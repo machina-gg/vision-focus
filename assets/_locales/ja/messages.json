@@ -1,0 +1,768 @@
+{
+  "extensionName": {
+    "message": "VisionFocus",
+    "description": "拡張機能名"
+  },
+  "extensionDescription": {
+    "message": "気が散るサイトをブロックし、時間を追跡して、目標に集中しましょう",
+    "description": "拡張機能の説明"
+  },
+  "siteBlocked": {
+    "message": "サイトをブロックしました",
+    "description": "ブロックページのタイトル"
+  },
+  "siteBlockedMessage": {
+    "message": "$DOMAIN$ はブロックリストに登録されています",
+    "description": "ブロックページのメッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "rememberGoal": {
+    "message": "あなたの目標を思い出してください",
+    "description": "目標リマインダーの見出し"
+  },
+  "lockdownModeActive": {
+    "message": "ロックダウンモード有効",
+    "description": "ロックダウンモード警告タイトル"
+  },
+  "lockdownModeMessage": {
+    "message": "ロックダウンモード中はサイトのブロックを解除できません。",
+    "description": "ロックダウンモード警告メッセージ"
+  },
+  "temporarilyUnblock": {
+    "message": "一時的にブロック解除（5分間）",
+    "description": "ブロック解除ボタンテキスト"
+  },
+  "challengePrompt": {
+    "message": "以下のテキストを入力してブロックを解除:",
+    "description": "チャレンジプロンプトテキスト"
+  },
+  "goBack": {
+    "message": "戻る",
+    "description": "戻るボタンテキスト"
+  },
+  "cancel": {
+    "message": "キャンセル",
+    "description": "キャンセルボタンテキスト"
+  },
+  "confirm": {
+    "message": "確認",
+    "description": "確認ボタンテキスト"
+  },
+  "save": {
+    "message": "保存",
+    "description": "保存ボタンテキスト"
+  },
+  "add": {
+    "message": "追加",
+    "description": "追加ボタンテキスト"
+  },
+  "delete": {
+    "message": "削除",
+    "description": "削除ボタンテキスト"
+  },
+  "edit": {
+    "message": "編集",
+    "description": "編集ボタンテキスト"
+  },
+  "settings": {
+    "message": "設定",
+    "description": "設定ページタイトル"
+  },
+  "general": {
+    "message": "一般",
+    "description": "一般設定タブ"
+  },
+  "blockList": {
+    "message": "ブロックリスト",
+    "description": "ブロックリストタブ"
+  },
+  "schedules": {
+    "message": "スケジュール",
+    "description": "スケジュールタブ"
+  },
+  "analytics": {
+    "message": "分析",
+    "description": "分析タブ"
+  },
+  "challengeOnUnblock": {
+    "message": "ブロック解除時のチャレンジ",
+    "description": "チャレンジ設定タイトル"
+  },
+  "challengeOnUnblockDescription": {
+    "message": "サイトのブロック解除時にフレーズの入力を要求する",
+    "description": "チャレンジ設定説明"
+  },
+  "dashboardBackground": {
+    "message": "ダッシュボードの背景",
+    "description": "背景設定タイトル"
+  },
+  "addSiteToBlock": {
+    "message": "ブロックするサイトを追加",
+    "description": "ブロック追加入力の見出し"
+  },
+  "domainPlaceholder": {
+    "message": "example.com または *.example.com",
+    "description": "ドメイン入力プレースホルダー"
+  },
+  "freeTierLimit": {
+    "message": "無料枠: $COUNT$ / $MAX$ サイト",
+    "description": "無料枠制限表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "max": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "blockedSites": {
+    "message": "ブロック中のサイト",
+    "description": "ブロックリスト見出し"
+  },
+  "noBlockedSites": {
+    "message": "ブロックしているサイトはありません。上のフィールドにドメインを追加してください。",
+    "description": "空のブロックリストメッセージ"
+  },
+  "blockingSchedules": {
+    "message": "ブロックスケジュール",
+    "description": "スケジュールリスト見出し"
+  },
+  "addSchedule": {
+    "message": "スケジュールを追加",
+    "description": "スケジュール追加ボタン"
+  },
+  "noSchedules": {
+    "message": "スケジュールが作成されていません。特定の時間帯にサイトを自動的にブロックするスケジュールを追加してください。",
+    "description": "空のスケジュールメッセージ"
+  },
+  "scheduleName": {
+    "message": "スケジュール名",
+    "description": "スケジュール名ラベル"
+  },
+  "startTime": {
+    "message": "開始時刻",
+    "description": "開始時刻ラベル"
+  },
+  "endTime": {
+    "message": "終了時刻",
+    "description": "終了時刻ラベル"
+  },
+  "activeDays": {
+    "message": "有効な曜日",
+    "description": "有効な曜日ラベル"
+  },
+  "recentActivity": {
+    "message": "最近のアクティビティ",
+    "description": "分析見出し"
+  },
+  "noActivity": {
+    "message": "まだアクティビティが記録されていません。ブラウジングを開始すると統計が表示されます。",
+    "description": "空の分析メッセージ"
+  },
+  "today": {
+    "message": "今日",
+    "description": "今日ラベル"
+  },
+  "waste": {
+    "message": "浪費",
+    "description": "浪費時間ラベル"
+  },
+  "invest": {
+    "message": "投資",
+    "description": "投資時間ラベル"
+  },
+  "blocked": {
+    "message": "ブロック",
+    "description": "ブロック数ラベル"
+  },
+  "blocks": {
+    "message": "$COUNT$ 回ブロック",
+    "description": "ブロック数表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "todaysSummary": {
+    "message": "今日のサマリー",
+    "description": "ポップアップサマリー見出し"
+  },
+  "quickBlock": {
+    "message": "クイックブロック",
+    "description": "クイックブロックボタン見出し"
+  },
+  "blockThisSite": {
+    "message": "$DOMAIN$ をブロック",
+    "description": "クイックブロックボタンテキスト",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "lockdownMode": {
+    "message": "ロックダウンモード",
+    "description": "ロックダウンモードトグルラベル"
+  },
+  "enableLockdown": {
+    "message": "ロックダウンを有効化",
+    "description": "ロックダウン有効化ボタン"
+  },
+  "disableLockdown": {
+    "message": "ロックダウンを無効化",
+    "description": "ロックダウン無効化ボタン"
+  },
+  "lockdownConfirmTitle": {
+    "message": "ロックダウンモードを有効化",
+    "description": "ロックダウン確認モーダルタイトル"
+  },
+  "lockdownConfirmMessage": {
+    "message": "ロックダウンモードでは、ブロックリスト内のすべてのサイトがブロックされ、解除できなくなります。",
+    "description": "ロックダウン確認メッセージ"
+  },
+  "lockdownConfirmWarning": {
+    "message": "ロックダウンモードを有効にしてもよろしいですか？",
+    "description": "ロックダウン確認警告"
+  },
+  "lockdownActive": {
+    "message": "ロックダウン中",
+    "description": "ロックダウン中ボタンテキスト"
+  },
+  "enableLockdownMode": {
+    "message": "ロックダウンモードを有効化",
+    "description": "ロックダウンモード有効化ボタンテキスト"
+  },
+  "blockingSettings": {
+    "message": "ブロック設定",
+    "description": "ブロック設定セクションタイトル"
+  },
+  "settingsTitle": {
+    "message": "VisionFocus 設定",
+    "description": "設定ページタイトル"
+  },
+  "saveChanges": {
+    "message": "変更を保存",
+    "description": "変更保存ボタン"
+  },
+  "addedOn": {
+    "message": "$DATE$ に追加",
+    "description": "追加日テキスト",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026/1/19"
+      }
+    }
+  },
+  "editSchedule": {
+    "message": "スケジュールを編集",
+    "description": "スケジュール編集モーダルタイトル"
+  },
+  "unblocking": {
+    "message": "解除中...",
+    "description": "解除処理中テキスト"
+  },
+  "confirmUnblock": {
+    "message": "このサイトを5分間解除してもよろしいですか？",
+    "description": "解除確認テキスト"
+  },
+  "typeTextAbove": {
+    "message": "上のテキストを入力してください...",
+    "description": "チャレンジ入力プレースホルダー"
+  },
+  "noSiteToBlock": {
+    "message": "ブロックするサイトがありません",
+    "description": "ブロック可能なサイトがない"
+  },
+  "enterGoalPlaceholder": {
+    "message": "目標を入力してください...",
+    "description": "目標入力プレースホルダー"
+  },
+  "challengeDescription": {
+    "message": "このサイトにアクセスしますか？まずチャレンジを完了してください。",
+    "description": "チャレンジモード説明テキスト"
+  },
+  "unblockPrompt": {
+    "message": "このサイトを一時的に解除しますか？",
+    "description": "チャレンジ無効時の解除プロンプト"
+  },
+  "goalSettings": {
+    "message": "目標設定",
+    "description": "目標設定セクションタイトル"
+  },
+  "yourGoal": {
+    "message": "あなたの目標",
+    "description": "目標入力ラベル"
+  },
+  "goalDescription": {
+    "message": "この目標は新しいタブページとブロックページに表示され、目的を思い出させてくれます。",
+    "description": "目標設定の説明"
+  },
+  "goalPlaceholder": {
+    "message": "例: 今月中にSaaSプロダクトをリリースする",
+    "description": "目標入力プレースホルダー"
+  },
+  "todaysGoal": {
+    "message": "今日の目標",
+    "description": "目標カードラベル"
+  },
+  "saved": {
+    "message": "保存しました",
+    "description": "保存成功フィードバック"
+  },
+  "dashboardPreview": {
+    "message": "ダッシュボードプレビュー",
+    "description": "プレビューセクションタイトル"
+  },
+  "backgroundType": {
+    "message": "背景タイプ",
+    "description": "背景タイプラベル"
+  },
+  "backgroundTypeImage": {
+    "message": "画像",
+    "description": "画像背景オプション"
+  },
+  "backgroundTypeColor": {
+    "message": "単色",
+    "description": "単色背景オプション"
+  },
+  "selectColor": {
+    "message": "色を選択",
+    "description": "色選択ラベル"
+  },
+  "goalSubText": {
+    "message": "サブメッセージ（任意）",
+    "description": "目標サブメッセージラベル"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "例: 一歩ずつ前へ",
+    "description": "目標サブメッセージプレースホルダー"
+  },
+  "textColor": {
+    "message": "文字色",
+    "description": "文字色ラベル"
+  },
+  "unsavedChanges": {
+    "message": "未保存の変更があります",
+    "description": "未保存の変更があることを知らせるテキスト"
+  },
+  "license": {
+    "message": "ライセンス",
+    "description": "ライセンスタブ"
+  },
+  "premium": {
+    "message": "プレミアム",
+    "description": "プレミアムラベル"
+  },
+  "free": {
+    "message": "無料",
+    "description": "無料ティアラベル"
+  },
+  "currentPlan": {
+    "message": "現在のプラン",
+    "description": "現在のプラン見出し"
+  },
+  "freePlan": {
+    "message": "無料プラン",
+    "description": "無料プラン名"
+  },
+  "premiumPlan": {
+    "message": "プレミアムプラン",
+    "description": "プレミアムプラン名"
+  },
+  "licenseKey": {
+    "message": "ライセンスキー",
+    "description": "ライセンスキー入力ラベル"
+  },
+  "enterLicenseKey": {
+    "message": "ライセンスキーを入力してください",
+    "description": "ライセンスキー入力プレースホルダー"
+  },
+  "activateLicense": {
+    "message": "ライセンスを有効化",
+    "description": "ライセンス有効化ボタン"
+  },
+  "activating": {
+    "message": "有効化中...",
+    "description": "ライセンス有効化中"
+  },
+  "licenseActivated": {
+    "message": "ライセンスが正常に有効化されました！",
+    "description": "ライセンス有効化成功メッセージ"
+  },
+  "invalidLicenseKey": {
+    "message": "無効なライセンスキーです。確認して再度お試しください。",
+    "description": "無効なライセンスキーエラー"
+  },
+  "deactivateLicense": {
+    "message": "ライセンスを無効化",
+    "description": "ライセンス無効化ボタン"
+  },
+  "licenseDeactivated": {
+    "message": "ライセンスが無効化されました",
+    "description": "ライセンス無効化メッセージ"
+  },
+  "licenseExpires": {
+    "message": "有効期限: $DATE$",
+    "description": "ライセンス有効期限",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-12-31"
+      }
+    }
+  },
+  "licenseLifetime": {
+    "message": "永続ライセンス",
+    "description": "永続ライセンスラベル"
+  },
+  "upgradeToPremium": {
+    "message": "プレミアムにアップグレード",
+    "description": "アップグレードボタンテキスト"
+  },
+  "premiumFeatures": {
+    "message": "プレミアム機能",
+    "description": "プレミアム機能見出し"
+  },
+  "premiumFeatureUnlimitedBlocklist": {
+    "message": "無制限のブロックリスト",
+    "description": "プレミアム機能: 無制限のブロックリスト"
+  },
+  "premiumFeatureUnlimitedHistory": {
+    "message": "無制限の分析履歴",
+    "description": "プレミアム機能: 無制限の履歴"
+  },
+  "premiumFeatureHardmode": {
+    "message": "ハードモード（ブロック解除不可）",
+    "description": "プレミアム機能: ハードモード"
+  },
+  "premiumFeatureCustomBackground": {
+    "message": "カスタム背景",
+    "description": "プレミアム機能: カスタム背景"
+  },
+  "premiumFeatureReports": {
+    "message": "週次・月次レポート",
+    "description": "プレミアム機能: レポート"
+  },
+  "freeTierLimitReached": {
+    "message": "無料枠の上限に達しました",
+    "description": "無料枠上限到達見出し"
+  },
+  "upgradeToAddMore": {
+    "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
+    "description": "ブロックリストのアップグレードプロンプト"
+  },
+  "devModeActive": {
+    "message": "開発者モード有効",
+    "description": "開発者モード有効インジケーター"
+  },
+  "devModeExpires": {
+    "message": "残り $TIME$",
+    "description": "開発者モード有効期限",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "23時間45分"
+      }
+    }
+  },
+  "devModeEnabled": {
+    "message": "開発者モードが24時間有効になりました",
+    "description": "開発者モード有効化メッセージ"
+  },
+  "devModeDisabled": {
+    "message": "開発者モードが無効になりました",
+    "description": "開発者モード無効化メッセージ"
+  },
+  "gracePeriodWarning": {
+    "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",
+    "description": "猶予期間警告",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-01-26"
+      }
+    }
+  },
+  "getPremium": {
+    "message": "プレミアムを取得",
+    "description": "プレミアム取得ボタン"
+  },
+  "learnMore": {
+    "message": "詳細を見る",
+    "description": "詳細リンク"
+  },
+  "premiumRequired": {
+    "message": "プレミアムが必要です",
+    "description": "プレミアム必須見出し"
+  },
+  "premiumRequiredDescription": {
+    "message": "この機能にはプレミアムサブスクリプションが必要です。",
+    "description": "プレミアム必須説明"
+  },
+  "remove": {
+    "message": "削除",
+    "description": "削除ボタンテキスト"
+  },
+  "uploadImage": {
+    "message": "クリックまたはドラッグして画像をアップロード",
+    "description": "画像アップロードプロンプト"
+  },
+  "dropImage": {
+    "message": "ここに画像をドロップ",
+    "description": "画像ドロッププロンプト"
+  },
+  "uploadedImage": {
+    "message": "アップロードされた画像",
+    "description": "アップロード済み画像ラベル"
+  },
+  "supportedFormats": {
+    "message": "JPEG、PNG、WebP（最大5MB）",
+    "description": "サポートされている画像形式"
+  },
+  "processing": {
+    "message": "処理中...",
+    "description": "処理中テキスト"
+  },
+  "fontFamily": {
+    "message": "フォントファミリー",
+    "description": "フォントファミリーラベル"
+  },
+  "fontSize": {
+    "message": "フォントサイズ",
+    "description": "フォントサイズラベル"
+  },
+  "fontWeight": {
+    "message": "フォントの太さ",
+    "description": "フォントの太さラベル"
+  },
+  "fontCustomization": {
+    "message": "フォントカスタマイズ",
+    "description": "フォントカスタマイズセクションタイトル"
+  },
+  "addGoal": {
+    "message": "目標を追加",
+    "description": "目標追加ボタン"
+  },
+  "editGoal": {
+    "message": "目標を編集",
+    "description": "目標編集モーダルタイトル"
+  },
+  "goalText": {
+    "message": "目標テキスト",
+    "description": "目標テキスト入力ラベル"
+  },
+  "goalTextPlaceholder": {
+    "message": "今日の主な目標は？",
+    "description": "目標テキストプレースホルダー"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "モチベーションメッセージを追加...",
+    "description": "目標サブテキストプレースホルダー"
+  },
+  "previewText": {
+    "message": "プレビュー",
+    "description": "プレビューテキスト"
+  },
+  "noGoals": {
+    "message": "目標がありません。目標を追加して始めましょう。",
+    "description": "空の目標メッセージ"
+  },
+  "maxGoalsReached": {
+    "message": "目標の上限に達しました（$COUNT$件）。プレミアムにアップグレードすると無制限に追加できます。",
+    "description": "最大目標数到達メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "multipleGoals": {
+    "message": "複数の目標",
+    "description": "複数の目標セクションタイトル"
+  },
+  "wasteTime": {
+    "message": "浪費時間",
+    "description": "浪費時間ラベル"
+  },
+  "investTime": {
+    "message": "投資時間",
+    "description": "投資時間ラベル"
+  },
+  "blockedCount": {
+    "message": "ブロック",
+    "description": "ブロック数ラベル"
+  },
+  "noData": {
+    "message": "データがありません",
+    "description": "データなしメッセージ"
+  },
+  "lineChart": {
+    "message": "折れ線グラフ",
+    "description": "折れ線グラフラベル"
+  },
+  "barChart": {
+    "message": "棒グラフ",
+    "description": "棒グラフラベル"
+  },
+  "pieChart": {
+    "message": "円グラフ",
+    "description": "円グラフラベル"
+  },
+  "neutral": {
+    "message": "中立",
+    "description": "中立カテゴリラベル"
+  },
+  "weeklyReport": {
+    "message": "週次レポート",
+    "description": "週次レポートタイトル"
+  },
+  "monthlyReport": {
+    "message": "月次レポート",
+    "description": "月次レポートタイトル"
+  },
+  "noReportData": {
+    "message": "レポート用のデータが不足しています",
+    "description": "レポートデータなしメッセージ"
+  },
+  "improving": {
+    "message": "改善中",
+    "description": "改善トレンドラベル"
+  },
+  "declining": {
+    "message": "低下中",
+    "description": "低下トレンドラベル"
+  },
+  "stable": {
+    "message": "安定",
+    "description": "安定トレンドラベル"
+  },
+  "clickForDetails": {
+    "message": "クリックして詳細を表示",
+    "description": "詳細表示ヒント"
+  },
+  "productivityImproving": {
+    "message": "生産性が向上しています！",
+    "description": "生産性向上メッセージ"
+  },
+  "productivityDeclining": {
+    "message": "生産性が低下しています",
+    "description": "生産性低下メッセージ"
+  },
+  "productivityStable": {
+    "message": "生産性は安定しています",
+    "description": "生産性安定メッセージ"
+  },
+  "topWasteSites": {
+    "message": "浪費サイトトップ",
+    "description": "浪費サイトトップ見出し"
+  },
+  "topInvestSites": {
+    "message": "投資サイトトップ",
+    "description": "投資サイトトップ見出し"
+  },
+  "close": {
+    "message": "閉じる",
+    "description": "閉じるボタン"
+  },
+  "download": {
+    "message": "ダウンロード",
+    "description": "ダウンロードボタン"
+  },
+  "downloadWallpaper": {
+    "message": "壁紙をダウンロード",
+    "description": "壁紙ダウンロードボタン"
+  },
+  "selectResolution": {
+    "message": "解像度を選択",
+    "description": "解像度選択ラベル"
+  },
+  "customBackground": {
+    "message": "カスタム背景",
+    "description": "カスタム背景セクションタイトル"
+  },
+  "uploadCustomBackground": {
+    "message": "カスタム背景をアップロード",
+    "description": "カスタム背景アップロードボタン"
+  },
+  "premiumFeatureMultipleGoals": {
+    "message": "複数の目標カード",
+    "description": "プレミアム機能: 複数の目標"
+  },
+  "premiumFeatureFontCustomization": {
+    "message": "フォントカスタマイズ",
+    "description": "プレミアム機能: フォントカスタマイズ"
+  },
+  "premiumFeatureDownloadWallpaper": {
+    "message": "壁紙ダウンロード",
+    "description": "プレミアム機能: 壁紙ダウンロード"
+  },
+  "detailedAnalytics": {
+    "message": "詳細分析",
+    "description": "詳細分析セクションタイトル"
+  },
+  "reports": {
+    "message": "レポート",
+    "description": "レポートセクションタイトル"
+  },
+  "siteCategories": {
+    "message": "サイトカテゴリ",
+    "description": "サイトカテゴリセクションタイトル"
+  },
+  "noSiteData": {
+    "message": "まだサイトを訪問していません。ブラウジングを開始してデータを記録しましょう。",
+    "description": "サイトデータなしメッセージ"
+  },
+  "searchSites": {
+    "message": "サイトを検索...",
+    "description": "サイト検索プレースホルダー"
+  },
+  "allCategories": {
+    "message": "すべてのカテゴリ",
+    "description": "全カテゴリフィルターオプション"
+  },
+  "site": {
+    "message": "サイト",
+    "description": "サイト列ヘッダー"
+  },
+  "time": {
+    "message": "時間",
+    "description": "時間列ヘッダー"
+  },
+  "category": {
+    "message": "カテゴリ",
+    "description": "カテゴリ列ヘッダー"
+  },
+  "noMatchingSites": {
+    "message": "検索条件に一致するサイトがありません。",
+    "description": "一致するサイトなしメッセージ"
+  },
+  "wasteShort": {
+    "message": "浪",
+    "description": "浪費カテゴリ短縮ラベル"
+  },
+  "investShort": {
+    "message": "投",
+    "description": "投資カテゴリ短縮ラベル"
+  },
+  "neutralShort": {
+    "message": "中",
+    "description": "中立カテゴリ短縮ラベル"
+  },
+  "siteCategoryHelp": {
+    "message": "サイトを浪費（時間の無駄）、投資（生産的）、または中立に分類して生産性を追跡しましょう。",
+    "description": "サイトカテゴリヘルプテキスト"
+  }
+}

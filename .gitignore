@@ -9,6 +9,9 @@ out/
 dist/
 build/
 
+# Plasmo
+.plasmo/
+
 # Environment
 .env
 .env.local

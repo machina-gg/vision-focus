@@ -1,0 +1,768 @@
+{
+  "extensionName": {
+    "message": "VisionFocus",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Block distractions, track time, and stay focused on your goals",
+    "description": "Extension description"
+  },
+  "siteBlocked": {
+    "message": "Site Blocked",
+    "description": "Title shown on blocked page"
+  },
+  "siteBlockedMessage": {
+    "message": "$DOMAIN$ is on your block list",
+    "description": "Message shown on blocked page",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "rememberGoal": {
+    "message": "Remember your goal",
+    "description": "Goal reminder heading"
+  },
+  "lockdownModeActive": {
+    "message": "Lockdown Mode Active",
+    "description": "Lockdown mode warning title"
+  },
+  "lockdownModeMessage": {
+    "message": "You cannot unblock sites during lockdown mode.",
+    "description": "Lockdown mode warning message"
+  },
+  "temporarilyUnblock": {
+    "message": "Temporarily Unblock (5 min)",
+    "description": "Unblock button text"
+  },
+  "challengePrompt": {
+    "message": "Type the following to unblock:",
+    "description": "Challenge prompt text"
+  },
+  "goBack": {
+    "message": "Go Back",
+    "description": "Go back button text"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button text"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirm button text"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button text"
+  },
+  "add": {
+    "message": "Add",
+    "description": "Add button text"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button text"
+  },
+  "edit": {
+    "message": "Edit",
+    "description": "Edit button text"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings page title"
+  },
+  "general": {
+    "message": "General",
+    "description": "General settings tab"
+  },
+  "blockList": {
+    "message": "Block List",
+    "description": "Block list tab"
+  },
+  "schedules": {
+    "message": "Schedules",
+    "description": "Schedules tab"
+  },
+  "analytics": {
+    "message": "Analytics",
+    "description": "Analytics tab"
+  },
+  "challengeOnUnblock": {
+    "message": "Challenge on Unblock",
+    "description": "Challenge setting title"
+  },
+  "challengeOnUnblockDescription": {
+    "message": "Require typing a phrase to unblock sites",
+    "description": "Challenge setting description"
+  },
+  "dashboardBackground": {
+    "message": "Dashboard Background",
+    "description": "Background setting title"
+  },
+  "addSiteToBlock": {
+    "message": "Add Site to Block",
+    "description": "Add block input heading"
+  },
+  "domainPlaceholder": {
+    "message": "example.com or *.example.com",
+    "description": "Domain input placeholder"
+  },
+  "freeTierLimit": {
+    "message": "Free tier: $COUNT$ / $MAX$ sites",
+    "description": "Free tier limit display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "max": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "blockedSites": {
+    "message": "Blocked Sites",
+    "description": "Blocked sites list heading"
+  },
+  "noBlockedSites": {
+    "message": "No sites blocked yet. Add a domain above to get started.",
+    "description": "Empty block list message"
+  },
+  "blockingSchedules": {
+    "message": "Blocking Schedules",
+    "description": "Schedules list heading"
+  },
+  "addSchedule": {
+    "message": "Add Schedule",
+    "description": "Add schedule button"
+  },
+  "noSchedules": {
+    "message": "No schedules created. Add a schedule to automatically block sites during specific times.",
+    "description": "Empty schedules message"
+  },
+  "scheduleName": {
+    "message": "Schedule Name",
+    "description": "Schedule name label"
+  },
+  "startTime": {
+    "message": "Start Time",
+    "description": "Start time label"
+  },
+  "endTime": {
+    "message": "End Time",
+    "description": "End time label"
+  },
+  "activeDays": {
+    "message": "Active Days",
+    "description": "Active days label"
+  },
+  "recentActivity": {
+    "message": "Recent Activity",
+    "description": "Analytics heading"
+  },
+  "noActivity": {
+    "message": "No activity recorded yet. Start browsing to see your stats.",
+    "description": "Empty analytics message"
+  },
+  "today": {
+    "message": "Today",
+    "description": "Today label"
+  },
+  "waste": {
+    "message": "Waste",
+    "description": "Waste time label"
+  },
+  "invest": {
+    "message": "Invest",
+    "description": "Invest time label"
+  },
+  "blocked": {
+    "message": "Blocked",
+    "description": "Blocked count label"
+  },
+  "blocks": {
+    "message": "$COUNT$ blocks",
+    "description": "Block count display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "todaysSummary": {
+    "message": "Today's Summary",
+    "description": "Popup summary heading"
+  },
+  "quickBlock": {
+    "message": "Quick Block",
+    "description": "Quick block button heading"
+  },
+  "blockThisSite": {
+    "message": "Block $DOMAIN$",
+    "description": "Quick block button text",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "lockdownMode": {
+    "message": "Lockdown Mode",
+    "description": "Lockdown mode toggle label"
+  },
+  "enableLockdown": {
+    "message": "Enable Lockdown",
+    "description": "Enable lockdown button"
+  },
+  "disableLockdown": {
+    "message": "Disable Lockdown",
+    "description": "Disable lockdown button"
+  },
+  "lockdownConfirmTitle": {
+    "message": "Enable Lockdown Mode",
+    "description": "Lockdown confirmation modal title"
+  },
+  "lockdownConfirmMessage": {
+    "message": "Lockdown mode will block all sites in your block list without the option to unblock them.",
+    "description": "Lockdown confirmation message"
+  },
+  "lockdownConfirmWarning": {
+    "message": "Are you sure you want to enable lockdown mode?",
+    "description": "Lockdown confirmation warning"
+  },
+  "lockdownActive": {
+    "message": "Lockdown Active",
+    "description": "Lockdown active button text"
+  },
+  "enableLockdownMode": {
+    "message": "Enable Lockdown Mode",
+    "description": "Enable lockdown mode button text"
+  },
+  "blockingSettings": {
+    "message": "Blocking Settings",
+    "description": "Blocking settings section title"
+  },
+  "settingsTitle": {
+    "message": "VisionFocus Settings",
+    "description": "Settings page title"
+  },
+  "saveChanges": {
+    "message": "Save Changes",
+    "description": "Save changes button"
+  },
+  "addedOn": {
+    "message": "Added $DATE$",
+    "description": "Added date text",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "1/19/2026"
+      }
+    }
+  },
+  "editSchedule": {
+    "message": "Edit Schedule",
+    "description": "Edit schedule modal title"
+  },
+  "unblocking": {
+    "message": "Unblocking...",
+    "description": "Unblocking in progress text"
+  },
+  "confirmUnblock": {
+    "message": "Are you sure you want to unblock this site for 5 minutes?",
+    "description": "Confirm unblock text"
+  },
+  "typeTextAbove": {
+    "message": "Type the text above...",
+    "description": "Challenge input placeholder"
+  },
+  "noSiteToBlock": {
+    "message": "No site to block",
+    "description": "No site available to block"
+  },
+  "enterGoalPlaceholder": {
+    "message": "Enter your goal...",
+    "description": "Goal input placeholder text"
+  },
+  "challengeDescription": {
+    "message": "Want to visit this site? Complete the challenge first.",
+    "description": "Challenge mode description text"
+  },
+  "unblockPrompt": {
+    "message": "Want to temporarily unblock this site?",
+    "description": "Unblock prompt when challenge is disabled"
+  },
+  "goalSettings": {
+    "message": "Goal Settings",
+    "description": "Goal settings section title"
+  },
+  "yourGoal": {
+    "message": "Your Goal",
+    "description": "Goal input label"
+  },
+  "goalDescription": {
+    "message": "This goal will be displayed on the new tab page and block page to remind you of your purpose.",
+    "description": "Goal setting description"
+  },
+  "goalPlaceholder": {
+    "message": "e.g., Ship my SaaS product by end of month",
+    "description": "Goal input placeholder"
+  },
+  "todaysGoal": {
+    "message": "Today's Goal",
+    "description": "Goal card label"
+  },
+  "saved": {
+    "message": "Saved!",
+    "description": "Save success feedback"
+  },
+  "dashboardPreview": {
+    "message": "Dashboard Preview",
+    "description": "Preview section title"
+  },
+  "backgroundType": {
+    "message": "Background Type",
+    "description": "Background type label"
+  },
+  "backgroundTypeImage": {
+    "message": "Image",
+    "description": "Image background option"
+  },
+  "backgroundTypeColor": {
+    "message": "Solid Color",
+    "description": "Color background option"
+  },
+  "selectColor": {
+    "message": "Select Color",
+    "description": "Color selection label"
+  },
+  "goalSubText": {
+    "message": "Sub-message (Optional)",
+    "description": "Goal sub-message label"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "e.g., One step at a time",
+    "description": "Goal sub-message placeholder"
+  },
+  "textColor": {
+    "message": "Text Color",
+    "description": "Text color label"
+  },
+  "unsavedChanges": {
+    "message": "You have unsaved changes",
+    "description": "Text indicating unsaved changes"
+  },
+  "license": {
+    "message": "License",
+    "description": "License tab"
+  },
+  "premium": {
+    "message": "Premium",
+    "description": "Premium label"
+  },
+  "free": {
+    "message": "Free",
+    "description": "Free tier label"
+  },
+  "currentPlan": {
+    "message": "Current Plan",
+    "description": "Current plan heading"
+  },
+  "freePlan": {
+    "message": "Free Plan",
+    "description": "Free plan name"
+  },
+  "premiumPlan": {
+    "message": "Premium Plan",
+    "description": "Premium plan name"
+  },
+  "licenseKey": {
+    "message": "License Key",
+    "description": "License key input label"
+  },
+  "enterLicenseKey": {
+    "message": "Enter your license key",
+    "description": "License key input placeholder"
+  },
+  "activateLicense": {
+    "message": "Activate License",
+    "description": "Activate license button"
+  },
+  "activating": {
+    "message": "Activating...",
+    "description": "License activation in progress"
+  },
+  "licenseActivated": {
+    "message": "License activated successfully!",
+    "description": "License activation success message"
+  },
+  "invalidLicenseKey": {
+    "message": "Invalid license key. Please check and try again.",
+    "description": "Invalid license key error"
+  },
+  "deactivateLicense": {
+    "message": "Deactivate License",
+    "description": "Deactivate license button"
+  },
+  "licenseDeactivated": {
+    "message": "License deactivated",
+    "description": "License deactivation message"
+  },
+  "licenseExpires": {
+    "message": "Expires: $DATE$",
+    "description": "License expiration date",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-12-31"
+      }
+    }
+  },
+  "licenseLifetime": {
+    "message": "Lifetime License",
+    "description": "Lifetime license label"
+  },
+  "upgradeToPremium": {
+    "message": "Upgrade to Premium",
+    "description": "Upgrade button text"
+  },
+  "premiumFeatures": {
+    "message": "Premium Features",
+    "description": "Premium features heading"
+  },
+  "premiumFeatureUnlimitedBlocklist": {
+    "message": "Unlimited block list",
+    "description": "Premium feature: unlimited blocklist"
+  },
+  "premiumFeatureUnlimitedHistory": {
+    "message": "Unlimited analytics history",
+    "description": "Premium feature: unlimited history"
+  },
+  "premiumFeatureHardmode": {
+    "message": "Hard mode (no unblocking)",
+    "description": "Premium feature: hard mode"
+  },
+  "premiumFeatureCustomBackground": {
+    "message": "Custom backgrounds",
+    "description": "Premium feature: custom backgrounds"
+  },
+  "premiumFeatureReports": {
+    "message": "Weekly & monthly reports",
+    "description": "Premium feature: reports"
+  },
+  "freeTierLimitReached": {
+    "message": "Free tier limit reached",
+    "description": "Free tier limit reached heading"
+  },
+  "upgradeToAddMore": {
+    "message": "Upgrade to Premium to add more sites to your block list.",
+    "description": "Upgrade prompt for blocklist"
+  },
+  "devModeActive": {
+    "message": "Developer Mode Active",
+    "description": "Dev mode active indicator"
+  },
+  "devModeExpires": {
+    "message": "Expires in $TIME$",
+    "description": "Dev mode expiration",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "23h 45m"
+      }
+    }
+  },
+  "devModeEnabled": {
+    "message": "Developer mode enabled for 24 hours",
+    "description": "Dev mode enabled message"
+  },
+  "devModeDisabled": {
+    "message": "Developer mode disabled",
+    "description": "Dev mode disabled message"
+  },
+  "gracePeriodWarning": {
+    "message": "License verification failed. Premium features will remain active until $DATE$.",
+    "description": "Grace period warning",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-01-26"
+      }
+    }
+  },
+  "getPremium": {
+    "message": "Get Premium",
+    "description": "Get premium button"
+  },
+  "learnMore": {
+    "message": "Learn More",
+    "description": "Learn more link"
+  },
+  "premiumRequired": {
+    "message": "Premium Required",
+    "description": "Premium required heading"
+  },
+  "premiumRequiredDescription": {
+    "message": "This feature requires a Premium subscription.",
+    "description": "Premium required description"
+  },
+  "remove": {
+    "message": "Remove",
+    "description": "Remove button text"
+  },
+  "uploadImage": {
+    "message": "Click or drag image to upload",
+    "description": "Image upload prompt"
+  },
+  "dropImage": {
+    "message": "Drop image here",
+    "description": "Image drop prompt"
+  },
+  "uploadedImage": {
+    "message": "Uploaded image",
+    "description": "Uploaded image label"
+  },
+  "supportedFormats": {
+    "message": "JPEG, PNG, or WebP (max 5MB)",
+    "description": "Supported image formats"
+  },
+  "processing": {
+    "message": "Processing...",
+    "description": "Processing text"
+  },
+  "fontFamily": {
+    "message": "Font Family",
+    "description": "Font family label"
+  },
+  "fontSize": {
+    "message": "Font Size",
+    "description": "Font size label"
+  },
+  "fontWeight": {
+    "message": "Font Weight",
+    "description": "Font weight label"
+  },
+  "fontCustomization": {
+    "message": "Font Customization",
+    "description": "Font customization section title"
+  },
+  "addGoal": {
+    "message": "Add Goal",
+    "description": "Add goal button"
+  },
+  "editGoal": {
+    "message": "Edit Goal",
+    "description": "Edit goal modal title"
+  },
+  "goalText": {
+    "message": "Goal Text",
+    "description": "Goal text input label"
+  },
+  "goalTextPlaceholder": {
+    "message": "What's your main focus today?",
+    "description": "Goal text placeholder"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "Add a motivational message...",
+    "description": "Goal sub-text placeholder"
+  },
+  "previewText": {
+    "message": "Preview",
+    "description": "Preview text"
+  },
+  "noGoals": {
+    "message": "No goals yet. Add a goal to get started.",
+    "description": "Empty goals message"
+  },
+  "maxGoalsReached": {
+    "message": "Maximum goals reached ($COUNT$). Upgrade to Premium for unlimited goals.",
+    "description": "Max goals reached message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "multipleGoals": {
+    "message": "Multiple Goals",
+    "description": "Multiple goals section title"
+  },
+  "wasteTime": {
+    "message": "Waste Time",
+    "description": "Waste time label"
+  },
+  "investTime": {
+    "message": "Invest Time",
+    "description": "Invest time label"
+  },
+  "blockedCount": {
+    "message": "Blocked",
+    "description": "Blocked count label"
+  },
+  "noData": {
+    "message": "No data available",
+    "description": "No data message"
+  },
+  "lineChart": {
+    "message": "Line Chart",
+    "description": "Line chart label"
+  },
+  "barChart": {
+    "message": "Bar Chart",
+    "description": "Bar chart label"
+  },
+  "pieChart": {
+    "message": "Pie Chart",
+    "description": "Pie chart label"
+  },
+  "neutral": {
+    "message": "Neutral",
+    "description": "Neutral category label"
+  },
+  "weeklyReport": {
+    "message": "Weekly Report",
+    "description": "Weekly report title"
+  },
+  "monthlyReport": {
+    "message": "Monthly Report",
+    "description": "Monthly report title"
+  },
+  "noReportData": {
+    "message": "Not enough data for report",
+    "description": "No report data message"
+  },
+  "improving": {
+    "message": "Improving",
+    "description": "Improving trend label"
+  },
+  "declining": {
+    "message": "Declining",
+    "description": "Declining trend label"
+  },
+  "stable": {
+    "message": "Stable",
+    "description": "Stable trend label"
+  },
+  "clickForDetails": {
+    "message": "Click for details",
+    "description": "Click for details hint"
+  },
+  "productivityImproving": {
+    "message": "Your productivity is improving!",
+    "description": "Productivity improving message"
+  },
+  "productivityDeclining": {
+    "message": "Your productivity is declining",
+    "description": "Productivity declining message"
+  },
+  "productivityStable": {
+    "message": "Your productivity is stable",
+    "description": "Productivity stable message"
+  },
+  "topWasteSites": {
+    "message": "Top Waste Sites",
+    "description": "Top waste sites heading"
+  },
+  "topInvestSites": {
+    "message": "Top Invest Sites",
+    "description": "Top invest sites heading"
+  },
+  "close": {
+    "message": "Close",
+    "description": "Close button"
+  },
+  "download": {
+    "message": "Download",
+    "description": "Download button"
+  },
+  "downloadWallpaper": {
+    "message": "Download Wallpaper",
+    "description": "Download wallpaper button"
+  },
+  "selectResolution": {
+    "message": "Select Resolution",
+    "description": "Resolution selection label"
+  },
+  "customBackground": {
+    "message": "Custom Background",
+    "description": "Custom background section title"
+  },
+  "uploadCustomBackground": {
+    "message": "Upload Custom Background",
+    "description": "Upload custom background button"
+  },
+  "premiumFeatureMultipleGoals": {
+    "message": "Multiple goal cards",
+    "description": "Premium feature: multiple goals"
+  },
+  "premiumFeatureFontCustomization": {
+    "message": "Font customization",
+    "description": "Premium feature: font customization"
+  },
+  "premiumFeatureDownloadWallpaper": {
+    "message": "Download wallpaper",
+    "description": "Premium feature: download wallpaper"
+  },
+  "detailedAnalytics": {
+    "message": "Detailed Analytics",
+    "description": "Detailed analytics section title"
+  },
+  "reports": {
+    "message": "Reports",
+    "description": "Reports section title"
+  },
+  "siteCategories": {
+    "message": "Site Categories",
+    "description": "Site categories section title"
+  },
+  "noSiteData": {
+    "message": "No sites visited yet. Start browsing to see your site data.",
+    "description": "Empty site data message"
+  },
+  "searchSites": {
+    "message": "Search sites...",
+    "description": "Search sites placeholder"
+  },
+  "allCategories": {
+    "message": "All Categories",
+    "description": "All categories filter option"
+  },
+  "site": {
+    "message": "Site",
+    "description": "Site column header"
+  },
+  "time": {
+    "message": "Time",
+    "description": "Time column header"
+  },
+  "category": {
+    "message": "Category",
+    "description": "Category column header"
+  },
+  "noMatchingSites": {
+    "message": "No sites match your search.",
+    "description": "No matching sites message"
+  },
+  "wasteShort": {
+    "message": "W",
+    "description": "Waste category short label"
+  },
+  "investShort": {
+    "message": "I",
+    "description": "Invest category short label"
+  },
+  "neutralShort": {
+    "message": "N",
+    "description": "Neutral category short label"
+  },
+  "siteCategoryHelp": {
+    "message": "Categorize your sites as Waste (time wasters), Invest (productive), or Neutral to track your productivity.",
+    "description": "Site category help text"
+  }
+}
