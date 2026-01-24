@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { useStorage } from '@plasmohq/storage/hook'
-import { ArrowLeft, Shield, Target } from 'lucide-react'
+import { Shield, Target } from 'lucide-react'
 
 import { Button, Card } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
@@ -27,14 +27,6 @@ function BlockedPage() {
       setBlockedDomain(domain)
     }
   }, [])
-
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      window.history.back()
-    } else {
-      window.close()
-    }
-  }
 
   const handleGoToDashboard = () => {
     window.location.href = chrome.runtime.getURL('newtab.html')
@@ -76,16 +68,10 @@ function BlockedPage() {
           </div>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-3">
-          <Button onClick={handleGoToDashboard} className="w-full">
-            {getMessage('goToDashboard')}
-          </Button>
-          <Button variant="ghost" onClick={handleGoBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {getMessage('goBack')}
-          </Button>
-        </div>
+        {/* Action Button */}
+        <Button onClick={handleGoToDashboard} className="w-full">
+          {getMessage('goToDashboard')}
+        </Button>
       </div>
     </div>
   )
