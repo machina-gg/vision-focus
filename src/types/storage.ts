@@ -105,7 +105,6 @@ export interface VisionSettings {
 export interface AppSettings {
   blockList: BlockItem[]
   schedules: Schedule[]
-  challengeEnabled: boolean
 }
 
 // Analytics data
@@ -142,7 +141,6 @@ export interface DevModeSettings {
 // Premium feature identifiers
 export type PremiumFeature =
   | 'unlimited_blocklist'
-  | 'hardmode'
   | 'custom_background'
   | 'unsplash'
   | 'unlimited_history'
@@ -152,12 +150,6 @@ export type PremiumFeature =
   | 'multiple_goals'
   | 'font_customization'
 
-// Temporary unblock info
-export interface TempUnblock {
-  domain: string
-  expiresAt: string // ISO string
-}
-
 // Complete storage schema
 export interface StorageSchema {
   settings: AppSettings
@@ -165,14 +157,12 @@ export interface StorageSchema {
   analytics: AnalyticsData
   license: LicenseInfo
   devMode: DevModeSettings
-  tempUnblocks: TempUnblock[]
 }
 
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
-  challengeEnabled: true,
 }
 
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
@@ -224,7 +214,6 @@ export const DEFAULT_STORAGE: StorageSchema = {
   analytics: DEFAULT_ANALYTICS,
   license: DEFAULT_LICENSE,
   devMode: DEFAULT_DEV_MODE,
-  tempUnblocks: [],
 }
 
 // Feature limits type
@@ -253,12 +242,6 @@ export const FEATURE_LIMITS: {
 
 // Legacy export for backwards compatibility
 export const FREE_TIER_LIMITS = FEATURE_LIMITS.free
-
-// Challenge text for unblocking
-export const CHALLENGE_TEXT = 'I choose to focus on my goals'
-
-// Temp unblock duration (5 minutes)
-export const TEMP_UNBLOCK_DURATION_MS = 5 * 60 * 1000
 
 // Font family CSS mappings
 export const FONT_FAMILY_MAP: Record<FontFamily, string> = {

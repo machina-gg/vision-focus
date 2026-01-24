@@ -11,7 +11,6 @@ import {
   type DevModeSettings,
   type LicenseInfo,
   type StorageSchema,
-  type TempUnblock,
   type VisionSettings,
 } from '~/types/storage'
 
@@ -27,7 +26,6 @@ const KEYS = {
   analytics: 'analytics',
   license: 'license',
   devMode: 'devMode',
-  tempUnblocks: 'tempUnblocks',
 } as const
 
 // Get settings
@@ -95,70 +93,17 @@ export async function setDevMode(devMode: DevModeSettings): Promise<void> {
   await storage.set(KEYS.devMode, devMode)
 }
 
-// Get temp unblocks
-export async function getTempUnblocks(): Promise<TempUnblock[]> {
-  const data = await storage.get<TempUnblock[]>(KEYS.tempUnblocks)
-  return data ?? []
-}
-
-// Set temp unblocks
-export async function setTempUnblocks(
-  tempUnblocks: TempUnblock[]
-): Promise<void> {
-  await storage.set(KEYS.tempUnblocks, tempUnblocks)
-}
-
-// Add temp unblock
-export async function addTempUnblock(
-  domain: string,
-  durationMs: number
-): Promise<void> {
-  const tempUnblocks = await getTempUnblocks()
-  const expiresAt = new Date(Date.now() + durationMs).toISOString()
-
-  // Remove existing entry for this domain if any
-  const filtered = tempUnblocks.filter((t) => t.domain !== domain)
-  filtered.push({ domain, expiresAt })
-
-  await setTempUnblocks(filtered)
-}
-
-// Check if domain is temporarily unblocked
-export async function isTempUnblocked(domain: string): Promise<boolean> {
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
-
-  const entry = tempUnblocks.find((t) => t.domain === domain)
-  if (!entry) return false
-
-  return new Date(entry.expiresAt) > now
-}
-
-// Clean up expired temp unblocks
-export async function cleanupTempUnblocks(): Promise<void> {
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
-
-  const valid = tempUnblocks.filter((t) => new Date(t.expiresAt) > now)
-
-  if (valid.length !== tempUnblocks.length) {
-    await setTempUnblocks(valid)
-  }
-}
-
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, analytics, license, devMode, tempUnblocks] =
-    await Promise.all([
-      getSettings(),
-      getVision(),
-      getAnalytics(),
-      getLicense(),
-      getDevMode(),
-      getTempUnblocks(),
-    ])
+  const [settings, vision, analytics, license, devMode] = await Promise.all([
+    getSettings(),
+    getVision(),
+    getAnalytics(),
+    getLicense(),
+    getDevMode(),
+  ])
 
-  return { settings, vision, analytics, license, devMode, tempUnblocks }
+  return { settings, vision, analytics, license, devMode }
 }
 
 // Clear all storage (for debugging)
@@ -169,7 +114,6 @@ export async function clearAllStorage(): Promise<void> {
     storage.remove(KEYS.analytics),
     storage.remove(KEYS.license),
     storage.remove(KEYS.devMode),
-    storage.remove(KEYS.tempUnblocks),
   ])
 }
 

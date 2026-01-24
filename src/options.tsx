@@ -672,30 +672,6 @@ function OptionsApp() {
 
             <Card>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {getMessage('blockingSettings')}
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {getMessage('challengeOnUnblock')}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {getMessage('challengeOnUnblockDescription')}
-                    </p>
-                  </div>
-                  <Toggle
-                    checked={settings?.challengeEnabled ?? true}
-                    onChange={(checked) =>
-                      handleToggleSetting('challengeEnabled', checked)
-                    }
-                  />
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 {getMessage('dashboardBackground')}
               </h2>
 

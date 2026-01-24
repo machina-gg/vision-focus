@@ -25,17 +25,13 @@
     "message": "あなたの目標を思い出してください",
     "description": "目標リマインダーの見出し"
   },
-  "temporarilyUnblock": {
-    "message": "一時的にブロック解除（5分間）",
-    "description": "ブロック解除ボタンテキスト"
-  },
-  "challengePrompt": {
-    "message": "以下のテキストを入力してブロックを解除:",
-    "description": "チャレンジプロンプトテキスト"
-  },
   "goBack": {
     "message": "戻る",
     "description": "戻るボタンテキスト"
+  },
+  "goToDashboard": {
+    "message": "ダッシュボードへ",
+    "description": "ダッシュボードへ移動するボタンテキスト"
   },
   "cancel": {
     "message": "キャンセル",
@@ -80,14 +76,6 @@
   "analytics": {
     "message": "分析",
     "description": "分析タブ"
-  },
-  "challengeOnUnblock": {
-    "message": "ブロック解除時のチャレンジ",
-    "description": "チャレンジ設定タイトル"
-  },
-  "challengeOnUnblockDescription": {
-    "message": "サイトのブロック解除時にフレーズの入力を要求する",
-    "description": "チャレンジ設定説明"
   },
   "dashboardBackground": {
     "message": "ダッシュボードの背景",
@@ -203,10 +191,6 @@
       }
     }
   },
-  "blockingSettings": {
-    "message": "ブロック設定",
-    "description": "ブロック設定セクションタイトル"
-  },
   "settingsTitle": {
     "message": "VisionFocus 設定",
     "description": "設定ページタイトル"
@@ -229,18 +213,6 @@
     "message": "スケジュールを編集",
     "description": "スケジュール編集モーダルタイトル"
   },
-  "unblocking": {
-    "message": "解除中...",
-    "description": "解除処理中テキスト"
-  },
-  "confirmUnblock": {
-    "message": "このサイトを5分間解除してもよろしいですか？",
-    "description": "解除確認テキスト"
-  },
-  "typeTextAbove": {
-    "message": "上のテキストを入力してください...",
-    "description": "チャレンジ入力プレースホルダー"
-  },
   "noSiteToBlock": {
     "message": "ブロックするサイトがありません",
     "description": "ブロック可能なサイトがない"
@@ -248,14 +220,6 @@
   "enterGoalPlaceholder": {
     "message": "目標を入力してください...",
     "description": "目標入力プレースホルダー"
-  },
-  "challengeDescription": {
-    "message": "このサイトにアクセスしますか？まずチャレンジを完了してください。",
-    "description": "チャレンジモード説明テキスト"
-  },
-  "unblockPrompt": {
-    "message": "このサイトを一時的に解除しますか？",
-    "description": "チャレンジ無効時の解除プロンプト"
   },
   "goalSettings": {
     "message": "目標設定",
@@ -402,10 +366,6 @@
   "premiumFeatureUnlimitedHistory": {
     "message": "無制限の分析履歴",
     "description": "プレミアム機能: 無制限の履歴"
-  },
-  "premiumFeatureHardmode": {
-    "message": "ハードモード（ブロック解除不可）",
-    "description": "プレミアム機能: ハードモード"
   },
   "premiumFeatureCustomBackground": {
     "message": "カスタム背景",

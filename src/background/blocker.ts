@@ -1,5 +1,5 @@
 import { extractDomain, matchesDomain } from '~/lib/domain'
-import { getSettings, getTempUnblocks } from '~/lib/storage'
+import { getSettings } from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
 import type { BlockItem } from '~/types/storage'
 
@@ -8,16 +8,9 @@ const RULE_ID_OFFSET = 1000
 // Update declarativeNetRequest rules based on current settings
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings()
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
 
   // Get domains to block
-  const domainsToBlock = getActiveBlockedDomains(
-    settings.blockList,
-    settings,
-    tempUnblocks,
-    now
-  )
+  const domainsToBlock = getActiveBlockedDomains(settings.blockList, settings)
 
   // Remove all existing rules
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
@@ -59,24 +52,11 @@ export async function updateBlockRules(): Promise<void> {
 // Get list of domains that should be actively blocked
 function getActiveBlockedDomains(
   blockList: BlockItem[],
-  settings: ReturnType<typeof getSettings> extends Promise<infer T> ? T : never,
-  tempUnblocks: Awaited<ReturnType<typeof getTempUnblocks>>,
-  now: Date
+  settings: ReturnType<typeof getSettings> extends Promise<infer T> ? T : never
 ): string[] {
-  // Filter out temporarily unblocked domains
-  const validTempUnblocks = tempUnblocks
-    .filter((t) => new Date(t.expiresAt) > now)
-    .map((t) => t.domain)
-
-  // Get domains to block
   const domainsToBlock: string[] = []
 
   for (const item of blockList) {
-    // Check if temporarily unblocked
-    if (validTempUnblocks.includes(item.domain.replace('*.', ''))) {
-      continue
-    }
-
     // Check schedule restrictions
     if (settings.schedules.length > 0) {
       const isScheduled = settings.schedules.some(
@@ -101,14 +81,6 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   if (!domain) return false
 
   const settings = await getSettings()
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
-
-  // Check temp unblocks
-  const isUnblocked = tempUnblocks.some(
-    (t) => t.domain === domain && new Date(t.expiresAt) > now
-  )
-  if (isUnblocked) return false
 
   // Check if domain is in block list
   const isBlocked = settings.blockList.some((item) =>

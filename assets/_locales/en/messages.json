@@ -25,17 +25,13 @@
     "message": "Remember your goal",
     "description": "Goal reminder heading"
   },
-  "temporarilyUnblock": {
-    "message": "Temporarily Unblock (5 min)",
-    "description": "Unblock button text"
-  },
-  "challengePrompt": {
-    "message": "Type the following to unblock:",
-    "description": "Challenge prompt text"
-  },
   "goBack": {
     "message": "Go Back",
     "description": "Go back button text"
+  },
+  "goToDashboard": {
+    "message": "Go to Dashboard",
+    "description": "Go to dashboard button text"
   },
   "cancel": {
     "message": "Cancel",
@@ -80,14 +76,6 @@
   "analytics": {
     "message": "Analytics",
     "description": "Analytics tab"
-  },
-  "challengeOnUnblock": {
-    "message": "Challenge on Unblock",
-    "description": "Challenge setting title"
-  },
-  "challengeOnUnblockDescription": {
-    "message": "Require typing a phrase to unblock sites",
-    "description": "Challenge setting description"
   },
   "dashboardBackground": {
     "message": "Dashboard Background",
@@ -203,10 +191,6 @@
       }
     }
   },
-  "blockingSettings": {
-    "message": "Blocking Settings",
-    "description": "Blocking settings section title"
-  },
   "settingsTitle": {
     "message": "VisionFocus Settings",
     "description": "Settings page title"
@@ -229,18 +213,6 @@
     "message": "Edit Schedule",
     "description": "Edit schedule modal title"
   },
-  "unblocking": {
-    "message": "Unblocking...",
-    "description": "Unblocking in progress text"
-  },
-  "confirmUnblock": {
-    "message": "Are you sure you want to unblock this site for 5 minutes?",
-    "description": "Confirm unblock text"
-  },
-  "typeTextAbove": {
-    "message": "Type the text above...",
-    "description": "Challenge input placeholder"
-  },
   "noSiteToBlock": {
     "message": "No site to block",
     "description": "No site available to block"
@@ -248,14 +220,6 @@
   "enterGoalPlaceholder": {
     "message": "Enter your goal...",
     "description": "Goal input placeholder text"
-  },
-  "challengeDescription": {
-    "message": "Want to visit this site? Complete the challenge first.",
-    "description": "Challenge mode description text"
-  },
-  "unblockPrompt": {
-    "message": "Want to temporarily unblock this site?",
-    "description": "Unblock prompt when challenge is disabled"
   },
   "goalSettings": {
     "message": "Goal Settings",
@@ -402,10 +366,6 @@
   "premiumFeatureUnlimitedHistory": {
     "message": "Unlimited analytics history",
     "description": "Premium feature: unlimited history"
-  },
-  "premiumFeatureHardmode": {
-    "message": "Hard mode (no unblocking)",
-    "description": "Premium feature: hard mode"
   },
   "premiumFeatureCustomBackground": {
     "message": "Custom backgrounds",

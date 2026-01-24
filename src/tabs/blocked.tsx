@@ -1,34 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { AlertTriangle, ArrowLeft, Shield, Target } from 'lucide-react'
+import { ArrowLeft, Shield, Target } from 'lucide-react'
 
-import { Button, Card, Input } from '~/components/ui'
+import { Button, Card } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
-import type { AppSettings, VisionSettings } from '~/types/storage'
-import {
-  CHALLENGE_TEXT,
-  DEFAULT_SETTINGS,
-  DEFAULT_VISION,
-} from '~/types/storage'
+import type { VisionSettings } from '~/types/storage'
+import { DEFAULT_VISION } from '~/types/storage'
 
 import '~/styles/globals.css'
 
 function BlockedPage() {
-  const [settings] = useStorage<AppSettings>({
-    key: 'settings',
-    instance: storage,
-  }, DEFAULT_SETTINGS)
   const [vision] = useStorage<VisionSettings>({
     key: 'vision',
     instance: storage,
   }, DEFAULT_VISION)
-  const [challengeInput, setChallengeInput] = useState('')
-  const [error, setError] = useState('')
-  const [isUnblocking, setIsUnblocking] = useState(false)
-  const [showChallenge, setShowChallenge] = useState(false)
 
   // Get blocked domain from URL params
   const [blockedDomain, setBlockedDomain] = useState<string>('')
@@ -41,58 +28,17 @@ function BlockedPage() {
     }
   }, [])
 
-  const handleGoBack = useCallback(() => {
+  const handleGoBack = () => {
     if (window.history.length > 1) {
       window.history.back()
     } else {
       window.close()
     }
-  }, [])
+  }
 
-  const handleStartChallenge = useCallback(() => {
-    setShowChallenge(true)
-    setChallengeInput('')
-    setError('')
-  }, [])
-
-  const handleUnblock = useCallback(async () => {
-    if (!blockedDomain) return
-
-    setIsUnblocking(true)
-    setError('')
-
-    try {
-      const response = await sendToBackground({
-        name: 'unblock-challenge',
-        body: {
-          domain: blockedDomain,
-          input: challengeInput,
-        },
-      })
-
-      if (response.success) {
-        // Redirect back to the blocked site
-        window.location.href = `https://${blockedDomain}`
-      } else {
-        setError(response.error || 'Failed to unblock')
-      }
-    } catch (err) {
-      setError('Failed to process unblock request')
-    } finally {
-      setIsUnblocking(false)
-    }
-  }, [blockedDomain, challengeInput])
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        handleUnblock()
-      }
-    },
-    [handleUnblock]
-  )
-
-  const isChallengeEnabled = settings?.challengeEnabled ?? true
+  const handleGoToDashboard = () => {
+    window.location.href = chrome.runtime.getURL('newtab.html')
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
@@ -130,98 +76,11 @@ function BlockedPage() {
           </div>
         </Card>
 
-        {/* Challenge Section */}
-        <Card className="bg-white/80 backdrop-blur">
-          {!showChallenge ? (
-            <div className="text-center">
-              <p className="text-gray-600 mb-4">
-                {isChallengeEnabled
-                  ? getMessage('challengeDescription')
-                  : getMessage('unblockPrompt')}
-              </p>
-              <Button
-                variant="secondary"
-                onClick={handleStartChallenge}
-                className="w-full"
-              >
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                {getMessage('temporarilyUnblock')}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {isChallengeEnabled ? (
-                <>
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-2">
-                      {getMessage('challengePrompt')}
-                    </h3>
-                    <p className="text-gray-700 bg-gray-100 p-3 rounded-lg font-mono text-sm">
-                      {CHALLENGE_TEXT}
-                    </p>
-                  </div>
-                  <Input
-                    value={challengeInput}
-                    onChange={setChallengeInput}
-                    onKeyDown={handleKeyDown}
-                    placeholder={getMessage('typeTextAbove')}
-                    autoFocus
-                  />
-                  {error && <p className="text-red-600 text-sm">{error}</p>}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowChallenge(false)}
-                      className="flex-1"
-                    >
-                      {getMessage('cancel')}
-                    </Button>
-                    <Button
-                      onClick={handleUnblock}
-                      disabled={
-                        isUnblocking ||
-                        challengeInput.trim() !== CHALLENGE_TEXT
-                      }
-                      className="flex-1"
-                    >
-                      {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-600 text-center">
-                    {getMessage('confirmUnblock')}
-                  </p>
-                  {error && (
-                    <p className="text-red-600 text-sm text-center">
-                      {error}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowChallenge(false)}
-                      className="flex-1"
-                    >
-                      {getMessage('cancel')}
-                    </Button>
-                    <Button
-                      onClick={handleUnblock}
-                      disabled={isUnblocking}
-                      className="flex-1"
-                    >
-                      {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Go Back Button */}
-        <div className="text-center">
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3">
+          <Button onClick={handleGoToDashboard} className="w-full">
+            {getMessage('goToDashboard')}
+          </Button>
           <Button variant="ghost" onClick={handleGoBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             {getMessage('goBack')}

@@ -1,5 +1,4 @@
 import {
-  cleanupTempUnblocks,
   getAnalytics,
   getLicense,
   getSettings,
@@ -28,9 +27,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onStartup.addListener(async () => {
   console.log('VisionFocus started')
 
-  // Clean up expired temp unblocks
-  await cleanupTempUnblocks()
-
   // Check dev mode expiration
   await checkAndCleanupDevMode()
 
@@ -43,11 +39,6 @@ chrome.runtime.onStartup.addListener(async () => {
 
 // Handle alarms
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'cleanup-temp-unblocks') {
-    await cleanupTempUnblocks()
-    await updateBlockRules()
-  }
-
   if (alarm.name === 'daily-cleanup') {
     await cleanupOldAnalytics()
   }
@@ -62,7 +53,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 })
 
 // Set up alarms
-chrome.alarms.create('cleanup-temp-unblocks', { periodInMinutes: 1 })
 chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 })
 chrome.alarms.create('check-dev-mode', { periodInMinutes: 5 }) // Check dev mode every 5 minutes
 chrome.alarms.create('verify-license', { periodInMinutes: 60 * 24 }) // Verify license once per day
