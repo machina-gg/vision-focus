@@ -105,8 +105,6 @@ export interface VisionSettings {
 export interface AppSettings {
   blockList: BlockItem[]
   schedules: Schedule[]
-  lockdownMode: boolean
-  lockdownEndTime: string | null
   challengeEnabled: boolean
 }
 
@@ -174,8 +172,6 @@ export interface StorageSchema {
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
-  lockdownMode: false,
-  lockdownEndTime: null,
   challengeEnabled: true,
 }
 

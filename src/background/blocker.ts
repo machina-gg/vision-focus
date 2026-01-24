@@ -63,15 +63,6 @@ function getActiveBlockedDomains(
   tempUnblocks: Awaited<ReturnType<typeof getTempUnblocks>>,
   now: Date
 ): string[] {
-  // If lockdown mode is active, block all domains in the list
-  if (settings.lockdownMode) {
-    // Check if lockdown has expired
-    if (settings.lockdownEndTime && new Date(settings.lockdownEndTime) < now) {
-      // Lockdown expired, will be handled elsewhere
-      return []
-    }
-  }
-
   // Filter out temporarily unblocked domains
   const validTempUnblocks = tempUnblocks
     .filter((t) => new Date(t.expiresAt) > now)
@@ -87,7 +78,7 @@ function getActiveBlockedDomains(
     }
 
     // Check schedule restrictions
-    if (settings.schedules.length > 0 && !settings.lockdownMode) {
+    if (settings.schedules.length > 0) {
       const isScheduled = settings.schedules.some(
         (schedule) =>
           schedule.enabled &&
@@ -124,14 +115,6 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
     matchesDomain(domain, item)
   )
   if (!isBlocked) return false
-
-  // If lockdown mode is active, always block
-  if (settings.lockdownMode) {
-    if (settings.lockdownEndTime && new Date(settings.lockdownEndTime) < now) {
-      return false // Lockdown expired
-    }
-    return true
-  }
 
   // Check schedules
   if (settings.schedules.length > 0) {

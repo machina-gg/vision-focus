@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { AlertTriangle, ArrowLeft, Lock, Shield, Target } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Shield, Target } from 'lucide-react'
 
 import { Button, Card, Input } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
@@ -92,7 +92,6 @@ function BlockedPage() {
     [handleUnblock]
   )
 
-  const isLockdownMode = settings?.lockdownMode || false
   const isChallengeEnabled = settings?.challengeEnabled ?? true
 
   return (
@@ -131,116 +130,95 @@ function BlockedPage() {
           </div>
         </Card>
 
-        {/* Lockdown Mode Warning */}
-        {isLockdownMode && (
-          <Card className="bg-amber-50 border-amber-200">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Lock className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <h2 className="font-medium text-amber-900 mb-1">
-                  {getMessage('lockdownModeActive')}
-                </h2>
-                <p className="text-amber-700 text-sm">
-                  {getMessage('lockdownModeMessage')}
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* Challenge Section */}
-        {!isLockdownMode && (
-          <Card className="bg-white/80 backdrop-blur">
-            {!showChallenge ? (
-              <div className="text-center">
-                <p className="text-gray-600 mb-4">
-                  {isChallengeEnabled
-                    ? getMessage('challengeDescription')
-                    : getMessage('unblockPrompt')}
-                </p>
-                <Button
-                  variant="secondary"
-                  onClick={handleStartChallenge}
-                  className="w-full"
-                >
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  {getMessage('temporarilyUnblock')}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {isChallengeEnabled ? (
-                  <>
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        {getMessage('challengePrompt')}
-                      </h3>
-                      <p className="text-gray-700 bg-gray-100 p-3 rounded-lg font-mono text-sm">
-                        {CHALLENGE_TEXT}
-                      </p>
-                    </div>
-                    <Input
-                      value={challengeInput}
-                      onChange={setChallengeInput}
-                      onKeyDown={handleKeyDown}
-                      placeholder={getMessage('typeTextAbove')}
-                      autoFocus
-                    />
-                    {error && <p className="text-red-600 text-sm">{error}</p>}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setShowChallenge(false)}
-                        className="flex-1"
-                      >
-                        {getMessage('cancel')}
-                      </Button>
-                      <Button
-                        onClick={handleUnblock}
-                        disabled={
-                          isUnblocking ||
-                          challengeInput.trim() !== CHALLENGE_TEXT
-                        }
-                        className="flex-1"
-                      >
-                        {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-gray-600 text-center">
-                      {getMessage('confirmUnblock')}
+        <Card className="bg-white/80 backdrop-blur">
+          {!showChallenge ? (
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">
+                {isChallengeEnabled
+                  ? getMessage('challengeDescription')
+                  : getMessage('unblockPrompt')}
+              </p>
+              <Button
+                variant="secondary"
+                onClick={handleStartChallenge}
+                className="w-full"
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                {getMessage('temporarilyUnblock')}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {isChallengeEnabled ? (
+                <>
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      {getMessage('challengePrompt')}
+                    </h3>
+                    <p className="text-gray-700 bg-gray-100 p-3 rounded-lg font-mono text-sm">
+                      {CHALLENGE_TEXT}
                     </p>
-                    {error && (
-                      <p className="text-red-600 text-sm text-center">
-                        {error}
-                      </p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setShowChallenge(false)}
-                        className="flex-1"
-                      >
-                        {getMessage('cancel')}
-                      </Button>
-                      <Button
-                        onClick={handleUnblock}
-                        disabled={isUnblocking}
-                        className="flex-1"
-                      >
-                        {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </Card>
-        )}
+                  </div>
+                  <Input
+                    value={challengeInput}
+                    onChange={setChallengeInput}
+                    onKeyDown={handleKeyDown}
+                    placeholder={getMessage('typeTextAbove')}
+                    autoFocus
+                  />
+                  {error && <p className="text-red-600 text-sm">{error}</p>}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowChallenge(false)}
+                      className="flex-1"
+                    >
+                      {getMessage('cancel')}
+                    </Button>
+                    <Button
+                      onClick={handleUnblock}
+                      disabled={
+                        isUnblocking ||
+                        challengeInput.trim() !== CHALLENGE_TEXT
+                      }
+                      className="flex-1"
+                    >
+                      {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-600 text-center">
+                    {getMessage('confirmUnblock')}
+                  </p>
+                  {error && (
+                    <p className="text-red-600 text-sm text-center">
+                      {error}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowChallenge(false)}
+                      className="flex-1"
+                    >
+                      {getMessage('cancel')}
+                    </Button>
+                    <Button
+                      onClick={handleUnblock}
+                      disabled={isUnblocking}
+                      className="flex-1"
+                    >
+                      {isUnblocking ? getMessage('unblocking') : getMessage('confirm')}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Go Back Button */}
         <div className="text-center">

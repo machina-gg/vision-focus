@@ -165,9 +165,9 @@ function init() {
 
   startTracking()
 
-  // Clean up on unload
-  window.addEventListener('beforeunload', handleUnload)
-  window.addEventListener('unload', handleUnload)
+  // Clean up on page hide (replaces deprecated unload event)
+  // pagehide is the modern replacement that works with bfcache
+  window.addEventListener('pagehide', handleUnload)
 }
 
 // Start tracking

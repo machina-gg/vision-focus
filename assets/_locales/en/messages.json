@@ -25,14 +25,6 @@
     "message": "Remember your goal",
     "description": "Goal reminder heading"
   },
-  "lockdownModeActive": {
-    "message": "Lockdown Mode Active",
-    "description": "Lockdown mode warning title"
-  },
-  "lockdownModeMessage": {
-    "message": "You cannot unblock sites during lockdown mode.",
-    "description": "Lockdown mode warning message"
-  },
   "temporarilyUnblock": {
     "message": "Temporarily Unblock (5 min)",
     "description": "Unblock button text"
@@ -210,38 +202,6 @@
         "example": "twitter.com"
       }
     }
-  },
-  "lockdownMode": {
-    "message": "Lockdown Mode",
-    "description": "Lockdown mode toggle label"
-  },
-  "enableLockdown": {
-    "message": "Enable Lockdown",
-    "description": "Enable lockdown button"
-  },
-  "disableLockdown": {
-    "message": "Disable Lockdown",
-    "description": "Disable lockdown button"
-  },
-  "lockdownConfirmTitle": {
-    "message": "Enable Lockdown Mode",
-    "description": "Lockdown confirmation modal title"
-  },
-  "lockdownConfirmMessage": {
-    "message": "Lockdown mode will block all sites in your block list without the option to unblock them.",
-    "description": "Lockdown confirmation message"
-  },
-  "lockdownConfirmWarning": {
-    "message": "Are you sure you want to enable lockdown mode?",
-    "description": "Lockdown confirmation warning"
-  },
-  "lockdownActive": {
-    "message": "Lockdown Active",
-    "description": "Lockdown active button text"
-  },
-  "enableLockdownMode": {
-    "message": "Enable Lockdown Mode",
-    "description": "Enable lockdown mode button text"
   },
   "blockingSettings": {
     "message": "Blocking Settings",

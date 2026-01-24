@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 import type { Meta, StoryObj } from '@storybook/react'
 import { Ban, Clock, TrendingUp } from 'lucide-react'
@@ -6,7 +6,6 @@ import { Ban, Clock, TrendingUp } from 'lucide-react'
 import {
   GoalCard,
   Header,
-  LockdownButton,
   QuickBlockButton,
   StatsCard,
 } from '~/components/features'
@@ -14,8 +13,6 @@ import {
 import './styles/globals.css'
 
 function PopupDemo() {
-  const [isLockdown, setIsLockdown] = useState(false)
-
   const goalText = 'Surpass my rivals and achieve overwhelming results'
   const currentDomain = 'twitter.com'
   const stats = {
@@ -57,8 +54,7 @@ function PopupDemo() {
           </div>
         </div>
 
-        <div className="space-y-3 pt-2">
-          <LockdownButton isActive={isLockdown} onToggle={setIsLockdown} />
+        <div className="pt-2">
           <QuickBlockButton
             currentDomain={currentDomain}
             onBlock={(domain) => alert(`Blocking: ${domain}`)}
@@ -85,50 +81,3 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {}
-
-function PopupLockdownActiveDemo() {
-  return (
-    <div className="w-[360px] min-h-[400px] max-h-[480px] bg-white">
-      <Header onSettingsClick={() => {}} />
-
-      <div className="p-4 space-y-4">
-        <GoalCard goalText="Stay focused. Victory is near." />
-
-        <div>
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-            Today's Summary
-          </h2>
-          <div className="grid grid-cols-3 gap-3">
-            <StatsCard
-              label="Waste"
-              value="0h 12m"
-              type="waste"
-              icon={<Clock className="w-4 h-4" />}
-            />
-            <StatsCard
-              label="Invest"
-              value="5h 30m"
-              type="invest"
-              icon={<TrendingUp className="w-4 h-4" />}
-            />
-            <StatsCard
-              label="Blocked"
-              value="45"
-              type="block"
-              icon={<Ban className="w-4 h-4" />}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3 pt-2">
-          <LockdownButton isActive={true} onToggle={() => {}} />
-          <QuickBlockButton currentDomain="youtube.com" onBlock={() => {}} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export const LockdownActive: Story = {
-  render: () => <PopupLockdownActiveDemo />,
-}

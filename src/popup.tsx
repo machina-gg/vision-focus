@@ -7,11 +7,9 @@ import { Ban, Clock, TrendingUp } from 'lucide-react'
 import {
   GoalCard,
   Header,
-  LockdownButton,
   QuickBlockButton,
   StatsCard,
 } from '~/components/features'
-import { Modal, Button } from '~/components/ui'
 import { extractDomain } from '~/lib/domain'
 import { getMessage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
@@ -36,7 +34,6 @@ function PopupApp() {
     blockCount: 0,
   })
   const [currentDomain, setCurrentDomain] = useState<string | undefined>()
-  const [showLockdownModal, setShowLockdownModal] = useState(false)
 
   // Fetch stats from background
   useEffect(() => {
@@ -101,37 +98,6 @@ function PopupApp() {
     }
   }, [])
 
-  const handleLockdownToggle = useCallback(
-    async (active: boolean) => {
-      if (active && !settings?.lockdownMode) {
-        setShowLockdownModal(true)
-      } else {
-        // Disable lockdown
-        try {
-          await sendToBackground({
-            name: 'toggle-lockdown',
-            body: { enabled: false },
-          })
-        } catch (error) {
-          console.error('Failed to toggle lockdown:', error)
-        }
-      }
-    },
-    [settings?.lockdownMode]
-  )
-
-  const handleConfirmLockdown = useCallback(async () => {
-    try {
-      await sendToBackground({
-        name: 'toggle-lockdown',
-        body: { enabled: true },
-      })
-      setShowLockdownModal(false)
-    } catch (error) {
-      console.error('Failed to enable lockdown:', error)
-    }
-  }, [])
-
   return (
     <div className="popup-container bg-white">
       <Header onSettingsClick={handleSettingsClick} />
@@ -170,44 +136,14 @@ function PopupApp() {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="space-y-3 pt-2">
-          <LockdownButton
-            isActive={settings?.lockdownMode || false}
-            onToggle={handleLockdownToggle}
-          />
+        {/* Quick Block */}
+        <div className="pt-2">
           <QuickBlockButton
             currentDomain={currentDomain}
             onBlock={handleBlock}
           />
         </div>
       </div>
-
-      {/* Lockdown Confirmation Modal */}
-      <Modal
-        isOpen={showLockdownModal}
-        onClose={() => setShowLockdownModal(false)}
-        title={getMessage('lockdownConfirmTitle')}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">{getMessage('lockdownConfirmMessage')}</p>
-          <p className="text-sm text-amber-600">
-            {getMessage('lockdownConfirmWarning')}
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => setShowLockdownModal(false)}
-            >
-              {getMessage('cancel')}
-            </Button>
-            <Button variant="danger" onClick={handleConfirmLockdown}>
-              {getMessage('enableLockdown')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }

@@ -20,13 +20,7 @@ const handler: PlasmoMessaging.MessageHandler<
   UnblockChallengeResponse
 > = async (req, res) => {
   const { domain, input } = req.body
-
-  // Check if lockdown mode is active
   const settings = await getSettings()
-  if (settings.lockdownMode) {
-    res.send({ success: false, error: 'Cannot unblock during lockdown mode' })
-    return
-  }
 
   // Check if challenge is enabled
   if (!settings.challengeEnabled) {

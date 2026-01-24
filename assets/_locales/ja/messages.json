@@ -25,14 +25,6 @@
     "message": "あなたの目標を思い出してください",
     "description": "目標リマインダーの見出し"
   },
-  "lockdownModeActive": {
-    "message": "ロックダウンモード有効",
-    "description": "ロックダウンモード警告タイトル"
-  },
-  "lockdownModeMessage": {
-    "message": "ロックダウンモード中はサイトのブロックを解除できません。",
-    "description": "ロックダウンモード警告メッセージ"
-  },
   "temporarilyUnblock": {
     "message": "一時的にブロック解除（5分間）",
     "description": "ブロック解除ボタンテキスト"
@@ -210,38 +202,6 @@
         "example": "twitter.com"
       }
     }
-  },
-  "lockdownMode": {
-    "message": "ロックダウンモード",
-    "description": "ロックダウンモードトグルラベル"
-  },
-  "enableLockdown": {
-    "message": "ロックダウンを有効化",
-    "description": "ロックダウン有効化ボタン"
-  },
-  "disableLockdown": {
-    "message": "ロックダウンを無効化",
-    "description": "ロックダウン無効化ボタン"
-  },
-  "lockdownConfirmTitle": {
-    "message": "ロックダウンモードを有効化",
-    "description": "ロックダウン確認モーダルタイトル"
-  },
-  "lockdownConfirmMessage": {
-    "message": "ロックダウンモードでは、ブロックリスト内のすべてのサイトがブロックされ、解除できなくなります。",
-    "description": "ロックダウン確認メッセージ"
-  },
-  "lockdownConfirmWarning": {
-    "message": "ロックダウンモードを有効にしてもよろしいですか？",
-    "description": "ロックダウン確認警告"
-  },
-  "lockdownActive": {
-    "message": "ロックダウン中",
-    "description": "ロックダウン中ボタンテキスト"
-  },
-  "enableLockdownMode": {
-    "message": "ロックダウンモードを有効化",
-    "description": "ロックダウンモード有効化ボタンテキスト"
   },
   "blockingSettings": {
     "message": "ブロック設定",
