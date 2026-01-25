@@ -124,7 +124,7 @@ export function GeneralTab({
                       disabled={isLocked}
                       title={
                         isLocked
-                          ? 'プレミアムにアップグレードしてこのプリセットを使用'
+                          ? getMessage('upgradeToUsePreset')
                           : undefined
                       }
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -180,9 +180,7 @@ export function GeneralTab({
                 ) >= featureLimits.maxPresets && (
                   <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
                     <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>
-                      現在設定中のプリセットはFreeプランでは使用できません。デフォルト設定が適用されます。
-                    </span>
+                    <span>{getMessage('lockedPresetWarning')}</span>
                   </div>
                 )}
             </>

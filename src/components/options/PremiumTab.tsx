@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Check, X, Crown, Lock, Sparkles } from 'lucide-react'
 
 import { Button, Card } from '~/components/ui'
@@ -13,46 +13,6 @@ interface PremiumTabProps {
   onManageSubscription: () => void
 }
 
-// Comparison table data
-const COMPARISON_FEATURES = [
-  {
-    name: 'ブロックリスト',
-    free: `${FEATURE_LIMITS.free.maxBlockList}件まで`,
-    premium: '無制限',
-    highlight: true,
-  },
-  {
-    name: '履歴保存期間',
-    free: `${FEATURE_LIMITS.free.historyDays}日間`,
-    premium: '無制限',
-    highlight: true,
-  },
-  {
-    name: 'プリセット',
-    free: `${FEATURE_LIMITS.free.maxPresets}件`,
-    premium: `${FEATURE_LIMITS.premium.maxPresets}件`,
-    highlight: false,
-  },
-  {
-    name: 'カスタム背景画像',
-    free: null,
-    premium: true,
-    highlight: true,
-  },
-  {
-    name: '壁紙ダウンロード',
-    free: null,
-    premium: true,
-    highlight: true,
-  },
-  {
-    name: '週次・月次レポート',
-    free: null,
-    premium: true,
-    highlight: false,
-  },
-]
-
 export function PremiumTab({
   settings,
   isPremium,
@@ -64,6 +24,61 @@ export function PremiumTab({
   const usagePercent = Math.min((blockListCount / blockListLimit) * 100, 100)
   const isNearLimit = blockListCount >= blockListLimit - 1
   const isAtLimit = blockListCount >= blockListLimit
+
+  // Comparison table data - computed to use i18n
+  const comparisonFeatures = useMemo(
+    () => [
+      {
+        name: getMessage('featureBlocklist'),
+        free: getMessage(
+          'featureBlocklistFree',
+          String(FEATURE_LIMITS.free.maxBlockList)
+        ),
+        premium: getMessage('featureUnlimited'),
+        highlight: true,
+      },
+      {
+        name: getMessage('featureHistoryRetention'),
+        free: getMessage(
+          'featureHistoryDays',
+          String(FEATURE_LIMITS.free.historyDays)
+        ),
+        premium: getMessage('featureAllTime'),
+        highlight: true,
+      },
+      {
+        name: getMessage('featurePresets'),
+        free: getMessage(
+          'featurePresetCount',
+          String(FEATURE_LIMITS.free.maxPresets)
+        ),
+        premium: getMessage(
+          'featurePresetCount',
+          String(FEATURE_LIMITS.premium.maxPresets)
+        ),
+        highlight: false,
+      },
+      {
+        name: getMessage('featureCustomBackground'),
+        free: null,
+        premium: true,
+        highlight: true,
+      },
+      {
+        name: getMessage('featureWallpaperDownload'),
+        free: null,
+        premium: true,
+        highlight: true,
+      },
+      {
+        name: getMessage('featureWeeklyMonthlyReports'),
+        free: null,
+        premium: true,
+        highlight: false,
+      },
+    ],
+    []
+  )
 
   return (
     <div className="space-y-6">
@@ -87,10 +102,10 @@ export function PremiumTab({
               </div>
               <div>
                 <p className="font-bold text-gray-900 text-lg">
-                  Premiumプランをご利用中
+                  {getMessage('premiumActiveTitle')}
                 </p>
                 <p className="text-sm text-gray-600">
-                  すべての機能をお楽しみいただけます
+                  {getMessage('premiumActiveDescription')}
                 </p>
               </div>
             </div>
@@ -112,15 +127,21 @@ export function PremiumTab({
           {/* Usage Visualization */}
           <Card className={isAtLimit ? 'ring-2 ring-red-200' : ''}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900">現在の使用状況</h3>
-              <span className="text-sm text-gray-500">Freeプラン</span>
+              <h3 className="font-semibold text-gray-900">
+                {getMessage('currentUsage')}
+              </h3>
+              <span className="text-sm text-gray-500">
+                {getMessage('freePlan')}
+              </span>
             </div>
 
             <div className="space-y-3">
               {/* Blocklist usage */}
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">ブロックリスト</span>
+                  <span className="text-gray-600">
+                    {getMessage('featureBlocklist')}
+                  </span>
                   <span
                     className={`font-medium ${isAtLimit ? 'text-red-600' : isNearLimit ? 'text-amber-600' : 'text-gray-900'}`}
                   >
@@ -142,12 +163,15 @@ export function PremiumTab({
                 {isAtLimit && (
                   <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                     <Lock className="w-3 h-3" />
-                    上限に達しました。Premiumで無制限に。
+                    {getMessage('limitReachedUpgrade')}
                   </p>
                 )}
                 {isNearLimit && !isAtLimit && (
                   <p className="text-xs text-amber-600 mt-1">
-                    あと{blockListLimit - blockListCount}件で上限です
+                    {getMessage(
+                      'limitWarning',
+                      String(blockListLimit - blockListCount)
+                    )}
                   </p>
                 )}
               </div>
@@ -155,15 +179,25 @@ export function PremiumTab({
               {/* Other limits */}
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">履歴保存</p>
+                  <p className="text-xs text-gray-500">
+                    {getMessage('historySaving')}
+                  </p>
                   <p className="font-medium text-gray-900">
-                    {FEATURE_LIMITS.free.historyDays}日間
+                    {getMessage(
+                      'featureHistoryDays',
+                      String(FEATURE_LIMITS.free.historyDays)
+                    )}
                   </p>
                 </div>
                 <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">プリセット</p>
+                  <p className="text-xs text-gray-500">
+                    {getMessage('featurePresets')}
+                  </p>
                   <p className="font-medium text-gray-900">
-                    {FEATURE_LIMITS.free.maxPresets}件まで
+                    {getMessage(
+                      'featureBlocklistFree',
+                      String(FEATURE_LIMITS.free.maxPresets)
+                    )}
                   </p>
                 </div>
               </div>
@@ -179,7 +213,7 @@ export function PremiumTab({
               </div>
 
               <h2 className="text-2xl font-bold mb-2 text-gray-800">
-                もっと集中したいあなたへ
+                {getMessage('premiumMarketingHeadline')}
               </h2>
 
               <div className="flex items-baseline justify-center gap-1 mb-1">
@@ -188,10 +222,10 @@ export function PremiumTab({
               </div>
 
               <p className="text-gray-600 text-sm mb-1">
-                1日たった約15円で、無制限の集中環境を
+                {getMessage('premiumMarketingPrice')}
               </p>
               <p className="text-gray-400 text-xs mb-4">
-                ※ 1ドル=155円換算
+                {getMessage('premiumMarketingPriceNote')}
               </p>
 
               <Button
@@ -199,25 +233,27 @@ export function PremiumTab({
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
               >
                 <Crown className="w-5 h-5" />
-                Premiumにアップグレード
+                {getMessage('upgradeToPremium')}
               </Button>
 
               <p className="text-xs text-gray-400 mt-3">
-                いつでもキャンセル可能
+                {getMessage('cancelAnytime')}
               </p>
             </div>
           </Card>
 
           {/* Comparison Table */}
           <Card>
-            <h3 className="font-semibold text-gray-900 mb-4">プラン比較</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">
+              {getMessage('planComparison')}
+            </h3>
 
             <div className="overflow-hidden rounded-lg border border-gray-200">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      機能
+                      {getMessage('featureColumn')}
                     </th>
                     <th className="text-center py-3 px-3 font-medium text-gray-600 w-24">
                       Free
@@ -228,7 +264,7 @@ export function PremiumTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {COMPARISON_FEATURES.map((feature, index) => (
+                  {comparisonFeatures.map((feature, index) => (
                     <tr
                       key={index}
                       className={feature.highlight ? 'bg-amber-50/50' : ''}

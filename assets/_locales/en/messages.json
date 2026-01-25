@@ -798,5 +798,133 @@
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
+  },
+  "upgradeToUsePreset": {
+    "message": "Upgrade to Premium to use this preset",
+    "description": "Tooltip for locked preset"
+  },
+  "lockedPresetWarning": {
+    "message": "The currently selected preset is not available on the Free plan. Default settings will be applied.",
+    "description": "Warning when active preset is locked"
+  },
+  "scheduleLockedPresetWarning": {
+    "message": "The selected preset will not be applied on the Free plan.",
+    "description": "Warning when schedule preset is locked"
+  },
+  "featureBlocklist": {
+    "message": "Block List",
+    "description": "Feature name: blocklist"
+  },
+  "featureBlocklistFree": {
+    "message": "Up to $COUNT$ sites",
+    "description": "Free tier blocklist limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureUnlimited": {
+    "message": "Unlimited",
+    "description": "Unlimited feature text"
+  },
+  "featureHistoryRetention": {
+    "message": "History Retention",
+    "description": "Feature name: history retention"
+  },
+  "featureHistoryDays": {
+    "message": "$COUNT$ days",
+    "description": "History days limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "featureAllTime": {
+    "message": "All time",
+    "description": "All time history"
+  },
+  "featurePresets": {
+    "message": "Presets",
+    "description": "Feature name: presets"
+  },
+  "featurePresetCount": {
+    "message": "$COUNT$ presets",
+    "description": "Preset count",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureCustomBackground": {
+    "message": "Custom Background",
+    "description": "Feature name: custom background"
+  },
+  "featureWallpaperDownload": {
+    "message": "Wallpaper Download",
+    "description": "Feature name: wallpaper download"
+  },
+  "featureWeeklyMonthlyReports": {
+    "message": "Weekly & Monthly Reports",
+    "description": "Feature name: reports"
+  },
+  "premiumActiveTitle": {
+    "message": "You're on Premium",
+    "description": "Premium active title"
+  },
+  "premiumActiveDescription": {
+    "message": "Enjoy all features without limits",
+    "description": "Premium active description"
+  },
+  "currentUsage": {
+    "message": "Current Usage",
+    "description": "Current usage heading"
+  },
+  "limitReachedUpgrade": {
+    "message": "Limit reached. Upgrade to Premium for unlimited.",
+    "description": "Limit reached message"
+  },
+  "limitWarning": {
+    "message": "$COUNT$ more until limit",
+    "description": "Limit warning message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "historySaving": {
+    "message": "History",
+    "description": "History saving label"
+  },
+  "premiumMarketingHeadline": {
+    "message": "Unlock Your Full Potential",
+    "description": "Premium marketing headline"
+  },
+  "premiumMarketingPrice": {
+    "message": "For less than $0.10/day, get unlimited focus power",
+    "description": "Premium marketing price copy"
+  },
+  "premiumMarketingPriceNote": {
+    "message": "* Based on monthly subscription",
+    "description": "Premium price note"
+  },
+  "cancelAnytime": {
+    "message": "Cancel anytime",
+    "description": "Cancel anytime text"
+  },
+  "planComparison": {
+    "message": "Plan Comparison",
+    "description": "Plan comparison heading"
+  },
+  "featureColumn": {
+    "message": "Feature",
+    "description": "Feature column header"
   }
 }

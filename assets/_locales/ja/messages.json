@@ -798,5 +798,133 @@
   "useDefault": {
     "message": "デフォルトに戻す",
     "description": "デフォルトに戻すボタン"
+  },
+  "upgradeToUsePreset": {
+    "message": "プレミアムにアップグレードしてこのプリセットを使用",
+    "description": "ロックされたプリセットのツールチップ"
+  },
+  "lockedPresetWarning": {
+    "message": "現在設定中のプリセットはFreeプランでは使用できません。デフォルト設定が適用されます。",
+    "description": "アクティブなプリセットがロックされている場合の警告"
+  },
+  "scheduleLockedPresetWarning": {
+    "message": "選択中のプリセットはFreeプランでは適用されません。",
+    "description": "スケジュールのプリセットがロックされている場合の警告"
+  },
+  "featureBlocklist": {
+    "message": "ブロックリスト",
+    "description": "機能名: ブロックリスト"
+  },
+  "featureBlocklistFree": {
+    "message": "$COUNT$件まで",
+    "description": "無料枠のブロックリスト制限",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureUnlimited": {
+    "message": "無制限",
+    "description": "無制限テキスト"
+  },
+  "featureHistoryRetention": {
+    "message": "履歴保存期間",
+    "description": "機能名: 履歴保存期間"
+  },
+  "featureHistoryDays": {
+    "message": "$COUNT$日間",
+    "description": "履歴日数制限",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "featureAllTime": {
+    "message": "無制限",
+    "description": "全期間履歴"
+  },
+  "featurePresets": {
+    "message": "プリセット",
+    "description": "機能名: プリセット"
+  },
+  "featurePresetCount": {
+    "message": "$COUNT$件",
+    "description": "プリセット数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureCustomBackground": {
+    "message": "カスタム背景画像",
+    "description": "機能名: カスタム背景"
+  },
+  "featureWallpaperDownload": {
+    "message": "壁紙ダウンロード",
+    "description": "機能名: 壁紙ダウンロード"
+  },
+  "featureWeeklyMonthlyReports": {
+    "message": "週次・月次レポート",
+    "description": "機能名: レポート"
+  },
+  "premiumActiveTitle": {
+    "message": "Premiumプランをご利用中",
+    "description": "プレミアムアクティブタイトル"
+  },
+  "premiumActiveDescription": {
+    "message": "すべての機能をお楽しみいただけます",
+    "description": "プレミアムアクティブ説明"
+  },
+  "currentUsage": {
+    "message": "現在の使用状況",
+    "description": "現在の使用状況見出し"
+  },
+  "limitReachedUpgrade": {
+    "message": "上限に達しました。Premiumで無制限に。",
+    "description": "上限到達メッセージ"
+  },
+  "limitWarning": {
+    "message": "あと$COUNT$件で上限です",
+    "description": "上限警告メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "historySaving": {
+    "message": "履歴保存",
+    "description": "履歴保存ラベル"
+  },
+  "premiumMarketingHeadline": {
+    "message": "もっと集中したいあなたへ",
+    "description": "プレミアムマーケティング見出し"
+  },
+  "premiumMarketingPrice": {
+    "message": "1日たった約15円で、無制限の集中環境を",
+    "description": "プレミアムマーケティング価格コピー"
+  },
+  "premiumMarketingPriceNote": {
+    "message": "※ 1ドル=155円換算",
+    "description": "価格備考"
+  },
+  "cancelAnytime": {
+    "message": "いつでもキャンセル可能",
+    "description": "いつでもキャンセル可能テキスト"
+  },
+  "planComparison": {
+    "message": "プラン比較",
+    "description": "プラン比較見出し"
+  },
+  "featureColumn": {
+    "message": "機能",
+    "description": "機能列ヘッダー"
   }
 }
