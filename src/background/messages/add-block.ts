@@ -1,7 +1,14 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
 import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain'
-import { getSettings, setSettings } from '~/lib/storage'
+import {
+  getSettings,
+  setSettings,
+  getUnblockHistory,
+  setUnblockHistory,
+  getAnalytics,
+  setAnalytics,
+} from '~/lib/storage'
 import { canAddToBlocklist } from '~/lib/license'
 import { updateBlockRules } from '../blocker'
 import type { AddBlockRequest, AddBlockResponse } from '~/types/messages'
@@ -59,6 +66,20 @@ const handler: PlasmoMessaging.MessageHandler<
 
   await setSettings(settings)
   await updateBlockRules()
+
+  // Remove from unblock history if present (re-blocking)
+  const history = await getUnblockHistory()
+  if (history.sites[parsedDomain]) {
+    delete history.sites[parsedDomain]
+    await setUnblockHistory(history)
+
+    // Also clean up analytics data for this domain
+    const analytics = await getAnalytics()
+    if (analytics.siteTime[parsedDomain]) {
+      delete analytics.siteTime[parsedDomain]
+      await setAnalytics(analytics)
+    }
+  }
 
   res.send({ success: true })
 }

@@ -1,7 +1,13 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
-import { extractDomain } from '~/lib/domain'
-import { getAnalytics, setAnalytics } from '~/lib/storage'
+import { extractDomain, matchesDomain } from '~/lib/domain'
+import {
+  getAnalytics,
+  setAnalytics,
+  getUnblockHistory,
+  setUnblockHistory,
+} from '~/lib/storage'
+import type { BlockItem } from '~/types/storage'
 import { getTodayKey } from '~/lib/time'
 import { TRACKER_CONFIG } from '~/constants/limits'
 import type { DailyStat, SiteTime } from '~/types/storage'
@@ -61,36 +67,92 @@ function ensureRecordingTimer() {
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS)
 }
 
-// Record time for a domain
+// Find matching unblocked site (supports wildcards and www variants)
+function findUnblockedSite(
+  domain: string,
+  history: { sites: Record<string, { domain: string }> }
+): string | null {
+  // Direct match first
+  if (history.sites[domain]) {
+    return domain
+  }
+
+  // Check all unblocked domains for matches
+  for (const unblockedDomain of Object.keys(history.sites)) {
+    // Create a BlockItem-like object for matching
+    const blockItem: BlockItem = {
+      id: '',
+      domain: unblockedDomain,
+      isWildcard: unblockedDomain.startsWith('*.'),
+      createdAt: '',
+    }
+
+    if (matchesDomain(domain, blockItem)) {
+      return unblockedDomain
+    }
+
+    // Also check www variant: if blocked "youtube.com", match "www.youtube.com"
+    if (
+      !unblockedDomain.startsWith('www.') &&
+      domain === 'www.' + unblockedDomain
+    ) {
+      return unblockedDomain
+    }
+
+    // And reverse: if blocked "www.youtube.com", match "youtube.com"
+    if (
+      unblockedDomain.startsWith('www.') &&
+      domain === unblockedDomain.slice(4)
+    ) {
+      return unblockedDomain
+    }
+  }
+
+  return null
+}
+
+// Record time for a domain (only tracks unblocked sites)
 async function recordTime(domain: string, seconds: number): Promise<void> {
   if (seconds <= 0 || !domain) return
 
+  // Only track sites that are in the unblock history
+  const history = await getUnblockHistory()
+  const matchedDomain = findUnblockedSite(domain, history)
+
+  if (!matchedDomain) {
+    // Not an unblocked site, skip tracking
+    return
+  }
+
+  const unblockedSite = history.sites[matchedDomain]
+
+  const now = new Date().toISOString()
+
+  // Update unblock history time
+  unblockedSite.timeAfterUnblock += seconds
+  unblockedSite.lastActivity = now
+  await setUnblockHistory(history)
+
+  // Also update analytics for graph display (Premium feature)
   const analytics = await getAnalytics()
   const todayKey = getTodayKey()
 
-  // Get category for this domain
-  const category = analytics.siteCategories[domain] || 'neutral'
-
-  // Update site time
+  // Update site time (for unblocked sites only)
   const existingSiteTime = analytics.siteTime[domain]
   const updatedSiteTime: SiteTime = {
     domain,
     time: (existingSiteTime?.time || 0) + seconds,
-    category,
-    lastUpdated: new Date().toISOString(),
+    category: 'waste', // Unblocked sites are considered waste
+    lastUpdated: now,
   }
   analytics.siteTime[domain] = updatedSiteTime
 
-  // Update daily stats
+  // Update daily stats (for graph)
   const existingDailyStat = analytics.dailyStats[todayKey]
   const updatedDailyStat: DailyStat = {
     date: todayKey,
-    wasteTime:
-      (existingDailyStat?.wasteTime || 0) +
-      (category === 'waste' ? seconds : 0),
-    investTime:
-      (existingDailyStat?.investTime || 0) +
-      (category === 'invest' ? seconds : 0),
+    wasteTime: (existingDailyStat?.wasteTime || 0) + seconds,
+    investTime: existingDailyStat?.investTime || 0,
     blockCount: existingDailyStat?.blockCount || 0,
   }
   analytics.dailyStats[todayKey] = updatedDailyStat

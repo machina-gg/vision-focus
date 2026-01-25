@@ -5,9 +5,9 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
   Cell,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,121 +15,173 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { BarChart3, LineChartIcon, PieChartIcon } from 'lucide-react'
+import { BarChart3, TrendingUp, Layers } from 'lucide-react'
 
-import type { AnalyticsData } from '~/types/storage'
+import type { AnalyticsData, UnblockHistory } from '~/types/storage'
 import { getMessage } from '~/lib/i18n'
 import { formatTime } from '~/lib/time'
 
-export type ChartType = 'line' | 'bar' | 'pie'
-export type DateRange = '7d' | '30d' | 'all'
+export type ChartType = 'daily' | 'bySite' | 'cumulative'
 
 export interface AnalyticsChartProps {
   analytics: AnalyticsData
+  unblockHistory: UnblockHistory
   disabled?: boolean
 }
 
-const COLORS = {
-  waste: '#ef4444', // Red
-  invest: '#22c55e', // Green
-  neutral: '#6b7280', // Gray
-}
-
-const _PIE_COLORS = ['#ef4444', '#22c55e', '#6b7280', '#3b82f6', '#f59e0b']
+// Color palette for different sites (soft pastel tones)
+const SITE_COLORS = [
+  '#fdba74', // orange-300
+  '#fcd34d', // amber-300
+  '#bef264', // lime-300
+  '#6ee7b7', // emerald-300
+  '#67e8f9', // cyan-300
+  '#a5b4fc', // indigo-300
+  '#d8b4fe', // purple-300
+  '#f9a8d4', // pink-300
+]
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function formatSeconds(seconds: number): string {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
+function formatMinutes(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const mins = Math.round(minutes % 60)
+  if (hours > 0) return `${hours}h ${mins}m`
+  return `${mins}m`
 }
 
 export function AnalyticsChart({
   analytics,
+  unblockHistory,
   disabled = false,
 }: AnalyticsChartProps) {
-  const [chartType, setChartType] = useState<ChartType>('line')
-  const [dateRange, setDateRange] = useState<DateRange>('7d')
+  const [chartType, setChartType] = useState<ChartType>('daily')
 
-  // Get daily data for the selected range
+  // Get list of unblocked domains
+  const unblockedDomains = useMemo(() => {
+    return Object.keys(unblockHistory.sites)
+  }, [unblockHistory.sites])
+
+  // A. Daily total time on unblocked sites
   const dailyData = useMemo(() => {
-    const now = new Date()
     const entries = Object.entries(analytics.dailyStats)
-      .map(([date, stat]) => ({ ...stat, date }))
+      .map(([date, stat]) => ({
+        date,
+        time: Math.round(stat.wasteTime / 60), // Convert to minutes
+      }))
+      .filter((e) => e.time > 0)
       .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-14) // Last 14 days
 
-    if (dateRange === '7d') {
-      const cutoff = new Date(now)
-      cutoff.setDate(cutoff.getDate() - 7)
-      return entries.filter((e) => new Date(e.date) >= cutoff)
+    // If no daily stats, show current total as today's data
+    if (entries.length === 0) {
+      const currentTotal = Object.values(unblockHistory.sites).reduce(
+        (sum, site) => sum + site.timeAfterUnblock,
+        0
+      )
+      if (currentTotal > 0) {
+        return [
+          {
+            date: formatDate(new Date().toISOString().split('T')[0]),
+            time: Math.round(currentTotal / 60),
+          },
+        ]
+      }
+      return []
     }
 
-    if (dateRange === '30d') {
-      const cutoff = new Date(now)
-      cutoff.setDate(cutoff.getDate() - 30)
-      return entries.filter((e) => new Date(e.date) >= cutoff)
+    return entries.map((e) => ({
+      ...e,
+      date: formatDate(e.date),
+    }))
+  }, [analytics.dailyStats, unblockHistory.sites])
+
+  // B. Site-by-site breakdown (stacked)
+  const bySiteData = useMemo(() => {
+    // Get daily breakdown per site from siteTime
+    // For now, show total per site as a simple bar chart
+    const siteData = unblockedDomains
+      .map((domain) => ({
+        domain: domain.length > 15 ? domain.slice(0, 15) + '...' : domain,
+        fullDomain: domain,
+        time: Math.round((unblockHistory.sites[domain]?.timeAfterUnblock || 0) / 60),
+      }))
+      .filter((s) => s.time > 0)
+      .sort((a, b) => b.time - a.time)
+      .slice(0, 8) // Top 8 sites
+
+    return siteData
+  }, [unblockedDomains, unblockHistory.sites])
+
+  // C. Cumulative time since unblock
+  const cumulativeData = useMemo(() => {
+    // Find earliest unblock date
+    const unblockedSites = Object.values(unblockHistory.sites)
+    if (unblockedSites.length === 0) return []
+
+    const earliestUnblock = unblockedSites.reduce((earliest, site) => {
+      const date = new Date(site.unblockedAt)
+      return date < earliest ? date : earliest
+    }, new Date())
+
+    // Generate cumulative data from daily stats
+    const dailyEntries = Object.entries(analytics.dailyStats)
+      .filter(([date]) => new Date(date) >= earliestUnblock)
+      .sort(([a], [b]) => a.localeCompare(b))
+
+    // If no daily stats, show at least current total as a single point
+    if (dailyEntries.length === 0) {
+      const currentTotal = unblockedSites.reduce(
+        (sum, site) => sum + site.timeAfterUnblock,
+        0
+      )
+      if (currentTotal > 0) {
+        return [
+          {
+            date: formatDate(new Date().toISOString().split('T')[0]),
+            cumulative: Math.round(currentTotal / 60),
+          },
+        ]
+      }
+      return []
     }
 
-    return entries
-  }, [analytics.dailyStats, dateRange])
-
-  // Get category breakdown for pie chart
-  const categoryData = useMemo(() => {
-    const totals = { waste: 0, invest: 0, neutral: 0 }
-
-    Object.values(analytics.siteTime).forEach((site) => {
-      totals[site.category] += site.time
+    let cumulative = 0
+    const data = dailyEntries.map(([date, stat]) => {
+      cumulative += stat.wasteTime
+      return {
+        date: formatDate(date),
+        cumulative: Math.round(cumulative / 60), // Minutes
+      }
     })
 
-    return [
-      { name: getMessage('waste'), value: totals.waste, color: COLORS.waste },
-      {
-        name: getMessage('invest'),
-        value: totals.invest,
-        color: COLORS.invest,
-      },
-      {
-        name: getMessage('neutral'),
-        value: totals.neutral,
-        color: COLORS.neutral,
-      },
-    ].filter((d) => d.value > 0)
-  }, [analytics.siteTime])
+    return data.slice(-14) // Last 14 days
+  }, [analytics.dailyStats, unblockHistory.sites])
 
-  // Summary statistics
-  const summary = useMemo(() => {
-    const totalWaste = dailyData.reduce((sum, d) => sum + d.wasteTime, 0)
-    const totalInvest = dailyData.reduce((sum, d) => sum + d.investTime, 0)
-    const totalBlocks = dailyData.reduce((sum, d) => sum + d.blockCount, 0)
-
-    return { totalWaste, totalInvest, totalBlocks }
-  }, [dailyData])
-
-  const chartData = dailyData.map((d) => ({
-    date: formatDate(d.date),
-    [getMessage('waste')]: Math.round(d.wasteTime / 60), // Convert to minutes
-    [getMessage('invest')]: Math.round(d.investTime / 60),
-  }))
+  // Total time across all unblocked sites
+  const totalTime = useMemo(() => {
+    return Object.values(unblockHistory.sites).reduce(
+      (sum, site) => sum + site.timeAfterUnblock,
+      0
+    )
+  }, [unblockHistory.sites])
 
   const renderChart = () => {
-    if (dailyData.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-64 text-gray-500">
-          {getMessage('noData')}
-        </div>
-      )
-    }
-
     switch (chartType) {
-      case 'line':
+      case 'daily':
+        if (dailyData.length === 0) {
+          return (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              {getMessage('noData')}
+            </div>
+          )
+        }
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={dailyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
               <YAxis
@@ -138,95 +190,106 @@ export function AnalyticsChart({
                 tickFormatter={(v) => `${v}m`}
               />
               <Tooltip
-                formatter={(value: number) => [`${value} min`, '']}
+                formatter={(value: number) => [formatMinutes(value), getMessage('chartDailyLabel')]}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
                 }}
               />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey={getMessage('waste')}
-                stroke={COLORS.waste}
-                strokeWidth={2}
-                dot={{ fill: COLORS.waste, strokeWidth: 0, r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey={getMessage('invest')}
-                stroke={COLORS.invest}
-                strokeWidth={2}
-                dot={{ fill: COLORS.invest, strokeWidth: 0, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )
-
-      case 'bar':
-        return (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-              <YAxis
-                stroke="#6b7280"
-                fontSize={12}
-                tickFormatter={(v) => `${v}m`}
-              />
-              <Tooltip
-                formatter={(value: number) => [`${value} min`, '']}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                }}
-              />
-              <Legend />
               <Bar
-                dataKey={getMessage('waste')}
-                fill={COLORS.waste}
+                dataKey="time"
+                fill="#fdba74"
                 radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey={getMessage('invest')}
-                fill={COLORS.invest}
-                radius={[4, 4, 0, 0]}
+                name={getMessage('chartDailyLabel')}
               />
             </BarChart>
           </ResponsiveContainer>
         )
 
-      case 'pie':
+      case 'bySite':
+        if (bySiteData.length === 0) {
+          return (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              {getMessage('noData')}
+            </div>
+          )
+        }
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={bySiteData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                type="number"
+                stroke="#6b7280"
+                fontSize={12}
+                tickFormatter={(v) => `${v}m`}
+              />
+              <YAxis
+                type="category"
+                dataKey="domain"
+                stroke="#6b7280"
+                fontSize={11}
+                width={100}
+              />
               <Tooltip
-                formatter={(value: number) => [formatSeconds(value), '']}
+                formatter={(value: number, _name: string, props) => {
+                  const payload = props?.payload as { fullDomain?: string } | undefined
+                  return [formatMinutes(value), payload?.fullDomain || '']
+                }}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
                 }}
               />
-            </PieChart>
+              <Bar dataKey="time" radius={[0, 4, 4, 0]}>
+                {bySiteData.map((_, index) => (
+                  <Cell
+                    key={index}
+                    fill={SITE_COLORS[index % SITE_COLORS.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )
+
+      case 'cumulative':
+        if (cumulativeData.length === 0) {
+          return (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              {getMessage('noData')}
+            </div>
+          )
+        }
+        return (
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={cumulativeData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+              <YAxis
+                stroke="#6b7280"
+                fontSize={12}
+                tickFormatter={(v) => `${v}m`}
+              />
+              <Tooltip
+                formatter={(value: number) => [formatMinutes(value), getMessage('chartCumulativeLabel')]}
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="cumulative"
+                stroke="#fdba74"
+                fill="#fef3c7"
+                strokeWidth={2}
+                name={getMessage('chartCumulativeLabel')}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         )
     }
@@ -236,101 +299,63 @@ export function AnalyticsChart({
     <div
       className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="p-3 bg-red-50 rounded-lg">
-          <p className="text-xs text-red-600 font-medium">
-            {getMessage('wasteTime')}
-          </p>
-          <p className="text-lg font-bold text-red-700">
-            {formatTime(summary.totalWaste)}
-          </p>
-        </div>
-        <div className="p-3 bg-green-50 rounded-lg">
-          <p className="text-xs text-green-600 font-medium">
-            {getMessage('investTime')}
-          </p>
-          <p className="text-lg font-bold text-green-700">
-            {formatTime(summary.totalInvest)}
-          </p>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs text-blue-600 font-medium">
-            {getMessage('blockedCount')}
-          </p>
-          <p className="text-lg font-bold text-blue-700">
-            {summary.totalBlocks}
-          </p>
-        </div>
+      {/* Summary */}
+      <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
+        <p className="text-sm text-orange-600 font-medium">
+          {getMessage('totalTimeOnUnblockedSites')}
+        </p>
+        <p className="text-2xl font-bold text-orange-700">
+          {formatTime(totalTime)}
+        </p>
+        <p className="text-xs text-orange-500 mt-1">
+          {getMessage('chartSiteCount', String(unblockedDomains.length))}
+        </p>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center justify-between">
-        {/* Date Range */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          {(['7d', '30d', 'all'] as DateRange[]).map((range) => (
-            <button
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`
-                px-3 py-1 text-sm rounded-md transition-colors
-                ${
-                  dateRange === range
-                    ? 'bg-white shadow text-gray-900'
-                    : 'text-gray-600 hover:text-gray-900'
-                }
-              `}
-            >
-              {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : 'All'}
-            </button>
-          ))}
-        </div>
-
-        {/* Chart Type */}
-        <div className="flex gap-1">
-          <button
-            onClick={() => setChartType('line')}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${
-                chartType === 'line'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-400 hover:text-gray-600'
-              }
-            `}
-            title={getMessage('lineChart')}
-          >
-            <LineChartIcon className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setChartType('bar')}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${
-                chartType === 'bar'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-400 hover:text-gray-600'
-              }
-            `}
-            title={getMessage('barChart')}
-          >
-            <BarChart3 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setChartType('pie')}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${
-                chartType === 'pie'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-400 hover:text-gray-600'
-              }
-            `}
-            title={getMessage('pieChart')}
-          >
-            <PieChartIcon className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Chart Type Selector */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+        <button
+          onClick={() => setChartType('daily')}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
+            ${
+              chartType === 'daily'
+                ? 'bg-white shadow text-gray-900'
+                : 'text-gray-600 hover:text-gray-900'
+            }
+          `}
+        >
+          <BarChart3 className="w-4 h-4" />
+          {getMessage('chartTypeDaily')}
+        </button>
+        <button
+          onClick={() => setChartType('bySite')}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
+            ${
+              chartType === 'bySite'
+                ? 'bg-white shadow text-gray-900'
+                : 'text-gray-600 hover:text-gray-900'
+            }
+          `}
+        >
+          <Layers className="w-4 h-4" />
+          {getMessage('chartTypeBySite')}
+        </button>
+        <button
+          onClick={() => setChartType('cumulative')}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
+            ${
+              chartType === 'cumulative'
+                ? 'bg-white shadow text-gray-900'
+                : 'text-gray-600 hover:text-gray-900'
+            }
+          `}
+        >
+          <TrendingUp className="w-4 h-4" />
+          {getMessage('chartTypeCumulative')}
+        </button>
       </div>
 
       {/* Chart */}

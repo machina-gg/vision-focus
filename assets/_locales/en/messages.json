@@ -926,5 +926,145 @@
   "featureColumn": {
     "message": "Feature",
     "description": "Feature column header"
+  },
+  "unblockedSitesTitle": {
+    "message": "Unblocked Sites Usage",
+    "description": "Unblocked sites section title"
+  },
+  "unblockedSitesDescription": {
+    "message": "These sites were removed from your block list. Are you still spending time on them?",
+    "description": "Unblocked sites section description"
+  },
+  "noUnblockedSites": {
+    "message": "No unblocked sites",
+    "description": "No unblocked sites title"
+  },
+  "noUnblockedSitesDescription": {
+    "message": "Great job staying focused! You haven't removed any sites from your block list.",
+    "description": "No unblocked sites description"
+  },
+  "unblockedOn": {
+    "message": "Unblocked",
+    "description": "Unblocked on label"
+  },
+  "timeSpentSinceUnblock": {
+    "message": "Time since unblock",
+    "description": "Time spent since unblock label"
+  },
+  "reblock": {
+    "message": "Re-block",
+    "description": "Re-block button"
+  },
+  "totalTimeOnUnblockedSites": {
+    "message": "Total time on unblocked sites",
+    "description": "Total time on unblocked sites label"
+  },
+  "yesterday": {
+    "message": "Yesterday",
+    "description": "Yesterday label"
+  },
+  "daysAgo": {
+    "message": "$COUNT$ days ago",
+    "description": "Days ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "weeksAgo": {
+    "message": "$COUNT$ week(s) ago",
+    "description": "Weeks ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "monthsAgo": {
+    "message": "$COUNT$ month(s) ago",
+    "description": "Months ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "upgradeFeatureViewTime": {
+    "message": "View time spent since unblocking",
+    "description": "Upgrade feature: view time"
+  },
+  "upgradeFeatureReblock": {
+    "message": "One-click re-block",
+    "description": "Upgrade feature: re-block"
+  },
+  "upgradeFeatureChart": {
+    "message": "Usage trend chart",
+    "description": "Upgrade feature: chart"
+  },
+  "usageChart": {
+    "message": "Usage Trend",
+    "description": "Usage chart title"
+  },
+  "chartTypeDaily": {
+    "message": "Daily",
+    "description": "Daily chart type"
+  },
+  "chartTypeBySite": {
+    "message": "By Site",
+    "description": "By site chart type"
+  },
+  "chartTypeCumulative": {
+    "message": "Cumulative",
+    "description": "Cumulative chart type"
+  },
+  "chartDailyLabel": {
+    "message": "Time spent",
+    "description": "Daily chart label"
+  },
+  "chartCumulativeLabel": {
+    "message": "Total time",
+    "description": "Cumulative chart label"
+  },
+  "chartSiteCount": {
+    "message": "Across $COUNT$ site(s)",
+    "description": "Site count label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reset": {
+    "message": "Reset",
+    "description": "Reset button"
+  },
+  "resetAnalyticsTitle": {
+    "message": "Reset Analytics Data?",
+    "description": "Reset analytics modal title"
+  },
+  "resetAnalyticsDescription": {
+    "message": "Usage time will be reset to zero for all sites. The site list will be kept.",
+    "description": "Reset analytics modal description"
+  },
+  "stopTracking": {
+    "message": "Stop tracking",
+    "description": "Stop tracking button"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Refresh button tooltip"
+  },
+  "addSiteToTrack": {
+    "message": "Add Tracking Site",
+    "description": "Add site to track heading"
+  },
+  "trackSitePlaceholder": {
+    "message": "example.com",
+    "description": "Track site input placeholder"
   }
 }

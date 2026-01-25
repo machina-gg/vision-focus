@@ -23,10 +23,12 @@ import type {
   AppSettings,
   VisionSettings,
   AnalyticsData,
+  UnblockHistory,
 } from '~/types/storage'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
+  DEFAULT_UNBLOCK_HISTORY,
   FEATURE_LIMITS,
   type FeatureLimits,
 } from '~/types/storage'
@@ -57,6 +59,11 @@ function OptionsApp() {
     siteCategories: {},
   })
 
+  // Unblock history state
+  const [unblockHistory, setUnblockHistory] = useState<UnblockHistory>(
+    DEFAULT_UNBLOCK_HISTORY
+  )
+
   // Premium state
   const [isPremium, setIsPremium] = useState(false)
   const [featureLimits, setFeatureLimits] = useState<FeatureLimits>(
@@ -68,15 +75,21 @@ function OptionsApp() {
   const schedules = useSchedules({ settings, setSettings })
   const presets = usePresets({ vision, setVision })
 
-  // Load analytics
+  // Load analytics and unblock history
   useEffect(() => {
-    const loadAnalytics = async () => {
-      const data = (await storage.get('analytics')) as AnalyticsData | undefined
-      if (data) {
-        setAnalyticsData(data)
+    const loadData = async () => {
+      const [analyticsResult, unblockResult] = await Promise.all([
+        storage.get('analytics') as Promise<AnalyticsData | undefined>,
+        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
+      ])
+      if (analyticsResult) {
+        setAnalyticsData(analyticsResult)
+      }
+      if (unblockResult) {
+        setUnblockHistory(unblockResult)
       }
     }
-    loadAnalytics()
+    loadData()
   }, [])
 
   // Load premium status
@@ -119,26 +132,132 @@ function OptionsApp() {
     },
   ]
 
-  // Analytics handlers
-  const handleSiteCategoryChange = useCallback(
-    async (domain: string, category: 'waste' | 'invest' | 'neutral') => {
-      try {
-        await sendToBackground({
-          name: 'set-site-category',
-          body: { domain, category },
-        })
-        const data = (await storage.get('analytics')) as
-          | AnalyticsData
-          | undefined
-        if (data) {
-          setAnalyticsData(data)
-        }
-      } catch {
-        // Silently handle error - analytics will refresh on next load
+  // Re-block handler
+  const handleReblock = useCallback(async (domain: string) => {
+    try {
+      await sendToBackground({
+        name: 'add-block',
+        body: { domain },
+      })
+      // Refresh data after re-blocking
+      const [analyticsResult, unblockResult, settingsResult] = await Promise.all([
+        storage.get('analytics') as Promise<AnalyticsData | undefined>,
+        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
+        storage.get('settings') as Promise<AppSettings | undefined>,
+      ])
+      if (analyticsResult) {
+        setAnalyticsData(analyticsResult)
       }
-    },
-    []
-  )
+      if (unblockResult) {
+        setUnblockHistory(unblockResult)
+      }
+      if (settingsResult) {
+        setSettings(settingsResult)
+      }
+    } catch {
+      // Silently handle error
+    }
+  }, [setSettings])
+
+  // Reset analytics handler (reset time only, keep site list)
+  const handleResetAnalytics = useCallback(async () => {
+    try {
+      // Reset time for all sites but keep the list
+      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      if (currentHistory) {
+        const resetHistory: UnblockHistory = {
+          sites: Object.fromEntries(
+            Object.entries(currentHistory.sites).map(([domain, site]) => [
+              domain,
+              { ...site, timeAfterUnblock: 0, lastActivity: null },
+            ])
+          ),
+        }
+        await storage.set('unblockHistory', resetHistory)
+        setUnblockHistory(resetHistory)
+      }
+
+      // Clear analytics data
+      const emptyAnalytics: AnalyticsData = {
+        dailyStats: {},
+        siteTime: {},
+        siteCategories: {},
+      }
+      await storage.set('analytics', emptyAnalytics)
+      setAnalyticsData(emptyAnalytics)
+    } catch {
+      // Silently handle error
+    }
+  }, [])
+
+  // Stop tracking a site (remove from unblock history)
+  const handleStopTracking = useCallback(async (domain: string) => {
+    try {
+      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      if (currentHistory && currentHistory.sites[domain]) {
+        const { [domain]: _, ...remainingSites } = currentHistory.sites
+        const updatedHistory: UnblockHistory = { sites: remainingSites }
+        await storage.set('unblockHistory', updatedHistory)
+        setUnblockHistory(updatedHistory)
+
+        // Also remove from analytics siteTime
+        const currentAnalytics = await storage.get('analytics') as AnalyticsData | undefined
+        if (currentAnalytics && currentAnalytics.siteTime[domain]) {
+          const { [domain]: __, ...remainingSiteTime } = currentAnalytics.siteTime
+          const updatedAnalytics: AnalyticsData = {
+            ...currentAnalytics,
+            siteTime: remainingSiteTime,
+          }
+          await storage.set('analytics', updatedAnalytics)
+          setAnalyticsData(updatedAnalytics)
+        }
+      }
+    } catch {
+      // Silently handle error
+    }
+  }, [])
+
+  // Refresh analytics data
+  const handleRefreshAnalytics = useCallback(async () => {
+    try {
+      const [analyticsResult, unblockResult] = await Promise.all([
+        storage.get('analytics') as Promise<AnalyticsData | undefined>,
+        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
+      ])
+      if (analyticsResult) {
+        setAnalyticsData(analyticsResult)
+      }
+      if (unblockResult) {
+        setUnblockHistory(unblockResult)
+      }
+    } catch {
+      // Silently handle error
+    }
+  }, [])
+
+  // Add site to track manually
+  const handleAddSiteToTrack = useCallback(async (domain: string) => {
+    try {
+      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      const history = currentHistory || { sites: {} }
+
+      // Don't add if already tracking
+      if (history.sites[domain]) {
+        return
+      }
+
+      history.sites[domain] = {
+        domain,
+        unblockedAt: new Date().toISOString(),
+        timeAfterUnblock: 0,
+        lastActivity: null,
+      }
+      await storage.set('unblockHistory', history)
+      setUnblockHistory(history)
+    } catch {
+      // Silently handle error
+    }
+  }, [])
 
   // Premium handlers
   const handleUpgrade = useCallback(() => {
@@ -227,9 +346,14 @@ function OptionsApp() {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <AnalyticsTab
+            unblockHistory={unblockHistory}
             analyticsData={analyticsData}
             isPremium={isPremium}
-            onSiteCategoryChange={handleSiteCategoryChange}
+            onReblock={handleReblock}
+            onReset={handleResetAnalytics}
+            onStopTracking={handleStopTracking}
+            onRefresh={handleRefreshAnalytics}
+            onAddSite={handleAddSiteToTrack}
           />
         )}
 

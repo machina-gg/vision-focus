@@ -7,6 +7,33 @@
 
 ## 2026-01-25
 
+### Analytics機能ブラッシュアップ
+
+- **実施内容**: 分析機能を「元ブロックサイトの利用状況」機能に特化
+- **変更ファイル**:
+  - src/types/storage.ts - UnblockedSite, UnblockHistory型追加
+  - src/lib/storage.ts - getUnblockHistory/setUnblockHistory追加
+  - src/background/messages/remove-block.ts - ブロック解除時に履歴記録
+  - src/background/messages/tracker-heartbeat.ts - 元ブロックサイトのみ時間追跡
+  - src/background/messages/add-block.ts - 再ブロック時に履歴から削除
+  - src/components/options/AnalyticsTab.tsx - UI全面書き換え
+  - src/options.tsx - unblockHistory読み込み、onReblock追加
+  - src/components/features/UpgradePrompt.tsx - featuresプロップ追加
+  - assets/_locales/en/messages.json - 英語メッセージ追加
+  - assets/_locales/ja/messages.json - 日本語メッセージ追加
+- **削除ファイル**:
+  - src/components/features/ReportCard/
+  - src/components/features/SiteCategoryManager/
+  - src/lib/reports.ts
+  - src/background/messages/set-site-category.ts
+- **実装機能**:
+  - ブロック解除したサイトの利用時間を追跡
+  - Freeユーザー: サイト一覧と解除日のみ表示（時間は伏せ字）
+  - Premiumユーザー: 利用時間表示、再ブロックボタン、グラフ
+  - グラフ機能: 3種類の切り替え表示（日別バー、サイト別横バー、累積エリア）
+  - リセット機能: 全データを削除するリセットボタン（確認モーダル付き）
+  - ドメインマッチング改善: www変換対応（youtube.com ↔ www.youtube.com）
+
 ### ドキュメント更新
 
 - **実施内容**: プリセット機能、Freeダウングレード対応に伴うドキュメント更新

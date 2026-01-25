@@ -16,6 +16,8 @@ export interface UpgradePromptProps {
   onUpgradeClick?: () => void
   /** Show feature list */
   showFeatures?: boolean
+  /** Custom features list to display (overrides default) */
+  features?: string[]
 }
 
 const PREMIUM_FEATURES = [
@@ -31,6 +33,7 @@ export function UpgradePrompt({
   message,
   onUpgradeClick,
   showFeatures = true,
+  features,
 }: UpgradePromptProps) {
   const handleUpgradeClick = () => {
     if (onUpgradeClick) {
@@ -109,15 +112,17 @@ export function UpgradePrompt({
               {getMessage('premiumFeatures')}
             </h4>
             <ul className="space-y-2">
-              {PREMIUM_FEATURES.map((featureKey) => (
-                <li
-                  key={featureKey}
-                  className="flex items-center gap-2 text-sm text-gray-600"
-                >
-                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  {getMessage(featureKey)}
-                </li>
-              ))}
+              {(features || PREMIUM_FEATURES.map((key) => getMessage(key))).map(
+                (feature, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 text-sm text-gray-600"
+                  >
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    {feature}
+                  </li>
+                )
+              )}
             </ul>
           </div>
         )}

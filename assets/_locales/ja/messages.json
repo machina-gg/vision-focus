@@ -926,5 +926,145 @@
   "featureColumn": {
     "message": "機能",
     "description": "機能列ヘッダー"
+  },
+  "unblockedSitesTitle": {
+    "message": "ブロック解除したサイトの利用状況",
+    "description": "ブロック解除サイトのセクションタイトル"
+  },
+  "unblockedSitesDescription": {
+    "message": "ブロックリストから削除したサイトです。やっぱり時間を使ってしまっていませんか？",
+    "description": "ブロック解除サイトのセクション説明"
+  },
+  "noUnblockedSites": {
+    "message": "ブロック解除したサイトはありません",
+    "description": "ブロック解除サイトなしタイトル"
+  },
+  "noUnblockedSitesDescription": {
+    "message": "集中を維持できています！ブロックリストから削除したサイトはありません。",
+    "description": "ブロック解除サイトなし説明"
+  },
+  "unblockedOn": {
+    "message": "解除",
+    "description": "解除日ラベル"
+  },
+  "timeSpentSinceUnblock": {
+    "message": "その後の利用時間",
+    "description": "解除後の利用時間ラベル"
+  },
+  "reblock": {
+    "message": "再ブロック",
+    "description": "再ブロックボタン"
+  },
+  "totalTimeOnUnblockedSites": {
+    "message": "ブロック解除サイトの合計利用時間",
+    "description": "合計利用時間ラベル"
+  },
+  "yesterday": {
+    "message": "昨日",
+    "description": "昨日ラベル"
+  },
+  "daysAgo": {
+    "message": "$COUNT$日前",
+    "description": "○日前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "weeksAgo": {
+    "message": "$COUNT$週間前",
+    "description": "○週間前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "monthsAgo": {
+    "message": "$COUNT$ヶ月前",
+    "description": "○ヶ月前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "upgradeFeatureViewTime": {
+    "message": "解除後の利用時間を確認",
+    "description": "アップグレード機能: 時間確認"
+  },
+  "upgradeFeatureReblock": {
+    "message": "ワンクリックで再ブロック",
+    "description": "アップグレード機能: 再ブロック"
+  },
+  "upgradeFeatureChart": {
+    "message": "利用時間の推移グラフ",
+    "description": "アップグレード機能: グラフ"
+  },
+  "usageChart": {
+    "message": "利用時間の推移",
+    "description": "利用グラフタイトル"
+  },
+  "chartTypeDaily": {
+    "message": "日別",
+    "description": "日別グラフタイプ"
+  },
+  "chartTypeBySite": {
+    "message": "サイト別",
+    "description": "サイト別グラフタイプ"
+  },
+  "chartTypeCumulative": {
+    "message": "累積",
+    "description": "累積グラフタイプ"
+  },
+  "chartDailyLabel": {
+    "message": "利用時間",
+    "description": "日別グラフラベル"
+  },
+  "chartCumulativeLabel": {
+    "message": "累積時間",
+    "description": "累積グラフラベル"
+  },
+  "chartSiteCount": {
+    "message": "$COUNT$サイトの合計",
+    "description": "サイト数ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reset": {
+    "message": "リセット",
+    "description": "リセットボタン"
+  },
+  "resetAnalyticsTitle": {
+    "message": "データをリセットしますか？",
+    "description": "リセット確認モーダルタイトル"
+  },
+  "resetAnalyticsDescription": {
+    "message": "すべてのサイトの利用時間が0にリセットされます。サイト一覧は維持されます。",
+    "description": "リセット確認モーダル説明"
+  },
+  "stopTracking": {
+    "message": "追跡を停止",
+    "description": "追跡停止ボタン"
+  },
+  "refresh": {
+    "message": "更新",
+    "description": "更新ボタンツールチップ"
+  },
+  "addSiteToTrack": {
+    "message": "追跡サイトを追加",
+    "description": "追跡サイト追加見出し"
+  },
+  "trackSitePlaceholder": {
+    "message": "example.com",
+    "description": "追跡サイト入力プレースホルダー"
   }
 }
