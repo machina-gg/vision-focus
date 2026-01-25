@@ -29,7 +29,7 @@ export async function updateBlockRules(): Promise<void> {
         action: {
           type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
           redirect: {
-            extensionPath: `/tabs/blocked.html?domain=${encodeURIComponent(baseDomain)}`,
+            extensionPath: '/newtab.html',
           },
         },
         condition: {

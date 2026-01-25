@@ -24,10 +24,6 @@
     @apply min-h-screen w-full;
   }
 
-  .blocked-container {
-    @apply min-h-screen w-full;
-  }
-
   .options-container {
     @apply min-h-screen w-full max-w-5xl mx-auto px-4 py-8;
   }
