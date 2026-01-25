@@ -45,9 +45,11 @@ const FONT_WEIGHT_VALUE: Record<string, number> = {
 
 // Background images
 const BACKGROUNDS: Record<string, string> = {
-  'default-1': chrome.runtime.getURL('assets/images/backgrounds/default-1.png'),
-  'default-2': chrome.runtime.getURL('assets/images/backgrounds/default-2.png'),
-  'default-3': chrome.runtime.getURL('assets/images/backgrounds/default-3.png'),
+  'default-1': chrome.runtime.getURL('assets/images/backgrounds/default-1.jpg'),
+  'default-2': chrome.runtime.getURL('assets/images/backgrounds/default-2.jpg'),
+  'default-3': chrome.runtime.getURL('assets/images/backgrounds/default-3.jpg'),
+  'default-4': chrome.runtime.getURL('assets/images/backgrounds/default-4.jpg'),
+  'default-5': chrome.runtime.getURL('assets/images/backgrounds/default-5.jpg'),
 }
 
 function NewtabApp() {
@@ -237,10 +239,10 @@ function NewtabApp() {
         isColorBackground
           ? { backgroundColor }
           : {
-              backgroundImage: `url(${backgroundUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }
+            backgroundImage: `url(${backgroundUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }
       }
     >
       {/* Overlay */}

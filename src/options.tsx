@@ -86,9 +86,11 @@ const FONT_WEIGHT_VALUE: Record<string, number> = {
 
 // Background images for selection
 const BACKGROUND_OPTIONS = [
-  { id: 'default-1', name: 'Mountain' },
-  { id: 'default-2', name: 'Ocean' },
-  { id: 'default-3', name: 'Forest' },
+  { id: 'default-1', name: 'Sky1' },
+  { id: 'default-2', name: 'Sky2' },
+  { id: 'default-3', name: 'Mountain1' },
+  { id: 'default-4', name: 'Mountain2' },
+  { id: 'default-5', name: 'Ocean' },
 ]
 
 function OptionsApp() {
@@ -330,8 +332,8 @@ function OptionsApp() {
 
     const updatedSchedules = editingSchedule
       ? settings.schedules.map((s) =>
-          s.id === editingSchedule.id ? newSchedule : s
-        )
+        s.id === editingSchedule.id ? newSchedule : s
+      )
       : [...settings.schedules, newSchedule]
 
     const updated = { ...settings, schedules: updatedSchedules }
@@ -541,17 +543,17 @@ function OptionsApp() {
     const updatedPresets = draftPresets.map((p) =>
       p.id === selectedPresetId
         ? {
-            ...p,
-            name: editingPresetName.trim(),
-            goalText: draftDisplaySettings.goalText.trim(),
-            goalSubText: draftDisplaySettings.goalSubText.trim(),
-            textColor: draftDisplaySettings.textColor,
-            backgroundType: draftDisplaySettings.backgroundType,
-            backgroundImage: draftDisplaySettings.backgroundImage,
-            backgroundColor: draftDisplaySettings.backgroundColor,
-            customBackgroundData: draftDisplaySettings.customBackgroundData,
-            fontSettings: draftDisplaySettings.fontSettings,
-          }
+          ...p,
+          name: editingPresetName.trim(),
+          goalText: draftDisplaySettings.goalText.trim(),
+          goalSubText: draftDisplaySettings.goalSubText.trim(),
+          textColor: draftDisplaySettings.textColor,
+          backgroundType: draftDisplaySettings.backgroundType,
+          backgroundImage: draftDisplaySettings.backgroundImage,
+          backgroundColor: draftDisplaySettings.backgroundColor,
+          customBackgroundData: draftDisplaySettings.customBackgroundData,
+          fontSettings: draftDisplaySettings.fontSettings,
+        }
         : p
     )
 
@@ -660,330 +662,326 @@ function OptionsApp() {
             <div className="lg:col-span-3 space-y-6">
               {/* Preset Selector */}
               <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {getMessage('dashboardPresets')}
-                </h2>
-                {!isPremium && (
-                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                    {getMessage('premium')}
-                  </span>
-                )}
-              </div>
-
-              {/* Empty state or Preset tabs */}
-              {draftPresets.length === 0 ? (
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Target className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900 mb-1">
-                    {getMessage('noPresetsTitle')}
-                  </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    {getMessage('noPresetsDescription')}
-                  </p>
-                  <Button
-                    onClick={() => setShowSavePresetModal(true)}
-                    size="sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {getMessage('createFirstPreset')}
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-wrap gap-2">
-                    {/* Preset buttons */}
-                    {draftPresets.map((preset) => {
-                      const isActive = vision?.activePresetId === preset.id
-                      const isSelected = selectedPresetId === preset.id
-                      return (
-                        <button
-                          key={preset.id}
-                          onClick={() => handleSelectPreset(preset.id)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                            isSelected
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {isActive && (
-                            <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-green-600'}`} />
-                          )}
-                          {preset.name}
-                        </button>
-                      )
-                    })}
-
-                    {/* New preset button */}
-                    {draftPresets.length < featureLimits.maxPresets && (
-                      <button
-                        onClick={() => setShowSavePresetModal(true)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        {getMessage('newPreset')}
-                      </button>
-                    )}
-                  </div>
-
-                  {!isPremium && draftPresets.length >= featureLimits.maxPresets && (
-                    <p className="text-xs text-amber-600 mt-2">
-                      {getMessage('maxPresetsReached', String(featureLimits.maxPresets))}
-                    </p>
-                  )}
-                </>
-              )}
-            </Card>
-
-            {/* Editing indicator and action buttons */}
-            {selectedPreset && (
-              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">
-                    {getMessage('editingPreset', selectedPreset.name)}
-                  </span>
-                  {isDirty && (
-                    <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-                      {getMessage('unsavedChanges')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeletePreset(selectedPreset.id)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                  {vision?.activePresetId === selectedPresetId ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg">
-                      <Check className="w-4 h-4" />
-                      {getMessage('activePreset')}
-                    </span>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      onClick={handleApplyPreset}
-                      size="sm"
-                    >
-                      <Check className="w-4 h-4" />
-                      {getMessage('applyPreset')}
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleSaveSelectedPreset}
-                    disabled={!draftDisplaySettings.goalText.trim() || !editingPresetName.trim() || !isDirty}
-                    size="sm"
-                  >
-                    <Save className="w-4 h-4" />
-                    {visionSaved ? getMessage('saved') : getMessage('save')}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Goal Settings */}
-            <Card>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                <div className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary-600" />
-                  {getMessage('goalSettings')}
-                </div>
-              </h2>
-              <div className="space-y-4">
-                {/* Preset Name (only when editing a preset) */}
-                {selectedPreset && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {getMessage('presetName')}
-                    </label>
-                    <Input
-                      value={editingPresetName}
-                      onChange={handlePresetNameChange}
-                      placeholder={getMessage('presetNamePlaceholder')}
-                    />
-                  </div>
-                )}
-
-                {/* Main Goal */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {getMessage('yourGoal')}
-                  </label>
-                  <Input
-                    value={draftDisplaySettings.goalText}
-                    onChange={handleDraftGoalTextChange}
-                    placeholder={getMessage('goalPlaceholder')}
-                  />
-                </div>
-
-                {/* Sub-message */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {getMessage('goalSubText')}
-                  </label>
-                  <textarea
-                    value={draftDisplaySettings.goalSubText}
-                    onChange={(e) => handleDraftGoalSubTextChange(e.target.value)}
-                    placeholder={getMessage('goalSubTextPlaceholder')}
-                    maxLength={100}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                  />
-                  <p className="text-xs text-gray-400 mt-1 text-right">
-                    {draftDisplaySettings.goalSubText.length} / 100
-                  </p>
-                </div>
-
-                {/* Text Color */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {getMessage('textColor')}
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="color"
-                      value={draftDisplaySettings.textColor}
-                      onChange={(e) => handleDraftTextColorChange(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-gray-300"
-                    />
-                    <input
-                      type="text"
-                      value={draftDisplaySettings.textColor}
-                      onChange={(e) => handleDraftTextColorChange(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono w-28"
-                      placeholder="#ffffff"
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Background Settings */}
-            <Card>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {getMessage('dashboardBackground')}
-              </h2>
-
-              {/* Background Type Toggle */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {getMessage('backgroundType')}
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleDraftBackgroundTypeChange('image')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      (draftDisplaySettings.backgroundType || 'image') === 'image'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {getMessage('backgroundTypeImage')}
-                  </button>
-                  <button
-                    onClick={() => handleDraftBackgroundTypeChange('color')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      draftDisplaySettings.backgroundType === 'color'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {getMessage('backgroundTypeColor')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Image Selection */}
-              {(draftDisplaySettings.backgroundType || 'image') === 'image' && (
-                <div className="grid grid-cols-3 gap-4">
-                  {BACKGROUND_OPTIONS.map((bg) => (
-                    <button
-                      key={bg.id}
-                      onClick={() => handleDraftBackgroundChange(bg.id)}
-                      className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-colors ${
-                        draftDisplaySettings.backgroundImage === bg.id
-                          ? 'border-blue-500'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <img
-                        src={chrome.runtime.getURL(
-                          `assets/images/backgrounds/${bg.id}.png`
-                        )}
-                        alt={bg.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-0.5 rounded">
-                        {bg.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Color Selection */}
-              {draftDisplaySettings.backgroundType === 'color' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {getMessage('selectColor')}
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="color"
-                      value={draftDisplaySettings.backgroundColor}
-                      onChange={(e) => handleDraftColorChange(e.target.value)}
-                      className="w-12 h-12 rounded-lg cursor-pointer border border-gray-300"
-                    />
-                    <input
-                      type="text"
-                      value={draftDisplaySettings.backgroundColor}
-                      onChange={(e) => handleDraftColorChange(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono w-28"
-                      placeholder="#1a1a2e"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Custom Background Upload (Premium) */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {getMessage('customBackground')}
-                  </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {getMessage('dashboardPresets')}
+                  </h2>
                   {!isPremium && (
                     <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
                       {getMessage('premium')}
                     </span>
                   )}
                 </div>
-                {isPremium ? (
-                  <ImageUploader
-                    value={draftDisplaySettings.customBackgroundData || null}
-                    onChange={handleCustomBackgroundChange}
-                  />
-                ) : (
-                  <UpgradePrompt variant="inline" />
-                )}
-              </div>
-            </Card>
 
-            {/* Font Customization */}
-            <Card>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {getMessage('fontCustomization')}
-              </h2>
-              <FontPicker
-                value={draftDisplaySettings.fontSettings || DEFAULT_FONT_SETTINGS}
-                onChange={handleFontSettingsChange}
-                previewText={draftDisplaySettings.goalText || 'Focus on your goals'}
-              />
-            </Card>
+                {/* Empty state or Preset tabs */}
+                {draftPresets.length === 0 ? (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Target className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      {getMessage('noPresetsTitle')}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-4">
+                      {getMessage('noPresetsDescription')}
+                    </p>
+                    <Button
+                      onClick={() => setShowSavePresetModal(true)}
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {getMessage('createFirstPreset')}
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Preset buttons */}
+                      {draftPresets.map((preset) => {
+                        const isActive = vision?.activePresetId === preset.id
+                        const isSelected = selectedPresetId === preset.id
+                        return (
+                          <button
+                            key={preset.id}
+                            onClick={() => handleSelectPreset(preset.id)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${isSelected
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                          >
+                            {isActive && (
+                              <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-green-600'}`} />
+                            )}
+                            {preset.name}
+                          </button>
+                        )
+                      })}
+
+                      {/* New preset button */}
+                      {draftPresets.length < featureLimits.maxPresets && (
+                        <button
+                          onClick={() => setShowSavePresetModal(true)}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
+                        >
+                          <Plus className="w-4 h-4" />
+                          {getMessage('newPreset')}
+                        </button>
+                      )}
+                    </div>
+
+                    {!isPremium && draftPresets.length >= featureLimits.maxPresets && (
+                      <p className="text-xs text-amber-600 mt-2">
+                        {getMessage('maxPresetsReached', String(featureLimits.maxPresets))}
+                      </p>
+                    )}
+                  </>
+                )}
+              </Card>
+
+              {/* Editing indicator and action buttons */}
+              {selectedPreset && (
+                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">
+                      {getMessage('editingPreset', selectedPreset.name)}
+                    </span>
+                    {isDirty && (
+                      <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                        {getMessage('unsavedChanges')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeletePreset(selectedPreset.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                    {vision?.activePresetId === selectedPresetId ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg">
+                        <Check className="w-4 h-4" />
+                        {getMessage('activePreset')}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        onClick={handleApplyPreset}
+                        size="sm"
+                      >
+                        <Check className="w-4 h-4" />
+                        {getMessage('applyPreset')}
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleSaveSelectedPreset}
+                      disabled={!draftDisplaySettings.goalText.trim() || !editingPresetName.trim() || !isDirty}
+                      size="sm"
+                    >
+                      <Save className="w-4 h-4" />
+                      {visionSaved ? getMessage('saved') : getMessage('save')}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Goal Settings */}
+              <Card>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary-600" />
+                    {getMessage('goalSettings')}
+                  </div>
+                </h2>
+                <div className="space-y-4">
+                  {/* Preset Name (only when editing a preset) */}
+                  {selectedPreset && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {getMessage('presetName')}
+                      </label>
+                      <Input
+                        value={editingPresetName}
+                        onChange={handlePresetNameChange}
+                        placeholder={getMessage('presetNamePlaceholder')}
+                      />
+                    </div>
+                  )}
+
+                  {/* Main Goal */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {getMessage('yourGoal')}
+                    </label>
+                    <Input
+                      value={draftDisplaySettings.goalText}
+                      onChange={handleDraftGoalTextChange}
+                      placeholder={getMessage('goalPlaceholder')}
+                    />
+                  </div>
+
+                  {/* Sub-message */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {getMessage('goalSubText')}
+                    </label>
+                    <textarea
+                      value={draftDisplaySettings.goalSubText}
+                      onChange={(e) => handleDraftGoalSubTextChange(e.target.value)}
+                      placeholder={getMessage('goalSubTextPlaceholder')}
+                      maxLength={100}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1 text-right">
+                      {draftDisplaySettings.goalSubText.length} / 100
+                    </p>
+                  </div>
+
+                  {/* Text Color */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {getMessage('textColor')}
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="color"
+                        value={draftDisplaySettings.textColor}
+                        onChange={(e) => handleDraftTextColorChange(e.target.value)}
+                        className="w-10 h-10 rounded-lg cursor-pointer border border-gray-300"
+                      />
+                      <input
+                        type="text"
+                        value={draftDisplaySettings.textColor}
+                        onChange={(e) => handleDraftTextColorChange(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono w-28"
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Background Settings */}
+              <Card>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  {getMessage('dashboardBackground')}
+                </h2>
+
+                {/* Background Type Toggle */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {getMessage('backgroundType')}
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDraftBackgroundTypeChange('image')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(draftDisplaySettings.backgroundType || 'image') === 'image'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                      {getMessage('backgroundTypeImage')}
+                    </button>
+                    <button
+                      onClick={() => handleDraftBackgroundTypeChange('color')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${draftDisplaySettings.backgroundType === 'color'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                      {getMessage('backgroundTypeColor')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Image Selection */}
+                {(draftDisplaySettings.backgroundType || 'image') === 'image' && (
+                  <div className="grid grid-cols-3 gap-4">
+                    {BACKGROUND_OPTIONS.map((bg) => (
+                      <button
+                        key={bg.id}
+                        onClick={() => handleDraftBackgroundChange(bg.id)}
+                        className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-colors ${draftDisplaySettings.backgroundImage === bg.id
+                          ? 'border-blue-500'
+                          : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                      >
+                        <img
+                          src={chrome.runtime.getURL(
+                            `assets/images/backgrounds/${bg.id}.jpg`
+                          )}
+                          alt={bg.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-0.5 rounded">
+                          {bg.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Color Selection */}
+                {draftDisplaySettings.backgroundType === 'color' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {getMessage('selectColor')}
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="color"
+                        value={draftDisplaySettings.backgroundColor}
+                        onChange={(e) => handleDraftColorChange(e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer border border-gray-300"
+                      />
+                      <input
+                        type="text"
+                        value={draftDisplaySettings.backgroundColor}
+                        onChange={(e) => handleDraftColorChange(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono w-28"
+                        placeholder="#1a1a2e"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Background Upload (Premium) */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {getMessage('customBackground')}
+                    </h3>
+                    {!isPremium && (
+                      <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                        {getMessage('premium')}
+                      </span>
+                    )}
+                  </div>
+                  {isPremium ? (
+                    <ImageUploader
+                      value={draftDisplaySettings.customBackgroundData || null}
+                      onChange={handleCustomBackgroundChange}
+                    />
+                  ) : (
+                    <UpgradePrompt variant="inline" />
+                  )}
+                </div>
+              </Card>
+
+              {/* Font Customization */}
+              <Card>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  {getMessage('fontCustomization')}
+                </h2>
+                <FontPicker
+                  value={draftDisplaySettings.fontSettings || DEFAULT_FONT_SETTINGS}
+                  onChange={handleFontSettingsChange}
+                  previewText={draftDisplaySettings.goalText || 'Focus on your goals'}
+                />
+              </Card>
             </div>
 
             {/* Right Column - Preview (sticky) */}
@@ -1000,17 +998,17 @@ function OptionsApp() {
                         ? { backgroundColor: draftDisplaySettings.backgroundColor }
                         : draftDisplaySettings.customBackgroundData
                           ? {
-                              backgroundImage: `url(${draftDisplaySettings.customBackgroundData})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            }
+                            backgroundImage: `url(${draftDisplaySettings.customBackgroundData})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }
                           : {
-                              backgroundImage: `url(${chrome.runtime.getURL(
-                                `assets/images/backgrounds/${draftDisplaySettings.backgroundImage || 'default-1'}.png`
-                              )})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            }
+                            backgroundImage: `url(${chrome.runtime.getURL(
+                              `assets/images/backgrounds/${draftDisplaySettings.backgroundImage || 'default-1'}.jpg`
+                            )})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }
                     }
                   >
                     {/* Overlay */}
@@ -1192,11 +1190,10 @@ function OptionsApp() {
                           {dayNames.map((day, idx) => (
                             <span
                               key={day}
-                              className={`text-xs px-1.5 py-0.5 rounded ${
-                                schedule.days.includes(idx)
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-200 text-gray-400'
-                              }`}
+                              className={`text-xs px-1.5 py-0.5 rounded ${schedule.days.includes(idx)
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-200 text-gray-400'
+                                }`}
                             >
                               {day}
                             </span>
@@ -1555,11 +1552,10 @@ function OptionsApp() {
                 <button
                   key={day}
                   onClick={() => toggleDay(idx)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    scheduleForm.days.includes(idx)
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${scheduleForm.days.includes(idx)
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {day}
                 </button>
