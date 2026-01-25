@@ -19,6 +19,7 @@ import { getMessage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus, getFeatureLimits } from '~/lib/license'
 import { openPaymentPage, openManagementPage } from '~/lib/extpay'
+import { parseDomainInput, isValidDomain } from '~/lib/domain'
 import type {
   AppSettings,
   VisionSettings,
@@ -75,22 +76,24 @@ function OptionsApp() {
   const schedules = useSchedules({ settings, setSettings })
   const presets = usePresets({ vision, setVision })
 
-  // Load analytics and unblock history
-  useEffect(() => {
-    const loadData = async () => {
-      const [analyticsResult, unblockResult] = await Promise.all([
-        storage.get('analytics') as Promise<AnalyticsData | undefined>,
-        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
-      ])
-      if (analyticsResult) {
-        setAnalyticsData(analyticsResult)
-      }
-      if (unblockResult) {
-        setUnblockHistory(unblockResult)
-      }
+  // Helper function to reload analytics data
+  const reloadAnalyticsData = useCallback(async () => {
+    const [analyticsResult, unblockResult] = await Promise.all([
+      storage.get('analytics') as Promise<AnalyticsData | undefined>,
+      storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
+    ])
+    if (analyticsResult) {
+      setAnalyticsData(analyticsResult)
     }
-    loadData()
+    if (unblockResult) {
+      setUnblockHistory(unblockResult)
+    }
   }, [])
+
+  // Load analytics and unblock history on mount
+  useEffect(() => {
+    reloadAnalyticsData()
+  }, [reloadAnalyticsData])
 
   // Load premium status
   useEffect(() => {
@@ -133,37 +136,35 @@ function OptionsApp() {
   ]
 
   // Re-block handler
-  const handleReblock = useCallback(async (domain: string) => {
-    try {
-      await sendToBackground({
-        name: 'add-block',
-        body: { domain },
-      })
-      // Refresh data after re-blocking
-      const [analyticsResult, unblockResult, settingsResult] = await Promise.all([
-        storage.get('analytics') as Promise<AnalyticsData | undefined>,
-        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
-        storage.get('settings') as Promise<AppSettings | undefined>,
-      ])
-      if (analyticsResult) {
-        setAnalyticsData(analyticsResult)
+  const handleReblock = useCallback(
+    async (domain: string) => {
+      try {
+        await sendToBackground({
+          name: 'add-block',
+          body: { domain },
+        })
+        // Refresh data after re-blocking
+        await reloadAnalyticsData()
+        const settingsResult = (await storage.get('settings')) as
+          | AppSettings
+          | undefined
+        if (settingsResult) {
+          setSettings(settingsResult)
+        }
+      } catch {
+        // Silently handle error
       }
-      if (unblockResult) {
-        setUnblockHistory(unblockResult)
-      }
-      if (settingsResult) {
-        setSettings(settingsResult)
-      }
-    } catch {
-      // Silently handle error
-    }
-  }, [setSettings])
+    },
+    [setSettings, reloadAnalyticsData]
+  )
 
   // Reset analytics handler (reset time only, keep site list)
   const handleResetAnalytics = useCallback(async () => {
     try {
       // Reset time for all sites but keep the list
-      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      const currentHistory = (await storage.get('unblockHistory')) as
+        | UnblockHistory
+        | undefined
       if (currentHistory) {
         const resetHistory: UnblockHistory = {
           sites: Object.fromEntries(
@@ -193,7 +194,9 @@ function OptionsApp() {
   // Stop tracking a site (remove from unblock history)
   const handleStopTracking = useCallback(async (domain: string) => {
     try {
-      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      const currentHistory = (await storage.get('unblockHistory')) as
+        | UnblockHistory
+        | undefined
       if (currentHistory && currentHistory.sites[domain]) {
         const { [domain]: _, ...remainingSites } = currentHistory.sites
         const updatedHistory: UnblockHistory = { sites: remainingSites }
@@ -201,9 +204,12 @@ function OptionsApp() {
         setUnblockHistory(updatedHistory)
 
         // Also remove from analytics siteTime
-        const currentAnalytics = await storage.get('analytics') as AnalyticsData | undefined
+        const currentAnalytics = (await storage.get('analytics')) as
+          | AnalyticsData
+          | undefined
         if (currentAnalytics && currentAnalytics.siteTime[domain]) {
-          const { [domain]: __, ...remainingSiteTime } = currentAnalytics.siteTime
+          const { [domain]: __, ...remainingSiteTime } =
+            currentAnalytics.siteTime
           const updatedAnalytics: AnalyticsData = {
             ...currentAnalytics,
             siteTime: remainingSiteTime,
@@ -220,34 +226,33 @@ function OptionsApp() {
   // Refresh analytics data
   const handleRefreshAnalytics = useCallback(async () => {
     try {
-      const [analyticsResult, unblockResult] = await Promise.all([
-        storage.get('analytics') as Promise<AnalyticsData | undefined>,
-        storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
-      ])
-      if (analyticsResult) {
-        setAnalyticsData(analyticsResult)
-      }
-      if (unblockResult) {
-        setUnblockHistory(unblockResult)
-      }
+      await reloadAnalyticsData()
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, [reloadAnalyticsData])
 
   // Add site to track manually
   const handleAddSiteToTrack = useCallback(async (domain: string) => {
     try {
-      const currentHistory = await storage.get('unblockHistory') as UnblockHistory | undefined
+      // Validate and parse domain
+      const { domain: parsedDomain } = parseDomainInput(domain)
+      if (!isValidDomain(parsedDomain)) {
+        return // Invalid domain format
+      }
+
+      const currentHistory = (await storage.get('unblockHistory')) as
+        | UnblockHistory
+        | undefined
       const history = currentHistory || { sites: {} }
 
       // Don't add if already tracking
-      if (history.sites[domain]) {
+      if (history.sites[parsedDomain]) {
         return
       }
 
-      history.sites[domain] = {
-        domain,
+      history.sites[parsedDomain] = {
+        domain: parsedDomain,
         unblockedAt: new Date().toISOString(),
         timeAfterUnblock: 0,
         lastActivity: null,

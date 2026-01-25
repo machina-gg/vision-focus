@@ -1,5 +1,14 @@
 import React, { useMemo, useState } from 'react'
-import { AlertTriangle, Clock, Lock, RefreshCw, Trash2, EyeOff, RotateCw, Plus } from 'lucide-react'
+import {
+  AlertTriangle,
+  Clock,
+  Lock,
+  RefreshCw,
+  Trash2,
+  EyeOff,
+  RotateCw,
+  Plus,
+} from 'lucide-react'
 
 import { Card, Button, Modal, Input } from '~/components/ui'
 import { UpgradePrompt, AnalyticsChart } from '~/components/features'
@@ -113,7 +122,9 @@ export function AnalyticsTab({
             className="text-gray-500 hover:text-gray-700"
             title={getMessage('refresh')}
           >
-            <RotateCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RotateCw
+              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
           </Button>
         </div>
       </Card>
@@ -126,7 +137,7 @@ export function AnalyticsTab({
         <div className="flex gap-2">
           <Input
             value={newSiteDomain}
-            onChange={(e) => setNewSiteDomain(e.target.value)}
+            onChange={(value) => setNewSiteDomain(value)}
             placeholder={getMessage('trackSitePlaceholder')}
             onKeyDown={(e) => e.key === 'Enter' && handleAddSite()}
             className="flex-1"
@@ -181,7 +192,8 @@ export function AnalyticsTab({
 
                     {/* Unblocked date */}
                     <p className="text-sm text-gray-500 mt-1">
-                      {getMessage('unblockedOn')}: {formatRelativeTime(site.unblockedAt)}
+                      {getMessage('unblockedOn')}:{' '}
+                      {formatRelativeTime(site.unblockedAt)}
                     </p>
 
                     {/* Time spent */}
@@ -277,7 +289,10 @@ export function AnalyticsTab({
               {getMessage('reset')}
             </Button>
           </div>
-          <AnalyticsChart analytics={analyticsData} unblockHistory={unblockHistory} />
+          <AnalyticsChart
+            analytics={analyticsData}
+            unblockHistory={unblockHistory}
+          />
         </Card>
       )}
 
@@ -298,10 +313,7 @@ export function AnalyticsTab({
             >
               {getMessage('cancel')}
             </Button>
-            <Button
-              variant="danger"
-              onClick={handleReset}
-            >
+            <Button variant="danger" onClick={handleReset}>
               {getMessage('reset')}
             </Button>
           </div>

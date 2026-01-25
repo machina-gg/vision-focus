@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react'
 
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   Cell,
@@ -12,7 +10,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import { BarChart3, TrendingUp, Layers } from 'lucide-react'
@@ -107,7 +104,9 @@ export function AnalyticsChart({
       .map((domain) => ({
         domain: domain.length > 15 ? domain.slice(0, 15) + '...' : domain,
         fullDomain: domain,
-        time: Math.round((unblockHistory.sites[domain]?.timeAfterUnblock || 0) / 60),
+        time: Math.round(
+          (unblockHistory.sites[domain]?.timeAfterUnblock || 0) / 60
+        ),
       }))
       .filter((s) => s.time > 0)
       .sort((a, b) => b.time - a.time)
@@ -190,7 +189,10 @@ export function AnalyticsChart({
                 tickFormatter={(v) => `${v}m`}
               />
               <Tooltip
-                formatter={(value: number) => [formatMinutes(value), getMessage('chartDailyLabel')]}
+                formatter={(value: number) => [
+                  formatMinutes(value),
+                  getMessage('chartDailyLabel'),
+                ]}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
@@ -234,7 +236,9 @@ export function AnalyticsChart({
               />
               <Tooltip
                 formatter={(value: number, _name: string, props) => {
-                  const payload = props?.payload as { fullDomain?: string } | undefined
+                  const payload = props?.payload as
+                    | { fullDomain?: string }
+                    | undefined
                   return [formatMinutes(value), payload?.fullDomain || '']
                 }}
                 contentStyle={{
@@ -274,7 +278,10 @@ export function AnalyticsChart({
                 tickFormatter={(v) => `${v}m`}
               />
               <Tooltip
-                formatter={(value: number) => [formatMinutes(value), getMessage('chartCumulativeLabel')]}
+                formatter={(value: number) => [
+                  formatMinutes(value),
+                  getMessage('chartCumulativeLabel'),
+                ]}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',

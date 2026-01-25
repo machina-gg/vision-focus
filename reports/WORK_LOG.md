@@ -7,7 +7,51 @@
 
 ## 2026-01-25
 
-### Analytics機能ブラッシュアップ
+### リファクタリング・セキュリティ強化
+
+- **実施内容**: コード品質とセキュリティの改善
+- **変更ファイル**:
+  - src/background/messages/tracker-heartbeat.ts
+    - マジックナンバー（60*1000）を定数化
+    - www変換ロジックをヘルパー関数（normalizeDomain, domainsMatch）に抽出
+  - src/options.tsx
+    - ドメイン入力検証を追加（parseDomainInput, isValidDomain）
+    - データ読み込みロジックを reloadAnalyticsData に共通化
+    - handleReblock, handleRefreshAnalytics のコード重複を削減
+- **セキュリティ改善**:
+  - 手動サイト追加時のドメイン検証追加（不正なドメイン形式を拒否）
+  - 入力値のサニタイズ（トリム、小文字化）を確認
+- **リファクタリング**:
+  - www変換ロジックの重複排除（normalizeDomain関数）
+  - マジックナンバーの定数化
+  - データ読み込みパターンの共通化
+
+### Analytics機能ブラッシュアップ（追加改善）
+
+- **実施内容**: 分析機能のUX改善とトラッキング精度向上
+- **変更ファイル**:
+  - src/contents/tracker.ts - 表示時間ベーストラッキングに変更（アクティビティ検出を廃止）
+  - src/background/messages/tracker-heartbeat.ts - www変換対応を追加
+  - src/components/options/AnalyticsTab.tsx - リセット、更新、追跡停止、手動サイト追加機能追加
+  - src/components/features/AnalyticsChart/AnalyticsChart.tsx - パステルカラーに変更、Cellコンポーネント使用
+  - src/options.tsx - 新ハンドラー追加（handleResetAnalytics, handleStopTracking, handleRefreshAnalytics, handleAddSiteToTrack）
+  - assets/\_locales/en/messages.json - 新メッセージ追加
+  - assets/\_locales/ja/messages.json - 新メッセージ追加
+- **実装機能**:
+  - 表示時間ベーストラッキング: タブが表示されている間は時間を計測（バックグラウンド再生も計測）
+  - リセット機能: 時間のみリセット（サイトリストは保持）
+  - 追跡停止機能: 個別サイトの追跡を停止
+  - 手動サイト追加: 任意のドメインを追跡対象に追加
+  - 更新ボタン: データを最新に更新（スピンアニメーション付き）
+  - グラフ色改善: 毒々しい色からパステルカラーに変更
+  - ドメインマッチング: youtube.com と www.youtube.com を同一サイトとして認識
+- **品質対応**:
+  - TypeScript: エラーなし
+  - ESLint: エラーなし
+  - Prettier: フォーマット完了
+  - セキュリティチェック: XSS/インジェクション脆弱性なし
+
+### Analytics機能ブラッシュアップ（初期実装）
 
 - **実施内容**: 分析機能を「元ブロックサイトの利用状況」機能に特化
 - **変更ファイル**:
@@ -19,8 +63,8 @@
   - src/components/options/AnalyticsTab.tsx - UI全面書き換え
   - src/options.tsx - unblockHistory読み込み、onReblock追加
   - src/components/features/UpgradePrompt.tsx - featuresプロップ追加
-  - assets/_locales/en/messages.json - 英語メッセージ追加
-  - assets/_locales/ja/messages.json - 日本語メッセージ追加
+  - assets/\_locales/en/messages.json - 英語メッセージ追加
+  - assets/\_locales/ja/messages.json - 日本語メッセージ追加
 - **削除ファイル**:
   - src/components/features/ReportCard/
   - src/components/features/SiteCategoryManager/
@@ -152,11 +196,11 @@
   - src/newtab.tsx - ダッシュボード（新規タブ）
   - src/tabs/blocked.tsx - ブロックページ
   - src/options.tsx - オプション画面（設定、ブロックリスト、スケジュール、分析）
-  - assets/_locales/en/messages.json - 英語メッセージ
-  - assets/_locales/ja/messages.json - 日本語メッセージ
+  - assets/\_locales/en/messages.json - 英語メッセージ
+  - assets/\_locales/ja/messages.json - 日本語メッセージ
 - **実装機能**:
   - サイトブロック（declarativeNetRequest API）
-  - ワイルドカードドメイン対応（*.example.com）
+  - ワイルドカードドメイン対応（\*.example.com）
   - スケジュールベースブロック
   - ロックダウンモード
   - 一時解除チャレンジ（5分間）

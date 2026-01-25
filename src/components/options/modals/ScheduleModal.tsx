@@ -125,11 +125,7 @@ export function ScheduleModal({
             {vision?.presets?.map((preset, index) => {
               const isLocked = !isPremium && index >= featureLimits.maxPresets
               return (
-                <option
-                  key={preset.id}
-                  value={preset.id}
-                  disabled={isLocked}
-                >
+                <option key={preset.id} value={preset.id} disabled={isLocked}>
                   {isLocked ? `🔒 ${preset.name}` : preset.name}
                 </option>
               )

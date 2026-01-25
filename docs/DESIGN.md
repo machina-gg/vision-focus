@@ -40,18 +40,18 @@
 
 ### 決済関連（有料版）
 
-| カテゴリ       | 技術            | 備考                             |
-| -------------- | --------------- | -------------------------------- |
-| 課金           | Gumroad         | ライセンスキー発行               |
-| ライセンス検証 | Gumroad API     | ライセンスキーの有効性確認       |
-| 開発者モード   | ローカル検証    | 24時間限定のプレミアム機能解放   |
+| カテゴリ       | 技術         | 備考                           |
+| -------------- | ------------ | ------------------------------ |
+| 課金           | Gumroad      | ライセンスキー発行             |
+| ライセンス検証 | Gumroad API  | ライセンスキーの有効性確認     |
+| 開発者モード   | ローカル検証 | 24時間限定のプレミアム機能解放 |
 
 ### プレミアム機能用ライブラリ
 
-| カテゴリ       | 技術            | 備考                             |
-| -------------- | --------------- | -------------------------------- |
-| 分析グラフ     | recharts        | React向けチャートライブラリ      |
-| 壁紙生成       | html2canvas     | DOM要素をCanvas化してPNG出力     |
+| カテゴリ   | 技術        | 備考                         |
+| ---------- | ----------- | ---------------------------- |
+| 分析グラフ | recharts    | React向けチャートライブラリ  |
+| 壁紙生成   | html2canvas | DOM要素をCanvas化してPNG出力 |
 
 ## 2. ディレクトリ構成
 
@@ -209,20 +209,20 @@ interface StorageSchema {
 
 // アプリ設定
 interface AppSettings {
-  blockList: BlockItem[]      // ブロックリスト
-  schedules: Schedule[]       // 時間帯指定（プリセット連携対応）
+  blockList: BlockItem[] // ブロックリスト
+  schedules: Schedule[] // 時間帯指定（プリセット連携対応）
 }
 
 // ダッシュボード表示設定（プリセットとデフォルトで共通）
 interface DashboardDisplaySettings {
-  goalText: string            // 目標テキスト
-  goalSubText: string         // サブテキスト
-  textColor: string           // テキスト色
+  goalText: string // 目標テキスト
+  goalSubText: string // サブテキスト
+  textColor: string // テキスト色
   backgroundType: 'image' | 'color'
-  backgroundImage: string     // 背景画像ID
-  backgroundColor: string     // 背景色
-  customBackgroundData: string | null  // Base64アップロード画像（Premium）
-  fontSettings: FontSettings  // フォント設定
+  backgroundImage: string // 背景画像ID
+  backgroundColor: string // 背景色
+  customBackgroundData: string | null // Base64アップロード画像（Premium）
+  fontSettings: FontSettings // フォント設定
 }
 
 // ダッシュボードプリセット
@@ -234,22 +234,22 @@ interface DashboardPreset extends DashboardDisplaySettings {
 
 // ビジョン設定
 interface VisionSettings {
-  defaultSettings: DashboardDisplaySettings  // デフォルト設定
-  presets: DashboardPreset[]                 // ユーザー作成プリセット
-  activePresetId: string | null              // 現在有効なプリセットID
+  defaultSettings: DashboardDisplaySettings // デフォルト設定
+  presets: DashboardPreset[] // ユーザー作成プリセット
+  activePresetId: string | null // 現在有効なプリセットID
 }
 
 // フォント設定
 interface FontSettings {
-  family: FontFamily   // フォントファミリー（20種類以上）
+  family: FontFamily // フォントファミリー（20種類以上）
   size: 'sm' | 'md' | 'lg' | 'xl'
   weight: 'normal' | 'medium' | 'semibold' | 'bold'
 }
 
 // 分析データ
 interface AnalyticsData {
-  dailyStats: Record<string, DailyStat>  // 日別統計
-  siteTime: Record<string, SiteTime>     // サイト別滞在時間
+  dailyStats: Record<string, DailyStat> // 日別統計
+  siteTime: Record<string, SiteTime> // サイト別滞在時間
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>
 }
 
@@ -258,8 +258,8 @@ interface Schedule {
   id: string
   name: string
   startTime: string // HH:mm
-  endTime: string   // HH:mm
-  days: number[]    // 0=Sun, 1=Mon, ..., 6=Sat
+  endTime: string // HH:mm
+  days: number[] // 0=Sun, 1=Mon, ..., 6=Sat
   enabled: boolean
   presetId?: string // このスケジュールで適用するプリセットID
 }

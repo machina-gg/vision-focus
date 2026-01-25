@@ -116,16 +116,15 @@ export function GeneralTab({
                 {draftPresets.map((preset, index) => {
                   const isActive = vision?.activePresetId === preset.id
                   const isSelected = selectedPresetId === preset.id
-                  const isLocked = !isPremium && index >= featureLimits.maxPresets
+                  const isLocked =
+                    !isPremium && index >= featureLimits.maxPresets
                   return (
                     <button
                       key={preset.id}
                       onClick={() => !isLocked && onSelectPreset(preset.id)}
                       disabled={isLocked}
                       title={
-                        isLocked
-                          ? getMessage('upgradeToUsePreset')
-                          : undefined
+                        isLocked ? getMessage('upgradeToUsePreset') : undefined
                       }
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                         isLocked
@@ -175,9 +174,8 @@ export function GeneralTab({
               {/* Warning if active preset is locked */}
               {!isPremium &&
                 vision?.activePresetId &&
-                draftPresets.findIndex(
-                  (p) => p.id === vision.activePresetId
-                ) >= featureLimits.maxPresets && (
+                draftPresets.findIndex((p) => p.id === vision.activePresetId) >=
+                  featureLimits.maxPresets && (
                   <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
                     <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>{getMessage('lockedPresetWarning')}</span>

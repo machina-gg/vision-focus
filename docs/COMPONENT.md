@@ -18,44 +18,44 @@
 
 ### 機能コンポーネント
 
-| コンポーネント名    | 種別    | 説明                         |
-| ------------------- | ------- | ---------------------------- |
-| Header              | layout  | ヘッダー（ロゴ + ナビ）      |
-| GoalCard            | feature | 目標表示カード               |
-| StatsCard           | feature | 統計表示カード               |
-| BlockListItem       | feature | ブロックリスト項目           |
-| SiteTimeChart       | feature | サイト利用時間グラフ         |
-| ChallengeModal      | feature | 解除チャレンジモーダル       |
-| LockdownButton      | feature | ロックダウンモードボタン     |
-| QuickBlockButton    | feature | クイックブロックボタン       |
-| ScheduleEditor      | feature | スケジュール編集             |
-| PremiumBanner       | feature | 有料版アップグレードバナー   |
+| コンポーネント名    | 種別    | 説明                            |
+| ------------------- | ------- | ------------------------------- |
+| Header              | layout  | ヘッダー（ロゴ + ナビ）         |
+| GoalCard            | feature | 目標表示カード                  |
+| StatsCard           | feature | 統計表示カード                  |
+| BlockListItem       | feature | ブロックリスト項目              |
+| SiteTimeChart       | feature | サイト利用時間グラフ            |
+| ChallengeModal      | feature | 解除チャレンジモーダル          |
+| LockdownButton      | feature | ロックダウンモードボタン        |
+| QuickBlockButton    | feature | クイックブロックボタン          |
+| ScheduleEditor      | feature | スケジュール編集                |
+| PremiumBanner       | feature | 有料版アップグレードバナー      |
 | ImageUploader       | feature | 背景画像アップロード（Premium） |
-| FontPicker          | feature | フォント選択（20種類以上）   |
-| AnalyticsChart      | feature | 分析グラフ（recharts）       |
-| ReportCard          | feature | 週次/月次レポート表示        |
-| DownloadButton      | feature | 壁紙ダウンロード（Premium）  |
-| SiteCategoryManager | feature | サイトカテゴリ管理UI         |
-| UpgradePrompt       | feature | プレミアムアップグレード促進 |
+| FontPicker          | feature | フォント選択（20種類以上）      |
+| AnalyticsChart      | feature | 分析グラフ（recharts）          |
+| ReportCard          | feature | 週次/月次レポート表示           |
+| DownloadButton      | feature | 壁紙ダウンロード（Premium）     |
+| SiteCategoryManager | feature | サイトカテゴリ管理UI            |
+| UpgradePrompt       | feature | プレミアムアップグレード促進    |
 
 ### 新規タブ用コンポーネント
 
-| コンポーネント名 | 種別   | 説明                       |
-| ---------------- | ------ | -------------------------- |
-| GoalDisplay      | newtab | 目標テキスト表示・編集     |
-| MiniStats        | newtab | ミニ統計カード（3項目）    |
+| コンポーネント名 | 種別   | 説明                    |
+| ---------------- | ------ | ----------------------- |
+| GoalDisplay      | newtab | 目標テキスト表示・編集  |
+| MiniStats        | newtab | ミニ統計カード（3項目） |
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名 | 種別    | 説明                         |
-| ---------------- | ------- | ---------------------------- |
-| GeneralTab       | options | 一般設定（プリセット管理）   |
-| BlocklistTab     | options | ブロックリスト管理           |
-| SchedulesTab     | options | スケジュール管理             |
-| AnalyticsTab     | options | 分析タブ                     |
-| PremiumTab       | options | プレミアムタブ               |
-| ScheduleModal    | modal   | スケジュール編集モーダル     |
-| NewPresetModal   | modal   | 新規プリセット作成モーダル   |
+| コンポーネント名 | 種別    | 説明                       |
+| ---------------- | ------- | -------------------------- |
+| GeneralTab       | options | 一般設定（プリセット管理） |
+| BlocklistTab     | options | ブロックリスト管理         |
+| SchedulesTab     | options | スケジュール管理           |
+| AnalyticsTab     | options | 分析タブ                   |
+| PremiumTab       | options | プレミアムタブ             |
+| ScheduleModal    | modal   | スケジュール編集モーダル   |
+| NewPresetModal   | modal   | 新規プリセット作成モーダル |
 
 ### ページコンポーネント
 
@@ -394,8 +394,9 @@ function useBlocklist(props: {
 ```
 
 **機能**
+
 - ドメインの追加・削除
-- ワイルドカード（*.example.com）対応
+- ワイルドカード（\*.example.com）対応
 - 重複チェック
 - バリデーションエラー管理
 
@@ -432,6 +433,7 @@ function useSchedules(props: {
 ```
 
 **機能**
+
 - スケジュールの追加・編集・削除
 - 有効/無効の切り替え
 - プリセット連携（presetId）
@@ -482,6 +484,7 @@ function usePresets(props: {
 ```
 
 **機能**
+
 - プリセットの作成・選択・削除・適用
 - 設定変更時のドラフト管理
 - ストレージへの永続化
@@ -547,14 +550,14 @@ interface Schedule {
 
 ```typescript
 interface DashboardDisplaySettings {
-  goalText: string            // 目標テキスト
-  goalSubText: string         // サブテキスト
-  textColor: string           // テキスト色
+  goalText: string // 目標テキスト
+  goalSubText: string // サブテキスト
+  textColor: string // テキスト色
   backgroundType: 'image' | 'color'
-  backgroundImage: string     // 背景画像ID
-  backgroundColor: string     // 背景色
-  customBackgroundData: string | null  // Base64アップロード画像（Premium）
-  fontSettings: FontSettings  // フォント設定
+  backgroundImage: string // 背景画像ID
+  backgroundColor: string // 背景色
+  customBackgroundData: string | null // Base64アップロード画像（Premium）
+  fontSettings: FontSettings // フォント設定
 }
 ```
 
@@ -572,9 +575,9 @@ interface DashboardPreset extends DashboardDisplaySettings {
 
 ```typescript
 interface VisionSettings {
-  defaultSettings: DashboardDisplaySettings  // デフォルト設定
-  presets: DashboardPreset[]                 // ユーザー作成プリセット
-  activePresetId: string | null              // 現在有効なプリセットID
+  defaultSettings: DashboardDisplaySettings // デフォルト設定
+  presets: DashboardPreset[] // ユーザー作成プリセット
+  activePresetId: string | null // 現在有効なプリセットID
 }
 ```
 

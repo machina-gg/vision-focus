@@ -111,7 +111,9 @@ function NewtabApp() {
 
     if (activeScheduleWithPreset?.presetId) {
       // Check if preset is available for free tier
-      if (isPresetAvailable(activeScheduleWithPreset.presetId, vision.presets)) {
+      if (
+        isPresetAvailable(activeScheduleWithPreset.presetId, vision.presets)
+      ) {
         const schedulePreset = vision.presets?.find(
           (p) => p.id === activeScheduleWithPreset.presetId
         )

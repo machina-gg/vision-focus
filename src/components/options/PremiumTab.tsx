@@ -269,7 +269,9 @@ export function PremiumTab({
                       key={index}
                       className={feature.highlight ? 'bg-amber-50/50' : ''}
                     >
-                      <td className="py-3 px-4 text-gray-700">{feature.name}</td>
+                      <td className="py-3 px-4 text-gray-700">
+                        {feature.name}
+                      </td>
                       <td className="py-3 px-3 text-center">
                         {feature.free === null ? (
                           <X className="w-5 h-5 text-gray-300 mx-auto" />

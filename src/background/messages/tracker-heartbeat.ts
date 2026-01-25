@@ -53,8 +53,9 @@ function ensureRecordingTimer() {
     }
 
     // Clean up stale entries (no heartbeat for over 1 minute)
+    const STALE_TIMEOUT_MS = 60 * 1000
     for (const [key, page] of activePages.entries()) {
-      if (now - page.lastHeartbeat > 60 * 1000) {
+      if (now - page.lastHeartbeat > STALE_TIMEOUT_MS) {
         activePages.delete(key)
       }
     }
@@ -65,6 +66,16 @@ function ensureRecordingTimer() {
       recordingTimer = null
     }
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS)
+}
+
+// Normalize domain by removing www prefix
+function normalizeDomain(domain: string): string {
+  return domain.startsWith('www.') ? domain.slice(4) : domain
+}
+
+// Check if two domains match (considering www variants)
+function domainsMatch(domain1: string, domain2: string): boolean {
+  return normalizeDomain(domain1) === normalizeDomain(domain2)
 }
 
 // Find matching unblocked site (supports wildcards and www variants)
@@ -91,19 +102,8 @@ function findUnblockedSite(
       return unblockedDomain
     }
 
-    // Also check www variant: if blocked "youtube.com", match "www.youtube.com"
-    if (
-      !unblockedDomain.startsWith('www.') &&
-      domain === 'www.' + unblockedDomain
-    ) {
-      return unblockedDomain
-    }
-
-    // And reverse: if blocked "www.youtube.com", match "youtube.com"
-    if (
-      unblockedDomain.startsWith('www.') &&
-      domain === unblockedDomain.slice(4)
-    ) {
+    // Check www variant match (youtube.com ↔ www.youtube.com)
+    if (domainsMatch(domain, unblockedDomain)) {
       return unblockedDomain
     }
   }

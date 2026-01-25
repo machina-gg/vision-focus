@@ -75,7 +75,9 @@ export async function getUnblockHistory(): Promise<UnblockHistory> {
 }
 
 // Set unblock history
-export async function setUnblockHistory(history: UnblockHistory): Promise<void> {
+export async function setUnblockHistory(
+  history: UnblockHistory
+): Promise<void> {
   await storage.set(KEYS.unblockHistory, history)
 }
 
