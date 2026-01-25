@@ -246,7 +246,7 @@
     "description": "Save success feedback"
   },
   "dashboardPreview": {
-    "message": "Dashboard Preview",
+    "message": "Preview",
     "description": "Preview section title"
   },
   "backgroundType": {
@@ -676,8 +676,8 @@
     "description": "Site category help text"
   },
   "dashboardPresets": {
-    "message": "Dashboard Presets",
-    "description": "Dashboard presets section title"
+    "message": "Presets",
+    "description": "Presets section title"
   },
   "saveAsPreset": {
     "message": "Save as Preset",
@@ -686,6 +686,10 @@
   "savePresetDescription": {
     "message": "Save the current dashboard settings (goal, background, font) as a preset for quick switching",
     "description": "Save preset description"
+  },
+  "presetName": {
+    "message": "Preset Name",
+    "description": "Preset name label"
   },
   "presetNamePlaceholder": {
     "message": "e.g., Work Mode, Weekend, Morning Routine",
@@ -742,5 +746,17 @@
   "activePreset": {
     "message": "Active",
     "description": "Currently active preset"
+  },
+  "noPresetsTitle": {
+    "message": "No Presets",
+    "description": "Title when no presets exist"
+  },
+  "noPresetsDescription": {
+    "message": "Add a preset to customize your dashboard appearance",
+    "description": "Description when no presets exist"
+  },
+  "createFirstPreset": {
+    "message": "Create First Preset",
+    "description": "Create first preset button"
   }
 }

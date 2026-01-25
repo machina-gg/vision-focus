@@ -246,7 +246,7 @@
     "description": "保存成功フィードバック"
   },
   "dashboardPreview": {
-    "message": "ダッシュボードプレビュー",
+    "message": "プレビュー",
     "description": "プレビューセクションタイトル"
   },
   "backgroundType": {
@@ -676,8 +676,8 @@
     "description": "サイトカテゴリヘルプテキスト"
   },
   "dashboardPresets": {
-    "message": "ダッシュボードプリセット",
-    "description": "ダッシュボードプリセットセクションタイトル"
+    "message": "プリセット",
+    "description": "プリセットセクションタイトル"
   },
   "saveAsPreset": {
     "message": "プリセットとして保存",
@@ -686,6 +686,10 @@
   "savePresetDescription": {
     "message": "現在のダッシュボード設定（目標、背景、フォント）をプリセットとして保存し、すぐに切り替えられます",
     "description": "プリセット保存の説明"
+  },
+  "presetName": {
+    "message": "プリセット名",
+    "description": "プリセット名ラベル"
   },
   "presetNamePlaceholder": {
     "message": "例: 仕事モード、休日、朝のルーティン",
@@ -742,5 +746,17 @@
   "activePreset": {
     "message": "設定中",
     "description": "現在アクティブなプリセット"
+  },
+  "noPresetsTitle": {
+    "message": "プリセットがありません",
+    "description": "プリセットがない場合のタイトル"
+  },
+  "noPresetsDescription": {
+    "message": "プリセットを追加して、ダッシュボードの外観をカスタマイズしましょう",
+    "description": "プリセットがない場合の説明"
+  },
+  "createFirstPreset": {
+    "message": "最初のプリセットを作成",
+    "description": "最初のプリセット作成ボタン"
   }
 }

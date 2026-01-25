@@ -145,26 +145,10 @@ function OptionsApp() {
       const storedVision = (await storage.get('vision')) as VisionSettings | undefined
 
       if (!storedVision || !storedVision.presets || storedVision.presets.length === 0) {
-        // Actually no presets in storage, create default
+        // No presets - use default vision values, no preset selected
         const baseVision = storedVision || DEFAULT_VISION
-        const defaultPreset: DashboardPreset = {
-          id: 'default',
-          name: getMessage('defaultPreset'),
-          goalText: baseVision.goalText,
-          goalSubText: baseVision.goalSubText,
-          textColor: baseVision.textColor,
-          backgroundType: baseVision.backgroundType,
-          backgroundImage: baseVision.backgroundImage,
-          backgroundColor: baseVision.backgroundColor,
-          customBackgroundData: baseVision.customBackgroundData,
-          fontSettings: baseVision.fontSettings,
-          createdAt: new Date().toISOString(),
-        }
-        const updatedVision = { ...baseVision, presets: [defaultPreset], activePresetId: 'default' }
-        await storage.set('vision', updatedVision)
-        setVision(updatedVision)
-        setDraftVision(updatedVision)
-        setSelectedPresetId('default')
+        setDraftVision(baseVision)
+        setSelectedPresetId(null)
       } else {
         // Load active preset or first preset
         const activeId = storedVision.activePresetId
@@ -185,6 +169,7 @@ function OptionsApp() {
           fontSettings: presetToLoad.fontSettings,
         })
         setSelectedPresetId(presetToLoad.id)
+        setEditingPresetName(presetToLoad.name)
       }
       setIsInitialized(true)
     }
@@ -423,39 +408,47 @@ function OptionsApp() {
   // Preset state
   const [presetName, setPresetName] = useState('')
   const [showSavePresetModal, setShowSavePresetModal] = useState(false)
+  const [editingPresetName, setEditingPresetName] = useState('')
 
   const handleDeletePreset = useCallback(async (id: string) => {
     const remainingPresets = (draftVision.presets || []).filter((p) => p.id !== id)
 
-    // If deleting the selected preset, select the first remaining one
-    const newSelectedId = id === selectedPresetId && remainingPresets.length > 0
-      ? remainingPresets[0].id
+    // If deleting the selected preset, select the first remaining one or null
+    const newSelectedId = id === selectedPresetId
+      ? (remainingPresets.length > 0 ? remainingPresets[0].id : null)
       : selectedPresetId
 
-    const newPreset = remainingPresets.find((p) => p.id === newSelectedId)
+    const newPreset = newSelectedId
+      ? remainingPresets.find((p) => p.id === newSelectedId)
+      : null
 
-    const toSave = {
-      ...draftVision,
-      presets: remainingPresets,
-      // Update current settings to the newly selected preset
-      ...(newPreset && {
-        goalText: newPreset.goalText,
-        goalSubText: newPreset.goalSubText,
-        textColor: newPreset.textColor,
-        backgroundType: newPreset.backgroundType,
-        backgroundImage: newPreset.backgroundImage,
-        backgroundColor: newPreset.backgroundColor,
-        customBackgroundData: newPreset.customBackgroundData,
-        fontSettings: newPreset.fontSettings,
-      }),
-    }
+    // If no presets remain, reset to default vision values
+    const toSave = remainingPresets.length > 0
+      ? {
+          ...draftVision,
+          presets: remainingPresets,
+          activePresetId: newPreset ? draftVision.activePresetId : null,
+          ...(newPreset && {
+            goalText: newPreset.goalText,
+            goalSubText: newPreset.goalSubText,
+            textColor: newPreset.textColor,
+            backgroundType: newPreset.backgroundType,
+            backgroundImage: newPreset.backgroundImage,
+            backgroundColor: newPreset.backgroundColor,
+            customBackgroundData: newPreset.customBackgroundData,
+            fontSettings: newPreset.fontSettings,
+          }),
+        }
+      : {
+          ...DEFAULT_VISION,
+          presets: [],
+          activePresetId: null,
+        }
 
     await storage.set('vision', toSave)
     setVision(toSave)
     setDraftVision(toSave)
-    if (newSelectedId !== selectedPresetId) {
-      setSelectedPresetId(newSelectedId)
-    }
+    setSelectedPresetId(newSelectedId)
   }, [draftVision, selectedPresetId, setVision])
 
   const handleFontSettingsChange = useCallback((fontSettings: FontSettings) => {
@@ -527,6 +520,7 @@ function OptionsApp() {
     const preset = vision?.presets?.find((p) => p.id === presetId)
     if (preset && vision) {
       setSelectedPresetId(presetId)
+      setEditingPresetName(preset.name)
       // Load preset settings into draft from saved vision
       setDraftVision({
         ...vision,
@@ -543,14 +537,21 @@ function OptionsApp() {
     }
   }, [vision])
 
+  // Handle preset name change
+  const handlePresetNameChange = useCallback((name: string) => {
+    setEditingPresetName(name)
+    setIsDirty(true)
+  }, [])
+
   // Save changes to selected preset
   const handleSaveSelectedPreset = useCallback(async () => {
-    if (!selectedPresetId || !draftVision.goalText.trim()) return
+    if (!selectedPresetId || !draftVision.goalText.trim() || !editingPresetName.trim()) return
 
     const updatedPresets = (draftVision.presets || []).map((p) =>
       p.id === selectedPresetId
         ? {
             ...p,
+            name: editingPresetName.trim(),
             goalText: draftVision.goalText.trim(),
             goalSubText: draftVision.goalSubText.trim(),
             textColor: draftVision.textColor,
@@ -576,7 +577,7 @@ function OptionsApp() {
     setIsDirty(false)
     setVisionSaved(true)
     setTimeout(() => setVisionSaved(false), 2000)
-  }, [selectedPresetId, draftVision, setVision])
+  }, [selectedPresetId, draftVision, editingPresetName, setVision])
 
   // Apply preset to dashboard (switch without editing)
   const handleApplyPreset = useCallback(async () => {
@@ -629,10 +630,23 @@ function OptionsApp() {
 
     await storage.set('vision', toSave)
     setVision(toSave)
-    setDraftVision(toSave)
+    // Update draftVision with the new preset's default values
+    setDraftVision({
+      ...toSave,
+      goalText: newPreset.goalText,
+      goalSubText: newPreset.goalSubText,
+      textColor: newPreset.textColor,
+      backgroundType: newPreset.backgroundType,
+      backgroundImage: newPreset.backgroundImage,
+      backgroundColor: newPreset.backgroundColor,
+      customBackgroundData: newPreset.customBackgroundData,
+      fontSettings: newPreset.fontSettings,
+    })
     setSelectedPresetId(newPreset.id)
+    setEditingPresetName(newPreset.name)
     setShowSavePresetModal(false)
     setPresetName('')
+    setIsDirty(false)
   }, [presetName, draftVision, setVision])
 
   return (
@@ -673,44 +687,67 @@ function OptionsApp() {
                 )}
               </div>
 
-              {/* Preset tabs */}
-              <div className="flex flex-wrap gap-2">
-                {draftVision.presets?.map((preset) => {
-                  const isActive = vision?.activePresetId === preset.id
-                  const isSelected = selectedPresetId === preset.id
-                  return (
-                    <button
-                      key={preset.id}
-                      onClick={() => handleSelectPreset(preset.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isSelected
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {isActive && (
-                        <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-green-600'}`} />
-                      )}
-                      {preset.name}
-                    </button>
-                  )
-                })}
-                {/* New preset button */}
-                {isPremium && (draftVision.presets?.length || 0) < featureLimits.maxPresets && (
-                  <button
+              {/* Empty state or Preset tabs */}
+              {(!draftVision.presets || draftVision.presets.length === 0) ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Target className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {getMessage('noPresetsTitle')}
+                  </p>
+                  <p className="text-xs text-gray-500 mb-4">
+                    {getMessage('noPresetsDescription')}
+                  </p>
+                  <Button
                     onClick={() => setShowSavePresetModal(true)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
+                    size="sm"
                   >
                     <Plus className="w-4 h-4" />
-                    {getMessage('newPreset')}
-                  </button>
-                )}
-              </div>
+                    {getMessage('createFirstPreset')}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {draftVision.presets.map((preset) => {
+                      const isActive = vision?.activePresetId === preset.id
+                      const isSelected = selectedPresetId === preset.id
+                      return (
+                        <button
+                          key={preset.id}
+                          onClick={() => handleSelectPreset(preset.id)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {isActive && (
+                            <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-green-600'}`} />
+                          )}
+                          {preset.name}
+                        </button>
+                      )
+                    })}
+                    {/* New preset button */}
+                    {(draftVision.presets.length || 0) < featureLimits.maxPresets && (
+                      <button
+                        onClick={() => setShowSavePresetModal(true)}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {getMessage('newPreset')}
+                      </button>
+                    )}
+                  </div>
 
-              {!isPremium && (draftVision.presets?.length || 0) >= 1 && (
-                <p className="text-xs text-amber-600 mt-2">
-                  {getMessage('maxPresetsReached', String(featureLimits.maxPresets))}
-                </p>
+                  {!isPremium && (draftVision.presets.length || 0) >= featureLimits.maxPresets && (
+                    <p className="text-xs text-amber-600 mt-2">
+                      {getMessage('maxPresetsReached', String(featureLimits.maxPresets))}
+                    </p>
+                  )}
+                </>
               )}
             </Card>
 
@@ -729,15 +766,13 @@ function OptionsApp() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {isPremium && draftVision.presets && draftVision.presets.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeletePreset(selectedPreset.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeletePreset(selectedPreset.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                   {vision?.activePresetId === selectedPresetId ? (
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg">
                       <Check className="w-4 h-4" />
@@ -755,7 +790,7 @@ function OptionsApp() {
                   )}
                   <Button
                     onClick={handleSaveSelectedPreset}
-                    disabled={!draftVision.goalText.trim() || !isDirty}
+                    disabled={!draftVision.goalText.trim() || !editingPresetName.trim() || !isDirty}
                     size="sm"
                   >
                     <Save className="w-4 h-4" />
@@ -774,6 +809,20 @@ function OptionsApp() {
                 </div>
               </h2>
               <div className="space-y-4">
+                {/* Preset Name */}
+                {selectedPreset && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {getMessage('presetName')}
+                    </label>
+                    <Input
+                      value={editingPresetName}
+                      onChange={handlePresetNameChange}
+                      placeholder={getMessage('presetNamePlaceholder')}
+                    />
+                  </div>
+                )}
+
                 {/* Main Goal */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
