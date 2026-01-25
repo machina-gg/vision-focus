@@ -49,7 +49,14 @@ const FONT_WEIGHT_VALUE: Record<FontWeight, number> = {
   bold: 700,
 }
 
-const CATEGORY_ORDER: FontCategory[] = ['system', 'modern', 'elegant', 'impact', 'handwriting', 'japanese']
+const CATEGORY_ORDER: FontCategory[] = [
+  'system',
+  'modern',
+  'elegant',
+  'impact',
+  'handwriting',
+  'japanese',
+]
 
 // Load Google Font dynamically
 function loadGoogleFont(fontName: string) {
@@ -113,7 +120,9 @@ export function FontPicker({
   }
 
   return (
-    <div className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div
+      className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+    >
       {/* Preview */}
       <div className="p-4 bg-gray-900 rounded-lg">
         <p className="text-white text-center truncate" style={previewStyle}>
@@ -136,9 +145,11 @@ export function FontPicker({
                 onClick={() => handleCategoryChange(categoryKey)}
                 className={`
                   px-3 py-1.5 text-sm rounded-lg border transition-colors
-                  ${selectedCategory === categoryKey
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'}
+                  ${
+                    selectedCategory === categoryKey
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }
                 `}
               >
                 {category.name}
@@ -160,9 +171,11 @@ export function FontPicker({
               onClick={() => handleChange({ family: font.family })}
               className={`
                 px-3 py-2 text-sm rounded-lg border transition-colors text-left
-                ${value.family === font.family
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700'}
+                ${
+                  value.family === font.family
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }
               `}
               style={{ fontFamily: font.css }}
             >
@@ -184,9 +197,11 @@ export function FontPicker({
               onClick={() => handleChange({ size: size.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
-                ${value.size === size.value
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700'}
+                ${
+                  value.size === size.value
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }
               `}
             >
               {size.label}
@@ -207,9 +222,11 @@ export function FontPicker({
               onClick={() => handleChange({ weight: weight.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
-                ${value.weight === weight.value
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700'}
+                ${
+                  value.weight === weight.value
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }
               `}
               style={{ fontWeight: FONT_WEIGHT_VALUE[weight.value] }}
             >

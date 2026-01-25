@@ -50,9 +50,7 @@ export function SchedulesTab({
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900">
-                      {schedule.name}
-                    </p>
+                    <p className="font-medium text-gray-900">{schedule.name}</p>
                     <Toggle
                       checked={schedule.enabled}
                       onChange={(enabled) =>

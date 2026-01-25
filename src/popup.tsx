@@ -20,14 +20,20 @@ import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage'
 import './styles/globals.css'
 
 function PopupApp() {
-  const [settings] = useStorage<AppSettings>({
-    key: 'settings',
-    instance: storage,
-  }, DEFAULT_SETTINGS)
-  const [vision] = useStorage<VisionSettings>({
-    key: 'vision',
-    instance: storage,
-  }, DEFAULT_VISION)
+  const [settings] = useStorage<AppSettings>(
+    {
+      key: 'settings',
+      instance: storage,
+    },
+    DEFAULT_SETTINGS
+  )
+  const [vision] = useStorage<VisionSettings>(
+    {
+      key: 'vision',
+      instance: storage,
+    },
+    DEFAULT_VISION
+  )
   const [stats, setStats] = useState({
     wasteTime: 0,
     investTime: 0,
@@ -105,7 +111,10 @@ function PopupApp() {
       <div className="p-4 space-y-4">
         {/* Goal Card */}
         <GoalCard
-          goalText={vision?.goalText || DEFAULT_VISION.goalText}
+          goalText={
+            vision?.defaultSettings?.goalText ||
+            DEFAULT_VISION.defaultSettings.goalText
+          }
           onClick={handleGoalClick}
         />
 

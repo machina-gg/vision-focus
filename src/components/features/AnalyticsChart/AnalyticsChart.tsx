@@ -88,8 +88,16 @@ export function AnalyticsChart({
 
     return [
       { name: getMessage('waste'), value: totals.waste, color: COLORS.waste },
-      { name: getMessage('invest'), value: totals.invest, color: COLORS.invest },
-      { name: getMessage('neutral'), value: totals.neutral, color: COLORS.neutral },
+      {
+        name: getMessage('invest'),
+        value: totals.invest,
+        color: COLORS.invest,
+      },
+      {
+        name: getMessage('neutral'),
+        value: totals.neutral,
+        color: COLORS.neutral,
+      },
     ].filter((d) => d.value > 0)
   }, [analytics.siteTime])
 
@@ -176,8 +184,16 @@ export function AnalyticsChart({
                 }}
               />
               <Legend />
-              <Bar dataKey={getMessage('waste')} fill={COLORS.waste} radius={[4, 4, 0, 0]} />
-              <Bar dataKey={getMessage('invest')} fill={COLORS.invest} radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey={getMessage('waste')}
+                fill={COLORS.waste}
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey={getMessage('invest')}
+                fill={COLORS.invest}
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         )
@@ -217,24 +233,34 @@ export function AnalyticsChart({
   }
 
   return (
-    <div className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div
+      className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+    >
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
         <div className="p-3 bg-red-50 rounded-lg">
-          <p className="text-xs text-red-600 font-medium">{getMessage('wasteTime')}</p>
+          <p className="text-xs text-red-600 font-medium">
+            {getMessage('wasteTime')}
+          </p>
           <p className="text-lg font-bold text-red-700">
             {formatTime(summary.totalWaste)}
           </p>
         </div>
         <div className="p-3 bg-green-50 rounded-lg">
-          <p className="text-xs text-green-600 font-medium">{getMessage('investTime')}</p>
+          <p className="text-xs text-green-600 font-medium">
+            {getMessage('investTime')}
+          </p>
           <p className="text-lg font-bold text-green-700">
             {formatTime(summary.totalInvest)}
           </p>
         </div>
         <div className="p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs text-blue-600 font-medium">{getMessage('blockedCount')}</p>
-          <p className="text-lg font-bold text-blue-700">{summary.totalBlocks}</p>
+          <p className="text-xs text-blue-600 font-medium">
+            {getMessage('blockedCount')}
+          </p>
+          <p className="text-lg font-bold text-blue-700">
+            {summary.totalBlocks}
+          </p>
         </div>
       </div>
 
@@ -248,9 +274,11 @@ export function AnalyticsChart({
               onClick={() => setDateRange(range)}
               className={`
                 px-3 py-1 text-sm rounded-md transition-colors
-                ${dateRange === range
-                  ? 'bg-white shadow text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900'}
+                ${
+                  dateRange === range
+                    ? 'bg-white shadow text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900'
+                }
               `}
             >
               {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : 'All'}
@@ -264,9 +292,11 @@ export function AnalyticsChart({
             onClick={() => setChartType('line')}
             className={`
               p-2 rounded-lg transition-colors
-              ${chartType === 'line'
-                ? 'bg-primary-100 text-primary-700'
-                : 'text-gray-400 hover:text-gray-600'}
+              ${
+                chartType === 'line'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-400 hover:text-gray-600'
+              }
             `}
             title={getMessage('lineChart')}
           >
@@ -276,9 +306,11 @@ export function AnalyticsChart({
             onClick={() => setChartType('bar')}
             className={`
               p-2 rounded-lg transition-colors
-              ${chartType === 'bar'
-                ? 'bg-primary-100 text-primary-700'
-                : 'text-gray-400 hover:text-gray-600'}
+              ${
+                chartType === 'bar'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-400 hover:text-gray-600'
+              }
             `}
             title={getMessage('barChart')}
           >
@@ -288,9 +320,11 @@ export function AnalyticsChart({
             onClick={() => setChartType('pie')}
             className={`
               p-2 rounded-lg transition-colors
-              ${chartType === 'pie'
-                ? 'bg-primary-100 text-primary-700'
-                : 'text-gray-400 hover:text-gray-600'}
+              ${
+                chartType === 'pie'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-400 hover:text-gray-600'
+              }
             `}
             title={getMessage('pieChart')}
           >

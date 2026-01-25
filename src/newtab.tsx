@@ -10,9 +10,22 @@ import { getMessage } from '~/lib/i18n'
 import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
-import { getBackgroundUrl, loadGoogleFont, FONT_WEIGHT_VALUE } from '~/constants'
-import type { VisionSettings, DashboardDisplaySettings, AppSettings } from '~/types/storage'
-import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS, getFontDefinition } from '~/types/storage'
+import {
+  getBackgroundUrl,
+  loadGoogleFont,
+  FONT_WEIGHT_VALUE,
+} from '~/constants'
+import type {
+  VisionSettings,
+  DashboardDisplaySettings,
+  AppSettings,
+} from '~/types/storage'
+import {
+  DEFAULT_VISION,
+  DEFAULT_DISPLAY_SETTINGS,
+  DEFAULT_SETTINGS,
+  getFontDefinition,
+} from '~/types/storage'
 
 import './styles/globals.css'
 
@@ -25,14 +38,20 @@ const FONT_SIZE_PX: Record<string, number> = {
 }
 
 function NewtabApp() {
-  const [vision, setVision] = useStorage<VisionSettings>({
-    key: 'vision',
-    instance: storage,
-  }, DEFAULT_VISION)
-  const [settings] = useStorage<AppSettings>({
-    key: 'settings',
-    instance: storage,
-  }, DEFAULT_SETTINGS)
+  const [vision, setVision] = useStorage<VisionSettings>(
+    {
+      key: 'vision',
+      instance: storage,
+    },
+    DEFAULT_VISION
+  )
+  const [settings] = useStorage<AppSettings>(
+    {
+      key: 'settings',
+      instance: storage,
+    },
+    DEFAULT_SETTINGS
+  )
   const [stats, setStats] = useState({
     wasteTime: 0,
     investTime: 0,
@@ -63,7 +82,8 @@ function NewtabApp() {
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   // Get current display settings
@@ -80,7 +100,9 @@ function NewtabApp() {
     )
 
     if (activeScheduleWithPreset?.presetId) {
-      const schedulePreset = vision.presets?.find((p) => p.id === activeScheduleWithPreset.presetId)
+      const schedulePreset = vision.presets?.find(
+        (p) => p.id === activeScheduleWithPreset.presetId
+      )
       if (schedulePreset) {
         return {
           goalText: schedulePreset.goalText,
@@ -97,7 +119,9 @@ function NewtabApp() {
 
     // Check for user-selected preset
     if (vision.activePresetId) {
-      const activePreset = vision.presets?.find((p) => p.id === vision.activePresetId)
+      const activePreset = vision.presets?.find(
+        (p) => p.id === vision.activePresetId
+      )
       if (activePreset) {
         return {
           goalText: activePreset.goalText,

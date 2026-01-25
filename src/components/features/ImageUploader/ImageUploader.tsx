@@ -182,9 +182,7 @@ export function ImageUploader({
         )}
       </div>
 
-      {error && (
-        <p className="text-sm text-red-500 text-center">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
     </div>
   )
 }

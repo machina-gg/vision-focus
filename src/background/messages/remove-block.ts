@@ -18,11 +18,21 @@ const handler: PlasmoMessaging.MessageHandler<
 > = async (req, res) => {
   const { id } = req.body
 
+  // Validate input
+  if (!id || typeof id !== 'string' || id.length === 0 || id.length > 100) {
+    res.send({ success: false })
+    return
+  }
+
   const settings = await getSettings()
+  const originalLength = settings.blockList.length
   settings.blockList = settings.blockList.filter((item) => item.id !== id)
 
-  await setSettings(settings)
-  await updateBlockRules()
+  // Only update if something was actually removed
+  if (settings.blockList.length < originalLength) {
+    await setSettings(settings)
+    await updateBlockRules()
+  }
 
   res.send({ success: true })
 }

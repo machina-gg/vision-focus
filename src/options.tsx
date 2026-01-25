@@ -19,20 +19,35 @@ import { getMessage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus, getFeatureLimits } from '~/lib/license'
 import { openPaymentPage, openManagementPage } from '~/lib/extpay'
-import type { AppSettings, VisionSettings, AnalyticsData } from '~/types/storage'
-import { DEFAULT_SETTINGS, DEFAULT_VISION, FEATURE_LIMITS, type FeatureLimits } from '~/types/storage'
+import type {
+  AppSettings,
+  VisionSettings,
+  AnalyticsData,
+} from '~/types/storage'
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  FEATURE_LIMITS,
+  type FeatureLimits,
+} from '~/types/storage'
 
 import './styles/globals.css'
 
 function OptionsApp() {
-  const [settings, setSettings] = useStorage<AppSettings>({
-    key: 'settings',
-    instance: storage,
-  }, DEFAULT_SETTINGS)
-  const [vision, setVision] = useStorage<VisionSettings>({
-    key: 'vision',
-    instance: storage,
-  }, DEFAULT_VISION)
+  const [settings, setSettings] = useStorage<AppSettings>(
+    {
+      key: 'settings',
+      instance: storage,
+    },
+    DEFAULT_SETTINGS
+  )
+  const [vision, setVision] = useStorage<VisionSettings>(
+    {
+      key: 'vision',
+      instance: storage,
+    },
+    DEFAULT_VISION
+  )
   const [activeTab, setActiveTab] = useState('general')
 
   // Analytics state
@@ -44,7 +59,9 @@ function OptionsApp() {
 
   // Premium state
   const [isPremium, setIsPremium] = useState(false)
-  const [featureLimits, setFeatureLimits] = useState<FeatureLimits>(FEATURE_LIMITS.free)
+  const [featureLimits, setFeatureLimits] = useState<FeatureLimits>(
+    FEATURE_LIMITS.free
+  )
 
   // Custom hooks
   const blocklist = useBlocklist({ settings, setSettings })
@@ -75,19 +92,44 @@ function OptionsApp() {
 
   // Tabs configuration
   const tabs = [
-    { id: 'general', label: getMessage('general'), icon: <Settings className="w-4 h-4" /> },
-    { id: 'blocklist', label: getMessage('blockList'), icon: <Ban className="w-4 h-4" /> },
-    { id: 'schedules', label: getMessage('schedules'), icon: <Calendar className="w-4 h-4" /> },
-    { id: 'analytics', label: getMessage('analytics'), icon: <TrendingUp className="w-4 h-4" /> },
-    { id: 'license', label: getMessage('premium'), icon: <Crown className="w-4 h-4" /> },
+    {
+      id: 'general',
+      label: getMessage('general'),
+      icon: <Settings className="w-4 h-4" />,
+    },
+    {
+      id: 'blocklist',
+      label: getMessage('blockList'),
+      icon: <Ban className="w-4 h-4" />,
+    },
+    {
+      id: 'schedules',
+      label: getMessage('schedules'),
+      icon: <Calendar className="w-4 h-4" />,
+    },
+    {
+      id: 'analytics',
+      label: getMessage('analytics'),
+      icon: <TrendingUp className="w-4 h-4" />,
+    },
+    {
+      id: 'license',
+      label: getMessage('premium'),
+      icon: <Crown className="w-4 h-4" />,
+    },
   ]
 
   // Analytics handlers
   const handleSiteCategoryChange = useCallback(
     async (domain: string, category: 'waste' | 'invest' | 'neutral') => {
       try {
-        await sendToBackground({ name: 'set-site-category', body: { domain, category } })
-        const data = (await storage.get('analytics')) as AnalyticsData | undefined
+        await sendToBackground({
+          name: 'set-site-category',
+          body: { domain, category },
+        })
+        const data = (await storage.get('analytics')) as
+          | AnalyticsData
+          | undefined
         if (data) {
           setAnalyticsData(data)
         }
@@ -120,7 +162,12 @@ function OptionsApp() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="mb-8" />
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          className="mb-8"
+        />
 
         {/* General Tab */}
         {activeTab === 'general' && (

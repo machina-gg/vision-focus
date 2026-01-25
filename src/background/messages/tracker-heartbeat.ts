@@ -97,12 +97,39 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
   await setAnalytics(analytics)
 }
 
+// Valid status values
+const VALID_STATUSES = ['active', 'inactive', 'heartbeat'] as const
+
 // Message handler
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const { url, status, timestamp } = req.body as {
     url: string
     status: 'active' | 'inactive' | 'heartbeat'
     timestamp: number
+  }
+
+  // Validate url
+  if (!url || typeof url !== 'string' || url.length > 2048) {
+    res.send({ success: false, error: 'Invalid URL' })
+    return
+  }
+
+  // Validate status
+  if (!status || !VALID_STATUSES.includes(status)) {
+    res.send({ success: false, error: 'Invalid status' })
+    return
+  }
+
+  // Validate timestamp if provided
+  if (timestamp !== undefined) {
+    if (
+      typeof timestamp !== 'number' ||
+      !Number.isFinite(timestamp) ||
+      timestamp < 0
+    ) {
+      res.send({ success: false, error: 'Invalid timestamp' })
+      return
+    }
   }
 
   // Extract domain from URL

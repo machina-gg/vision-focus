@@ -142,7 +142,9 @@ export function generateMonthlyReport(
   month?: string // YYYY-MM format
 ): MonthlyReport {
   const now = new Date()
-  const targetMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const targetMonth =
+    month ||
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
   const [year, monthNum] = targetMonth.split('-').map(Number)
   const firstDay = new Date(year, monthNum - 1, 1)
@@ -236,7 +238,9 @@ export function formatTime(seconds: number): string {
 /**
  * Get trend emoji
  */
-export function getTrendEmoji(trend: 'improving' | 'declining' | 'stable'): string {
+export function getTrendEmoji(
+  trend: 'improving' | 'declining' | 'stable'
+): string {
   switch (trend) {
     case 'improving':
       return '↑'

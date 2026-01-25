@@ -43,7 +43,9 @@ export function useSchedules({
 }: UseSchedulesOptions): UseSchedulesReturn {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null)
-  const [scheduleForm, setScheduleForm] = useState<ScheduleFormData>(DEFAULT_SCHEDULE_FORM)
+  const [scheduleForm, setScheduleForm] = useState<ScheduleFormData>(
+    DEFAULT_SCHEDULE_FORM
+  )
 
   const handleSaveSchedule = useCallback(async () => {
     if (!settings || !scheduleForm.name.trim()) return
@@ -59,7 +61,9 @@ export function useSchedules({
     }
 
     const updatedSchedules = editingSchedule
-      ? settings.schedules.map((s) => (s.id === editingSchedule.id ? newSchedule : s))
+      ? settings.schedules.map((s) =>
+          s.id === editingSchedule.id ? newSchedule : s
+        )
       : [...settings.schedules, newSchedule]
 
     const updated = { ...settings, schedules: updatedSchedules }
@@ -70,22 +74,33 @@ export function useSchedules({
     setScheduleForm(DEFAULT_SCHEDULE_FORM)
   }, [settings, setSettings, scheduleForm, editingSchedule])
 
-  const handleDeleteSchedule = useCallback(async (id: string) => {
-    if (!settings) return
-    const updated = { ...settings, schedules: settings.schedules.filter((s) => s.id !== id) }
-    await storage.set('settings', updated)
-    setSettings(updated)
-  }, [settings, setSettings])
+  const handleDeleteSchedule = useCallback(
+    async (id: string) => {
+      if (!settings) return
+      const updated = {
+        ...settings,
+        schedules: settings.schedules.filter((s) => s.id !== id),
+      }
+      await storage.set('settings', updated)
+      setSettings(updated)
+    },
+    [settings, setSettings]
+  )
 
-  const handleToggleSchedule = useCallback(async (id: string, enabled: boolean) => {
-    if (!settings) return
-    const updated = {
-      ...settings,
-      schedules: settings.schedules.map((s) => (s.id === id ? { ...s, enabled } : s)),
-    }
-    await storage.set('settings', updated)
-    setSettings(updated)
-  }, [settings, setSettings])
+  const handleToggleSchedule = useCallback(
+    async (id: string, enabled: boolean) => {
+      if (!settings) return
+      const updated = {
+        ...settings,
+        schedules: settings.schedules.map((s) =>
+          s.id === id ? { ...s, enabled } : s
+        ),
+      }
+      await storage.set('settings', updated)
+      setSettings(updated)
+    },
+    [settings, setSettings]
+  )
 
   const openEditSchedule = useCallback((schedule: Schedule) => {
     setEditingSchedule(schedule)

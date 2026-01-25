@@ -55,14 +55,36 @@ export function isValidDomain(domain: string): boolean {
   // Remove wildcard prefix for validation
   const cleanDomain = domain.replace(/^\*\./, '')
 
-  // Basic domain validation regex
-  const domainRegex =
-    /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*)*\.[a-zA-Z]{2,}$/
+  // Check length limits (max 253 chars total, max 63 per label)
+  if (cleanDomain.length > 253) return false
 
-  return domainRegex.test(cleanDomain)
+  const labels = cleanDomain.split('.')
+
+  // Must have at least 2 labels (e.g., "example.com")
+  if (labels.length < 2) return false
+
+  // Each label validation
+  const labelRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/
+
+  for (const label of labels) {
+    // Each label max 63 chars
+    if (label.length === 0 || label.length > 63) return false
+    // Labels cannot be all numbers (except for IP, but we don't allow IPs)
+    if (!labelRegex.test(label)) return false
+  }
+
+  // TLD must be at least 2 chars and only letters
+  const tld = labels[labels.length - 1]
+  if (!/^[a-zA-Z]{2,}$/.test(tld)) return false
+
+  return true
 }
 
-// Generate unique ID
+// Generate cryptographically secure unique ID
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+    ''
+  )
 }

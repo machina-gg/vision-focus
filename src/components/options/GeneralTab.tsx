@@ -150,14 +150,15 @@ export function GeneralTab({
                 )}
               </div>
 
-              {!isPremium && draftPresets.length >= featureLimits.maxPresets && (
-                <p className="text-xs text-amber-600 mt-2">
-                  {getMessage(
-                    'maxPresetsReached',
-                    String(featureLimits.maxPresets)
-                  )}
-                </p>
-              )}
+              {!isPremium &&
+                draftPresets.length >= featureLimits.maxPresets && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    {getMessage(
+                      'maxPresetsReached',
+                      String(featureLimits.maxPresets)
+                    )}
+                  </p>
+                )}
             </>
           )}
         </Card>
@@ -471,7 +472,9 @@ export function GeneralTab({
                 )}
                 <div className="flex gap-2 mt-4">
                   <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
-                    <p className="text-xs text-red-500">{getMessage('waste')}</p>
+                    <p className="text-xs text-red-500">
+                      {getMessage('waste')}
+                    </p>
                     <p className="text-sm font-bold text-red-600">0:00</p>
                   </div>
                   <div className="bg-white/90 rounded-lg px-3 py-2 text-center">

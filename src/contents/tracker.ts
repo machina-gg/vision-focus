@@ -78,9 +78,8 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
         timestamp: Date.now(),
       },
     })
-  } catch (error) {
-    // Silently fail if background is not available
-    console.debug('Failed to send heartbeat:', error)
+  } catch {
+    // Silently fail if background is not available (e.g., extension context invalidated)
   }
 }
 

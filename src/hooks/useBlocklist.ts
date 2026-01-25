@@ -31,7 +31,9 @@ export function useBlocklist({
 
     const limitCheck = await canAddToBlocklist(settings.blockList.length)
     if (!limitCheck.allowed) {
-      setBlockError(limitCheck.reason || `Limit reached: ${limitCheck.limit} sites`)
+      setBlockError(
+        limitCheck.reason || `Limit reached: ${limitCheck.limit} sites`
+      )
       return
     }
 
@@ -67,17 +69,20 @@ export function useBlocklist({
     }
   }, [settings, newDomain, setSettings])
 
-  const handleRemoveDomain = useCallback(async (id: string) => {
-    try {
-      await sendToBackground({ name: 'remove-block', body: { id } })
-      const updatedSettings = await storage.get<AppSettings>('settings')
-      if (updatedSettings) {
-        setSettings(updatedSettings)
+  const handleRemoveDomain = useCallback(
+    async (id: string) => {
+      try {
+        await sendToBackground({ name: 'remove-block', body: { id } })
+        const updatedSettings = await storage.get<AppSettings>('settings')
+        if (updatedSettings) {
+          setSettings(updatedSettings)
+        }
+      } catch (error) {
+        console.error('Failed to remove domain:', error)
       }
-    } catch (error) {
-      console.error('Failed to remove domain:', error)
-    }
-  }, [setSettings])
+    },
+    [setSettings]
+  )
 
   return {
     newDomain,

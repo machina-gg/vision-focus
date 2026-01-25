@@ -1,4 +1,4 @@
-import { extractDomain, matchesDomain } from '~/lib/domain'
+import { extractDomain, matchesDomain, generateId } from '~/lib/domain'
 import { getSettings } from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
 import type { BlockItem } from '~/types/storage'
@@ -45,8 +45,6 @@ export async function updateBlockRules(): Promise<void> {
     removeRuleIds,
     addRules,
   })
-
-  console.log(`Updated block rules: ${addRules.length} domains blocked`)
 }
 
 // Get list of domains that should be actively blocked
@@ -116,7 +114,7 @@ export async function addBlockedDomain(
   }
 
   const newItem: BlockItem = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: generateId(),
     domain: isWildcard ? `*.${domain.replace('*.', '')}` : domain,
     isWildcard,
     createdAt: new Date().toISOString(),

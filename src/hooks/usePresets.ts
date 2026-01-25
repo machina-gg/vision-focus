@@ -59,7 +59,8 @@ export function usePresets({
   setVision,
 }: UsePresetsOptions): UsePresetsReturn {
   // Draft display settings (for preview, saved on button click)
-  const [draftDisplaySettings, setDraftDisplaySettings] = useState<DashboardDisplaySettings>(DEFAULT_DISPLAY_SETTINGS)
+  const [draftDisplaySettings, setDraftDisplaySettings] =
+    useState<DashboardDisplaySettings>(DEFAULT_DISPLAY_SETTINGS)
   const [draftPresets, setDraftPresets] = useState<DashboardPreset[]>([])
   const [visionSaved, setVisionSaved] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
@@ -75,7 +76,9 @@ export function usePresets({
   // Initialize from storage (run once on mount)
   useEffect(() => {
     const initialize = async () => {
-      const storedVision = (await storage.get('vision')) as VisionSettings | undefined
+      const storedVision = (await storage.get('vision')) as
+        | VisionSettings
+        | undefined
       const visionData = storedVision || DEFAULT_VISION
 
       const presets = visionData.presets || []
@@ -99,7 +102,9 @@ export function usePresets({
           fontSettings: presetToSelect.fontSettings,
         })
       } else {
-        setDraftDisplaySettings(visionData.defaultSettings || DEFAULT_DISPLAY_SETTINGS)
+        setDraftDisplaySettings(
+          visionData.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+        )
         setSelectedPresetId(null)
       }
     }
@@ -110,7 +115,9 @@ export function usePresets({
   // Load Google Font when fontSettings changes
   useEffect(() => {
     if (draftDisplaySettings.fontSettings) {
-      const fontDef = getFontDefinition(draftDisplaySettings.fontSettings.family)
+      const fontDef = getFontDefinition(
+        draftDisplaySettings.fontSettings.family
+      )
       if (fontDef.googleFont) {
         loadGoogleFont(fontDef.googleFont)
       }
@@ -149,7 +156,10 @@ export function usePresets({
   }, [])
 
   const handleCustomBackgroundChange = useCallback((dataUrl: string | null) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, customBackgroundData: dataUrl }))
+    setDraftDisplaySettings((prev) => ({
+      ...prev,
+      customBackgroundData: dataUrl,
+    }))
     setIsDirty(true)
   }, [])
 
@@ -159,53 +169,67 @@ export function usePresets({
   }, [])
 
   // ============ Preset Handlers ============
-  const handleSelectPreset = useCallback((presetId: string) => {
-    const preset = draftPresets.find((p) => p.id === presetId)
-    if (preset) {
-      setSelectedPresetId(presetId)
-      setEditingPresetName(preset.name)
-      setDraftDisplaySettings({
-        goalText: preset.goalText,
-        goalSubText: preset.goalSubText,
-        textColor: preset.textColor,
-        backgroundType: preset.backgroundType,
-        backgroundImage: preset.backgroundImage,
-        backgroundColor: preset.backgroundColor,
-        customBackgroundData: preset.customBackgroundData,
-        fontSettings: preset.fontSettings,
-      })
-      setIsDirty(false)
-    }
-  }, [draftPresets])
+  const handleSelectPreset = useCallback(
+    (presetId: string) => {
+      const preset = draftPresets.find((p) => p.id === presetId)
+      if (preset) {
+        setSelectedPresetId(presetId)
+        setEditingPresetName(preset.name)
+        setDraftDisplaySettings({
+          goalText: preset.goalText,
+          goalSubText: preset.goalSubText,
+          textColor: preset.textColor,
+          backgroundType: preset.backgroundType,
+          backgroundImage: preset.backgroundImage,
+          backgroundColor: preset.backgroundColor,
+          customBackgroundData: preset.customBackgroundData,
+          fontSettings: preset.fontSettings,
+        })
+        setIsDirty(false)
+      }
+    },
+    [draftPresets]
+  )
 
   const handlePresetNameChange = useCallback((name: string) => {
     setEditingPresetName(name)
     setIsDirty(true)
   }, [])
 
-  const handleDeletePreset = useCallback(async (id: string) => {
-    const remainingPresets = draftPresets.filter((p) => p.id !== id)
-    setDraftPresets(remainingPresets)
+  const handleDeletePreset = useCallback(
+    async (id: string) => {
+      const remainingPresets = draftPresets.filter((p) => p.id !== id)
+      setDraftPresets(remainingPresets)
 
-    if (id === selectedPresetId) {
-      setSelectedPresetId(null)
-      const storedVision = vision || DEFAULT_VISION
-      setDraftDisplaySettings(storedVision.defaultSettings || DEFAULT_DISPLAY_SETTINGS)
-    }
+      if (id === selectedPresetId) {
+        setSelectedPresetId(null)
+        const storedVision = vision || DEFAULT_VISION
+        setDraftDisplaySettings(
+          storedVision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+        )
+      }
 
-    const toSave: VisionSettings = {
-      defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
-      presets: remainingPresets,
-      activePresetId: vision?.activePresetId === id ? null : vision?.activePresetId || null,
-    }
+      const toSave: VisionSettings = {
+        defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
+        presets: remainingPresets,
+        activePresetId:
+          vision?.activePresetId === id ? null : vision?.activePresetId || null,
+      }
 
-    await storage.set('vision', toSave)
-    setVision(toSave)
-    setIsDirty(false)
-  }, [draftPresets, selectedPresetId, vision, setVision])
+      await storage.set('vision', toSave)
+      setVision(toSave)
+      setIsDirty(false)
+    },
+    [draftPresets, selectedPresetId, vision, setVision]
+  )
 
   const handleSaveSelectedPreset = useCallback(async () => {
-    if (!selectedPresetId || !draftDisplaySettings.goalText.trim() || !editingPresetName.trim()) return
+    if (
+      !selectedPresetId ||
+      !draftDisplaySettings.goalText.trim() ||
+      !editingPresetName.trim()
+    )
+      return
 
     const updatedPresets = draftPresets.map((p) =>
       p.id === selectedPresetId
@@ -237,12 +261,22 @@ export function usePresets({
     setIsDirty(false)
     setVisionSaved(true)
     setTimeout(() => setVisionSaved(false), 2000)
-  }, [selectedPresetId, draftDisplaySettings, draftPresets, editingPresetName, vision, setVision])
+  }, [
+    selectedPresetId,
+    draftDisplaySettings,
+    draftPresets,
+    editingPresetName,
+    vision,
+    setVision,
+  ])
 
   const handleApplyPreset = useCallback(async () => {
     if (!selectedPresetId || !vision) return
 
-    const toSave: VisionSettings = { ...vision, activePresetId: selectedPresetId }
+    const toSave: VisionSettings = {
+      ...vision,
+      activePresetId: selectedPresetId,
+    }
     await storage.set('vision', toSave)
     setVision(toSave)
     setVisionSaved(true)

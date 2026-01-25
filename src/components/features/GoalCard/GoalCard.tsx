@@ -49,7 +49,9 @@ export function GoalCard({
           <Target className="w-5 h-5 text-primary-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-500 mb-1">{getMessage('todaysGoal')}</p>
+          <p className="text-xs font-medium text-gray-500 mb-1">
+            {getMessage('todaysGoal')}
+          </p>
           {isEditing ? (
             <textarea
               value={editText}

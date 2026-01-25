@@ -60,12 +60,35 @@ export function getLastNDays(n: number): string[] {
   return dates
 }
 
+// Validate time string format (HH:mm)
+export function isValidTimeString(time: string): boolean {
+  if (!time || typeof time !== 'string') return false
+  const match = time.match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/)
+  return match !== null
+}
+
+// Parse time string (HH:mm) to minutes from midnight
+// Returns 0 if invalid time string
+export function parseTimeToMinutes(time: string): number {
+  if (!isValidTimeString(time)) return 0
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
 // Check if current time is within schedule
 export function isWithinSchedule(
   startTime: string,
   endTime: string,
   days: number[]
 ): boolean {
+  // Validate inputs
+  if (!isValidTimeString(startTime) || !isValidTimeString(endTime)) {
+    return false
+  }
+  if (!Array.isArray(days) || days.length === 0) {
+    return false
+  }
+
   const now = new Date()
   const currentDay = now.getDay()
 
@@ -75,10 +98,8 @@ export function isWithinSchedule(
   }
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
-  const [startHour, startMin] = startTime.split(':').map(Number)
-  const [endHour, endMin] = endTime.split(':').map(Number)
-  const startMinutes = startHour * 60 + startMin
-  const endMinutes = endHour * 60 + endMin
+  const startMinutes = parseTimeToMinutes(startTime)
+  const endMinutes = parseTimeToMinutes(endTime)
 
   // Handle overnight schedules (e.g., 22:00 - 06:00)
   if (endMinutes < startMinutes) {
@@ -86,10 +107,4 @@ export function isWithinSchedule(
   }
 
   return currentMinutes >= startMinutes && currentMinutes < endMinutes
-}
-
-// Parse time string (HH:mm) to minutes from midnight
-export function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number)
-  return hours * 60 + minutes
 }

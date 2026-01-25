@@ -19,8 +19,6 @@ storage.watch({
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(async () => {
-  console.log('VisionFocus installed')
-
   // Initialize block rules
   await updateBlockRules()
 
@@ -30,8 +28,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(async () => {
-  console.log('VisionFocus started')
-
   // Update block rules
   await updateBlockRules()
 

@@ -138,8 +138,9 @@ export function getResolutionOptions(): {
 /**
  * Get resolution dimensions
  */
-export function getResolutionDimensions(
-  resolution: Resolution
-): { width: number; height: number } {
+export function getResolutionDimensions(resolution: Resolution): {
+  width: number
+  height: number
+} {
   return RESOLUTIONS[resolution]
 }
