@@ -11,12 +11,22 @@ export const config: PlasmoCSConfig = {
 let isUserActive = false
 let lastActivityTime = Date.now()
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+let isStopped = false
 
 // Activity timeout (consider user inactive after 30 seconds of no activity)
 const ACTIVITY_TIMEOUT_MS = 30 * 1000
 
 // Heartbeat interval (send heartbeat every 5 seconds when active)
 const HEARTBEAT_INTERVAL_MS = 5 * 1000
+
+// Check if extension context is still valid
+function isContextValid(): boolean {
+  try {
+    return !!chrome.runtime?.id
+  } catch {
+    return false
+  }
+}
 
 // Activity events to listen for
 const ACTIVITY_EVENTS = [
@@ -46,6 +56,11 @@ function throttle<T extends (...args: unknown[]) => void>(
 
 // Handle user activity
 const handleActivity = throttle(() => {
+  if (isStopped || !isContextValid()) {
+    stopTracking()
+    return
+  }
+
   lastActivityTime = Date.now()
 
   if (!isUserActive) {
@@ -69,6 +84,14 @@ function checkActivity() {
 
 // Send heartbeat to background
 async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
+  if (isStopped) return
+
+  // Check if extension context is still valid
+  if (!isContextValid()) {
+    stopTracking()
+    return
+  }
+
   try {
     await sendToBackground({
       name: 'tracker-heartbeat',
@@ -79,12 +102,18 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
       },
     })
   } catch {
-    // Silently fail if background is not available (e.g., extension context invalidated)
+    // Extension context likely invalidated, stop tracking
+    stopTracking()
   }
 }
 
 // Handle visibility change
 function handleVisibilityChange() {
+  if (isStopped || !isContextValid()) {
+    stopTracking()
+    return
+  }
+
   if (document.hidden) {
     // Page is hidden, notify background
     sendHeartbeat('inactive')
@@ -109,6 +138,12 @@ function startTracking() {
 
   // Start heartbeat interval
   heartbeatInterval = setInterval(() => {
+    // Stop if context invalidated
+    if (!isContextValid()) {
+      stopTracking()
+      return
+    }
+
     checkActivity()
 
     if (isUserActive && !document.hidden) {
@@ -125,6 +160,9 @@ function startTracking() {
 
 // Stop tracking
 function stopTracking() {
+  if (isStopped) return
+  isStopped = true
+
   // Remove activity listeners
   ACTIVITY_EVENTS.forEach((event) => {
     document.removeEventListener(event, handleActivity)
@@ -139,11 +177,7 @@ function stopTracking() {
     heartbeatInterval = null
   }
 
-  // Send final inactive status
-  if (isUserActive) {
-    sendHeartbeat('inactive')
-    isUserActive = false
-  }
+  isUserActive = false
 }
 
 // Handle page unload
