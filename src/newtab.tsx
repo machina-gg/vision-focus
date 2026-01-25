@@ -2,54 +2,26 @@ import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Clock, Edit2, Settings, TrendingUp } from 'lucide-react'
+import { Settings } from 'lucide-react'
 
-import { StatsCard, DownloadButton } from '~/components/features'
-import { Button, Input } from '~/components/ui'
+import { DownloadButton } from '~/components/features'
+import { MiniStats, GoalDisplay } from '~/components/newtab'
 import { getMessage } from '~/lib/i18n'
-import { formatTime, isWithinSchedule } from '~/lib/time'
+import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
+import { getBackgroundUrl, loadGoogleFont, FONT_WEIGHT_VALUE } from '~/constants'
 import type { VisionSettings, DashboardDisplaySettings, AppSettings } from '~/types/storage'
 import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS, getFontDefinition } from '~/types/storage'
 
 import './styles/globals.css'
 
-// Load Google Font dynamically
-function loadGoogleFont(fontName: string) {
-  const linkId = `google-font-${fontName.replace(/\+/g, '-')}`
-  if (document.getElementById(linkId)) return
-
-  const link = document.createElement('link')
-  link.id = linkId
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`
-  document.head.appendChild(link)
-}
-
-// Font size in pixels for inline styles
+// Font size in pixels for newtab (larger than options preview)
 const FONT_SIZE_PX: Record<string, number> = {
   sm: 30,
   md: 36,
   lg: 48,
   xl: 60,
-}
-
-// Font weight values
-const FONT_WEIGHT_VALUE: Record<string, number> = {
-  normal: 400,
-  medium: 500,
-  semibold: 600,
-  bold: 700,
-}
-
-// Background images
-const BACKGROUNDS: Record<string, string> = {
-  'default-1': chrome.runtime.getURL('assets/images/backgrounds/default-1.jpg'),
-  'default-2': chrome.runtime.getURL('assets/images/backgrounds/default-2.jpg'),
-  'default-3': chrome.runtime.getURL('assets/images/backgrounds/default-3.jpg'),
-  'default-4': chrome.runtime.getURL('assets/images/backgrounds/default-4.jpg'),
-  'default-5': chrome.runtime.getURL('assets/images/backgrounds/default-5.jpg'),
 }
 
 function NewtabApp() {
@@ -149,8 +121,8 @@ function NewtabApp() {
   const backgroundUrl = displaySettings.customBackgroundData
     ? displaySettings.customBackgroundData
     : displaySettings.backgroundImage
-      ? BACKGROUNDS[displaySettings.backgroundImage] || displaySettings.backgroundImage
-      : BACKGROUNDS['default-1']
+      ? getBackgroundUrl(displaySettings.backgroundImage)
+      : getBackgroundUrl('default-1')
   const backgroundColor = displaySettings.backgroundColor
 
   // Get font styles
@@ -179,9 +151,7 @@ function NewtabApp() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await sendToBackground({
-          name: 'get-stats',
-        })
+        const response = await sendToBackground({ name: 'get-stats' })
         setStats(response)
       } catch (error) {
         console.error('Failed to get stats:', error)
@@ -200,7 +170,6 @@ function NewtabApp() {
 
   const handleSaveGoal = useCallback(async () => {
     if (vision && editText.trim()) {
-      // Update defaultSettings with new goal text
       const updated = {
         ...vision,
         defaultSettings: {
@@ -239,10 +208,10 @@ function NewtabApp() {
         isColorBackground
           ? { backgroundColor }
           : {
-            backgroundImage: `url(${backgroundUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }
+              backgroundImage: `url(${backgroundUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
       }
     >
       {/* Overlay */}
@@ -250,85 +219,30 @@ function NewtabApp() {
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-2xl px-8 text-center">
-        {/* Goal Text with Carousel */}
+        {/* Goal Text */}
         <div className="mb-12">
-          {isEditing ? (
-            <div className="space-y-4">
-              <Input
-                value={editText}
-                onChange={setEditText}
-                onKeyDown={handleKeyDown}
-                placeholder={getMessage('enterGoalPlaceholder')}
-                className="text-center text-2xl bg-white/90"
-                autoFocus
-              />
-              <div className="flex justify-center gap-2">
-                <Button variant="secondary" onClick={() => setIsEditing(false)}>
-                  {getMessage('cancel')}
-                </Button>
-                <Button onClick={handleSaveGoal}>{getMessage('save')}</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="group relative">
-              <h1
-                className="drop-shadow-lg leading-tight transition-opacity duration-300"
-                style={{ color: textColor, ...fontStyle }}
-              >
-                {goalText}
-              </h1>
-              {goalSubText && (
-                <p
-                  className="text-lg md:text-xl mt-4 drop-shadow-lg opacity-80 whitespace-pre-line"
-                  style={{ color: textColor }}
-                >
-                  {goalSubText}
-                </p>
-              )}
-
-              {/* Edit button - only show when no preset is active */}
-              {!vision?.activePresetId && (
-                <button
-                  onClick={handleStartEdit}
-                  className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Edit2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          )}
+          <GoalDisplay
+            goalText={goalText}
+            goalSubText={goalSubText}
+            textColor={textColor}
+            fontStyle={fontStyle}
+            isEditing={isEditing}
+            editText={editText}
+            canEdit={!vision?.activePresetId}
+            onEditTextChange={setEditText}
+            onStartEdit={handleStartEdit}
+            onSave={handleSaveGoal}
+            onCancel={() => setIsEditing(false)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
 
         {/* Mini Stats */}
-        <div className="flex justify-center gap-4">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-red-500 mb-1">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('waste')}</span>
-            </div>
-            <p className="text-xl font-bold text-red-600">
-              {formatTime(stats.wasteTime)}
-            </p>
-          </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-green-500 mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('invest')}</span>
-            </div>
-            <p className="text-xl font-bold text-green-600">
-              {formatTime(stats.investTime)}
-            </p>
-          </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-amber-500 mb-1">
-              <Ban className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('blocked')}</span>
-            </div>
-            <p className="text-xl font-bold text-amber-600">
-              {stats.blockCount}
-            </p>
-          </div>
-        </div>
+        <MiniStats
+          wasteTime={stats.wasteTime}
+          investTime={stats.investTime}
+          blockCount={stats.blockCount}
+        />
       </div>
 
       {/* Bottom Controls */}
