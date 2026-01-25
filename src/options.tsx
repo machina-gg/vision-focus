@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
@@ -8,9 +8,7 @@ import {
   Check,
   Clock,
   Crown,
-  ExternalLink,
   Image,
-  Key,
   Plus,
   Settings,
   Target,
@@ -33,29 +31,19 @@ import { getMessage, formatDate } from '~/lib/i18n'
 import { parseDomainInput } from '~/lib/domain'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus, getFeatureLimits, canAddToBlocklist } from '~/lib/license'
-import { activateGumroadLicense, getGumroadPurchaseUrl } from '~/lib/gumroad'
-import {
-  enableDevMode,
-  disableDevMode,
-  isDevModeActive,
-  formatRemainingTime,
-  isDevModeAllowed,
-} from '~/lib/devMode'
-import { deactivateLicense } from '~/lib/license'
+import { openPaymentPage, openManagementPage } from '~/lib/extpay'
 import type {
   AppSettings,
   Schedule,
   VisionSettings,
   DailyStat,
   AnalyticsData,
-  LicenseInfo,
   Goal,
   FontSettings,
 } from '~/types/storage'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
-  DEFAULT_LICENSE,
   DEFAULT_FONT_SETTINGS,
   FREE_TIER_LIMITS,
   FEATURE_LIMITS,
@@ -110,27 +98,10 @@ function OptionsApp() {
   })
   const analytics = analyticsData.dailyStats
 
-  // License state
-  const [license] = useStorage<LicenseInfo>({
-    key: 'license',
-    instance: storage,
-  }, DEFAULT_LICENSE)
+  // Premium state
   const [isPremium, setIsPremium] = useState(false)
   const [premiumSource, setPremiumSource] = useState<string | null>(null)
-  const [premiumExpires, setPremiumExpires] = useState<string | null>(null)
-  const [licenseKeyInput, setLicenseKeyInput] = useState('')
-  const [licenseError, setLicenseError] = useState('')
-  const [licenseSuccess, setLicenseSuccess] = useState('')
-  const [activatingLicense, setActivatingLicense] = useState(false)
   const [featureLimits, setFeatureLimits] = useState<FeatureLimits>(FEATURE_LIMITS.free)
-
-  // Dev mode state
-  const [devModeActive, setDevModeActive] = useState(false)
-  const [devModeRemaining, setDevModeRemaining] = useState<string | null>(null)
-  const [devModeKeyCount, setDevModeKeyCount] = useState(0)
-  const [showDevModeInput, setShowDevModeInput] = useState(false)
-  const [devModeSecret, setDevModeSecret] = useState('')
-  const devModeKeyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sync draft with stored vision
   useEffect(() => {
@@ -150,61 +121,17 @@ function OptionsApp() {
     loadAnalytics()
   }, [])
 
-  // Load premium status and dev mode
+  // Load premium status
   useEffect(() => {
     const loadPremiumStatus = async () => {
       const status = await checkPremiumStatus()
       setIsPremium(status.isPremium)
       setPremiumSource(status.source)
-      setPremiumExpires(status.expiresAt)
       const limits = await getFeatureLimits()
       setFeatureLimits(limits)
     }
     loadPremiumStatus()
-
-    const loadDevModeStatus = async () => {
-      const status = await isDevModeActive()
-      setDevModeActive(status.active)
-      if (status.remainingMs) {
-        setDevModeRemaining(formatRemainingTime(status.remainingMs))
-      }
-    }
-    loadDevModeStatus()
-
-    // Update dev mode remaining time every minute
-    const interval = setInterval(loadDevModeStatus, 60000)
-    return () => clearInterval(interval)
-  }, [license])
-
-  // Handle dev mode secret key combo (Ctrl+Shift+D x5)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault()
-
-        // Clear previous timeout
-        if (devModeKeyTimeoutRef.current) {
-          clearTimeout(devModeKeyTimeoutRef.current)
-        }
-
-        const newCount = devModeKeyCount + 1
-        setDevModeKeyCount(newCount)
-
-        if (newCount >= 5) {
-          setShowDevModeInput(true)
-          setDevModeKeyCount(0)
-        } else {
-          // Reset count after 2 seconds of inactivity
-          devModeKeyTimeoutRef.current = setTimeout(() => {
-            setDevModeKeyCount(0)
-          }, 2000)
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [devModeKeyCount])
+  }, [])
 
   // Tabs configuration
   const tabs = [
@@ -487,73 +414,13 @@ function OptionsApp() {
     }))
   }, [])
 
-  // License handlers
-  const handleActivateLicense = useCallback(async () => {
-    if (!licenseKeyInput.trim()) return
-
-    setActivatingLicense(true)
-    setLicenseError('')
-    setLicenseSuccess('')
-
-    const result = await activateGumroadLicense(licenseKeyInput.trim())
-
-    if (result.success) {
-      setLicenseSuccess(getMessage('licenseActivated'))
-      setLicenseKeyInput('')
-      // Refresh premium status
-      const status = await checkPremiumStatus()
-      setIsPremium(status.isPremium)
-      setPremiumSource(status.source)
-      setPremiumExpires(status.expiresAt)
-      const limits = await getFeatureLimits()
-      setFeatureLimits(limits)
-    } else {
-      setLicenseError(result.error || getMessage('invalidLicenseKey'))
-    }
-
-    setActivatingLicense(false)
-  }, [licenseKeyInput])
-
-  const handleDeactivateLicense = useCallback(async () => {
-    await deactivateLicense()
-    setIsPremium(false)
-    setPremiumSource(null)
-    setPremiumExpires(null)
-    setFeatureLimits(FEATURE_LIMITS.free)
-    setLicenseSuccess(getMessage('licenseDeactivated'))
+  // ExtensionPay handlers
+  const handleUpgrade = useCallback(() => {
+    openPaymentPage()
   }, [])
 
-  const handleEnableDevMode = useCallback(async () => {
-    if (!devModeSecret.trim()) return
-
-    const result = await enableDevMode(devModeSecret.trim())
-
-    if (result.success) {
-      setDevModeActive(true)
-      if (result.expiresAt) {
-        const remaining = new Date(result.expiresAt).getTime() - Date.now()
-        setDevModeRemaining(formatRemainingTime(remaining))
-      }
-      setShowDevModeInput(false)
-      setDevModeSecret('')
-      // Refresh premium status
-      const status = await checkPremiumStatus()
-      setIsPremium(status.isPremium)
-      setPremiumSource(status.source)
-    } else {
-      setLicenseError(result.error || 'Invalid secret')
-    }
-  }, [devModeSecret])
-
-  const handleDisableDevMode = useCallback(async () => {
-    await disableDevMode()
-    setDevModeActive(false)
-    setDevModeRemaining(null)
-    // Refresh premium status
-    const status = await checkPremiumStatus()
-    setIsPremium(status.isPremium)
-    setPremiumSource(status.source)
-    setPremiumExpires(status.expiresAt)
+  const handleManageSubscription = useCallback(() => {
+    openManagementPage()
   }, [])
 
   // Handle site category change
@@ -1201,26 +1068,9 @@ function OptionsApp() {
                         <p className="font-medium text-gray-900">
                           {getMessage('premiumPlan')}
                         </p>
-                        {premiumSource === 'devMode' && devModeRemaining && (
-                          <p className="text-sm text-amber-600">
-                            {getMessage('devModeExpires', devModeRemaining)}
-                          </p>
-                        )}
-                        {premiumSource === 'license' && premiumExpires && (
-                          <p className="text-sm text-gray-500">
-                            {getMessage('licenseExpires', formatDate(premiumExpires))}
-                          </p>
-                        )}
-                        {premiumSource === 'license' && !premiumExpires && (
-                          <p className="text-sm text-gray-500">
-                            {getMessage('licenseLifetime')}
-                          </p>
-                        )}
-                        {premiumSource === 'gracePeriod' && premiumExpires && (
-                          <p className="text-sm text-amber-600">
-                            {getMessage('gracePeriodWarning', formatDate(premiumExpires))}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-500">
+                          {getMessage('subscriptionActive')}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1246,39 +1096,23 @@ function OptionsApp() {
                     </ul>
                   </div>
 
-                  {/* Dev Mode Controls */}
-                  {premiumSource === 'devMode' && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleDisableDevMode}
-                      >
-                        {getMessage('devModeDisabled')}
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Deactivate License */}
-                  {premiumSource === 'license' && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDeactivateLicense}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        {getMessage('deactivateLicense')}
-                      </Button>
-                    </div>
-                  )}
+                  {/* Manage Subscription */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleManageSubscription}
+                    >
+                      {getMessage('manageSubscription')}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-100 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <Key className="w-5 h-5 text-gray-600" />
+                        <Crown className="w-5 h-5 text-gray-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
@@ -1294,100 +1128,38 @@ function OptionsApp() {
                     </div>
                   </div>
 
-                  {/* Upgrade Prompt */}
-                  <UpgradePrompt variant="card" showFeatures={true} />
+                  {/* Upgrade Button */}
+                  <Button onClick={handleUpgrade} className="w-full">
+                    <Crown className="w-4 h-4" />
+                    {getMessage('upgradeToPremium')}
+                  </Button>
+
+                  {/* Premium Features List */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      {getMessage('premiumFeatures')}
+                    </p>
+                    <ul className="space-y-1 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        {getMessage('premiumFeatureUnlimitedBlocklist')}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        {getMessage('premiumFeatureUnlimitedHistory')}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        {getMessage('premiumFeatureCustomBackground')}
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               )}
             </Card>
-
-            {/* License Key Input */}
-            {!isPremium && (
-              <Card>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  {getMessage('licenseKey')}
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={licenseKeyInput}
-                      onChange={setLicenseKeyInput}
-                      placeholder={getMessage('enterLicenseKey')}
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={handleActivateLicense}
-                      loading={activatingLicense}
-                      disabled={!licenseKeyInput.trim()}
-                    >
-                      {activatingLicense
-                        ? getMessage('activating')
-                        : getMessage('activateLicense')}
-                    </Button>
-                  </div>
-                  {licenseError && (
-                    <p className="text-sm text-red-600">{licenseError}</p>
-                  )}
-                  {licenseSuccess && (
-                    <p className="text-sm text-green-600">{licenseSuccess}</p>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    {getMessage('upgradeToAddMore')}{' '}
-                    <a
-                      href={getGumroadPurchaseUrl('lifetime')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-600 hover:underline inline-flex items-center gap-1"
-                    >
-                      {getMessage('getPremium')}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </p>
-                </div>
-              </Card>
-            )}
           </div>
         )}
       </main>
-
-      {/* Dev Mode Modal */}
-      <Modal
-        isOpen={showDevModeInput}
-        onClose={() => {
-          setShowDevModeInput(false)
-          setDevModeSecret('')
-        }}
-        title="Developer Mode"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Enter the developer secret key to enable dev mode for 24 hours.
-          </p>
-          <Input
-            value={devModeSecret}
-            onChange={setDevModeSecret}
-            placeholder="Secret key"
-            type="password"
-          />
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowDevModeInput(false)
-                setDevModeSecret('')
-              }}
-            >
-              {getMessage('cancel')}
-            </Button>
-            <Button
-              onClick={handleEnableDevMode}
-              disabled={!devModeSecret.trim()}
-            >
-              Enable
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Schedule Modal */}
       <Modal

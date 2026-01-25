@@ -305,6 +305,14 @@
     "message": "プレミアムプラン",
     "description": "プレミアムプラン名"
   },
+  "subscriptionActive": {
+    "message": "サブスクリプションが有効です",
+    "description": "サブスクリプション有効状態"
+  },
+  "manageSubscription": {
+    "message": "サブスクリプションを管理",
+    "description": "サブスクリプション管理ボタン"
+  },
   "licenseKey": {
     "message": "ライセンスキー",
     "description": "ライセンスキー入力ラベル"
@@ -382,28 +390,6 @@
   "upgradeToAddMore": {
     "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
     "description": "ブロックリストのアップグレードプロンプト"
-  },
-  "devModeActive": {
-    "message": "開発者モード有効",
-    "description": "開発者モード有効インジケーター"
-  },
-  "devModeExpires": {
-    "message": "残り $TIME$",
-    "description": "開発者モード有効期限",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "23時間45分"
-      }
-    }
-  },
-  "devModeEnabled": {
-    "message": "開発者モードが24時間有効になりました",
-    "description": "開発者モード有効化メッセージ"
-  },
-  "devModeDisabled": {
-    "message": "開発者モードが無効になりました",
-    "description": "開発者モード無効化メッセージ"
   },
   "gracePeriodWarning": {
     "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",

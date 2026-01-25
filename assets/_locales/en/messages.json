@@ -305,6 +305,14 @@
     "message": "Premium Plan",
     "description": "Premium plan name"
   },
+  "subscriptionActive": {
+    "message": "Your subscription is active",
+    "description": "Active subscription status"
+  },
+  "manageSubscription": {
+    "message": "Manage Subscription",
+    "description": "Manage subscription button"
+  },
   "licenseKey": {
     "message": "License Key",
     "description": "License key input label"
@@ -382,28 +390,6 @@
   "upgradeToAddMore": {
     "message": "Upgrade to Premium to add more sites to your block list.",
     "description": "Upgrade prompt for blocklist"
-  },
-  "devModeActive": {
-    "message": "Developer Mode Active",
-    "description": "Dev mode active indicator"
-  },
-  "devModeExpires": {
-    "message": "Expires in $TIME$",
-    "description": "Dev mode expiration",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "23h 45m"
-      }
-    }
-  },
-  "devModeEnabled": {
-    "message": "Developer mode enabled for 24 hours",
-    "description": "Dev mode enabled message"
-  },
-  "devModeDisabled": {
-    "message": "Developer mode disabled",
-    "description": "Dev mode disabled message"
   },
   "gracePeriodWarning": {
     "message": "License verification failed. Premium features will remain active until $DATE$.",

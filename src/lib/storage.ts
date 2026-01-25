@@ -2,14 +2,10 @@ import { Storage } from '@plasmohq/storage'
 
 import {
   DEFAULT_ANALYTICS,
-  DEFAULT_DEV_MODE,
-  DEFAULT_LICENSE,
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
   type AnalyticsData,
   type AppSettings,
-  type DevModeSettings,
-  type LicenseInfo,
   type StorageSchema,
   type VisionSettings,
 } from '~/types/storage'
@@ -24,8 +20,6 @@ const KEYS = {
   settings: 'settings',
   vision: 'vision',
   analytics: 'analytics',
-  license: 'license',
-  devMode: 'devMode',
 } as const
 
 // Get settings
@@ -71,39 +65,15 @@ export async function setAnalytics(analytics: AnalyticsData): Promise<void> {
   await storage.set(KEYS.analytics, analytics)
 }
 
-// Get license info
-export async function getLicense(): Promise<LicenseInfo> {
-  const data = await storage.get<LicenseInfo>(KEYS.license)
-  return data ?? DEFAULT_LICENSE
-}
-
-// Set license info
-export async function setLicense(license: LicenseInfo): Promise<void> {
-  await storage.set(KEYS.license, license)
-}
-
-// Get dev mode settings
-export async function getDevMode(): Promise<DevModeSettings> {
-  const data = await storage.get<DevModeSettings>(KEYS.devMode)
-  return data ?? DEFAULT_DEV_MODE
-}
-
-// Set dev mode settings
-export async function setDevMode(devMode: DevModeSettings): Promise<void> {
-  await storage.set(KEYS.devMode, devMode)
-}
-
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, analytics, license, devMode] = await Promise.all([
+  const [settings, vision, analytics] = await Promise.all([
     getSettings(),
     getVision(),
     getAnalytics(),
-    getLicense(),
-    getDevMode(),
   ])
 
-  return { settings, vision, analytics, license, devMode }
+  return { settings, vision, analytics }
 }
 
 // Clear all storage (for debugging)
@@ -112,8 +82,6 @@ export async function clearAllStorage(): Promise<void> {
     storage.remove(KEYS.settings),
     storage.remove(KEYS.vision),
     storage.remove(KEYS.analytics),
-    storage.remove(KEYS.license),
-    storage.remove(KEYS.devMode),
   ])
 }
 

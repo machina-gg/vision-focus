@@ -114,30 +114,6 @@ export interface AnalyticsData {
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'> // key: domain
 }
 
-// License types
-export type LicenseType = 'free' | 'monthly' | 'yearly' | 'lifetime'
-export type LicenseSource = 'gumroad' | 'dev' | 'promo'
-
-// License info
-export interface LicenseInfo {
-  isPremium: boolean
-  type: LicenseType
-  source: LicenseSource | null
-  expiresAt: string | null
-  gracePeriodEndsAt: string | null
-  licenseKey: string | null // hashed
-  activatedAt: string | null
-  lastVerifiedAt: string | null
-  verificationFailCount: number
-}
-
-// Dev mode settings
-export interface DevModeSettings {
-  enabled: boolean
-  enabledAt: string | null
-  expiresAt: string | null // auto-disable after 24 hours
-}
-
 // Premium feature identifiers
 export type PremiumFeature =
   | 'unlimited_blocklist'
@@ -155,8 +131,6 @@ export interface StorageSchema {
   settings: AppSettings
   vision: VisionSettings
   analytics: AnalyticsData
-  license: LicenseInfo
-  devMode: DevModeSettings
 }
 
 // Default values
@@ -190,30 +164,10 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   siteCategories: {},
 }
 
-export const DEFAULT_LICENSE: LicenseInfo = {
-  isPremium: false,
-  type: 'free',
-  source: null,
-  expiresAt: null,
-  gracePeriodEndsAt: null,
-  licenseKey: null,
-  activatedAt: null,
-  lastVerifiedAt: null,
-  verificationFailCount: 0,
-}
-
-export const DEFAULT_DEV_MODE: DevModeSettings = {
-  enabled: false,
-  enabledAt: null,
-  expiresAt: null,
-}
-
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
   analytics: DEFAULT_ANALYTICS,
-  license: DEFAULT_LICENSE,
-  devMode: DEFAULT_DEV_MODE,
 }
 
 // Feature limits type

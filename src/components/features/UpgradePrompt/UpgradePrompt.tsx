@@ -1,9 +1,9 @@
 import React from 'react'
-import { Crown, Check, ExternalLink } from 'lucide-react'
+import { Crown, Check } from 'lucide-react'
 
 import { Button, Card } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
-import { getGumroadPurchaseUrl } from '~/lib/gumroad'
+import { openPaymentPage } from '~/lib/extpay'
 
 export interface UpgradePromptProps {
   /** Type of limit reached */
@@ -36,8 +36,8 @@ export function UpgradePrompt({
     if (onUpgradeClick) {
       onUpgradeClick()
     } else {
-      // Open Gumroad purchase page
-      window.open(getGumroadPurchaseUrl('lifetime'), '_blank')
+      // Open ExtensionPay payment page
+      openPaymentPage()
     }
   }
 
@@ -82,7 +82,6 @@ export function UpgradePrompt({
           className="bg-white text-primary-600 hover:bg-primary-50"
         >
           {getMessage('upgradeToPremium')}
-          <ExternalLink className="w-3 h-3 ml-1" />
         </Button>
       </div>
     )

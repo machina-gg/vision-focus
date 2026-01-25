@@ -1,16 +1,12 @@
-import {
-  getAnalytics,
-  getLicense,
-  getSettings,
-  setAnalytics,
-} from '~/lib/storage'
-import { getTodayKey } from '~/lib/time'
-import { checkAndCleanupDevMode } from '~/lib/devMode'
-import { verifyStoredLicense } from '~/lib/gumroad'
+import { getAnalytics, setAnalytics } from '~/lib/storage'
+import { startExtPayBackgroundListener } from '~/lib/extpay'
 import { getFeatureLimits } from '~/lib/license'
 
 import { updateBlockRules } from './blocker'
-import { startTracking, stopTracking } from './tracker'
+import { startTracking } from './tracker'
+
+// Initialize ExtensionPay at top level (required for Manifest V3)
+startExtPayBackgroundListener()
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(async () => {
@@ -27,9 +23,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onStartup.addListener(async () => {
   console.log('VisionFocus started')
 
-  // Check dev mode expiration
-  await checkAndCleanupDevMode()
-
   // Update block rules
   await updateBlockRules()
 
@@ -42,20 +35,10 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'daily-cleanup') {
     await cleanupOldAnalytics()
   }
-
-  if (alarm.name === 'check-dev-mode') {
-    await checkAndCleanupDevMode()
-  }
-
-  if (alarm.name === 'verify-license') {
-    await verifyStoredLicense()
-  }
 })
 
 // Set up alarms
 chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 })
-chrome.alarms.create('check-dev-mode', { periodInMinutes: 5 }) // Check dev mode every 5 minutes
-chrome.alarms.create('verify-license', { periodInMinutes: 60 * 24 }) // Verify license once per day
 
 // Clean up analytics based on tier limits
 async function cleanupOldAnalytics() {
