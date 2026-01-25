@@ -32,14 +32,19 @@ export interface SiteTime {
   lastUpdated: string
 }
 
-// Goal for multiple goals feature (Premium)
-export interface Goal {
+// Dashboard preset - saves all dashboard settings as a set (Premium)
+export interface DashboardPreset {
   id: string
-  text: string
-  subText: string
-  color: string // hex color
+  name: string
+  goalText: string
+  goalSubText: string
+  textColor: string
+  backgroundType: 'image' | 'color'
+  backgroundImage: string
+  backgroundColor: string
+  customBackgroundData: string | null
+  fontSettings: FontSettings
   createdAt: string
-  order: number
 }
 
 // Font settings for customization (Premium)
@@ -98,7 +103,7 @@ export interface VisionSettings {
   // Premium features
   customBackgroundData: string | null // Base64 data URL for uploaded images
   fontSettings: FontSettings
-  goals: Goal[] // Multiple goals (free: 1, premium: unlimited)
+  presets: DashboardPreset[] // Saved dashboard presets (free: 1, premium: 5)
 }
 
 // App settings
@@ -118,13 +123,12 @@ export interface AnalyticsData {
 export type PremiumFeature =
   | 'unlimited_blocklist'
   | 'custom_background'
+  | 'dashboard_presets'
   | 'unsplash'
   | 'unlimited_history'
   | 'weekly_report'
   | 'monthly_report'
   | 'github_integration'
-  | 'multiple_goals'
-  | 'font_customization'
 
 // Complete storage schema
 export interface StorageSchema {
@@ -155,7 +159,7 @@ export const DEFAULT_VISION: VisionSettings = {
   // Premium features
   customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS,
-  goals: [],
+  presets: [],
 }
 
 export const DEFAULT_ANALYTICS: AnalyticsData = {
@@ -174,7 +178,7 @@ export const DEFAULT_STORAGE: StorageSchema = {
 export interface FeatureLimits {
   maxBlockList: number
   historyDays: number
-  maxGoals: number
+  maxPresets: number
 }
 
 // Feature limits
@@ -185,12 +189,12 @@ export const FEATURE_LIMITS: {
   free: {
     maxBlockList: 5,
     historyDays: 7,
-    maxGoals: 1,
+    maxPresets: 1,
   },
   premium: {
     maxBlockList: Infinity,
     historyDays: Infinity,
-    maxGoals: Infinity,
+    maxPresets: 5,
   },
 }
 

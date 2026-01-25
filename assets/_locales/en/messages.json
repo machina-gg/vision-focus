@@ -670,5 +670,65 @@
   "siteCategoryHelp": {
     "message": "Categorize your sites as Waste (time wasters), Invest (productive), or Neutral to track your productivity.",
     "description": "Site category help text"
+  },
+  "dashboardPresets": {
+    "message": "Dashboard Presets",
+    "description": "Dashboard presets section title"
+  },
+  "saveAsPreset": {
+    "message": "Save as Preset",
+    "description": "Save as preset button"
+  },
+  "savePresetDescription": {
+    "message": "Save the current dashboard settings (goal, background, font) as a preset for quick switching",
+    "description": "Save preset description"
+  },
+  "presetNamePlaceholder": {
+    "message": "e.g., Work Mode, Weekend, Morning Routine",
+    "description": "Preset name input placeholder"
+  },
+  "maxPresetsReached": {
+    "message": "Maximum presets reached ($COUNT$). Upgrade to Premium for more slots.",
+    "description": "Max presets reached message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "Save up to 5 dashboard presets",
+    "description": "Premium feature: dashboard presets"
+  },
+  "noPresets": {
+    "message": "No presets saved yet. Configure your dashboard and save it as a preset.",
+    "description": "No presets message"
+  },
+  "presetsDescription": {
+    "message": "Save your dashboard settings as presets to quickly switch between different configurations.",
+    "description": "Presets feature description"
+  },
+  "defaultPreset": {
+    "message": "Default",
+    "description": "Default preset name"
+  },
+  "editingPreset": {
+    "message": "Editing \"$NAME$\"",
+    "description": "Currently editing preset label",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Work Mode"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "New Preset",
+    "description": "New preset button"
+  },
+  "deletePresetConfirm": {
+    "message": "Delete this preset?",
+    "description": "Delete preset confirmation"
   }
 }

@@ -670,5 +670,65 @@
   "siteCategoryHelp": {
     "message": "サイトを浪費（時間の無駄）、投資（生産的）、または中立に分類して生産性を追跡しましょう。",
     "description": "サイトカテゴリヘルプテキスト"
+  },
+  "dashboardPresets": {
+    "message": "ダッシュボードプリセット",
+    "description": "ダッシュボードプリセットセクションタイトル"
+  },
+  "saveAsPreset": {
+    "message": "プリセットとして保存",
+    "description": "プリセット保存ボタン"
+  },
+  "savePresetDescription": {
+    "message": "現在のダッシュボード設定（目標、背景、フォント）をプリセットとして保存し、すぐに切り替えられます",
+    "description": "プリセット保存の説明"
+  },
+  "presetNamePlaceholder": {
+    "message": "例: 仕事モード、休日、朝のルーティン",
+    "description": "プリセット名入力プレースホルダー"
+  },
+  "maxPresetsReached": {
+    "message": "プリセットの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "description": "最大プリセット数到達メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "最大5つのプリセットを保存",
+    "description": "プレミアム機能: ダッシュボードプリセット"
+  },
+  "noPresets": {
+    "message": "まだプリセットがありません。ダッシュボードを設定してプリセットとして保存してください。",
+    "description": "プリセットなしメッセージ"
+  },
+  "presetsDescription": {
+    "message": "ダッシュボード設定をプリセットとして保存し、異なる設定をすぐに切り替えられます。",
+    "description": "プリセット機能の説明"
+  },
+  "defaultPreset": {
+    "message": "デフォルト",
+    "description": "デフォルトプリセット名"
+  },
+  "editingPreset": {
+    "message": "「$NAME$」を編集中",
+    "description": "編集中のプリセットラベル",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "仕事モード"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "新規プリセット",
+    "description": "新規プリセットボタン"
+  },
+  "deletePresetConfirm": {
+    "message": "このプリセットを削除しますか？",
+    "description": "プリセット削除確認"
   }
 }
