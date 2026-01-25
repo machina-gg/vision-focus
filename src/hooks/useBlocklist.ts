@@ -77,8 +77,8 @@ export function useBlocklist({
         if (updatedSettings) {
           setSettings(updatedSettings)
         }
-      } catch (error) {
-        console.error('Failed to remove domain:', error)
+      } catch {
+        // Silently handle error - list will refresh on next settings change
       }
     },
     [setSettings]

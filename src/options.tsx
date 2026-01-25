@@ -133,8 +133,8 @@ function OptionsApp() {
         if (data) {
           setAnalyticsData(data)
         }
-      } catch (error) {
-        console.error('Failed to set site category:', error)
+      } catch {
+        // Silently handle error - analytics will refresh on next load
       }
     },
     []

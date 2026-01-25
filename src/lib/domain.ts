@@ -43,7 +43,7 @@ export function parseDomainInput(input: string): {
   const trimmed = input.trim().toLowerCase()
 
   // Remove protocol if present
-  let domain = trimmed.replace(/^https?:\/\//, '').replace(/\/.*$/, '') // Remove path
+  const domain = trimmed.replace(/^https?:\/\//, '').replace(/\/.*$/, '') // Remove path
 
   const isWildcard = domain.startsWith('*.')
 

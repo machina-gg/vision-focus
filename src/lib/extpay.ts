@@ -46,8 +46,8 @@ export async function isExtPayPremium(): Promise<boolean> {
   try {
     const user = await getExtPayUser()
     return user.paid
-  } catch (error) {
-    console.error('Failed to check ExtensionPay status:', error)
+  } catch {
+    // Assume not premium if check fails
     return false
   }
 }

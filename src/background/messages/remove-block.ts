@@ -1,16 +1,10 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
 import { getSettings, setSettings } from '~/lib/storage'
-
 import { updateBlockRules } from '../blocker'
+import type { RemoveBlockRequest, RemoveBlockResponse } from '~/types/messages'
 
-export type RemoveBlockRequest = {
-  id: string
-}
-
-export type RemoveBlockResponse = {
-  success: boolean
-}
+export type { RemoveBlockRequest, RemoveBlockResponse }
 
 const handler: PlasmoMessaging.MessageHandler<
   RemoveBlockRequest,

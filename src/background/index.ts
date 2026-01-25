@@ -1,4 +1,4 @@
-import { getAnalytics, setAnalytics, storage, getSettings } from '~/lib/storage'
+import { getAnalytics, setAnalytics, storage } from '~/lib/storage'
 import { startExtPayBackgroundListener } from '~/lib/extpay'
 import { getFeatureLimits } from '~/lib/license'
 

@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef } from 'react'
 
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 
-import { compressImage, validateImageFile, formatBytes } from '~/lib/image'
+import { compressImage, validateImageFile } from '~/lib/image'
 import { getMessage } from '~/lib/i18n'
 
 export interface ImageUploaderProps {

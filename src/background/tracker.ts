@@ -47,8 +47,8 @@ async function initializeCurrentTab(): Promise<void> {
       activeDomain = extractDomain(tab.url)
       lastUpdateTime = Date.now()
     }
-  } catch (error) {
-    console.error('Error initializing current tab:', error)
+  } catch {
+    // Silently handle error - tracking will start on next tab activation
   }
 }
 
@@ -78,7 +78,7 @@ async function handleTabActivated(
 async function handleTabUpdated(
   tabId: number,
   changeInfo: chrome.tabs.TabChangeInfo,
-  tab: chrome.tabs.Tab
+  _tab: chrome.tabs.Tab
 ): Promise<void> {
   if (!isContextValid()) return
   if (tabId !== activeTabId || !changeInfo.url) return
@@ -125,7 +125,7 @@ async function updateTracking(): Promise<void> {
     try {
       await recordTime(activeDomain, elapsed)
       lastUpdateTime = now
-    } catch (error) {
+    } catch {
       // Extension context invalidated, stop tracking
       if (trackingInterval) {
         clearInterval(trackingInterval)

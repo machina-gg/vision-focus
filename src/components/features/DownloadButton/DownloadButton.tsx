@@ -43,8 +43,7 @@ export function DownloadButton({
       })
       setDownloadStatus('success')
       setTimeout(() => setDownloadStatus('idle'), 2000)
-    } catch (error) {
-      console.error('Failed to download wallpaper:', error)
+    } catch {
       setDownloadStatus('error')
       setTimeout(() => setDownloadStatus('idle'), 2000)
     } finally {

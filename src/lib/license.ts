@@ -21,8 +21,8 @@ export async function checkPremiumStatus(): Promise<{
         source: 'extpay',
       }
     }
-  } catch (error) {
-    console.error('Failed to check ExtensionPay status:', error)
+  } catch {
+    // Assume not premium if check fails
   }
 
   return {
@@ -35,7 +35,7 @@ export async function checkPremiumStatus(): Promise<{
  * Check if user can access a specific premium feature
  */
 export async function canAccessFeature(
-  feature: PremiumFeature
+  _feature: PremiumFeature
 ): Promise<boolean> {
   const { isPremium } = await checkPremiumStatus()
   return isPremium

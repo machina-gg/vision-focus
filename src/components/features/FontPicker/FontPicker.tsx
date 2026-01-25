@@ -4,7 +4,6 @@ import { Type } from 'lucide-react'
 
 import {
   type FontSettings,
-  type FontFamily,
   type FontSize,
   type FontWeight,
   type FontCategory,

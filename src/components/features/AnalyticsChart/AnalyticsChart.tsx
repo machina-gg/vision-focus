@@ -17,9 +17,9 @@ import {
 } from 'recharts'
 import { BarChart3, LineChartIcon, PieChartIcon } from 'lucide-react'
 
-import type { AnalyticsData, DailyStat } from '~/types/storage'
+import type { AnalyticsData } from '~/types/storage'
 import { getMessage } from '~/lib/i18n'
-import { formatTime } from '~/lib/reports'
+import { formatTime } from '~/lib/time'
 
 export type ChartType = 'line' | 'bar' | 'pie'
 export type DateRange = '7d' | '30d' | 'all'
@@ -35,7 +35,7 @@ const COLORS = {
   neutral: '#6b7280', // Gray
 }
 
-const PIE_COLORS = ['#ef4444', '#22c55e', '#6b7280', '#3b82f6', '#f59e0b']
+const _PIE_COLORS = ['#ef4444', '#22c55e', '#6b7280', '#3b82f6', '#f59e0b']
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)

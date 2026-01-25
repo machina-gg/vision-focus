@@ -1,9 +1,8 @@
 import { extractDomain, matchesDomain, generateId } from '~/lib/domain'
 import { getSettings } from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
-import type { BlockItem } from '~/types/storage'
-
-const RULE_ID_OFFSET = 1000
+import { BLOCKER_CONFIG } from '~/constants/limits'
+import type { AppSettings, BlockItem } from '~/types/storage'
 
 // Update declarativeNetRequest rules based on current settings
 export async function updateBlockRules(): Promise<void> {
@@ -24,7 +23,7 @@ export async function updateBlockRules(): Promise<void> {
       const baseDomain = isWildcard ? domain.replace('*.', '') : domain
 
       return {
-        id: RULE_ID_OFFSET + index,
+        id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
         priority: 1,
         action: {
           type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
@@ -50,7 +49,7 @@ export async function updateBlockRules(): Promise<void> {
 // Get list of domains that should be actively blocked
 function getActiveBlockedDomains(
   blockList: BlockItem[],
-  settings: ReturnType<typeof getSettings> extends Promise<infer T> ? T : never
+  settings: AppSettings
 ): string[] {
   const domainsToBlock: string[] = []
 

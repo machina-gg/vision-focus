@@ -3,18 +3,10 @@ import type { PlasmoMessaging } from '@plasmohq/messaging'
 import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain'
 import { getSettings, setSettings } from '~/lib/storage'
 import { canAddToBlocklist } from '~/lib/license'
-
 import { updateBlockRules } from '../blocker'
+import type { AddBlockRequest, AddBlockResponse } from '~/types/messages'
 
-export type AddBlockRequest = {
-  domain: string
-}
-
-export type AddBlockResponse = {
-  success: boolean
-  error?: string
-  limitReached?: boolean
-}
+export type { AddBlockRequest, AddBlockResponse }
 
 const handler: PlasmoMessaging.MessageHandler<
   AddBlockRequest,

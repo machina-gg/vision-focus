@@ -122,7 +122,7 @@ export function usePresets({
         loadGoogleFont(fontDef.googleFont)
       }
     }
-  }, [draftDisplaySettings.fontSettings?.family])
+  }, [draftDisplaySettings.fontSettings])
 
   // ============ Display Settings Handlers ============
   const handleGoalTextChange = useCallback((text: string) => {

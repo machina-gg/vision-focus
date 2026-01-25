@@ -1,16 +1,18 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
 import { setSiteCategory } from '~/background/tracker'
+import { DOMAIN_CONFIG } from '~/constants/limits'
+import type {
+  SetSiteCategoryRequest,
+  SetSiteCategoryResponse,
+} from '~/types/messages'
 
-interface SetSiteCategoryRequest {
-  domain: string
-  category: 'waste' | 'invest' | 'neutral'
-}
+export type { SetSiteCategoryRequest, SetSiteCategoryResponse }
 
 // Simple domain format validation for category setting
 function isValidDomainFormat(domain: string): boolean {
   if (!domain || typeof domain !== 'string') return false
-  if (domain.length > 253) return false
+  if (domain.length > DOMAIN_CONFIG.MAX_DOMAIN_LENGTH) return false
   // Basic hostname pattern (allows subdomains)
   return /^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/.test(domain)
 }
@@ -37,8 +39,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   try {
     await setSiteCategory(domain, category)
     res.send({ success: true })
-  } catch (error) {
-    console.error('Failed to set site category:', error)
+  } catch {
     res.send({ success: false, error: 'Failed to set category' })
   }
 }

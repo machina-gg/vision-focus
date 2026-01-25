@@ -6,7 +6,6 @@ import { Settings } from 'lucide-react'
 
 import { DownloadButton } from '~/components/features'
 import { MiniStats, GoalDisplay } from '~/components/newtab'
-import { getMessage } from '~/lib/i18n'
 import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
@@ -138,6 +137,7 @@ function NewtabApp() {
 
     // Fall back to default settings
     return vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
   }, [vision, settings, timeTick])
 
   // Get background style - supports custom uploaded background
@@ -177,8 +177,8 @@ function NewtabApp() {
       try {
         const response = await sendToBackground({ name: 'get-stats' })
         setStats(response)
-      } catch (error) {
-        console.error('Failed to get stats:', error)
+      } catch {
+        // Silently handle error - stats will refresh on next interval
       }
     }
 

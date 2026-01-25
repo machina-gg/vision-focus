@@ -20,7 +20,7 @@ import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage'
 import './styles/globals.css'
 
 function PopupApp() {
-  const [settings] = useStorage<AppSettings>(
+  const [_settings] = useStorage<AppSettings>(
     {
       key: 'settings',
       instance: storage,
@@ -49,8 +49,8 @@ function PopupApp() {
           name: 'get-stats',
         })
         setStats(response)
-      } catch (error) {
-        console.error('Failed to get stats:', error)
+      } catch {
+        // Silently handle error - stats will refresh on next interval
       }
     }
 
@@ -71,8 +71,8 @@ function PopupApp() {
           const domain = extractDomain(tab.url)
           setCurrentDomain(domain || undefined)
         }
-      } catch (error) {
-        console.error('Failed to get current tab:', error)
+      } catch {
+        // Silently handle error - domain will be undefined
       }
     }
 
@@ -99,8 +99,8 @@ function PopupApp() {
       } else {
         alert(response.error || 'Failed to add block')
       }
-    } catch (error) {
-      console.error('Failed to block domain:', error)
+    } catch {
+      // Silently handle error
     }
   }, [])
 

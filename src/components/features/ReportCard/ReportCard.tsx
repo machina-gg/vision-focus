@@ -10,23 +10,17 @@ import {
   ChevronRight,
   Clock,
   Shield,
-  Globe,
 } from 'lucide-react'
 
 import { Card, Button } from '~/components/ui'
-import type {
-  AnalyticsData,
-  WeeklyReport,
-  MonthlyReport,
-} from '~/types/storage'
+import type { AnalyticsData } from '~/types/storage'
 import {
   generateWeeklyReport,
   generateMonthlyReport,
-  formatTime,
-  getTrendEmoji,
   getAvailableWeeks,
   getAvailableMonths,
 } from '~/lib/reports'
+import { formatTime } from '~/lib/time'
 import { getMessage } from '~/lib/i18n'
 
 export type ReportType = 'weekly' | 'monthly'

@@ -97,10 +97,11 @@ export function SiteCategoryManager({
         case 'domain':
           comparison = a.domain.localeCompare(b.domain)
           break
-        case 'category':
+        case 'category': {
           const categoryOrder = { waste: 0, invest: 1, neutral: 2 }
           comparison = categoryOrder[a.category] - categoryOrder[b.category]
           break
+        }
       }
 
       return sortOrder === 'asc' ? comparison : -comparison
