@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-01-25
+
+### ドキュメント更新
+
+- **実施内容**: プリセット機能、Freeダウングレード対応に伴うドキュメント更新
+- **変更ファイル**:
+  - docs/PRD.md - ダッシュボード・プリセット機能追加、Freeダウングレード時の動作表追加
+  - docs/DESIGN.md - hooksディレクトリ追加、ストレージスキーマ更新済み
+  - docs/SCREEN.md - 一般タブのプリセットUI詳細、スケジュールのプリセット連携、モーダル一覧追加
+  - docs/COMPONENT.md - newtab/options用コンポーネント、カスタムフック（useBlocklist, useSchedules, usePresets）、型定義追加
+  - README.md - 未実装機能一覧整理、価格情報修正
+
+### Freeダウングレード制限実装
+
+- **実施内容**: Premium→Free時の機能制限実装
+- **変更ファイル**:
+  - src/newtab.tsx - isPresetAvailable判定、ロックされたプリセットのフォールバック
+  - src/components/options/GeneralTab.tsx - ロックアイコン表示、警告メッセージ
+  - src/components/options/modals/ScheduleModal.tsx - プリセット選択制限、警告表示
+  - src/options.tsx - isPremium/featureLimitsをScheduleModalに渡す
+- **実装内容**:
+  - 2件目以降のプリセットは🔒表示で選択不可
+  - スケジュールのプリセット連携もFree制限を適用
+  - カスタム背景はデフォルトにフォールバック
+  - データは削除されず、再アップグレード時に復元可能
+
+---
+
 ## 2026-01-19
 
 ### 実装（MVP機能追加）

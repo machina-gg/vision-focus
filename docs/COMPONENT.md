@@ -18,18 +18,44 @@
 
 ### 機能コンポーネント
 
-| コンポーネント名 | 種別    | 説明                       |
-| ---------------- | ------- | -------------------------- |
-| Header           | layout  | ヘッダー（ロゴ + ナビ）    |
-| GoalCard         | feature | 目標表示カード             |
-| StatsCard        | feature | 統計表示カード             |
-| BlockListItem    | feature | ブロックリスト項目         |
-| SiteTimeChart    | feature | サイト利用時間グラフ       |
-| ChallengeModal   | feature | 解除チャレンジモーダル     |
-| LockdownButton   | feature | ロックダウンモードボタン   |
-| QuickBlockButton | feature | クイックブロックボタン     |
-| ScheduleEditor   | feature | スケジュール編集           |
-| PremiumBanner    | feature | 有料版アップグレードバナー |
+| コンポーネント名    | 種別    | 説明                         |
+| ------------------- | ------- | ---------------------------- |
+| Header              | layout  | ヘッダー（ロゴ + ナビ）      |
+| GoalCard            | feature | 目標表示カード               |
+| StatsCard           | feature | 統計表示カード               |
+| BlockListItem       | feature | ブロックリスト項目           |
+| SiteTimeChart       | feature | サイト利用時間グラフ         |
+| ChallengeModal      | feature | 解除チャレンジモーダル       |
+| LockdownButton      | feature | ロックダウンモードボタン     |
+| QuickBlockButton    | feature | クイックブロックボタン       |
+| ScheduleEditor      | feature | スケジュール編集             |
+| PremiumBanner       | feature | 有料版アップグレードバナー   |
+| ImageUploader       | feature | 背景画像アップロード（Premium） |
+| FontPicker          | feature | フォント選択（20種類以上）   |
+| AnalyticsChart      | feature | 分析グラフ（recharts）       |
+| ReportCard          | feature | 週次/月次レポート表示        |
+| DownloadButton      | feature | 壁紙ダウンロード（Premium）  |
+| SiteCategoryManager | feature | サイトカテゴリ管理UI         |
+| UpgradePrompt       | feature | プレミアムアップグレード促進 |
+
+### 新規タブ用コンポーネント
+
+| コンポーネント名 | 種別   | 説明                       |
+| ---------------- | ------ | -------------------------- |
+| GoalDisplay      | newtab | 目標テキスト表示・編集     |
+| MiniStats        | newtab | ミニ統計カード（3項目）    |
+
+### オプション画面用コンポーネント
+
+| コンポーネント名 | 種別    | 説明                         |
+| ---------------- | ------- | ---------------------------- |
+| GeneralTab       | options | 一般設定（プリセット管理）   |
+| BlocklistTab     | options | ブロックリスト管理           |
+| SchedulesTab     | options | スケジュール管理             |
+| AnalyticsTab     | options | 分析タブ                     |
+| PremiumTab       | options | プレミアムタブ               |
+| ScheduleModal    | modal   | スケジュール編集モーダル     |
+| NewPresetModal   | modal   | 新規プリセット作成モーダル   |
 
 ### ページコンポーネント
 
@@ -332,46 +358,133 @@ graph TD
 
 ## 4. カスタムフック
 
-### useStorage
+### useStorage（@plasmohq/storage/hook）
 
-chrome.storage.local のラッパーフック。
+Plasmo提供のストレージ同期フック。chrome.storage の値をReactで自動同期。
 
 ```typescript
-function useStorage<T>(
-  key: string,
-  defaultValue: T
-): [T, (value: T) => void, boolean]
-```
+import { useStorage } from '@plasmohq/storage/hook'
 
-**戻り値**
-
-| 値       | 型                   | 説明               |
-| -------- | -------------------- | ------------------ |
-| value    | `T`                  | 現在の値           |
-| setValue | `(value: T) => void` | 値を更新           |
-| loading  | `boolean`            | 読み込み中かどうか |
-
-**使用例**
-
-```tsx
-const [settings, setSettings, loading] = useStorage('settings', defaultSettings)
+const [settings, setSettings] = useStorage<AppSettings>(
+  {
+    key: 'settings',
+    instance: storage,
+  },
+  DEFAULT_SETTINGS
+)
 ```
 
 ---
 
-### useBlockList
+### useBlocklist
 
 ブロックリスト管理フック。
 
 ```typescript
-function useBlockList(): {
-  blockList: BlockItem[]
-  addSite: (domain: string) => void
-  removeSite: (domain: string) => void
-  updateSite: (domain: string, newDomain: string) => void
-  canAddMore: boolean // 無料版の制限チェック
+function useBlocklist(props: {
+  settings: AppSettings | undefined
+  setSettings: (settings: AppSettings) => void
+}): {
+  newDomain: string
+  setNewDomain: (domain: string) => void
+  blockError: string
+  handleAddDomain: () => void
+  handleRemoveDomain: (domain: string) => void
 }
 ```
+
+**機能**
+- ドメインの追加・削除
+- ワイルドカード（*.example.com）対応
+- 重複チェック
+- バリデーションエラー管理
+
+---
+
+### useSchedules
+
+スケジュール管理フック。
+
+```typescript
+interface ScheduleFormData {
+  name: string
+  startTime: string
+  endTime: string
+  days: number[]
+  presetId: string
+}
+
+function useSchedules(props: {
+  settings: AppSettings | undefined
+  setSettings: (settings: AppSettings) => void
+}): {
+  showScheduleModal: boolean
+  setShowScheduleModal: (show: boolean) => void
+  editingSchedule: Schedule | null
+  scheduleForm: ScheduleFormData
+  setScheduleForm: (form: ScheduleFormData) => void
+  openAddSchedule: () => void
+  openEditSchedule: (schedule: Schedule) => void
+  handleSaveSchedule: () => void
+  handleDeleteSchedule: (id: string) => void
+  handleToggleSchedule: (id: string) => void
+}
+```
+
+**機能**
+- スケジュールの追加・編集・削除
+- 有効/無効の切り替え
+- プリセット連携（presetId）
+
+---
+
+### usePresets
+
+プリセット管理フック。
+
+```typescript
+function usePresets(props: {
+  vision: VisionSettings | undefined
+  setVision: (vision: VisionSettings) => void
+}): {
+  // プリセット一覧（ドラフト状態）
+  draftPresets: DashboardPreset[]
+  selectedPresetId: string | null
+  draftDisplaySettings: DashboardDisplaySettings
+  editingPresetName: string
+  isDirty: boolean
+  visionSaved: boolean
+
+  // モーダル制御
+  showSavePresetModal: boolean
+  setShowSavePresetModal: (show: boolean) => void
+  presetName: string
+  setPresetName: (name: string) => void
+
+  // プリセット操作
+  handleSelectPreset: (id: string | null) => void
+  handleCreatePreset: () => void
+  handleDeletePreset: (id: string) => void
+  handleApplyPreset: () => void
+  handleSaveSelectedPreset: () => void
+
+  // 設定変更
+  handlePresetNameChange: (name: string) => void
+  handleGoalTextChange: (text: string) => void
+  handleGoalSubTextChange: (text: string) => void
+  handleTextColorChange: (color: string) => void
+  handleBackgroundTypeChange: (type: 'image' | 'color') => void
+  handleBackgroundChange: (imageId: string) => void
+  handleBackgroundColorChange: (color: string) => void
+  handleCustomBackgroundChange: (data: string | null) => void
+  handleFontSettingsChange: (settings: Partial<FontSettings>) => void
+}
+```
+
+**機能**
+- プリセットの作成・選択・削除・適用
+- 設定変更時のドラフト管理
+- ストレージへの永続化
 
 ---
 
@@ -426,6 +539,77 @@ interface Schedule {
   endTime: string // 終了時刻 (HH:mm)
   days: number[] // 曜日 (0=日, 1=月, ..., 6=土)
   enabled: boolean // 有効/無効
+  presetId?: string // このスケジュールで適用するプリセットID
+}
+```
+
+### DashboardDisplaySettings
+
+```typescript
+interface DashboardDisplaySettings {
+  goalText: string            // 目標テキスト
+  goalSubText: string         // サブテキスト
+  textColor: string           // テキスト色
+  backgroundType: 'image' | 'color'
+  backgroundImage: string     // 背景画像ID
+  backgroundColor: string     // 背景色
+  customBackgroundData: string | null  // Base64アップロード画像（Premium）
+  fontSettings: FontSettings  // フォント設定
+}
+```
+
+### DashboardPreset
+
+```typescript
+interface DashboardPreset extends DashboardDisplaySettings {
+  id: string
+  name: string
+  createdAt: string
+}
+```
+
+### VisionSettings
+
+```typescript
+interface VisionSettings {
+  defaultSettings: DashboardDisplaySettings  // デフォルト設定
+  presets: DashboardPreset[]                 // ユーザー作成プリセット
+  activePresetId: string | null              // 現在有効なプリセットID
+}
+```
+
+### FontSettings
+
+```typescript
+type FontFamily = 'system' | 'inter' | 'roboto' | 'noto-sans-jp' | ... // 20種類以上
+
+interface FontSettings {
+  family: FontFamily
+  size: 'sm' | 'md' | 'lg' | 'xl'
+  weight: 'normal' | 'medium' | 'semibold' | 'bold'
+}
+```
+
+### FeatureLimits
+
+```typescript
+interface FeatureLimits {
+  maxBlockList: number
+  historyDays: number
+  maxPresets: number
+}
+
+const FEATURE_LIMITS = {
+  free: {
+    maxBlockList: 5,
+    historyDays: 7,
+    maxPresets: 1,
+  },
+  premium: {
+    maxBlockList: Infinity,
+    historyDays: Infinity,
+    maxPresets: 5,
+  },
 }
 ```
 
