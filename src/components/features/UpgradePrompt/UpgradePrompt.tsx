@@ -7,7 +7,7 @@ import { openPaymentPage } from '~/lib/extpay'
 
 export interface UpgradePromptProps {
   /** Type of limit reached */
-  limitType?: 'blocklist' | 'history' | 'goals'
+  limitType?: 'blocklist' | 'history' | 'goals' | 'customBackground'
   /** Show as a modal/card or inline */
   variant?: 'card' | 'inline' | 'banner'
   /** Custom message to display */
@@ -16,6 +16,8 @@ export interface UpgradePromptProps {
   onUpgradeClick?: () => void
   /** Show feature list */
   showFeatures?: boolean
+  /** Custom features list to display (overrides default) */
+  features?: string[]
 }
 
 const PREMIUM_FEATURES = [
@@ -31,6 +33,7 @@ export function UpgradePrompt({
   message,
   onUpgradeClick,
   showFeatures = true,
+  features,
 }: UpgradePromptProps) {
   const handleUpgradeClick = () => {
     if (onUpgradeClick) {
@@ -46,7 +49,9 @@ export function UpgradePrompt({
       ? getMessage('upgradeToAddMore')
       : limitType === 'history'
         ? 'Upgrade to Premium for unlimited analytics history.'
-        : 'Upgrade to Premium for unlimited goals.'
+        : limitType === 'customBackground'
+          ? getMessage('upgradeForCustomBackground')
+          : 'Upgrade to Premium for unlimited goals.'
 
   if (variant === 'inline') {
     return (
@@ -107,15 +112,17 @@ export function UpgradePrompt({
               {getMessage('premiumFeatures')}
             </h4>
             <ul className="space-y-2">
-              {PREMIUM_FEATURES.map((featureKey) => (
-                <li
-                  key={featureKey}
-                  className="flex items-center gap-2 text-sm text-gray-600"
-                >
-                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  {getMessage(featureKey)}
-                </li>
-              ))}
+              {(features || PREMIUM_FEATURES.map((key) => getMessage(key))).map(
+                (feature, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 text-sm text-gray-600"
+                  >
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    {feature}
+                  </li>
+                )
+              )}
             </ul>
           </div>
         )}

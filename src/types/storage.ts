@@ -330,6 +330,19 @@ export interface AnalyticsData {
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'> // key: domain
 }
 
+// Unblocked site tracking - tracks sites that were removed from blocklist
+export interface UnblockedSite {
+  domain: string // The domain that was unblocked
+  unblockedAt: string // ISO8601 timestamp when removed from blocklist
+  timeAfterUnblock: number // Cumulative time spent (seconds) after unblocking
+  lastActivity: string | null // ISO8601 timestamp of last activity
+}
+
+// History of unblocked sites
+export interface UnblockHistory {
+  sites: Record<string, UnblockedSite> // key: domain
+}
+
 // Premium feature identifiers
 export type PremiumFeature =
   | 'unlimited_blocklist'
@@ -340,12 +353,14 @@ export type PremiumFeature =
   | 'weekly_report'
   | 'monthly_report'
   | 'github_integration'
+  | 'unblock_analytics' // View unblocked site usage time and re-block
 
 // Complete storage schema
 export interface StorageSchema {
   settings: AppSettings
   vision: VisionSettings
   analytics: AnalyticsData
+  unblockHistory: UnblockHistory
 }
 
 // Default values
@@ -405,10 +420,15 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   siteCategories: {},
 }
 
+export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {
+  sites: {},
+}
+
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
   analytics: DEFAULT_ANALYTICS,
+  unblockHistory: DEFAULT_UNBLOCK_HISTORY,
 }
 
 // Feature limits type

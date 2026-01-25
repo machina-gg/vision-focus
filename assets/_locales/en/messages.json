@@ -391,6 +391,10 @@
     "message": "Upgrade to Premium to add more sites to your block list.",
     "description": "Upgrade prompt for blocklist"
   },
+  "upgradeForCustomBackground": {
+    "message": "Upgrade to Premium to upload custom background images.",
+    "description": "Upgrade prompt for custom background"
+  },
   "gracePeriodWarning": {
     "message": "License verification failed. Premium features will remain active until $DATE$.",
     "description": "Grace period warning",
@@ -794,5 +798,273 @@
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
+  },
+  "upgradeToUsePreset": {
+    "message": "Upgrade to Premium to use this preset",
+    "description": "Tooltip for locked preset"
+  },
+  "lockedPresetWarning": {
+    "message": "The currently selected preset is not available on the Free plan. Default settings will be applied.",
+    "description": "Warning when active preset is locked"
+  },
+  "scheduleLockedPresetWarning": {
+    "message": "The selected preset will not be applied on the Free plan.",
+    "description": "Warning when schedule preset is locked"
+  },
+  "featureBlocklist": {
+    "message": "Block List",
+    "description": "Feature name: blocklist"
+  },
+  "featureBlocklistFree": {
+    "message": "Up to $COUNT$ sites",
+    "description": "Free tier blocklist limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureUnlimited": {
+    "message": "Unlimited",
+    "description": "Unlimited feature text"
+  },
+  "featureHistoryRetention": {
+    "message": "History Retention",
+    "description": "Feature name: history retention"
+  },
+  "featureHistoryDays": {
+    "message": "$COUNT$ days",
+    "description": "History days limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "featureAllTime": {
+    "message": "All time",
+    "description": "All time history"
+  },
+  "featurePresets": {
+    "message": "Presets",
+    "description": "Feature name: presets"
+  },
+  "featurePresetCount": {
+    "message": "$COUNT$ presets",
+    "description": "Preset count",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureCustomBackground": {
+    "message": "Custom Background",
+    "description": "Feature name: custom background"
+  },
+  "featureWallpaperDownload": {
+    "message": "Wallpaper Download",
+    "description": "Feature name: wallpaper download"
+  },
+  "featureWeeklyMonthlyReports": {
+    "message": "Weekly & Monthly Reports",
+    "description": "Feature name: reports"
+  },
+  "premiumActiveTitle": {
+    "message": "You're on Premium",
+    "description": "Premium active title"
+  },
+  "premiumActiveDescription": {
+    "message": "Enjoy all features without limits",
+    "description": "Premium active description"
+  },
+  "currentUsage": {
+    "message": "Current Usage",
+    "description": "Current usage heading"
+  },
+  "limitReachedUpgrade": {
+    "message": "Limit reached. Upgrade to Premium for unlimited.",
+    "description": "Limit reached message"
+  },
+  "limitWarning": {
+    "message": "$COUNT$ more until limit",
+    "description": "Limit warning message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "historySaving": {
+    "message": "History",
+    "description": "History saving label"
+  },
+  "premiumMarketingHeadline": {
+    "message": "Unlock Your Full Potential",
+    "description": "Premium marketing headline"
+  },
+  "premiumMarketingPrice": {
+    "message": "For less than $0.10/day, get unlimited focus power",
+    "description": "Premium marketing price copy"
+  },
+  "premiumMarketingPriceNote": {
+    "message": "* Based on monthly subscription",
+    "description": "Premium price note"
+  },
+  "cancelAnytime": {
+    "message": "Cancel anytime",
+    "description": "Cancel anytime text"
+  },
+  "planComparison": {
+    "message": "Plan Comparison",
+    "description": "Plan comparison heading"
+  },
+  "featureColumn": {
+    "message": "Feature",
+    "description": "Feature column header"
+  },
+  "unblockedSitesTitle": {
+    "message": "Unblocked Sites Usage",
+    "description": "Unblocked sites section title"
+  },
+  "unblockedSitesDescription": {
+    "message": "These sites were removed from your block list. Are you still spending time on them?",
+    "description": "Unblocked sites section description"
+  },
+  "noUnblockedSites": {
+    "message": "No unblocked sites",
+    "description": "No unblocked sites title"
+  },
+  "noUnblockedSitesDescription": {
+    "message": "Great job staying focused! You haven't removed any sites from your block list.",
+    "description": "No unblocked sites description"
+  },
+  "unblockedOn": {
+    "message": "Unblocked",
+    "description": "Unblocked on label"
+  },
+  "timeSpentSinceUnblock": {
+    "message": "Time since unblock",
+    "description": "Time spent since unblock label"
+  },
+  "reblock": {
+    "message": "Re-block",
+    "description": "Re-block button"
+  },
+  "totalTimeOnUnblockedSites": {
+    "message": "Total time on unblocked sites",
+    "description": "Total time on unblocked sites label"
+  },
+  "yesterday": {
+    "message": "Yesterday",
+    "description": "Yesterday label"
+  },
+  "daysAgo": {
+    "message": "$COUNT$ days ago",
+    "description": "Days ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "weeksAgo": {
+    "message": "$COUNT$ week(s) ago",
+    "description": "Weeks ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "monthsAgo": {
+    "message": "$COUNT$ month(s) ago",
+    "description": "Months ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "upgradeFeatureViewTime": {
+    "message": "View time spent since unblocking",
+    "description": "Upgrade feature: view time"
+  },
+  "upgradeFeatureReblock": {
+    "message": "One-click re-block",
+    "description": "Upgrade feature: re-block"
+  },
+  "upgradeFeatureChart": {
+    "message": "Usage trend chart",
+    "description": "Upgrade feature: chart"
+  },
+  "usageChart": {
+    "message": "Usage Trend",
+    "description": "Usage chart title"
+  },
+  "chartTypeDaily": {
+    "message": "Daily",
+    "description": "Daily chart type"
+  },
+  "chartTypeBySite": {
+    "message": "By Site",
+    "description": "By site chart type"
+  },
+  "chartTypeCumulative": {
+    "message": "Cumulative",
+    "description": "Cumulative chart type"
+  },
+  "chartDailyLabel": {
+    "message": "Time spent",
+    "description": "Daily chart label"
+  },
+  "chartCumulativeLabel": {
+    "message": "Total time",
+    "description": "Cumulative chart label"
+  },
+  "chartSiteCount": {
+    "message": "Across $COUNT$ site(s)",
+    "description": "Site count label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reset": {
+    "message": "Reset",
+    "description": "Reset button"
+  },
+  "resetAnalyticsTitle": {
+    "message": "Reset Analytics Data?",
+    "description": "Reset analytics modal title"
+  },
+  "resetAnalyticsDescription": {
+    "message": "Usage time will be reset to zero for all sites. The site list will be kept.",
+    "description": "Reset analytics modal description"
+  },
+  "stopTracking": {
+    "message": "Stop tracking",
+    "description": "Stop tracking button"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Refresh button tooltip"
+  },
+  "addSiteToTrack": {
+    "message": "Add Tracking Site",
+    "description": "Add site to track heading"
+  },
+  "trackSitePlaceholder": {
+    "message": "example.com",
+    "description": "Track site input placeholder"
   }
 }

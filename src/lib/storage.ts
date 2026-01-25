@@ -3,10 +3,12 @@ import { Storage } from '@plasmohq/storage'
 import {
   DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
+  DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_VISION,
   type AnalyticsData,
   type AppSettings,
   type StorageSchema,
+  type UnblockHistory,
   type VisionSettings,
 } from '~/types/storage'
 
@@ -20,6 +22,7 @@ const KEYS = {
   settings: 'settings',
   vision: 'vision',
   analytics: 'analytics',
+  unblockHistory: 'unblockHistory',
 } as const
 
 // Get settings
@@ -65,15 +68,29 @@ export async function setAnalytics(analytics: AnalyticsData): Promise<void> {
   await storage.set(KEYS.analytics, analytics)
 }
 
+// Get unblock history
+export async function getUnblockHistory(): Promise<UnblockHistory> {
+  const data = await storage.get<UnblockHistory>(KEYS.unblockHistory)
+  return data ?? DEFAULT_UNBLOCK_HISTORY
+}
+
+// Set unblock history
+export async function setUnblockHistory(
+  history: UnblockHistory
+): Promise<void> {
+  await storage.set(KEYS.unblockHistory, history)
+}
+
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, analytics] = await Promise.all([
+  const [settings, vision, analytics, unblockHistory] = await Promise.all([
     getSettings(),
     getVision(),
     getAnalytics(),
+    getUnblockHistory(),
   ])
 
-  return { settings, vision, analytics }
+  return { settings, vision, analytics, unblockHistory }
 }
 
 // Clear all storage (for debugging)
@@ -82,6 +99,7 @@ export async function clearAllStorage(): Promise<void> {
     storage.remove(KEYS.settings),
     storage.remove(KEYS.vision),
     storage.remove(KEYS.analytics),
+    storage.remove(KEYS.unblockHistory),
   ])
 }
 

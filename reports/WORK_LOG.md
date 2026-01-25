@@ -5,6 +5,105 @@
 
 ---
 
+## 2026-01-25
+
+### リファクタリング・セキュリティ強化
+
+- **実施内容**: コード品質とセキュリティの改善
+- **変更ファイル**:
+  - src/background/messages/tracker-heartbeat.ts
+    - マジックナンバー（60*1000）を定数化
+    - www変換ロジックをヘルパー関数（normalizeDomain, domainsMatch）に抽出
+  - src/options.tsx
+    - ドメイン入力検証を追加（parseDomainInput, isValidDomain）
+    - データ読み込みロジックを reloadAnalyticsData に共通化
+    - handleReblock, handleRefreshAnalytics のコード重複を削減
+- **セキュリティ改善**:
+  - 手動サイト追加時のドメイン検証追加（不正なドメイン形式を拒否）
+  - 入力値のサニタイズ（トリム、小文字化）を確認
+- **リファクタリング**:
+  - www変換ロジックの重複排除（normalizeDomain関数）
+  - マジックナンバーの定数化
+  - データ読み込みパターンの共通化
+
+### Analytics機能ブラッシュアップ（追加改善）
+
+- **実施内容**: 分析機能のUX改善とトラッキング精度向上
+- **変更ファイル**:
+  - src/contents/tracker.ts - 表示時間ベーストラッキングに変更（アクティビティ検出を廃止）
+  - src/background/messages/tracker-heartbeat.ts - www変換対応を追加
+  - src/components/options/AnalyticsTab.tsx - リセット、更新、追跡停止、手動サイト追加機能追加
+  - src/components/features/AnalyticsChart/AnalyticsChart.tsx - パステルカラーに変更、Cellコンポーネント使用
+  - src/options.tsx - 新ハンドラー追加（handleResetAnalytics, handleStopTracking, handleRefreshAnalytics, handleAddSiteToTrack）
+  - assets/\_locales/en/messages.json - 新メッセージ追加
+  - assets/\_locales/ja/messages.json - 新メッセージ追加
+- **実装機能**:
+  - 表示時間ベーストラッキング: タブが表示されている間は時間を計測（バックグラウンド再生も計測）
+  - リセット機能: 時間のみリセット（サイトリストは保持）
+  - 追跡停止機能: 個別サイトの追跡を停止
+  - 手動サイト追加: 任意のドメインを追跡対象に追加
+  - 更新ボタン: データを最新に更新（スピンアニメーション付き）
+  - グラフ色改善: 毒々しい色からパステルカラーに変更
+  - ドメインマッチング: youtube.com と www.youtube.com を同一サイトとして認識
+- **品質対応**:
+  - TypeScript: エラーなし
+  - ESLint: エラーなし
+  - Prettier: フォーマット完了
+  - セキュリティチェック: XSS/インジェクション脆弱性なし
+
+### Analytics機能ブラッシュアップ（初期実装）
+
+- **実施内容**: 分析機能を「元ブロックサイトの利用状況」機能に特化
+- **変更ファイル**:
+  - src/types/storage.ts - UnblockedSite, UnblockHistory型追加
+  - src/lib/storage.ts - getUnblockHistory/setUnblockHistory追加
+  - src/background/messages/remove-block.ts - ブロック解除時に履歴記録
+  - src/background/messages/tracker-heartbeat.ts - 元ブロックサイトのみ時間追跡
+  - src/background/messages/add-block.ts - 再ブロック時に履歴から削除
+  - src/components/options/AnalyticsTab.tsx - UI全面書き換え
+  - src/options.tsx - unblockHistory読み込み、onReblock追加
+  - src/components/features/UpgradePrompt.tsx - featuresプロップ追加
+  - assets/\_locales/en/messages.json - 英語メッセージ追加
+  - assets/\_locales/ja/messages.json - 日本語メッセージ追加
+- **削除ファイル**:
+  - src/components/features/ReportCard/
+  - src/components/features/SiteCategoryManager/
+  - src/lib/reports.ts
+  - src/background/messages/set-site-category.ts
+- **実装機能**:
+  - ブロック解除したサイトの利用時間を追跡
+  - Freeユーザー: サイト一覧と解除日のみ表示（時間は伏せ字）
+  - Premiumユーザー: 利用時間表示、再ブロックボタン、グラフ
+  - グラフ機能: 3種類の切り替え表示（日別バー、サイト別横バー、累積エリア）
+  - リセット機能: 全データを削除するリセットボタン（確認モーダル付き）
+  - ドメインマッチング改善: www変換対応（youtube.com ↔ www.youtube.com）
+
+### ドキュメント更新
+
+- **実施内容**: プリセット機能、Freeダウングレード対応に伴うドキュメント更新
+- **変更ファイル**:
+  - docs/PRD.md - ダッシュボード・プリセット機能追加、Freeダウングレード時の動作表追加
+  - docs/DESIGN.md - hooksディレクトリ追加、ストレージスキーマ更新済み
+  - docs/SCREEN.md - 一般タブのプリセットUI詳細、スケジュールのプリセット連携、モーダル一覧追加
+  - docs/COMPONENT.md - newtab/options用コンポーネント、カスタムフック（useBlocklist, useSchedules, usePresets）、型定義追加
+  - README.md - 未実装機能一覧整理、価格情報修正
+
+### Freeダウングレード制限実装
+
+- **実施内容**: Premium→Free時の機能制限実装
+- **変更ファイル**:
+  - src/newtab.tsx - isPresetAvailable判定、ロックされたプリセットのフォールバック
+  - src/components/options/GeneralTab.tsx - ロックアイコン表示、警告メッセージ
+  - src/components/options/modals/ScheduleModal.tsx - プリセット選択制限、警告表示
+  - src/options.tsx - isPremium/featureLimitsをScheduleModalに渡す
+- **実装内容**:
+  - 2件目以降のプリセットは🔒表示で選択不可
+  - スケジュールのプリセット連携もFree制限を適用
+  - カスタム背景はデフォルトにフォールバック
+  - データは削除されず、再アップグレード時に復元可能
+
+---
+
 ## 2026-01-19
 
 ### 実装（MVP機能追加）
@@ -97,11 +196,11 @@
   - src/newtab.tsx - ダッシュボード（新規タブ）
   - src/tabs/blocked.tsx - ブロックページ
   - src/options.tsx - オプション画面（設定、ブロックリスト、スケジュール、分析）
-  - assets/_locales/en/messages.json - 英語メッセージ
-  - assets/_locales/ja/messages.json - 日本語メッセージ
+  - assets/\_locales/en/messages.json - 英語メッセージ
+  - assets/\_locales/ja/messages.json - 日本語メッセージ
 - **実装機能**:
   - サイトブロック（declarativeNetRequest API）
-  - ワイルドカードドメイン対応（*.example.com）
+  - ワイルドカードドメイン対応（\*.example.com）
   - スケジュールベースブロック
   - ロックダウンモード
   - 一時解除チャレンジ（5分間）

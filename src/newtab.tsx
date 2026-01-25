@@ -23,6 +23,7 @@ import {
   DEFAULT_VISION,
   DEFAULT_DISPLAY_SETTINGS,
   DEFAULT_SETTINGS,
+  FEATURE_LIMITS,
   getFontDefinition,
 } from '~/types/storage'
 
@@ -85,6 +86,16 @@ function NewtabApp() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
+  // Helper to check if a preset is within free tier limits
+  const isPresetAvailable = useCallback(
+    (presetId: string, presets: VisionSettings['presets']) => {
+      if (isPremium) return true
+      const index = presets?.findIndex((p) => p.id === presetId) ?? -1
+      return index >= 0 && index < FEATURE_LIMITS.free.maxPresets
+    },
+    [isPremium]
+  )
+
   // Get current display settings
   // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
   const displaySettings: DashboardDisplaySettings = useMemo(() => {
@@ -99,46 +110,69 @@ function NewtabApp() {
     )
 
     if (activeScheduleWithPreset?.presetId) {
-      const schedulePreset = vision.presets?.find(
-        (p) => p.id === activeScheduleWithPreset.presetId
-      )
-      if (schedulePreset) {
-        return {
-          goalText: schedulePreset.goalText,
-          goalSubText: schedulePreset.goalSubText,
-          textColor: schedulePreset.textColor,
-          backgroundType: schedulePreset.backgroundType,
-          backgroundImage: schedulePreset.backgroundImage,
-          backgroundColor: schedulePreset.backgroundColor,
-          customBackgroundData: schedulePreset.customBackgroundData,
-          fontSettings: schedulePreset.fontSettings,
+      // Check if preset is available for free tier
+      if (
+        isPresetAvailable(activeScheduleWithPreset.presetId, vision.presets)
+      ) {
+        const schedulePreset = vision.presets?.find(
+          (p) => p.id === activeScheduleWithPreset.presetId
+        )
+        if (schedulePreset) {
+          return {
+            goalText: schedulePreset.goalText,
+            goalSubText: schedulePreset.goalSubText,
+            textColor: schedulePreset.textColor,
+            backgroundType: schedulePreset.backgroundType,
+            backgroundImage: schedulePreset.backgroundImage,
+            backgroundColor: schedulePreset.backgroundColor,
+            // Custom background requires premium
+            customBackgroundData: isPremium
+              ? schedulePreset.customBackgroundData
+              : null,
+            fontSettings: schedulePreset.fontSettings,
+          }
         }
       }
+      // If preset is not available (beyond free limit), fall through to next priority
     }
 
     // Check for user-selected preset
     if (vision.activePresetId) {
-      const activePreset = vision.presets?.find(
-        (p) => p.id === vision.activePresetId
-      )
-      if (activePreset) {
-        return {
-          goalText: activePreset.goalText,
-          goalSubText: activePreset.goalSubText,
-          textColor: activePreset.textColor,
-          backgroundType: activePreset.backgroundType,
-          backgroundImage: activePreset.backgroundImage,
-          backgroundColor: activePreset.backgroundColor,
-          customBackgroundData: activePreset.customBackgroundData,
-          fontSettings: activePreset.fontSettings,
+      // Check if preset is available for free tier
+      if (isPresetAvailable(vision.activePresetId, vision.presets)) {
+        const activePreset = vision.presets?.find(
+          (p) => p.id === vision.activePresetId
+        )
+        if (activePreset) {
+          return {
+            goalText: activePreset.goalText,
+            goalSubText: activePreset.goalSubText,
+            textColor: activePreset.textColor,
+            backgroundType: activePreset.backgroundType,
+            backgroundImage: activePreset.backgroundImage,
+            backgroundColor: activePreset.backgroundColor,
+            // Custom background requires premium
+            customBackgroundData: isPremium
+              ? activePreset.customBackgroundData
+              : null,
+            fontSettings: activePreset.fontSettings,
+          }
         }
       }
+      // If preset is not available (beyond free limit), fall through to default
     }
 
     // Fall back to default settings
-    return vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+    const defaultSettings = vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+    return {
+      ...defaultSettings,
+      // Custom background requires premium
+      customBackgroundData: isPremium
+        ? defaultSettings.customBackgroundData
+        : null,
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
-  }, [vision, settings, timeTick])
+  }, [vision, settings, timeTick, isPremium, isPresetAvailable])
 
   // Get background style - supports custom uploaded background
   const isColorBackground = displaySettings.backgroundType === 'color'
