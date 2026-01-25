@@ -441,8 +441,12 @@
     "message": "Processing...",
     "description": "Processing text"
   },
+  "fontCategory": {
+    "message": "Font Category",
+    "description": "Font category label"
+  },
   "fontFamily": {
-    "message": "Font Family",
+    "message": "Font",
     "description": "Font family label"
   },
   "fontSize": {
@@ -730,5 +734,13 @@
   "deletePresetConfirm": {
     "message": "Delete this preset?",
     "description": "Delete preset confirmation"
+  },
+  "applyPreset": {
+    "message": "Apply",
+    "description": "Apply preset button"
+  },
+  "activePreset": {
+    "message": "Active",
+    "description": "Currently active preset"
   }
 }

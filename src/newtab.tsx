@@ -11,9 +11,37 @@ import { formatTime } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
 import type { VisionSettings, Goal } from '~/types/storage'
-import { DEFAULT_VISION, DEFAULT_FONT_SETTINGS, FONT_FAMILY_MAP, FONT_SIZE_MAP, FONT_WEIGHT_MAP } from '~/types/storage'
+import { DEFAULT_VISION, DEFAULT_FONT_SETTINGS, FONT_FAMILY_MAP, FONT_SIZE_MAP, FONT_WEIGHT_MAP, getFontDefinition } from '~/types/storage'
 
 import './styles/globals.css'
+
+// Load Google Font dynamically
+function loadGoogleFont(fontName: string) {
+  const linkId = `google-font-${fontName.replace(/\+/g, '-')}`
+  if (document.getElementById(linkId)) return
+
+  const link = document.createElement('link')
+  link.id = linkId
+  link.rel = 'stylesheet'
+  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`
+  document.head.appendChild(link)
+}
+
+// Font size in pixels for inline styles
+const FONT_SIZE_PX: Record<string, number> = {
+  sm: 30,
+  md: 36,
+  lg: 48,
+  xl: 60,
+}
+
+// Font weight values
+const FONT_WEIGHT_VALUE: Record<string, number> = {
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+}
 
 // Background images
 const BACKGROUNDS: Record<string, string> = {
@@ -58,8 +86,19 @@ function NewtabApp() {
 
   // Get font styles
   const fontSettings = vision?.fontSettings || DEFAULT_FONT_SETTINGS
+  const fontDef = getFontDefinition(fontSettings.family)
+
+  // Load Google Font
+  useEffect(() => {
+    if (fontDef.googleFont) {
+      loadGoogleFont(fontDef.googleFont)
+    }
+  }, [fontDef.googleFont])
+
   const fontStyle = {
-    fontFamily: FONT_FAMILY_MAP[fontSettings.family],
+    fontFamily: fontDef.css,
+    fontSize: `${FONT_SIZE_PX[fontSettings.size]}px`,
+    fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight],
   }
 
   // Get goals (use multiple if available, otherwise use single goal)
@@ -145,22 +184,6 @@ function NewtabApp() {
   // Current goal
   const currentGoal = goals[currentGoalIndex]
 
-  // Get font size class based on settings
-  const getFontSizeClass = () => {
-    switch (fontSettings.size) {
-      case 'sm':
-        return 'text-2xl md:text-3xl'
-      case 'md':
-        return 'text-3xl md:text-4xl'
-      case 'lg':
-        return 'text-4xl md:text-5xl'
-      case 'xl':
-        return 'text-5xl md:text-6xl'
-      default:
-        return 'text-4xl md:text-5xl'
-    }
-  }
-
   return (
     <div
       ref={containerRef}
@@ -220,7 +243,7 @@ function NewtabApp() {
               )}
 
               <h1
-                className={`${getFontSizeClass()} ${FONT_WEIGHT_MAP[fontSettings.weight]} drop-shadow-lg leading-tight transition-opacity duration-300`}
+                className="drop-shadow-lg leading-tight transition-opacity duration-300"
                 style={{ color: currentGoal.color, ...fontStyle }}
               >
                 {currentGoal.text}

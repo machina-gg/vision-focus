@@ -441,8 +441,12 @@
     "message": "処理中...",
     "description": "処理中テキスト"
   },
+  "fontCategory": {
+    "message": "フォントカテゴリ",
+    "description": "フォントカテゴリラベル"
+  },
   "fontFamily": {
-    "message": "フォントファミリー",
+    "message": "フォント",
     "description": "フォントファミリーラベル"
   },
   "fontSize": {
@@ -730,5 +734,13 @@
   "deletePresetConfirm": {
     "message": "このプリセットを削除しますか？",
     "description": "プリセット削除確認"
+  },
+  "applyPreset": {
+    "message": "切り替え",
+    "description": "プリセットを適用するボタン"
+  },
+  "activePreset": {
+    "message": "設定中",
+    "description": "現在アクティブなプリセット"
   }
 }

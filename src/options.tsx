@@ -48,10 +48,39 @@ import {
   FREE_TIER_LIMITS,
   FEATURE_LIMITS,
   type FeatureLimits,
+  getFontDefinition,
 } from '~/types/storage'
 import { canAccessFeature } from '~/lib/license'
 
 import './styles/globals.css'
+
+// Load Google Font dynamically
+function loadGoogleFont(fontName: string) {
+  const linkId = `google-font-${fontName.replace(/\+/g, '-')}`
+  if (document.getElementById(linkId)) return
+
+  const link = document.createElement('link')
+  link.id = linkId
+  link.rel = 'stylesheet'
+  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`
+  document.head.appendChild(link)
+}
+
+// Font size in pixels
+const FONT_SIZE_PX: Record<string, number> = {
+  sm: 24,
+  md: 30,
+  lg: 36,
+  xl: 48,
+}
+
+// Font weight values
+const FONT_WEIGHT_VALUE: Record<string, number> = {
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+}
 
 // Background images for selection
 const BACKGROUND_OPTIONS = [
@@ -131,26 +160,31 @@ function OptionsApp() {
           fontSettings: baseVision.fontSettings,
           createdAt: new Date().toISOString(),
         }
-        const updatedVision = { ...baseVision, presets: [defaultPreset] }
+        const updatedVision = { ...baseVision, presets: [defaultPreset], activePresetId: 'default' }
         await storage.set('vision', updatedVision)
         setVision(updatedVision)
         setDraftVision(updatedVision)
         setSelectedPresetId('default')
       } else {
-        // Load first preset settings
-        const firstPreset = storedVision.presets[0]
+        // Load active preset or first preset
+        const activeId = storedVision.activePresetId
+        const activePreset = activeId
+          ? storedVision.presets.find((p) => p.id === activeId)
+          : null
+        const presetToLoad = activePreset || storedVision.presets[0]
+
         setDraftVision({
           ...storedVision,
-          goalText: firstPreset.goalText,
-          goalSubText: firstPreset.goalSubText,
-          textColor: firstPreset.textColor,
-          backgroundType: firstPreset.backgroundType,
-          backgroundImage: firstPreset.backgroundImage,
-          backgroundColor: firstPreset.backgroundColor,
-          customBackgroundData: firstPreset.customBackgroundData,
-          fontSettings: firstPreset.fontSettings,
+          goalText: presetToLoad.goalText,
+          goalSubText: presetToLoad.goalSubText,
+          textColor: presetToLoad.textColor,
+          backgroundType: presetToLoad.backgroundType,
+          backgroundImage: presetToLoad.backgroundImage,
+          backgroundColor: presetToLoad.backgroundColor,
+          customBackgroundData: presetToLoad.customBackgroundData,
+          fontSettings: presetToLoad.fontSettings,
         })
-        setSelectedPresetId(firstPreset.id)
+        setSelectedPresetId(presetToLoad.id)
       }
       setIsInitialized(true)
     }
@@ -158,26 +192,15 @@ function OptionsApp() {
     initializePresets()
   }, [setVision])
 
-  // Sync draft when vision changes (after initialization)
+  // Load Google Font when fontSettings changes
   useEffect(() => {
-    if (isInitialized && vision && selectedPresetId) {
-      const preset = vision.presets?.find((p) => p.id === selectedPresetId)
-      if (preset) {
-        setDraftVision({
-          ...vision,
-          goalText: preset.goalText,
-          goalSubText: preset.goalSubText,
-          textColor: preset.textColor,
-          backgroundType: preset.backgroundType,
-          backgroundImage: preset.backgroundImage,
-          backgroundColor: preset.backgroundColor,
-          customBackgroundData: preset.customBackgroundData,
-          fontSettings: preset.fontSettings,
-        })
+    if (draftVision.fontSettings) {
+      const fontDef = getFontDefinition(draftVision.fontSettings.family)
+      if (fontDef.googleFont) {
+        loadGoogleFont(fontDef.googleFont)
       }
-      setIsDirty(false)
     }
-  }, [isInitialized, vision, selectedPresetId])
+  }, [draftVision.fontSettings?.family])
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -501,12 +524,12 @@ function OptionsApp() {
 
   // Handle preset selection
   const handleSelectPreset = useCallback((presetId: string) => {
-    const preset = draftVision.presets?.find((p) => p.id === presetId)
-    if (preset) {
+    const preset = vision?.presets?.find((p) => p.id === presetId)
+    if (preset && vision) {
       setSelectedPresetId(presetId)
-      // Load preset settings into draft
-      setDraftVision((prev) => ({
-        ...prev,
+      // Load preset settings into draft from saved vision
+      setDraftVision({
+        ...vision,
         goalText: preset.goalText,
         goalSubText: preset.goalSubText,
         textColor: preset.textColor,
@@ -515,10 +538,10 @@ function OptionsApp() {
         backgroundColor: preset.backgroundColor,
         customBackgroundData: preset.customBackgroundData,
         fontSettings: preset.fontSettings,
-      }))
+      })
       setIsDirty(false)
     }
-  }, [draftVision.presets])
+  }, [vision])
 
   // Save changes to selected preset
   const handleSaveSelectedPreset = useCallback(async () => {
@@ -555,6 +578,34 @@ function OptionsApp() {
     setTimeout(() => setVisionSaved(false), 2000)
   }, [selectedPresetId, draftVision, setVision])
 
+  // Apply preset to dashboard (switch without editing)
+  const handleApplyPreset = useCallback(async () => {
+    if (!selectedPresetId || !vision) return
+
+    const preset = vision.presets?.find((p) => p.id === selectedPresetId)
+    if (!preset) return
+
+    const toSave = {
+      ...vision,
+      goalText: preset.goalText,
+      goalSubText: preset.goalSubText,
+      textColor: preset.textColor,
+      backgroundType: preset.backgroundType,
+      backgroundImage: preset.backgroundImage,
+      backgroundColor: preset.backgroundColor,
+      customBackgroundData: preset.customBackgroundData,
+      fontSettings: preset.fontSettings,
+      activePresetId: selectedPresetId,
+    }
+
+    await storage.set('vision', toSave)
+    setVision(toSave)
+    setDraftVision(toSave)
+    setIsDirty(false)
+    setVisionSaved(true)
+    setTimeout(() => setVisionSaved(false), 2000)
+  }, [selectedPresetId, vision, setVision])
+
   // Create new preset
   const handleCreatePreset = useCallback(async () => {
     if (!presetName.trim()) return
@@ -588,14 +639,14 @@ function OptionsApp() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold text-gray-900">
             {getMessage('settingsTitle')}
           </h1>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Tabs */}
         <Tabs
           tabs={tabs}
@@ -606,9 +657,11 @@ function OptionsApp() {
 
         {/* General Tab */}
         {activeTab === 'general' && (
-          <div className="space-y-6">
-            {/* Preset Selector */}
-            <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {/* Left Column - Settings */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Preset Selector */}
+              <Card>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
                   {getMessage('dashboardPresets')}
@@ -622,19 +675,26 @@ function OptionsApp() {
 
               {/* Preset tabs */}
               <div className="flex flex-wrap gap-2">
-                {draftVision.presets?.map((preset) => (
-                  <button
-                    key={preset.id}
-                    onClick={() => handleSelectPreset(preset.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      selectedPresetId === preset.id
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {preset.name}
-                  </button>
-                ))}
+                {draftVision.presets?.map((preset) => {
+                  const isActive = vision?.activePresetId === preset.id
+                  const isSelected = selectedPresetId === preset.id
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => handleSelectPreset(preset.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isActive && (
+                        <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-green-600'}`} />
+                      )}
+                      {preset.name}
+                    </button>
+                  )
+                })}
                 {/* New preset button */}
                 {isPremium && (draftVision.presets?.length || 0) < featureLimits.maxPresets && (
                   <button
@@ -654,7 +714,7 @@ function OptionsApp() {
               )}
             </Card>
 
-            {/* Editing indicator and save button */}
+            {/* Editing indicator and action buttons */}
             {selectedPreset && (
               <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -676,6 +736,21 @@ function OptionsApp() {
                       onClick={() => handleDeletePreset(selectedPreset.id)}
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  )}
+                  {vision?.activePresetId === selectedPresetId ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg">
+                      <Check className="w-4 h-4" />
+                      {getMessage('activePreset')}
+                    </span>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      onClick={handleApplyPreset}
+                      size="sm"
+                    >
+                      <Check className="w-4 h-4" />
+                      {getMessage('applyPreset')}
                     </Button>
                   )}
                   <Button
@@ -874,67 +949,77 @@ function OptionsApp() {
                 previewText={draftVision.goalText || 'Focus on your goals'}
               />
             </Card>
+            </div>
 
-            {/* Dashboard Preview */}
-            <Card>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {getMessage('dashboardPreview')}
-              </h2>
-              <div
-                className="relative aspect-video rounded-lg overflow-hidden"
-                style={
-                  draftVision.backgroundType === 'color'
-                    ? { backgroundColor: draftVision.backgroundColor }
-                    : draftVision.customBackgroundData
-                      ? {
-                          backgroundImage: `url(${draftVision.customBackgroundData})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                      : {
-                          backgroundImage: `url(${chrome.runtime.getURL(
-                            `assets/images/backgrounds/${draftVision.backgroundImage || 'default-1'}.png`
-                          )})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                }
-              >
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/30" />
-                {/* Content */}
-                <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">
-                  <p
-                    className="text-lg md:text-xl font-bold text-center drop-shadow-lg"
-                    style={{ color: draftVision.textColor }}
+            {/* Right Column - Preview (sticky) */}
+            <div className="lg:col-span-2">
+              <div className="sticky top-6">
+                <Card>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    {getMessage('dashboardPreview')}
+                  </h2>
+                  <div
+                    className="relative aspect-video rounded-lg overflow-hidden"
+                    style={
+                      draftVision.backgroundType === 'color'
+                        ? { backgroundColor: draftVision.backgroundColor }
+                        : draftVision.customBackgroundData
+                          ? {
+                              backgroundImage: `url(${draftVision.customBackgroundData})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }
+                          : {
+                              backgroundImage: `url(${chrome.runtime.getURL(
+                                `assets/images/backgrounds/${draftVision.backgroundImage || 'default-1'}.png`
+                              )})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }
+                    }
                   >
-                    {draftVision.goalText || 'Your goal will appear here'}
-                  </p>
-                  {draftVision.goalSubText && (
-                    <p
-                      className="text-sm text-center drop-shadow-lg mt-2 opacity-80 whitespace-pre-line"
-                      style={{ color: draftVision.textColor }}
-                    >
-                      {draftVision.goalSubText}
-                    </p>
-                  )}
-                  <div className="flex gap-2 mt-4">
-                    <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
-                      <p className="text-xs text-red-500">{getMessage('waste')}</p>
-                      <p className="text-sm font-bold text-red-600">0:00</p>
-                    </div>
-                    <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
-                      <p className="text-xs text-green-500">{getMessage('invest')}</p>
-                      <p className="text-sm font-bold text-green-600">0:00</p>
-                    </div>
-                    <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
-                      <p className="text-xs text-amber-500">{getMessage('blocked')}</p>
-                      <p className="text-sm font-bold text-amber-600">0</p>
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/30" />
+                    {/* Content */}
+                    <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">
+                      <p
+                        className="text-center drop-shadow-lg"
+                        style={{
+                          color: draftVision.textColor,
+                          fontFamily: getFontDefinition(draftVision.fontSettings?.family || 'system').css,
+                          fontSize: `${FONT_SIZE_PX[draftVision.fontSettings?.size || 'md']}px`,
+                          fontWeight: FONT_WEIGHT_VALUE[draftVision.fontSettings?.weight || 'bold'],
+                        }}
+                      >
+                        {draftVision.goalText || 'Your goal will appear here'}
+                      </p>
+                      {draftVision.goalSubText && (
+                        <p
+                          className="text-sm text-center drop-shadow-lg mt-2 opacity-80 whitespace-pre-line"
+                          style={{ color: draftVision.textColor }}
+                        >
+                          {draftVision.goalSubText}
+                        </p>
+                      )}
+                      <div className="flex gap-2 mt-4">
+                        <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
+                          <p className="text-xs text-red-500">{getMessage('waste')}</p>
+                          <p className="text-sm font-bold text-red-600">0:00</p>
+                        </div>
+                        <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
+                          <p className="text-xs text-green-500">{getMessage('invest')}</p>
+                          <p className="text-sm font-bold text-green-600">0:00</p>
+                        </div>
+                        <div className="bg-white/90 rounded-lg px-3 py-2 text-center">
+                          <p className="text-xs text-amber-500">{getMessage('blocked')}</p>
+                          <p className="text-sm font-bold text-amber-600">0</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Card>
               </div>
-            </Card>
+            </div>
           </div>
         )}
 
