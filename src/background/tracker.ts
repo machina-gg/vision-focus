@@ -56,6 +56,8 @@ async function initializeCurrentTab(): Promise<void> {
 async function handleTabActivated(
   activeInfo: chrome.tabs.TabActiveInfo
 ): Promise<void> {
+  if (!isContextValid()) return
+
   // Save time for previous tab
   await saveElapsedTime()
 
@@ -78,6 +80,7 @@ async function handleTabUpdated(
   changeInfo: chrome.tabs.TabChangeInfo,
   tab: chrome.tabs.Tab
 ): Promise<void> {
+  if (!isContextValid()) return
   if (tabId !== activeTabId || !changeInfo.url) return
 
   // Save time for previous domain
@@ -90,6 +93,8 @@ async function handleTabUpdated(
 
 // Handle window focus changes
 async function handleWindowFocusChanged(windowId: number): Promise<void> {
+  if (!isContextValid()) return
+
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
     // Browser lost focus, save time
     await saveElapsedTime()
@@ -100,28 +105,49 @@ async function handleWindowFocusChanged(windowId: number): Promise<void> {
   }
 }
 
+// Check if extension context is still valid
+function isContextValid(): boolean {
+  try {
+    return !!chrome.runtime?.id
+  } catch {
+    return false
+  }
+}
+
 // Update tracking (called every second)
 async function updateTracking(): Promise<void> {
-  if (!activeDomain) return
+  if (!activeDomain || !isContextValid()) return
 
   const now = Date.now()
   const elapsed = Math.floor((now - lastUpdateTime) / 1000)
 
   if (elapsed >= 1) {
-    await recordTime(activeDomain, elapsed)
-    lastUpdateTime = now
+    try {
+      await recordTime(activeDomain, elapsed)
+      lastUpdateTime = now
+    } catch (error) {
+      // Extension context invalidated, stop tracking
+      if (trackingInterval) {
+        clearInterval(trackingInterval)
+        trackingInterval = null
+      }
+    }
   }
 }
 
 // Save elapsed time for current domain
 async function saveElapsedTime(): Promise<void> {
-  if (!activeDomain) return
+  if (!activeDomain || !isContextValid()) return
 
   const now = Date.now()
   const elapsed = Math.floor((now - lastUpdateTime) / 1000)
 
   if (elapsed > 0) {
-    await recordTime(activeDomain, elapsed)
+    try {
+      await recordTime(activeDomain, elapsed)
+    } catch {
+      // Extension context invalidated, ignore
+    }
   }
 }
 

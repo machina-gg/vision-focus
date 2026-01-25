@@ -14,6 +14,7 @@ export interface Schedule {
   endTime: string // HH:mm
   days: number[] // 0=Sun, 1=Mon, ..., 6=Sat
   enabled: boolean
+  presetId?: string // Dashboard preset to apply when schedule is active
 }
 
 // Daily statistics
@@ -32,10 +33,8 @@ export interface SiteTime {
   lastUpdated: string
 }
 
-// Dashboard preset - saves all dashboard settings as a set (Premium)
-export interface DashboardPreset {
-  id: string
-  name: string
+// Dashboard display settings (shared between default and presets)
+export interface DashboardDisplaySettings {
   goalText: string
   goalSubText: string
   textColor: string
@@ -44,6 +43,12 @@ export interface DashboardPreset {
   backgroundColor: string
   customBackgroundData: string | null
   fontSettings: FontSettings
+}
+
+// Dashboard preset - saves all dashboard settings as a set
+export interface DashboardPreset extends DashboardDisplaySettings {
+  id: string
+  name: string
   createdAt: string
 }
 
@@ -196,17 +201,12 @@ export interface MonthlyReport {
 
 // Vision/Dashboard settings
 export interface VisionSettings {
-  goalText: string
-  goalSubText: string // sub-message/detail
-  textColor: string // hex color for goal text
-  backgroundType: 'image' | 'color'
-  backgroundImage: string // 'default-1' | 'default-2' | 'default-3' | custom URL
-  backgroundColor: string // hex color (e.g., '#1a1a2e')
-  // Premium features
-  customBackgroundData: string | null // Base64 data URL for uploaded images
-  fontSettings: FontSettings
-  presets: DashboardPreset[] // Saved dashboard presets (free: 1, premium: 5)
-  activePresetId: string | null // Currently active preset ID
+  // Default display settings (used when no preset is active)
+  defaultSettings: DashboardDisplaySettings
+  // User-created presets
+  presets: DashboardPreset[]
+  // Currently active preset ID (null = use defaultSettings)
+  activePresetId: string | null
 }
 
 // App settings
@@ -252,18 +252,41 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
   weight: 'bold',
 }
 
-export const DEFAULT_VISION: VisionSettings = {
+export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   goalText: 'Focus on your goals',
   goalSubText: '',
   textColor: '#ffffff',
   backgroundType: 'image',
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
-  // Premium features
   customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS,
+}
+
+export const DEFAULT_VISION: VisionSettings = {
+  defaultSettings: DEFAULT_DISPLAY_SETTINGS,
   presets: [],
   activePresetId: null,
+}
+
+// Helper to get current display settings based on activePresetId
+export function getCurrentDisplaySettings(vision: VisionSettings): DashboardDisplaySettings {
+  if (vision.activePresetId) {
+    const preset = vision.presets.find((p) => p.id === vision.activePresetId)
+    if (preset) {
+      return {
+        goalText: preset.goalText,
+        goalSubText: preset.goalSubText,
+        textColor: preset.textColor,
+        backgroundType: preset.backgroundType,
+        backgroundImage: preset.backgroundImage,
+        backgroundColor: preset.backgroundColor,
+        customBackgroundData: preset.customBackgroundData,
+        fontSettings: preset.fontSettings,
+      }
+    }
+  }
+  return vision.defaultSettings
 }
 
 export const DEFAULT_ANALYTICS: AnalyticsData = {

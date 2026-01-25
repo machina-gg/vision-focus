@@ -758,5 +758,41 @@
   "createFirstPreset": {
     "message": "最初のプリセットを作成",
     "description": "最初のプリセット作成ボタン"
+  },
+  "schedulePreset": {
+    "message": "表示するプリセット",
+    "description": "スケジュール用プリセット選択ラベル"
+  },
+  "noPresetSelected": {
+    "message": "設定しない",
+    "description": "プリセット未選択オプション"
+  },
+  "schedulePresetDescription": {
+    "message": "このスケジュールがアクティブになると、選択したプリセットが自動的に適用されます",
+    "description": "スケジュールプリセットの説明"
+  },
+  "presetLabel": {
+    "message": "プリセット",
+    "description": "プリセットラベル"
+  },
+  "unknownPreset": {
+    "message": "不明なプリセット",
+    "description": "削除されたプリセット"
+  },
+  "defaultSettings": {
+    "message": "デフォルト",
+    "description": "デフォルト設定ボタン"
+  },
+  "editingDefault": {
+    "message": "デフォルト設定を編集中",
+    "description": "デフォルト設定編集中ラベル"
+  },
+  "active": {
+    "message": "有効",
+    "description": "有効ラベル"
+  },
+  "useDefault": {
+    "message": "デフォルトに戻す",
+    "description": "デフォルトに戻すボタン"
   }
 }

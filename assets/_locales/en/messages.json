@@ -758,5 +758,41 @@
   "createFirstPreset": {
     "message": "Create First Preset",
     "description": "Create first preset button"
+  },
+  "schedulePreset": {
+    "message": "Display Preset",
+    "description": "Schedule preset selection label"
+  },
+  "noPresetSelected": {
+    "message": "None",
+    "description": "No preset selected option"
+  },
+  "schedulePresetDescription": {
+    "message": "When this schedule becomes active, the selected preset will be automatically applied",
+    "description": "Schedule preset description"
+  },
+  "presetLabel": {
+    "message": "Preset",
+    "description": "Preset label"
+  },
+  "unknownPreset": {
+    "message": "Unknown preset",
+    "description": "Deleted preset"
+  },
+  "defaultSettings": {
+    "message": "Default",
+    "description": "Default settings button"
+  },
+  "editingDefault": {
+    "message": "Editing default settings",
+    "description": "Editing default settings label"
+  },
+  "active": {
+    "message": "Active",
+    "description": "Active label"
+  },
+  "useDefault": {
+    "message": "Use Default",
+    "description": "Use default button"
   }
 }

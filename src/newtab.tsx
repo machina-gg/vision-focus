@@ -1,17 +1,17 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Clock, Edit2, Settings, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Ban, Clock, Edit2, Settings, TrendingUp } from 'lucide-react'
 
 import { StatsCard, DownloadButton } from '~/components/features'
 import { Button, Input } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
-import { formatTime } from '~/lib/time'
+import { formatTime, isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
-import type { VisionSettings, Goal } from '~/types/storage'
-import { DEFAULT_VISION, DEFAULT_FONT_SETTINGS, FONT_FAMILY_MAP, FONT_SIZE_MAP, FONT_WEIGHT_MAP, getFontDefinition } from '~/types/storage'
+import type { VisionSettings, DashboardDisplaySettings, AppSettings } from '~/types/storage'
+import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS, getFontDefinition } from '~/types/storage'
 
 import './styles/globals.css'
 
@@ -55,6 +55,10 @@ function NewtabApp() {
     key: 'vision',
     instance: storage,
   }, DEFAULT_VISION)
+  const [settings] = useStorage<AppSettings>({
+    key: 'settings',
+    instance: storage,
+  }, DEFAULT_SETTINGS)
   const [stats, setStats] = useState({
     wasteTime: 0,
     investTime: 0,
@@ -63,8 +67,10 @@ function NewtabApp() {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState('')
   const [isPremium, setIsPremium] = useState(false)
-  const [currentGoalIndex, setCurrentGoalIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Time tick for schedule checking (updates when tab becomes visible)
+  const [timeTick, setTimeTick] = useState(0)
 
   // Check premium status
   useEffect(() => {
@@ -75,17 +81,78 @@ function NewtabApp() {
     loadPremiumStatus()
   }, [])
 
+  // Re-check schedule when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setTimeTick((prev) => prev + 1)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  // Get current display settings
+  // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
+  const displaySettings: DashboardDisplaySettings = useMemo(() => {
+    if (!vision) return DEFAULT_DISPLAY_SETTINGS
+
+    // Check for active schedule with a preset
+    const activeScheduleWithPreset = settings?.schedules?.find(
+      (schedule) =>
+        schedule.enabled &&
+        schedule.presetId &&
+        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
+    )
+
+    if (activeScheduleWithPreset?.presetId) {
+      const schedulePreset = vision.presets?.find((p) => p.id === activeScheduleWithPreset.presetId)
+      if (schedulePreset) {
+        return {
+          goalText: schedulePreset.goalText,
+          goalSubText: schedulePreset.goalSubText,
+          textColor: schedulePreset.textColor,
+          backgroundType: schedulePreset.backgroundType,
+          backgroundImage: schedulePreset.backgroundImage,
+          backgroundColor: schedulePreset.backgroundColor,
+          customBackgroundData: schedulePreset.customBackgroundData,
+          fontSettings: schedulePreset.fontSettings,
+        }
+      }
+    }
+
+    // Check for user-selected preset
+    if (vision.activePresetId) {
+      const activePreset = vision.presets?.find((p) => p.id === vision.activePresetId)
+      if (activePreset) {
+        return {
+          goalText: activePreset.goalText,
+          goalSubText: activePreset.goalSubText,
+          textColor: activePreset.textColor,
+          backgroundType: activePreset.backgroundType,
+          backgroundImage: activePreset.backgroundImage,
+          backgroundColor: activePreset.backgroundColor,
+          customBackgroundData: activePreset.customBackgroundData,
+          fontSettings: activePreset.fontSettings,
+        }
+      }
+    }
+
+    // Fall back to default settings
+    return vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+  }, [vision, settings, timeTick])
+
   // Get background style - supports custom uploaded background
-  const isColorBackground = vision?.backgroundType === 'color'
-  const backgroundUrl = vision?.customBackgroundData
-    ? vision.customBackgroundData
-    : vision?.backgroundImage
-      ? BACKGROUNDS[vision.backgroundImage] || vision.backgroundImage
+  const isColorBackground = displaySettings.backgroundType === 'color'
+  const backgroundUrl = displaySettings.customBackgroundData
+    ? displaySettings.customBackgroundData
+    : displaySettings.backgroundImage
+      ? BACKGROUNDS[displaySettings.backgroundImage] || displaySettings.backgroundImage
       : BACKGROUNDS['default-1']
-  const backgroundColor = vision?.backgroundColor || '#1a1a2e'
+  const backgroundColor = displaySettings.backgroundColor
 
   // Get font styles
-  const fontSettings = vision?.fontSettings || DEFAULT_FONT_SETTINGS
+  const fontSettings = displaySettings.fontSettings
   const fontDef = getFontDefinition(fontSettings.family)
 
   // Load Google Font
@@ -101,28 +168,10 @@ function NewtabApp() {
     fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight],
   }
 
-  // Get goals (use multiple if available, otherwise use single goal)
-  const goals: Goal[] = vision?.goals && vision.goals.length > 0
-    ? vision.goals
-    : [{
-        id: 'default',
-        text: vision?.goalText || DEFAULT_VISION.goalText,
-        subText: vision?.goalSubText || '',
-        color: vision?.textColor || '#ffffff',
-        createdAt: new Date().toISOString(),
-        order: 0,
-      }]
-
-  // Auto-rotate goals (every 5 seconds)
-  useEffect(() => {
-    if (goals.length <= 1) return
-
-    const interval = setInterval(() => {
-      setCurrentGoalIndex((prev) => (prev + 1) % goals.length)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [goals.length])
+  // Get goal from display settings
+  const goalText = displaySettings.goalText
+  const goalSubText = displaySettings.goalSubText
+  const textColor = displaySettings.textColor
 
   // Fetch stats from background
   useEffect(() => {
@@ -143,13 +192,20 @@ function NewtabApp() {
   }, [])
 
   const handleStartEdit = useCallback(() => {
-    setEditText(vision?.goalText || '')
+    setEditText(goalText)
     setIsEditing(true)
-  }, [vision?.goalText])
+  }, [goalText])
 
   const handleSaveGoal = useCallback(async () => {
     if (vision && editText.trim()) {
-      const updated = { ...vision, goalText: editText.trim() }
+      // Update defaultSettings with new goal text
+      const updated = {
+        ...vision,
+        defaultSettings: {
+          ...vision.defaultSettings,
+          goalText: editText.trim(),
+        },
+      }
       await storage.set('vision', updated)
       setVision(updated)
     }
@@ -172,17 +228,6 @@ function NewtabApp() {
   const handleSettingsClick = useCallback(() => {
     chrome.runtime.openOptionsPage()
   }, [])
-
-  const handlePrevGoal = useCallback(() => {
-    setCurrentGoalIndex((prev) => (prev - 1 + goals.length) % goals.length)
-  }, [goals.length])
-
-  const handleNextGoal = useCallback(() => {
-    setCurrentGoalIndex((prev) => (prev + 1) % goals.length)
-  }, [goals.length])
-
-  // Current goal
-  const currentGoal = goals[currentGoalIndex]
 
   return (
     <div
@@ -224,58 +269,23 @@ function NewtabApp() {
             </div>
           ) : (
             <div className="group relative">
-              {/* Navigation arrows for multiple goals */}
-              {goals.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevGoal}
-                    className="absolute -left-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={handleNextGoal}
-                    className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
-
               <h1
                 className="drop-shadow-lg leading-tight transition-opacity duration-300"
-                style={{ color: currentGoal.color, ...fontStyle }}
+                style={{ color: textColor, ...fontStyle }}
               >
-                {currentGoal.text}
+                {goalText}
               </h1>
-              {currentGoal.subText && (
+              {goalSubText && (
                 <p
                   className="text-lg md:text-xl mt-4 drop-shadow-lg opacity-80 whitespace-pre-line"
-                  style={{ color: currentGoal.color, ...fontStyle }}
+                  style={{ color: textColor }}
                 >
-                  {currentGoal.subText}
+                  {goalSubText}
                 </p>
               )}
 
-              {/* Goal navigation dots */}
-              {goals.length > 1 && (
-                <div className="flex justify-center gap-2 mt-6">
-                  {goals.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentGoalIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentGoalIndex
-                          ? 'bg-white scale-125'
-                          : 'bg-white/50 hover:bg-white/75'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Edit button - only show for single goal mode */}
-              {goals.length === 1 && goals[0].id === 'default' && (
+              {/* Edit button - only show when no preset is active */}
+              {!vision?.activePresetId && (
                 <button
                   onClick={handleStartEdit}
                   className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
