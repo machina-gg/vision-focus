@@ -7,7 +7,7 @@ import { openPaymentPage } from '~/lib/extpay'
 
 export interface UpgradePromptProps {
   /** Type of limit reached */
-  limitType?: 'blocklist' | 'history' | 'goals'
+  limitType?: 'blocklist' | 'history' | 'goals' | 'customBackground'
   /** Show as a modal/card or inline */
   variant?: 'card' | 'inline' | 'banner'
   /** Custom message to display */
@@ -46,7 +46,9 @@ export function UpgradePrompt({
       ? getMessage('upgradeToAddMore')
       : limitType === 'history'
         ? 'Upgrade to Premium for unlimited analytics history.'
-        : 'Upgrade to Premium for unlimited goals.'
+        : limitType === 'customBackground'
+          ? getMessage('upgradeForCustomBackground')
+          : 'Upgrade to Premium for unlimited goals.'
 
   if (variant === 'inline') {
     return (

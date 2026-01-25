@@ -391,6 +391,10 @@
     "message": "Upgrade to Premium to add more sites to your block list.",
     "description": "Upgrade prompt for blocklist"
   },
+  "upgradeForCustomBackground": {
+    "message": "Upgrade to Premium to upload custom background images.",
+    "description": "Upgrade prompt for custom background"
+  },
   "gracePeriodWarning": {
     "message": "License verification failed. Premium features will remain active until $DATE$.",
     "description": "Grace period warning",

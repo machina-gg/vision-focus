@@ -262,6 +262,8 @@ function OptionsApp() {
         onFormChange={schedules.setScheduleForm}
         onSave={schedules.handleSaveSchedule}
         vision={vision}
+        isPremium={isPremium}
+        featureLimits={featureLimits}
       />
     </div>
   )

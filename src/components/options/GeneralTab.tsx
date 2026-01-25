@@ -1,5 +1,5 @@
 import React from 'react'
-import { Check, Plus, Save, Target, Trash2 } from 'lucide-react'
+import { Check, Lock, Plus, Save, Target, Trash2 } from 'lucide-react'
 
 import { Button, Card, Input } from '~/components/ui'
 import { UpgradePrompt, ImageUploader, FontPicker } from '~/components/features'
@@ -113,20 +113,32 @@ export function GeneralTab({
             <>
               <div className="flex flex-wrap gap-2">
                 {/* Preset buttons */}
-                {draftPresets.map((preset) => {
+                {draftPresets.map((preset, index) => {
                   const isActive = vision?.activePresetId === preset.id
                   const isSelected = selectedPresetId === preset.id
+                  const isLocked = !isPremium && index >= featureLimits.maxPresets
                   return (
                     <button
                       key={preset.id}
-                      onClick={() => onSelectPreset(preset.id)}
+                      onClick={() => !isLocked && onSelectPreset(preset.id)}
+                      disabled={isLocked}
+                      title={
+                        isLocked
+                          ? 'プレミアムにアップグレードしてこのプリセットを使用'
+                          : undefined
+                      }
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isSelected
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        isLocked
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : isSelected
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {isActive && (
+                      {isLocked && (
+                        <Lock className="w-3.5 h-3.5 text-gray-400" />
+                      )}
+                      {!isLocked && isActive && (
                         <Check
                           className={`w-3.5 h-3.5 ${
                             isSelected ? 'text-white' : 'text-green-600'
@@ -158,6 +170,20 @@ export function GeneralTab({
                       String(featureLimits.maxPresets)
                     )}
                   </p>
+                )}
+
+              {/* Warning if active preset is locked */}
+              {!isPremium &&
+                vision?.activePresetId &&
+                draftPresets.findIndex(
+                  (p) => p.id === vision.activePresetId
+                ) >= featureLimits.maxPresets && (
+                  <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
+                    <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>
+                      現在設定中のプリセットはFreeプランでは使用できません。デフォルト設定が適用されます。
+                    </span>
+                  </div>
                 )}
             </>
           )}
@@ -392,7 +418,7 @@ export function GeneralTab({
                 onChange={onCustomBackgroundChange}
               />
             ) : (
-              <UpgradePrompt variant="inline" />
+              <UpgradePrompt variant="inline" limitType="customBackground" />
             )}
           </div>
         </Card>

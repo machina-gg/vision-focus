@@ -391,6 +391,10 @@
     "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
     "description": "ブロックリストのアップグレードプロンプト"
   },
+  "upgradeForCustomBackground": {
+    "message": "プレミアムにアップグレードして、カスタム背景画像をアップロードしましょう。",
+    "description": "カスタム背景のアップグレードプロンプト"
+  },
   "gracePeriodWarning": {
     "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",
     "description": "猶予期間警告",
