@@ -14,6 +14,7 @@ export interface Schedule {
   endTime: string // HH:mm
   days: number[] // 0=Sun, 1=Mon, ..., 6=Sat
   enabled: boolean
+  presetId?: string // Dashboard preset to apply when schedule is active
 }
 
 // Daily statistics
@@ -32,23 +33,60 @@ export interface SiteTime {
   lastUpdated: string
 }
 
-// Goal for multiple goals feature (Premium)
-export interface Goal {
-  id: string
-  text: string
-  subText: string
-  color: string // hex color
-  createdAt: string
-  order: number
+// Dashboard display settings (shared between default and presets)
+export interface DashboardDisplaySettings {
+  goalText: string
+  goalSubText: string
+  textColor: string
+  backgroundType: 'image' | 'color'
+  backgroundImage: string
+  backgroundColor: string
+  customBackgroundData: string | null
+  fontSettings: FontSettings
 }
 
-// Font settings for customization (Premium)
+// Dashboard preset - saves all dashboard settings as a set
+export interface DashboardPreset extends DashboardDisplaySettings {
+  id: string
+  name: string
+  createdAt: string
+}
+
+// Font settings for customization
 export type FontFamily =
   | 'system'
+  // Modern
   | 'inter'
   | 'roboto'
+  | 'poppins'
+  | 'lato'
+  | 'opensans'
+  | 'nunito'
+  // Elegant
   | 'playfair'
+  | 'merriweather'
+  | 'lora'
+  | 'crimsontext'
+  // Impact
   | 'montserrat'
+  | 'oswald'
+  | 'bebasneue'
+  | 'raleway'
+  // Handwriting
+  | 'dancingscript'
+  | 'caveat'
+  // Japanese
+  | 'notosansjp'
+  | 'notoserifjp'
+  | 'mplusrounded'
+
+export type FontCategory =
+  | 'system'
+  | 'modern'
+  | 'elegant'
+  | 'impact'
+  | 'handwriting'
+  | 'japanese'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold'
 
@@ -56,6 +94,188 @@ export interface FontSettings {
   family: FontFamily
   size: FontSize
   weight: FontWeight
+}
+
+// Font category definitions
+export interface FontDefinition {
+  family: FontFamily
+  name: string
+  css: string
+  googleFont?: string // Google Fonts name for loading
+}
+
+export const FONT_CATEGORIES: Record<
+  FontCategory,
+  { name: string; fonts: FontDefinition[] }
+> = {
+  system: {
+    name: 'System',
+    fonts: [
+      {
+        family: 'system',
+        name: 'System Default',
+        css: 'ui-sans-serif, system-ui, sans-serif',
+      },
+    ],
+  },
+  modern: {
+    name: 'Modern',
+    fonts: [
+      {
+        family: 'inter',
+        name: 'Inter',
+        css: "'Inter', sans-serif",
+        googleFont: 'Inter',
+      },
+      {
+        family: 'roboto',
+        name: 'Roboto',
+        css: "'Roboto', sans-serif",
+        googleFont: 'Roboto',
+      },
+      {
+        family: 'poppins',
+        name: 'Poppins',
+        css: "'Poppins', sans-serif",
+        googleFont: 'Poppins',
+      },
+      {
+        family: 'lato',
+        name: 'Lato',
+        css: "'Lato', sans-serif",
+        googleFont: 'Lato',
+      },
+      {
+        family: 'opensans',
+        name: 'Open Sans',
+        css: "'Open Sans', sans-serif",
+        googleFont: 'Open+Sans',
+      },
+      {
+        family: 'nunito',
+        name: 'Nunito',
+        css: "'Nunito', sans-serif",
+        googleFont: 'Nunito',
+      },
+    ],
+  },
+  elegant: {
+    name: 'Elegant',
+    fonts: [
+      {
+        family: 'playfair',
+        name: 'Playfair Display',
+        css: "'Playfair Display', serif",
+        googleFont: 'Playfair+Display',
+      },
+      {
+        family: 'merriweather',
+        name: 'Merriweather',
+        css: "'Merriweather', serif",
+        googleFont: 'Merriweather',
+      },
+      {
+        family: 'lora',
+        name: 'Lora',
+        css: "'Lora', serif",
+        googleFont: 'Lora',
+      },
+      {
+        family: 'crimsontext',
+        name: 'Crimson Text',
+        css: "'Crimson Text', serif",
+        googleFont: 'Crimson+Text',
+      },
+    ],
+  },
+  impact: {
+    name: 'Impact',
+    fonts: [
+      {
+        family: 'montserrat',
+        name: 'Montserrat',
+        css: "'Montserrat', sans-serif",
+        googleFont: 'Montserrat',
+      },
+      {
+        family: 'oswald',
+        name: 'Oswald',
+        css: "'Oswald', sans-serif",
+        googleFont: 'Oswald',
+      },
+      {
+        family: 'bebasneue',
+        name: 'Bebas Neue',
+        css: "'Bebas Neue', sans-serif",
+        googleFont: 'Bebas+Neue',
+      },
+      {
+        family: 'raleway',
+        name: 'Raleway',
+        css: "'Raleway', sans-serif",
+        googleFont: 'Raleway',
+      },
+    ],
+  },
+  handwriting: {
+    name: 'Handwriting',
+    fonts: [
+      {
+        family: 'dancingscript',
+        name: 'Dancing Script',
+        css: "'Dancing Script', cursive",
+        googleFont: 'Dancing+Script',
+      },
+      {
+        family: 'caveat',
+        name: 'Caveat',
+        css: "'Caveat', cursive",
+        googleFont: 'Caveat',
+      },
+    ],
+  },
+  japanese: {
+    name: 'Japanese',
+    fonts: [
+      {
+        family: 'notosansjp',
+        name: 'Noto Sans JP',
+        css: "'Noto Sans JP', sans-serif",
+        googleFont: 'Noto+Sans+JP',
+      },
+      {
+        family: 'notoserifjp',
+        name: 'Noto Serif JP',
+        css: "'Noto Serif JP', serif",
+        googleFont: 'Noto+Serif+JP',
+      },
+      {
+        family: 'mplusrounded',
+        name: 'M PLUS Rounded 1c',
+        css: "'M PLUS Rounded 1c', sans-serif",
+        googleFont: 'M+PLUS+Rounded+1c',
+      },
+    ],
+  },
+}
+
+// Helper to get font definition by family
+export function getFontDefinition(family: FontFamily): FontDefinition {
+  for (const category of Object.values(FONT_CATEGORIES)) {
+    const font = category.fonts.find((f) => f.family === family)
+    if (font) return font
+  }
+  return FONT_CATEGORIES.system.fonts[0]
+}
+
+// Helper to get category for a font family
+export function getFontCategory(family: FontFamily): FontCategory {
+  for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
+    if (category.fonts.some((f) => f.family === family)) {
+      return categoryKey as FontCategory
+    }
+  }
+  return 'system'
 }
 
 // Weekly report (Premium)
@@ -89,25 +309,18 @@ export interface MonthlyReport {
 
 // Vision/Dashboard settings
 export interface VisionSettings {
-  goalText: string
-  goalSubText: string // sub-message/detail
-  textColor: string // hex color for goal text
-  backgroundType: 'image' | 'color'
-  backgroundImage: string // 'default-1' | 'default-2' | 'default-3' | custom URL
-  backgroundColor: string // hex color (e.g., '#1a1a2e')
-  // Premium features
-  customBackgroundData: string | null // Base64 data URL for uploaded images
-  fontSettings: FontSettings
-  goals: Goal[] // Multiple goals (free: 1, premium: unlimited)
+  // Default display settings (used when no preset is active)
+  defaultSettings: DashboardDisplaySettings
+  // User-created presets
+  presets: DashboardPreset[]
+  // Currently active preset ID (null = use defaultSettings)
+  activePresetId: string | null
 }
 
 // App settings
 export interface AppSettings {
   blockList: BlockItem[]
   schedules: Schedule[]
-  lockdownMode: boolean
-  lockdownEndTime: string | null
-  challengeEnabled: boolean
 }
 
 // Analytics data
@@ -117,66 +330,28 @@ export interface AnalyticsData {
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'> // key: domain
 }
 
-// License types
-export type LicenseType = 'free' | 'monthly' | 'yearly' | 'lifetime'
-export type LicenseSource = 'gumroad' | 'dev' | 'promo'
-
-// License info
-export interface LicenseInfo {
-  isPremium: boolean
-  type: LicenseType
-  source: LicenseSource | null
-  expiresAt: string | null
-  gracePeriodEndsAt: string | null
-  licenseKey: string | null // hashed
-  activatedAt: string | null
-  lastVerifiedAt: string | null
-  verificationFailCount: number
-}
-
-// Dev mode settings
-export interface DevModeSettings {
-  enabled: boolean
-  enabledAt: string | null
-  expiresAt: string | null // auto-disable after 24 hours
-}
-
 // Premium feature identifiers
 export type PremiumFeature =
   | 'unlimited_blocklist'
-  | 'hardmode'
   | 'custom_background'
+  | 'dashboard_presets'
   | 'unsplash'
   | 'unlimited_history'
   | 'weekly_report'
   | 'monthly_report'
   | 'github_integration'
-  | 'multiple_goals'
-  | 'font_customization'
-
-// Temporary unblock info
-export interface TempUnblock {
-  domain: string
-  expiresAt: string // ISO string
-}
 
 // Complete storage schema
 export interface StorageSchema {
   settings: AppSettings
   vision: VisionSettings
   analytics: AnalyticsData
-  license: LicenseInfo
-  devMode: DevModeSettings
-  tempUnblocks: TempUnblock[]
 }
 
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
-  lockdownMode: false,
-  lockdownEndTime: null,
-  challengeEnabled: true,
 }
 
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
@@ -185,17 +360,43 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
   weight: 'bold',
 }
 
-export const DEFAULT_VISION: VisionSettings = {
+export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   goalText: 'Focus on your goals',
   goalSubText: '',
   textColor: '#ffffff',
   backgroundType: 'image',
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
-  // Premium features
   customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS,
-  goals: [],
+}
+
+export const DEFAULT_VISION: VisionSettings = {
+  defaultSettings: DEFAULT_DISPLAY_SETTINGS,
+  presets: [],
+  activePresetId: null,
+}
+
+// Helper to get current display settings based on activePresetId
+export function getCurrentDisplaySettings(
+  vision: VisionSettings
+): DashboardDisplaySettings {
+  if (vision.activePresetId) {
+    const preset = vision.presets.find((p) => p.id === vision.activePresetId)
+    if (preset) {
+      return {
+        goalText: preset.goalText,
+        goalSubText: preset.goalSubText,
+        textColor: preset.textColor,
+        backgroundType: preset.backgroundType,
+        backgroundImage: preset.backgroundImage,
+        backgroundColor: preset.backgroundColor,
+        customBackgroundData: preset.customBackgroundData,
+        fontSettings: preset.fontSettings,
+      }
+    }
+  }
+  return vision.defaultSettings
 }
 
 export const DEFAULT_ANALYTICS: AnalyticsData = {
@@ -204,38 +405,17 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   siteCategories: {},
 }
 
-export const DEFAULT_LICENSE: LicenseInfo = {
-  isPremium: false,
-  type: 'free',
-  source: null,
-  expiresAt: null,
-  gracePeriodEndsAt: null,
-  licenseKey: null,
-  activatedAt: null,
-  lastVerifiedAt: null,
-  verificationFailCount: 0,
-}
-
-export const DEFAULT_DEV_MODE: DevModeSettings = {
-  enabled: false,
-  enabledAt: null,
-  expiresAt: null,
-}
-
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
   analytics: DEFAULT_ANALYTICS,
-  license: DEFAULT_LICENSE,
-  devMode: DEFAULT_DEV_MODE,
-  tempUnblocks: [],
 }
 
 // Feature limits type
 export interface FeatureLimits {
   maxBlockList: number
   historyDays: number
-  maxGoals: number
+  maxPresets: number
 }
 
 // Feature limits
@@ -246,32 +426,29 @@ export const FEATURE_LIMITS: {
   free: {
     maxBlockList: 5,
     historyDays: 7,
-    maxGoals: 1,
+    maxPresets: 1,
   },
   premium: {
     maxBlockList: Infinity,
     historyDays: Infinity,
-    maxGoals: Infinity,
+    maxPresets: 5,
   },
 }
 
 // Legacy export for backwards compatibility
 export const FREE_TIER_LIMITS = FEATURE_LIMITS.free
 
-// Challenge text for unblocking
-export const CHALLENGE_TEXT = 'I choose to focus on my goals'
-
-// Temp unblock duration (5 minutes)
-export const TEMP_UNBLOCK_DURATION_MS = 5 * 60 * 1000
-
-// Font family CSS mappings
-export const FONT_FAMILY_MAP: Record<FontFamily, string> = {
-  system: 'ui-sans-serif, system-ui, sans-serif',
-  inter: "'Inter', sans-serif",
-  roboto: "'Roboto', sans-serif",
-  playfair: "'Playfair Display', serif",
-  montserrat: "'Montserrat', sans-serif",
+// Font family CSS mappings (uses new FONT_CATEGORIES)
+export const getFontFamilyCSS = (family: FontFamily): string => {
+  return getFontDefinition(family).css
 }
+
+// Legacy compatibility - dynamically generated
+export const FONT_FAMILY_MAP: Record<string, string> = Object.values(
+  FONT_CATEGORIES
+)
+  .flatMap((cat) => cat.fonts)
+  .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {})
 
 // Font size Tailwind class mappings
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
@@ -289,11 +466,9 @@ export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   bold: 'font-bold',
 }
 
-// Font family display names
-export const FONT_FAMILY_NAMES: Record<FontFamily, string> = {
-  system: 'System Default',
-  inter: 'Inter',
-  roboto: 'Roboto',
-  playfair: 'Playfair Display',
-  montserrat: 'Montserrat',
-}
+// Font family display names (uses new FONT_CATEGORIES)
+export const FONT_FAMILY_NAMES: Record<string, string> = Object.values(
+  FONT_CATEGORIES
+)
+  .flatMap((cat) => cat.fonts)
+  .reduce((acc, font) => ({ ...acc, [font.family]: font.name }), {})

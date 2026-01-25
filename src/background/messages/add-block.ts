@@ -1,20 +1,12 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
-import { parseDomainInput } from '~/lib/domain'
+import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain'
 import { getSettings, setSettings } from '~/lib/storage'
 import { canAddToBlocklist } from '~/lib/license'
-
 import { updateBlockRules } from '../blocker'
+import type { AddBlockRequest, AddBlockResponse } from '~/types/messages'
 
-export type AddBlockRequest = {
-  domain: string
-}
-
-export type AddBlockResponse = {
-  success: boolean
-  error?: string
-  limitReached?: boolean
-}
+export type { AddBlockRequest, AddBlockResponse }
 
 const handler: PlasmoMessaging.MessageHandler<
   AddBlockRequest,
@@ -42,6 +34,12 @@ const handler: PlasmoMessaging.MessageHandler<
 
   const { domain: parsedDomain, isWildcard } = parseDomainInput(domain)
 
+  // Validate domain format
+  if (!isValidDomain(parsedDomain)) {
+    res.send({ success: false, error: 'Invalid domain format' })
+    return
+  }
+
   // Check if already in list
   const exists = settings.blockList.some(
     (item) => item.domain.toLowerCase() === parsedDomain.toLowerCase()
@@ -53,7 +51,7 @@ const handler: PlasmoMessaging.MessageHandler<
 
   // Add to block list
   settings.blockList.push({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: generateId(),
     domain: parsedDomain,
     isWildcard,
     createdAt: new Date().toISOString(),

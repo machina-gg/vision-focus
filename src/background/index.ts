@@ -1,22 +1,24 @@
-import {
-  cleanupTempUnblocks,
-  getAnalytics,
-  getLicense,
-  getSettings,
-  setAnalytics,
-} from '~/lib/storage'
-import { getTodayKey } from '~/lib/time'
-import { checkAndCleanupDevMode } from '~/lib/devMode'
-import { verifyStoredLicense } from '~/lib/gumroad'
+import { getAnalytics, setAnalytics, storage } from '~/lib/storage'
+import { startExtPayBackgroundListener } from '~/lib/extpay'
 import { getFeatureLimits } from '~/lib/license'
 
 import { updateBlockRules } from './blocker'
-import { startTracking, stopTracking } from './tracker'
+import { startTracking } from './tracker'
+
+// Initialize ExtensionPay at top level (required for Manifest V3)
+startExtPayBackgroundListener()
+
+// Listen for settings changes and update block rules
+storage.watch({
+  settings: async () => {
+    // Small delay to ensure storage is fully updated
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    await updateBlockRules()
+  },
+})
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(async () => {
-  console.log('VisionFocus installed')
-
   // Initialize block rules
   await updateBlockRules()
 
@@ -26,14 +28,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(async () => {
-  console.log('VisionFocus started')
-
-  // Clean up expired temp unblocks
-  await cleanupTempUnblocks()
-
-  // Check dev mode expiration
-  await checkAndCleanupDevMode()
-
   // Update block rules
   await updateBlockRules()
 
@@ -43,29 +37,18 @@ chrome.runtime.onStartup.addListener(async () => {
 
 // Handle alarms
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'cleanup-temp-unblocks') {
-    await cleanupTempUnblocks()
-    await updateBlockRules()
-  }
-
   if (alarm.name === 'daily-cleanup') {
     await cleanupOldAnalytics()
   }
-
-  if (alarm.name === 'check-dev-mode') {
-    await checkAndCleanupDevMode()
-  }
-
-  if (alarm.name === 'verify-license') {
-    await verifyStoredLicense()
+  if (alarm.name === 'check-schedule') {
+    // Update block rules every minute to handle schedule changes
+    await updateBlockRules()
   }
 })
 
 // Set up alarms
-chrome.alarms.create('cleanup-temp-unblocks', { periodInMinutes: 1 })
 chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 })
-chrome.alarms.create('check-dev-mode', { periodInMinutes: 5 }) // Check dev mode every 5 minutes
-chrome.alarms.create('verify-license', { periodInMinutes: 60 * 24 }) // Verify license once per day
+chrome.alarms.create('check-schedule', { periodInMinutes: 1 })
 
 // Clean up analytics based on tier limits
 async function cleanupOldAnalytics() {

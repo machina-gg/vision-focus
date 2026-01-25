@@ -3,6 +3,7 @@ import type { PlasmoMessaging } from '@plasmohq/messaging'
 import { extractDomain } from '~/lib/domain'
 import { getAnalytics, setAnalytics } from '~/lib/storage'
 import { getTodayKey } from '~/lib/time'
+import { TRACKER_CONFIG } from '~/constants/limits'
 import type { DailyStat, SiteTime } from '~/types/storage'
 
 // Track active pages and their last heartbeat
@@ -15,12 +16,6 @@ interface ActivePage {
 // Store active pages (keyed by tab ID or URL)
 const activePages = new Map<string, ActivePage>()
 
-// Heartbeat timeout (consider page inactive if no heartbeat for 10 seconds)
-const HEARTBEAT_TIMEOUT_MS = 10 * 1000
-
-// Recording interval (record time every 5 seconds)
-const RECORDING_INTERVAL_MS = 5 * 1000
-
 // Track recording timer
 let recordingTimer: ReturnType<typeof setInterval> | null = null
 
@@ -32,14 +27,20 @@ function ensureRecordingTimer() {
     const now = Date.now()
 
     // Record time for all active pages
-    for (const [key, page] of activePages.entries()) {
+    for (const [_key, page] of activePages.entries()) {
       // Check if page is still active (received heartbeat recently)
       const timeSinceHeartbeat = now - page.lastHeartbeat
 
-      if (page.isActive && timeSinceHeartbeat <= HEARTBEAT_TIMEOUT_MS) {
+      if (
+        page.isActive &&
+        timeSinceHeartbeat <= TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS
+      ) {
         // Record 5 seconds of time for this page
-        await recordTime(page.domain, Math.floor(RECORDING_INTERVAL_MS / 1000))
-      } else if (timeSinceHeartbeat > HEARTBEAT_TIMEOUT_MS) {
+        await recordTime(
+          page.domain,
+          Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000)
+        )
+      } else if (timeSinceHeartbeat > TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS) {
         // Page is stale, mark as inactive
         page.isActive = false
       }
@@ -57,7 +58,7 @@ function ensureRecordingTimer() {
       clearInterval(recordingTimer)
       recordingTimer = null
     }
-  }, RECORDING_INTERVAL_MS)
+  }, TRACKER_CONFIG.RECORDING_INTERVAL_MS)
 }
 
 // Record time for a domain
@@ -97,12 +98,39 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
   await setAnalytics(analytics)
 }
 
+// Valid status values
+const VALID_STATUSES = ['active', 'inactive', 'heartbeat'] as const
+
 // Message handler
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const { url, status, timestamp } = req.body as {
     url: string
     status: 'active' | 'inactive' | 'heartbeat'
     timestamp: number
+  }
+
+  // Validate url
+  if (!url || typeof url !== 'string' || url.length > 2048) {
+    res.send({ success: false, error: 'Invalid URL' })
+    return
+  }
+
+  // Validate status
+  if (!status || !VALID_STATUSES.includes(status)) {
+    res.send({ success: false, error: 'Invalid status' })
+    return
+  }
+
+  // Validate timestamp if provided
+  if (timestamp !== undefined) {
+    if (
+      typeof timestamp !== 'number' ||
+      !Number.isFinite(timestamp) ||
+      timestamp < 0
+    ) {
+      res.send({ success: false, error: 'Invalid timestamp' })
+      return
+    }
   }
 
   // Extract domain from URL
@@ -127,15 +155,16 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       ensureRecordingTimer()
       break
 
-    case 'inactive':
+    case 'inactive': {
       // Page became inactive
       const inactivePage = activePages.get(pageKey)
       if (inactivePage) {
         inactivePage.isActive = false
       }
       break
+    }
 
-    case 'heartbeat':
+    case 'heartbeat': {
       // Regular heartbeat - update last heartbeat time
       const existingPage = activePages.get(pageKey)
       if (existingPage) {
@@ -151,6 +180,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
         ensureRecordingTimer()
       }
       break
+    }
   }
 
   res.send({ success: true })

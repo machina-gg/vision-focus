@@ -25,25 +25,13 @@
     "message": "Remember your goal",
     "description": "Goal reminder heading"
   },
-  "lockdownModeActive": {
-    "message": "Lockdown Mode Active",
-    "description": "Lockdown mode warning title"
-  },
-  "lockdownModeMessage": {
-    "message": "You cannot unblock sites during lockdown mode.",
-    "description": "Lockdown mode warning message"
-  },
-  "temporarilyUnblock": {
-    "message": "Temporarily Unblock (5 min)",
-    "description": "Unblock button text"
-  },
-  "challengePrompt": {
-    "message": "Type the following to unblock:",
-    "description": "Challenge prompt text"
-  },
   "goBack": {
     "message": "Go Back",
     "description": "Go back button text"
+  },
+  "goToDashboard": {
+    "message": "Go to Dashboard",
+    "description": "Go to dashboard button text"
   },
   "cancel": {
     "message": "Cancel",
@@ -88,14 +76,6 @@
   "analytics": {
     "message": "Analytics",
     "description": "Analytics tab"
-  },
-  "challengeOnUnblock": {
-    "message": "Challenge on Unblock",
-    "description": "Challenge setting title"
-  },
-  "challengeOnUnblockDescription": {
-    "message": "Require typing a phrase to unblock sites",
-    "description": "Challenge setting description"
   },
   "dashboardBackground": {
     "message": "Dashboard Background",
@@ -211,42 +191,6 @@
       }
     }
   },
-  "lockdownMode": {
-    "message": "Lockdown Mode",
-    "description": "Lockdown mode toggle label"
-  },
-  "enableLockdown": {
-    "message": "Enable Lockdown",
-    "description": "Enable lockdown button"
-  },
-  "disableLockdown": {
-    "message": "Disable Lockdown",
-    "description": "Disable lockdown button"
-  },
-  "lockdownConfirmTitle": {
-    "message": "Enable Lockdown Mode",
-    "description": "Lockdown confirmation modal title"
-  },
-  "lockdownConfirmMessage": {
-    "message": "Lockdown mode will block all sites in your block list without the option to unblock them.",
-    "description": "Lockdown confirmation message"
-  },
-  "lockdownConfirmWarning": {
-    "message": "Are you sure you want to enable lockdown mode?",
-    "description": "Lockdown confirmation warning"
-  },
-  "lockdownActive": {
-    "message": "Lockdown Active",
-    "description": "Lockdown active button text"
-  },
-  "enableLockdownMode": {
-    "message": "Enable Lockdown Mode",
-    "description": "Enable lockdown mode button text"
-  },
-  "blockingSettings": {
-    "message": "Blocking Settings",
-    "description": "Blocking settings section title"
-  },
   "settingsTitle": {
     "message": "VisionFocus Settings",
     "description": "Settings page title"
@@ -269,18 +213,6 @@
     "message": "Edit Schedule",
     "description": "Edit schedule modal title"
   },
-  "unblocking": {
-    "message": "Unblocking...",
-    "description": "Unblocking in progress text"
-  },
-  "confirmUnblock": {
-    "message": "Are you sure you want to unblock this site for 5 minutes?",
-    "description": "Confirm unblock text"
-  },
-  "typeTextAbove": {
-    "message": "Type the text above...",
-    "description": "Challenge input placeholder"
-  },
   "noSiteToBlock": {
     "message": "No site to block",
     "description": "No site available to block"
@@ -288,14 +220,6 @@
   "enterGoalPlaceholder": {
     "message": "Enter your goal...",
     "description": "Goal input placeholder text"
-  },
-  "challengeDescription": {
-    "message": "Want to visit this site? Complete the challenge first.",
-    "description": "Challenge mode description text"
-  },
-  "unblockPrompt": {
-    "message": "Want to temporarily unblock this site?",
-    "description": "Unblock prompt when challenge is disabled"
   },
   "goalSettings": {
     "message": "Goal Settings",
@@ -322,7 +246,7 @@
     "description": "Save success feedback"
   },
   "dashboardPreview": {
-    "message": "Dashboard Preview",
+    "message": "Preview",
     "description": "Preview section title"
   },
   "backgroundType": {
@@ -380,6 +304,14 @@
   "premiumPlan": {
     "message": "Premium Plan",
     "description": "Premium plan name"
+  },
+  "subscriptionActive": {
+    "message": "Your subscription is active",
+    "description": "Active subscription status"
+  },
+  "manageSubscription": {
+    "message": "Manage Subscription",
+    "description": "Manage subscription button"
   },
   "licenseKey": {
     "message": "License Key",
@@ -443,10 +375,6 @@
     "message": "Unlimited analytics history",
     "description": "Premium feature: unlimited history"
   },
-  "premiumFeatureHardmode": {
-    "message": "Hard mode (no unblocking)",
-    "description": "Premium feature: hard mode"
-  },
   "premiumFeatureCustomBackground": {
     "message": "Custom backgrounds",
     "description": "Premium feature: custom backgrounds"
@@ -462,28 +390,6 @@
   "upgradeToAddMore": {
     "message": "Upgrade to Premium to add more sites to your block list.",
     "description": "Upgrade prompt for blocklist"
-  },
-  "devModeActive": {
-    "message": "Developer Mode Active",
-    "description": "Dev mode active indicator"
-  },
-  "devModeExpires": {
-    "message": "Expires in $TIME$",
-    "description": "Dev mode expiration",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "23h 45m"
-      }
-    }
-  },
-  "devModeEnabled": {
-    "message": "Developer mode enabled for 24 hours",
-    "description": "Dev mode enabled message"
-  },
-  "devModeDisabled": {
-    "message": "Developer mode disabled",
-    "description": "Dev mode disabled message"
   },
   "gracePeriodWarning": {
     "message": "License verification failed. Premium features will remain active until $DATE$.",
@@ -535,8 +441,12 @@
     "message": "Processing...",
     "description": "Processing text"
   },
+  "fontCategory": {
+    "message": "Font Category",
+    "description": "Font category label"
+  },
   "fontFamily": {
-    "message": "Font Family",
+    "message": "Font",
     "description": "Font family label"
   },
   "fontSize": {
@@ -764,5 +674,125 @@
   "siteCategoryHelp": {
     "message": "Categorize your sites as Waste (time wasters), Invest (productive), or Neutral to track your productivity.",
     "description": "Site category help text"
+  },
+  "dashboardPresets": {
+    "message": "Presets",
+    "description": "Presets section title"
+  },
+  "saveAsPreset": {
+    "message": "Save as Preset",
+    "description": "Save as preset button"
+  },
+  "savePresetDescription": {
+    "message": "Save the current dashboard settings (goal, background, font) as a preset for quick switching",
+    "description": "Save preset description"
+  },
+  "presetName": {
+    "message": "Preset Name",
+    "description": "Preset name label"
+  },
+  "presetNamePlaceholder": {
+    "message": "e.g., Work Mode, Weekend, Morning Routine",
+    "description": "Preset name input placeholder"
+  },
+  "maxPresetsReached": {
+    "message": "Maximum presets reached ($COUNT$). Upgrade to Premium for more slots.",
+    "description": "Max presets reached message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "Save up to 5 dashboard presets",
+    "description": "Premium feature: dashboard presets"
+  },
+  "noPresets": {
+    "message": "No presets saved yet. Configure your dashboard and save it as a preset.",
+    "description": "No presets message"
+  },
+  "presetsDescription": {
+    "message": "Save your dashboard settings as presets to quickly switch between different configurations.",
+    "description": "Presets feature description"
+  },
+  "defaultPreset": {
+    "message": "Default",
+    "description": "Default preset name"
+  },
+  "editingPreset": {
+    "message": "Editing \"$NAME$\"",
+    "description": "Currently editing preset label",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Work Mode"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "New Preset",
+    "description": "New preset button"
+  },
+  "deletePresetConfirm": {
+    "message": "Delete this preset?",
+    "description": "Delete preset confirmation"
+  },
+  "applyPreset": {
+    "message": "Apply",
+    "description": "Apply preset button"
+  },
+  "activePreset": {
+    "message": "Active",
+    "description": "Currently active preset"
+  },
+  "noPresetsTitle": {
+    "message": "No Presets",
+    "description": "Title when no presets exist"
+  },
+  "noPresetsDescription": {
+    "message": "Add a preset to customize your dashboard appearance",
+    "description": "Description when no presets exist"
+  },
+  "createFirstPreset": {
+    "message": "Create First Preset",
+    "description": "Create first preset button"
+  },
+  "schedulePreset": {
+    "message": "Display Preset",
+    "description": "Schedule preset selection label"
+  },
+  "noPresetSelected": {
+    "message": "None",
+    "description": "No preset selected option"
+  },
+  "schedulePresetDescription": {
+    "message": "When this schedule becomes active, the selected preset will be automatically applied",
+    "description": "Schedule preset description"
+  },
+  "presetLabel": {
+    "message": "Preset",
+    "description": "Preset label"
+  },
+  "unknownPreset": {
+    "message": "Unknown preset",
+    "description": "Deleted preset"
+  },
+  "defaultSettings": {
+    "message": "Default",
+    "description": "Default settings button"
+  },
+  "editingDefault": {
+    "message": "Editing default settings",
+    "description": "Editing default settings label"
+  },
+  "active": {
+    "message": "Active",
+    "description": "Active label"
+  },
+  "useDefault": {
+    "message": "Use Default",
+    "description": "Use default button"
   }
 }

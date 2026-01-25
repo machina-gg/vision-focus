@@ -1,32 +1,56 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Clock, Edit2, Settings, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Settings } from 'lucide-react'
 
-import { StatsCard, DownloadButton } from '~/components/features'
-import { Button, Input } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import { formatTime } from '~/lib/time'
+import { DownloadButton } from '~/components/features'
+import { MiniStats, GoalDisplay } from '~/components/newtab'
+import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
-import type { VisionSettings, Goal } from '~/types/storage'
-import { DEFAULT_VISION, DEFAULT_FONT_SETTINGS, FONT_FAMILY_MAP, FONT_SIZE_MAP, FONT_WEIGHT_MAP } from '~/types/storage'
+import {
+  getBackgroundUrl,
+  loadGoogleFont,
+  FONT_WEIGHT_VALUE,
+} from '~/constants'
+import type {
+  VisionSettings,
+  DashboardDisplaySettings,
+  AppSettings,
+} from '~/types/storage'
+import {
+  DEFAULT_VISION,
+  DEFAULT_DISPLAY_SETTINGS,
+  DEFAULT_SETTINGS,
+  getFontDefinition,
+} from '~/types/storage'
 
 import './styles/globals.css'
 
-// Background images
-const BACKGROUNDS: Record<string, string> = {
-  'default-1': chrome.runtime.getURL('assets/images/backgrounds/default-1.png'),
-  'default-2': chrome.runtime.getURL('assets/images/backgrounds/default-2.png'),
-  'default-3': chrome.runtime.getURL('assets/images/backgrounds/default-3.png'),
+// Font size in pixels for newtab (larger than options preview)
+const FONT_SIZE_PX: Record<string, number> = {
+  sm: 30,
+  md: 36,
+  lg: 48,
+  xl: 60,
 }
 
 function NewtabApp() {
-  const [vision, setVision] = useStorage<VisionSettings>({
-    key: 'vision',
-    instance: storage,
-  }, DEFAULT_VISION)
+  const [vision, setVision] = useStorage<VisionSettings>(
+    {
+      key: 'vision',
+      instance: storage,
+    },
+    DEFAULT_VISION
+  )
+  const [settings] = useStorage<AppSettings>(
+    {
+      key: 'settings',
+      instance: storage,
+    },
+    DEFAULT_SETTINGS
+  )
   const [stats, setStats] = useState({
     wasteTime: 0,
     investTime: 0,
@@ -35,8 +59,10 @@ function NewtabApp() {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState('')
   const [isPremium, setIsPremium] = useState(false)
-  const [currentGoalIndex, setCurrentGoalIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Time tick for schedule checking (updates when tab becomes visible)
+  const [timeTick, setTimeTick] = useState(0)
 
   // Check premium status
   useEffect(() => {
@@ -47,54 +73,112 @@ function NewtabApp() {
     loadPremiumStatus()
   }, [])
 
+  // Re-check schedule when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setTimeTick((prev) => prev + 1)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  // Get current display settings
+  // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
+  const displaySettings: DashboardDisplaySettings = useMemo(() => {
+    if (!vision) return DEFAULT_DISPLAY_SETTINGS
+
+    // Check for active schedule with a preset
+    const activeScheduleWithPreset = settings?.schedules?.find(
+      (schedule) =>
+        schedule.enabled &&
+        schedule.presetId &&
+        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
+    )
+
+    if (activeScheduleWithPreset?.presetId) {
+      const schedulePreset = vision.presets?.find(
+        (p) => p.id === activeScheduleWithPreset.presetId
+      )
+      if (schedulePreset) {
+        return {
+          goalText: schedulePreset.goalText,
+          goalSubText: schedulePreset.goalSubText,
+          textColor: schedulePreset.textColor,
+          backgroundType: schedulePreset.backgroundType,
+          backgroundImage: schedulePreset.backgroundImage,
+          backgroundColor: schedulePreset.backgroundColor,
+          customBackgroundData: schedulePreset.customBackgroundData,
+          fontSettings: schedulePreset.fontSettings,
+        }
+      }
+    }
+
+    // Check for user-selected preset
+    if (vision.activePresetId) {
+      const activePreset = vision.presets?.find(
+        (p) => p.id === vision.activePresetId
+      )
+      if (activePreset) {
+        return {
+          goalText: activePreset.goalText,
+          goalSubText: activePreset.goalSubText,
+          textColor: activePreset.textColor,
+          backgroundType: activePreset.backgroundType,
+          backgroundImage: activePreset.backgroundImage,
+          backgroundColor: activePreset.backgroundColor,
+          customBackgroundData: activePreset.customBackgroundData,
+          fontSettings: activePreset.fontSettings,
+        }
+      }
+    }
+
+    // Fall back to default settings
+    return vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
+  }, [vision, settings, timeTick])
+
   // Get background style - supports custom uploaded background
-  const isColorBackground = vision?.backgroundType === 'color'
-  const backgroundUrl = vision?.customBackgroundData
-    ? vision.customBackgroundData
-    : vision?.backgroundImage
-      ? BACKGROUNDS[vision.backgroundImage] || vision.backgroundImage
-      : BACKGROUNDS['default-1']
-  const backgroundColor = vision?.backgroundColor || '#1a1a2e'
+  const isColorBackground = displaySettings.backgroundType === 'color'
+  const backgroundUrl = displaySettings.customBackgroundData
+    ? displaySettings.customBackgroundData
+    : displaySettings.backgroundImage
+      ? getBackgroundUrl(displaySettings.backgroundImage)
+      : getBackgroundUrl('default-1')
+  const backgroundColor = displaySettings.backgroundColor
 
   // Get font styles
-  const fontSettings = vision?.fontSettings || DEFAULT_FONT_SETTINGS
+  const fontSettings = displaySettings.fontSettings
+  const fontDef = getFontDefinition(fontSettings.family)
+
+  // Load Google Font
+  useEffect(() => {
+    if (fontDef.googleFont) {
+      loadGoogleFont(fontDef.googleFont)
+    }
+  }, [fontDef.googleFont])
+
   const fontStyle = {
-    fontFamily: FONT_FAMILY_MAP[fontSettings.family],
+    fontFamily: fontDef.css,
+    fontSize: `${FONT_SIZE_PX[fontSettings.size]}px`,
+    fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight],
   }
 
-  // Get goals (use multiple if available, otherwise use single goal)
-  const goals: Goal[] = vision?.goals && vision.goals.length > 0
-    ? vision.goals
-    : [{
-        id: 'default',
-        text: vision?.goalText || DEFAULT_VISION.goalText,
-        subText: vision?.goalSubText || '',
-        color: vision?.textColor || '#ffffff',
-        createdAt: new Date().toISOString(),
-        order: 0,
-      }]
-
-  // Auto-rotate goals (every 5 seconds)
-  useEffect(() => {
-    if (goals.length <= 1) return
-
-    const interval = setInterval(() => {
-      setCurrentGoalIndex((prev) => (prev + 1) % goals.length)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [goals.length])
+  // Get goal from display settings
+  const goalText = displaySettings.goalText
+  const goalSubText = displaySettings.goalSubText
+  const textColor = displaySettings.textColor
 
   // Fetch stats from background
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await sendToBackground({
-          name: 'get-stats',
-        })
+        const response = await sendToBackground({ name: 'get-stats' })
         setStats(response)
-      } catch (error) {
-        console.error('Failed to get stats:', error)
+      } catch {
+        // Silently handle error - stats will refresh on next interval
       }
     }
 
@@ -104,13 +188,19 @@ function NewtabApp() {
   }, [])
 
   const handleStartEdit = useCallback(() => {
-    setEditText(vision?.goalText || '')
+    setEditText(goalText)
     setIsEditing(true)
-  }, [vision?.goalText])
+  }, [goalText])
 
   const handleSaveGoal = useCallback(async () => {
     if (vision && editText.trim()) {
-      const updated = { ...vision, goalText: editText.trim() }
+      const updated = {
+        ...vision,
+        defaultSettings: {
+          ...vision.defaultSettings,
+          goalText: editText.trim(),
+        },
+      }
       await storage.set('vision', updated)
       setVision(updated)
     }
@@ -134,33 +224,6 @@ function NewtabApp() {
     chrome.runtime.openOptionsPage()
   }, [])
 
-  const handlePrevGoal = useCallback(() => {
-    setCurrentGoalIndex((prev) => (prev - 1 + goals.length) % goals.length)
-  }, [goals.length])
-
-  const handleNextGoal = useCallback(() => {
-    setCurrentGoalIndex((prev) => (prev + 1) % goals.length)
-  }, [goals.length])
-
-  // Current goal
-  const currentGoal = goals[currentGoalIndex]
-
-  // Get font size class based on settings
-  const getFontSizeClass = () => {
-    switch (fontSettings.size) {
-      case 'sm':
-        return 'text-2xl md:text-3xl'
-      case 'md':
-        return 'text-3xl md:text-4xl'
-      case 'lg':
-        return 'text-4xl md:text-5xl'
-      case 'xl':
-        return 'text-5xl md:text-6xl'
-      default:
-        return 'text-4xl md:text-5xl'
-    }
-  }
-
   return (
     <div
       ref={containerRef}
@@ -180,120 +243,30 @@ function NewtabApp() {
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-2xl px-8 text-center">
-        {/* Goal Text with Carousel */}
+        {/* Goal Text */}
         <div className="mb-12">
-          {isEditing ? (
-            <div className="space-y-4">
-              <Input
-                value={editText}
-                onChange={setEditText}
-                onKeyDown={handleKeyDown}
-                placeholder={getMessage('enterGoalPlaceholder')}
-                className="text-center text-2xl bg-white/90"
-                autoFocus
-              />
-              <div className="flex justify-center gap-2">
-                <Button variant="secondary" onClick={() => setIsEditing(false)}>
-                  {getMessage('cancel')}
-                </Button>
-                <Button onClick={handleSaveGoal}>{getMessage('save')}</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="group relative">
-              {/* Navigation arrows for multiple goals */}
-              {goals.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevGoal}
-                    className="absolute -left-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={handleNextGoal}
-                    className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
-
-              <h1
-                className={`${getFontSizeClass()} ${FONT_WEIGHT_MAP[fontSettings.weight]} drop-shadow-lg leading-tight transition-opacity duration-300`}
-                style={{ color: currentGoal.color, ...fontStyle }}
-              >
-                {currentGoal.text}
-              </h1>
-              {currentGoal.subText && (
-                <p
-                  className="text-lg md:text-xl mt-4 drop-shadow-lg opacity-80 whitespace-pre-line"
-                  style={{ color: currentGoal.color, ...fontStyle }}
-                >
-                  {currentGoal.subText}
-                </p>
-              )}
-
-              {/* Goal navigation dots */}
-              {goals.length > 1 && (
-                <div className="flex justify-center gap-2 mt-6">
-                  {goals.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentGoalIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentGoalIndex
-                          ? 'bg-white scale-125'
-                          : 'bg-white/50 hover:bg-white/75'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Edit button - only show for single goal mode */}
-              {goals.length === 1 && goals[0].id === 'default' && (
-                <button
-                  onClick={handleStartEdit}
-                  className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Edit2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          )}
+          <GoalDisplay
+            goalText={goalText}
+            goalSubText={goalSubText}
+            textColor={textColor}
+            fontStyle={fontStyle}
+            isEditing={isEditing}
+            editText={editText}
+            canEdit={!vision?.activePresetId}
+            onEditTextChange={setEditText}
+            onStartEdit={handleStartEdit}
+            onSave={handleSaveGoal}
+            onCancel={() => setIsEditing(false)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
 
         {/* Mini Stats */}
-        <div className="flex justify-center gap-4">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-red-500 mb-1">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('waste')}</span>
-            </div>
-            <p className="text-xl font-bold text-red-600">
-              {formatTime(stats.wasteTime)}
-            </p>
-          </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-green-500 mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('invest')}</span>
-            </div>
-            <p className="text-xl font-bold text-green-600">
-              {formatTime(stats.investTime)}
-            </p>
-          </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-amber-500 mb-1">
-              <Ban className="w-4 h-4" />
-              <span className="text-xs font-medium">{getMessage('blocked')}</span>
-            </div>
-            <p className="text-xl font-bold text-amber-600">
-              {stats.blockCount}
-            </p>
-          </div>
-        </div>
+        <MiniStats
+          wasteTime={stats.wasteTime}
+          investTime={stats.investTime}
+          blockCount={stats.blockCount}
+        />
       </div>
 
       {/* Bottom Controls */}

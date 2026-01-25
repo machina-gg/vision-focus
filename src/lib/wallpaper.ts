@@ -56,8 +56,8 @@ async function captureElement(
   ctx.fillRect(0, 0, width, height)
 
   // Calculate centering
-  const scaledWidth = canvas.width * (width / canvas.width)
-  const scaledHeight = canvas.height * (height / canvas.height)
+  const _scaledWidth = canvas.width * (width / canvas.width)
+  const _scaledHeight = canvas.height * (height / canvas.height)
   const useScale = Math.min(width / canvas.width, height / canvas.height)
   const finalWidth = canvas.width * useScale
   const finalHeight = canvas.height * useScale
@@ -138,8 +138,9 @@ export function getResolutionOptions(): {
 /**
  * Get resolution dimensions
  */
-export function getResolutionDimensions(
-  resolution: Resolution
-): { width: number; height: number } {
+export function getResolutionDimensions(resolution: Resolution): {
+  width: number
+  height: number
+} {
   return RESOLUTIONS[resolution]
 }

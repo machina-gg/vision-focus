@@ -25,25 +25,13 @@
     "message": "あなたの目標を思い出してください",
     "description": "目標リマインダーの見出し"
   },
-  "lockdownModeActive": {
-    "message": "ロックダウンモード有効",
-    "description": "ロックダウンモード警告タイトル"
-  },
-  "lockdownModeMessage": {
-    "message": "ロックダウンモード中はサイトのブロックを解除できません。",
-    "description": "ロックダウンモード警告メッセージ"
-  },
-  "temporarilyUnblock": {
-    "message": "一時的にブロック解除（5分間）",
-    "description": "ブロック解除ボタンテキスト"
-  },
-  "challengePrompt": {
-    "message": "以下のテキストを入力してブロックを解除:",
-    "description": "チャレンジプロンプトテキスト"
-  },
   "goBack": {
     "message": "戻る",
     "description": "戻るボタンテキスト"
+  },
+  "goToDashboard": {
+    "message": "ダッシュボードへ",
+    "description": "ダッシュボードへ移動するボタンテキスト"
   },
   "cancel": {
     "message": "キャンセル",
@@ -88,14 +76,6 @@
   "analytics": {
     "message": "分析",
     "description": "分析タブ"
-  },
-  "challengeOnUnblock": {
-    "message": "ブロック解除時のチャレンジ",
-    "description": "チャレンジ設定タイトル"
-  },
-  "challengeOnUnblockDescription": {
-    "message": "サイトのブロック解除時にフレーズの入力を要求する",
-    "description": "チャレンジ設定説明"
   },
   "dashboardBackground": {
     "message": "ダッシュボードの背景",
@@ -211,42 +191,6 @@
       }
     }
   },
-  "lockdownMode": {
-    "message": "ロックダウンモード",
-    "description": "ロックダウンモードトグルラベル"
-  },
-  "enableLockdown": {
-    "message": "ロックダウンを有効化",
-    "description": "ロックダウン有効化ボタン"
-  },
-  "disableLockdown": {
-    "message": "ロックダウンを無効化",
-    "description": "ロックダウン無効化ボタン"
-  },
-  "lockdownConfirmTitle": {
-    "message": "ロックダウンモードを有効化",
-    "description": "ロックダウン確認モーダルタイトル"
-  },
-  "lockdownConfirmMessage": {
-    "message": "ロックダウンモードでは、ブロックリスト内のすべてのサイトがブロックされ、解除できなくなります。",
-    "description": "ロックダウン確認メッセージ"
-  },
-  "lockdownConfirmWarning": {
-    "message": "ロックダウンモードを有効にしてもよろしいですか？",
-    "description": "ロックダウン確認警告"
-  },
-  "lockdownActive": {
-    "message": "ロックダウン中",
-    "description": "ロックダウン中ボタンテキスト"
-  },
-  "enableLockdownMode": {
-    "message": "ロックダウンモードを有効化",
-    "description": "ロックダウンモード有効化ボタンテキスト"
-  },
-  "blockingSettings": {
-    "message": "ブロック設定",
-    "description": "ブロック設定セクションタイトル"
-  },
   "settingsTitle": {
     "message": "VisionFocus 設定",
     "description": "設定ページタイトル"
@@ -269,18 +213,6 @@
     "message": "スケジュールを編集",
     "description": "スケジュール編集モーダルタイトル"
   },
-  "unblocking": {
-    "message": "解除中...",
-    "description": "解除処理中テキスト"
-  },
-  "confirmUnblock": {
-    "message": "このサイトを5分間解除してもよろしいですか？",
-    "description": "解除確認テキスト"
-  },
-  "typeTextAbove": {
-    "message": "上のテキストを入力してください...",
-    "description": "チャレンジ入力プレースホルダー"
-  },
   "noSiteToBlock": {
     "message": "ブロックするサイトがありません",
     "description": "ブロック可能なサイトがない"
@@ -288,14 +220,6 @@
   "enterGoalPlaceholder": {
     "message": "目標を入力してください...",
     "description": "目標入力プレースホルダー"
-  },
-  "challengeDescription": {
-    "message": "このサイトにアクセスしますか？まずチャレンジを完了してください。",
-    "description": "チャレンジモード説明テキスト"
-  },
-  "unblockPrompt": {
-    "message": "このサイトを一時的に解除しますか？",
-    "description": "チャレンジ無効時の解除プロンプト"
   },
   "goalSettings": {
     "message": "目標設定",
@@ -322,7 +246,7 @@
     "description": "保存成功フィードバック"
   },
   "dashboardPreview": {
-    "message": "ダッシュボードプレビュー",
+    "message": "プレビュー",
     "description": "プレビューセクションタイトル"
   },
   "backgroundType": {
@@ -380,6 +304,14 @@
   "premiumPlan": {
     "message": "プレミアムプラン",
     "description": "プレミアムプラン名"
+  },
+  "subscriptionActive": {
+    "message": "サブスクリプションが有効です",
+    "description": "サブスクリプション有効状態"
+  },
+  "manageSubscription": {
+    "message": "サブスクリプションを管理",
+    "description": "サブスクリプション管理ボタン"
   },
   "licenseKey": {
     "message": "ライセンスキー",
@@ -443,10 +375,6 @@
     "message": "無制限の分析履歴",
     "description": "プレミアム機能: 無制限の履歴"
   },
-  "premiumFeatureHardmode": {
-    "message": "ハードモード（ブロック解除不可）",
-    "description": "プレミアム機能: ハードモード"
-  },
   "premiumFeatureCustomBackground": {
     "message": "カスタム背景",
     "description": "プレミアム機能: カスタム背景"
@@ -462,28 +390,6 @@
   "upgradeToAddMore": {
     "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
     "description": "ブロックリストのアップグレードプロンプト"
-  },
-  "devModeActive": {
-    "message": "開発者モード有効",
-    "description": "開発者モード有効インジケーター"
-  },
-  "devModeExpires": {
-    "message": "残り $TIME$",
-    "description": "開発者モード有効期限",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "23時間45分"
-      }
-    }
-  },
-  "devModeEnabled": {
-    "message": "開発者モードが24時間有効になりました",
-    "description": "開発者モード有効化メッセージ"
-  },
-  "devModeDisabled": {
-    "message": "開発者モードが無効になりました",
-    "description": "開発者モード無効化メッセージ"
   },
   "gracePeriodWarning": {
     "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",
@@ -535,8 +441,12 @@
     "message": "処理中...",
     "description": "処理中テキスト"
   },
+  "fontCategory": {
+    "message": "フォントカテゴリ",
+    "description": "フォントカテゴリラベル"
+  },
   "fontFamily": {
-    "message": "フォントファミリー",
+    "message": "フォント",
     "description": "フォントファミリーラベル"
   },
   "fontSize": {
@@ -764,5 +674,125 @@
   "siteCategoryHelp": {
     "message": "サイトを浪費（時間の無駄）、投資（生産的）、または中立に分類して生産性を追跡しましょう。",
     "description": "サイトカテゴリヘルプテキスト"
+  },
+  "dashboardPresets": {
+    "message": "プリセット",
+    "description": "プリセットセクションタイトル"
+  },
+  "saveAsPreset": {
+    "message": "プリセットとして保存",
+    "description": "プリセット保存ボタン"
+  },
+  "savePresetDescription": {
+    "message": "現在のダッシュボード設定（目標、背景、フォント）をプリセットとして保存し、すぐに切り替えられます",
+    "description": "プリセット保存の説明"
+  },
+  "presetName": {
+    "message": "プリセット名",
+    "description": "プリセット名ラベル"
+  },
+  "presetNamePlaceholder": {
+    "message": "例: 仕事モード、休日、朝のルーティン",
+    "description": "プリセット名入力プレースホルダー"
+  },
+  "maxPresetsReached": {
+    "message": "プリセットの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "description": "最大プリセット数到達メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "最大5つのプリセットを保存",
+    "description": "プレミアム機能: ダッシュボードプリセット"
+  },
+  "noPresets": {
+    "message": "まだプリセットがありません。ダッシュボードを設定してプリセットとして保存してください。",
+    "description": "プリセットなしメッセージ"
+  },
+  "presetsDescription": {
+    "message": "ダッシュボード設定をプリセットとして保存し、異なる設定をすぐに切り替えられます。",
+    "description": "プリセット機能の説明"
+  },
+  "defaultPreset": {
+    "message": "デフォルト",
+    "description": "デフォルトプリセット名"
+  },
+  "editingPreset": {
+    "message": "「$NAME$」を編集中",
+    "description": "編集中のプリセットラベル",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "仕事モード"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "新規プリセット",
+    "description": "新規プリセットボタン"
+  },
+  "deletePresetConfirm": {
+    "message": "このプリセットを削除しますか？",
+    "description": "プリセット削除確認"
+  },
+  "applyPreset": {
+    "message": "切り替え",
+    "description": "プリセットを適用するボタン"
+  },
+  "activePreset": {
+    "message": "設定中",
+    "description": "現在アクティブなプリセット"
+  },
+  "noPresetsTitle": {
+    "message": "プリセットがありません",
+    "description": "プリセットがない場合のタイトル"
+  },
+  "noPresetsDescription": {
+    "message": "プリセットを追加して、ダッシュボードの外観をカスタマイズしましょう",
+    "description": "プリセットがない場合の説明"
+  },
+  "createFirstPreset": {
+    "message": "最初のプリセットを作成",
+    "description": "最初のプリセット作成ボタン"
+  },
+  "schedulePreset": {
+    "message": "表示するプリセット",
+    "description": "スケジュール用プリセット選択ラベル"
+  },
+  "noPresetSelected": {
+    "message": "設定しない",
+    "description": "プリセット未選択オプション"
+  },
+  "schedulePresetDescription": {
+    "message": "このスケジュールがアクティブになると、選択したプリセットが自動的に適用されます",
+    "description": "スケジュールプリセットの説明"
+  },
+  "presetLabel": {
+    "message": "プリセット",
+    "description": "プリセットラベル"
+  },
+  "unknownPreset": {
+    "message": "不明なプリセット",
+    "description": "削除されたプリセット"
+  },
+  "defaultSettings": {
+    "message": "デフォルト",
+    "description": "デフォルト設定ボタン"
+  },
+  "editingDefault": {
+    "message": "デフォルト設定を編集中",
+    "description": "デフォルト設定編集中ラベル"
+  },
+  "active": {
+    "message": "有効",
+    "description": "有効ラベル"
+  },
+  "useDefault": {
+    "message": "デフォルトに戻す",
+    "description": "デフォルトに戻すボタン"
   }
 }

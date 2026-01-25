@@ -78,9 +78,8 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
         timestamp: Date.now(),
       },
     })
-  } catch (error) {
-    // Silently fail if background is not available
-    console.debug('Failed to send heartbeat:', error)
+  } catch {
+    // Silently fail if background is not available (e.g., extension context invalidated)
   }
 }
 
@@ -165,9 +164,9 @@ function init() {
 
   startTracking()
 
-  // Clean up on unload
-  window.addEventListener('beforeunload', handleUnload)
-  window.addEventListener('unload', handleUnload)
+  // Clean up on page hide (replaces deprecated unload event)
+  // pagehide is the modern replacement that works with bfcache
+  window.addEventListener('pagehide', handleUnload)
 }
 
 // Start tracking

@@ -7,11 +7,9 @@ import { Ban, Clock, TrendingUp } from 'lucide-react'
 import {
   GoalCard,
   Header,
-  LockdownButton,
   QuickBlockButton,
   StatsCard,
 } from '~/components/features'
-import { Modal, Button } from '~/components/ui'
 import { extractDomain } from '~/lib/domain'
 import { getMessage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
@@ -22,21 +20,26 @@ import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage'
 import './styles/globals.css'
 
 function PopupApp() {
-  const [settings] = useStorage<AppSettings>({
-    key: 'settings',
-    instance: storage,
-  }, DEFAULT_SETTINGS)
-  const [vision] = useStorage<VisionSettings>({
-    key: 'vision',
-    instance: storage,
-  }, DEFAULT_VISION)
+  const [_settings] = useStorage<AppSettings>(
+    {
+      key: 'settings',
+      instance: storage,
+    },
+    DEFAULT_SETTINGS
+  )
+  const [vision] = useStorage<VisionSettings>(
+    {
+      key: 'vision',
+      instance: storage,
+    },
+    DEFAULT_VISION
+  )
   const [stats, setStats] = useState({
     wasteTime: 0,
     investTime: 0,
     blockCount: 0,
   })
   const [currentDomain, setCurrentDomain] = useState<string | undefined>()
-  const [showLockdownModal, setShowLockdownModal] = useState(false)
 
   // Fetch stats from background
   useEffect(() => {
@@ -46,8 +49,8 @@ function PopupApp() {
           name: 'get-stats',
         })
         setStats(response)
-      } catch (error) {
-        console.error('Failed to get stats:', error)
+      } catch {
+        // Silently handle error - stats will refresh on next interval
       }
     }
 
@@ -68,8 +71,8 @@ function PopupApp() {
           const domain = extractDomain(tab.url)
           setCurrentDomain(domain || undefined)
         }
-      } catch (error) {
-        console.error('Failed to get current tab:', error)
+      } catch {
+        // Silently handle error - domain will be undefined
       }
     }
 
@@ -96,39 +99,8 @@ function PopupApp() {
       } else {
         alert(response.error || 'Failed to add block')
       }
-    } catch (error) {
-      console.error('Failed to block domain:', error)
-    }
-  }, [])
-
-  const handleLockdownToggle = useCallback(
-    async (active: boolean) => {
-      if (active && !settings?.lockdownMode) {
-        setShowLockdownModal(true)
-      } else {
-        // Disable lockdown
-        try {
-          await sendToBackground({
-            name: 'toggle-lockdown',
-            body: { enabled: false },
-          })
-        } catch (error) {
-          console.error('Failed to toggle lockdown:', error)
-        }
-      }
-    },
-    [settings?.lockdownMode]
-  )
-
-  const handleConfirmLockdown = useCallback(async () => {
-    try {
-      await sendToBackground({
-        name: 'toggle-lockdown',
-        body: { enabled: true },
-      })
-      setShowLockdownModal(false)
-    } catch (error) {
-      console.error('Failed to enable lockdown:', error)
+    } catch {
+      // Silently handle error
     }
   }, [])
 
@@ -139,7 +111,10 @@ function PopupApp() {
       <div className="p-4 space-y-4">
         {/* Goal Card */}
         <GoalCard
-          goalText={vision?.goalText || DEFAULT_VISION.goalText}
+          goalText={
+            vision?.defaultSettings?.goalText ||
+            DEFAULT_VISION.defaultSettings.goalText
+          }
           onClick={handleGoalClick}
         />
 
@@ -170,44 +145,14 @@ function PopupApp() {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="space-y-3 pt-2">
-          <LockdownButton
-            isActive={settings?.lockdownMode || false}
-            onToggle={handleLockdownToggle}
-          />
+        {/* Quick Block */}
+        <div className="pt-2">
           <QuickBlockButton
             currentDomain={currentDomain}
             onBlock={handleBlock}
           />
         </div>
       </div>
-
-      {/* Lockdown Confirmation Modal */}
-      <Modal
-        isOpen={showLockdownModal}
-        onClose={() => setShowLockdownModal(false)}
-        title={getMessage('lockdownConfirmTitle')}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">{getMessage('lockdownConfirmMessage')}</p>
-          <p className="text-sm text-amber-600">
-            {getMessage('lockdownConfirmWarning')}
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => setShowLockdownModal(false)}
-            >
-              {getMessage('cancel')}
-            </Button>
-            <Button variant="danger" onClick={handleConfirmLockdown}>
-              {getMessage('enableLockdown')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }

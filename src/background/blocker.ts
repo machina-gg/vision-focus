@@ -1,23 +1,15 @@
-import { extractDomain, matchesDomain } from '~/lib/domain'
-import { getSettings, getTempUnblocks } from '~/lib/storage'
+import { extractDomain, matchesDomain, generateId } from '~/lib/domain'
+import { getSettings } from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
-import type { BlockItem } from '~/types/storage'
-
-const RULE_ID_OFFSET = 1000
+import { BLOCKER_CONFIG } from '~/constants/limits'
+import type { AppSettings, BlockItem } from '~/types/storage'
 
 // Update declarativeNetRequest rules based on current settings
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings()
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
 
   // Get domains to block
-  const domainsToBlock = getActiveBlockedDomains(
-    settings.blockList,
-    settings,
-    tempUnblocks,
-    now
-  )
+  const domainsToBlock = getActiveBlockedDomains(settings.blockList, settings)
 
   // Remove all existing rules
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
@@ -31,12 +23,12 @@ export async function updateBlockRules(): Promise<void> {
       const baseDomain = isWildcard ? domain.replace('*.', '') : domain
 
       return {
-        id: RULE_ID_OFFSET + index,
+        id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
         priority: 1,
         action: {
           type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
           redirect: {
-            extensionPath: `/tabs/blocked.html?domain=${encodeURIComponent(baseDomain)}`,
+            extensionPath: '/newtab.html',
           },
         },
         condition: {
@@ -52,42 +44,18 @@ export async function updateBlockRules(): Promise<void> {
     removeRuleIds,
     addRules,
   })
-
-  console.log(`Updated block rules: ${addRules.length} domains blocked`)
 }
 
 // Get list of domains that should be actively blocked
 function getActiveBlockedDomains(
   blockList: BlockItem[],
-  settings: ReturnType<typeof getSettings> extends Promise<infer T> ? T : never,
-  tempUnblocks: Awaited<ReturnType<typeof getTempUnblocks>>,
-  now: Date
+  settings: AppSettings
 ): string[] {
-  // If lockdown mode is active, block all domains in the list
-  if (settings.lockdownMode) {
-    // Check if lockdown has expired
-    if (settings.lockdownEndTime && new Date(settings.lockdownEndTime) < now) {
-      // Lockdown expired, will be handled elsewhere
-      return []
-    }
-  }
-
-  // Filter out temporarily unblocked domains
-  const validTempUnblocks = tempUnblocks
-    .filter((t) => new Date(t.expiresAt) > now)
-    .map((t) => t.domain)
-
-  // Get domains to block
   const domainsToBlock: string[] = []
 
   for (const item of blockList) {
-    // Check if temporarily unblocked
-    if (validTempUnblocks.includes(item.domain.replace('*.', ''))) {
-      continue
-    }
-
     // Check schedule restrictions
-    if (settings.schedules.length > 0 && !settings.lockdownMode) {
+    if (settings.schedules.length > 0) {
       const isScheduled = settings.schedules.some(
         (schedule) =>
           schedule.enabled &&
@@ -110,28 +78,12 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   if (!domain) return false
 
   const settings = await getSettings()
-  const tempUnblocks = await getTempUnblocks()
-  const now = new Date()
-
-  // Check temp unblocks
-  const isUnblocked = tempUnblocks.some(
-    (t) => t.domain === domain && new Date(t.expiresAt) > now
-  )
-  if (isUnblocked) return false
 
   // Check if domain is in block list
   const isBlocked = settings.blockList.some((item) =>
     matchesDomain(domain, item)
   )
   if (!isBlocked) return false
-
-  // If lockdown mode is active, always block
-  if (settings.lockdownMode) {
-    if (settings.lockdownEndTime && new Date(settings.lockdownEndTime) < now) {
-      return false // Lockdown expired
-    }
-    return true
-  }
 
   // Check schedules
   if (settings.schedules.length > 0) {
@@ -161,7 +113,7 @@ export async function addBlockedDomain(
   }
 
   const newItem: BlockItem = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: generateId(),
     domain: isWildcard ? `*.${domain.replace('*.', '')}` : domain,
     isWildcard,
     createdAt: new Date().toISOString(),

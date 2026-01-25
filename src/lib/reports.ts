@@ -9,6 +9,8 @@ import type {
   WeeklyReport,
   MonthlyReport,
 } from '~/types/storage'
+import { getDateKey } from '~/lib/time'
+import { ANALYTICS_CONFIG } from '~/constants/limits'
 
 /**
  * Get the start of the week (Sunday) for a given date
@@ -33,19 +35,12 @@ function getWeekEnd(date: Date): Date {
 }
 
 /**
- * Format date as YYYY-MM-DD
- */
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
-
-/**
  * Get top sites by time
  */
 function getTopSites(
   siteTime: Record<string, SiteTime>,
   category: 'waste' | 'invest',
-  limit: number = 5
+  limit: number = ANALYTICS_CONFIG.TOP_SITES_LIMIT
 ): { domain: string; time: number }[] {
   return Object.values(siteTime)
     .filter((site) => site.category === category)
@@ -79,10 +74,9 @@ function calculateTrend(
     secondHalfWaste > 0 ? secondHalfInvest / secondHalfWaste : secondHalfInvest
 
   const change = secondRatio - firstRatio
-  const threshold = 0.1 // 10% change threshold
 
-  if (change > threshold) return 'improving'
-  if (change < -threshold) return 'declining'
+  if (change > ANALYTICS_CONFIG.TREND_CHANGE_THRESHOLD) return 'improving'
+  if (change < -ANALYTICS_CONFIG.TREND_CHANGE_THRESHOLD) return 'declining'
   return 'stable'
 }
 
@@ -106,7 +100,7 @@ export function generateWeeklyReport(
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(weekStart)
     currentDate.setDate(weekStart.getDate() + i)
-    const dateKey = formatDate(currentDate)
+    const dateKey = getDateKey(currentDate)
 
     const dayStat = analytics.dailyStats[dateKey] || {
       date: dateKey,
@@ -122,8 +116,8 @@ export function generateWeeklyReport(
   }
 
   return {
-    weekStart: formatDate(weekStart),
-    weekEnd: formatDate(weekEnd),
+    weekStart: getDateKey(weekStart),
+    weekEnd: getDateKey(weekEnd),
     totalWasteTime,
     totalInvestTime,
     totalBlockCount,
@@ -142,7 +136,9 @@ export function generateMonthlyReport(
   month?: string // YYYY-MM format
 ): MonthlyReport {
   const now = new Date()
-  const targetMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const targetMonth =
+    month ||
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
   const [year, monthNum] = targetMonth.split('-').map(Number)
   const firstDay = new Date(year, monthNum - 1, 1)
@@ -161,7 +157,7 @@ export function generateMonthlyReport(
   // Group by weeks
   let currentWeekStart = getWeekStart(firstDay)
   while (currentWeekStart <= lastDay) {
-    const weekEnd = getWeekEnd(currentWeekStart)
+    const _weekEnd = getWeekEnd(currentWeekStart)
     let weekWaste = 0
     let weekInvest = 0
 
@@ -172,7 +168,7 @@ export function generateMonthlyReport(
       // Skip if outside the target month
       if (currentDate < firstDay || currentDate > lastDay) continue
 
-      const dateKey = formatDate(currentDate)
+      const dateKey = getDateKey(currentDate)
       const dayStat = analytics.dailyStats[dateKey]
 
       if (dayStat) {
@@ -183,7 +179,7 @@ export function generateMonthlyReport(
     }
 
     weeklyBreakdown.push({
-      weekStart: formatDate(currentWeekStart),
+      weekStart: getDateKey(currentWeekStart),
       wasteTime: weekWaste,
       investTime: weekInvest,
     })
@@ -199,7 +195,7 @@ export function generateMonthlyReport(
   // Get all daily stats for trend calculation
   const dailyStats: DailyStat[] = []
   for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-    const dateKey = formatDate(d)
+    const dateKey = getDateKey(d)
     if (analytics.dailyStats[dateKey]) {
       dailyStats.push(analytics.dailyStats[dateKey])
     }
@@ -218,25 +214,11 @@ export function generateMonthlyReport(
 }
 
 /**
- * Format seconds to human readable time
- */
-export function formatTime(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  }
-
-  return `${minutes}m`
-}
-
-/**
  * Get trend emoji
  */
-export function getTrendEmoji(trend: 'improving' | 'declining' | 'stable'): string {
+export function getTrendEmoji(
+  trend: 'improving' | 'declining' | 'stable'
+): string {
   switch (trend) {
     case 'improving':
       return '↑'
@@ -273,7 +255,7 @@ export function getAvailableWeeks(
     const date = new Date(dateKey)
     const weekStart = getWeekStart(date)
     const weekEnd = getWeekEnd(date)
-    const key = formatDate(weekStart)
+    const key = getDateKey(weekStart)
 
     if (!weeks.has(key)) {
       weeks.set(key, { start: weekStart, end: weekEnd })
@@ -282,5 +264,5 @@ export function getAvailableWeeks(
 
   return Array.from(weeks.values())
     .sort((a, b) => b.start.getTime() - a.start.getTime())
-    .map((w) => ({ start: formatDate(w.start), end: formatDate(w.end) }))
+    .map((w) => ({ start: getDateKey(w.start), end: getDateKey(w.end) }))
 }

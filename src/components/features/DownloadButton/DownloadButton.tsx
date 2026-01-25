@@ -22,7 +22,9 @@ export function DownloadButton({
 }: DownloadButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [downloadStatus, setDownloadStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle')
   const menuRef = useRef<HTMLDivElement>(null)
 
   const resolutions = getResolutionOptions()
@@ -41,8 +43,7 @@ export function DownloadButton({
       })
       setDownloadStatus('success')
       setTimeout(() => setDownloadStatus('idle'), 2000)
-    } catch (error) {
-      console.error('Failed to download wallpaper:', error)
+    } catch {
       setDownloadStatus('error')
       setTimeout(() => setDownloadStatus('idle'), 2000)
     } finally {
@@ -88,7 +89,9 @@ export function DownloadButton({
         {getButtonIcon()}
         <span className="text-sm font-medium">{getMessage('download')}</span>
         {!isDownloading && downloadStatus === 'idle' && (
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
         )}
       </button>
 

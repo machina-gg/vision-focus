@@ -2,18 +2,7 @@
  * Image utilities for custom background uploads
  */
 
-// Maximum file size for uploaded images (5MB before compression)
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-
-// Target size after compression (1MB)
-const TARGET_SIZE = 1 * 1024 * 1024
-
-// Supported image types
-const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-
-// Maximum dimensions for compressed image
-const MAX_WIDTH = 1920
-const MAX_HEIGHT = 1080
+import { IMAGE_LIMITS } from '~/constants/limits'
 
 export interface ImageValidationResult {
   valid: boolean
@@ -28,17 +17,21 @@ export function validateImageFile(file: File): ImageValidationResult {
     return { valid: false, error: 'No file provided' }
   }
 
-  if (!SUPPORTED_TYPES.includes(file.type)) {
+  if (
+    !IMAGE_LIMITS.SUPPORTED_TYPES.includes(
+      file.type as (typeof IMAGE_LIMITS.SUPPORTED_TYPES)[number]
+    )
+  ) {
     return {
       valid: false,
       error: 'Unsupported file type. Please use JPEG, PNG, or WebP.',
     }
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > IMAGE_LIMITS.MAX_FILE_SIZE) {
     return {
       valid: false,
-      error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+      error: `File too large. Maximum size is ${IMAGE_LIMITS.MAX_FILE_SIZE / 1024 / 1024}MB.`,
     }
   }
 
@@ -93,7 +86,7 @@ function calculateDimensions(
  */
 export async function compressImage(
   file: File,
-  maxSizeMB: number = TARGET_SIZE / 1024 / 1024
+  maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
 ): Promise<string> {
   const validation = validateImageFile(file)
   if (!validation.valid) {
@@ -104,8 +97,8 @@ export async function compressImage(
   const { width, height } = calculateDimensions(
     img.width,
     img.height,
-    MAX_WIDTH,
-    MAX_HEIGHT
+    IMAGE_LIMITS.MAX_WIDTH,
+    IMAGE_LIMITS.MAX_HEIGHT
   )
 
   const canvas = document.createElement('canvas')

@@ -10,19 +10,17 @@ import {
   ChevronRight,
   Clock,
   Shield,
-  Globe,
 } from 'lucide-react'
 
 import { Card, Button } from '~/components/ui'
-import type { AnalyticsData, WeeklyReport, MonthlyReport } from '~/types/storage'
+import type { AnalyticsData } from '~/types/storage'
 import {
   generateWeeklyReport,
   generateMonthlyReport,
-  formatTime,
-  getTrendEmoji,
   getAvailableWeeks,
   getAvailableMonths,
 } from '~/lib/reports'
+import { formatTime } from '~/lib/time'
 import { getMessage } from '~/lib/i18n'
 
 export type ReportType = 'weekly' | 'monthly'
@@ -102,7 +100,11 @@ export function ReportCard({
 
   if (!report) {
     return (
-      <Card variant="default" padding="md" className={disabled ? 'opacity-50' : ''}>
+      <Card
+        variant="default"
+        padding="md"
+        className={disabled ? 'opacity-50' : ''}
+      >
         <div className="text-center py-4">
           <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-gray-500">{getMessage('noReportData')}</p>
@@ -124,7 +126,9 @@ export function ReportCard({
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary-600" />
             <h3 className="font-semibold text-gray-900">
-              {type === 'weekly' ? getMessage('weeklyReport') : getMessage('monthlyReport')}
+              {type === 'weekly'
+                ? getMessage('weeklyReport')
+                : getMessage('monthlyReport')}
             </h3>
           </div>
           <div className="flex items-center gap-1">
@@ -173,7 +177,9 @@ export function ReportCard({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                {type === 'weekly' ? getMessage('weeklyReport') : getMessage('monthlyReport')}
+                {type === 'weekly'
+                  ? getMessage('weeklyReport')
+                  : getMessage('monthlyReport')}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -192,7 +198,9 @@ export function ReportCard({
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium text-gray-700">{getPeriodLabel()}</span>
+              <span className="font-medium text-gray-700">
+                {getPeriodLabel()}
+              </span>
               <button
                 onClick={handleNext}
                 disabled={!hasNext}
@@ -220,21 +228,27 @@ export function ReportCard({
               <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-red-50 rounded-lg text-center">
                   <Clock className="w-5 h-5 text-red-500 mx-auto mb-1" />
-                  <p className="text-xs text-red-600">{getMessage('wasteTime')}</p>
+                  <p className="text-xs text-red-600">
+                    {getMessage('wasteTime')}
+                  </p>
                   <p className="text-lg font-bold text-red-700">
                     {formatTime(report.totalWasteTime)}
                   </p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg text-center">
                   <Clock className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <p className="text-xs text-green-600">{getMessage('investTime')}</p>
+                  <p className="text-xs text-green-600">
+                    {getMessage('investTime')}
+                  </p>
                   <p className="text-lg font-bold text-green-700">
                     {formatTime(report.totalInvestTime)}
                   </p>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-lg text-center">
                   <Shield className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-                  <p className="text-xs text-blue-600">{getMessage('blocked')}</p>
+                  <p className="text-xs text-blue-600">
+                    {getMessage('blocked')}
+                  </p>
                   <p className="text-lg font-bold text-blue-700">
                     {report.totalBlockCount}
                   </p>
@@ -265,7 +279,9 @@ export function ReportCard({
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-gray-400">{getMessage('noData')}</p>
+                    <p className="text-sm text-gray-400">
+                      {getMessage('noData')}
+                    </p>
                   )}
                 </div>
 
@@ -291,7 +307,9 @@ export function ReportCard({
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-gray-400">{getMessage('noData')}</p>
+                    <p className="text-sm text-gray-400">
+                      {getMessage('noData')}
+                    </p>
                   )}
                 </div>
               </div>
