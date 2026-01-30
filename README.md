@@ -1,6 +1,7 @@
 # 未実装・今後の対応
 
 ## 必須（リリース前）
+
 - [ ] このウェブブロッカー参照
 chrome://extensions/?id=kniediipngcpmbmpeacaoinhoeipfina
 - [ ] ポップアップを改善してもいいかも
