@@ -8,6 +8,7 @@ export interface InputProps extends Omit<
   label?: string
   error?: string
   onChange?: (value: string) => void
+  containerClassName?: string
 }
 
 export function Input({
@@ -15,13 +16,14 @@ export function Input({
   error,
   onChange,
   className = '',
+  containerClassName = '',
   id,
   ...props
 }: InputProps) {
   const inputId = id || `input-${Math.random().toString(36).slice(2)}`
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col gap-1.5 ${containerClassName}`}>
       {label && (
         <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
           {label}

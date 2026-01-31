@@ -61,6 +61,14 @@
     "message": "Settings",
     "description": "Settings page title"
   },
+  "paused": {
+    "message": "Paused",
+    "description": "Paused toggle label"
+  },
+  "help": {
+    "message": "Help",
+    "description": "Help button label"
+  },
   "general": {
     "message": "General",
     "description": "General settings tab"
@@ -84,6 +92,14 @@
   "addSiteToBlock": {
     "message": "Add Site to Block",
     "description": "Add block input heading"
+  },
+  "blockWebsites": {
+    "message": "Block Websites",
+    "description": "Block websites section heading"
+  },
+  "block": {
+    "message": "Block",
+    "description": "Block button text"
   },
   "domainPlaceholder": {
     "message": "example.com or *.example.com",
@@ -795,6 +811,10 @@
     "message": "Active",
     "description": "Active label"
   },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Disabled label"
+  },
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
@@ -1066,5 +1086,85 @@
   "trackSitePlaceholder": {
     "message": "example.com",
     "description": "Track site input placeholder"
+  },
+  "helpGettingStarted": {
+    "message": "Getting Started",
+    "description": "Help getting started title"
+  },
+  "helpGettingStartedDescription": {
+    "message": "Learn the basics of VisionFocus",
+    "description": "Help getting started description"
+  },
+  "helpBlockSites": {
+    "message": "Block Distracting Sites",
+    "description": "Help block sites title"
+  },
+  "helpBlockSitesDescription": {
+    "message": "Add domains to your block list from the popup or settings. Use wildcards (*.example.com) to block all subdomains.",
+    "description": "Help block sites description"
+  },
+  "helpSchedules": {
+    "message": "Set Up Schedules",
+    "description": "Help schedules title"
+  },
+  "helpSchedulesDescription": {
+    "message": "Create schedules to automatically enable blocking during specific times and days.",
+    "description": "Help schedules description"
+  },
+  "helpDashboard": {
+    "message": "Customize Your Dashboard",
+    "description": "Help dashboard title"
+  },
+  "helpDashboardDescription": {
+    "message": "Personalize your new tab page with your goals, background images, and fonts to stay motivated.",
+    "description": "Help dashboard description"
+  },
+  "helpFaq": {
+    "message": "FAQ",
+    "description": "Help FAQ title"
+  },
+  "helpFaqDescription": {
+    "message": "Frequently asked questions",
+    "description": "Help FAQ description"
+  },
+  "helpFaqWildcard": {
+    "message": "How do wildcard blocks work?",
+    "description": "Help FAQ wildcard question"
+  },
+  "helpFaqWildcardAnswer": {
+    "message": "Use *.example.com to block all subdomains (like news.example.com, blog.example.com). Use example.com without wildcard to block only the main domain.",
+    "description": "Help FAQ wildcard answer"
+  },
+  "helpFaqPause": {
+    "message": "How do I temporarily disable blocking?",
+    "description": "Help FAQ pause question"
+  },
+  "helpFaqPauseAnswer": {
+    "message": "Toggle the 'Paused' switch in the popup header to temporarily disable all blocking. Remember to turn it back on!",
+    "description": "Help FAQ pause answer"
+  },
+  "helpFaqPresets": {
+    "message": "What are dashboard presets?",
+    "description": "Help FAQ presets question"
+  },
+  "helpFaqPresetsAnswer": {
+    "message": "Presets save your dashboard settings (goal, background, fonts) so you can quickly switch between different configurations for work, study, or relaxation.",
+    "description": "Help FAQ presets answer"
+  },
+  "helpSupport": {
+    "message": "Support",
+    "description": "Help support title"
+  },
+  "helpSupportDescription": {
+    "message": "Need help? We're here for you",
+    "description": "Help support description"
+  },
+  "helpReportIssue": {
+    "message": "Report an issue on GitHub",
+    "description": "Help report issue link"
+  },
+  "helpComingSoon": {
+    "message": "More help resources coming soon...",
+    "description": "Help coming soon text"
   }
 }

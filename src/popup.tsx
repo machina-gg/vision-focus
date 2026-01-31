@@ -11,16 +11,17 @@ import {
   StatsCard,
 } from '~/components/features'
 import { extractDomain } from '~/lib/domain'
-import { getMessage } from '~/lib/i18n'
+import { getMessage, setCurrentLanguage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
 import { formatTime } from '~/lib/time'
-import type { AppSettings, VisionSettings } from '~/types/storage'
+import type { AppSettings, VisionSettings, SupportedLanguage } from '~/types/storage'
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage'
 
 import './styles/globals.css'
 
+
 function PopupApp() {
-  const [_settings] = useStorage<AppSettings>(
+  const [settings, setSettings] = useStorage<AppSettings>(
     {
       key: 'settings',
       instance: storage,
@@ -40,6 +41,15 @@ function PopupApp() {
     blockCount: 0,
   })
   const [currentDomain, setCurrentDomain] = useState<string | undefined>()
+  // Force re-render when language changes
+  const [, forceUpdate] = useState({})
+
+  // Sync language setting with i18n module
+  useEffect(() => {
+    if (settings?.language !== undefined) {
+      setCurrentLanguage(settings.language)
+    }
+  }, [settings?.language])
 
   // Fetch stats from background
   useEffect(() => {
@@ -83,6 +93,33 @@ function PopupApp() {
     chrome.runtime.openOptionsPage()
   }, [])
 
+  const handleHelpClick = useCallback(() => {
+    // Open options page with help tab selected
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#help') })
+  }, [])
+
+  const handlePausedChange = useCallback(async (paused: boolean) => {
+    try {
+      await sendToBackground({
+        name: 'toggle-pause',
+        body: { paused },
+      })
+    } catch {
+      // Silently handle error
+    }
+  }, [])
+
+  const handleLanguageChange = useCallback(async (language: SupportedLanguage) => {
+    // Update i18n module immediately
+    setCurrentLanguage(language)
+    // Force re-render to update all translated text
+    forceUpdate({})
+    // Save to storage
+    if (settings) {
+      await setSettings({ ...settings, language })
+    }
+  }, [settings, setSettings])
+
   const handleGoalClick = useCallback(() => {
     chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') })
   }, [])
@@ -106,9 +143,22 @@ function PopupApp() {
 
   return (
     <div className="popup-container bg-white">
-      <Header onSettingsClick={handleSettingsClick} />
+      <Header
+        onSettingsClick={handleSettingsClick}
+        onHelpClick={handleHelpClick}
+        paused={settings?.paused ?? false}
+        onPausedChange={handlePausedChange}
+        language={settings?.language}
+        onLanguageChange={handleLanguageChange}
+      />
 
       <div className="p-4 space-y-4">
+        {/* Block Websites - Top priority action */}
+        <QuickBlockButton
+          currentDomain={currentDomain}
+          onBlock={handleBlock}
+        />
+
         {/* Goal Card */}
         <GoalCard
           goalText={
@@ -143,14 +193,6 @@ function PopupApp() {
               icon={<Ban className="w-4 h-4" />}
             />
           </div>
-        </div>
-
-        {/* Quick Block */}
-        <div className="pt-2">
-          <QuickBlockButton
-            currentDomain={currentDomain}
-            onBlock={handleBlock}
-          />
         </div>
       </div>
     </div>

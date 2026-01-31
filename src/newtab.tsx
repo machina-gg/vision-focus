@@ -6,6 +6,7 @@ import { Settings } from 'lucide-react'
 
 import { DownloadButton } from '~/components/features'
 import { MiniStats, GoalDisplay } from '~/components/newtab'
+import { setCurrentLanguage } from '~/lib/i18n'
 import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus } from '~/lib/license'
@@ -73,6 +74,13 @@ function NewtabApp() {
     }
     loadPremiumStatus()
   }, [])
+
+  // Sync language setting with i18n module
+  useEffect(() => {
+    if (settings?.language !== undefined) {
+      setCurrentLanguage(settings.language)
+    }
+  }, [settings?.language])
 
   // Re-check schedule when tab becomes visible
   useEffect(() => {

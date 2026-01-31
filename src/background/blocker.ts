@@ -8,6 +8,17 @@ import type { AppSettings, BlockItem } from '~/types/storage'
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings()
 
+  // If paused, don't block anything
+  if (settings.paused) {
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+    const removeRuleIds = existingRules.map((rule) => rule.id)
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds,
+      addRules: [],
+    })
+    return
+  }
+
   // Get domains to block
   const domainsToBlock = getActiveBlockedDomains(settings.blockList, settings)
 
@@ -78,6 +89,9 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   if (!domain) return false
 
   const settings = await getSettings()
+
+  // If paused, don't block
+  if (settings.paused) return false
 
   // Check if domain is in block list
   const isBlocked = settings.blockList.some((item) =>

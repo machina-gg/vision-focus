@@ -318,9 +318,14 @@ export interface VisionSettings {
 }
 
 // App settings
+// Supported languages
+export type SupportedLanguage = 'en' | 'ja'
+
 export interface AppSettings {
   blockList: BlockItem[]
   schedules: Schedule[]
+  paused: boolean // Global pause for all blocking
+  language: SupportedLanguage | null // null = use browser language
 }
 
 // Analytics data
@@ -367,6 +372,8 @@ export interface StorageSchema {
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
+  paused: false,
+  language: null, // Use browser language by default
 }
 
 export const DEFAULT_FONT_SETTINGS: FontSettings = {

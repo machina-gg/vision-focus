@@ -61,6 +61,14 @@
     "message": "設定",
     "description": "設定ページタイトル"
   },
+  "paused": {
+    "message": "一時停止",
+    "description": "一時停止トグルのラベル"
+  },
+  "help": {
+    "message": "ヘルプ",
+    "description": "ヘルプボタンのラベル"
+  },
   "general": {
     "message": "一般",
     "description": "一般設定タブ"
@@ -84,6 +92,14 @@
   "addSiteToBlock": {
     "message": "ブロックするサイトを追加",
     "description": "ブロック追加入力の見出し"
+  },
+  "blockWebsites": {
+    "message": "サイトをブロック",
+    "description": "サイトブロックセクションの見出し"
+  },
+  "block": {
+    "message": "ブロック",
+    "description": "ブロックボタンのテキスト"
   },
   "domainPlaceholder": {
     "message": "example.com または *.example.com",
@@ -795,6 +811,10 @@
     "message": "有効",
     "description": "有効ラベル"
   },
+  "disabled": {
+    "message": "無効",
+    "description": "無効ラベル"
+  },
   "useDefault": {
     "message": "デフォルトに戻す",
     "description": "デフォルトに戻すボタン"
@@ -1066,5 +1086,85 @@
   "trackSitePlaceholder": {
     "message": "example.com",
     "description": "追跡サイト入力プレースホルダー"
+  },
+  "helpGettingStarted": {
+    "message": "はじめに",
+    "description": "ヘルプ開始タイトル"
+  },
+  "helpGettingStartedDescription": {
+    "message": "VisionFocusの基本を学びましょう",
+    "description": "ヘルプ開始説明"
+  },
+  "helpBlockSites": {
+    "message": "サイトをブロック",
+    "description": "ヘルプサイトブロックタイトル"
+  },
+  "helpBlockSitesDescription": {
+    "message": "ポップアップまたは設定からブロックリストにドメインを追加します。ワイルドカード（*.example.com）を使用すると、すべてのサブドメインをブロックできます。",
+    "description": "ヘルプサイトブロック説明"
+  },
+  "helpSchedules": {
+    "message": "スケジュールを設定",
+    "description": "ヘルプスケジュールタイトル"
+  },
+  "helpSchedulesDescription": {
+    "message": "特定の時間帯と曜日にブロックを自動的に有効にするスケジュールを作成します。",
+    "description": "ヘルプスケジュール説明"
+  },
+  "helpDashboard": {
+    "message": "ダッシュボードをカスタマイズ",
+    "description": "ヘルプダッシュボードタイトル"
+  },
+  "helpDashboardDescription": {
+    "message": "目標、背景画像、フォントで新しいタブページをカスタマイズして、モチベーションを維持しましょう。",
+    "description": "ヘルプダッシュボード説明"
+  },
+  "helpFaq": {
+    "message": "よくある質問",
+    "description": "ヘルプFAQタイトル"
+  },
+  "helpFaqDescription": {
+    "message": "よく寄せられる質問と回答",
+    "description": "ヘルプFAQ説明"
+  },
+  "helpFaqWildcard": {
+    "message": "ワイルドカードブロックはどう機能しますか？",
+    "description": "ヘルプFAQワイルドカード質問"
+  },
+  "helpFaqWildcardAnswer": {
+    "message": "*.example.com を使用すると、すべてのサブドメイン（news.example.com、blog.example.comなど）をブロックできます。ワイルドカードなしでexample.comを指定すると、メインドメインのみがブロックされます。",
+    "description": "ヘルプFAQワイルドカード回答"
+  },
+  "helpFaqPause": {
+    "message": "一時的にブロックを無効にするには？",
+    "description": "ヘルプFAQ一時停止質問"
+  },
+  "helpFaqPauseAnswer": {
+    "message": "ポップアップヘッダーの「一時停止」スイッチを切り替えると、すべてのブロックが一時的に無効になります。忘れずに元に戻してください！",
+    "description": "ヘルプFAQ一時停止回答"
+  },
+  "helpFaqPresets": {
+    "message": "ダッシュボードプリセットとは？",
+    "description": "ヘルプFAQプリセット質問"
+  },
+  "helpFaqPresetsAnswer": {
+    "message": "プリセットはダッシュボード設定（目標、背景、フォント）を保存し、仕事、勉強、リラックスなど、異なる設定をすぐに切り替えられるようにします。",
+    "description": "ヘルプFAQプリセット回答"
+  },
+  "helpSupport": {
+    "message": "サポート",
+    "description": "ヘルプサポートタイトル"
+  },
+  "helpSupportDescription": {
+    "message": "お困りですか？お手伝いします",
+    "description": "ヘルプサポート説明"
+  },
+  "helpReportIssue": {
+    "message": "GitHubで問題を報告する",
+    "description": "ヘルプ問題報告リンク"
+  },
+  "helpComingSoon": {
+    "message": "その他のヘルプリソースは近日公開予定...",
+    "description": "ヘルプ近日公開テキスト"
   }
 }

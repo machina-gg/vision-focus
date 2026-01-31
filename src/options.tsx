@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Calendar, Crown, Settings, TrendingUp } from 'lucide-react'
+import { Ban, Calendar, Crown, HelpCircle, Settings, TrendingUp } from 'lucide-react'
 
 import { Tabs } from '~/components/ui'
 import {
@@ -11,11 +11,12 @@ import {
   SchedulesTab,
   AnalyticsTab,
   PremiumTab,
+  HelpTab,
   NewPresetModal,
   ScheduleModal,
 } from '~/components/options'
 import { useBlocklist, useSchedules, usePresets } from '~/hooks'
-import { getMessage } from '~/lib/i18n'
+import { getMessage, setCurrentLanguage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
 import { checkPremiumStatus, getFeatureLimits } from '~/lib/license'
 import { openPaymentPage, openManagementPage } from '~/lib/extpay'
@@ -51,7 +52,13 @@ function OptionsApp() {
     },
     DEFAULT_VISION
   )
-  const [activeTab, setActiveTab] = useState('general')
+  // Read initial tab from URL hash (e.g., #help)
+  const getInitialTab = () => {
+    const hash = window.location.hash.slice(1) // Remove #
+    const validTabs = ['general', 'blocklist', 'schedules', 'analytics', 'license', 'help']
+    return validTabs.includes(hash) ? hash : 'general'
+  }
+  const [activeTab, setActiveTab] = useState(getInitialTab)
 
   // Analytics state
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
@@ -106,6 +113,13 @@ function OptionsApp() {
     loadPremiumStatus()
   }, [])
 
+  // Sync language setting with i18n module
+  useEffect(() => {
+    if (settings?.language !== undefined) {
+      setCurrentLanguage(settings.language)
+    }
+  }, [settings?.language])
+
   // Tabs configuration
   const tabs = [
     {
@@ -132,6 +146,11 @@ function OptionsApp() {
       id: 'license',
       label: getMessage('premium'),
       icon: <Crown className="w-4 h-4" />,
+    },
+    {
+      id: 'help',
+      label: getMessage('help'),
+      icon: <HelpCircle className="w-4 h-4" />,
     },
   ]
 
@@ -368,6 +387,9 @@ function OptionsApp() {
             onManageSubscription={handleManageSubscription}
           />
         )}
+
+        {/* Help Tab */}
+        {activeTab === 'help' && <HelpTab />}
       </main>
 
       {/* New Preset Modal */}
