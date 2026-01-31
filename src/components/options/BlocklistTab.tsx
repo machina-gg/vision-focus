@@ -1,10 +1,9 @@
 import React from 'react'
-import { Crown, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
 import { Button, Card, Input } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
 import type { AppSettings } from '~/types/storage'
-import type { FeatureLimits } from '~/types/storage'
 
 interface BlocklistTabProps {
   settings: AppSettings | undefined
@@ -13,8 +12,6 @@ interface BlocklistTabProps {
   blockError: string
   onAddDomain: () => void
   onRemoveDomain: (id: string) => void
-  isPremium: boolean
-  featureLimits: FeatureLimits
 }
 
 export function BlocklistTab({
@@ -24,8 +21,6 @@ export function BlocklistTab({
   blockError,
   onAddDomain,
   onRemoveDomain,
-  isPremium,
-  featureLimits,
 }: BlocklistTabProps) {
   return (
     <div className="space-y-6">
@@ -47,19 +42,6 @@ export function BlocklistTab({
         </div>
         {blockError && (
           <p className="mt-2 text-sm text-red-600">{blockError}</p>
-        )}
-        {!isPremium ? (
-          <p className="mt-2 text-sm text-gray-500">
-            {getMessage('freeTierLimit', [
-              String(settings?.blockList.length || 0),
-              String(featureLimits.maxBlockList),
-            ])}
-          </p>
-        ) : (
-          <p className="mt-2 text-sm text-green-600 flex items-center gap-1">
-            <Crown className="w-3 h-3" />
-            {getMessage('premiumFeatureUnlimitedBlocklist')}
-          </p>
         )}
       </Card>
 

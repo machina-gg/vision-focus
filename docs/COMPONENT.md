@@ -604,7 +604,7 @@ interface FeatureLimits {
 
 const FEATURE_LIMITS = {
   free: {
-    maxBlockList: 5,
+    maxBlockList: Infinity, // Unlimited for all users
     historyDays: 7,
     maxPresets: 1,
   },

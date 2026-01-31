@@ -331,8 +331,6 @@ function OptionsApp() {
             blockError={blocklist.blockError}
             onAddDomain={blocklist.handleAddDomain}
             onRemoveDomain={blocklist.handleRemoveDomain}
-            isPremium={isPremium}
-            featureLimits={featureLimits}
           />
         )}
 
@@ -365,7 +363,6 @@ function OptionsApp() {
         {/* Premium Tab */}
         {activeTab === 'license' && (
           <PremiumTab
-            settings={settings}
             isPremium={isPremium}
             onUpgrade={handleUpgrade}
             onManageSubscription={handleManageSubscription}

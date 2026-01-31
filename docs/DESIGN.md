@@ -40,11 +40,11 @@
 
 ### 決済関連（有料版）
 
-| カテゴリ       | 技術         | 備考                           |
-| -------------- | ------------ | ------------------------------ |
-| 課金           | Gumroad      | ライセンスキー発行             |
-| ライセンス検証 | Gumroad API  | ライセンスキーの有効性確認     |
-| 開発者モード   | ローカル検証 | 24時間限定のプレミアム機能解放 |
+| カテゴリ       | 技術             | 備考                           |
+| -------------- | ---------------- | ------------------------------ |
+| 課金           | ExtensionPay     | Stripe連携の決済サービス       |
+| ライセンス検証 | ExtensionPay API | サブスクリプション状態確認     |
+| 開発者モード   | ローカル検証     | 24時間限定のプレミアム機能解放 |
 
 ### プレミアム機能用ライブラリ
 
@@ -267,7 +267,7 @@ interface Schedule {
 // 機能制限
 const FEATURE_LIMITS = {
   free: {
-    maxBlockList: 5,
+    maxBlockList: Infinity, // Unlimited for all users
     historyDays: 7,
     maxPresets: 1,
   },
@@ -459,3 +459,58 @@ assets/_locales/
 // 使用側
 chrome.i18n.getMessage('blockPageTitle')
 ```
+
+## 10. 決済・ライセンス管理
+
+### 使用サービス
+
+**ExtensionPay** (https://extensionpay.com)
+
+- Stripe連携のChrome拡張向け決済サービス
+- サーバー不要でサブスクリプション管理が可能
+- npmパッケージ: `extpay`
+
+### 環境変数
+
+```bash
+# .env
+PLASMO_PUBLIC_EXTPAY_ID=visionfocus
+```
+
+### ユーザーステータス
+
+ExtensionPayの `extpay.getUser()` で取得できる情報:
+
+| フィールド             | 型                                       | 説明                           |
+| ---------------------- | ---------------------------------------- | ------------------------------ |
+| `paid`                 | `boolean`                                | 現在有効な支払いがあるか       |
+| `paidAt`               | `Date \| null`                           | 最後の支払い日時               |
+| `installedAt`          | `Date`                                   | 拡張機能インストール日時       |
+| `trialStartedAt`       | `Date \| null`                           | トライアル開始日時             |
+| `subscriptionStatus`   | `"active" \| "past_due" \| "canceled"`   | サブスクリプション状態         |
+| `subscriptionCancelAt` | `Date \| null`                           | サブスク終了予定日時           |
+
+### サブスクリプションキャンセル時の動作
+
+**重要**: キャンセル後も請求期間終了までプレミアム機能が使える。
+
+| タイミング       | `user.paid` | `subscriptionStatus` | `subscriptionCancelAt` |
+| ---------------- | ----------- | -------------------- | ---------------------- |
+| キャンセル直後   | `true`      | `"active"`           | 終了日時がセット       |
+| 請求期間終了後   | `false`     | `"canceled"`         | そのまま維持           |
+
+現在の実装では `user.paid` をチェックしているため、キャンセル後も請求期間終了まで正しく動作する。
+
+```typescript
+// src/lib/extpay.ts
+export async function isExtPayPremium(): Promise<boolean> {
+  const user = await getExtPayUser()
+  return user.paid  // キャンセル後も請求期間終了まで true
+}
+```
+
+### 参考資料
+
+- [ExtPay - How Subscriptions Work](https://github.com/Glench/ExtPay/blob/main/docs/how_subscriptions_work.md)
+- [ExtPay npm package](https://www.npmjs.com/package/extpay)
+- [ExtensionPay公式サイト](https://extensionpay.com)
