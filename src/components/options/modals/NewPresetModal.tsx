@@ -1,15 +1,15 @@
-import React from 'react'
-import { Plus } from 'lucide-react'
+import React from 'react';
+import { Plus } from 'lucide-react';
 
-import { Button, Input, Modal } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
+import { Button, Input, Modal } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
 interface NewPresetModalProps {
-  isOpen: boolean
-  onClose: () => void
-  presetName: string
-  onPresetNameChange: (name: string) => void
-  onCreate: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  presetName: string;
+  onPresetNameChange: (name: string) => void;
+  onCreate: () => void;
 }
 
 export function NewPresetModal({
@@ -17,12 +17,12 @@ export function NewPresetModal({
   onClose,
   presetName,
   onPresetNameChange,
-  onCreate,
+  onCreate
 }: NewPresetModalProps) {
   const handleClose = () => {
-    onClose()
-    onPresetNameChange('')
-  }
+    onClose();
+    onPresetNameChange('');
+  };
 
   return (
     <Modal
@@ -48,5 +48,5 @@ export function NewPresetModal({
         </div>
       </div>
     </Modal>
-  )
+  );
 }

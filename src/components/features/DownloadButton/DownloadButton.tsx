@@ -1,76 +1,76 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef } from 'react';
 
-import { Download, Check, X, ChevronDown } from 'lucide-react'
+import { Download, Check, X, ChevronDown } from 'lucide-react';
 
 import {
   downloadWallpaper,
   type Resolution,
-  getResolutionOptions,
-} from '~/lib/wallpaper'
-import { getMessage } from '~/lib/i18n'
+  getResolutionOptions
+} from '~/lib/wallpaper';
+import { getMessage } from '~/lib/i18n';
 
 export interface DownloadButtonProps {
-  targetRef: React.RefObject<HTMLElement>
-  disabled?: boolean
-  className?: string
+  targetRef: React.RefObject<HTMLElement>;
+  disabled?: boolean;
+  className?: string;
 }
 
 export function DownloadButton({
   targetRef,
   disabled = false,
-  className = '',
+  className = ''
 }: DownloadButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState<
     'idle' | 'success' | 'error'
-  >('idle')
-  const menuRef = useRef<HTMLDivElement>(null)
+  >('idle');
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const resolutions = getResolutionOptions()
+  const resolutions = getResolutionOptions();
 
   const handleDownload = async (resolution: Resolution) => {
-    if (!targetRef.current || isDownloading) return
+    if (!targetRef.current || isDownloading) return;
 
-    setIsDownloading(true)
-    setDownloadStatus('idle')
-    setIsOpen(false)
+    setIsDownloading(true);
+    setDownloadStatus('idle');
+    setIsOpen(false);
 
     try {
       await downloadWallpaper(targetRef.current, 'visionfocus-wallpaper', {
         resolution,
-        quality: 0.95,
-      })
-      setDownloadStatus('success')
-      setTimeout(() => setDownloadStatus('idle'), 2000)
+        quality: 0.95
+      });
+      setDownloadStatus('success');
+      setTimeout(() => setDownloadStatus('idle'), 2000);
     } catch {
-      setDownloadStatus('error')
-      setTimeout(() => setDownloadStatus('idle'), 2000)
+      setDownloadStatus('error');
+      setTimeout(() => setDownloadStatus('idle'), 2000);
     } finally {
-      setIsDownloading(false)
+      setIsDownloading(false);
     }
-  }
+  };
 
   const getButtonIcon = () => {
     if (isDownloading) {
       return (
         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-      )
+      );
     }
     if (downloadStatus === 'success') {
-      return <Check className="w-5 h-5" />
+      return <Check className="w-5 h-5" />;
     }
     if (downloadStatus === 'error') {
-      return <X className="w-5 h-5" />
+      return <X className="w-5 h-5" />;
     }
-    return <Download className="w-5 h-5" />
-  }
+    return <Download className="w-5 h-5" />;
+  };
 
   const getButtonColor = () => {
-    if (downloadStatus === 'success') return 'bg-green-500 hover:bg-green-600'
-    if (downloadStatus === 'error') return 'bg-red-500 hover:bg-red-600'
-    return 'bg-black/50 hover:bg-black/70'
-  }
+    if (downloadStatus === 'success') return 'bg-green-500 hover:bg-green-600';
+    if (downloadStatus === 'error') return 'bg-red-500 hover:bg-red-600';
+    return 'bg-black/50 hover:bg-black/70';
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -130,5 +130,5 @@ export function DownloadButton({
         </>
       )}
     </div>
-  )
+  );
 }

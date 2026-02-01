@@ -1,2 +1,2 @@
-export { DownloadButton } from './DownloadButton'
-export type { DownloadButtonProps } from './DownloadButton'
+export { DownloadButton } from './DownloadButton';
+export type { DownloadButtonProps } from './DownloadButton';

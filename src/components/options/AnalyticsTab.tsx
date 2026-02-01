@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Clock,
@@ -10,56 +10,56 @@ import {
   Plus,
   Shield,
   Download,
-  ChevronDown,
-} from 'lucide-react'
+  ChevronDown
+} from 'lucide-react';
 
-import { Card, Button, Modal, Input } from '~/components/ui'
-import { UpgradePrompt, AnalyticsChart } from '~/components/features'
-import { formatTime } from '~/lib/time'
-import { getMessage } from '~/lib/i18n'
+import { Card, Button, Modal, Input } from '~/components/ui';
+import { UpgradePrompt, AnalyticsChart } from '~/components/features';
+import { formatTime } from '~/lib/time';
+import { getMessage } from '~/lib/i18n';
 import {
   exportBlockList,
   exportBlockCounts,
   exportDailyStats,
-  exportUnblockedSites,
-} from '~/lib/export'
+  exportUnblockedSites
+} from '~/lib/export';
 import type {
   UnblockHistory,
   AnalyticsData,
-  AppSettings,
-} from '~/types/storage'
+  AppSettings
+} from '~/types/storage';
 
 interface AnalyticsTabProps {
-  unblockHistory: UnblockHistory
-  analyticsData: AnalyticsData
-  settings: AppSettings | null
-  isPremium: boolean
-  onReblock: (domain: string) => void
-  onReset: () => void
-  onStopTracking: (domain: string) => void
-  onRefresh: () => Promise<void>
-  onAddSite: (domain: string) => void
+  unblockHistory: UnblockHistory;
+  analyticsData: AnalyticsData;
+  settings: AppSettings | null;
+  isPremium: boolean;
+  onReblock: (domain: string) => void;
+  onReset: () => void;
+  onStopTracking: (domain: string) => void;
+  onRefresh: () => Promise<void>;
+  onAddSite: (domain: string) => void;
 }
 
 // Format relative time (e.g., "3 days ago")
 function formatRelativeTime(isoDate: string): string {
-  const date = new Date(isoDate)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return getMessage('today')
+    return getMessage('today');
   } else if (diffDays === 1) {
-    return getMessage('yesterday')
+    return getMessage('yesterday');
   } else if (diffDays < 7) {
-    return getMessage('daysAgo', String(diffDays))
+    return getMessage('daysAgo', String(diffDays));
   } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7)
-    return getMessage('weeksAgo', String(weeks))
+    const weeks = Math.floor(diffDays / 7);
+    return getMessage('weeksAgo', String(weeks));
   } else {
-    const months = Math.floor(diffDays / 30)
-    return getMessage('monthsAgo', String(months))
+    const months = Math.floor(diffDays / 30);
+    return getMessage('monthsAgo', String(months));
   }
 }
 
@@ -72,97 +72,97 @@ export function AnalyticsTab({
   onReset,
   onStopTracking,
   onRefresh,
-  onAddSite,
+  onAddSite
 }: AnalyticsTabProps) {
-  const [showResetModal, setShowResetModal] = useState(false)
-  const [newSiteDomain, setNewSiteDomain] = useState('')
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [newSiteDomain, setNewSiteDomain] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleAddSite = () => {
     if (newSiteDomain.trim()) {
-      onAddSite(newSiteDomain.trim().toLowerCase())
-      setNewSiteDomain('')
+      onAddSite(newSiteDomain.trim().toLowerCase());
+      setNewSiteDomain('');
     }
-  }
+  };
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await onRefresh()
+    setIsRefreshing(true);
+    await onRefresh();
     // Keep spinning for a moment so user can see it
-    setTimeout(() => setIsRefreshing(false), 500)
-  }
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   // Separate and sort tracked sites by status
   const { blockedSites, unblockedSites } = useMemo(() => {
-    const allSites = Object.values(unblockHistory.sites)
+    const allSites = Object.values(unblockHistory.sites);
     const blocked = allSites
       .filter((s) => s.status === 'blocked')
       .sort(
         (a, b) =>
           new Date(b.blockedAt).getTime() - new Date(a.blockedAt).getTime()
-      )
+      );
     const unblocked = allSites
       .filter((s) => s.status === 'unblocked')
-      .sort((a, b) => b.timeAfterUnblock - a.timeAfterUnblock)
-    return { blockedSites: blocked, unblockedSites: unblocked }
-  }, [unblockHistory.sites])
+      .sort((a, b) => b.timeAfterUnblock - a.timeAfterUnblock);
+    return { blockedSites: blocked, unblockedSites: unblocked };
+  }, [unblockHistory.sites]);
 
-  const hasTrackedSites = blockedSites.length > 0 || unblockedSites.length > 0
+  const hasTrackedSites = blockedSites.length > 0 || unblockedSites.length > 0;
 
   // Calculate total time spent on unblocked sites
   const totalTimeSpent = useMemo(() => {
-    return unblockedSites.reduce((sum, site) => sum + site.timeAfterUnblock, 0)
-  }, [unblockedSites])
+    return unblockedSites.reduce((sum, site) => sum + site.timeAfterUnblock, 0);
+  }, [unblockedSites]);
 
   // Sort site block counts (descending by count)
   const topBlockedSites = useMemo(() => {
-    const counts = Object.values(analyticsData.siteBlockCounts || {})
-    return counts.sort((a, b) => b.count - a.count).slice(0, 10)
-  }, [analyticsData.siteBlockCounts])
+    const counts = Object.values(analyticsData.siteBlockCounts || {});
+    return counts.sort((a, b) => b.count - a.count).slice(0, 10);
+  }, [analyticsData.siteBlockCounts]);
 
   const handleReset = () => {
-    onReset()
-    setShowResetModal(false)
-  }
+    onReset();
+    setShowResetModal(false);
+  };
 
   // Check if there's any data to export
-  const hasBlockList = (settings?.blockList?.length ?? 0) > 0
+  const hasBlockList = (settings?.blockList?.length ?? 0) > 0;
   const hasBlockCounts =
-    Object.keys(analyticsData.siteBlockCounts || {}).length > 0
-  const hasDailyStats = Object.keys(analyticsData.dailyStats || {}).length > 0
-  const hasUnblockedData = Object.keys(unblockHistory.sites || {}).length > 0
+    Object.keys(analyticsData.siteBlockCounts || {}).length > 0;
+  const hasDailyStats = Object.keys(analyticsData.dailyStats || {}).length > 0;
+  const hasUnblockedData = Object.keys(unblockHistory.sites || {}).length > 0;
   const hasAnyData =
-    hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData
+    hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData;
 
   // Export handlers
   const handleExportBlockList = () => {
     if (settings?.blockList) {
-      exportBlockList(settings.blockList)
+      exportBlockList(settings.blockList);
     }
-    setShowExportMenu(false)
-  }
+    setShowExportMenu(false);
+  };
 
   const handleExportBlockCounts = () => {
     if (analyticsData.siteBlockCounts) {
-      exportBlockCounts(analyticsData.siteBlockCounts)
+      exportBlockCounts(analyticsData.siteBlockCounts);
     }
-    setShowExportMenu(false)
-  }
+    setShowExportMenu(false);
+  };
 
   const handleExportDailyStats = () => {
     if (analyticsData.dailyStats) {
-      exportDailyStats(analyticsData.dailyStats)
+      exportDailyStats(analyticsData.dailyStats);
     }
-    setShowExportMenu(false)
-  }
+    setShowExportMenu(false);
+  };
 
   const handleExportUnblockedSites = () => {
     if (isPremium) {
-      exportUnblockedSites(unblockHistory)
+      exportUnblockedSites(unblockHistory);
     }
-    setShowExportMenu(false)
-  }
+    setShowExportMenu(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -474,7 +474,7 @@ export function AnalyticsTab({
             features={[
               getMessage('upgradeFeatureViewTime'),
               getMessage('upgradeFeatureReblock'),
-              getMessage('upgradeFeatureChart'),
+              getMessage('upgradeFeatureChart')
             ]}
           />
         </Card>
@@ -528,5 +528,5 @@ export function AnalyticsTab({
         </div>
       </Modal>
     </div>
-  )
+  );
 }

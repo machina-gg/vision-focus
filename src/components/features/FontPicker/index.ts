@@ -1,2 +1,2 @@
-export { FontPicker } from './FontPicker'
-export type { FontPickerProps } from './FontPicker'
+export { FontPicker } from './FontPicker';
+export type { FontPickerProps } from './FontPicker';

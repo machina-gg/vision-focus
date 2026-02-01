@@ -1,17 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging'
-import { useStorage } from '@plasmohq/storage/hook'
+import { sendToBackground } from '@plasmohq/messaging';
+import { useStorage } from '@plasmohq/storage/hook';
 import {
   Ban,
   Calendar,
   Crown,
   HelpCircle,
   Palette,
-  TrendingUp,
-} from 'lucide-react'
+  TrendingUp
+} from 'lucide-react';
 
-import { Tabs } from '~/components/ui'
+import { Tabs } from '~/components/ui';
 import {
   GeneralTab,
   BlocklistTab,
@@ -20,140 +20,149 @@ import {
   PremiumTab,
   HelpTab,
   NewPresetModal,
-  ScheduleModal,
-} from '~/components/options'
-import { useBlocklist, useSchedules, usePresets, usePremiumStatus } from '~/hooks'
-import { getMessage, setCurrentLanguage } from '~/lib/i18n'
-import { storage } from '~/lib/storage'
-import { openPaymentPage, openManagementPage } from '~/lib/extpay'
-import { parseDomainInput, isValidDomain } from '~/lib/domain'
+  ScheduleModal
+} from '~/components/options';
+import {
+  useBlocklist,
+  useSchedules,
+  usePresets,
+  usePremiumStatus
+} from '~/hooks';
+import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { storage } from '~/lib/storage';
+import { openPaymentPage, openManagementPage } from '~/lib/extpay';
+import { parseDomainInput, isValidDomain } from '~/lib/domain';
 import type {
   AppSettings,
   VisionSettings,
   AnalyticsData,
-  UnblockHistory,
-} from '~/types/storage'
-import { DEFAULT_SETTINGS, DEFAULT_VISION, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage'
+  UnblockHistory
+} from '~/types/storage';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  DEFAULT_UNBLOCK_HISTORY
+} from '~/types/storage';
 
-import './styles/globals.css'
+import './styles/globals.css';
 
 function OptionsApp() {
   const [settings, setSettings] = useStorage<AppSettings>(
     {
       key: 'settings',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_SETTINGS
-  )
+  );
   const [vision, setVision] = useStorage<VisionSettings>(
     {
       key: 'vision',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_VISION
-  )
+  );
   // Read initial tab from URL hash (e.g., #help)
   const getInitialTab = () => {
-    const hash = window.location.hash.slice(1) // Remove #
+    const hash = window.location.hash.slice(1); // Remove #
     const validTabs = [
       'blocklist',
       'styles',
       'schedules',
       'analytics',
       'license',
-      'help',
-    ]
+      'help'
+    ];
     // Support legacy 'general' hash
-    if (hash === 'general') return 'styles'
-    return validTabs.includes(hash) ? hash : 'blocklist'
-  }
-  const [activeTab, setActiveTab] = useState(getInitialTab)
+    if (hash === 'general') return 'styles';
+    return validTabs.includes(hash) ? hash : 'blocklist';
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab);
 
   // Sync URL hash with active tab
   useEffect(() => {
-    window.location.hash = activeTab
-  }, [activeTab])
+    window.location.hash = activeTab;
+  }, [activeTab]);
 
   // Analytics state
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     dailyStats: {},
     siteTime: {},
     siteCategories: {},
-    siteBlockCounts: {},
-  })
+    siteBlockCounts: {}
+  });
 
   // Unblock history state
   const [unblockHistory, setUnblockHistory] = useState<UnblockHistory>(
     DEFAULT_UNBLOCK_HISTORY
-  )
+  );
 
   // Premium status (from hook)
-  const { isPremium, featureLimits } = usePremiumStatus()
+  const { isPremium, featureLimits } = usePremiumStatus();
 
   // Custom hooks
-  const blocklist = useBlocklist({ settings, setSettings })
-  const schedules = useSchedules({ settings, setSettings })
-  const presets = usePresets({ vision, setVision })
+  const blocklist = useBlocklist({ settings, setSettings });
+  const schedules = useSchedules({ settings, setSettings });
+  const presets = usePresets({ vision, setVision });
 
   // Helper function to reload analytics data
   const reloadAnalyticsData = useCallback(async () => {
     const [analyticsResult, unblockResult] = await Promise.all([
       storage.get('analytics') as Promise<AnalyticsData | undefined>,
-      storage.get('unblockHistory') as Promise<UnblockHistory | undefined>,
-    ])
+      storage.get('unblockHistory') as Promise<UnblockHistory | undefined>
+    ]);
     if (analyticsResult) {
-      setAnalyticsData(analyticsResult)
+      setAnalyticsData(analyticsResult);
     }
     if (unblockResult) {
-      setUnblockHistory(unblockResult)
+      setUnblockHistory(unblockResult);
     }
-  }, [])
+  }, []);
 
   // Load analytics and unblock history on mount
   useEffect(() => {
-    reloadAnalyticsData()
-  }, [reloadAnalyticsData])
+    reloadAnalyticsData();
+  }, [reloadAnalyticsData]);
 
   // Sync language setting with i18n module
   useEffect(() => {
     if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language)
+      setCurrentLanguage(settings.language);
     }
-  }, [settings?.language])
+  }, [settings?.language]);
 
   // Tabs configuration
   const tabs = [
     {
       id: 'blocklist',
       label: getMessage('blockList'),
-      icon: <Ban className="w-4 h-4" />,
+      icon: <Ban className="w-4 h-4" />
     },
     {
       id: 'styles',
       label: getMessage('styles'),
-      icon: <Palette className="w-4 h-4" />,
+      icon: <Palette className="w-4 h-4" />
     },
     {
       id: 'schedules',
       label: getMessage('schedules'),
-      icon: <Calendar className="w-4 h-4" />,
+      icon: <Calendar className="w-4 h-4" />
     },
     {
       id: 'analytics',
       label: getMessage('analytics'),
-      icon: <TrendingUp className="w-4 h-4" />,
+      icon: <TrendingUp className="w-4 h-4" />
     },
     {
       id: 'license',
       label: getMessage('premium'),
-      icon: <Crown className="w-4 h-4" />,
+      icon: <Crown className="w-4 h-4" />
     },
     {
       id: 'help',
       label: getMessage('help'),
-      icon: <HelpCircle className="w-4 h-4" />,
-    },
-  ]
+      icon: <HelpCircle className="w-4 h-4" />
+    }
+  ];
 
   // Re-block handler
   const handleReblock = useCallback(
@@ -161,22 +170,22 @@ function OptionsApp() {
       try {
         await sendToBackground({
           name: 'add-block',
-          body: { domain },
-        })
+          body: { domain }
+        });
         // Refresh data after re-blocking
-        await reloadAnalyticsData()
+        await reloadAnalyticsData();
         const settingsResult = (await storage.get('settings')) as
           | AppSettings
-          | undefined
+          | undefined;
         if (settingsResult) {
-          setSettings(settingsResult)
+          setSettings(settingsResult);
         }
       } catch {
         // Silently handle error
       }
     },
     [setSettings, reloadAnalyticsData]
-  )
+  );
 
   // Reset analytics handler (reset time only, keep site list)
   const handleResetAnalytics = useCallback(async () => {
@@ -184,18 +193,18 @@ function OptionsApp() {
       // Reset time for all sites but keep the list
       const currentHistory = (await storage.get('unblockHistory')) as
         | UnblockHistory
-        | undefined
+        | undefined;
       if (currentHistory) {
         const resetHistory: UnblockHistory = {
           sites: Object.fromEntries(
             Object.entries(currentHistory.sites).map(([domain, site]) => [
               domain,
-              { ...site, timeAfterUnblock: 0, lastActivity: null },
+              { ...site, timeAfterUnblock: 0, lastActivity: null }
             ])
-          ),
-        }
-        await storage.set('unblockHistory', resetHistory)
-        setUnblockHistory(resetHistory)
+          )
+        };
+        await storage.set('unblockHistory', resetHistory);
+        setUnblockHistory(resetHistory);
       }
 
       // Clear analytics data
@@ -203,73 +212,73 @@ function OptionsApp() {
         dailyStats: {},
         siteTime: {},
         siteCategories: {},
-        siteBlockCounts: {},
-      }
-      await storage.set('analytics', emptyAnalytics)
-      setAnalyticsData(emptyAnalytics)
+        siteBlockCounts: {}
+      };
+      await storage.set('analytics', emptyAnalytics);
+      setAnalyticsData(emptyAnalytics);
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, []);
 
   // Stop tracking a site (remove from unblock history)
   const handleStopTracking = useCallback(async (domain: string) => {
     try {
       const currentHistory = (await storage.get('unblockHistory')) as
         | UnblockHistory
-        | undefined
+        | undefined;
       if (currentHistory && currentHistory.sites[domain]) {
-        const { [domain]: _, ...remainingSites } = currentHistory.sites
-        const updatedHistory: UnblockHistory = { sites: remainingSites }
-        await storage.set('unblockHistory', updatedHistory)
-        setUnblockHistory(updatedHistory)
+        const { [domain]: _, ...remainingSites } = currentHistory.sites;
+        const updatedHistory: UnblockHistory = { sites: remainingSites };
+        await storage.set('unblockHistory', updatedHistory);
+        setUnblockHistory(updatedHistory);
 
         // Also remove from analytics siteTime
         const currentAnalytics = (await storage.get('analytics')) as
           | AnalyticsData
-          | undefined
+          | undefined;
         if (currentAnalytics && currentAnalytics.siteTime[domain]) {
           const { [domain]: __, ...remainingSiteTime } =
-            currentAnalytics.siteTime
+            currentAnalytics.siteTime;
           const updatedAnalytics: AnalyticsData = {
             ...currentAnalytics,
-            siteTime: remainingSiteTime,
-          }
-          await storage.set('analytics', updatedAnalytics)
-          setAnalyticsData(updatedAnalytics)
+            siteTime: remainingSiteTime
+          };
+          await storage.set('analytics', updatedAnalytics);
+          setAnalyticsData(updatedAnalytics);
         }
       }
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, []);
 
   // Refresh analytics data
   const handleRefreshAnalytics = useCallback(async () => {
     try {
-      await reloadAnalyticsData()
+      await reloadAnalyticsData();
     } catch {
       // Silently handle error
     }
-  }, [reloadAnalyticsData])
+  }, [reloadAnalyticsData]);
 
   // Add site to track manually
   const handleAddSiteToTrack = useCallback(async (domain: string) => {
     try {
       // Validate and parse domain
-      const { domain: parsedDomain } = parseDomainInput(domain)
+      const { domain: parsedDomain } = parseDomainInput(domain);
       if (!isValidDomain(parsedDomain)) {
-        return // Invalid domain format
+        return; // Invalid domain format
       }
 
       const currentHistory = (await storage.get('unblockHistory')) as
         | UnblockHistory
-        | undefined
-      const history = currentHistory || { sites: {} }
+        | undefined;
+      const history = currentHistory || { sites: {} };
 
       // Don't add if already tracking
       if (history.sites[parsedDomain]) {
-        return
+        return;
       }
 
       history.sites[parsedDomain] = {
@@ -278,23 +287,23 @@ function OptionsApp() {
         blockedAt: new Date().toISOString(),
         unblockedAt: new Date().toISOString(),
         timeAfterUnblock: 0,
-        lastActivity: null,
-      }
-      await storage.set('unblockHistory', history)
-      setUnblockHistory(history)
+        lastActivity: null
+      };
+      await storage.set('unblockHistory', history);
+      setUnblockHistory(history);
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, []);
 
   // Premium handlers
   const handleUpgrade = useCallback(() => {
-    openPaymentPage()
-  }, [])
+    openPaymentPage();
+  }, []);
 
   const handleManageSubscription = useCallback(() => {
-    openManagementPage()
-  }, [])
+    openManagementPage();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -420,7 +429,7 @@ function OptionsApp() {
         featureLimits={featureLimits}
       />
     </div>
-  )
+  );
 }
 
-export default OptionsApp
+export default OptionsApp;

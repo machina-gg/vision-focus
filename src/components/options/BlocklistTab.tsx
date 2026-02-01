@@ -1,18 +1,18 @@
-import React from 'react'
-import { Plus, Trash2, Shield } from 'lucide-react'
+import React from 'react';
+import { Plus, Trash2, Shield } from 'lucide-react';
 
-import { Button, Card, Input } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import type { AppSettings, SiteBlockCount } from '~/types/storage'
+import { Button, Card, Input } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
+import type { AppSettings, SiteBlockCount } from '~/types/storage';
 
 interface BlocklistTabProps {
-  settings: AppSettings | undefined
-  newDomain: string
-  setNewDomain: (value: string) => void
-  blockError: string
-  onAddDomain: () => void
-  onRemoveDomain: (id: string) => void
-  siteBlockCounts?: Record<string, SiteBlockCount>
+  settings: AppSettings | undefined;
+  newDomain: string;
+  setNewDomain: (value: string) => void;
+  blockError: string;
+  onAddDomain: () => void;
+  onRemoveDomain: (id: string) => void;
+  siteBlockCounts?: Record<string, SiteBlockCount>;
 }
 
 export function BlocklistTab({
@@ -22,7 +22,7 @@ export function BlocklistTab({
   blockError,
   onAddDomain,
   onRemoveDomain,
-  siteBlockCounts = {},
+  siteBlockCounts = {}
 }: BlocklistTabProps) {
   return (
     <div className="space-y-6">
@@ -60,11 +60,11 @@ export function BlocklistTab({
             {settings?.blockList.map((item) => {
               const domainKey = item.isWildcard
                 ? item.domain.replace('*.', '')
-                : item.domain
+                : item.domain;
               const blockCount =
                 siteBlockCounts[domainKey]?.count ??
                 siteBlockCounts[item.domain]?.count ??
-                0
+                0;
               return (
                 <div
                   key={item.id}
@@ -97,11 +97,11 @@ export function BlocklistTab({
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </Card>
     </div>
-  )
+  );
 }

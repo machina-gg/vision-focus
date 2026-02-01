@@ -1,23 +1,23 @@
-import React from 'react'
-import { Lock } from 'lucide-react'
+import React from 'react';
+import { Lock } from 'lucide-react';
 
-import { Button, Input, Modal } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import type { Schedule, VisionSettings, FeatureLimits } from '~/types/storage'
-import type { ScheduleFormData } from '~/hooks/useSchedules'
+import { Button, Input, Modal } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
+import type { Schedule, VisionSettings, FeatureLimits } from '~/types/storage';
+import type { ScheduleFormData } from '~/hooks/useSchedules';
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface ScheduleModalProps {
-  isOpen: boolean
-  onClose: () => void
-  editingSchedule: Schedule | null
-  scheduleForm: ScheduleFormData
-  onFormChange: (form: ScheduleFormData) => void
-  onSave: () => void
-  vision: VisionSettings | undefined
-  isPremium: boolean
-  featureLimits: FeatureLimits
+  isOpen: boolean;
+  onClose: () => void;
+  editingSchedule: Schedule | null;
+  scheduleForm: ScheduleFormData;
+  onFormChange: (form: ScheduleFormData) => void;
+  onSave: () => void;
+  vision: VisionSettings | undefined;
+  isPremium: boolean;
+  featureLimits: FeatureLimits;
 }
 
 export function ScheduleModal({
@@ -29,14 +29,14 @@ export function ScheduleModal({
   onSave,
   vision,
   isPremium,
-  featureLimits,
+  featureLimits
 }: ScheduleModalProps) {
   const toggleDay = (day: number) => {
     const newDays = scheduleForm.days.includes(day)
       ? scheduleForm.days.filter((d) => d !== day)
-      : [...scheduleForm.days, day].sort()
-    onFormChange({ ...scheduleForm, days: newDays })
-  }
+      : [...scheduleForm.days, day].sort();
+    onFormChange({ ...scheduleForm, days: newDays });
+  };
 
   return (
     <Modal
@@ -123,12 +123,12 @@ export function ScheduleModal({
           >
             <option value="">{getMessage('noPresetSelected')}</option>
             {vision?.presets?.map((preset, index) => {
-              const isLocked = !isPremium && index >= featureLimits.maxPresets
+              const isLocked = !isPremium && index >= featureLimits.maxPresets;
               return (
                 <option key={preset.id} value={preset.id} disabled={isLocked}>
                   {isLocked ? `🔒 ${preset.name}` : preset.name}
                 </option>
-              )
+              );
             })}
           </select>
           <p className="text-xs text-gray-500 mt-1">
@@ -159,5 +159,5 @@ export function ScheduleModal({
         </div>
       </div>
     </Modal>
-  )
+  );
 }

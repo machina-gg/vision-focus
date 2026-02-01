@@ -1,20 +1,20 @@
-import React from 'react'
-import { Ban, Calendar, TrendingUp } from 'lucide-react'
+import React from 'react';
+import { Ban, Calendar, TrendingUp } from 'lucide-react';
 
-import { getMessage } from '~/lib/i18n'
+import { getMessage } from '~/lib/i18n';
 
 interface MiniStatsProps {
-  blockCount: number
-  blockingDays: number | null // null if site is not in blocklist
-  isPremium?: boolean
-  onAnalyticsClick?: () => void
+  blockCount: number;
+  blockingDays: number | null; // null if site is not in blocklist
+  isPremium?: boolean;
+  onAnalyticsClick?: () => void;
 }
 
 export function MiniStats({
   blockCount,
   blockingDays,
   isPremium = false,
-  onAnalyticsClick,
+  onAnalyticsClick
 }: MiniStatsProps) {
   return (
     <div className="flex flex-col items-center gap-3">
@@ -57,5 +57,5 @@ export function MiniStats({
         </button>
       )}
     </div>
-  )
+  );
 }

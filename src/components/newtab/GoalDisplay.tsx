@@ -1,22 +1,22 @@
-import React from 'react'
-import { Edit2 } from 'lucide-react'
+import React from 'react';
+import { Edit2 } from 'lucide-react';
 
-import { Button, Input } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
+import { Button, Input } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
 interface GoalDisplayProps {
-  goalText: string
-  goalSubText: string
-  textColor: string
-  fontStyle: React.CSSProperties
-  isEditing: boolean
-  editText: string
-  canEdit: boolean
-  onEditTextChange: (text: string) => void
-  onStartEdit: () => void
-  onSave: () => void
-  onCancel: () => void
-  onKeyDown: (e: React.KeyboardEvent) => void
+  goalText: string;
+  goalSubText: string;
+  textColor: string;
+  fontStyle: React.CSSProperties;
+  isEditing: boolean;
+  editText: string;
+  canEdit: boolean;
+  onEditTextChange: (text: string) => void;
+  onStartEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
 }
 
 export function GoalDisplay({
@@ -31,7 +31,7 @@ export function GoalDisplay({
   onStartEdit,
   onSave,
   onCancel,
-  onKeyDown,
+  onKeyDown
 }: GoalDisplayProps) {
   if (isEditing) {
     return (
@@ -51,7 +51,7 @@ export function GoalDisplay({
           <Button onClick={onSave}>{getMessage('save')}</Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -81,5 +81,5 @@ export function GoalDisplay({
         </button>
       )}
     </div>
-  )
+  );
 }

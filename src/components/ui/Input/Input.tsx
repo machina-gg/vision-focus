@@ -1,14 +1,14 @@
-import type { InputHTMLAttributes } from 'react'
-import React from 'react'
+import type { InputHTMLAttributes } from 'react';
+import React from 'react';
 
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'onChange'
 > {
-  label?: string
-  error?: string
-  onChange?: (value: string) => void
-  containerClassName?: string
+  label?: string;
+  error?: string;
+  onChange?: (value: string) => void;
+  containerClassName?: string;
 }
 
 export function Input({
@@ -20,7 +20,7 @@ export function Input({
   id,
   ...props
 }: InputProps) {
-  const inputId = id || `input-${Math.random().toString(36).slice(2)}`
+  const inputId = id || `input-${Math.random().toString(36).slice(2)}`;
 
   return (
     <div className={`flex flex-col gap-1.5 ${containerClassName}`}>
@@ -46,5 +46,5 @@ export function Input({
       />
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
-  )
+  );
 }

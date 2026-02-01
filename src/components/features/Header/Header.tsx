@@ -1,25 +1,25 @@
-import React from 'react'
+import React from 'react';
 
-import { Settings, HelpCircle, ChevronDown } from 'lucide-react'
+import { Settings, HelpCircle, ChevronDown } from 'lucide-react';
 
-import { Toggle } from '~/components/ui'
+import { Toggle } from '~/components/ui';
 import {
   getMessage,
   getSupportedLanguages,
-  getCurrentLanguage,
-} from '~/lib/i18n'
-import type { SupportedLanguage } from '~/types/storage'
+  getCurrentLanguage
+} from '~/lib/i18n';
+import type { SupportedLanguage } from '~/types/storage';
 
-const VERSION = '1.0.0'
+const VERSION = '1.0.0';
 
 export interface HeaderProps {
-  showSettings?: boolean
-  onSettingsClick?: () => void
-  onHelpClick?: () => void
-  paused?: boolean
-  onPausedChange?: (paused: boolean) => void
-  language?: SupportedLanguage | null
-  onLanguageChange?: (language: SupportedLanguage) => void
+  showSettings?: boolean;
+  onSettingsClick?: () => void;
+  onHelpClick?: () => void;
+  paused?: boolean;
+  onPausedChange?: (paused: boolean) => void;
+  language?: SupportedLanguage | null;
+  onLanguageChange?: (language: SupportedLanguage) => void;
 }
 
 export function Header({
@@ -29,10 +29,10 @@ export function Header({
   paused = false,
   onPausedChange,
   language,
-  onLanguageChange,
+  onLanguageChange
 }: HeaderProps) {
-  const supportedLanguages = getSupportedLanguages()
-  const currentLang = language ?? getCurrentLanguage()
+  const supportedLanguages = getSupportedLanguages();
+  const currentLang = language ?? getCurrentLanguage();
 
   return (
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -110,5 +110,5 @@ export function Header({
         )}
       </div>
     </header>
-  )
+  );
 }

@@ -1,210 +1,210 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react';
 
-import { storage } from '~/lib/storage'
-import { presetToDisplaySettings } from '~/lib/presetUtils'
-import { loadGoogleFont } from '~/constants/fonts'
+import { storage } from '~/lib/storage';
+import { presetToDisplaySettings } from '~/lib/presetUtils';
+import { loadGoogleFont } from '~/constants/fonts';
 import type {
   VisionSettings,
   DashboardPreset,
   DashboardDisplaySettings,
-  FontSettings,
-} from '~/types/storage'
+  FontSettings
+} from '~/types/storage';
 import {
   DEFAULT_VISION,
   DEFAULT_FONT_SETTINGS,
   DEFAULT_DISPLAY_SETTINGS,
-  getFontDefinition,
-} from '~/types/storage'
+  getFontDefinition
+} from '~/types/storage';
 
 interface UsePresetsOptions {
-  vision: VisionSettings | undefined
-  setVision: (vision: VisionSettings) => void
+  vision: VisionSettings | undefined;
+  setVision: (vision: VisionSettings) => void;
 }
 
 interface UsePresetsReturn {
   // State
-  draftDisplaySettings: DashboardDisplaySettings
-  draftPresets: DashboardPreset[]
-  selectedPresetId: string | null
-  editingPresetName: string
-  isDirty: boolean
-  visionSaved: boolean
-  showSavePresetModal: boolean
-  presetName: string
+  draftDisplaySettings: DashboardDisplaySettings;
+  draftPresets: DashboardPreset[];
+  selectedPresetId: string | null;
+  editingPresetName: string;
+  isDirty: boolean;
+  visionSaved: boolean;
+  showSavePresetModal: boolean;
+  presetName: string;
 
   // Modal controls
-  setShowSavePresetModal: (show: boolean) => void
-  setPresetName: (name: string) => void
+  setShowSavePresetModal: (show: boolean) => void;
+  setPresetName: (name: string) => void;
 
   // Preset handlers
-  handleSelectPreset: (presetId: string) => void
-  handlePresetNameChange: (name: string) => void
-  handleDeletePreset: (id: string) => Promise<void>
-  handleSaveSelectedPreset: () => Promise<void>
-  handleApplyPreset: () => Promise<void>
-  handleCreatePreset: () => Promise<void>
+  handleSelectPreset: (presetId: string) => void;
+  handlePresetNameChange: (name: string) => void;
+  handleDeletePreset: (id: string) => Promise<void>;
+  handleSaveSelectedPreset: () => Promise<void>;
+  handleApplyPreset: () => Promise<void>;
+  handleCreatePreset: () => Promise<void>;
 
   // Display settings handlers
-  handleGoalTextChange: (text: string) => void
-  handleGoalSubTextChange: (text: string) => void
-  handleTextColorChange: (color: string) => void
-  handleBackgroundTypeChange: (type: 'image' | 'color') => void
-  handleBackgroundChange: (bgId: string) => void
-  handleBackgroundColorChange: (color: string) => void
-  handleCustomBackgroundChange: (dataUrl: string | null) => void
-  handleFontSettingsChange: (fontSettings: FontSettings) => void
+  handleGoalTextChange: (text: string) => void;
+  handleGoalSubTextChange: (text: string) => void;
+  handleTextColorChange: (color: string) => void;
+  handleBackgroundTypeChange: (type: 'image' | 'color') => void;
+  handleBackgroundChange: (bgId: string) => void;
+  handleBackgroundColorChange: (color: string) => void;
+  handleCustomBackgroundChange: (dataUrl: string | null) => void;
+  handleFontSettingsChange: (fontSettings: FontSettings) => void;
 }
 
 export function usePresets({
   vision,
-  setVision,
+  setVision
 }: UsePresetsOptions): UsePresetsReturn {
   // Draft display settings (for preview, saved on button click)
   const [draftDisplaySettings, setDraftDisplaySettings] =
-    useState<DashboardDisplaySettings>(DEFAULT_DISPLAY_SETTINGS)
-  const [draftPresets, setDraftPresets] = useState<DashboardPreset[]>([])
-  const [visionSaved, setVisionSaved] = useState(false)
-  const [isDirty, setIsDirty] = useState(false)
+    useState<DashboardDisplaySettings>(DEFAULT_DISPLAY_SETTINGS);
+  const [draftPresets, setDraftPresets] = useState<DashboardPreset[]>([]);
+  const [visionSaved, setVisionSaved] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Selected preset state
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   // Preset modal state
-  const [presetName, setPresetName] = useState('')
-  const [showSavePresetModal, setShowSavePresetModal] = useState(false)
-  const [editingPresetName, setEditingPresetName] = useState('')
+  const [presetName, setPresetName] = useState('');
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false);
+  const [editingPresetName, setEditingPresetName] = useState('');
 
   // Initialize from storage (run once on mount)
   useEffect(() => {
     const initialize = async () => {
       const storedVision = (await storage.get('vision')) as
         | VisionSettings
-        | undefined
-      const visionData = storedVision || DEFAULT_VISION
+        | undefined;
+      const visionData = storedVision || DEFAULT_VISION;
 
-      const presets = visionData.presets || []
-      setDraftPresets(presets)
+      const presets = visionData.presets || [];
+      setDraftPresets(presets);
 
       if (presets.length > 0) {
         const activePreset = visionData.activePresetId
           ? presets.find((p) => p.id === visionData.activePresetId)
-          : presets[0]
-        const presetToSelect = activePreset || presets[0]
-        setSelectedPresetId(presetToSelect.id)
-        setEditingPresetName(presetToSelect.name)
-        setDraftDisplaySettings(presetToDisplaySettings(presetToSelect))
+          : presets[0];
+        const presetToSelect = activePreset || presets[0];
+        setSelectedPresetId(presetToSelect.id);
+        setEditingPresetName(presetToSelect.name);
+        setDraftDisplaySettings(presetToDisplaySettings(presetToSelect));
       } else {
         setDraftDisplaySettings(
           visionData.defaultSettings || DEFAULT_DISPLAY_SETTINGS
-        )
-        setSelectedPresetId(null)
+        );
+        setSelectedPresetId(null);
       }
-    }
+    };
 
-    initialize()
-  }, [])
+    initialize();
+  }, []);
 
   // Load Google Font when fontSettings changes
   useEffect(() => {
     if (draftDisplaySettings.fontSettings) {
       const fontDef = getFontDefinition(
         draftDisplaySettings.fontSettings.family
-      )
+      );
       if (fontDef.googleFont) {
-        loadGoogleFont(fontDef.googleFont)
+        loadGoogleFont(fontDef.googleFont);
       }
     }
-  }, [draftDisplaySettings.fontSettings])
+  }, [draftDisplaySettings.fontSettings]);
 
   // ============ Display Settings Handlers ============
   const handleGoalTextChange = useCallback((text: string) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, goalText: text }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, goalText: text }));
+    setIsDirty(true);
+  }, []);
 
   const handleGoalSubTextChange = useCallback((text: string) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, goalSubText: text }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, goalSubText: text }));
+    setIsDirty(true);
+  }, []);
 
   const handleTextColorChange = useCallback((color: string) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, textColor: color }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, textColor: color }));
+    setIsDirty(true);
+  }, []);
 
   const handleBackgroundChange = useCallback((bgId: string) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, backgroundImage: bgId }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, backgroundImage: bgId }));
+    setIsDirty(true);
+  }, []);
 
   const handleBackgroundTypeChange = useCallback((type: 'image' | 'color') => {
-    setDraftDisplaySettings((prev) => ({ ...prev, backgroundType: type }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, backgroundType: type }));
+    setIsDirty(true);
+  }, []);
 
   const handleBackgroundColorChange = useCallback((color: string) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, backgroundColor: color }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, backgroundColor: color }));
+    setIsDirty(true);
+  }, []);
 
   const handleCustomBackgroundChange = useCallback((dataUrl: string | null) => {
     setDraftDisplaySettings((prev) => ({
       ...prev,
-      customBackgroundData: dataUrl,
-    }))
-    setIsDirty(true)
-  }, [])
+      customBackgroundData: dataUrl
+    }));
+    setIsDirty(true);
+  }, []);
 
   const handleFontSettingsChange = useCallback((fontSettings: FontSettings) => {
-    setDraftDisplaySettings((prev) => ({ ...prev, fontSettings }))
-    setIsDirty(true)
-  }, [])
+    setDraftDisplaySettings((prev) => ({ ...prev, fontSettings }));
+    setIsDirty(true);
+  }, []);
 
   // ============ Preset Handlers ============
   const handleSelectPreset = useCallback(
     (presetId: string) => {
-      const preset = draftPresets.find((p) => p.id === presetId)
+      const preset = draftPresets.find((p) => p.id === presetId);
       if (preset) {
-        setSelectedPresetId(presetId)
-        setEditingPresetName(preset.name)
-        setDraftDisplaySettings(presetToDisplaySettings(preset))
-        setIsDirty(false)
+        setSelectedPresetId(presetId);
+        setEditingPresetName(preset.name);
+        setDraftDisplaySettings(presetToDisplaySettings(preset));
+        setIsDirty(false);
       }
     },
     [draftPresets]
-  )
+  );
 
   const handlePresetNameChange = useCallback((name: string) => {
-    setEditingPresetName(name)
-    setIsDirty(true)
-  }, [])
+    setEditingPresetName(name);
+    setIsDirty(true);
+  }, []);
 
   const handleDeletePreset = useCallback(
     async (id: string) => {
-      const remainingPresets = draftPresets.filter((p) => p.id !== id)
-      setDraftPresets(remainingPresets)
+      const remainingPresets = draftPresets.filter((p) => p.id !== id);
+      setDraftPresets(remainingPresets);
 
       if (id === selectedPresetId) {
-        setSelectedPresetId(null)
-        const storedVision = vision || DEFAULT_VISION
+        setSelectedPresetId(null);
+        const storedVision = vision || DEFAULT_VISION;
         setDraftDisplaySettings(
           storedVision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
-        )
+        );
       }
 
       const toSave: VisionSettings = {
         defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
         presets: remainingPresets,
         activePresetId:
-          vision?.activePresetId === id ? null : vision?.activePresetId || null,
-      }
+          vision?.activePresetId === id ? null : vision?.activePresetId || null
+      };
 
-      await storage.set('vision', toSave)
-      setVision(toSave)
-      setIsDirty(false)
+      await storage.set('vision', toSave);
+      setVision(toSave);
+      setIsDirty(false);
     },
     [draftPresets, selectedPresetId, vision, setVision]
-  )
+  );
 
   const handleSaveSelectedPreset = useCallback(async () => {
     if (
@@ -212,7 +212,7 @@ export function usePresets({
       !draftDisplaySettings.goalText.trim() ||
       !editingPresetName.trim()
     )
-      return
+      return;
 
     const updatedPresets = draftPresets.map((p) =>
       p.id === selectedPresetId
@@ -226,48 +226,48 @@ export function usePresets({
             backgroundImage: draftDisplaySettings.backgroundImage,
             backgroundColor: draftDisplaySettings.backgroundColor,
             customBackgroundData: draftDisplaySettings.customBackgroundData,
-            fontSettings: draftDisplaySettings.fontSettings,
+            fontSettings: draftDisplaySettings.fontSettings
           }
         : p
-    )
+    );
 
-    setDraftPresets(updatedPresets)
+    setDraftPresets(updatedPresets);
 
     const toSave: VisionSettings = {
       defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
       presets: updatedPresets,
-      activePresetId: vision?.activePresetId || null,
-    }
+      activePresetId: vision?.activePresetId || null
+    };
 
-    await storage.set('vision', toSave)
-    setVision(toSave)
-    setIsDirty(false)
-    setVisionSaved(true)
-    setTimeout(() => setVisionSaved(false), 2000)
+    await storage.set('vision', toSave);
+    setVision(toSave);
+    setIsDirty(false);
+    setVisionSaved(true);
+    setTimeout(() => setVisionSaved(false), 2000);
   }, [
     selectedPresetId,
     draftDisplaySettings,
     draftPresets,
     editingPresetName,
     vision,
-    setVision,
-  ])
+    setVision
+  ]);
 
   const handleApplyPreset = useCallback(async () => {
-    if (!selectedPresetId || !vision) return
+    if (!selectedPresetId || !vision) return;
 
     const toSave: VisionSettings = {
       ...vision,
-      activePresetId: selectedPresetId,
-    }
-    await storage.set('vision', toSave)
-    setVision(toSave)
-    setVisionSaved(true)
-    setTimeout(() => setVisionSaved(false), 2000)
-  }, [selectedPresetId, vision, setVision])
+      activePresetId: selectedPresetId
+    };
+    await storage.set('vision', toSave);
+    setVision(toSave);
+    setVisionSaved(true);
+    setTimeout(() => setVisionSaved(false), 2000);
+  }, [selectedPresetId, vision, setVision]);
 
   const handleCreatePreset = useCallback(async () => {
-    if (!presetName.trim()) return
+    if (!presetName.trim()) return;
 
     const newPreset: DashboardPreset = {
       id: crypto.randomUUID(),
@@ -280,28 +280,28 @@ export function usePresets({
       backgroundColor: DEFAULT_DISPLAY_SETTINGS.backgroundColor,
       customBackgroundData: null,
       fontSettings: DEFAULT_FONT_SETTINGS,
-      createdAt: new Date().toISOString(),
-    }
+      createdAt: new Date().toISOString()
+    };
 
-    const updatedPresets = [...draftPresets, newPreset]
-    setDraftPresets(updatedPresets)
+    const updatedPresets = [...draftPresets, newPreset];
+    setDraftPresets(updatedPresets);
 
     const toSave: VisionSettings = {
       defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
       presets: updatedPresets,
-      activePresetId: vision?.activePresetId || null,
-    }
+      activePresetId: vision?.activePresetId || null
+    };
 
-    await storage.set('vision', toSave)
-    setVision(toSave)
+    await storage.set('vision', toSave);
+    setVision(toSave);
 
-    setSelectedPresetId(newPreset.id)
-    setEditingPresetName(newPreset.name)
-    setDraftDisplaySettings(presetToDisplaySettings(newPreset))
-    setShowSavePresetModal(false)
-    setPresetName('')
-    setIsDirty(false)
-  }, [presetName, draftPresets, vision, setVision])
+    setSelectedPresetId(newPreset.id);
+    setEditingPresetName(newPreset.name);
+    setDraftDisplaySettings(presetToDisplaySettings(newPreset));
+    setShowSavePresetModal(false);
+    setPresetName('');
+    setIsDirty(false);
+  }, [presetName, draftPresets, vision, setVision]);
 
   return {
     // State
@@ -334,6 +334,6 @@ export function usePresets({
     handleBackgroundChange,
     handleBackgroundColorChange,
     handleCustomBackgroundChange,
-    handleFontSettingsChange,
-  }
+    handleFontSettingsChange
+  };
 }

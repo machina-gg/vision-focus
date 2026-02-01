@@ -1,50 +1,50 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging'
-import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Shield, TrendingUp } from 'lucide-react'
+import { sendToBackground } from '@plasmohq/messaging';
+import { useStorage } from '@plasmohq/storage/hook';
+import { Ban, Shield, TrendingUp } from 'lucide-react';
 
-import { GoalCard, Header, QuickBlockButton } from '~/components/features'
-import { useBackgroundStats, usePremiumStatus } from '~/hooks'
-import { extractDomain } from '~/lib/domain'
-import { getMessage, setCurrentLanguage } from '~/lib/i18n'
-import { storage } from '~/lib/storage'
+import { GoalCard, Header, QuickBlockButton } from '~/components/features';
+import { useBackgroundStats, usePremiumStatus } from '~/hooks';
+import { extractDomain } from '~/lib/domain';
+import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { storage } from '~/lib/storage';
 import type {
   AppSettings,
   VisionSettings,
-  SupportedLanguage,
-} from '~/types/storage'
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage'
+  SupportedLanguage
+} from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 
-import './styles/globals.css'
+import './styles/globals.css';
 
 function PopupApp() {
   const [settings, setSettings] = useStorage<AppSettings>(
     {
       key: 'settings',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_SETTINGS
-  )
+  );
   const [vision] = useStorage<VisionSettings>(
     {
       key: 'vision',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_VISION
-  )
-  const stats = useBackgroundStats(5000)
-  const { isPremium } = usePremiumStatus()
-  const [currentDomain, setCurrentDomain] = useState<string | undefined>()
+  );
+  const stats = useBackgroundStats(5000);
+  const { isPremium } = usePremiumStatus();
+  const [currentDomain, setCurrentDomain] = useState<string | undefined>();
   // Counter to force re-render when language changes (value unused intentionally)
-  const [, setRenderKey] = useState(0)
+  const [, setRenderKey] = useState(0);
 
   // Sync language setting with i18n module
   useEffect(() => {
     if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language)
+      setCurrentLanguage(settings.language);
     }
-  }, [settings?.language])
+  }, [settings?.language]);
 
   // Get current tab's domain
   useEffect(() => {
@@ -52,79 +52,81 @@ function PopupApp() {
       try {
         const [tab] = await chrome.tabs.query({
           active: true,
-          currentWindow: true,
-        })
+          currentWindow: true
+        });
         if (tab?.url) {
-          const domain = extractDomain(tab.url)
-          setCurrentDomain(domain || undefined)
+          const domain = extractDomain(tab.url);
+          setCurrentDomain(domain || undefined);
         }
       } catch {
         // Silently handle error - domain will be undefined
       }
-    }
+    };
 
-    getCurrentDomain()
-  }, [])
+    getCurrentDomain();
+  }, []);
 
   const handleSettingsClick = useCallback(() => {
-    chrome.runtime.openOptionsPage()
-  }, [])
+    chrome.runtime.openOptionsPage();
+  }, []);
 
   const handleHelpClick = useCallback(() => {
     // Open options page with help tab selected
-    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#help') })
-  }, [])
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#help') });
+  }, []);
 
   const handleAnalyticsClick = useCallback(() => {
     // Open options page with analytics tab selected
-    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#analytics') })
-  }, [])
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('options.html#analytics')
+    });
+  }, []);
 
   const handlePausedChange = useCallback(async (paused: boolean) => {
     try {
       await sendToBackground({
         name: 'toggle-pause',
-        body: { paused },
-      })
+        body: { paused }
+      });
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, []);
 
   const handleLanguageChange = useCallback(
     async (language: SupportedLanguage) => {
       // Update i18n module immediately
-      setCurrentLanguage(language)
+      setCurrentLanguage(language);
       // Force re-render to update all translated text
-      setRenderKey((prev) => prev + 1)
+      setRenderKey((prev) => prev + 1);
       // Save to storage
       if (settings) {
-        await setSettings({ ...settings, language })
+        await setSettings({ ...settings, language });
       }
     },
     [settings, setSettings]
-  )
+  );
 
   const handleGoalClick = useCallback(() => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') })
-  }, [])
+    chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') });
+  }, []);
 
   const handleBlock = useCallback(async (domain: string) => {
     try {
       const response = await sendToBackground({
         name: 'add-block',
-        body: { domain },
-      })
+        body: { domain }
+      });
       if (response.success) {
         // Show success feedback
-        setCurrentDomain(undefined)
+        setCurrentDomain(undefined);
       } else {
-        alert(response.error || 'Failed to add block')
+        alert(response.error || 'Failed to add block');
       }
     } catch {
       // Silently handle error
     }
-  }, [])
+  }, []);
 
   return (
     <div className="popup-container bg-white">
@@ -213,7 +215,7 @@ function PopupApp() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default PopupApp
+export default PopupApp;

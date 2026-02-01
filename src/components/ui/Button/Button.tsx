@@ -1,15 +1,15 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import React from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import React from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
-type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant
-  size?: ButtonSize
-  loading?: boolean
-  fullWidth?: boolean
-  children: ReactNode
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  fullWidth?: boolean;
+  children: ReactNode;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -18,14 +18,14 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary:
     'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500',
   danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
-  ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
-}
+  ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500'
+};
 
 const sizeStyles: Record<ButtonSize, string> = {
   sm: 'px-3 py-1.5 text-sm',
   md: 'px-4 py-2 text-base',
-  lg: 'px-6 py-3 text-lg',
-}
+  lg: 'px-6 py-3 text-lg'
+};
 
 export function Button({
   variant = 'primary',
@@ -37,7 +37,7 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const isDisabled = disabled || loading
+  const isDisabled = disabled || loading;
 
   return (
     <button
@@ -79,5 +79,5 @@ export function Button({
       )}
       {children}
     </button>
-  )
+  );
 }

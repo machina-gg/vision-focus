@@ -11,12 +11,12 @@ export const BACKGROUND_OPTIONS = [
   { id: 'thursday', name: 'Thursday' },
   { id: 'friday', name: 'Friday' },
   { id: 'saturday', name: 'Saturday' },
-  { id: 'sunday', name: 'Sunday' },
-] as const
+  { id: 'sunday', name: 'Sunday' }
+] as const;
 
-export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number]
+export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number];
 
 // Helper to get background URL
 export function getBackgroundUrl(bgId: string): string {
-  return chrome.runtime.getURL(`assets/images/backgrounds/${bgId}.jpg`)
+  return chrome.runtime.getURL(`assets/images/backgrounds/${bgId}.jpg`);
 }

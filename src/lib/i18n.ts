@@ -3,34 +3,34 @@
  * Supports manual language switching while defaulting to browser language
  */
 
-import type { SupportedLanguage } from '~/types/storage'
+import type { SupportedLanguage } from '~/types/storage';
 
 // Import messages directly
-import enMessages from '../../assets/_locales/en/messages.json'
-import jaMessages from '../../assets/_locales/ja/messages.json'
+import enMessages from '../../assets/_locales/en/messages.json';
+import jaMessages from '../../assets/_locales/ja/messages.json';
 
 type MessageFile = Record<
   string,
   { message: string; placeholders?: Record<string, { content: string }> }
->
+>;
 
 const messages: Record<SupportedLanguage, MessageFile> = {
   en: enMessages as MessageFile,
-  ja: jaMessages as MessageFile,
-}
+  ja: jaMessages as MessageFile
+};
 
 // Current language (null = use browser language)
-let currentLanguage: SupportedLanguage | null = null
+let currentLanguage: SupportedLanguage | null = null;
 
 /**
  * Get the browser's UI language
  */
 export function getBrowserLanguage(): SupportedLanguage {
   try {
-    const lang = chrome.i18n.getUILanguage()
-    return lang.startsWith('ja') ? 'ja' : 'en'
+    const lang = chrome.i18n.getUILanguage();
+    return lang.startsWith('ja') ? 'ja' : 'en';
   } catch {
-    return 'en'
+    return 'en';
   }
 }
 
@@ -38,7 +38,7 @@ export function getBrowserLanguage(): SupportedLanguage {
  * Get the effective current language
  */
 export function getCurrentLanguage(): SupportedLanguage {
-  return currentLanguage ?? getBrowserLanguage()
+  return currentLanguage ?? getBrowserLanguage();
 }
 
 /**
@@ -46,7 +46,7 @@ export function getCurrentLanguage(): SupportedLanguage {
  * @param lang - The language to set, or null to use browser language
  */
 export function setCurrentLanguage(lang: SupportedLanguage | null): void {
-  currentLanguage = lang
+  currentLanguage = lang;
 }
 
 /**
@@ -59,19 +59,19 @@ export function getMessage(
   messageName: string,
   substitutions?: string | string[]
 ): string {
-  const lang = getCurrentLanguage()
-  const messageObj = messages[lang]?.[messageName]
+  const lang = getCurrentLanguage();
+  const messageObj = messages[lang]?.[messageName];
 
   if (!messageObj) {
     // Fallback to English
-    const enMessageObj = messages.en?.[messageName]
+    const enMessageObj = messages.en?.[messageName];
     if (!enMessageObj) {
-      return messageName
+      return messageName;
     }
-    return applySubstitutions(enMessageObj.message, substitutions)
+    return applySubstitutions(enMessageObj.message, substitutions);
   }
 
-  return applySubstitutions(messageObj.message, substitutions)
+  return applySubstitutions(messageObj.message, substitutions);
 }
 
 /**
@@ -81,18 +81,18 @@ function applySubstitutions(
   message: string,
   substitutions?: string | string[]
 ): string {
-  if (!substitutions) return message
+  if (!substitutions) return message;
 
-  const subs = Array.isArray(substitutions) ? substitutions : [substitutions]
-  let result = message
+  const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
+  let result = message;
 
   subs.forEach((sub, index) => {
-    result = result.replace(`$${index + 1}`, sub)
+    result = result.replace(`$${index + 1}`, sub);
     // Also handle named placeholders like $DOMAIN$
-    result = result.replace(/\$[A-Z_]+\$/g, sub)
-  })
+    result = result.replace(/\$[A-Z_]+\$/g, sub);
+  });
 
-  return result
+  return result;
 }
 
 /**
@@ -100,14 +100,14 @@ function applySubstitutions(
  * @returns The current language code (e.g., 'en', 'ja')
  */
 export function getUILanguage(): SupportedLanguage {
-  return getCurrentLanguage()
+  return getCurrentLanguage();
 }
 
 /**
  * Check if the current language is Japanese
  */
 export function isJapanese(): boolean {
-  return getCurrentLanguage() === 'ja'
+  return getCurrentLanguage() === 'ja';
 }
 
 /**
@@ -116,7 +116,7 @@ export function isJapanese(): boolean {
  * @returns The formatted number string
  */
 export function formatNumber(num: number): string {
-  return num.toLocaleString(getCurrentLanguage())
+  return num.toLocaleString(getCurrentLanguage());
 }
 
 /**
@@ -129,19 +129,19 @@ export function formatDate(
   date: Date | string,
   options?: Intl.DateTimeFormatOptions
 ): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString(getCurrentLanguage(), options)
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString(getCurrentLanguage(), options);
 }
 
 /**
  * Get all supported languages with their display names
  */
 export function getSupportedLanguages(): {
-  code: SupportedLanguage
-  name: string
+  code: SupportedLanguage;
+  name: string;
 }[] {
   return [
     { code: 'en', name: 'English' },
-    { code: 'ja', name: '日本語' },
-  ]
+    { code: 'ja', name: '日本語' }
+  ];
 }

@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react'
-import { BarChart3, Clock, Layout, List, Settings } from 'lucide-react'
+import type { Meta, StoryObj } from '@storybook/react';
+import { BarChart3, Clock, Layout, List, Settings } from 'lucide-react';
 
-import { Tabs } from './Tabs'
+import { Tabs } from './Tabs';
 
 const meta = {
   title: 'UI/Tabs',
   component: Tabs,
   parameters: {
-    layout: 'centered',
+    layout: 'centered'
   },
   tags: ['autodocs'],
   decorators: [
@@ -17,45 +17,45 @@ const meta = {
       <div style={{ width: '500px' }}>
         <Story />
       </div>
-    ),
-  ],
-} satisfies Meta<typeof Tabs>
+    )
+  ]
+} satisfies Meta<typeof Tabs>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 const simpleTabs = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'blocklist', label: 'Block List' },
-  { id: 'analytics', label: 'Analytics' },
-]
+  { id: 'analytics', label: 'Analytics' }
+];
 
 export const Default: Story = {
   args: {
     tabs: simpleTabs,
     activeTab: 'dashboard',
-    onChange: () => {},
-  },
-}
+    onChange: () => {}
+  }
+};
 
 const tabsWithIcons = [
   { id: 'dashboard', label: 'Dashboard', icon: <Layout size={16} /> },
   { id: 'blocklist', label: 'Block List', icon: <List size={16} /> },
   { id: 'schedule', label: 'Schedule', icon: <Clock size={16} /> },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
-  { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
-]
+  { id: 'settings', label: 'Settings', icon: <Settings size={16} /> }
+];
 
 export const WithIcons: Story = {
   args: {
     tabs: tabsWithIcons,
     activeTab: 'dashboard',
-    onChange: () => {},
-  },
-}
+    onChange: () => {}
+  }
+};
 
 const InteractiveTabsTemplate = () => {
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
     <div>
@@ -70,14 +70,14 @@ const InteractiveTabsTemplate = () => {
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const Interactive: Story = {
   args: {
     tabs: tabsWithIcons,
     activeTab: 'dashboard',
-    onChange: () => {},
+    onChange: () => {}
   },
-  render: () => <InteractiveTabsTemplate />,
-}
+  render: () => <InteractiveTabsTemplate />
+};

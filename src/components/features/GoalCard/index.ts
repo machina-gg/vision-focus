@@ -1,2 +1,2 @@
-export { GoalCard } from './GoalCard'
-export type { GoalCardProps } from './GoalCard'
+export { GoalCard } from './GoalCard';
+export type { GoalCardProps } from './GoalCard';

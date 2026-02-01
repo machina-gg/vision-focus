@@ -2,11 +2,11 @@
  * Image utilities for custom background uploads
  */
 
-import { IMAGE_LIMITS } from '~/constants/limits'
+import { IMAGE_LIMITS } from '~/constants/limits';
 
 export interface ImageValidationResult {
-  valid: boolean
-  error?: string
+  valid: boolean;
+  error?: string;
 }
 
 /**
@@ -14,7 +14,7 @@ export interface ImageValidationResult {
  */
 export function validateImageFile(file: File): ImageValidationResult {
   if (!file) {
-    return { valid: false, error: 'No file provided' }
+    return { valid: false, error: 'No file provided' };
   }
 
   if (
@@ -24,18 +24,18 @@ export function validateImageFile(file: File): ImageValidationResult {
   ) {
     return {
       valid: false,
-      error: 'Unsupported file type. Please use JPEG, PNG, or WebP.',
-    }
+      error: 'Unsupported file type. Please use JPEG, PNG, or WebP.'
+    };
   }
 
   if (file.size > IMAGE_LIMITS.MAX_FILE_SIZE) {
     return {
       valid: false,
-      error: `File too large. Maximum size is ${IMAGE_LIMITS.MAX_FILE_SIZE / 1024 / 1024}MB.`,
-    }
+      error: `File too large. Maximum size is ${IMAGE_LIMITS.MAX_FILE_SIZE / 1024 / 1024}MB.`
+    };
   }
 
-  return { valid: true }
+  return { valid: true };
 }
 
 /**
@@ -43,17 +43,17 @@ export function validateImageFile(file: File): ImageValidationResult {
  */
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('Failed to load image'))
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image'));
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      img.src = e.target?.result as string
-    }
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsDataURL(file)
-  })
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -65,20 +65,20 @@ function calculateDimensions(
   maxWidth: number,
   maxHeight: number
 ): { width: number; height: number } {
-  let newWidth = width
-  let newHeight = height
+  let newWidth = width;
+  let newHeight = height;
 
   if (width > maxWidth) {
-    newWidth = maxWidth
-    newHeight = (height * maxWidth) / width
+    newWidth = maxWidth;
+    newHeight = (height * maxWidth) / width;
   }
 
   if (newHeight > maxHeight) {
-    newHeight = maxHeight
-    newWidth = (width * maxHeight) / height
+    newHeight = maxHeight;
+    newWidth = (width * maxHeight) / height;
   }
 
-  return { width: Math.round(newWidth), height: Math.round(newHeight) }
+  return { width: Math.round(newWidth), height: Math.round(newHeight) };
 }
 
 /**
@@ -88,50 +88,50 @@ export async function compressImage(
   file: File,
   maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
 ): Promise<string> {
-  const validation = validateImageFile(file)
+  const validation = validateImageFile(file);
   if (!validation.valid) {
-    throw new Error(validation.error)
+    throw new Error(validation.error);
   }
 
-  const img = await loadImage(file)
+  const img = await loadImage(file);
   const { width, height } = calculateDimensions(
     img.width,
     img.height,
     IMAGE_LIMITS.MAX_WIDTH,
     IMAGE_LIMITS.MAX_HEIGHT
-  )
+  );
 
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
 
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d');
   if (!ctx) {
-    throw new Error('Failed to get canvas context')
+    throw new Error('Failed to get canvas context');
   }
 
   // Draw image with white background (for transparency)
-  ctx.fillStyle = '#000000'
-  ctx.fillRect(0, 0, width, height)
-  ctx.drawImage(img, 0, 0, width, height)
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
 
   // Try different quality levels to get under target size
-  const targetSize = maxSizeMB * 1024 * 1024
-  let quality = 0.9
-  let dataUrl = canvas.toDataURL('image/jpeg', quality)
+  const targetSize = maxSizeMB * 1024 * 1024;
+  let quality = 0.9;
+  let dataUrl = canvas.toDataURL('image/jpeg', quality);
 
   while (dataUrl.length > targetSize && quality > 0.1) {
-    quality -= 0.1
-    dataUrl = canvas.toDataURL('image/jpeg', quality)
+    quality -= 0.1;
+    dataUrl = canvas.toDataURL('image/jpeg', quality);
   }
 
   if (dataUrl.length > targetSize) {
     throw new Error(
       `Unable to compress image below ${maxSizeMB}MB. Try a smaller image.`
-    )
+    );
   }
 
-  return dataUrl
+  return dataUrl;
 }
 
 /**
@@ -139,19 +139,19 @@ export async function compressImage(
  */
 export function getBase64Size(dataUrl: string): number {
   // Remove data URL prefix (data:image/jpeg;base64,)
-  const base64 = dataUrl.split(',')[1]
-  if (!base64) return 0
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) return 0;
 
   // Calculate size: base64 represents 3 bytes per 4 characters
-  const padding = (base64.match(/=/g) || []).length
-  return Math.floor((base64.length * 3) / 4) - padding
+  const padding = (base64.match(/=/g) || []).length;
+  return Math.floor((base64.length * 3) / 4) - padding;
 }
 
 /**
  * Format bytes to human readable string
  */
 export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
