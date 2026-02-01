@@ -1,6 +1,15 @@
-import { getAnalytics, setAnalytics, storage } from '~/lib/storage'
+import {
+  getAnalytics,
+  setAnalytics,
+  storage,
+  getSettings,
+  incrementSiteBlockCount,
+  setLastBlockedDomain,
+} from '~/lib/storage'
 import { startExtPayBackgroundListener } from '~/lib/extpay'
 import { getFeatureLimits } from '~/lib/license'
+import { extractDomain, matchesDomain } from '~/lib/domain'
+import { isWithinSchedule } from '~/lib/time'
 
 import { updateBlockRules } from './blocker'
 import { startTracking } from './tracker'
@@ -49,6 +58,64 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // Set up alarms
 chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 })
 chrome.alarms.create('check-schedule', { periodInMinutes: 1 })
+
+// Track blocked navigations and increment site block count
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  // Only track main frame navigations
+  if (details.frameId !== 0) return
+
+  const url = details.url
+  const domain = extractDomain(url)
+  if (!domain) return
+
+  const settings = await getSettings()
+
+  // Check if paused
+  if (settings.paused) return
+
+  // Check if domain is in block list
+  const isBlocked = settings.blockList.some((item) =>
+    matchesDomain(domain, item)
+  )
+  if (!isBlocked) return
+
+  // Check schedules
+  if (settings.schedules.length > 0) {
+    const isScheduled = settings.schedules.some(
+      (schedule) =>
+        schedule.enabled &&
+        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
+    )
+    if (!isScheduled) return
+  }
+
+  // Increment block count for this domain
+  await incrementSiteBlockCount(domain)
+
+  // Store last blocked domain for newtab display
+  await setLastBlockedDomain(domain)
+
+  // Also increment daily stats block count
+  const analytics = await getAnalytics()
+  const today = new Date().toISOString().slice(0, 10)
+  const todayStats = analytics.dailyStats[today] || {
+    date: today,
+    wasteTime: 0,
+    investTime: 0,
+    blockCount: 0,
+  }
+
+  await setAnalytics({
+    ...analytics,
+    dailyStats: {
+      ...analytics.dailyStats,
+      [today]: {
+        ...todayStats,
+        blockCount: todayStats.blockCount + 1,
+      },
+    },
+  })
+})
 
 // Clean up analytics based on tier limits
 async function cleanupOldAnalytics() {

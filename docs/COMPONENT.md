@@ -47,15 +47,23 @@
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名 | 種別    | 説明                       |
-| ---------------- | ------- | -------------------------- |
-| GeneralTab       | options | 一般設定（プリセット管理） |
-| BlocklistTab     | options | ブロックリスト管理         |
-| SchedulesTab     | options | スケジュール管理           |
-| AnalyticsTab     | options | 分析タブ                   |
-| PremiumTab       | options | プレミアムタブ             |
-| ScheduleModal    | modal   | スケジュール編集モーダル   |
-| NewPresetModal   | modal   | 新規プリセット作成モーダル |
+| コンポーネント名 | 種別    | 説明                         |
+| ---------------- | ------- | ---------------------------- |
+| GeneralTab       | options | スタイル設定（スタイル管理） |
+| BlocklistTab     | options | ブロックリスト管理           |
+| SchedulesTab     | options | スケジュール管理             |
+| AnalyticsTab     | options | 分析タブ                     |
+| PremiumTab       | options | プレミアムタブ               |
+| HelpTab          | options | ヘルプタブ                   |
+| ScheduleModal    | modal   | スケジュール編集モーダル     |
+| NewPresetModal   | modal   | 新規スタイル作成モーダル     |
+
+### ユーティリティ（lib）
+
+| ファイル名   | 説明                         |
+| ------------ | ---------------------------- |
+| export.ts    | CSVエクスポート機能          |
+| wallpaper.ts | 壁紙キャプチャ・ダウンロード |
 
 ### ページコンポーネント
 
@@ -436,20 +444,20 @@ function useSchedules(props: {
 
 - スケジュールの追加・編集・削除
 - 有効/無効の切り替え
-- プリセット連携（presetId）
+- スタイル連携（presetId）
 
 ---
 
 ### usePresets
 
-プリセット管理フック。
+スタイル管理フック。
 
 ```typescript
 function usePresets(props: {
   vision: VisionSettings | undefined
   setVision: (vision: VisionSettings) => void
 }): {
-  // プリセット一覧（ドラフト状態）
+  // スタイル一覧（ドラフト状態）
   draftPresets: DashboardPreset[]
   selectedPresetId: string | null
   draftDisplaySettings: DashboardDisplaySettings
@@ -463,7 +471,7 @@ function usePresets(props: {
   presetName: string
   setPresetName: (name: string) => void
 
-  // プリセット操作
+  // スタイル操作
   handleSelectPreset: (id: string | null) => void
   handleCreatePreset: () => void
   handleDeletePreset: (id: string) => void
@@ -485,7 +493,7 @@ function usePresets(props: {
 
 **機能**
 
-- プリセットの作成・選択・削除・適用
+- スタイルの作成・選択・削除・適用
 - 設定変更時のドラフト管理
 - ストレージへの永続化
 
@@ -542,7 +550,7 @@ interface Schedule {
   endTime: string // 終了時刻 (HH:mm)
   days: number[] // 曜日 (0=日, 1=月, ..., 6=土)
   enabled: boolean // 有効/無効
-  presetId?: string // このスケジュールで適用するプリセットID
+  presetId?: string // このスケジュールで適用するスタイルID
 }
 ```
 
@@ -576,8 +584,8 @@ interface DashboardPreset extends DashboardDisplaySettings {
 ```typescript
 interface VisionSettings {
   defaultSettings: DashboardDisplaySettings // デフォルト設定
-  presets: DashboardPreset[] // ユーザー作成プリセット
-  activePresetId: string | null // 現在有効なプリセットID
+  presets: DashboardPreset[] // ユーザー作成スタイル
+  activePresetId: string | null // 現在有効なスタイルID
 }
 ```
 
@@ -599,7 +607,7 @@ interface FontSettings {
 interface FeatureLimits {
   maxBlockList: number
   historyDays: number
-  maxPresets: number
+  maxPresets: number // スタイル数の上限
 }
 
 const FEATURE_LIMITS = {

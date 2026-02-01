@@ -8,17 +8,31 @@ import {
   EyeOff,
   RotateCw,
   Plus,
+  Shield,
+  Download,
+  ChevronDown,
 } from 'lucide-react'
 
 import { Card, Button, Modal, Input } from '~/components/ui'
 import { UpgradePrompt, AnalyticsChart } from '~/components/features'
 import { formatTime } from '~/lib/time'
 import { getMessage } from '~/lib/i18n'
-import type { UnblockHistory, AnalyticsData } from '~/types/storage'
+import {
+  exportBlockList,
+  exportBlockCounts,
+  exportDailyStats,
+  exportUnblockedSites,
+} from '~/lib/export'
+import type {
+  UnblockHistory,
+  AnalyticsData,
+  AppSettings,
+} from '~/types/storage'
 
 interface AnalyticsTabProps {
   unblockHistory: UnblockHistory
   analyticsData: AnalyticsData
+  settings: AppSettings | null
   isPremium: boolean
   onReblock: (domain: string) => void
   onReset: () => void
@@ -52,6 +66,7 @@ function formatRelativeTime(isoDate: string): string {
 export function AnalyticsTab({
   unblockHistory,
   analyticsData,
+  settings,
   isPremium,
   onReblock,
   onReset,
@@ -62,6 +77,7 @@ export function AnalyticsTab({
   const [showResetModal, setShowResetModal] = useState(false)
   const [newSiteDomain, setNewSiteDomain] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   const handleAddSite = () => {
     if (newSiteDomain.trim()) {
@@ -77,57 +93,199 @@ export function AnalyticsTab({
     setTimeout(() => setIsRefreshing(false), 500)
   }
 
-  // Sort unblocked sites by time spent (descending)
-  const sortedSites = useMemo(() => {
-    return Object.values(unblockHistory.sites).sort(
-      (a, b) => b.timeAfterUnblock - a.timeAfterUnblock
-    )
+  // Separate and sort tracked sites by status
+  const { blockedSites, unblockedSites } = useMemo(() => {
+    const allSites = Object.values(unblockHistory.sites)
+    const blocked = allSites
+      .filter((s) => s.status === 'blocked')
+      .sort(
+        (a, b) =>
+          new Date(b.blockedAt).getTime() - new Date(a.blockedAt).getTime()
+      )
+    const unblocked = allSites
+      .filter((s) => s.status === 'unblocked')
+      .sort((a, b) => b.timeAfterUnblock - a.timeAfterUnblock)
+    return { blockedSites: blocked, unblockedSites: unblocked }
   }, [unblockHistory.sites])
 
-  const hasUnblockedSites = sortedSites.length > 0
+  const hasTrackedSites = blockedSites.length > 0 || unblockedSites.length > 0
 
   // Calculate total time spent on unblocked sites
   const totalTimeSpent = useMemo(() => {
-    return sortedSites.reduce((sum, site) => sum + site.timeAfterUnblock, 0)
-  }, [sortedSites])
+    return unblockedSites.reduce((sum, site) => sum + site.timeAfterUnblock, 0)
+  }, [unblockedSites])
+
+  // Sort site block counts (descending by count)
+  const topBlockedSites = useMemo(() => {
+    const counts = Object.values(analyticsData.siteBlockCounts || {})
+    return counts.sort((a, b) => b.count - a.count).slice(0, 10)
+  }, [analyticsData.siteBlockCounts])
 
   const handleReset = () => {
     onReset()
     setShowResetModal(false)
   }
 
+  // Check if there's any data to export
+  const hasBlockList = (settings?.blockList?.length ?? 0) > 0
+  const hasBlockCounts =
+    Object.keys(analyticsData.siteBlockCounts || {}).length > 0
+  const hasDailyStats = Object.keys(analyticsData.dailyStats || {}).length > 0
+  const hasUnblockedData = Object.keys(unblockHistory.sites || {}).length > 0
+  const hasAnyData =
+    hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData
+
+  // Export handlers
+  const handleExportBlockList = () => {
+    if (settings?.blockList) {
+      exportBlockList(settings.blockList)
+    }
+    setShowExportMenu(false)
+  }
+
+  const handleExportBlockCounts = () => {
+    if (analyticsData.siteBlockCounts) {
+      exportBlockCounts(analyticsData.siteBlockCounts)
+    }
+    setShowExportMenu(false)
+  }
+
+  const handleExportDailyStats = () => {
+    if (analyticsData.dailyStats) {
+      exportDailyStats(analyticsData.dailyStats)
+    }
+    setShowExportMenu(false)
+  }
+
+  const handleExportUnblockedSites = () => {
+    if (isPremium) {
+      exportUnblockedSites(unblockHistory)
+    }
+    setShowExportMenu(false)
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header Card */}
+      {/* Header Card with Export */}
       <Card>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Shield className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                {getMessage('unblockedSitesTitle')}
+                {getMessage('trackedSitesTitle')}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {getMessage('unblockedSitesDescription')}
+                {getMessage('trackedSitesDescription')}
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="text-gray-500 hover:text-gray-700"
-            title={getMessage('refresh')}
-          >
-            <RotateCw
-              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
-            />
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Export Dropdown */}
+            <div className="relative">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={!hasAnyData}
+                className="flex items-center gap-1.5"
+              >
+                <Download className="w-4 h-4" />
+                {getMessage('exportData')}
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+              {showExportMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowExportMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
+                    <button
+                      onClick={handleExportBlockList}
+                      disabled={!hasBlockList}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {getMessage('exportBlockList')}
+                    </button>
+                    <button
+                      onClick={handleExportBlockCounts}
+                      disabled={!hasBlockCounts}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {getMessage('exportBlockCounts')}
+                    </button>
+                    <button
+                      onClick={handleExportDailyStats}
+                      disabled={!hasDailyStats}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {getMessage('exportDailyStats')}
+                    </button>
+                    {isPremium && (
+                      <button
+                        onClick={handleExportUnblockedSites}
+                        disabled={!hasUnblockedData}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {getMessage('exportUnblockedSites')}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            {/* Refresh Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-gray-500 hover:text-gray-700"
+              title={getMessage('refresh')}
+            >
+              <RotateCw
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+              />
+            </Button>
+          </div>
         </div>
       </Card>
+
+      {/* Top Blocked Sites */}
+      {topBlockedSites.length > 0 && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-5 h-5 text-red-500" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              {getMessage('topBlockedSites')}
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {topBlockedSites.map((site, index) => (
+              <div
+                key={site.domain}
+                className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 flex items-center justify-center text-sm font-medium text-gray-500 bg-gray-200 rounded-full">
+                    {index + 1}
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {site.domain}
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+                  <Shield className="w-3.5 h-3.5" />
+                  {getMessage('blockedTimesShort', site.count.toString())}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Add Site */}
       <Card>
@@ -155,7 +313,7 @@ export function AnalyticsTab({
       </Card>
 
       {/* Empty State */}
-      {!hasUnblockedSites && (
+      {!hasTrackedSites && (
         <Card>
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -171,32 +329,82 @@ export function AnalyticsTab({
         </Card>
       )}
 
-      {/* Unblocked Sites List */}
-      {hasUnblockedSites && (
+      {/* Blocked Sites List */}
+      {blockedSites.length > 0 && (
         <Card>
-          <div className="space-y-4">
-            {sortedSites.map((site) => (
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Lock className="w-4 h-4 text-green-600" />
+            {getMessage('statusBlocked')} ({blockedSites.length})
+          </h3>
+          <div className="space-y-3">
+            {blockedSites.map((site) => (
               <div
                 key={site.domain}
-                className="p-4 bg-gray-50 rounded-lg border border-gray-100"
+                className="p-3 bg-green-50 rounded-lg border border-green-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span className="font-medium text-gray-900 truncate">
+                        {site.domain}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                        {getMessage('statusBlocked')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {getMessage('blockedSince')}:{' '}
+                      {formatRelativeTime(site.blockedAt)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-green-600">
+                      0{getMessage('time') === 'Time' ? 'm' : '分'}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {getMessage('timeSaved')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Unblocked Sites List */}
+      {unblockedSites.length > 0 && (
+        <Card>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            {getMessage('statusUnblocked')} ({unblockedSites.length})
+          </h3>
+          <div className="space-y-3">
+            {unblockedSites.map((site) => (
+              <div
+                key={site.domain}
+                className="p-4 bg-orange-50 rounded-lg border border-orange-100"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    {/* Domain */}
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-orange-500 rounded-full" />
                       <span className="font-medium text-gray-900 truncate">
                         {site.domain}
                       </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+                        {getMessage('statusUnblocked')}
+                      </span>
                     </div>
 
-                    {/* Unblocked date */}
                     <p className="text-sm text-gray-500 mt-1">
                       {getMessage('unblockedOn')}:{' '}
-                      {formatRelativeTime(site.unblockedAt)}
+                      {site.unblockedAt
+                        ? formatRelativeTime(site.unblockedAt)
+                        : '-'}
                     </p>
 
-                    {/* Time spent */}
                     <div className="flex items-center gap-2 mt-2">
                       <Clock className="w-4 h-4 text-gray-400" />
                       {isPremium ? (
@@ -242,8 +450,8 @@ export function AnalyticsTab({
             ))}
 
             {/* Total time (Premium only) */}
-            {isPremium && sortedSites.length > 1 && (
-              <div className="pt-4 border-t border-gray-200">
+            {isPremium && unblockedSites.length > 1 && (
+              <div className="pt-4 border-t border-orange-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">
                     {getMessage('totalTimeOnUnblockedSites')}
@@ -259,7 +467,7 @@ export function AnalyticsTab({
       )}
 
       {/* Upgrade Prompt for Free Users */}
-      {hasUnblockedSites && !isPremium && (
+      {unblockedSites.length > 0 && !isPremium && (
         <Card>
           <UpgradePrompt
             variant="inline"
@@ -273,7 +481,7 @@ export function AnalyticsTab({
       )}
 
       {/* Analytics Chart (Premium only) */}
-      {hasUnblockedSites && isPremium && (
+      {unblockedSites.length > 0 && isPremium && (
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">

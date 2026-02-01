@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { storage } from '~/lib/storage'
+import { presetToDisplaySettings } from '~/lib/presetUtils'
 import { loadGoogleFont } from '~/constants/fonts'
 import type {
   VisionSettings,
@@ -91,16 +92,7 @@ export function usePresets({
         const presetToSelect = activePreset || presets[0]
         setSelectedPresetId(presetToSelect.id)
         setEditingPresetName(presetToSelect.name)
-        setDraftDisplaySettings({
-          goalText: presetToSelect.goalText,
-          goalSubText: presetToSelect.goalSubText,
-          textColor: presetToSelect.textColor,
-          backgroundType: presetToSelect.backgroundType,
-          backgroundImage: presetToSelect.backgroundImage,
-          backgroundColor: presetToSelect.backgroundColor,
-          customBackgroundData: presetToSelect.customBackgroundData,
-          fontSettings: presetToSelect.fontSettings,
-        })
+        setDraftDisplaySettings(presetToDisplaySettings(presetToSelect))
       } else {
         setDraftDisplaySettings(
           visionData.defaultSettings || DEFAULT_DISPLAY_SETTINGS
@@ -175,16 +167,7 @@ export function usePresets({
       if (preset) {
         setSelectedPresetId(presetId)
         setEditingPresetName(preset.name)
-        setDraftDisplaySettings({
-          goalText: preset.goalText,
-          goalSubText: preset.goalSubText,
-          textColor: preset.textColor,
-          backgroundType: preset.backgroundType,
-          backgroundImage: preset.backgroundImage,
-          backgroundColor: preset.backgroundColor,
-          customBackgroundData: preset.customBackgroundData,
-          fontSettings: preset.fontSettings,
-        })
+        setDraftDisplaySettings(presetToDisplaySettings(preset))
         setIsDirty(false)
       }
     },
@@ -314,16 +297,7 @@ export function usePresets({
 
     setSelectedPresetId(newPreset.id)
     setEditingPresetName(newPreset.name)
-    setDraftDisplaySettings({
-      goalText: newPreset.goalText,
-      goalSubText: newPreset.goalSubText,
-      textColor: newPreset.textColor,
-      backgroundType: newPreset.backgroundType,
-      backgroundImage: newPreset.backgroundImage,
-      backgroundColor: newPreset.backgroundColor,
-      customBackgroundData: newPreset.customBackgroundData,
-      fontSettings: newPreset.fontSettings,
-    })
+    setDraftDisplaySettings(presetToDisplaySettings(newPreset))
     setShowSavePresetModal(false)
     setPresetName('')
     setIsDirty(false)

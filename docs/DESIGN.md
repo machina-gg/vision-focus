@@ -481,23 +481,23 @@ PLASMO_PUBLIC_EXTPAY_ID=visionfocus
 
 ExtensionPayの `extpay.getUser()` で取得できる情報:
 
-| フィールド             | 型                                       | 説明                           |
-| ---------------------- | ---------------------------------------- | ------------------------------ |
-| `paid`                 | `boolean`                                | 現在有効な支払いがあるか       |
-| `paidAt`               | `Date \| null`                           | 最後の支払い日時               |
-| `installedAt`          | `Date`                                   | 拡張機能インストール日時       |
-| `trialStartedAt`       | `Date \| null`                           | トライアル開始日時             |
-| `subscriptionStatus`   | `"active" \| "past_due" \| "canceled"`   | サブスクリプション状態         |
-| `subscriptionCancelAt` | `Date \| null`                           | サブスク終了予定日時           |
+| フィールド             | 型                                     | 説明                     |
+| ---------------------- | -------------------------------------- | ------------------------ |
+| `paid`                 | `boolean`                              | 現在有効な支払いがあるか |
+| `paidAt`               | `Date \| null`                         | 最後の支払い日時         |
+| `installedAt`          | `Date`                                 | 拡張機能インストール日時 |
+| `trialStartedAt`       | `Date \| null`                         | トライアル開始日時       |
+| `subscriptionStatus`   | `"active" \| "past_due" \| "canceled"` | サブスクリプション状態   |
+| `subscriptionCancelAt` | `Date \| null`                         | サブスク終了予定日時     |
 
 ### サブスクリプションキャンセル時の動作
 
 **重要**: キャンセル後も請求期間終了までプレミアム機能が使える。
 
-| タイミング       | `user.paid` | `subscriptionStatus` | `subscriptionCancelAt` |
-| ---------------- | ----------- | -------------------- | ---------------------- |
-| キャンセル直後   | `true`      | `"active"`           | 終了日時がセット       |
-| 請求期間終了後   | `false`     | `"canceled"`         | そのまま維持           |
+| タイミング     | `user.paid` | `subscriptionStatus` | `subscriptionCancelAt` |
+| -------------- | ----------- | -------------------- | ---------------------- |
+| キャンセル直後 | `true`      | `"active"`           | 終了日時がセット       |
+| 請求期間終了後 | `false`     | `"canceled"`         | そのまま維持           |
 
 現在の実装では `user.paid` をチェックしているため、キャンセル後も請求期間終了まで正しく動作する。
 
@@ -505,7 +505,7 @@ ExtensionPayの `extpay.getUser()` で取得できる情報:
 // src/lib/extpay.ts
 export async function isExtPayPremium(): Promise<boolean> {
   const user = await getExtPayUser()
-  return user.paid  // キャンセル後も請求期間終了まで true
+  return user.paid // キャンセル後も請求期間終了まで true
 }
 ```
 

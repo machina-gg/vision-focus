@@ -2,7 +2,17 @@ import { extractDomain, matchesDomain, generateId } from '~/lib/domain'
 import { getSettings } from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
 import { BLOCKER_CONFIG } from '~/constants/limits'
-import type { AppSettings, BlockItem } from '~/types/storage'
+import type { AppSettings, BlockItem, Schedule } from '~/types/storage'
+
+// Check if any schedule is currently active
+function isAnyScheduleActive(schedules: Schedule[]): boolean {
+  if (schedules.length === 0) return true // No schedules = always active
+  return schedules.some(
+    (schedule) =>
+      schedule.enabled &&
+      isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
+  )
+}
 
 // Update declarativeNetRequest rules based on current settings
 export async function updateBlockRules(): Promise<void> {
@@ -62,25 +72,12 @@ function getActiveBlockedDomains(
   blockList: BlockItem[],
   settings: AppSettings
 ): string[] {
-  const domainsToBlock: string[] = []
-
-  for (const item of blockList) {
-    // Check schedule restrictions
-    if (settings.schedules.length > 0) {
-      const isScheduled = settings.schedules.some(
-        (schedule) =>
-          schedule.enabled &&
-          isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
-      )
-      if (!isScheduled) {
-        continue
-      }
-    }
-
-    domainsToBlock.push(item.domain)
+  // If no schedule is active, don't block anything
+  if (!isAnyScheduleActive(settings.schedules)) {
+    return []
   }
 
-  return domainsToBlock
+  return blockList.map((item) => item.domain)
 }
 
 // Check if a specific URL should be blocked
@@ -99,18 +96,8 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   )
   if (!isBlocked) return false
 
-  // Check schedules
-  if (settings.schedules.length > 0) {
-    const isScheduled = settings.schedules.some(
-      (schedule) =>
-        schedule.enabled &&
-        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
-    )
-    return isScheduled
-  }
-
-  // No schedules, always block
-  return true
+  // Check if any schedule is active
+  return isAnyScheduleActive(settings.schedules)
 }
 
 // Add domain to block list and update rules
@@ -150,4 +137,25 @@ export async function removeBlockedDomain(id: string): Promise<void> {
   const { setSettings } = await import('~/lib/storage')
   await setSettings(settings)
   await updateBlockRules()
+}
+
+// Check all open tabs and redirect any that match blocked domains
+export async function blockExistingTabs(): Promise<void> {
+  const tabs = await chrome.tabs.query({})
+  const newtabUrl = chrome.runtime.getURL('newtab.html')
+
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url) continue
+    // Skip extension pages and chrome:// pages
+    if (
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://')
+    )
+      continue
+
+    const shouldBlock = await shouldBlockUrl(tab.url)
+    if (shouldBlock) {
+      await chrome.tabs.update(tab.id, { url: newtabUrl })
+    }
+  }
 }

@@ -33,6 +33,13 @@ export interface SiteTime {
   lastUpdated: string
 }
 
+// Site block count tracking (independent of blockList)
+export interface SiteBlockCount {
+  domain: string
+  count: number // cumulative block count
+  lastBlocked: string // ISO8601 timestamp
+}
+
 // Dashboard display settings (shared between default and presets)
 export interface DashboardDisplaySettings {
   goalText: string
@@ -333,15 +340,21 @@ export interface AnalyticsData {
   dailyStats: Record<string, DailyStat> // key: YYYY-MM-DD
   siteTime: Record<string, SiteTime> // key: domain
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'> // key: domain
+  siteBlockCounts: Record<string, SiteBlockCount> // key: domain (persists even after removal from blockList)
 }
 
-// Unblocked site tracking - tracks sites that were removed from blocklist
-export interface UnblockedSite {
-  domain: string // The domain that was unblocked
-  unblockedAt: string // ISO8601 timestamp when removed from blocklist
+// Tracked site - tracks sites from when they are blocked
+export interface TrackedSite {
+  domain: string
+  status: 'blocked' | 'unblocked' // Current status
+  blockedAt: string // ISO8601 timestamp when added to blocklist
+  unblockedAt: string | null // ISO8601 timestamp when removed from blocklist (null if still blocked)
   timeAfterUnblock: number // Cumulative time spent (seconds) after unblocking
   lastActivity: string | null // ISO8601 timestamp of last activity
 }
+
+// Legacy alias for backwards compatibility
+export type UnblockedSite = TrackedSite
 
 // History of unblocked sites
 export interface UnblockHistory {
@@ -383,7 +396,7 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
 }
 
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
-  goalText: 'Focus on your goals',
+  goalText: '',
   goalSubText: '',
   textColor: '#ffffff',
   backgroundType: 'image',
@@ -425,6 +438,7 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   dailyStats: {},
   siteTime: {},
   siteCategories: {},
+  siteBlockCounts: {},
 }
 
 export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {

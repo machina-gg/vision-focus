@@ -3,7 +3,11 @@ import React from 'react'
 import { Settings, HelpCircle, ChevronDown } from 'lucide-react'
 
 import { Toggle } from '~/components/ui'
-import { getMessage, getSupportedLanguages, getCurrentLanguage } from '~/lib/i18n'
+import {
+  getMessage,
+  getSupportedLanguages,
+  getCurrentLanguage,
+} from '~/lib/i18n'
 import type { SupportedLanguage } from '~/types/storage'
 
 const VERSION = '1.0.0'
@@ -38,8 +42,12 @@ export function Header({
           <span className="text-white font-bold text-xs">VF</span>
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-gray-800 text-sm leading-tight">VisionFocus</span>
-          <span className="text-[10px] text-gray-400 leading-tight">v{VERSION}</span>
+          <span className="font-semibold text-gray-800 text-sm leading-tight">
+            VisionFocus
+          </span>
+          <span className="text-[10px] text-gray-400 leading-tight">
+            v{VERSION}
+          </span>
         </div>
       </div>
 
@@ -50,7 +58,9 @@ export function Header({
           <div className="relative">
             <select
               value={currentLang}
-              onChange={(e) => onLanguageChange(e.target.value as SupportedLanguage)}
+              onChange={(e) =>
+                onLanguageChange(e.target.value as SupportedLanguage)
+              }
               className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-2 py-1 pr-6 text-xs text-gray-600 cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               {supportedLanguages.map((lang) => (
@@ -66,7 +76,9 @@ export function Header({
         {/* Block Toggle */}
         {onPausedChange && (
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">{getMessage(paused ? 'disabled' : 'active')}</span>
+            <span className="text-xs text-gray-500">
+              {getMessage(paused ? 'disabled' : 'active')}
+            </span>
             <Toggle
               checked={!paused}
               onChange={(checked) => onPausedChange(!checked)}

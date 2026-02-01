@@ -36,13 +36,27 @@ const handler: PlasmoMessaging.MessageHandler<
     await setSettings(settings)
     await updateBlockRules()
 
-    // Add to unblock history for tracking
+    const now = new Date().toISOString()
+
+    // Update tracking history: change status to unblocked
     const history = await getUnblockHistory()
-    history.sites[removedItem.domain] = {
-      domain: removedItem.domain,
-      unblockedAt: new Date().toISOString(),
-      timeAfterUnblock: 0,
-      lastActivity: null,
+    if (history.sites[removedItem.domain]) {
+      // Update existing entry
+      history.sites[removedItem.domain].status = 'unblocked'
+      history.sites[removedItem.domain].unblockedAt = now
+      // Keep blockedAt and reset time tracking
+      history.sites[removedItem.domain].timeAfterUnblock = 0
+      history.sites[removedItem.domain].lastActivity = null
+    } else {
+      // Create new entry (for sites blocked before this feature)
+      history.sites[removedItem.domain] = {
+        domain: removedItem.domain,
+        status: 'unblocked',
+        blockedAt: removedItem.createdAt, // Use original block date
+        unblockedAt: now,
+        timeAfterUnblock: 0,
+        lastActivity: null,
+      }
     }
     await setUnblockHistory(history)
   }

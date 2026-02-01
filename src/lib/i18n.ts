@@ -9,7 +9,10 @@ import type { SupportedLanguage } from '~/types/storage'
 import enMessages from '../../assets/_locales/en/messages.json'
 import jaMessages from '../../assets/_locales/ja/messages.json'
 
-type MessageFile = Record<string, { message: string; placeholders?: Record<string, { content: string }> }>
+type MessageFile = Record<
+  string,
+  { message: string; placeholders?: Record<string, { content: string }> }
+>
 
 const messages: Record<SupportedLanguage, MessageFile> = {
   en: enMessages as MessageFile,
@@ -133,7 +136,10 @@ export function formatDate(
 /**
  * Get all supported languages with their display names
  */
-export function getSupportedLanguages(): { code: SupportedLanguage; name: string }[] {
+export function getSupportedLanguages(): {
+  code: SupportedLanguage
+  name: string
+}[] {
   return [
     { code: 'en', name: 'English' },
     { code: 'ja', name: '日本語' },

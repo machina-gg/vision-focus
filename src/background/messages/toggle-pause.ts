@@ -1,6 +1,6 @@
 import type { PlasmoMessaging } from '@plasmohq/messaging'
 
-import { updateBlockRules } from '~/background/blocker'
+import { updateBlockRules, blockExistingTabs } from '~/background/blocker'
 import { getSettings, setSettings } from '~/lib/storage'
 
 export type RequestBody = {
@@ -24,6 +24,11 @@ const handler: PlasmoMessaging.MessageHandler<
 
   // Update block rules based on new paused state
   await updateBlockRules()
+
+  // If unpausing, also block any existing tabs that match
+  if (!paused) {
+    await blockExistingTabs()
+  }
 
   res.send({
     success: true,

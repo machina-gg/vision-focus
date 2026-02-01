@@ -2,7 +2,14 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Ban, Calendar, Crown, HelpCircle, Settings, TrendingUp } from 'lucide-react'
+import {
+  Ban,
+  Calendar,
+  Crown,
+  HelpCircle,
+  Palette,
+  TrendingUp,
+} from 'lucide-react'
 
 import { Tabs } from '~/components/ui'
 import {
@@ -15,10 +22,9 @@ import {
   NewPresetModal,
   ScheduleModal,
 } from '~/components/options'
-import { useBlocklist, useSchedules, usePresets } from '~/hooks'
+import { useBlocklist, useSchedules, usePresets, usePremiumStatus } from '~/hooks'
 import { getMessage, setCurrentLanguage } from '~/lib/i18n'
 import { storage } from '~/lib/storage'
-import { checkPremiumStatus, getFeatureLimits } from '~/lib/license'
 import { openPaymentPage, openManagementPage } from '~/lib/extpay'
 import { parseDomainInput, isValidDomain } from '~/lib/domain'
 import type {
@@ -27,13 +33,7 @@ import type {
   AnalyticsData,
   UnblockHistory,
 } from '~/types/storage'
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_VISION,
-  DEFAULT_UNBLOCK_HISTORY,
-  FEATURE_LIMITS,
-  type FeatureLimits,
-} from '~/types/storage'
+import { DEFAULT_SETTINGS, DEFAULT_VISION, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage'
 
 import './styles/globals.css'
 
@@ -55,16 +55,31 @@ function OptionsApp() {
   // Read initial tab from URL hash (e.g., #help)
   const getInitialTab = () => {
     const hash = window.location.hash.slice(1) // Remove #
-    const validTabs = ['general', 'blocklist', 'schedules', 'analytics', 'license', 'help']
-    return validTabs.includes(hash) ? hash : 'general'
+    const validTabs = [
+      'blocklist',
+      'styles',
+      'schedules',
+      'analytics',
+      'license',
+      'help',
+    ]
+    // Support legacy 'general' hash
+    if (hash === 'general') return 'styles'
+    return validTabs.includes(hash) ? hash : 'blocklist'
   }
   const [activeTab, setActiveTab] = useState(getInitialTab)
+
+  // Sync URL hash with active tab
+  useEffect(() => {
+    window.location.hash = activeTab
+  }, [activeTab])
 
   // Analytics state
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     dailyStats: {},
     siteTime: {},
     siteCategories: {},
+    siteBlockCounts: {},
   })
 
   // Unblock history state
@@ -72,11 +87,8 @@ function OptionsApp() {
     DEFAULT_UNBLOCK_HISTORY
   )
 
-  // Premium state
-  const [isPremium, setIsPremium] = useState(false)
-  const [featureLimits, setFeatureLimits] = useState<FeatureLimits>(
-    FEATURE_LIMITS.free
-  )
+  // Premium status (from hook)
+  const { isPremium, featureLimits } = usePremiumStatus()
 
   // Custom hooks
   const blocklist = useBlocklist({ settings, setSettings })
@@ -102,17 +114,6 @@ function OptionsApp() {
     reloadAnalyticsData()
   }, [reloadAnalyticsData])
 
-  // Load premium status
-  useEffect(() => {
-    const loadPremiumStatus = async () => {
-      const status = await checkPremiumStatus()
-      setIsPremium(status.isPremium)
-      const limits = await getFeatureLimits()
-      setFeatureLimits(limits)
-    }
-    loadPremiumStatus()
-  }, [])
-
   // Sync language setting with i18n module
   useEffect(() => {
     if (settings?.language !== undefined) {
@@ -123,14 +124,14 @@ function OptionsApp() {
   // Tabs configuration
   const tabs = [
     {
-      id: 'general',
-      label: getMessage('general'),
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
       id: 'blocklist',
       label: getMessage('blockList'),
       icon: <Ban className="w-4 h-4" />,
+    },
+    {
+      id: 'styles',
+      label: getMessage('styles'),
+      icon: <Palette className="w-4 h-4" />,
     },
     {
       id: 'schedules',
@@ -202,6 +203,7 @@ function OptionsApp() {
         dailyStats: {},
         siteTime: {},
         siteCategories: {},
+        siteBlockCounts: {},
       }
       await storage.set('analytics', emptyAnalytics)
       setAnalyticsData(emptyAnalytics)
@@ -272,6 +274,8 @@ function OptionsApp() {
 
       history.sites[parsedDomain] = {
         domain: parsedDomain,
+        status: 'unblocked',
+        blockedAt: new Date().toISOString(),
         unblockedAt: new Date().toISOString(),
         timeAfterUnblock: 0,
         lastActivity: null,
@@ -312,8 +316,8 @@ function OptionsApp() {
           className="mb-8"
         />
 
-        {/* General Tab */}
-        {activeTab === 'general' && (
+        {/* Styles Tab */}
+        {activeTab === 'styles' && (
           <GeneralTab
             vision={vision}
             draftPresets={presets.draftPresets}
@@ -350,6 +354,7 @@ function OptionsApp() {
             blockError={blocklist.blockError}
             onAddDomain={blocklist.handleAddDomain}
             onRemoveDomain={blocklist.handleRemoveDomain}
+            siteBlockCounts={analyticsData.siteBlockCounts}
           />
         )}
 
@@ -370,6 +375,7 @@ function OptionsApp() {
           <AnalyticsTab
             unblockHistory={unblockHistory}
             analyticsData={analyticsData}
+            settings={settings}
             isPremium={isPremium}
             onReblock={handleReblock}
             onReset={handleResetAnalytics}

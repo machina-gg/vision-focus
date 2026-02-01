@@ -21,6 +21,30 @@
       }
     }
   },
+  "blockedTimes": {
+    "message": "このサイトを $COUNT$ 回ブロックしました",
+    "description": "ブロック回数表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "blockedTimesShort": {
+    "message": "$COUNT$ 回",
+    "description": "ブロック回数短縮表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "topBlockedSites": {
+    "message": "よくブロックするサイト",
+    "description": "ブロック回数ランキング見出し"
+  },
   "rememberGoal": {
     "message": "あなたの目標を思い出してください",
     "description": "目標リマインダーの見出し"
@@ -72,6 +96,10 @@
   "general": {
     "message": "一般",
     "description": "一般設定タブ"
+  },
+  "styles": {
+    "message": "スタイル",
+    "description": "スタイル設定タブ"
   },
   "blockList": {
     "message": "ブロックリスト",
@@ -696,28 +724,28 @@
     "description": "サイトカテゴリヘルプテキスト"
   },
   "dashboardPresets": {
-    "message": "プリセット",
-    "description": "プリセットセクションタイトル"
+    "message": "スタイル",
+    "description": "スタイルセクションタイトル"
   },
   "saveAsPreset": {
-    "message": "プリセットとして保存",
-    "description": "プリセット保存ボタン"
+    "message": "スタイルとして保存",
+    "description": "スタイル保存ボタン"
   },
   "savePresetDescription": {
-    "message": "現在のダッシュボード設定（目標、背景、フォント）をプリセットとして保存し、すぐに切り替えられます",
-    "description": "プリセット保存の説明"
+    "message": "現在のダッシュボード設定（目標、背景、フォント）をスタイルとして保存し、すぐに切り替えられます",
+    "description": "スタイル保存の説明"
   },
   "presetName": {
-    "message": "プリセット名",
-    "description": "プリセット名ラベル"
+    "message": "スタイル名",
+    "description": "スタイル名ラベル"
   },
   "presetNamePlaceholder": {
     "message": "例: 仕事モード、休日、朝のルーティン",
-    "description": "プリセット名入力プレースホルダー"
+    "description": "スタイル名入力プレースホルダー"
   },
   "maxPresetsReached": {
-    "message": "プリセットの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
-    "description": "最大プリセット数到達メッセージ",
+    "message": "スタイルの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "description": "最大スタイル数到達メッセージ",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -726,24 +754,24 @@
     }
   },
   "premiumFeaturePresets": {
-    "message": "最大5つのプリセットを保存",
-    "description": "プレミアム機能: ダッシュボードプリセット"
+    "message": "最大5つのスタイルを保存",
+    "description": "プレミアム機能: ダッシュボードスタイル"
   },
   "noPresets": {
-    "message": "まだプリセットがありません。ダッシュボードを設定してプリセットとして保存してください。",
-    "description": "プリセットなしメッセージ"
+    "message": "まだスタイルがありません。ダッシュボードを設定してスタイルとして保存してください。",
+    "description": "スタイルなしメッセージ"
   },
   "presetsDescription": {
-    "message": "ダッシュボード設定をプリセットとして保存し、異なる設定をすぐに切り替えられます。",
-    "description": "プリセット機能の説明"
+    "message": "ダッシュボード設定をスタイルとして保存し、異なる設定をすぐに切り替えられます。",
+    "description": "スタイル機能の説明"
   },
   "defaultPreset": {
     "message": "デフォルト",
-    "description": "デフォルトプリセット名"
+    "description": "デフォルトスタイル名"
   },
   "editingPreset": {
     "message": "「$NAME$」を編集中",
-    "description": "編集中のプリセットラベル",
+    "description": "編集中のスタイルラベル",
     "placeholders": {
       "name": {
         "content": "$1",
@@ -752,52 +780,52 @@
     }
   },
   "newPreset": {
-    "message": "新規プリセット",
-    "description": "新規プリセットボタン"
+    "message": "新規スタイル",
+    "description": "新規スタイルボタン"
   },
   "deletePresetConfirm": {
-    "message": "このプリセットを削除しますか？",
-    "description": "プリセット削除確認"
+    "message": "このスタイルを削除しますか？",
+    "description": "スタイル削除確認"
   },
   "applyPreset": {
     "message": "切り替え",
-    "description": "プリセットを適用するボタン"
+    "description": "スタイルを適用するボタン"
   },
   "activePreset": {
     "message": "設定中",
-    "description": "現在アクティブなプリセット"
+    "description": "現在アクティブなスタイル"
   },
   "noPresetsTitle": {
-    "message": "プリセットがありません",
-    "description": "プリセットがない場合のタイトル"
+    "message": "スタイルがありません",
+    "description": "スタイルがない場合のタイトル"
   },
   "noPresetsDescription": {
-    "message": "プリセットを追加して、ダッシュボードの外観をカスタマイズしましょう",
-    "description": "プリセットがない場合の説明"
+    "message": "スタイルを追加して、ダッシュボードの外観をカスタマイズしましょう",
+    "description": "スタイルがない場合の説明"
   },
   "createFirstPreset": {
-    "message": "最初のプリセットを作成",
-    "description": "最初のプリセット作成ボタン"
+    "message": "最初のスタイルを作成",
+    "description": "最初のスタイル作成ボタン"
   },
   "schedulePreset": {
-    "message": "表示するプリセット",
-    "description": "スケジュール用プリセット選択ラベル"
+    "message": "表示するスタイル",
+    "description": "スケジュール用スタイル選択ラベル"
   },
   "noPresetSelected": {
     "message": "設定しない",
-    "description": "プリセット未選択オプション"
+    "description": "スタイル未選択オプション"
   },
   "schedulePresetDescription": {
-    "message": "このスケジュールがアクティブになると、選択したプリセットが自動的に適用されます",
-    "description": "スケジュールプリセットの説明"
+    "message": "このスケジュールがアクティブになると、選択したスタイルが自動的に適用されます",
+    "description": "スケジュールスタイルの説明"
   },
   "presetLabel": {
-    "message": "プリセット",
-    "description": "プリセットラベル"
+    "message": "スタイル",
+    "description": "スタイルラベル"
   },
   "unknownPreset": {
-    "message": "不明なプリセット",
-    "description": "削除されたプリセット"
+    "message": "不明なスタイル",
+    "description": "削除されたスタイル"
   },
   "defaultSettings": {
     "message": "デフォルト",
@@ -820,16 +848,16 @@
     "description": "デフォルトに戻すボタン"
   },
   "upgradeToUsePreset": {
-    "message": "プレミアムにアップグレードしてこのプリセットを使用",
-    "description": "ロックされたプリセットのツールチップ"
+    "message": "プレミアムにアップグレードしてこのスタイルを使用",
+    "description": "ロックされたスタイルのツールチップ"
   },
   "lockedPresetWarning": {
-    "message": "現在設定中のプリセットはFreeプランでは使用できません。デフォルト設定が適用されます。",
-    "description": "アクティブなプリセットがロックされている場合の警告"
+    "message": "現在設定中のスタイルはFreeプランでは使用できません。デフォルト設定が適用されます。",
+    "description": "アクティブなスタイルがロックされている場合の警告"
   },
   "scheduleLockedPresetWarning": {
-    "message": "選択中のプリセットはFreeプランでは適用されません。",
-    "description": "スケジュールのプリセットがロックされている場合の警告"
+    "message": "選択中のスタイルはFreeプランでは適用されません。",
+    "description": "スケジュールのスタイルがロックされている場合の警告"
   },
   "featureBlocklist": {
     "message": "ブロックリスト",
@@ -868,12 +896,12 @@
     "description": "全期間履歴"
   },
   "featurePresets": {
-    "message": "プリセット",
-    "description": "機能名: プリセット"
+    "message": "スタイル",
+    "description": "機能名: スタイル"
   },
   "featurePresetCount": {
     "message": "$COUNT$件",
-    "description": "プリセット数",
+    "description": "スタイル数",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -900,6 +928,10 @@
   "premiumActiveDescription": {
     "message": "すべての機能をお楽しみいただけます",
     "description": "プレミアムアクティブ説明"
+  },
+  "premiumFeaturesIncluded": {
+    "message": "ご利用中の機能",
+    "description": "プレミアム機能一覧見出し"
   },
   "currentUsage": {
     "message": "現在の使用状況",
@@ -947,6 +979,14 @@
     "message": "機能",
     "description": "機能列ヘッダー"
   },
+  "trackedSitesTitle": {
+    "message": "サイト追跡",
+    "description": "追跡サイトのセクションタイトル"
+  },
+  "trackedSitesDescription": {
+    "message": "ブロック中・解除済みサイトの状況を追跡します。ブロック中は0分 - それがあなたの成果です！",
+    "description": "追跡サイトのセクション説明"
+  },
   "unblockedSitesTitle": {
     "message": "ブロック解除したサイトの利用状況",
     "description": "ブロック解除サイトのセクションタイトル"
@@ -954,6 +994,22 @@
   "unblockedSitesDescription": {
     "message": "ブロックリストから削除したサイトです。やっぱり時間を使ってしまっていませんか？",
     "description": "ブロック解除サイトのセクション説明"
+  },
+  "statusBlocked": {
+    "message": "ブロック中",
+    "description": "ブロック中サイトのステータスラベル"
+  },
+  "statusUnblocked": {
+    "message": "解除済み",
+    "description": "解除済みサイトのステータスラベル"
+  },
+  "blockedSince": {
+    "message": "ブロック開始",
+    "description": "ブロック開始日ラベル"
+  },
+  "timeSaved": {
+    "message": "節約した時間",
+    "description": "ブロック中サイトの節約時間ラベル"
   },
   "noUnblockedSites": {
     "message": "ブロック解除したサイトはありません",
@@ -1087,6 +1143,34 @@
     "message": "example.com",
     "description": "追跡サイト入力プレースホルダー"
   },
+  "exportData": {
+    "message": "データをエクスポート",
+    "description": "データエクスポートボタン"
+  },
+  "exportBlockList": {
+    "message": "ブロックリストをエクスポート",
+    "description": "ブロックリストエクスポートボタン"
+  },
+  "exportBlockCounts": {
+    "message": "ブロック回数をエクスポート",
+    "description": "ブロック回数エクスポートボタン"
+  },
+  "exportDailyStats": {
+    "message": "日別統計をエクスポート",
+    "description": "日別統計エクスポートボタン"
+  },
+  "exportUnblockedSites": {
+    "message": "解除サイトをエクスポート",
+    "description": "解除サイトエクスポートボタン（プレミアム）"
+  },
+  "exportAll": {
+    "message": "すべてエクスポート",
+    "description": "全データエクスポートボタン"
+  },
+  "noDataToExport": {
+    "message": "エクスポートするデータがありません",
+    "description": "エクスポートするデータがない場合のメッセージ"
+  },
   "helpGettingStarted": {
     "message": "はじめに",
     "description": "ヘルプ開始タイトル"
@@ -1144,12 +1228,12 @@
     "description": "ヘルプFAQ一時停止回答"
   },
   "helpFaqPresets": {
-    "message": "ダッシュボードプリセットとは？",
-    "description": "ヘルプFAQプリセット質問"
+    "message": "ダッシュボードスタイルとは？",
+    "description": "ヘルプFAQスタイル質問"
   },
   "helpFaqPresetsAnswer": {
-    "message": "プリセットはダッシュボード設定（目標、背景、フォント）を保存し、仕事、勉強、リラックスなど、異なる設定をすぐに切り替えられるようにします。",
-    "description": "ヘルプFAQプリセット回答"
+    "message": "スタイルはダッシュボード設定（目標、背景、フォント）を保存し、仕事、勉強、リラックスなど、異なる設定をすぐに切り替えられるようにします。",
+    "description": "ヘルプFAQスタイル回答"
   },
   "helpSupport": {
     "message": "サポート",
@@ -1166,5 +1250,35 @@
   "helpComingSoon": {
     "message": "その他のヘルプリソースは近日公開予定...",
     "description": "ヘルプ近日公開テキスト"
+  },
+  "todayBlocks": {
+    "message": "今日のブロック",
+    "description": "今日のブロック回数ラベル"
+  },
+  "topBlockedSite": {
+    "message": "よくブロック",
+    "description": "一番ブロックしているサイトラベル"
+  },
+  "blockingDays": {
+    "message": "継続日数",
+    "description": "ブロック継続日数ラベル"
+  },
+  "blockedForDays": {
+    "message": "$COUNT$日",
+    "description": "ブロック日数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "viewAnalytics": {
+    "message": "分析を見る",
+    "description": "分析リンクテキスト"
+  },
+  "noBlockedSitesYet": {
+    "message": "まだなし",
+    "description": "ブロックサイトがまだない場合のメッセージ"
   }
 }
