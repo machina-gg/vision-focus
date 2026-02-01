@@ -69,7 +69,8 @@
       "storage",
       "tabs",
       "declarativeNetRequest",
-      "alarms"
+      "alarms",
+      "webNavigation"
     ],
     "web_accessible_resources": [
       {

@@ -1,42 +1,24 @@
 import React, { useMemo } from 'react'
-import { Check, X, Crown, Lock, Sparkles } from 'lucide-react'
+import { Check, X, Crown, Sparkles } from 'lucide-react'
 
 import { Button, Card } from '~/components/ui'
 import { getMessage } from '~/lib/i18n'
-import type { AppSettings } from '~/types/storage'
 import { FEATURE_LIMITS } from '~/types/storage'
 
 interface PremiumTabProps {
-  settings: AppSettings | undefined
   isPremium: boolean
   onUpgrade: () => void
   onManageSubscription: () => void
 }
 
 export function PremiumTab({
-  settings,
   isPremium,
   onUpgrade,
   onManageSubscription,
 }: PremiumTabProps) {
-  const blockListCount = settings?.blockList.length || 0
-  const blockListLimit = FEATURE_LIMITS.free.maxBlockList
-  const usagePercent = Math.min((blockListCount / blockListLimit) * 100, 100)
-  const isNearLimit = blockListCount >= blockListLimit - 1
-  const isAtLimit = blockListCount >= blockListLimit
-
   // Comparison table data - computed to use i18n
   const comparisonFeatures = useMemo(
     () => [
-      {
-        name: getMessage('featureBlocklist'),
-        free: getMessage(
-          'featureBlocklistFree',
-          String(FEATURE_LIMITS.free.maxBlockList)
-        ),
-        premium: getMessage('featureUnlimited'),
-        highlight: true,
-      },
       {
         name: getMessage('featureHistoryRetention'),
         free: getMessage(
@@ -84,48 +66,77 @@ export function PremiumTab({
     <div className="space-y-6">
       {isPremium ? (
         // Premium user view
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {getMessage('currentPlan')}
-            </h2>
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-full text-sm font-bold shadow-sm">
-              <Crown className="w-4 h-4" />
-              Premium
-            </span>
-          </div>
+        <>
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {getMessage('currentPlan')}
+              </h2>
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-full text-sm font-bold shadow-sm">
+                <Crown className="w-4 h-4" />
+                Premium
+              </span>
+            </div>
 
-          <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-lg">
-                  {getMessage('premiumActiveTitle')}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {getMessage('premiumActiveDescription')}
-                </p>
+            <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Crown className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-lg">
+                    {getMessage('premiumActiveTitle')}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {getMessage('premiumActiveDescription')}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onManageSubscription}
-            >
-              {getMessage('manageSubscription')}
-            </Button>
-          </div>
-        </Card>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onManageSubscription}
+              >
+                {getMessage('manageSubscription')}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Premium Features List */}
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-4">
+              {getMessage('premiumFeaturesIncluded')}
+            </h3>
+
+            <div className="space-y-3">
+              {comparisonFeatures.map((feature, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 border border-amber-100 rounded-lg"
+                >
+                  <span className="text-gray-700">{feature.name}</span>
+                  <div className="flex items-center gap-2">
+                    {feature.premium === true ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <span className="font-medium text-amber-600">
+                        {feature.premium}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </>
       ) : (
         // Free user view
         <>
           {/* Usage Visualization */}
-          <Card className={isAtLimit ? 'ring-2 ring-red-200' : ''}>
+          <Card>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900">
                 {getMessage('currentUsage')}
@@ -135,71 +146,28 @@ export function PremiumTab({
               </span>
             </div>
 
-            <div className="space-y-3">
-              {/* Blocklist usage */}
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">
-                    {getMessage('featureBlocklist')}
-                  </span>
-                  <span
-                    className={`font-medium ${isAtLimit ? 'text-red-600' : isNearLimit ? 'text-amber-600' : 'text-gray-900'}`}
-                  >
-                    {blockListCount} / {blockListLimit}
-                  </span>
-                </div>
-                <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      isAtLimit
-                        ? 'bg-red-500'
-                        : isNearLimit
-                          ? 'bg-amber-500'
-                          : 'bg-blue-500'
-                    }`}
-                    style={{ width: `${usagePercent}%` }}
-                  />
-                </div>
-                {isAtLimit && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                    {getMessage('limitReachedUpgrade')}
-                  </p>
-                )}
-                {isNearLimit && !isAtLimit && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    {getMessage(
-                      'limitWarning',
-                      String(blockListLimit - blockListCount)
-                    )}
-                  </p>
-                )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-2 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500">
+                  {getMessage('historySaving')}
+                </p>
+                <p className="font-medium text-gray-900">
+                  {getMessage(
+                    'featureHistoryDays',
+                    String(FEATURE_LIMITS.free.historyDays)
+                  )}
+                </p>
               </div>
-
-              {/* Other limits */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">
-                    {getMessage('historySaving')}
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {getMessage(
-                      'featureHistoryDays',
-                      String(FEATURE_LIMITS.free.historyDays)
-                    )}
-                  </p>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">
-                    {getMessage('featurePresets')}
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {getMessage(
-                      'featureBlocklistFree',
-                      String(FEATURE_LIMITS.free.maxPresets)
-                    )}
-                  </p>
-                </div>
+              <div className="p-2 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500">
+                  {getMessage('featurePresets')}
+                </p>
+                <p className="font-medium text-gray-900">
+                  {getMessage(
+                    'featurePresetCount',
+                    String(FEATURE_LIMITS.free.maxPresets)
+                  )}
+                </p>
               </div>
             </div>
           </Card>

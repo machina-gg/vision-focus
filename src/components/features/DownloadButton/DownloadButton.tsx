@@ -95,19 +95,21 @@ export function DownloadButton({
         )}
       </button>
 
-      {/* Resolution Menu */}
+      {/* Resolution Menu - excluded from wallpaper capture */}
       {isOpen && (
         <>
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
+            data-html2canvas-ignore="true"
           />
 
           {/* Menu */}
           <div
             ref={menuRef}
             className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+            data-html2canvas-ignore="true"
           >
             <div className="p-2 border-b border-gray-100">
               <p className="text-xs font-medium text-gray-500 uppercase">

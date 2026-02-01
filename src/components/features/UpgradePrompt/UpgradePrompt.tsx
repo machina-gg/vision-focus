@@ -21,7 +21,6 @@ export interface UpgradePromptProps {
 }
 
 const PREMIUM_FEATURES = [
-  'premiumFeatureUnlimitedBlocklist',
   'premiumFeatureUnlimitedHistory',
   'premiumFeatureCustomBackground',
   'premiumFeatureReports',

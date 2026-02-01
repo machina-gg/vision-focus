@@ -10,7 +10,7 @@ import {
   setAnalytics,
 } from '~/lib/storage'
 import { canAddToBlocklist } from '~/lib/license'
-import { updateBlockRules } from '../blocker'
+import { updateBlockRules, blockExistingTabs } from '../blocker'
 import type { AddBlockRequest, AddBlockResponse } from '~/types/messages'
 
 export type { AddBlockRequest, AddBlockResponse }
@@ -56,29 +56,48 @@ const handler: PlasmoMessaging.MessageHandler<
     return
   }
 
+  const now = new Date().toISOString()
+
   // Add to block list
   settings.blockList.push({
     id: generateId(),
     domain: parsedDomain,
     isWildcard,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
   })
 
   await setSettings(settings)
   await updateBlockRules()
+  await blockExistingTabs()
 
-  // Remove from unblock history if present (re-blocking)
+  // Add or update tracking history
   const history = await getUnblockHistory()
-  if (history.sites[parsedDomain]) {
-    delete history.sites[parsedDomain]
-    await setUnblockHistory(history)
 
-    // Also clean up analytics data for this domain
-    const analytics = await getAnalytics()
-    if (analytics.siteTime[parsedDomain]) {
-      delete analytics.siteTime[parsedDomain]
-      await setAnalytics(analytics)
+  if (history.sites[parsedDomain]) {
+    // Re-blocking: update status back to blocked, reset time
+    history.sites[parsedDomain].status = 'blocked'
+    history.sites[parsedDomain].blockedAt = now
+    history.sites[parsedDomain].unblockedAt = null
+    history.sites[parsedDomain].timeAfterUnblock = 0
+    history.sites[parsedDomain].lastActivity = null
+  } else {
+    // New block: create tracking entry
+    history.sites[parsedDomain] = {
+      domain: parsedDomain,
+      status: 'blocked',
+      blockedAt: now,
+      unblockedAt: null,
+      timeAfterUnblock: 0,
+      lastActivity: null,
     }
+  }
+  await setUnblockHistory(history)
+
+  // Clean up analytics data for this domain (reset time tracking)
+  const analytics = await getAnalytics()
+  if (analytics.siteTime[parsedDomain]) {
+    delete analytics.siteTime[parsedDomain]
+    await setAnalytics(analytics)
   }
 
   res.send({ success: true })

@@ -5,6 +5,20 @@ export interface ToggleProps {
   onChange: (checked: boolean) => void
   label?: string
   disabled?: boolean
+  size?: 'sm' | 'md'
+}
+
+const sizeClasses = {
+  sm: {
+    button: 'h-5 w-9',
+    thumb: 'h-4 w-4',
+    translate: 'translate-x-4',
+  },
+  md: {
+    button: 'h-6 w-11',
+    thumb: 'h-5 w-5',
+    translate: 'translate-x-5',
+  },
 }
 
 export function Toggle({
@@ -12,7 +26,10 @@ export function Toggle({
   onChange,
   label,
   disabled = false,
+  size = 'md',
 }: ToggleProps) {
+  const classes = sizeClasses[size]
+
   return (
     <label className="inline-flex items-center gap-3 cursor-pointer">
       <button
@@ -22,7 +39,7 @@ export function Toggle({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`
-          relative inline-flex h-6 w-11 shrink-0
+          relative inline-flex ${classes.button} shrink-0
           cursor-pointer rounded-full border-2 border-transparent
           transition-colors duration-200 ease-in-out
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
@@ -32,10 +49,10 @@ export function Toggle({
       >
         <span
           className={`
-            pointer-events-none inline-block h-5 w-5
+            pointer-events-none inline-block ${classes.thumb}
             transform rounded-full bg-white shadow ring-0
             transition duration-200 ease-in-out
-            ${checked ? 'translate-x-5' : 'translate-x-0'}
+            ${checked ? classes.translate : 'translate-x-0'}
           `}
         />
       </button>

@@ -12,7 +12,7 @@
 - **実施内容**: コード品質とセキュリティの改善
 - **変更ファイル**:
   - src/background/messages/tracker-heartbeat.ts
-    - マジックナンバー（60*1000）を定数化
+    - マジックナンバー（60\*1000）を定数化
     - www変換ロジックをヘルパー関数（normalizeDomain, domainsMatch）に抽出
   - src/options.tsx
     - ドメイン入力検証を追加（parseDomainInput, isValidDomain）

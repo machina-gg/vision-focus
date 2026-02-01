@@ -1,14 +1,20 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 
-import { sendToBackground } from '@plasmohq/messaging'
 import { useStorage } from '@plasmohq/storage/hook'
-import { Settings } from 'lucide-react'
+import { Settings, ShieldX } from 'lucide-react'
 
 import { DownloadButton } from '~/components/features'
-import { MiniStats, GoalDisplay } from '~/components/newtab'
+import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab'
+import { useBackgroundStats, usePremiumStatus } from '~/hooks'
+import { getMessage, setCurrentLanguage } from '~/lib/i18n'
+import { presetToDisplaySettings } from '~/lib/presetUtils'
+import {
+  getLastBlockedDomain,
+  clearLastBlockedDomain,
+  getSiteBlockCount,
+} from '~/lib/storage'
 import { isWithinSchedule } from '~/lib/time'
 import { storage } from '~/lib/storage'
-import { checkPremiumStatus } from '~/lib/license'
 import {
   getBackgroundUrl,
   loadGoogleFont,
@@ -18,11 +24,13 @@ import type {
   VisionSettings,
   DashboardDisplaySettings,
   AppSettings,
+  AnalyticsData,
 } from '~/types/storage'
 import {
   DEFAULT_VISION,
   DEFAULT_DISPLAY_SETTINGS,
   DEFAULT_SETTINGS,
+  DEFAULT_ANALYTICS,
   FEATURE_LIMITS,
   getFontDefinition,
 } from '~/types/storage'
@@ -52,27 +60,48 @@ function NewtabApp() {
     },
     DEFAULT_SETTINGS
   )
-  const [stats, setStats] = useState({
-    wasteTime: 0,
-    investTime: 0,
-    blockCount: 0,
-  })
+  const [analytics] = useStorage<AnalyticsData>(
+    {
+      key: 'analytics',
+      instance: storage,
+    },
+    DEFAULT_ANALYTICS
+  )
+  const stats = useBackgroundStats(10000)
+  const { isPremium } = usePremiumStatus()
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState('')
-  const [isPremium, setIsPremium] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Blocked site info (shown when redirected from a blocked site)
+  const [blockedInfo, setBlockedInfo] = useState<{
+    domain: string
+    count: number
+  } | null>(null)
 
   // Time tick for schedule checking (updates when tab becomes visible)
   const [timeTick, setTimeTick] = useState(0)
 
-  // Check premium status
+  // Check if we were redirected from a blocked site
   useEffect(() => {
-    const loadPremiumStatus = async () => {
-      const status = await checkPremiumStatus()
-      setIsPremium(status.isPremium)
+    const loadBlockedInfo = async () => {
+      const domain = await getLastBlockedDomain()
+      if (domain) {
+        const count = await getSiteBlockCount(domain)
+        setBlockedInfo({ domain, count })
+        // Clear it so it doesn't show on next new tab
+        await clearLastBlockedDomain()
+      }
     }
-    loadPremiumStatus()
+    loadBlockedInfo()
   }, [])
+
+  // Sync language setting with i18n module
+  useEffect(() => {
+    if (settings?.language !== undefined) {
+      setCurrentLanguage(settings.language)
+    }
+  }, [settings?.language])
 
   // Re-check schedule when tab becomes visible
   useEffect(() => {
@@ -118,19 +147,7 @@ function NewtabApp() {
           (p) => p.id === activeScheduleWithPreset.presetId
         )
         if (schedulePreset) {
-          return {
-            goalText: schedulePreset.goalText,
-            goalSubText: schedulePreset.goalSubText,
-            textColor: schedulePreset.textColor,
-            backgroundType: schedulePreset.backgroundType,
-            backgroundImage: schedulePreset.backgroundImage,
-            backgroundColor: schedulePreset.backgroundColor,
-            // Custom background requires premium
-            customBackgroundData: isPremium
-              ? schedulePreset.customBackgroundData
-              : null,
-            fontSettings: schedulePreset.fontSettings,
-          }
+          return presetToDisplaySettings(schedulePreset, isPremium)
         }
       }
       // If preset is not available (beyond free limit), fall through to next priority
@@ -144,19 +161,7 @@ function NewtabApp() {
           (p) => p.id === vision.activePresetId
         )
         if (activePreset) {
-          return {
-            goalText: activePreset.goalText,
-            goalSubText: activePreset.goalSubText,
-            textColor: activePreset.textColor,
-            backgroundType: activePreset.backgroundType,
-            backgroundImage: activePreset.backgroundImage,
-            backgroundColor: activePreset.backgroundColor,
-            // Custom background requires premium
-            customBackgroundData: isPremium
-              ? activePreset.customBackgroundData
-              : null,
-            fontSettings: activePreset.fontSettings,
-          }
+          return presetToDisplaySettings(activePreset, isPremium)
         }
       }
       // If preset is not available (beyond free limit), fall through to default
@@ -205,20 +210,30 @@ function NewtabApp() {
   const goalSubText = displaySettings.goalSubText
   const textColor = displaySettings.textColor
 
-  // Fetch stats from background
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await sendToBackground({ name: 'get-stats' })
-        setStats(response)
-      } catch {
-        // Silently handle error - stats will refresh on next interval
-      }
-    }
+  // Calculate blocking days for the blocked site
+  const blockingDays = useMemo(() => {
+    if (!blockedInfo?.domain || !settings?.blockList) return null
 
-    fetchStats()
-    const interval = setInterval(fetchStats, 10000)
-    return () => clearInterval(interval)
+    // Find the block item for this domain
+    const blockItem = settings.blockList.find(
+      (item) =>
+        item.domain === blockedInfo.domain ||
+        (item.isWildcard &&
+          blockedInfo.domain.endsWith(item.domain.replace('*.', '.')))
+    )
+
+    if (!blockItem?.createdAt) return null
+
+    const createdDate = new Date(blockItem.createdAt)
+    const now = new Date()
+    const diffTime = now.getTime() - createdDate.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    return Math.max(1, diffDays) // At least 1 day
+  }, [blockedInfo?.domain, settings?.blockList])
+
+  const handleAnalyticsClick = useCallback(() => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#analytics') })
   }, [])
 
   const handleStartEdit = useCallback(() => {
@@ -258,6 +273,92 @@ function NewtabApp() {
     chrome.runtime.openOptionsPage()
   }, [])
 
+  // Check if user has any presets configured
+  const hasPresets = (vision?.presets?.length ?? 0) > 0
+
+  // Simple block page UI (when no presets are configured)
+  if (!hasPresets) {
+    return (
+      <div
+        ref={containerRef}
+        className="newtab-container relative flex flex-col items-center justify-center"
+        style={{ backgroundColor: '#1a1a2e' }}
+      >
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-md px-8 text-center">
+          {/* Block Icon */}
+          <div className="mb-6">
+            <div className="w-24 h-24 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
+              <ShieldX className="w-12 h-12 text-red-400" />
+            </div>
+          </div>
+
+          {/* Block Message */}
+          {blockedInfo ? (
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {getMessage('siteBlocked')}
+              </h1>
+              <p className="text-gray-300 mb-4">{blockedInfo.domain}</p>
+              <p className="text-red-300 text-sm">
+                {getMessage('blockedTimes', blockedInfo.count.toString())}
+              </p>
+            </div>
+          ) : (
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white mb-2">
+                VisionFocus
+              </h1>
+              <p className="text-gray-400">{getMessage('rememberGoal')}</p>
+            </div>
+          )}
+
+          {/* Mini Stats */}
+          <MiniStats
+            blockCount={stats.blockCount}
+            blockingDays={blockingDays}
+            isPremium={isPremium}
+            onAnalyticsClick={handleAnalyticsClick}
+          />
+
+          {/* Blocked Sites List */}
+          <BlockedSitesList
+            blockList={settings?.blockList || []}
+            blockCounts={analytics?.siteBlockCounts || {}}
+          />
+
+          {/* Setup CTA */}
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="text-gray-400 text-sm mb-3">
+              {getMessage('noPresetsDescription')}
+            </p>
+            <button
+              onClick={handleSettingsClick}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              {getMessage('createFirstPreset')}
+            </button>
+          </div>
+        </div>
+
+        {/* Settings Button - excluded from wallpaper capture */}
+        <div
+          className="absolute bottom-6 right-6"
+          data-html2canvas-ignore="true"
+        >
+          <button
+            onClick={handleSettingsClick}
+            className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Full dashboard UI (when presets are configured)
   return (
     <div
       ref={containerRef}
@@ -277,6 +378,23 @@ function NewtabApp() {
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-2xl px-8 text-center">
+        {/* Blocked Site Info */}
+        {blockedInfo && (
+          <div className="mb-8 animate-fade-in">
+            <div className="inline-flex items-center gap-3 bg-red-500/20 backdrop-blur-sm rounded-xl px-6 py-4 border border-red-500/30">
+              <ShieldX className="w-6 h-6 text-red-400" />
+              <div className="text-left">
+                <p className="text-white font-medium">
+                  {getMessage('siteBlockedMessage', blockedInfo.domain)}
+                </p>
+                <p className="text-red-200 text-sm">
+                  {getMessage('blockedTimes', blockedInfo.count.toString())}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Goal Text */}
         <div className="mb-12">
           <GoalDisplay
@@ -297,14 +415,24 @@ function NewtabApp() {
 
         {/* Mini Stats */}
         <MiniStats
-          wasteTime={stats.wasteTime}
-          investTime={stats.investTime}
           blockCount={stats.blockCount}
+          blockingDays={blockingDays}
+          isPremium={isPremium}
+          onAnalyticsClick={handleAnalyticsClick}
+        />
+
+        {/* Blocked Sites List */}
+        <BlockedSitesList
+          blockList={settings?.blockList || []}
+          blockCounts={analytics?.siteBlockCounts || {}}
         />
       </div>
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-3">
+      {/* Bottom Controls - excluded from wallpaper capture */}
+      <div
+        className="absolute bottom-6 right-6 flex items-center gap-3"
+        data-html2canvas-ignore="true"
+      >
         {/* Download Wallpaper Button (Premium) */}
         {isPremium && containerRef.current && (
           <DownloadButton

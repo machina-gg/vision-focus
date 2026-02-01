@@ -1,11 +1,57 @@
 /**
  * i18n helper for Chrome extension
- * Uses chrome.i18n API with fallback to English
+ * Supports manual language switching while defaulting to browser language
  */
+
+import type { SupportedLanguage } from '~/types/storage'
+
+// Import messages directly
+import enMessages from '../../assets/_locales/en/messages.json'
+import jaMessages from '../../assets/_locales/ja/messages.json'
+
+type MessageFile = Record<
+  string,
+  { message: string; placeholders?: Record<string, { content: string }> }
+>
+
+const messages: Record<SupportedLanguage, MessageFile> = {
+  en: enMessages as MessageFile,
+  ja: jaMessages as MessageFile,
+}
+
+// Current language (null = use browser language)
+let currentLanguage: SupportedLanguage | null = null
+
+/**
+ * Get the browser's UI language
+ */
+export function getBrowserLanguage(): SupportedLanguage {
+  try {
+    const lang = chrome.i18n.getUILanguage()
+    return lang.startsWith('ja') ? 'ja' : 'en'
+  } catch {
+    return 'en'
+  }
+}
+
+/**
+ * Get the effective current language
+ */
+export function getCurrentLanguage(): SupportedLanguage {
+  return currentLanguage ?? getBrowserLanguage()
+}
+
+/**
+ * Set the current language
+ * @param lang - The language to set, or null to use browser language
+ */
+export function setCurrentLanguage(lang: SupportedLanguage | null): void {
+  currentLanguage = lang
+}
 
 /**
  * Get a localized message
- * @param messageName - The message name from _locales messages.json
+ * @param messageName - The message name from messages.json
  * @param substitutions - Optional substitutions for placeholders
  * @returns The localized message or the message name if not found
  */
@@ -13,32 +59,55 @@ export function getMessage(
   messageName: string,
   substitutions?: string | string[]
 ): string {
-  try {
-    const message = chrome.i18n.getMessage(messageName, substitutions)
-    return message || messageName
-  } catch {
-    // Fallback for non-extension context (e.g., Storybook)
-    return messageName
+  const lang = getCurrentLanguage()
+  const messageObj = messages[lang]?.[messageName]
+
+  if (!messageObj) {
+    // Fallback to English
+    const enMessageObj = messages.en?.[messageName]
+    if (!enMessageObj) {
+      return messageName
+    }
+    return applySubstitutions(enMessageObj.message, substitutions)
   }
+
+  return applySubstitutions(messageObj.message, substitutions)
 }
 
 /**
- * Get the current UI language
+ * Apply substitutions to a message
+ */
+function applySubstitutions(
+  message: string,
+  substitutions?: string | string[]
+): string {
+  if (!substitutions) return message
+
+  const subs = Array.isArray(substitutions) ? substitutions : [substitutions]
+  let result = message
+
+  subs.forEach((sub, index) => {
+    result = result.replace(`$${index + 1}`, sub)
+    // Also handle named placeholders like $DOMAIN$
+    result = result.replace(/\$[A-Z_]+\$/g, sub)
+  })
+
+  return result
+}
+
+/**
+ * Get the current UI language (for compatibility)
  * @returns The current language code (e.g., 'en', 'ja')
  */
-export function getUILanguage(): string {
-  try {
-    return chrome.i18n.getUILanguage()
-  } catch {
-    return 'en'
-  }
+export function getUILanguage(): SupportedLanguage {
+  return getCurrentLanguage()
 }
 
 /**
  * Check if the current language is Japanese
  */
 export function isJapanese(): boolean {
-  return getUILanguage().startsWith('ja')
+  return getCurrentLanguage() === 'ja'
 }
 
 /**
@@ -47,7 +116,7 @@ export function isJapanese(): boolean {
  * @returns The formatted number string
  */
 export function formatNumber(num: number): string {
-  return num.toLocaleString(getUILanguage())
+  return num.toLocaleString(getCurrentLanguage())
 }
 
 /**
@@ -61,5 +130,18 @@ export function formatDate(
   options?: Intl.DateTimeFormatOptions
 ): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString(getUILanguage(), options)
+  return d.toLocaleDateString(getCurrentLanguage(), options)
+}
+
+/**
+ * Get all supported languages with their display names
+ */
+export function getSupportedLanguages(): {
+  code: SupportedLanguage
+  name: string
+}[] {
+  return [
+    { code: 'en', name: 'English' },
+    { code: 'ja', name: '日本語' },
+  ]
 }

@@ -29,6 +29,10 @@ export interface GetStatsResponse {
   wasteTime: number
   investTime: number
   blockCount: number
+  topBlockedSite: {
+    domain: string
+    count: number
+  } | null
 }
 
 // Set Site Category

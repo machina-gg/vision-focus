@@ -21,6 +21,30 @@
       }
     }
   },
+  "blockedTimes": {
+    "message": "You've blocked this site $COUNT$ times",
+    "description": "Block count display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "blockedTimesShort": {
+    "message": "$COUNT$ blocks",
+    "description": "Block count short display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "topBlockedSites": {
+    "message": "Most Blocked Sites",
+    "description": "Block count ranking heading"
+  },
   "rememberGoal": {
     "message": "Remember your goal",
     "description": "Goal reminder heading"
@@ -61,9 +85,21 @@
     "message": "Settings",
     "description": "Settings page title"
   },
+  "paused": {
+    "message": "Paused",
+    "description": "Paused toggle label"
+  },
+  "help": {
+    "message": "Help",
+    "description": "Help button label"
+  },
   "general": {
     "message": "General",
     "description": "General settings tab"
+  },
+  "styles": {
+    "message": "Styles",
+    "description": "Styles settings tab"
   },
   "blockList": {
     "message": "Block List",
@@ -84,6 +120,14 @@
   "addSiteToBlock": {
     "message": "Add Site to Block",
     "description": "Add block input heading"
+  },
+  "blockWebsites": {
+    "message": "Block Websites",
+    "description": "Block websites section heading"
+  },
+  "block": {
+    "message": "Block",
+    "description": "Block button text"
   },
   "domainPlaceholder": {
     "message": "example.com or *.example.com",
@@ -680,28 +724,28 @@
     "description": "Site category help text"
   },
   "dashboardPresets": {
-    "message": "Presets",
-    "description": "Presets section title"
+    "message": "Styles",
+    "description": "Styles section title"
   },
   "saveAsPreset": {
-    "message": "Save as Preset",
-    "description": "Save as preset button"
+    "message": "Save as Style",
+    "description": "Save as style button"
   },
   "savePresetDescription": {
-    "message": "Save the current dashboard settings (goal, background, font) as a preset for quick switching",
-    "description": "Save preset description"
+    "message": "Save the current dashboard settings (goal, background, font) as a style for quick switching",
+    "description": "Save style description"
   },
   "presetName": {
-    "message": "Preset Name",
-    "description": "Preset name label"
+    "message": "Style Name",
+    "description": "Style name label"
   },
   "presetNamePlaceholder": {
     "message": "e.g., Work Mode, Weekend, Morning Routine",
-    "description": "Preset name input placeholder"
+    "description": "Style name input placeholder"
   },
   "maxPresetsReached": {
-    "message": "Maximum presets reached ($COUNT$). Upgrade to Premium for more slots.",
-    "description": "Max presets reached message",
+    "message": "Maximum styles reached ($COUNT$). Upgrade to Premium for more slots.",
+    "description": "Max styles reached message",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -710,24 +754,24 @@
     }
   },
   "premiumFeaturePresets": {
-    "message": "Save up to 5 dashboard presets",
-    "description": "Premium feature: dashboard presets"
+    "message": "Save up to 5 styles",
+    "description": "Premium feature: dashboard styles"
   },
   "noPresets": {
-    "message": "No presets saved yet. Configure your dashboard and save it as a preset.",
-    "description": "No presets message"
+    "message": "No styles saved yet. Configure your dashboard and save it as a style.",
+    "description": "No styles message"
   },
   "presetsDescription": {
-    "message": "Save your dashboard settings as presets to quickly switch between different configurations.",
-    "description": "Presets feature description"
+    "message": "Save your dashboard settings as styles to quickly switch between different configurations.",
+    "description": "Styles feature description"
   },
   "defaultPreset": {
     "message": "Default",
-    "description": "Default preset name"
+    "description": "Default style name"
   },
   "editingPreset": {
     "message": "Editing \"$NAME$\"",
-    "description": "Currently editing preset label",
+    "description": "Currently editing style label",
     "placeholders": {
       "name": {
         "content": "$1",
@@ -736,52 +780,52 @@
     }
   },
   "newPreset": {
-    "message": "New Preset",
-    "description": "New preset button"
+    "message": "New Style",
+    "description": "New style button"
   },
   "deletePresetConfirm": {
-    "message": "Delete this preset?",
-    "description": "Delete preset confirmation"
+    "message": "Delete this style?",
+    "description": "Delete style confirmation"
   },
   "applyPreset": {
     "message": "Apply",
-    "description": "Apply preset button"
+    "description": "Apply style button"
   },
   "activePreset": {
     "message": "Active",
-    "description": "Currently active preset"
+    "description": "Currently active style"
   },
   "noPresetsTitle": {
-    "message": "No Presets",
-    "description": "Title when no presets exist"
+    "message": "No Styles",
+    "description": "Title when no styles exist"
   },
   "noPresetsDescription": {
-    "message": "Add a preset to customize your dashboard appearance",
-    "description": "Description when no presets exist"
+    "message": "Add a style to customize your dashboard appearance",
+    "description": "Description when no styles exist"
   },
   "createFirstPreset": {
-    "message": "Create First Preset",
-    "description": "Create first preset button"
+    "message": "Create First Style",
+    "description": "Create first style button"
   },
   "schedulePreset": {
-    "message": "Display Preset",
-    "description": "Schedule preset selection label"
+    "message": "Display Style",
+    "description": "Schedule style selection label"
   },
   "noPresetSelected": {
     "message": "None",
-    "description": "No preset selected option"
+    "description": "No style selected option"
   },
   "schedulePresetDescription": {
-    "message": "When this schedule becomes active, the selected preset will be automatically applied",
-    "description": "Schedule preset description"
+    "message": "When this schedule becomes active, the selected style will be automatically applied",
+    "description": "Schedule style description"
   },
   "presetLabel": {
-    "message": "Preset",
-    "description": "Preset label"
+    "message": "Style",
+    "description": "Style label"
   },
   "unknownPreset": {
-    "message": "Unknown preset",
-    "description": "Deleted preset"
+    "message": "Unknown style",
+    "description": "Deleted style"
   },
   "defaultSettings": {
     "message": "Default",
@@ -795,21 +839,25 @@
     "message": "Active",
     "description": "Active label"
   },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Disabled label"
+  },
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
   },
   "upgradeToUsePreset": {
-    "message": "Upgrade to Premium to use this preset",
-    "description": "Tooltip for locked preset"
+    "message": "Upgrade to Premium to use this style",
+    "description": "Tooltip for locked style"
   },
   "lockedPresetWarning": {
-    "message": "The currently selected preset is not available on the Free plan. Default settings will be applied.",
-    "description": "Warning when active preset is locked"
+    "message": "The currently selected style is not available on the Free plan. Default settings will be applied.",
+    "description": "Warning when active style is locked"
   },
   "scheduleLockedPresetWarning": {
-    "message": "The selected preset will not be applied on the Free plan.",
-    "description": "Warning when schedule preset is locked"
+    "message": "The selected style will not be applied on the Free plan.",
+    "description": "Warning when schedule style is locked"
   },
   "featureBlocklist": {
     "message": "Block List",
@@ -848,12 +896,12 @@
     "description": "All time history"
   },
   "featurePresets": {
-    "message": "Presets",
-    "description": "Feature name: presets"
+    "message": "Styles",
+    "description": "Feature name: styles"
   },
   "featurePresetCount": {
-    "message": "$COUNT$ presets",
-    "description": "Preset count",
+    "message": "$COUNT$ styles",
+    "description": "Style count",
     "placeholders": {
       "count": {
         "content": "$1",
@@ -880,6 +928,10 @@
   "premiumActiveDescription": {
     "message": "Enjoy all features without limits",
     "description": "Premium active description"
+  },
+  "premiumFeaturesIncluded": {
+    "message": "What's Included",
+    "description": "Premium features included heading"
   },
   "currentUsage": {
     "message": "Current Usage",
@@ -927,6 +979,14 @@
     "message": "Feature",
     "description": "Feature column header"
   },
+  "trackedSitesTitle": {
+    "message": "Site Tracking",
+    "description": "Tracked sites section title"
+  },
+  "trackedSitesDescription": {
+    "message": "Track your blocked and unblocked sites. Blocked sites show 0 time - that's your discipline!",
+    "description": "Tracked sites section description"
+  },
   "unblockedSitesTitle": {
     "message": "Unblocked Sites Usage",
     "description": "Unblocked sites section title"
@@ -934,6 +994,22 @@
   "unblockedSitesDescription": {
     "message": "These sites were removed from your block list. Are you still spending time on them?",
     "description": "Unblocked sites section description"
+  },
+  "statusBlocked": {
+    "message": "Blocked",
+    "description": "Status label for blocked sites"
+  },
+  "statusUnblocked": {
+    "message": "Unblocked",
+    "description": "Status label for unblocked sites"
+  },
+  "blockedSince": {
+    "message": "Blocked since",
+    "description": "Blocked since label"
+  },
+  "timeSaved": {
+    "message": "Time saved",
+    "description": "Time saved label for blocked sites"
   },
   "noUnblockedSites": {
     "message": "No unblocked sites",
@@ -1066,5 +1142,143 @@
   "trackSitePlaceholder": {
     "message": "example.com",
     "description": "Track site input placeholder"
+  },
+  "exportData": {
+    "message": "Export Data",
+    "description": "Export data button"
+  },
+  "exportBlockList": {
+    "message": "Export Block List",
+    "description": "Export block list button"
+  },
+  "exportBlockCounts": {
+    "message": "Export Block Counts",
+    "description": "Export block counts button"
+  },
+  "exportDailyStats": {
+    "message": "Export Daily Stats",
+    "description": "Export daily stats button"
+  },
+  "exportUnblockedSites": {
+    "message": "Export Unblocked Sites",
+    "description": "Export unblocked sites button (premium)"
+  },
+  "exportAll": {
+    "message": "Export All",
+    "description": "Export all data button"
+  },
+  "noDataToExport": {
+    "message": "No data to export",
+    "description": "Message when there's no data to export"
+  },
+  "helpGettingStarted": {
+    "message": "Getting Started",
+    "description": "Help getting started title"
+  },
+  "helpGettingStartedDescription": {
+    "message": "Learn the basics of VisionFocus",
+    "description": "Help getting started description"
+  },
+  "helpBlockSites": {
+    "message": "Block Distracting Sites",
+    "description": "Help block sites title"
+  },
+  "helpBlockSitesDescription": {
+    "message": "Add domains to your block list from the popup or settings. Use wildcards (*.example.com) to block all subdomains.",
+    "description": "Help block sites description"
+  },
+  "helpSchedules": {
+    "message": "Set Up Schedules",
+    "description": "Help schedules title"
+  },
+  "helpSchedulesDescription": {
+    "message": "Create schedules to automatically enable blocking during specific times and days.",
+    "description": "Help schedules description"
+  },
+  "helpDashboard": {
+    "message": "Customize Your Dashboard",
+    "description": "Help dashboard title"
+  },
+  "helpDashboardDescription": {
+    "message": "Personalize your new tab page with your goals, background images, and fonts to stay motivated.",
+    "description": "Help dashboard description"
+  },
+  "helpFaq": {
+    "message": "FAQ",
+    "description": "Help FAQ title"
+  },
+  "helpFaqDescription": {
+    "message": "Frequently asked questions",
+    "description": "Help FAQ description"
+  },
+  "helpFaqWildcard": {
+    "message": "How do wildcard blocks work?",
+    "description": "Help FAQ wildcard question"
+  },
+  "helpFaqWildcardAnswer": {
+    "message": "Use *.example.com to block all subdomains (like news.example.com, blog.example.com). Use example.com without wildcard to block only the main domain.",
+    "description": "Help FAQ wildcard answer"
+  },
+  "helpFaqPause": {
+    "message": "How do I temporarily disable blocking?",
+    "description": "Help FAQ pause question"
+  },
+  "helpFaqPauseAnswer": {
+    "message": "Toggle the 'Paused' switch in the popup header to temporarily disable all blocking. Remember to turn it back on!",
+    "description": "Help FAQ pause answer"
+  },
+  "helpFaqPresets": {
+    "message": "What are dashboard styles?",
+    "description": "Help FAQ styles question"
+  },
+  "helpFaqPresetsAnswer": {
+    "message": "Styles save your dashboard settings (goal, background, fonts) so you can quickly switch between different configurations for work, study, or relaxation.",
+    "description": "Help FAQ styles answer"
+  },
+  "helpSupport": {
+    "message": "Support",
+    "description": "Help support title"
+  },
+  "helpSupportDescription": {
+    "message": "Need help? We're here for you",
+    "description": "Help support description"
+  },
+  "helpReportIssue": {
+    "message": "Report an issue on GitHub",
+    "description": "Help report issue link"
+  },
+  "helpComingSoon": {
+    "message": "More help resources coming soon...",
+    "description": "Help coming soon text"
+  },
+  "todayBlocks": {
+    "message": "Today's Blocks",
+    "description": "Today's block count label"
+  },
+  "topBlockedSite": {
+    "message": "Most Blocked",
+    "description": "Top blocked site label"
+  },
+  "blockingDays": {
+    "message": "Blocking Days",
+    "description": "Days since blocking started label"
+  },
+  "blockedForDays": {
+    "message": "$COUNT$ days",
+    "description": "Number of days blocked",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "viewAnalytics": {
+    "message": "View Analytics",
+    "description": "View analytics link text"
+  },
+  "noBlockedSitesYet": {
+    "message": "None yet",
+    "description": "No blocked sites yet message"
   }
 }
