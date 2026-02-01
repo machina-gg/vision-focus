@@ -12,182 +12,107 @@
 
 ## 2. カラーパレット
 
-| 用途             | カラー  | Tailwind  | 使用箇所                   |
-| ---------------- | ------- | --------- | -------------------------- |
-| Primary          | #3B82F6 | blue-500  | ボタン、リンク、アクセント |
-| Primary Dark     | #2563EB | blue-600  | ホバー状態                 |
-| Background       | #FFFFFF | white     | ページ背景                 |
-| Surface          | #F9FAFB | gray-50   | カード背景、セクション     |
-| Text Primary     | #1F2937 | gray-800  | 見出し、本文               |
-| Text Secondary   | #6B7280 | gray-500  | 補足テキスト、ラベル       |
-| Border           | #E5E7EB | gray-200  | 境界線、区切り             |
-| Success / Invest | #22C55E | green-500 | 投資時間、成功表示         |
-| Warning / Block  | #F59E0B | amber-500 | ブロック回数               |
-| Danger / Waste   | #EF4444 | red-500   | 浪費時間、エラー、削除     |
+### メインカラー
 
-### 色の意味
+| 用途 | カラー | Tailwind | 意味 |
+|------|--------|----------|------|
+| Primary | #3B82F6 | blue-500 | 集中、信頼、行動 |
+| Primary Dark | #2563EB | blue-600 | ホバー状態 |
 
-- **青（Primary）**: 集中、信頼、行動
-- **緑（Invest）**: 成長、生産的な時間
-- **赤（Waste）**: 警告、浪費した時間
-- **琥珀（Block）**: 注意、ブロック機能
+### セマンティックカラー
+
+| 用途 | カラー | Tailwind | 意味 |
+|------|--------|----------|------|
+| Success / Invest | #22C55E | green-500 | 成長、生産的な時間 |
+| Warning / Block | #F59E0B | amber-500 | 注意、ブロック機能 |
+| Danger / Waste | #EF4444 | red-500 | 警告、浪費した時間 |
+| Premium | #F59E0B | amber-500 | プレミアム機能、Crown |
+
+### ニュートラルカラー
+
+| 用途 | カラー | Tailwind |
+|------|--------|----------|
+| Background | #FFFFFF | white |
+| Surface | #F9FAFB | gray-50 |
+| Text Primary | #1F2937 | gray-800 |
+| Text Secondary | #6B7280 | gray-500 |
+| Border | #E5E7EB | gray-200 |
 
 ## 3. タイポグラフィ
 
-| 要素        | サイズ | ウェイト | Tailwind               |
-| ----------- | ------ | -------- | ---------------------- |
-| H1          | 36px   | Bold     | text-4xl font-bold     |
-| H2          | 30px   | Bold     | text-3xl font-bold     |
-| H3          | 24px   | Semibold | text-2xl font-semibold |
-| H4          | 20px   | Semibold | text-xl font-semibold  |
-| Body        | 16px   | Normal   | text-base              |
-| Small       | 14px   | Normal   | text-sm                |
-| Caption     | 12px   | Medium   | text-xs font-medium    |
-| Stats Value | 24px   | Bold     | text-2xl font-bold     |
+### 原則
 
-- **フォントファミリー**: システムフォント（font-sans）
-  - 読みやすさとパフォーマンスを両立
-  - OS ネイティブの美しいフォント表示
+- **フォントファミリー**: システムフォント（font-sans）をベースに、ダッシュボードではGoogle Fontsも使用可能
+- **階層**: 見出し（Bold）→ 本文（Normal）→ 補足（Small）の明確な階層
+- **可読性**: 十分なコントラスト、適切な行間
+
+### ダッシュボード目標テキスト
+
+- ユーザーがカスタマイズ可能（フォント、サイズ、ウェイト）
+- 20種類以上のGoogle Fontsから選択可能
 
 ## 4. スペーシング
 
-| 用途               | サイズ | Tailwind     |
-| ------------------ | ------ | ------------ |
-| セクション間       | 16px   | space-y-4    |
-| カード内余白       | 16px   | p-4          |
-| コンポーネント間   | 12px   | gap-3        |
-| テキスト間         | 8px    | gap-2 / mb-2 |
-| アイコンとテキスト | 8px    | gap-2        |
+### 原則
 
-### ポップアップのレイアウト
+- **一貫性**: Tailwindのスペーシングスケール（4px単位）を使用
+- **余白**: 詰めすぎず、適度な余白で視認性を確保
+- **グルーピング**: 関連要素は近く、異なる要素は離す
+
+### ポップアップ
 
 - 幅: 360px（固定）
-- 高さ: 400px〜480px（コンテンツに応じて）
-- 内側余白: 16px（p-4）
+- 高さ: コンテンツに応じて可変
 
-## 5. コンポーネントスタイル
+## 5. コンポーネント設計原則
 
-### ボタン
+### 一貫性のルール
 
-| バリアント | スタイル                                |
-| ---------- | --------------------------------------- |
-| Primary    | 背景: blue-500、白文字、hover: blue-600 |
-| Secondary  | 白背景、gray-300 枠線、hover: gray-50   |
-| Danger     | 背景: red-500、白文字、hover: red-600   |
-| Ghost      | 透明背景、hover: gray-100               |
+- **角丸**: ボタン=rounded-lg、カード=rounded-xl、入力=rounded-md
+- **影**: 必要最小限（elevated cardのみshadow-md）
+- **ホバー**: 色の変化で状態を示す
 
-- 角丸: rounded-lg（8px）
-- サイズ: sm(py-1.5 px-3), md(py-2 px-4), lg(py-3 px-6)
-- フォーカスリング: ring-2 ring-offset-2
+### プレミアム機能の表現
 
-### カード
+- Crownアイコン + amber系カラー
+- ロック状態: 薄いオーバーレイ + ロックアイコン
+- アップグレード導線: banner / card / inline の3バリアント
 
-| バリアント | スタイル                      |
-| ---------- | ----------------------------- |
-| Default    | 背景: gray-50、枠線: gray-200 |
-| Outlined   | 背景: white、枠線: gray-200   |
-| Elevated   | 背景: white、shadow-md        |
+### コンポーネント詳細
 
-- 角丸: rounded-xl（12px）
-- クリッカブル時: hover で border-primary-300
+Storybookおよび `src/components/` を参照。
 
-### 入力フォーム
+## 6. アセット
 
-- 枠線: gray-300
-- フォーカス時: ring-2 ring-primary-500
-- エラー時: border-red-500、ring-red-500
-- 角丸: rounded-md（6px）
-- 内側余白: px-3 py-2
+### アイコン
 
-### 統計カード
+**Lucide React** を使用。アイコン選定は一貫性を重視。
 
-| タイプ  | 背景色   | テキスト色 |
-| ------- | -------- | ---------- |
-| Waste   | red-50   | red-600    |
-| Invest  | green-50 | green-600  |
-| Block   | amber-50 | amber-600  |
-| Neutral | gray-50  | gray-600   |
+### 背景画像
 
-## 6. アイコン
+`assets/images/backgrounds/` を参照。
 
-**ライブラリ**: Lucide React
-
-| 用途         | アイコン      |
-| ------------ | ------------- |
-| 設定         | Settings      |
-| 目標         | Target        |
-| 編集         | Edit2         |
-| ロック       | Lock / Unlock |
-| ブロック     | Shield        |
-| 時間         | Clock         |
-| 投資         | TrendingUp    |
-| ブロック回数 | Ban           |
-| 閉じる       | X             |
-
-- アイコンサイズ: 16px（w-4 h-4）〜20px（w-5 h-5）
-- 色: 親要素に合わせて currentColor を使用
-
-## 7. 必要な画像一覧
-
-### 画像スタイルガイド
-
-- **スタイル**: フラットイラスト / 写真風（ダッシュボード背景）
-- **トーン**: 落ち着いた、プロフェッショナル
-- **配色**: ブルー系をベースに、自然な色調
-- **テイスト**: モチベーショナル、集中を促す
+- デフォルト背景（default-1〜5）
+- 曜日別背景（monday〜sunday）
 
 ### ブランド
 
-| ファイル名  | パス                | サイズ  | 背景 | プロンプト                                                                                                        |
-| ----------- | ------------------- | ------- | ---- | ----------------------------------------------------------------------------------------------------------------- |
-| icon.png    | /assets/icon.png    | 128x128 | 透過 | グラデーションブルー（#3B82F6→#2563EB）の四角形に白文字「VF」、モダンなサンセリフ体、ミニマルでプロフェッショナル |
-| icon-16.png | /assets/icon-16.png | 16x16   | 透過 | 上記アイコンの16x16版                                                                                             |
-| icon-32.png | /assets/icon-32.png | 32x32   | 透過 | 上記アイコンの32x32版                                                                                             |
-| icon-48.png | /assets/icon-48.png | 48x48   | 透過 | 上記アイコンの48x48版                                                                                             |
+`assets/` を参照。
 
-### ダッシュボード / ブロックページ背景
+- icon.png（128x128）- Plasmoが自動リサイズ
 
-| ファイル名    | パス                                     | サイズ    | 背景 | プロンプト                                                                                                         |
-| ------------- | ---------------------------------------- | --------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
-| default-1.png | /assets/images/backgrounds/default-1.png | 1024x1024 | あり | 朝日に照らされた山頂からの眺望、霧がかった谷、希望と達成感を感じさせる風景写真、ブルーとオレンジのグラデーション空 |
-| default-2.png | /assets/images/backgrounds/default-2.png | 1024x1024 | あり | 静かな森の中の一本道、木漏れ日、集中と瞑想を連想させる落ち着いた雰囲気、緑とブルーの自然なトーン                   |
-| default-3.png | /assets/images/backgrounds/default-3.png | 1024x1024 | あり | ミニマルなデスクトップ、ノートとコーヒー、集中を促すクリーンなワークスペース、ソフトな自然光                       |
+### Chrome Web Store用
 
-### Chrome Web Store 用
+`assets/store/` を参照（実装後に作成）。
 
-| ファイル名        | パス                            | サイズ   | 背景 | プロンプト                                                                                                     |
-| ----------------- | ------------------------------- | -------- | ---- | -------------------------------------------------------------------------------------------------------------- |
-| promo-small.png   | /assets/store/promo-small.png   | 440x280  | あり | VisionFocusロゴ中央、「Focus on what matters」テキスト、グラデーションブルー背景、プロフェッショナルでクリーン |
-| promo-large.png   | /assets/store/promo-large.png   | 920x680  | あり | ポップアップUIのスクリーンショット＋機能説明テキスト、3つのアイコン（分析・ブロック・モチベーション）          |
-| promo-marquee.png | /assets/store/promo-marquee.png | 1400x560 | あり | ダッシュボード画面のモックアップ、目標テキストが表示された状態、ブルー系の統一感のあるデザイン                 |
-| screenshot-1.png  | /assets/store/screenshot-1.png  | 1280x800 | あり | ポップアップUIのスクリーンショット、目標カード・統計・ロックダウンボタンが見える状態                           |
-| screenshot-2.png  | /assets/store/screenshot-2.png  | 1280x800 | あり | ダッシュボード（新規タブ）画面、背景画像に目標テキストがオーバーレイ                                           |
-| screenshot-3.png  | /assets/store/screenshot-3.png  | 1280x800 | あり | ブロックページ、「今これをしていて良いのか？」と問いかける画面                                                 |
-| screenshot-4.png  | /assets/store/screenshot-4.png  | 1280x800 | あり | オプション画面、分析タブでサイト利用時間のグラフが表示された状態                                               |
-
-### 画像生成時の注意
-
-- **背景列の凡例**: `透過` = 背景透過必須 / `あり` = 背景あり（透過不要）
-- 上記スタイルガイドに従い、統一感のあるスタイルで生成する
-- ブランドカラー（blue-500, blue-600）を意識する
-- プロンプトは具体的に書く（被写体、構図、雰囲気、色調など）
-- Chrome Web Store のスクリーンショットは実際のUI実装後に撮影
-
-## 8. モーション / アニメーション
-
-- **トランジション**: 200ms ease-in-out
-- **ホバー効果**: 色の変化、背景色の変化
-- **ロックダウン有効時**: animate-pulse（点滅）
-- **モーダル**: フェードイン（backdrop-blur-sm）
-
-## 9. アクセシビリティ
+## 7. アクセシビリティ
 
 - コントラスト比: WCAG AA 準拠（4.5:1 以上）
 - フォーカス表示: ring-2 ring-offset-2
-- インタラクティブ要素: role 属性、tabIndex の適切な設定
-- アイコン単独使用時: aria-label の付与
+- インタラクティブ要素: role属性、tabIndexの適切な設定
+- アイコン単独使用時: aria-labelの付与
 
-## 10. 参考サイト・イメージ
+## 8. 参考サイト
 
 - **Notion**: ミニマルで機能的なUI
 - **Linear**: プロフェッショナルな色使い、シャープなデザイン
