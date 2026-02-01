@@ -7,8 +7,8 @@ description: デプロイを行う
 1. Vercel MCP の設定確認
    - Vercel MCP が設定されていない場合 → 以下を案内：
      「Vercel MCP が設定されていません。
-     docs/SETUP_VERCEL_MCP.md の手順に従って設定してください。
-     設定後、再度 /project:deploy を実行してください」
+      .claude/docs/SETUP_VERCEL_MCP.md の手順に従って設定してください。
+      設定後、再度 /project:deploy を実行してください」
 
 2. デプロイ前の確認
    - `npm run build` でビルドが成功するか確認
@@ -62,11 +62,3 @@ description: デプロイを行う
    - デプロイ URL を追記
    - 本番環境の情報を追加
 
-9. **【必須】reports/WORK_LOG.md に作業履歴を追記**
-   - 日付（## YYYY-MM-DD 形式）
-   - フェーズ名（### デプロイ）
-   - 実施内容
-   - デプロイ URL
-   - 設定した項目（環境変数、Analytics など）
-     ※ 新しい履歴はファイル上部に追記
-     ※ このステップを省略しないこと

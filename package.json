@@ -1,9 +1,9 @@
 {
   "name": "vision-focus",
   "displayName": "VisionFocus",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Control your vision, realize your ideals - A productivity Chrome extension",
-  "author": "",
+  "author": "machina-gg",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",

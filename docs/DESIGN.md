@@ -55,105 +55,26 @@
 
 ## 2. ディレクトリ構成
 
-Plasmoのファイルベース規約に従った構成。
+Plasmoのファイルベース規約に従った構成。詳細は実際のソースコードを参照。
 
 ```
 vision-focus/
 ├── src/
-│   ├── popup.tsx             # ポップアップUI（Plasmo自動認識）
-│   ├── newtab.tsx            # 新規タブ/ダッシュボード（Plasmo自動認識）
-│   ├── options.tsx           # オプション画面（Plasmo自動認識）
-│   ├── tabs/                 # 追加タブページ
-│   │   └── blocked.tsx       # ブロックページ
+│   ├── popup.tsx             # ポップアップUI
+│   ├── newtab.tsx            # 新規タブ/ダッシュボード
+│   ├── options.tsx           # オプション画面
 │   ├── background/           # Service Worker
-│   │   ├── index.ts          # メインエントリ（Plasmo自動認識）
-│   │   ├── blocker.ts        # declarativeNetRequestによるブロック
-│   │   ├── tracker.ts        # 時間追跡（タブAPI経由）
-│   │   └── messages/         # メッセージハンドラ
-│   │       ├── add-block.ts
-│   │       ├── remove-block.ts
-│   │       ├── get-stats.ts
-│   │       ├── toggle-lockdown.ts
-│   │       ├── unblock-challenge.ts
-│   │       ├── tracker-heartbeat.ts  # Content Scriptからのハートビート
-│   │       └── set-site-category.ts  # サイトカテゴリ設定
-│   ├── contents/             # Content Scripts（Plasmo自動認識）
-│   │   └── tracker.ts        # ページ滞在時間計測（ユーザーアクティビティ検出）
+│   ├── contents/             # Content Scripts
 │   ├── components/           # 共通コンポーネント
-│   │   ├── ui/               # 汎用UI部品
-│   │   │   ├── Button/
-│   │   │   ├── Card/
-│   │   │   ├── Input/
-│   │   │   ├── Modal/
-│   │   │   ├── Toggle/
-│   │   │   ├── Badge/
-│   │   │   └── Tabs/
-│   │   ├── features/         # 機能コンポーネント
-│   │   │   ├── GoalCard/
-│   │   │   ├── QuickBlockButton/
-│   │   │   ├── UpgradePrompt/    # プレミアムアップグレード促進
-│   │   │   ├── ImageUploader/    # 背景画像アップロード（Premium）
-│   │   │   ├── FontPicker/       # フォントカスタマイズ（20種類以上）
-│   │   │   ├── AnalyticsChart/   # 分析グラフ（recharts）
-│   │   │   ├── ReportCard/       # 週次/月次レポート
-│   │   │   ├── DownloadButton/   # 壁紙ダウンロード（Premium）
-│   │   │   └── SiteCategoryManager/  # サイトカテゴリ管理
-│   │   ├── newtab/           # 新規タブ用コンポーネント
-│   │   │   ├── GoalDisplay/      # 目標表示・編集
-│   │   │   └── MiniStats/        # ミニ統計カード
-│   │   └── options/          # オプション画面用コンポーネント
-│   │       ├── GeneralTab/       # 一般設定（プリセット管理）
-│   │       ├── BlocklistTab/     # ブロックリスト管理
-│   │       ├── SchedulesTab/     # スケジュール管理
-│   │       ├── AnalyticsTab/     # 分析タブ
-│   │       ├── PremiumTab/       # プレミアムタブ
-│   │       └── modals/           # モーダル
-│   │           ├── ScheduleModal/    # スケジュール編集（プリセット選択対応）
-│   │           └── NewPresetModal/   # 新規プリセット作成
 │   ├── hooks/                # カスタムフック
-│   │   ├── index.ts          # エクスポート
-│   │   ├── useBlocklist.ts   # ブロックリスト管理
-│   │   ├── useSchedules.ts   # スケジュール管理
-│   │   └── usePresets.ts     # プリセット管理
 │   ├── lib/                  # ユーティリティ
-│   │   ├── storage.ts        # @plasmohq/storage設定
-│   │   ├── i18n.ts           # 多言語対応ヘルパー
-│   │   ├── time.ts           # 時間計算・スケジュール判定
-│   │   ├── domain.ts         # ドメイン抽出・マッチング
-│   │   ├── license.ts        # ライセンス管理
-│   │   ├── gumroad.ts        # Gumroad API連携
-│   │   ├── devMode.ts        # 開発者モード
-│   │   ├── image.ts          # 画像圧縮・検証
-│   │   ├── reports.ts        # レポート生成
-│   │   └── wallpaper.ts      # 壁紙キャプチャ
-│   ├── types/                # 型定義
-│   │   └── storage.ts        # 全ストレージスキーマ・型定義
-│   ├── styles/               # グローバルCSS
-│   │   └── globals.css
-│   └── test/                 # テストセットアップ
-│       └── setup.ts
-├── assets/                   # 静的アセット（Plasmo規約）
+│   ├── constants/            # 定数定義
+│   └── types/                # 型定義
+├── assets/                   # 静的アセット
 │   ├── _locales/             # 多言語リソース
-│   │   ├── en/
-│   │   │   └── messages.json
-│   │   └── ja/
-│   │       └── messages.json
-│   ├── icon.png              # 拡張アイコン（Plasmoが自動リサイズ）
-│   └── images/               # 背景画像等
-│       └── backgrounds/
-│           ├── default-1.png
-│           ├── default-2.png
-│           └── default-3.png
-├── .storybook/               # Storybook設定
-├── e2e/                      # E2Eテスト（未実装）
+│   └── images/               # 画像
 ├── docs/                     # ドキュメント
-├── reports/                  # レポート
-├── .plasmo/                  # Plasmoビルドキャッシュ（.gitignore）
-├── build/                    # ビルド出力（.gitignore）
-├── tailwind.config.ts        # Tailwind設定
-├── vitest.config.ts          # Vitest設定
-├── tsconfig.json             # TypeScript設定
-└── package.json              # Plasmo設定含む
+└── package.json
 ```
 
 ### Plasmoファイル規約
@@ -163,7 +84,6 @@ vision-focus/
 | `popup.tsx`           | ポップアップ画面       |
 | `newtab.tsx`          | 新規タブオーバーライド |
 | `options.tsx`         | オプション画面         |
-| `tabs/*.tsx`          | 追加タブページ         |
 | `background/index.ts` | Service Worker         |
 | `contents/*.ts`       | Content Scripts        |
 | `assets/`             | 静的アセット           |
@@ -181,107 +101,13 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 | Background (Service Worker) | @plasmohq/storage                | データの読み書き、他コンテキストへの通知 |
 | Popup / Newtab / Options    | React useState + useStorage hook | UIローカル状態 + ストレージ同期          |
 
-### @plasmohq/storage の使用
+### データモデル
 
-```typescript
-import { Storage } from "@plasmohq/storage"
-import { useStorage } from "@plasmohq/storage/hook"
-
-// Background側
-const storage = new Storage()
-await storage.set("settings", { ... })
-
-// UI側（React hook）
-const [settings, setSettings] = useStorage<Settings>("settings")
-```
-
-### ストレージ構造
-
-```typescript
-interface StorageSchema {
-  // 設定
-  settings: AppSettings
-  // ダッシュボード設定
-  vision: VisionSettings
-  // 分析データ
-  analytics: AnalyticsData
-}
-
-// アプリ設定
-interface AppSettings {
-  blockList: BlockItem[] // ブロックリスト
-  schedules: Schedule[] // 時間帯指定（プリセット連携対応）
-}
-
-// ダッシュボード表示設定（プリセットとデフォルトで共通）
-interface DashboardDisplaySettings {
-  goalText: string // 目標テキスト
-  goalSubText: string // サブテキスト
-  textColor: string // テキスト色
-  backgroundType: 'image' | 'color'
-  backgroundImage: string // 背景画像ID
-  backgroundColor: string // 背景色
-  customBackgroundData: string | null // Base64アップロード画像（Premium）
-  fontSettings: FontSettings // フォント設定
-}
-
-// ダッシュボードプリセット
-interface DashboardPreset extends DashboardDisplaySettings {
-  id: string
-  name: string
-  createdAt: string
-}
-
-// ビジョン設定
-interface VisionSettings {
-  defaultSettings: DashboardDisplaySettings // デフォルト設定
-  presets: DashboardPreset[] // ユーザー作成プリセット
-  activePresetId: string | null // 現在有効なプリセットID
-}
-
-// フォント設定
-interface FontSettings {
-  family: FontFamily // フォントファミリー（20種類以上）
-  size: 'sm' | 'md' | 'lg' | 'xl'
-  weight: 'normal' | 'medium' | 'semibold' | 'bold'
-}
-
-// 分析データ
-interface AnalyticsData {
-  dailyStats: Record<string, DailyStat> // 日別統計
-  siteTime: Record<string, SiteTime> // サイト別滞在時間
-  siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>
-}
-
-// スケジュール（プリセット連携）
-interface Schedule {
-  id: string
-  name: string
-  startTime: string // HH:mm
-  endTime: string // HH:mm
-  days: number[] // 0=Sun, 1=Mon, ..., 6=Sat
-  enabled: boolean
-  presetId?: string // このスケジュールで適用するプリセットID
-}
-
-// 機能制限
-const FEATURE_LIMITS = {
-  free: {
-    maxBlockList: Infinity, // Unlimited for all users
-    historyDays: 7,
-    maxPresets: 1,
-  },
-  premium: {
-    maxBlockList: Infinity,
-    historyDays: Infinity,
-    maxPresets: 5,
-  },
-}
-```
+詳細は [DATA_MODEL.md](./DATA_MODEL.md) を参照。
 
 ### コンテキスト間通信
 
-@plasmohq/messaging を使用したシンプルな通信。
+@plasmohq/messaging を使用。
 
 ```
 ┌─────────────┐    @plasmohq/messaging          ┌─────────────┐
@@ -295,63 +121,48 @@ const FEATURE_LIMITS = {
 └─────────────┘                                 └─────────────┘
 ```
 
-**メッセージング例**
-
-```typescript
-// background/messages/blocker.ts
-import type { PlasmoMessaging } from '@plasmohq/messaging'
-
-const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { domain } = req.body
-  // ブロック処理
-  res.send({ success: true })
-}
-export default handler
-
-// UI側（popup.tsx など）
-import { sendToBackground } from '@plasmohq/messaging'
-
-const result = await sendToBackground({
-  name: 'blocker',
-  body: { domain: 'twitter.com' },
-})
-```
-
 ## 4. データストレージ
 
 ### 方針
 
-**なし（chrome.storage.local のみ）**
+**chrome.storage.local をメインに使用**
 
 ### 選定理由
 
-- PRD で「全データをローカルに保持するプライバシーファースト設計」が明記されている
-- サーバー通信なしの要件により外部DBは不要
+- ユーザーの設定・分析データはローカルに保持
 - chrome.storage.local はChrome拡張の標準的なデータ保存先
 - 同期が必要な場合は chrome.storage.sync（8KB制限）も使用可能
 
 ### 補足
 
 - chrome.storage.local: 5MB以上の大容量データに対応
-- 有料版のライセンス検証のみ、Chrome Web Store Payments API または Stripe との連携が必要
+- ライセンス検証: ExtensionPay（Stripe連携）
+- 使用統計: GA4（オプトイン、匿名データのみ）
 
 ## 5. データ通信方針
 
 ### 方針
 
-**なし（外部API通信なし）**
-
-### 選定理由
-
-- プライバシーファースト設計（サーバー通信なし）
-- 全機能がローカルで完結
-- APIコストゼロの実現
+**必要最小限の外部通信**
 
 ### 外部連携
 
-| 機能 | API                                | 備考           |
-| ---- | ---------------------------------- | -------------- |
-| 決済 | Chrome Web Store Payments / Stripe | ライセンス管理 |
+| 機能 | API | 備考 |
+| ---- | --- | ---- |
+| 決済・ライセンス | ExtensionPay (Stripe) | サブスクリプション管理 |
+| 使用統計 | Google Analytics 4 | オプトイン、匿名データのみ |
+
+### GA4で収集するデータ
+
+- DAU / WAU / MAU
+- 機能別使用率
+- エラー発生率
+
+### GA4で収集しないデータ
+
+- ブロックしたドメイン名
+- 目標テキスト等の個人設定
+- 閲覧履歴
 
 ## 6. 主要コンポーネント
 
@@ -375,36 +186,25 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 
 ### 権限の最小化
 
-```json
-{
-  "permissions": [
-    "storage", // データ保存
-    "tabs", // タブ情報取得
-    "declarativeNetRequest", // サイトブロック
-    "alarms" // 定期処理
-  ],
-  "host_permissions": [
-    "<all_urls>" // 滞在時間計測のため必要
-  ]
-}
-```
+| 権限 | 用途 |
+|------|------|
+| storage | データ保存 |
+| tabs | タブ情報取得 |
+| declarativeNetRequest | サイトブロック |
+| alarms | 定期処理 |
+| host_permissions: <all_urls> | 滞在時間計測 |
 
 ### データ保護
 
-- 全データをローカルに保持（chrome.storage.local）
-- パスワード等の機密情報は扱わない
-- 外部サーバーへのデータ送信なし
+セキュリティ・プライバシー要件は [PRD.md](./PRD.md) の非機能要件を参照。
+
+実装上の注意点：
+- chrome.storage.local を使用（同期不要）
+- パスワード等の機密情報は扱わない設計
 
 ## 8. パフォーマンス最適化
 
-### 目標値（PRDより）
-
-| 指標                 | 目標                    |
-| -------------------- | ----------------------- |
-| 拡張機能のロード時間 | 100ms以下               |
-| ブロックページ表示   | 即時                    |
-| 分析データ更新       | リアルタイム（1秒単位） |
-| メモリ使用量         | 50MB以下                |
+目標値は [PRD.md](./PRD.md) の非機能要件を参照。
 
 ### 最適化戦略
 
@@ -422,43 +222,13 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 
 ## 9. 多言語対応
 
-### 対応言語
-
-| 言語   | コード | 優先度     |
-| ------ | ------ | ---------- |
-| 英語   | en     | デフォルト |
-| 日本語 | ja     | MVP        |
+対応言語・要件は [PRD.md](./PRD.md) の非機能要件を参照。
 
 ### 実装方式
 
-chrome.i18n API を使用し、ブラウザ言語設定による自動切替。
-
-### ファイル構成
-
-```
-assets/_locales/
-├── en/
-│   └── messages.json
-└── ja/
-    └── messages.json
-```
-
-### 使用例
-
-```typescript
-// messages.json
-{
-  "appName": {
-    "message": "VisionFocus"
-  },
-  "blockPageTitle": {
-    "message": "Focus on your goals"
-  }
-}
-
-// 使用側
-chrome.i18n.getMessage('blockPageTitle')
-```
+- chrome.i18n API を使用
+- ブラウザ言語設定による自動切替
+- メッセージファイル: `assets/_locales/{lang}/messages.json`
 
 ## 10. 決済・ライセンス管理
 
@@ -470,47 +240,12 @@ chrome.i18n.getMessage('blockPageTitle')
 - サーバー不要でサブスクリプション管理が可能
 - npmパッケージ: `extpay`
 
-### 環境変数
+### ライセンス判定
 
-```bash
-# .env
-PLASMO_PUBLIC_EXTPAY_ID=visionfocus
-```
-
-### ユーザーステータス
-
-ExtensionPayの `extpay.getUser()` で取得できる情報:
-
-| フィールド             | 型                                     | 説明                     |
-| ---------------------- | -------------------------------------- | ------------------------ |
-| `paid`                 | `boolean`                              | 現在有効な支払いがあるか |
-| `paidAt`               | `Date \| null`                         | 最後の支払い日時         |
-| `installedAt`          | `Date`                                 | 拡張機能インストール日時 |
-| `trialStartedAt`       | `Date \| null`                         | トライアル開始日時       |
-| `subscriptionStatus`   | `"active" \| "past_due" \| "canceled"` | サブスクリプション状態   |
-| `subscriptionCancelAt` | `Date \| null`                         | サブスク終了予定日時     |
-
-### サブスクリプションキャンセル時の動作
-
-**重要**: キャンセル後も請求期間終了までプレミアム機能が使える。
-
-| タイミング     | `user.paid` | `subscriptionStatus` | `subscriptionCancelAt` |
-| -------------- | ----------- | -------------------- | ---------------------- |
-| キャンセル直後 | `true`      | `"active"`           | 終了日時がセット       |
-| 請求期間終了後 | `false`     | `"canceled"`         | そのまま維持           |
-
-現在の実装では `user.paid` をチェックしているため、キャンセル後も請求期間終了まで正しく動作する。
-
-```typescript
-// src/lib/extpay.ts
-export async function isExtPayPremium(): Promise<boolean> {
-  const user = await getExtPayUser()
-  return user.paid // キャンセル後も請求期間終了まで true
-}
-```
+- `user.paid` フラグでプレミアム判定
+- キャンセル後も請求期間終了まで `paid: true` を維持
 
 ### 参考資料
 
-- [ExtPay - How Subscriptions Work](https://github.com/Glench/ExtPay/blob/main/docs/how_subscriptions_work.md)
-- [ExtPay npm package](https://www.npmjs.com/package/extpay)
 - [ExtensionPay公式サイト](https://extensionpay.com)
+- [ExtPay npm package](https://www.npmjs.com/package/extpay)
