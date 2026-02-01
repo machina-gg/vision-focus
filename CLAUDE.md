@@ -606,6 +606,7 @@ export const useAuth = () => useContext(AuthContext)
 - default export（app/ 配下以外）
 - PRD.md の無断変更（確認必須）
 - テストなしでの複雑なロジック実装
+- Git コマンドの `&&` 連結（権限パターンがマッチしなくなるため、個別に実行すること）
 
 ---
 
