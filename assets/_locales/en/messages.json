@@ -1280,5 +1280,111 @@
   "noBlockedSitesYet": {
     "message": "None yet",
     "description": "No blocked sites yet message"
+  },
+  "dataBackup": {
+    "message": "Data Backup",
+    "description": "Data backup section title"
+  },
+  "dataBackupDescription": {
+    "message": "Export and import your settings to backup or transfer to another device",
+    "description": "Data backup description"
+  },
+  "exportSettings": {
+    "message": "Export Settings",
+    "description": "Export settings button"
+  },
+  "exportSettingsDescription": {
+    "message": "Download your block list, schedules, and dashboard styles as a JSON file",
+    "description": "Export settings description"
+  },
+  "importSettings": {
+    "message": "Import Settings",
+    "description": "Import settings button"
+  },
+  "importSettingsDescription": {
+    "message": "Restore settings from a previously exported backup file",
+    "description": "Import settings description"
+  },
+  "exportSuccess": {
+    "message": "Settings exported successfully!",
+    "description": "Export success message"
+  },
+  "exportError": {
+    "message": "Failed to export settings: $ERROR$",
+    "description": "Export error message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Unknown error"
+      }
+    }
+  },
+  "importSuccess": {
+    "message": "Settings imported: $BLOCKLIST$ sites, $SCHEDULES$ schedules, $PRESETS$ styles",
+    "description": "Import success message",
+    "placeholders": {
+      "blocklist": {
+        "content": "$1",
+        "example": "5"
+      },
+      "schedules": {
+        "content": "$2",
+        "example": "2"
+      },
+      "presets": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "importError": {
+    "message": "Failed to import settings: $ERROR$",
+    "description": "Import error message",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Invalid file format"
+      }
+    }
+  },
+  "selectFile": {
+    "message": "Select File",
+    "description": "Select file button"
+  },
+  "backupIncludes": {
+    "message": "Backup includes",
+    "description": "Backup includes heading"
+  },
+  "backupIncludesBlockList": {
+    "message": "Block list",
+    "description": "Backup includes: block list"
+  },
+  "backupIncludesSchedules": {
+    "message": "Schedules",
+    "description": "Backup includes: schedules"
+  },
+  "backupIncludesPresets": {
+    "message": "Dashboard styles & settings",
+    "description": "Backup includes: presets"
+  },
+  "backupExcludes": {
+    "message": "Not included",
+    "description": "Backup excludes heading"
+  },
+  "backupExcludesAnalytics": {
+    "message": "Analytics data",
+    "description": "Backup excludes: analytics"
+  },
+  "backupExcludesPremium": {
+    "message": "Premium subscription status",
+    "description": "Backup excludes: premium"
+  },
+  "importing": {
+    "message": "Importing...",
+    "description": "Import in progress text"
+  },
+  "exporting": {
+    "message": "Exporting...",
+    "description": "Export in progress text"
   }
 }

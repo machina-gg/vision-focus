@@ -1280,5 +1280,111 @@
   "noBlockedSitesYet": {
     "message": "まだなし",
     "description": "ブロックサイトがまだない場合のメッセージ"
+  },
+  "dataBackup": {
+    "message": "データバックアップ",
+    "description": "データバックアップセクションタイトル"
+  },
+  "dataBackupDescription": {
+    "message": "設定をエクスポート・インポートして、バックアップや他のデバイスへの移行ができます",
+    "description": "データバックアップ説明"
+  },
+  "exportSettings": {
+    "message": "設定をエクスポート",
+    "description": "設定エクスポートボタン"
+  },
+  "exportSettingsDescription": {
+    "message": "ブロックリスト、スケジュール、ダッシュボードスタイルをJSONファイルとしてダウンロード",
+    "description": "設定エクスポート説明"
+  },
+  "importSettings": {
+    "message": "設定をインポート",
+    "description": "設定インポートボタン"
+  },
+  "importSettingsDescription": {
+    "message": "以前エクスポートしたバックアップファイルから設定を復元",
+    "description": "設定インポート説明"
+  },
+  "exportSuccess": {
+    "message": "設定をエクスポートしました！",
+    "description": "エクスポート成功メッセージ"
+  },
+  "exportError": {
+    "message": "エクスポートに失敗しました: $ERROR$",
+    "description": "エクスポートエラーメッセージ",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "不明なエラー"
+      }
+    }
+  },
+  "importSuccess": {
+    "message": "設定をインポートしました: サイト$BLOCKLIST$件、スケジュール$SCHEDULES$件、スタイル$PRESETS$件",
+    "description": "インポート成功メッセージ",
+    "placeholders": {
+      "blocklist": {
+        "content": "$1",
+        "example": "5"
+      },
+      "schedules": {
+        "content": "$2",
+        "example": "2"
+      },
+      "presets": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "importError": {
+    "message": "インポートに失敗しました: $ERROR$",
+    "description": "インポートエラーメッセージ",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "無効なファイル形式"
+      }
+    }
+  },
+  "selectFile": {
+    "message": "ファイルを選択",
+    "description": "ファイル選択ボタン"
+  },
+  "backupIncludes": {
+    "message": "バックアップに含まれるもの",
+    "description": "バックアップに含まれるもの見出し"
+  },
+  "backupIncludesBlockList": {
+    "message": "ブロックリスト",
+    "description": "バックアップに含まれるもの: ブロックリスト"
+  },
+  "backupIncludesSchedules": {
+    "message": "スケジュール",
+    "description": "バックアップに含まれるもの: スケジュール"
+  },
+  "backupIncludesPresets": {
+    "message": "ダッシュボードスタイル・設定",
+    "description": "バックアップに含まれるもの: プリセット"
+  },
+  "backupExcludes": {
+    "message": "含まれないもの",
+    "description": "バックアップに含まれないもの見出し"
+  },
+  "backupExcludesAnalytics": {
+    "message": "分析データ",
+    "description": "バックアップに含まれないもの: 分析"
+  },
+  "backupExcludesPremium": {
+    "message": "プレミアムサブスクリプション状態",
+    "description": "バックアップに含まれないもの: プレミアム"
+  },
+  "importing": {
+    "message": "インポート中...",
+    "description": "インポート中テキスト"
+  },
+  "exporting": {
+    "message": "エクスポート中...",
+    "description": "エクスポート中テキスト"
   }
 }
