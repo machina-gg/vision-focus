@@ -51,32 +51,32 @@ git pull origin develop
 
 ### 開発コマンド
 
-| コマンド | 用途 |
-|----------|------|
+| コマンド | 用途                        |
+| -------- | --------------------------- |
 | `pnpm:*` | format, lint, test, build等 |
 
 ### Git操作
 
-| コマンド | 用途 |
-|----------|------|
-| `git commit:*` | コミット |
-| `git push:*` | プッシュ |
-| `git fetch:*` | リモート最新化 |
-| `git pull:*` | リモートから取得・マージ |
-| `git checkout:*` | ブランチ切り替え |
-| `git branch:*` | ブランチ操作 |
-| `git worktree:*` | 並行開発用worktree操作 |
+| コマンド         | 用途                     |
+| ---------------- | ------------------------ |
+| `git commit:*`   | コミット                 |
+| `git push:*`     | プッシュ                 |
+| `git fetch:*`    | リモート最新化           |
+| `git pull:*`     | リモートから取得・マージ |
+| `git checkout:*` | ブランチ切り替え         |
+| `git branch:*`   | ブランチ操作             |
+| `git worktree:*` | 並行開発用worktree操作   |
 
 ### GitHub CLI
 
-| コマンド | 用途 |
-|----------|------|
-| `gh pr create:*` | PR作成 |
-| `gh pr edit:*` | PR編集 |
-| `gh issue create:*` | Issue作成 |
-| `gh issue close:*` | Issueクローズ |
+| コマンド             | 用途          |
+| -------------------- | ------------- |
+| `gh pr create:*`     | PR作成        |
+| `gh pr edit:*`       | PR編集        |
+| `gh issue create:*`  | Issue作成     |
+| `gh issue close:*`   | Issueクローズ |
 | `gh issue comment:*` | Issueコメント |
-| `gh issue list:*` | Issue一覧 |
+| `gh issue list:*`    | Issue一覧     |
 
 ## 補足
 
