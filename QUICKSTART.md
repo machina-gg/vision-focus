@@ -4,19 +4,31 @@
 
 ## コマンド早見表
 
-| やりたいこと | コマンド                |
-| ------------ | ----------------------- |
-| 要件定義     | `/project:requirements` |
-| 設計         | `/project:design`       |
-| API設計      | `/project:api`          |
-| 環境構築     | `/project:setup`        |
-| プロトタイプ | `/project:prototype`    |
-| テスト設計   | `/project:test-design`  |
-| 実装         | `/project:implement`    |
-| 進捗確認     | `/project:continue`     |
-| レビュー     | `/project:review`       |
-| デプロイ     | `/project:deploy`       |
-| 改善管理     | `/project:improvements` |
+| やりたいこと | コマンド                      |
+| ------------ | ----------------------------- |
+| 要件定義     | `/project:requirements`       |
+| 設計         | `/project:design`             |
+| API設計      | `/project:api`                |
+| 環境構築     | `/project:setup`              |
+| プロトタイプ | `/project:prototype`          |
+| テスト設計   | `/project:test-design`        |
+| 実装（単一） | `/project:implement 30`       |
+| 実装（複数） | `/project:implement 30,31,32` |
+| 進捗確認     | `/project:continue`           |
+| レビュー     | `/project:review`             |
+| デプロイ     | `/project:deploy`             |
+| 改善管理     | `/project:improvements`       |
+
+### 実装コマンドの使い方
+
+```bash
+# 単一Issueの実装
+/project:implement 30
+
+# 複数Issueの並行実装（git worktree使用）
+/project:implement 30,31,32
+/project:implement 30 31 32
+```
 
 ## 開発フロー
 
@@ -65,6 +77,7 @@ npm run supabase:reset   # DBリセット
 
 1. [GitHub MCP 設定](./.claude/docs/SETUP_GITHUB_MCP.md) - Issue管理に必要
 2. [Vercel MCP 設定](./.claude/docs/SETUP_VERCEL_MCP.md) - デプロイに必要
+3. [権限設定](./.claude/docs/SETUP_PERMISSIONS.md) - コミット・PR確認スキップ（任意）
 
 ## テンプレート
 
