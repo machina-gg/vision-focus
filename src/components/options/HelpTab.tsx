@@ -1,12 +1,148 @@
-import React from 'react';
-import { ExternalLink, MessageCircle, BookOpen, Mail } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import {
+  ExternalLink,
+  MessageCircle,
+  BookOpen,
+  Mail,
+  Download,
+  Upload,
+  HardDrive,
+  Check,
+  AlertTriangle
+} from 'lucide-react';
 
-import { Card } from '~/components/ui';
+import { Button, Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
+import {
+  exportSettings,
+  downloadSettings,
+  readFileAsString,
+  validateImportedData,
+  applyImportedSettings
+} from '~/lib/settingsExport';
+import { getSettings, getVision, setSettings, setVision } from '~/lib/storage';
 
 const VERSION = '1.0.0';
 
-export function HelpTab() {
+interface HelpTabProps {
+  onSettingsChange?: () => void;
+}
+
+export function HelpTab({ onSettingsChange }: HelpTabProps) {
+  const [exportStatus, setExportStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
+  const [importStatus, setImportStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    setExportStatus('loading');
+    setExportWarning(null);
+
+    try {
+      const [settings, vision] = await Promise.all([
+        getSettings(),
+        getVision()
+      ]);
+      const { data, isLarge } = exportSettings(settings, vision);
+
+      if (isLarge) {
+        setExportWarning(getMessage('exportLargeWarning'));
+      }
+
+      downloadSettings(data);
+      setExportStatus('success');
+
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setExportStatus('idle');
+        setExportWarning(null);
+      }, 3000);
+    } catch {
+      setExportStatus('error');
+      setTimeout(() => setExportStatus('idle'), 3000);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportStatus('loading');
+    setImportMessage(null);
+    setImportWarnings([]);
+
+    try {
+      const content = await readFileAsString(file);
+      const result = validateImportedData(content);
+
+      if (!result.success) {
+        setImportStatus('error');
+        setImportMessage(
+          getMessage(result.error || 'importErrorInvalidFormat')
+        );
+        setTimeout(() => {
+          setImportStatus('idle');
+          setImportMessage(null);
+        }, 5000);
+        return;
+      }
+
+      if (result.warnings) {
+        setImportWarnings(result.warnings.map((w) => getMessage(w)));
+      }
+
+      // Apply imported settings
+      if (!result.data) {
+        throw new Error('No data');
+      }
+
+      const [currentSettings, currentVision] = await Promise.all([
+        getSettings(),
+        getVision()
+      ]);
+
+      const { settings: newSettings, vision: newVision } =
+        applyImportedSettings(result.data, currentSettings, currentVision);
+
+      await Promise.all([setSettings(newSettings), setVision(newVision)]);
+
+      setImportStatus('success');
+      setImportMessage(getMessage('importSuccessWithMerge'));
+
+      // Notify parent of settings change
+      onSettingsChange?.();
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setImportStatus('idle');
+        setImportMessage(null);
+        setImportWarnings([]);
+      }, 5000);
+    } catch {
+      setImportStatus('error');
+      setImportMessage(getMessage('importErrorInvalidFormat'));
+      setTimeout(() => {
+        setImportStatus('idle');
+        setImportMessage(null);
+      }, 5000);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Getting Started */}
@@ -88,6 +224,145 @@ export function HelpTab() {
               {getMessage('helpFaqPresetsAnswer')}
             </p>
           </details>
+        </div>
+      </Card>
+
+      {/* Settings Backup */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+            <HardDrive className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {getMessage('settingsBackup')}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {getMessage('settingsBackupDescription')}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Export Section */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-800 mb-1 flex items-center gap-2">
+                  <Download className="w-4 h-4 text-gray-600" />
+                  {getMessage('exportSettings')}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  {getMessage('exportSettingsDescription')}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {getMessage('settingsIncluded')}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {getMessage('settingsNotIncluded')}
+                </p>
+              </div>
+              <Button
+                onClick={handleExport}
+                disabled={exportStatus === 'loading'}
+                size="sm"
+                variant={exportStatus === 'success' ? 'secondary' : 'primary'}
+              >
+                {exportStatus === 'loading' ? (
+                  getMessage('processing')
+                ) : exportStatus === 'success' ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    {getMessage('saved')}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    {getMessage('exportSettings')}
+                  </>
+                )}
+              </Button>
+            </div>
+            {exportWarning && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{exportWarning}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Import Section */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-800 mb-1 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-gray-600" />
+                  {getMessage('importSettings')}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {getMessage('importSettingsDescription')}
+                </p>
+              </div>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button
+                  onClick={handleImportClick}
+                  disabled={importStatus === 'loading'}
+                  size="sm"
+                  variant={importStatus === 'success' ? 'secondary' : 'primary'}
+                >
+                  {importStatus === 'loading' ? (
+                    getMessage('processing')
+                  ) : importStatus === 'success' ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      {getMessage('saved')}
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      {getMessage('selectFile')}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            {importMessage && (
+              <div
+                className={`mt-3 flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
+                  importStatus === 'success'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-red-600 bg-red-50'
+                }`}
+              >
+                {importStatus === 'success' ? (
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span>{importMessage}</span>
+              </div>
+            )}
+            {importWarnings.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {importWarnings.map((warning, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg"
+                  >
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>{warning}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 

@@ -1280,5 +1280,81 @@
   "noBlockedSitesYet": {
     "message": "None yet",
     "description": "No blocked sites yet message"
+  },
+  "settingsBackup": {
+    "message": "Settings Backup",
+    "description": "Settings backup section title"
+  },
+  "settingsBackupDescription": {
+    "message": "Export and import your settings to backup or transfer to another device",
+    "description": "Settings backup description"
+  },
+  "exportSettings": {
+    "message": "Export Settings",
+    "description": "Export settings button"
+  },
+  "importSettings": {
+    "message": "Import Settings",
+    "description": "Import settings button"
+  },
+  "exportSettingsDescription": {
+    "message": "Download your block list, schedules, and styles as a JSON file",
+    "description": "Export settings description"
+  },
+  "importSettingsDescription": {
+    "message": "Restore settings from a previously exported file",
+    "description": "Import settings description"
+  },
+  "exportLargeWarning": {
+    "message": "Your settings file is large (contains custom background images). The download may take a moment.",
+    "description": "Warning for large export files"
+  },
+  "exportSuccess": {
+    "message": "Settings exported successfully!",
+    "description": "Export success message"
+  },
+  "importSuccess": {
+    "message": "Settings imported successfully!",
+    "description": "Import success message"
+  },
+  "importSuccessWithMerge": {
+    "message": "Settings imported and merged with existing data",
+    "description": "Import success message with merge"
+  },
+  "importErrorFileTooLarge": {
+    "message": "File is too large (max 5MB)",
+    "description": "Import error: file too large"
+  },
+  "importErrorInvalidJson": {
+    "message": "Invalid file format. Please select a valid JSON file.",
+    "description": "Import error: invalid JSON"
+  },
+  "importErrorInvalidFormat": {
+    "message": "Invalid settings file format. Please select a VisionFocus settings file.",
+    "description": "Import error: invalid format"
+  },
+  "importWarningNewerVersion": {
+    "message": "This file was exported from a newer version of VisionFocus. Some settings may not be fully compatible.",
+    "description": "Import warning: newer version"
+  },
+  "importWarningOrphanedPresets": {
+    "message": "Some schedules referenced missing styles and have been cleared.",
+    "description": "Import warning: orphaned presets"
+  },
+  "importWarningActivePresetNotFound": {
+    "message": "The active style was not found and has been reset to default.",
+    "description": "Import warning: active preset not found"
+  },
+  "selectFile": {
+    "message": "Select File",
+    "description": "Select file button"
+  },
+  "settingsIncluded": {
+    "message": "Includes: Block list, Schedules, Styles, Dashboard settings",
+    "description": "What's included in settings export"
+  },
+  "settingsNotIncluded": {
+    "message": "Not included: Premium status, Analytics data",
+    "description": "What's not included in settings export"
   }
 }
