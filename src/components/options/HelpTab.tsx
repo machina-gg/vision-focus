@@ -1,10 +1,10 @@
-import React from 'react'
-import { ExternalLink, MessageCircle, BookOpen, Mail } from 'lucide-react'
+import React from 'react';
+import { ExternalLink, MessageCircle, BookOpen, Mail } from 'lucide-react';
 
-import { Card } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
+import { Card } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
-const VERSION = '1.0.0'
+const VERSION = '1.0.0';
 
 export function HelpTab() {
   return (
@@ -128,5 +128,5 @@ export function HelpTab() {
         <p>VisionFocus v{VERSION}</p>
       </div>
     </div>
-  )
+  );
 }

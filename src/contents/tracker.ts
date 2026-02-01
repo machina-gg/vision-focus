@@ -1,36 +1,36 @@
-import type { PlasmoCSConfig } from 'plasmo'
-import { sendToBackground } from '@plasmohq/messaging'
+import type { PlasmoCSConfig } from 'plasmo';
+import { sendToBackground } from '@plasmohq/messaging';
 
 // Run on all pages
 export const config: PlasmoCSConfig = {
   matches: ['<all_urls>'],
-  run_at: 'document_idle',
-}
+  run_at: 'document_idle'
+};
 
 // Tracking state
-let heartbeatInterval: ReturnType<typeof setInterval> | null = null
-let isStopped = false
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+let isStopped = false;
 
 // Heartbeat interval (send heartbeat every 5 seconds when visible)
-const HEARTBEAT_INTERVAL_MS = 5 * 1000
+const HEARTBEAT_INTERVAL_MS = 5 * 1000;
 
 // Check if extension context is still valid
 function isContextValid(): boolean {
   try {
-    return !!chrome.runtime?.id
+    return !!chrome.runtime?.id;
   } catch {
-    return false
+    return false;
   }
 }
 
 // Send heartbeat to background
 async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
-  if (isStopped) return
+  if (isStopped) return;
 
   // Check if extension context is still valid
   if (!isContextValid()) {
-    stopTracking()
-    return
+    stopTracking();
+    return;
   }
 
   try {
@@ -39,74 +39,74 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
       body: {
         url: window.location.href,
         status,
-        timestamp: Date.now(),
-      },
-    })
+        timestamp: Date.now()
+      }
+    });
   } catch {
     // Extension context likely invalidated, stop tracking
-    stopTracking()
+    stopTracking();
   }
 }
 
 // Handle visibility change
 function handleVisibilityChange() {
   if (isStopped || !isContextValid()) {
-    stopTracking()
-    return
+    stopTracking();
+    return;
   }
 
   if (document.hidden) {
     // Page is hidden, notify background
-    sendHeartbeat('inactive')
+    sendHeartbeat('inactive');
   } else {
     // Page is visible again
-    sendHeartbeat('active')
+    sendHeartbeat('active');
   }
 }
 
 // Start tracking
 function startTracking() {
   // Listen for visibility changes
-  document.addEventListener('visibilitychange', handleVisibilityChange)
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   // Start heartbeat interval
   heartbeatInterval = setInterval(() => {
     // Stop if context invalidated
     if (!isContextValid()) {
-      stopTracking()
-      return
+      stopTracking();
+      return;
     }
 
     // Send heartbeat if page is visible (simple visibility-based tracking)
     if (!document.hidden) {
-      sendHeartbeat('heartbeat')
+      sendHeartbeat('heartbeat');
     }
-  }, HEARTBEAT_INTERVAL_MS)
+  }, HEARTBEAT_INTERVAL_MS);
 
   // Initial heartbeat if page is visible
   if (!document.hidden) {
-    sendHeartbeat('active')
+    sendHeartbeat('active');
   }
 }
 
 // Stop tracking
 function stopTracking() {
-  if (isStopped) return
-  isStopped = true
+  if (isStopped) return;
+  isStopped = true;
 
   // Remove visibility listener
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 
   // Clear interval
   if (heartbeatInterval) {
-    clearInterval(heartbeatInterval)
-    heartbeatInterval = null
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
   }
 }
 
 // Handle page unload
 function handleUnload() {
-  stopTracking()
+  stopTracking();
 }
 
 // Initialize
@@ -117,15 +117,15 @@ function init() {
     window.location.protocol === 'moz-extension:' ||
     window.location.protocol === 'about:'
   ) {
-    return
+    return;
   }
 
-  startTracking()
+  startTracking();
 
   // Clean up on page hide (replaces deprecated unload event)
   // pagehide is the modern replacement that works with bfcache
-  window.addEventListener('pagehide', handleUnload)
+  window.addEventListener('pagehide', handleUnload);
 }
 
 // Start tracking
-init()
+init();

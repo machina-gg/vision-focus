@@ -1,41 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
-import { Edit2, Target } from 'lucide-react'
+import { Edit2, Target } from 'lucide-react';
 
-import { Card } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
+import { Card } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
 export interface GoalCardProps {
-  goalText: string
-  onClick?: () => void
-  editable?: boolean
-  onEdit?: (text: string) => void
+  goalText: string;
+  onClick?: () => void;
+  editable?: boolean;
+  onEdit?: (text: string) => void;
 }
 
 export function GoalCard({
   goalText,
   onClick,
   editable = false,
-  onEdit,
+  onEdit
 }: GoalCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editText, setEditText] = useState(goalText)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(goalText);
 
   const handleSave = () => {
-    onEdit?.(editText)
-    setIsEditing(false)
-  }
+    onEdit?.(editText);
+    setIsEditing(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSave()
+      e.preventDefault();
+      handleSave();
     }
     if (e.key === 'Escape') {
-      setEditText(goalText)
-      setIsEditing(false)
+      setEditText(goalText);
+      setIsEditing(false);
     }
-  }
+  };
 
   return (
     <Card
@@ -71,8 +71,8 @@ export function GoalCard({
         {editable && !isEditing && (
           <button
             onClick={(e) => {
-              e.stopPropagation()
-              setIsEditing(true)
+              e.stopPropagation();
+              setIsEditing(true);
             }}
             className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-all"
           >
@@ -81,5 +81,5 @@ export function GoalCard({
         )}
       </div>
     </Card>
-  )
+  );
 }

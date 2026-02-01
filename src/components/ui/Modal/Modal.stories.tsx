@@ -1,27 +1,27 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react';
 
-import { Button } from '../Button'
-import { Modal } from './Modal'
+import { Button } from '../Button';
+import { Modal } from './Modal';
 
 const meta = {
   title: 'UI/Modal',
   component: Modal,
   parameters: {
-    layout: 'fullscreen',
+    layout: 'fullscreen'
   },
   tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',
-      options: ['sm', 'md', 'lg'],
-    },
-  },
-} satisfies Meta<typeof Modal>
+      options: ['sm', 'md', 'lg']
+    }
+  }
+} satisfies Meta<typeof Modal>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
@@ -38,9 +38,9 @@ export const Default: Story = {
         </div>
       </div>
     ),
-    onClose: () => {},
-  },
-}
+    onClose: () => {}
+  }
+};
 
 export const Small: Story = {
   args: {
@@ -48,9 +48,9 @@ export const Small: Story = {
     title: 'Small Modal',
     size: 'sm',
     children: <p className="text-gray-600">This is a small modal.</p>,
-    onClose: () => {},
-  },
-}
+    onClose: () => {}
+  }
+};
 
 export const Large: Story = {
   args: {
@@ -63,12 +63,12 @@ export const Large: Story = {
         forms or complex dialogs.
       </p>
     ),
-    onClose: () => {},
-  },
-}
+    onClose: () => {}
+  }
+};
 
 const InteractiveModalTemplate = () => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="p-8">
@@ -91,14 +91,14 @@ const InteractiveModalTemplate = () => {
         </div>
       </Modal>
     </div>
-  )
-}
+  );
+};
 
 export const Interactive: Story = {
   args: {
     isOpen: false,
     onClose: () => {},
-    children: 'Interactive modal content',
+    children: 'Interactive modal content'
   },
-  render: () => <InteractiveModalTemplate />,
-}
+  render: () => <InteractiveModalTemplate />
+};

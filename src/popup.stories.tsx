@@ -1,25 +1,25 @@
-import React from 'react'
+import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react'
-import { Ban, Clock, TrendingUp } from 'lucide-react'
+import type { Meta, StoryObj } from '@storybook/react';
+import { Ban, Clock, TrendingUp } from 'lucide-react';
 
 import {
   GoalCard,
   Header,
   QuickBlockButton,
-  StatsCard,
-} from '~/components/features'
+  StatsCard
+} from '~/components/features';
 
-import './styles/globals.css'
+import './styles/globals.css';
 
 function PopupDemo() {
-  const goalText = 'Surpass my rivals and achieve overwhelming results'
-  const currentDomain = 'twitter.com'
+  const goalText = 'Surpass my rivals and achieve overwhelming results';
+  const currentDomain = 'twitter.com';
   const stats = {
     wasteTime: '1h 23m',
     investTime: '3h 45m',
-    blockCount: '12',
-  }
+    blockCount: '12'
+  };
 
   return (
     <div className="w-[360px] min-h-[400px] max-h-[480px] bg-white">
@@ -62,7 +62,7 @@ function PopupDemo() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 const meta = {
@@ -71,13 +71,13 @@ const meta = {
   parameters: {
     layout: 'centered',
     backgrounds: {
-      default: 'gray',
-    },
+      default: 'gray'
+    }
   },
-  tags: ['autodocs'],
-} satisfies Meta<typeof PopupDemo>
+  tags: ['autodocs']
+} satisfies Meta<typeof PopupDemo>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {}
+export const Default: Story = {};

@@ -1,25 +1,25 @@
-import { isExtPayPremium } from './extpay'
+import { isExtPayPremium } from './extpay';
 import {
   FEATURE_LIMITS,
   type FeatureLimits,
-  type PremiumFeature,
-} from '~/types/storage'
+  type PremiumFeature
+} from '~/types/storage';
 
 /**
  * Check if user has premium access (via ExtensionPay)
  */
 export async function checkPremiumStatus(): Promise<{
-  isPremium: boolean
-  source: 'extpay' | null
+  isPremium: boolean;
+  source: 'extpay' | null;
 }> {
   // Check ExtensionPay subscription status
   try {
-    const isPaid = await isExtPayPremium()
+    const isPaid = await isExtPayPremium();
     if (isPaid) {
       return {
         isPremium: true,
-        source: 'extpay',
-      }
+        source: 'extpay'
+      };
     }
   } catch {
     // Assume not premium if check fails
@@ -27,8 +27,8 @@ export async function checkPremiumStatus(): Promise<{
 
   return {
     isPremium: false,
-    source: null,
-  }
+    source: null
+  };
 }
 
 /**
@@ -37,16 +37,16 @@ export async function checkPremiumStatus(): Promise<{
 export async function canAccessFeature(
   _feature: PremiumFeature
 ): Promise<boolean> {
-  const { isPremium } = await checkPremiumStatus()
-  return isPremium
+  const { isPremium } = await checkPremiumStatus();
+  return isPremium;
 }
 
 /**
  * Get current feature limits based on premium status
  */
 export async function getFeatureLimits(): Promise<FeatureLimits> {
-  const { isPremium } = await checkPremiumStatus()
-  return isPremium ? FEATURE_LIMITS.premium : FEATURE_LIMITS.free
+  const { isPremium } = await checkPremiumStatus();
+  return isPremium ? FEATURE_LIMITS.premium : FEATURE_LIMITS.free;
 }
 
 /**
@@ -55,8 +55,8 @@ export async function getFeatureLimits(): Promise<FeatureLimits> {
 export async function canAddToBlocklist(
   currentCount: number
 ): Promise<{ allowed: boolean; limit: number; reason?: string }> {
-  const limits = await getFeatureLimits()
-  const { isPremium } = await checkPremiumStatus()
+  const limits = await getFeatureLimits();
+  const { isPremium } = await checkPremiumStatus();
 
   if (currentCount >= limits.maxBlockList) {
     return {
@@ -64,12 +64,12 @@ export async function canAddToBlocklist(
       limit: limits.maxBlockList,
       reason: isPremium
         ? undefined
-        : `Free tier limit reached (${limits.maxBlockList} sites). Upgrade to Premium for unlimited sites.`,
-    }
+        : `Free tier limit reached (${limits.maxBlockList} sites). Upgrade to Premium for unlimited sites.`
+    };
   }
 
   return {
     allowed: true,
-    limit: limits.maxBlockList,
-  }
+    limit: limits.maxBlockList
+  };
 }

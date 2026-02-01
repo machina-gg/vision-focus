@@ -7,6 +7,7 @@ description: 改善リスト作成・Issue一括登録
 ## 1. 改善リストの確認・作成
 
 docs/IMPROVEMENTS.md を確認：
+
 - 存在しない場合 → テンプレートから新規作成
 - 存在する場合 → 内容を確認し、ユーザーに追加・編集を確認
 
@@ -16,6 +17,7 @@ docs/IMPROVEMENTS.md を確認：
 # 改善リスト
 
 ## 使い方
+
 1. 改善したい内容を下記に追記
 2. `/project:improvements` を実行してIssue化
 3. Issue化されたら「Issue化済み」セクションに移動
@@ -23,20 +25,25 @@ docs/IMPROVEMENTS.md を確認：
 ## 改善予定
 
 ### UI/UX
+
 - [ ] 改善内容を記載
 
 ### パフォーマンス
+
 - [ ] 改善内容を記載
 
 ### バグ修正
+
 - [ ] 改善内容を記載
 
 ### その他
+
 - [ ] 改善内容を記載
 
 ---
 
 ## Issue化済み
+
 <!-- Issue化された項目はここに移動 -->
 <!-- - [x] 改善内容 (#123) -->
 ```
@@ -44,6 +51,7 @@ docs/IMPROVEMENTS.md を確認：
 ## 2. ユーザーとの対話
 
 改善リストを確認したら：
+
 1. 現在の改善リストを表示
 2. 追加・編集したい内容があるか確認
 3. 変更があれば docs/IMPROVEMENTS.md を更新
@@ -51,6 +59,7 @@ docs/IMPROVEMENTS.md を確認：
 ## 3. Issue化する項目の選択
 
 ユーザーに確認：
+
 - どの項目をIssue化するか（全部 or 選択）
 - ラベルの付与方針（カテゴリをラベルにするか）
 
@@ -59,6 +68,7 @@ docs/IMPROVEMENTS.md を確認：
 選択された項目について：
 
 1. `gh issue create` コマンドでIssue作成
+
    ```bash
    gh issue create --title "改善: タイトル" --body "詳細" --label "improvement,カテゴリ"
    ```
@@ -88,4 +98,3 @@ Issue化完了後、以下を案内：
 4. PR作成時に複数Issueを参照:
    Closes #10, Closes #11, Closes #12
 ```
-

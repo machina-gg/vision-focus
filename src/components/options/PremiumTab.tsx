@@ -1,20 +1,20 @@
-import React, { useMemo } from 'react'
-import { Check, X, Crown, Sparkles } from 'lucide-react'
+import React, { useMemo } from 'react';
+import { Check, X, Crown, Sparkles } from 'lucide-react';
 
-import { Button, Card } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import { FEATURE_LIMITS } from '~/types/storage'
+import { Button, Card } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
+import { FEATURE_LIMITS } from '~/types/storage';
 
 interface PremiumTabProps {
-  isPremium: boolean
-  onUpgrade: () => void
-  onManageSubscription: () => void
+  isPremium: boolean;
+  onUpgrade: () => void;
+  onManageSubscription: () => void;
 }
 
 export function PremiumTab({
   isPremium,
   onUpgrade,
-  onManageSubscription,
+  onManageSubscription
 }: PremiumTabProps) {
   // Comparison table data - computed to use i18n
   const comparisonFeatures = useMemo(
@@ -26,7 +26,7 @@ export function PremiumTab({
           String(FEATURE_LIMITS.free.historyDays)
         ),
         premium: getMessage('featureAllTime'),
-        highlight: true,
+        highlight: true
       },
       {
         name: getMessage('featurePresets'),
@@ -38,29 +38,29 @@ export function PremiumTab({
           'featurePresetCount',
           String(FEATURE_LIMITS.premium.maxPresets)
         ),
-        highlight: false,
+        highlight: false
       },
       {
         name: getMessage('featureCustomBackground'),
         free: null,
         premium: true,
-        highlight: true,
+        highlight: true
       },
       {
         name: getMessage('featureWallpaperDownload'),
         free: null,
         premium: true,
-        highlight: true,
+        highlight: true
       },
       {
         name: getMessage('featureWeeklyMonthlyReports'),
         free: null,
         premium: true,
-        highlight: false,
-      },
+        highlight: false
+      }
     ],
     []
-  )
+  );
 
   return (
     <div className="space-y-6">
@@ -265,5 +265,5 @@ export function PremiumTab({
         </>
       )}
     </div>
-  )
+  );
 }

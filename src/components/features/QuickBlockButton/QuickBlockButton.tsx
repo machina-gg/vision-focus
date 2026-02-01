@@ -1,43 +1,43 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 
-import { Shield } from 'lucide-react'
+import { Shield } from 'lucide-react';
 
-import { Button, Input } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
+import { Button, Input } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
 export interface QuickBlockButtonProps {
-  currentDomain?: string
-  onBlock: (domain: string) => void
-  disabled?: boolean
+  currentDomain?: string;
+  onBlock: (domain: string) => void;
+  disabled?: boolean;
 }
 
 export function QuickBlockButton({
   currentDomain,
   onBlock,
-  disabled = false,
+  disabled = false
 }: QuickBlockButtonProps) {
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState('');
 
   // Auto-fill with current domain when it changes
   useEffect(() => {
     if (currentDomain) {
-      setInputValue(currentDomain)
+      setInputValue(currentDomain);
     }
-  }, [currentDomain])
+  }, [currentDomain]);
 
   const handleBlock = () => {
-    const domain = inputValue.trim()
+    const domain = inputValue.trim();
     if (domain) {
-      onBlock(domain)
-      setInputValue('')
+      onBlock(domain);
+      setInputValue('');
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleBlock()
+      handleBlock();
     }
-  }
+  };
 
   return (
     <div className="space-y-3">
@@ -64,5 +64,5 @@ export function QuickBlockButton({
         </Button>
       </div>
     </div>
-  )
+  );
 }

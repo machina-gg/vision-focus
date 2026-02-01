@@ -1,7 +1,7 @@
 import type {
   DashboardPreset,
-  DashboardDisplaySettings,
-} from '~/types/storage'
+  DashboardDisplaySettings
+} from '~/types/storage';
 
 /**
  * Convert a preset to display settings
@@ -20,6 +20,6 @@ export function presetToDisplaySettings(
     backgroundColor: preset.backgroundColor,
     // Custom background requires premium
     customBackgroundData: isPremium ? preset.customBackgroundData : null,
-    fontSettings: preset.fontSettings,
-  }
+    fontSettings: preset.fontSettings
+  };
 }

@@ -1,30 +1,30 @@
-import React from 'react'
-import { Crown, Check } from 'lucide-react'
+import React from 'react';
+import { Crown, Check } from 'lucide-react';
 
-import { Button, Card } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import { openPaymentPage } from '~/lib/extpay'
+import { Button, Card } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
+import { openPaymentPage } from '~/lib/extpay';
 
 export interface UpgradePromptProps {
   /** Type of limit reached */
-  limitType?: 'blocklist' | 'history' | 'goals' | 'customBackground'
+  limitType?: 'blocklist' | 'history' | 'goals' | 'customBackground';
   /** Show as a modal/card or inline */
-  variant?: 'card' | 'inline' | 'banner'
+  variant?: 'card' | 'inline' | 'banner';
   /** Custom message to display */
-  message?: string
+  message?: string;
   /** Callback when upgrade button is clicked */
-  onUpgradeClick?: () => void
+  onUpgradeClick?: () => void;
   /** Show feature list */
-  showFeatures?: boolean
+  showFeatures?: boolean;
   /** Custom features list to display (overrides default) */
-  features?: string[]
+  features?: string[];
 }
 
 const PREMIUM_FEATURES = [
   'premiumFeatureUnlimitedHistory',
   'premiumFeatureCustomBackground',
-  'premiumFeatureReports',
-]
+  'premiumFeatureReports'
+];
 
 export function UpgradePrompt({
   limitType = 'blocklist',
@@ -32,16 +32,16 @@ export function UpgradePrompt({
   message,
   onUpgradeClick,
   showFeatures = true,
-  features,
+  features
 }: UpgradePromptProps) {
   const handleUpgradeClick = () => {
     if (onUpgradeClick) {
-      onUpgradeClick()
+      onUpgradeClick();
     } else {
       // Open ExtensionPay payment page
-      openPaymentPage()
+      openPaymentPage();
     }
-  }
+  };
 
   const defaultMessage =
     limitType === 'blocklist'
@@ -50,7 +50,7 @@ export function UpgradePrompt({
         ? 'Upgrade to Premium for unlimited analytics history.'
         : limitType === 'customBackground'
           ? getMessage('upgradeForCustomBackground')
-          : 'Upgrade to Premium for unlimited goals.'
+          : 'Upgrade to Premium for unlimited goals.';
 
   if (variant === 'inline') {
     return (
@@ -64,7 +64,7 @@ export function UpgradePrompt({
           {getMessage('upgradeToPremium')}
         </button>
       </div>
-    )
+    );
   }
 
   if (variant === 'banner') {
@@ -88,7 +88,7 @@ export function UpgradePrompt({
           {getMessage('upgradeToPremium')}
         </Button>
       </div>
-    )
+    );
   }
 
   // Card variant (default)
@@ -132,5 +132,5 @@ export function UpgradePrompt({
         </Button>
       </div>
     </Card>
-  )
+  );
 }

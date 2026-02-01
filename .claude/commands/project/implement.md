@@ -52,4 +52,9 @@ description: 実装を行う
     - 新規コンポーネント追加 → docs/COMPONENT.md を更新
     - 画面追加・変更 → docs/SCREEN.md を更新
 
-11. 完了したら Issue を更新・クローズ
+11. 実装完了したらコミット・push
+    - コミットメッセージに `Closes #XX` を含める
+    - 例: `Prettier設定を変更 Closes #34`
+    - 既存のPRがあればpushで自動反映
+    - PRがなければユーザーに確認（まとめてPR作成することがある）
+    - PRマージ時にIssueが自動クローズされる

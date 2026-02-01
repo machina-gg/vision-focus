@@ -1,19 +1,19 @@
-import React from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import React from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
-import { Button, Card, Toggle } from '~/components/ui'
-import { getMessage } from '~/lib/i18n'
-import type { AppSettings, Schedule, VisionSettings } from '~/types/storage'
+import { Button, Card, Toggle } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
+import type { AppSettings, Schedule, VisionSettings } from '~/types/storage';
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface SchedulesTabProps {
-  settings: AppSettings | undefined
-  vision: VisionSettings | undefined
-  onAddSchedule: () => void
-  onEditSchedule: (schedule: Schedule) => void
-  onDeleteSchedule: (id: string) => void
-  onToggleSchedule: (id: string, enabled: boolean) => void
+  settings: AppSettings | undefined;
+  vision: VisionSettings | undefined;
+  onAddSchedule: () => void;
+  onEditSchedule: (schedule: Schedule) => void;
+  onDeleteSchedule: (id: string) => void;
+  onToggleSchedule: (id: string, enabled: boolean) => void;
 }
 
 export function SchedulesTab({
@@ -22,7 +22,7 @@ export function SchedulesTab({
   onAddSchedule,
   onEditSchedule,
   onDeleteSchedule,
-  onToggleSchedule,
+  onToggleSchedule
 }: SchedulesTabProps) {
   return (
     <div className="space-y-6">
@@ -105,5 +105,5 @@ export function SchedulesTab({
         )}
       </Card>
     </div>
-  )
+  );
 }

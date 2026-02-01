@@ -1,32 +1,32 @@
-import type { ReactNode } from 'react'
-import React from 'react'
+import type { ReactNode } from 'react';
+import React from 'react';
 
-import { X } from 'lucide-react'
+import { X } from 'lucide-react';
 
-type ModalSize = 'sm' | 'md' | 'lg'
+type ModalSize = 'sm' | 'md' | 'lg';
 
 export interface ModalProps {
-  isOpen: boolean
-  onClose: () => void
-  title?: string
-  size?: ModalSize
-  children: ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  size?: ModalSize;
+  children: ReactNode;
 }
 
 const sizeStyles: Record<ModalSize, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
-  lg: 'max-w-lg',
-}
+  lg: 'max-w-lg'
+};
 
 export function Modal({
   isOpen,
   onClose,
   title,
   size = 'md',
-  children,
+  children
 }: ModalProps) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -61,5 +61,5 @@ export function Modal({
         <div className="px-6 py-4">{children}</div>
       </div>
     </div>
-  )
+  );
 }

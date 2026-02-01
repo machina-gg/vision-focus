@@ -1,62 +1,62 @@
 // Block list item
 export interface BlockItem {
-  id: string
-  domain: string
-  isWildcard: boolean
-  createdAt: string
+  id: string;
+  domain: string;
+  isWildcard: boolean;
+  createdAt: string;
 }
 
 // Schedule for time-based blocking
 export interface Schedule {
-  id: string
-  name: string
-  startTime: string // HH:mm
-  endTime: string // HH:mm
-  days: number[] // 0=Sun, 1=Mon, ..., 6=Sat
-  enabled: boolean
-  presetId?: string // Dashboard preset to apply when schedule is active
+  id: string;
+  name: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  days: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+  enabled: boolean;
+  presetId?: string; // Dashboard preset to apply when schedule is active
 }
 
 // Daily statistics
 export interface DailyStat {
-  date: string // YYYY-MM-DD
-  wasteTime: number // seconds
-  investTime: number // seconds
-  blockCount: number
+  date: string; // YYYY-MM-DD
+  wasteTime: number; // seconds
+  investTime: number; // seconds
+  blockCount: number;
 }
 
 // Site time tracking
 export interface SiteTime {
-  domain: string
-  time: number // seconds
-  category: 'waste' | 'invest' | 'neutral'
-  lastUpdated: string
+  domain: string;
+  time: number; // seconds
+  category: 'waste' | 'invest' | 'neutral';
+  lastUpdated: string;
 }
 
 // Site block count tracking (independent of blockList)
 export interface SiteBlockCount {
-  domain: string
-  count: number // cumulative block count
-  lastBlocked: string // ISO8601 timestamp
+  domain: string;
+  count: number; // cumulative block count
+  lastBlocked: string; // ISO8601 timestamp
 }
 
 // Dashboard display settings (shared between default and presets)
 export interface DashboardDisplaySettings {
-  goalText: string
-  goalSubText: string
-  textColor: string
-  backgroundType: 'image' | 'color'
-  backgroundImage: string
-  backgroundColor: string
-  customBackgroundData: string | null
-  fontSettings: FontSettings
+  goalText: string;
+  goalSubText: string;
+  textColor: string;
+  backgroundType: 'image' | 'color';
+  backgroundImage: string;
+  backgroundColor: string;
+  customBackgroundData: string | null;
+  fontSettings: FontSettings;
 }
 
 // Dashboard preset - saves all dashboard settings as a set
 export interface DashboardPreset extends DashboardDisplaySettings {
-  id: string
-  name: string
-  createdAt: string
+  id: string;
+  name: string;
+  createdAt: string;
 }
 
 // Font settings for customization
@@ -85,7 +85,7 @@ export type FontFamily =
   // Japanese
   | 'notosansjp'
   | 'notoserifjp'
-  | 'mplusrounded'
+  | 'mplusrounded';
 
 export type FontCategory =
   | 'system'
@@ -93,22 +93,22 @@ export type FontCategory =
   | 'elegant'
   | 'impact'
   | 'handwriting'
-  | 'japanese'
-export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
-export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold'
+  | 'japanese';
+export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
+export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 
 export interface FontSettings {
-  family: FontFamily
-  size: FontSize
-  weight: FontWeight
+  family: FontFamily;
+  size: FontSize;
+  weight: FontWeight;
 }
 
 // Font category definitions
 export interface FontDefinition {
-  family: FontFamily
-  name: string
-  css: string
-  googleFont?: string // Google Fonts name for loading
+  family: FontFamily;
+  name: string;
+  css: string;
+  googleFont?: string; // Google Fonts name for loading
 }
 
 export const FONT_CATEGORIES: Record<
@@ -121,9 +121,9 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'system',
         name: 'System Default',
-        css: 'ui-sans-serif, system-ui, sans-serif',
-      },
-    ],
+        css: 'ui-sans-serif, system-ui, sans-serif'
+      }
+    ]
   },
   modern: {
     name: 'Modern',
@@ -132,39 +132,39 @@ export const FONT_CATEGORIES: Record<
         family: 'inter',
         name: 'Inter',
         css: "'Inter', sans-serif",
-        googleFont: 'Inter',
+        googleFont: 'Inter'
       },
       {
         family: 'roboto',
         name: 'Roboto',
         css: "'Roboto', sans-serif",
-        googleFont: 'Roboto',
+        googleFont: 'Roboto'
       },
       {
         family: 'poppins',
         name: 'Poppins',
         css: "'Poppins', sans-serif",
-        googleFont: 'Poppins',
+        googleFont: 'Poppins'
       },
       {
         family: 'lato',
         name: 'Lato',
         css: "'Lato', sans-serif",
-        googleFont: 'Lato',
+        googleFont: 'Lato'
       },
       {
         family: 'opensans',
         name: 'Open Sans',
         css: "'Open Sans', sans-serif",
-        googleFont: 'Open+Sans',
+        googleFont: 'Open+Sans'
       },
       {
         family: 'nunito',
         name: 'Nunito',
         css: "'Nunito', sans-serif",
-        googleFont: 'Nunito',
-      },
-    ],
+        googleFont: 'Nunito'
+      }
+    ]
   },
   elegant: {
     name: 'Elegant',
@@ -173,27 +173,27 @@ export const FONT_CATEGORIES: Record<
         family: 'playfair',
         name: 'Playfair Display',
         css: "'Playfair Display', serif",
-        googleFont: 'Playfair+Display',
+        googleFont: 'Playfair+Display'
       },
       {
         family: 'merriweather',
         name: 'Merriweather',
         css: "'Merriweather', serif",
-        googleFont: 'Merriweather',
+        googleFont: 'Merriweather'
       },
       {
         family: 'lora',
         name: 'Lora',
         css: "'Lora', serif",
-        googleFont: 'Lora',
+        googleFont: 'Lora'
       },
       {
         family: 'crimsontext',
         name: 'Crimson Text',
         css: "'Crimson Text', serif",
-        googleFont: 'Crimson+Text',
-      },
-    ],
+        googleFont: 'Crimson+Text'
+      }
+    ]
   },
   impact: {
     name: 'Impact',
@@ -202,27 +202,27 @@ export const FONT_CATEGORIES: Record<
         family: 'montserrat',
         name: 'Montserrat',
         css: "'Montserrat', sans-serif",
-        googleFont: 'Montserrat',
+        googleFont: 'Montserrat'
       },
       {
         family: 'oswald',
         name: 'Oswald',
         css: "'Oswald', sans-serif",
-        googleFont: 'Oswald',
+        googleFont: 'Oswald'
       },
       {
         family: 'bebasneue',
         name: 'Bebas Neue',
         css: "'Bebas Neue', sans-serif",
-        googleFont: 'Bebas+Neue',
+        googleFont: 'Bebas+Neue'
       },
       {
         family: 'raleway',
         name: 'Raleway',
         css: "'Raleway', sans-serif",
-        googleFont: 'Raleway',
-      },
-    ],
+        googleFont: 'Raleway'
+      }
+    ]
   },
   handwriting: {
     name: 'Handwriting',
@@ -231,15 +231,15 @@ export const FONT_CATEGORIES: Record<
         family: 'dancingscript',
         name: 'Dancing Script',
         css: "'Dancing Script', cursive",
-        googleFont: 'Dancing+Script',
+        googleFont: 'Dancing+Script'
       },
       {
         family: 'caveat',
         name: 'Caveat',
         css: "'Caveat', cursive",
-        googleFont: 'Caveat',
-      },
-    ],
+        googleFont: 'Caveat'
+      }
+    ]
   },
   japanese: {
     name: 'Japanese',
@@ -248,117 +248,117 @@ export const FONT_CATEGORIES: Record<
         family: 'notosansjp',
         name: 'Noto Sans JP',
         css: "'Noto Sans JP', sans-serif",
-        googleFont: 'Noto+Sans+JP',
+        googleFont: 'Noto+Sans+JP'
       },
       {
         family: 'notoserifjp',
         name: 'Noto Serif JP',
         css: "'Noto Serif JP', serif",
-        googleFont: 'Noto+Serif+JP',
+        googleFont: 'Noto+Serif+JP'
       },
       {
         family: 'mplusrounded',
         name: 'M PLUS Rounded 1c',
         css: "'M PLUS Rounded 1c', sans-serif",
-        googleFont: 'M+PLUS+Rounded+1c',
-      },
-    ],
-  },
-}
+        googleFont: 'M+PLUS+Rounded+1c'
+      }
+    ]
+  }
+};
 
 // Helper to get font definition by family
 export function getFontDefinition(family: FontFamily): FontDefinition {
   for (const category of Object.values(FONT_CATEGORIES)) {
-    const font = category.fonts.find((f) => f.family === family)
-    if (font) return font
+    const font = category.fonts.find((f) => f.family === family);
+    if (font) return font;
   }
-  return FONT_CATEGORIES.system.fonts[0]
+  return FONT_CATEGORIES.system.fonts[0];
 }
 
 // Helper to get category for a font family
 export function getFontCategory(family: FontFamily): FontCategory {
   for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
     if (category.fonts.some((f) => f.family === family)) {
-      return categoryKey as FontCategory
+      return categoryKey as FontCategory;
     }
   }
-  return 'system'
+  return 'system';
 }
 
 // Weekly report (Premium)
 export interface WeeklyReport {
-  weekStart: string // YYYY-MM-DD
-  weekEnd: string // YYYY-MM-DD
-  totalWasteTime: number // seconds
-  totalInvestTime: number // seconds
-  totalBlockCount: number
-  dailyBreakdown: DailyStat[]
-  topWasteSites: { domain: string; time: number }[]
-  topInvestSites: { domain: string; time: number }[]
-  trend: 'improving' | 'declining' | 'stable'
+  weekStart: string; // YYYY-MM-DD
+  weekEnd: string; // YYYY-MM-DD
+  totalWasteTime: number; // seconds
+  totalInvestTime: number; // seconds
+  totalBlockCount: number;
+  dailyBreakdown: DailyStat[];
+  topWasteSites: { domain: string; time: number }[];
+  topInvestSites: { domain: string; time: number }[];
+  trend: 'improving' | 'declining' | 'stable';
 }
 
 // Monthly report (Premium)
 export interface MonthlyReport {
-  month: string // YYYY-MM
-  totalWasteTime: number // seconds
-  totalInvestTime: number // seconds
-  totalBlockCount: number
+  month: string; // YYYY-MM
+  totalWasteTime: number; // seconds
+  totalInvestTime: number; // seconds
+  totalBlockCount: number;
   weeklyBreakdown: {
-    weekStart: string
-    wasteTime: number
-    investTime: number
-  }[]
-  topWasteSites: { domain: string; time: number }[]
-  topInvestSites: { domain: string; time: number }[]
-  trend: 'improving' | 'declining' | 'stable'
+    weekStart: string;
+    wasteTime: number;
+    investTime: number;
+  }[];
+  topWasteSites: { domain: string; time: number }[];
+  topInvestSites: { domain: string; time: number }[];
+  trend: 'improving' | 'declining' | 'stable';
 }
 
 // Vision/Dashboard settings
 export interface VisionSettings {
   // Default display settings (used when no preset is active)
-  defaultSettings: DashboardDisplaySettings
+  defaultSettings: DashboardDisplaySettings;
   // User-created presets
-  presets: DashboardPreset[]
+  presets: DashboardPreset[];
   // Currently active preset ID (null = use defaultSettings)
-  activePresetId: string | null
+  activePresetId: string | null;
 }
 
 // App settings
 // Supported languages
-export type SupportedLanguage = 'en' | 'ja'
+export type SupportedLanguage = 'en' | 'ja';
 
 export interface AppSettings {
-  blockList: BlockItem[]
-  schedules: Schedule[]
-  paused: boolean // Global pause for all blocking
-  language: SupportedLanguage | null // null = use browser language
+  blockList: BlockItem[];
+  schedules: Schedule[];
+  paused: boolean; // Global pause for all blocking
+  language: SupportedLanguage | null; // null = use browser language
 }
 
 // Analytics data
 export interface AnalyticsData {
-  dailyStats: Record<string, DailyStat> // key: YYYY-MM-DD
-  siteTime: Record<string, SiteTime> // key: domain
-  siteCategories: Record<string, 'waste' | 'invest' | 'neutral'> // key: domain
-  siteBlockCounts: Record<string, SiteBlockCount> // key: domain (persists even after removal from blockList)
+  dailyStats: Record<string, DailyStat>; // key: YYYY-MM-DD
+  siteTime: Record<string, SiteTime>; // key: domain
+  siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
+  siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
 }
 
 // Tracked site - tracks sites from when they are blocked
 export interface TrackedSite {
-  domain: string
-  status: 'blocked' | 'unblocked' // Current status
-  blockedAt: string // ISO8601 timestamp when added to blocklist
-  unblockedAt: string | null // ISO8601 timestamp when removed from blocklist (null if still blocked)
-  timeAfterUnblock: number // Cumulative time spent (seconds) after unblocking
-  lastActivity: string | null // ISO8601 timestamp of last activity
+  domain: string;
+  status: 'blocked' | 'unblocked'; // Current status
+  blockedAt: string; // ISO8601 timestamp when added to blocklist
+  unblockedAt: string | null; // ISO8601 timestamp when removed from blocklist (null if still blocked)
+  timeAfterUnblock: number; // Cumulative time spent (seconds) after unblocking
+  lastActivity: string | null; // ISO8601 timestamp of last activity
 }
 
 // Legacy alias for backwards compatibility
-export type UnblockedSite = TrackedSite
+export type UnblockedSite = TrackedSite;
 
 // History of unblocked sites
 export interface UnblockHistory {
-  sites: Record<string, UnblockedSite> // key: domain
+  sites: Record<string, UnblockedSite>; // key: domain
 }
 
 // Premium feature identifiers
@@ -371,14 +371,14 @@ export type PremiumFeature =
   | 'weekly_report'
   | 'monthly_report'
   | 'github_integration'
-  | 'unblock_analytics' // View unblocked site usage time and re-block
+  | 'unblock_analytics'; // View unblocked site usage time and re-block
 
 // Complete storage schema
 export interface StorageSchema {
-  settings: AppSettings
-  vision: VisionSettings
-  analytics: AnalyticsData
-  unblockHistory: UnblockHistory
+  settings: AppSettings;
+  vision: VisionSettings;
+  analytics: AnalyticsData;
+  unblockHistory: UnblockHistory;
 }
 
 // Default values
@@ -386,14 +386,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
   paused: false,
-  language: null, // Use browser language by default
-}
+  language: null // Use browser language by default
+};
 
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
   family: 'system',
   size: 'md',
-  weight: 'bold',
-}
+  weight: 'bold'
+};
 
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   goalText: '',
@@ -403,21 +403,21 @@ export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
   customBackgroundData: null,
-  fontSettings: DEFAULT_FONT_SETTINGS,
-}
+  fontSettings: DEFAULT_FONT_SETTINGS
+};
 
 export const DEFAULT_VISION: VisionSettings = {
   defaultSettings: DEFAULT_DISPLAY_SETTINGS,
   presets: [],
-  activePresetId: null,
-}
+  activePresetId: null
+};
 
 // Helper to get current display settings based on activePresetId
 export function getCurrentDisplaySettings(
   vision: VisionSettings
 ): DashboardDisplaySettings {
   if (vision.activePresetId) {
-    const preset = vision.presets.find((p) => p.id === vision.activePresetId)
+    const preset = vision.presets.find((p) => p.id === vision.activePresetId);
     if (preset) {
       return {
         goalText: preset.goalText,
@@ -427,89 +427,89 @@ export function getCurrentDisplaySettings(
         backgroundImage: preset.backgroundImage,
         backgroundColor: preset.backgroundColor,
         customBackgroundData: preset.customBackgroundData,
-        fontSettings: preset.fontSettings,
-      }
+        fontSettings: preset.fontSettings
+      };
     }
   }
-  return vision.defaultSettings
+  return vision.defaultSettings;
 }
 
 export const DEFAULT_ANALYTICS: AnalyticsData = {
   dailyStats: {},
   siteTime: {},
   siteCategories: {},
-  siteBlockCounts: {},
-}
+  siteBlockCounts: {}
+};
 
 export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {
-  sites: {},
-}
+  sites: {}
+};
 
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
   analytics: DEFAULT_ANALYTICS,
-  unblockHistory: DEFAULT_UNBLOCK_HISTORY,
-}
+  unblockHistory: DEFAULT_UNBLOCK_HISTORY
+};
 
 // Feature limits type
 export interface FeatureLimits {
-  maxBlockList: number
-  historyDays: number
-  maxPresets: number
+  maxBlockList: number;
+  historyDays: number;
+  maxPresets: number;
 }
 
 // Feature limits
 export const FEATURE_LIMITS: {
-  free: FeatureLimits
-  premium: FeatureLimits
+  free: FeatureLimits;
+  premium: FeatureLimits;
 } = {
   free: {
     maxBlockList: Infinity, // Unlimited for all users
     historyDays: 7,
-    maxPresets: 1,
+    maxPresets: 1
   },
   premium: {
     maxBlockList: Infinity,
     historyDays: Infinity,
-    maxPresets: 5,
-  },
-}
+    maxPresets: 5
+  }
+};
 
 // Legacy export for backwards compatibility
-export const FREE_TIER_LIMITS = FEATURE_LIMITS.free
+export const FREE_TIER_LIMITS = FEATURE_LIMITS.free;
 
 // Font family CSS mappings (uses new FONT_CATEGORIES)
 export const getFontFamilyCSS = (family: FontFamily): string => {
-  return getFontDefinition(family).css
-}
+  return getFontDefinition(family).css;
+};
 
 // Legacy compatibility - dynamically generated
 export const FONT_FAMILY_MAP: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )
   .flatMap((cat) => cat.fonts)
-  .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {})
+  .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {});
 
 // Font size Tailwind class mappings
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
   sm: 'text-2xl',
   md: 'text-3xl',
   lg: 'text-4xl',
-  xl: 'text-5xl',
-}
+  xl: 'text-5xl'
+};
 
 // Font weight Tailwind class mappings
 export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   normal: 'font-normal',
   medium: 'font-medium',
   semibold: 'font-semibold',
-  bold: 'font-bold',
-}
+  bold: 'font-bold'
+};
 
 // Font family display names (uses new FONT_CATEGORIES)
 export const FONT_FAMILY_NAMES: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )
   .flatMap((cat) => cat.fonts)
-  .reduce((acc, font) => ({ ...acc, [font.family]: font.name }), {})
+  .reduce((acc, font) => ({ ...acc, [font.family]: font.name }), {});

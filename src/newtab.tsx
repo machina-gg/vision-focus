@@ -1,134 +1,140 @@
-import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo
+} from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook'
-import { Settings, ShieldX } from 'lucide-react'
+import { useStorage } from '@plasmohq/storage/hook';
+import { Settings, ShieldX } from 'lucide-react';
 
-import { DownloadButton } from '~/components/features'
-import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab'
-import { useBackgroundStats, usePremiumStatus } from '~/hooks'
-import { getMessage, setCurrentLanguage } from '~/lib/i18n'
-import { presetToDisplaySettings } from '~/lib/presetUtils'
+import { DownloadButton } from '~/components/features';
+import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
+import { useBackgroundStats, usePremiumStatus } from '~/hooks';
+import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { presetToDisplaySettings } from '~/lib/presetUtils';
 import {
   getLastBlockedDomain,
   clearLastBlockedDomain,
-  getSiteBlockCount,
-} from '~/lib/storage'
-import { isWithinSchedule } from '~/lib/time'
-import { storage } from '~/lib/storage'
+  getSiteBlockCount
+} from '~/lib/storage';
+import { isWithinSchedule } from '~/lib/time';
+import { storage } from '~/lib/storage';
 import {
   getBackgroundUrl,
   loadGoogleFont,
-  FONT_WEIGHT_VALUE,
-} from '~/constants'
+  FONT_WEIGHT_VALUE
+} from '~/constants';
 import type {
   VisionSettings,
   DashboardDisplaySettings,
   AppSettings,
-  AnalyticsData,
-} from '~/types/storage'
+  AnalyticsData
+} from '~/types/storage';
 import {
   DEFAULT_VISION,
   DEFAULT_DISPLAY_SETTINGS,
   DEFAULT_SETTINGS,
   DEFAULT_ANALYTICS,
   FEATURE_LIMITS,
-  getFontDefinition,
-} from '~/types/storage'
+  getFontDefinition
+} from '~/types/storage';
 
-import './styles/globals.css'
+import './styles/globals.css';
 
 // Font size in pixels for newtab (larger than options preview)
 const FONT_SIZE_PX: Record<string, number> = {
   sm: 30,
   md: 36,
   lg: 48,
-  xl: 60,
-}
+  xl: 60
+};
 
 function NewtabApp() {
   const [vision, setVision] = useStorage<VisionSettings>(
     {
       key: 'vision',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_VISION
-  )
+  );
   const [settings] = useStorage<AppSettings>(
     {
       key: 'settings',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_SETTINGS
-  )
+  );
   const [analytics] = useStorage<AnalyticsData>(
     {
       key: 'analytics',
-      instance: storage,
+      instance: storage
     },
     DEFAULT_ANALYTICS
-  )
-  const stats = useBackgroundStats(10000)
-  const { isPremium } = usePremiumStatus()
-  const [isEditing, setIsEditing] = useState(false)
-  const [editText, setEditText] = useState('')
-  const containerRef = useRef<HTMLDivElement>(null)
+  );
+  const stats = useBackgroundStats(10000);
+  const { isPremium } = usePremiumStatus();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Blocked site info (shown when redirected from a blocked site)
   const [blockedInfo, setBlockedInfo] = useState<{
-    domain: string
-    count: number
-  } | null>(null)
+    domain: string;
+    count: number;
+  } | null>(null);
 
   // Time tick for schedule checking (updates when tab becomes visible)
-  const [timeTick, setTimeTick] = useState(0)
+  const [timeTick, setTimeTick] = useState(0);
 
   // Check if we were redirected from a blocked site
   useEffect(() => {
     const loadBlockedInfo = async () => {
-      const domain = await getLastBlockedDomain()
+      const domain = await getLastBlockedDomain();
       if (domain) {
-        const count = await getSiteBlockCount(domain)
-        setBlockedInfo({ domain, count })
+        const count = await getSiteBlockCount(domain);
+        setBlockedInfo({ domain, count });
         // Clear it so it doesn't show on next new tab
-        await clearLastBlockedDomain()
+        await clearLastBlockedDomain();
       }
-    }
-    loadBlockedInfo()
-  }, [])
+    };
+    loadBlockedInfo();
+  }, []);
 
   // Sync language setting with i18n module
   useEffect(() => {
     if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language)
+      setCurrentLanguage(settings.language);
     }
-  }, [settings?.language])
+  }, [settings?.language]);
 
   // Re-check schedule when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        setTimeTick((prev) => prev + 1)
+        setTimeTick((prev) => prev + 1);
       }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Helper to check if a preset is within free tier limits
   const isPresetAvailable = useCallback(
     (presetId: string, presets: VisionSettings['presets']) => {
-      if (isPremium) return true
-      const index = presets?.findIndex((p) => p.id === presetId) ?? -1
-      return index >= 0 && index < FEATURE_LIMITS.free.maxPresets
+      if (isPremium) return true;
+      const index = presets?.findIndex((p) => p.id === presetId) ?? -1;
+      return index >= 0 && index < FEATURE_LIMITS.free.maxPresets;
     },
     [isPremium]
-  )
+  );
 
   // Get current display settings
   // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
   const displaySettings: DashboardDisplaySettings = useMemo(() => {
-    if (!vision) return DEFAULT_DISPLAY_SETTINGS
+    if (!vision) return DEFAULT_DISPLAY_SETTINGS;
 
     // Check for active schedule with a preset
     const activeScheduleWithPreset = settings?.schedules?.find(
@@ -136,7 +142,7 @@ function NewtabApp() {
         schedule.enabled &&
         schedule.presetId &&
         isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
-    )
+    );
 
     if (activeScheduleWithPreset?.presetId) {
       // Check if preset is available for free tier
@@ -145,9 +151,9 @@ function NewtabApp() {
       ) {
         const schedulePreset = vision.presets?.find(
           (p) => p.id === activeScheduleWithPreset.presetId
-        )
+        );
         if (schedulePreset) {
-          return presetToDisplaySettings(schedulePreset, isPremium)
+          return presetToDisplaySettings(schedulePreset, isPremium);
         }
       }
       // If preset is not available (beyond free limit), fall through to next priority
@@ -159,60 +165,60 @@ function NewtabApp() {
       if (isPresetAvailable(vision.activePresetId, vision.presets)) {
         const activePreset = vision.presets?.find(
           (p) => p.id === vision.activePresetId
-        )
+        );
         if (activePreset) {
-          return presetToDisplaySettings(activePreset, isPremium)
+          return presetToDisplaySettings(activePreset, isPremium);
         }
       }
       // If preset is not available (beyond free limit), fall through to default
     }
 
     // Fall back to default settings
-    const defaultSettings = vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS
+    const defaultSettings = vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS;
     return {
       ...defaultSettings,
       // Custom background requires premium
       customBackgroundData: isPremium
         ? defaultSettings.customBackgroundData
-        : null,
-    }
+        : null
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
-  }, [vision, settings, timeTick, isPremium, isPresetAvailable])
+  }, [vision, settings, timeTick, isPremium, isPresetAvailable]);
 
   // Get background style - supports custom uploaded background
-  const isColorBackground = displaySettings.backgroundType === 'color'
+  const isColorBackground = displaySettings.backgroundType === 'color';
   const backgroundUrl = displaySettings.customBackgroundData
     ? displaySettings.customBackgroundData
     : displaySettings.backgroundImage
       ? getBackgroundUrl(displaySettings.backgroundImage)
-      : getBackgroundUrl('default-1')
-  const backgroundColor = displaySettings.backgroundColor
+      : getBackgroundUrl('default-1');
+  const backgroundColor = displaySettings.backgroundColor;
 
   // Get font styles
-  const fontSettings = displaySettings.fontSettings
-  const fontDef = getFontDefinition(fontSettings.family)
+  const fontSettings = displaySettings.fontSettings;
+  const fontDef = getFontDefinition(fontSettings.family);
 
   // Load Google Font
   useEffect(() => {
     if (fontDef.googleFont) {
-      loadGoogleFont(fontDef.googleFont)
+      loadGoogleFont(fontDef.googleFont);
     }
-  }, [fontDef.googleFont])
+  }, [fontDef.googleFont]);
 
   const fontStyle = {
     fontFamily: fontDef.css,
     fontSize: `${FONT_SIZE_PX[fontSettings.size]}px`,
-    fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight],
-  }
+    fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight]
+  };
 
   // Get goal from display settings
-  const goalText = displaySettings.goalText
-  const goalSubText = displaySettings.goalSubText
-  const textColor = displaySettings.textColor
+  const goalText = displaySettings.goalText;
+  const goalSubText = displaySettings.goalSubText;
+  const textColor = displaySettings.textColor;
 
   // Calculate blocking days for the blocked site
   const blockingDays = useMemo(() => {
-    if (!blockedInfo?.domain || !settings?.blockList) return null
+    if (!blockedInfo?.domain || !settings?.blockList) return null;
 
     // Find the block item for this domain
     const blockItem = settings.blockList.find(
@@ -220,26 +226,28 @@ function NewtabApp() {
         item.domain === blockedInfo.domain ||
         (item.isWildcard &&
           blockedInfo.domain.endsWith(item.domain.replace('*.', '.')))
-    )
+    );
 
-    if (!blockItem?.createdAt) return null
+    if (!blockItem?.createdAt) return null;
 
-    const createdDate = new Date(blockItem.createdAt)
-    const now = new Date()
-    const diffTime = now.getTime() - createdDate.getTime()
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    const createdDate = new Date(blockItem.createdAt);
+    const now = new Date();
+    const diffTime = now.getTime() - createdDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    return Math.max(1, diffDays) // At least 1 day
-  }, [blockedInfo?.domain, settings?.blockList])
+    return Math.max(1, diffDays); // At least 1 day
+  }, [blockedInfo?.domain, settings?.blockList]);
 
   const handleAnalyticsClick = useCallback(() => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#analytics') })
-  }, [])
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('options.html#analytics')
+    });
+  }, []);
 
   const handleStartEdit = useCallback(() => {
-    setEditText(goalText)
-    setIsEditing(true)
-  }, [goalText])
+    setEditText(goalText);
+    setIsEditing(true);
+  }, [goalText]);
 
   const handleSaveGoal = useCallback(async () => {
     if (vision && editText.trim()) {
@@ -247,34 +255,34 @@ function NewtabApp() {
         ...vision,
         defaultSettings: {
           ...vision.defaultSettings,
-          goalText: editText.trim(),
-        },
-      }
-      await storage.set('vision', updated)
-      setVision(updated)
+          goalText: editText.trim()
+        }
+      };
+      await storage.set('vision', updated);
+      setVision(updated);
     }
-    setIsEditing(false)
-  }, [vision, editText, setVision])
+    setIsEditing(false);
+  }, [vision, editText, setVision]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault()
-        handleSaveGoal()
+        e.preventDefault();
+        handleSaveGoal();
       }
       if (e.key === 'Escape') {
-        setIsEditing(false)
+        setIsEditing(false);
       }
     },
     [handleSaveGoal]
-  )
+  );
 
   const handleSettingsClick = useCallback(() => {
-    chrome.runtime.openOptionsPage()
-  }, [])
+    chrome.runtime.openOptionsPage();
+  }, []);
 
   // Check if user has any presets configured
-  const hasPresets = (vision?.presets?.length ?? 0) > 0
+  const hasPresets = (vision?.presets?.length ?? 0) > 0;
 
   // Simple block page UI (when no presets are configured)
   if (!hasPresets) {
@@ -355,7 +363,7 @@ function NewtabApp() {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   // Full dashboard UI (when presets are configured)
@@ -369,7 +377,7 @@ function NewtabApp() {
           : {
               backgroundImage: `url(${backgroundUrl})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundPosition: 'center'
             }
       }
     >
@@ -449,7 +457,7 @@ function NewtabApp() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
-export default NewtabApp
+export default NewtabApp;

@@ -1,27 +1,27 @@
-import type { HTMLAttributes, ReactNode } from 'react'
-import React from 'react'
+import type { HTMLAttributes, ReactNode } from 'react';
+import React from 'react';
 
-type CardVariant = 'default' | 'outlined' | 'elevated'
-type CardPadding = 'none' | 'sm' | 'md' | 'lg'
+type CardVariant = 'default' | 'outlined' | 'elevated';
+type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: CardVariant
-  padding?: CardPadding
-  children: ReactNode
+  variant?: CardVariant;
+  padding?: CardPadding;
+  children: ReactNode;
 }
 
 const variantStyles: Record<CardVariant, string> = {
   default: 'bg-gray-50 border border-gray-200',
   outlined: 'bg-white border border-gray-200',
-  elevated: 'bg-white shadow-md border border-gray-100',
-}
+  elevated: 'bg-white shadow-md border border-gray-100'
+};
 
 const paddingStyles: Record<CardPadding, string> = {
   none: '',
   sm: 'p-3',
   md: 'p-4',
-  lg: 'p-6',
-}
+  lg: 'p-6'
+};
 
 export function Card({
   variant = 'default',
@@ -31,7 +31,7 @@ export function Card({
   className = '',
   ...props
 }: CardProps) {
-  const isClickable = !!onClick
+  const isClickable = !!onClick;
 
   return (
     <div
@@ -49,5 +49,5 @@ export function Card({
     >
       {children}
     </div>
-  )
+  );
 }

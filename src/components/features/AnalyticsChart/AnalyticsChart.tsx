@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react';
 
 import {
   BarChart,
@@ -10,20 +10,20 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-import { BarChart3, TrendingUp, Layers } from 'lucide-react'
+  ResponsiveContainer
+} from 'recharts';
+import { BarChart3, TrendingUp, Layers } from 'lucide-react';
 
-import type { AnalyticsData, UnblockHistory } from '~/types/storage'
-import { getMessage } from '~/lib/i18n'
-import { formatTime } from '~/lib/time'
+import type { AnalyticsData, UnblockHistory } from '~/types/storage';
+import { getMessage } from '~/lib/i18n';
+import { formatTime } from '~/lib/time';
 
-export type ChartType = 'daily' | 'bySite' | 'cumulative'
+export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
 export interface AnalyticsChartProps {
-  analytics: AnalyticsData
-  unblockHistory: UnblockHistory
-  disabled?: boolean
+  analytics: AnalyticsData;
+  unblockHistory: UnblockHistory;
+  disabled?: boolean;
 }
 
 // Color palette for different sites (soft pastel tones)
@@ -35,66 +35,66 @@ const SITE_COLORS = [
   '#67e8f9', // cyan-300
   '#a5b4fc', // indigo-300
   '#d8b4fe', // purple-300
-  '#f9a8d4', // pink-300
-]
+  '#f9a8d4' // pink-300
+];
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function formatMinutes(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const mins = Math.round(minutes % 60)
-  if (hours > 0) return `${hours}h ${mins}m`
-  return `${mins}m`
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 }
 
 export function AnalyticsChart({
   analytics,
   unblockHistory,
-  disabled = false,
+  disabled = false
 }: AnalyticsChartProps) {
-  const [chartType, setChartType] = useState<ChartType>('daily')
+  const [chartType, setChartType] = useState<ChartType>('daily');
 
   // Get list of unblocked domains
   const unblockedDomains = useMemo(() => {
-    return Object.keys(unblockHistory.sites)
-  }, [unblockHistory.sites])
+    return Object.keys(unblockHistory.sites);
+  }, [unblockHistory.sites]);
 
   // A. Daily total time on unblocked sites
   const dailyData = useMemo(() => {
     const entries = Object.entries(analytics.dailyStats)
       .map(([date, stat]) => ({
         date,
-        time: Math.round(stat.wasteTime / 60), // Convert to minutes
+        time: Math.round(stat.wasteTime / 60) // Convert to minutes
       }))
       .filter((e) => e.time > 0)
       .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-14) // Last 14 days
+      .slice(-14); // Last 14 days
 
     // If no daily stats, show current total as today's data
     if (entries.length === 0) {
       const currentTotal = Object.values(unblockHistory.sites).reduce(
         (sum, site) => sum + site.timeAfterUnblock,
         0
-      )
+      );
       if (currentTotal > 0) {
         return [
           {
             date: formatDate(new Date().toISOString().split('T')[0]),
-            time: Math.round(currentTotal / 60),
-          },
-        ]
+            time: Math.round(currentTotal / 60)
+          }
+        ];
       }
-      return []
+      return [];
     }
 
     return entries.map((e) => ({
       ...e,
-      date: formatDate(e.date),
-    }))
-  }, [analytics.dailyStats, unblockHistory.sites])
+      date: formatDate(e.date)
+    }));
+  }, [analytics.dailyStats, unblockHistory.sites]);
 
   // B. Site-by-site breakdown (stacked)
   const bySiteData = useMemo(() => {
@@ -106,67 +106,67 @@ export function AnalyticsChart({
         fullDomain: domain,
         time: Math.round(
           (unblockHistory.sites[domain]?.timeAfterUnblock || 0) / 60
-        ),
+        )
       }))
       .filter((s) => s.time > 0)
       .sort((a, b) => b.time - a.time)
-      .slice(0, 8) // Top 8 sites
+      .slice(0, 8); // Top 8 sites
 
-    return siteData
-  }, [unblockedDomains, unblockHistory.sites])
+    return siteData;
+  }, [unblockedDomains, unblockHistory.sites]);
 
   // C. Cumulative time since unblock
   const cumulativeData = useMemo(() => {
     // Find earliest unblock date
-    const unblockedSites = Object.values(unblockHistory.sites)
-    if (unblockedSites.length === 0) return []
+    const unblockedSites = Object.values(unblockHistory.sites);
+    if (unblockedSites.length === 0) return [];
 
     const earliestUnblock = unblockedSites.reduce((earliest, site) => {
-      const date = new Date(site.unblockedAt)
-      return date < earliest ? date : earliest
-    }, new Date())
+      const date = new Date(site.unblockedAt);
+      return date < earliest ? date : earliest;
+    }, new Date());
 
     // Generate cumulative data from daily stats
     const dailyEntries = Object.entries(analytics.dailyStats)
       .filter(([date]) => new Date(date) >= earliestUnblock)
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => a.localeCompare(b));
 
     // If no daily stats, show at least current total as a single point
     if (dailyEntries.length === 0) {
       const currentTotal = unblockedSites.reduce(
         (sum, site) => sum + site.timeAfterUnblock,
         0
-      )
+      );
       if (currentTotal > 0) {
         return [
           {
             date: formatDate(new Date().toISOString().split('T')[0]),
-            cumulative: Math.round(currentTotal / 60),
-          },
-        ]
+            cumulative: Math.round(currentTotal / 60)
+          }
+        ];
       }
-      return []
+      return [];
     }
 
-    let cumulative = 0
+    let cumulative = 0;
     const data = dailyEntries.map(([date, stat]) => {
-      cumulative += stat.wasteTime
+      cumulative += stat.wasteTime;
       return {
         date: formatDate(date),
-        cumulative: Math.round(cumulative / 60), // Minutes
-      }
-    })
+        cumulative: Math.round(cumulative / 60) // Minutes
+      };
+    });
 
-    return data.slice(-14) // Last 14 days
-  }, [analytics.dailyStats, unblockHistory.sites])
+    return data.slice(-14); // Last 14 days
+  }, [analytics.dailyStats, unblockHistory.sites]);
 
   // Total time across all unblocked sites
   const totalTime = useMemo(() => {
     return Object.values(unblockHistory.sites).reduce(
       (sum, site) => sum + site.timeAfterUnblock,
       0
-    )
-  }, [unblockHistory.sites])
+    );
+  }, [unblockHistory.sites]);
 
   const renderChart = () => {
     switch (chartType) {
@@ -176,7 +176,7 @@ export function AnalyticsChart({
             <div className="flex items-center justify-center h-64 text-gray-500">
               {getMessage('noData')}
             </div>
-          )
+          );
         }
         return (
           <ResponsiveContainer width="100%" height={280}>
@@ -191,12 +191,12 @@ export function AnalyticsChart({
               <Tooltip
                 formatter={(value: number) => [
                   formatMinutes(value),
-                  getMessage('chartDailyLabel'),
+                  getMessage('chartDailyLabel')
                 ]}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  borderRadius: '8px'
                 }}
               />
               <Bar
@@ -207,7 +207,7 @@ export function AnalyticsChart({
               />
             </BarChart>
           </ResponsiveContainer>
-        )
+        );
 
       case 'bySite':
         if (bySiteData.length === 0) {
@@ -215,7 +215,7 @@ export function AnalyticsChart({
             <div className="flex items-center justify-center h-64 text-gray-500">
               {getMessage('noData')}
             </div>
-          )
+          );
         }
         return (
           <ResponsiveContainer width="100%" height={280}>
@@ -238,13 +238,13 @@ export function AnalyticsChart({
                 formatter={(value: number, _name: string, props) => {
                   const payload = props?.payload as
                     | { fullDomain?: string }
-                    | undefined
-                  return [formatMinutes(value), payload?.fullDomain || '']
+                    | undefined;
+                  return [formatMinutes(value), payload?.fullDomain || ''];
                 }}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  borderRadius: '8px'
                 }}
               />
               <Bar dataKey="time" radius={[0, 4, 4, 0]}>
@@ -257,7 +257,7 @@ export function AnalyticsChart({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        )
+        );
 
       case 'cumulative':
         if (cumulativeData.length === 0) {
@@ -265,7 +265,7 @@ export function AnalyticsChart({
             <div className="flex items-center justify-center h-64 text-gray-500">
               {getMessage('noData')}
             </div>
-          )
+          );
         }
         return (
           <ResponsiveContainer width="100%" height={280}>
@@ -280,12 +280,12 @@ export function AnalyticsChart({
               <Tooltip
                 formatter={(value: number) => [
                   formatMinutes(value),
-                  getMessage('chartCumulativeLabel'),
+                  getMessage('chartCumulativeLabel')
                 ]}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  borderRadius: '8px'
                 }}
               />
               <Area
@@ -298,9 +298,9 @@ export function AnalyticsChart({
               />
             </AreaChart>
           </ResponsiveContainer>
-        )
+        );
     }
-  }
+  };
 
   return (
     <div
@@ -370,5 +370,5 @@ export function AnalyticsChart({
         {renderChart()}
       </div>
     </div>
-  )
+  );
 }

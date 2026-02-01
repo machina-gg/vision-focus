@@ -1,85 +1,85 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging'
+import type { PlasmoMessaging } from '@plasmohq/messaging';
 
-import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain'
+import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain';
 import {
   getSettings,
   setSettings,
   getUnblockHistory,
   setUnblockHistory,
   getAnalytics,
-  setAnalytics,
-} from '~/lib/storage'
-import { canAddToBlocklist } from '~/lib/license'
-import { updateBlockRules, blockExistingTabs } from '../blocker'
-import type { AddBlockRequest, AddBlockResponse } from '~/types/messages'
+  setAnalytics
+} from '~/lib/storage';
+import { canAddToBlocklist } from '~/lib/license';
+import { updateBlockRules, blockExistingTabs } from '../blocker';
+import type { AddBlockRequest, AddBlockResponse } from '~/types/messages';
 
-export type { AddBlockRequest, AddBlockResponse }
+export type { AddBlockRequest, AddBlockResponse };
 
 const handler: PlasmoMessaging.MessageHandler<
   AddBlockRequest,
   AddBlockResponse
 > = async (req, res) => {
-  const { domain } = req.body
+  const { domain } = req.body;
 
   if (!domain) {
-    res.send({ success: false, error: 'Domain is required' })
-    return
+    res.send({ success: false, error: 'Domain is required' });
+    return;
   }
 
-  const settings = await getSettings()
+  const settings = await getSettings();
 
   // Check tier limit using license service
-  const limitCheck = await canAddToBlocklist(settings.blockList.length)
+  const limitCheck = await canAddToBlocklist(settings.blockList.length);
   if (!limitCheck.allowed) {
     res.send({
       success: false,
       error: limitCheck.reason || `Limit reached (${limitCheck.limit} sites)`,
-      limitReached: true,
-    })
-    return
+      limitReached: true
+    });
+    return;
   }
 
-  const { domain: parsedDomain, isWildcard } = parseDomainInput(domain)
+  const { domain: parsedDomain, isWildcard } = parseDomainInput(domain);
 
   // Validate domain format
   if (!isValidDomain(parsedDomain)) {
-    res.send({ success: false, error: 'Invalid domain format' })
-    return
+    res.send({ success: false, error: 'Invalid domain format' });
+    return;
   }
 
   // Check if already in list
   const exists = settings.blockList.some(
     (item) => item.domain.toLowerCase() === parsedDomain.toLowerCase()
-  )
+  );
   if (exists) {
-    res.send({ success: false, error: 'Domain already in block list' })
-    return
+    res.send({ success: false, error: 'Domain already in block list' });
+    return;
   }
 
-  const now = new Date().toISOString()
+  const now = new Date().toISOString();
 
   // Add to block list
   settings.blockList.push({
     id: generateId(),
     domain: parsedDomain,
     isWildcard,
-    createdAt: now,
-  })
+    createdAt: now
+  });
 
-  await setSettings(settings)
-  await updateBlockRules()
-  await blockExistingTabs()
+  await setSettings(settings);
+  await updateBlockRules();
+  await blockExistingTabs();
 
   // Add or update tracking history
-  const history = await getUnblockHistory()
+  const history = await getUnblockHistory();
 
   if (history.sites[parsedDomain]) {
     // Re-blocking: update status back to blocked, reset time
-    history.sites[parsedDomain].status = 'blocked'
-    history.sites[parsedDomain].blockedAt = now
-    history.sites[parsedDomain].unblockedAt = null
-    history.sites[parsedDomain].timeAfterUnblock = 0
-    history.sites[parsedDomain].lastActivity = null
+    history.sites[parsedDomain].status = 'blocked';
+    history.sites[parsedDomain].blockedAt = now;
+    history.sites[parsedDomain].unblockedAt = null;
+    history.sites[parsedDomain].timeAfterUnblock = 0;
+    history.sites[parsedDomain].lastActivity = null;
   } else {
     // New block: create tracking entry
     history.sites[parsedDomain] = {
@@ -88,19 +88,19 @@ const handler: PlasmoMessaging.MessageHandler<
       blockedAt: now,
       unblockedAt: null,
       timeAfterUnblock: 0,
-      lastActivity: null,
-    }
+      lastActivity: null
+    };
   }
-  await setUnblockHistory(history)
+  await setUnblockHistory(history);
 
   // Clean up analytics data for this domain (reset time tracking)
-  const analytics = await getAnalytics()
+  const analytics = await getAnalytics();
   if (analytics.siteTime[parsedDomain]) {
-    delete analytics.siteTime[parsedDomain]
-    await setAnalytics(analytics)
+    delete analytics.siteTime[parsedDomain];
+    await setAnalytics(analytics);
   }
 
-  res.send({ success: true })
-}
+  res.send({ success: true });
+};
 
-export default handler
+export default handler;

@@ -1,51 +1,55 @@
-import React from 'react'
-import { Check, Lock, Plus, Save, Target, Trash2 } from 'lucide-react'
+import React from 'react';
+import { Check, Lock, Plus, Save, Target, Trash2 } from 'lucide-react';
 
-import { Button, Card, Input } from '~/components/ui'
-import { UpgradePrompt, ImageUploader, FontPicker } from '~/components/features'
-import { getMessage } from '~/lib/i18n'
-import { BACKGROUND_OPTIONS, getBackgroundUrl } from '~/constants/backgrounds'
-import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts'
+import { Button, Card, Input } from '~/components/ui';
+import {
+  UpgradePrompt,
+  ImageUploader,
+  FontPicker
+} from '~/components/features';
+import { getMessage } from '~/lib/i18n';
+import { BACKGROUND_OPTIONS, getBackgroundUrl } from '~/constants/backgrounds';
+import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts';
 import type {
   VisionSettings,
   DashboardPreset,
   DashboardDisplaySettings,
   FontSettings,
-  FeatureLimits,
-} from '~/types/storage'
-import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/storage'
+  FeatureLimits
+} from '~/types/storage';
+import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/storage';
 
 interface GeneralTabProps {
   // Vision data
-  vision: VisionSettings | undefined
-  draftPresets: DashboardPreset[]
-  selectedPresetId: string | null
-  draftDisplaySettings: DashboardDisplaySettings
-  editingPresetName: string
-  isDirty: boolean
-  visionSaved: boolean
+  vision: VisionSettings | undefined;
+  draftPresets: DashboardPreset[];
+  selectedPresetId: string | null;
+  draftDisplaySettings: DashboardDisplaySettings;
+  editingPresetName: string;
+  isDirty: boolean;
+  visionSaved: boolean;
 
   // Premium state
-  isPremium: boolean
-  featureLimits: FeatureLimits
+  isPremium: boolean;
+  featureLimits: FeatureLimits;
 
   // Preset handlers
-  onSelectPreset: (presetId: string) => void
-  onCreatePresetClick: () => void
-  onDeletePreset: (id: string) => void
-  onApplyPreset: () => void
-  onSavePreset: () => void
-  onPresetNameChange: (name: string) => void
+  onSelectPreset: (presetId: string) => void;
+  onCreatePresetClick: () => void;
+  onDeletePreset: (id: string) => void;
+  onApplyPreset: () => void;
+  onSavePreset: () => void;
+  onPresetNameChange: (name: string) => void;
 
   // Display settings handlers
-  onGoalTextChange: (text: string) => void
-  onGoalSubTextChange: (text: string) => void
-  onTextColorChange: (color: string) => void
-  onBackgroundTypeChange: (type: 'image' | 'color') => void
-  onBackgroundChange: (bgId: string) => void
-  onBackgroundColorChange: (color: string) => void
-  onCustomBackgroundChange: (dataUrl: string | null) => void
-  onFontSettingsChange: (fontSettings: FontSettings) => void
+  onGoalTextChange: (text: string) => void;
+  onGoalSubTextChange: (text: string) => void;
+  onTextColorChange: (color: string) => void;
+  onBackgroundTypeChange: (type: 'image' | 'color') => void;
+  onBackgroundChange: (bgId: string) => void;
+  onBackgroundColorChange: (color: string) => void;
+  onCustomBackgroundChange: (dataUrl: string | null) => void;
+  onFontSettingsChange: (fontSettings: FontSettings) => void;
 }
 
 export function GeneralTab({
@@ -71,12 +75,12 @@ export function GeneralTab({
   onBackgroundChange,
   onBackgroundColorChange,
   onCustomBackgroundChange,
-  onFontSettingsChange,
+  onFontSettingsChange
 }: GeneralTabProps) {
-  const selectedPreset = draftPresets.find((p) => p.id === selectedPresetId)
+  const selectedPreset = draftPresets.find((p) => p.id === selectedPresetId);
 
   // Determine if we're in editing mode
-  const isEditing = !!selectedPresetId
+  const isEditing = !!selectedPresetId;
 
   return (
     <div
@@ -119,10 +123,10 @@ export function GeneralTab({
               <div className="flex flex-wrap gap-2">
                 {/* Preset buttons */}
                 {draftPresets.map((preset, index) => {
-                  const isActive = vision?.activePresetId === preset.id
-                  const isSelected = selectedPresetId === preset.id
+                  const isActive = vision?.activePresetId === preset.id;
+                  const isSelected = selectedPresetId === preset.id;
                   const isLocked =
-                    !isPremium && index >= featureLimits.maxPresets
+                    !isPremium && index >= featureLimits.maxPresets;
                   return (
                     <button
                       key={preset.id}
@@ -151,7 +155,7 @@ export function GeneralTab({
                       )}
                       {preset.name}
                     </button>
-                  )
+                  );
                 })}
 
                 {/* New preset button */}
@@ -466,14 +470,14 @@ export function GeneralTab({
                       ? {
                           backgroundImage: `url(${draftDisplaySettings.customBackgroundData})`,
                           backgroundSize: 'cover',
-                          backgroundPosition: 'center',
+                          backgroundPosition: 'center'
                         }
                       : {
                           backgroundImage: `url(${getBackgroundUrl(
                             draftDisplaySettings.backgroundImage || 'default-1'
                           )})`,
                           backgroundSize: 'cover',
-                          backgroundPosition: 'center',
+                          backgroundPosition: 'center'
                         }
                 }
               >
@@ -496,7 +500,7 @@ export function GeneralTab({
                       fontWeight:
                         FONT_WEIGHT_VALUE[
                           draftDisplaySettings.fontSettings?.weight || 'bold'
-                        ],
+                        ]
                     }}
                   >
                     {draftDisplaySettings.goalText ||
@@ -533,5 +537,5 @@ export function GeneralTab({
         </div>
       )}
     </div>
-  )
+  );
 }

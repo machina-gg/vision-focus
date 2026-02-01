@@ -1,17 +1,17 @@
-import type { ReactNode } from 'react'
-import React from 'react'
+import type { ReactNode } from 'react';
+import React from 'react';
 
 export interface Tab {
-  id: string
-  label: string
-  icon?: ReactNode
+  id: string;
+  label: string;
+  icon?: ReactNode;
 }
 
 export interface TabsProps {
-  tabs: Tab[]
-  activeTab: string
-  onChange: (tabId: string) => void
-  className?: string
+  tabs: Tab[];
+  activeTab: string;
+  onChange: (tabId: string) => void;
+  className?: string;
 }
 
 export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
@@ -39,5 +39,5 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
         ))}
       </nav>
     </div>
-  )
+  );
 }

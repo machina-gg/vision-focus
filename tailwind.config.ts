@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
@@ -16,8 +16,8 @@ const config: Config = {
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
-          950: '#172554',
-        },
+          950: '#172554'
+        }
       },
       fontFamily: {
         sans: [
@@ -28,12 +28,12 @@ const config: Config = {
           'Roboto',
           'Helvetica Neue',
           'Arial',
-          'sans-serif',
-        ],
-      },
-    },
+          'sans-serif'
+        ]
+      }
+    }
   },
-  plugins: [],
-}
+  plugins: []
+};
 
-export default config
+export default config;

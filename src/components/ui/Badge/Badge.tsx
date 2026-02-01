@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
-import React from 'react'
+import type { ReactNode } from 'react';
+import React from 'react';
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
+type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
 
 export interface BadgeProps {
-  variant?: BadgeVariant
-  children: ReactNode
+  variant?: BadgeVariant;
+  children: ReactNode;
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
@@ -13,8 +13,8 @@ const variantStyles: Record<BadgeVariant, string> = {
   success: 'bg-green-100 text-green-700',
   warning: 'bg-yellow-100 text-yellow-700',
   danger: 'bg-red-100 text-red-700',
-  info: 'bg-blue-100 text-blue-700',
-}
+  info: 'bg-blue-100 text-blue-700'
+};
 
 export function Badge({ variant = 'default', children }: BadgeProps) {
   return (
@@ -27,5 +27,5 @@ export function Badge({ variant = 'default', children }: BadgeProps) {
     >
       {children}
     </span>
-  )
+  );
 }

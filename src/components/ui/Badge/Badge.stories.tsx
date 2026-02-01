@@ -1,65 +1,65 @@
-import React from 'react'
+import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react';
 
-import { Badge } from './Badge'
+import { Badge } from './Badge';
 
 const meta = {
   title: 'UI/Badge',
   component: Badge,
   parameters: {
-    layout: 'centered',
+    layout: 'centered'
   },
   tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'success', 'warning', 'danger', 'info'],
-    },
-  },
-} satisfies Meta<typeof Badge>
+      options: ['default', 'success', 'warning', 'danger', 'info']
+    }
+  }
+} satisfies Meta<typeof Badge>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
     variant: 'default',
-    children: 'Default',
-  },
-}
+    children: 'Default'
+  }
+};
 
 export const Success: Story = {
   args: {
     variant: 'success',
-    children: 'Success',
-  },
-}
+    children: 'Success'
+  }
+};
 
 export const Warning: Story = {
   args: {
     variant: 'warning',
-    children: 'Warning',
-  },
-}
+    children: 'Warning'
+  }
+};
 
 export const Danger: Story = {
   args: {
     variant: 'danger',
-    children: 'Danger',
-  },
-}
+    children: 'Danger'
+  }
+};
 
 export const Info: Story = {
   args: {
     variant: 'info',
-    children: 'Info',
-  },
-}
+    children: 'Info'
+  }
+};
 
 export const AllVariants: Story = {
   args: {
-    children: 'Badge',
+    children: 'Badge'
   },
   render: () => (
     <div className="flex gap-2">
@@ -69,5 +69,5 @@ export const AllVariants: Story = {
       <Badge variant="danger">Danger</Badge>
       <Badge variant="info">Info</Badge>
     </div>
-  ),
-}
+  )
+};

@@ -1,34 +1,34 @@
-import React from 'react'
+import React from 'react';
 
 export interface ToggleProps {
-  checked: boolean
-  onChange: (checked: boolean) => void
-  label?: string
-  disabled?: boolean
-  size?: 'sm' | 'md'
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label?: string;
+  disabled?: boolean;
+  size?: 'sm' | 'md';
 }
 
 const sizeClasses = {
   sm: {
     button: 'h-5 w-9',
     thumb: 'h-4 w-4',
-    translate: 'translate-x-4',
+    translate: 'translate-x-4'
   },
   md: {
     button: 'h-6 w-11',
     thumb: 'h-5 w-5',
-    translate: 'translate-x-5',
-  },
-}
+    translate: 'translate-x-5'
+  }
+};
 
 export function Toggle({
   checked,
   onChange,
   label,
   disabled = false,
-  size = 'md',
+  size = 'md'
 }: ToggleProps) {
-  const classes = sizeClasses[size]
+  const classes = sizeClasses[size];
 
   return (
     <label className="inline-flex items-center gap-3 cursor-pointer">
@@ -60,5 +60,5 @@ export function Toggle({
         <span className="text-sm font-medium text-gray-700">{label}</span>
       )}
     </label>
-  )
+  );
 }

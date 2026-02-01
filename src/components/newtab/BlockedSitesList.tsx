@@ -1,28 +1,28 @@
-import React, { useState } from 'react'
-import { ChevronDown, ChevronUp, Shield } from 'lucide-react'
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Shield } from 'lucide-react';
 
-import { getMessage } from '~/lib/i18n'
-import type { BlockItem, SiteBlockCount } from '~/types/storage'
+import { getMessage } from '~/lib/i18n';
+import type { BlockItem, SiteBlockCount } from '~/types/storage';
 
 interface BlockedSitesListProps {
-  blockList: BlockItem[]
-  blockCounts: Record<string, SiteBlockCount>
-  maxVisible?: number
+  blockList: BlockItem[];
+  blockCounts: Record<string, SiteBlockCount>;
+  maxVisible?: number;
 }
 
 export function BlockedSitesList({
   blockList,
   blockCounts,
-  maxVisible = 5,
+  maxVisible = 5
 }: BlockedSitesListProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (blockList.length === 0) {
-    return null
+    return null;
   }
 
-  const visibleSites = isExpanded ? blockList : blockList.slice(0, maxVisible)
-  const hasMore = blockList.length > maxVisible
+  const visibleSites = isExpanded ? blockList : blockList.slice(0, maxVisible);
+  const hasMore = blockList.length > maxVisible;
 
   return (
     <div className="w-full max-w-sm mx-auto mt-6">
@@ -48,7 +48,7 @@ export function BlockedSitesList({
         <div className="mt-2 bg-white/25 rounded-lg overflow-hidden">
           <ul className="divide-y divide-gray-300/30">
             {visibleSites.map((item) => {
-              const count = blockCounts[item.domain]?.count ?? 0
+              const count = blockCounts[item.domain]?.count ?? 0;
               return (
                 <li
                   key={item.id}
@@ -64,11 +64,11 @@ export function BlockedSitesList({
                     </span>
                   )}
                 </li>
-              )
+              );
             })}
           </ul>
         </div>
       )}
     </div>
-  )
+  );
 }
