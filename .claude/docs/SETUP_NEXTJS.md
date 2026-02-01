@@ -45,6 +45,27 @@ npx storybook@latest init
 
 ## 3. 設定ファイル作成
 
+### .gitignore に追記
+
+`create-next-app` が生成した `.gitignore` に、Claude Code 用の設定を追記：
+
+```gitignore
+# Claude Code local settings
+.claude/settings.local.json
+.claude/tmp/
+.claude/logs/
+.claude/mcp-cache/
+claude_desktop_config.json
+```
+
+| 項目 | 用途 |
+| ---- | ---- |
+| `.claude/settings.local.json` | ローカル権限設定（チーム共有は `settings.json` を使用） |
+| `.claude/tmp/` | 一時ファイル（コミットメッセージ等） |
+| `.claude/logs/` | デバッグログ |
+| `.claude/mcp-cache/` | MCP サーバーキャッシュ |
+| `claude_desktop_config.json` | Claude Desktop 個人設定 |
+
 ### .prettierrc
 
 ```json

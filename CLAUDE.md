@@ -22,6 +22,9 @@
 - `#` を含むブランチ名を引用符なしで使用（シェルがコメントと解釈するため、必ず引用符で囲むこと）
   - ❌ `git checkout feature/#17`
   - ✅ `git checkout "feature/#17"`
+- 複数行コミットメッセージを `-m` オプションで直接指定（権限パターンがマッチしなくなるため、`-F` オプションでファイルから読み込むこと）
+  - ❌ `git commit -m "$(cat <<'EOF' ... EOF)"`
+  - ✅ `git commit -F .claude/tmp/commit-msg.txt`
 
 ---
 
