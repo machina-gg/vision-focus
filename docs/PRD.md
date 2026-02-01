@@ -212,4 +212,3 @@ VisionFocusは、「視覚を支配し、理想を現実にする」ためのChr
 ### 決済手段
 
 - ExtensionPay（Stripe連携によるライセンス管理）
-

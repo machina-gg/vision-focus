@@ -7,8 +7,8 @@ description: デプロイを行う
 1. Vercel MCP の設定確認
    - Vercel MCP が設定されていない場合 → 以下を案内：
      「Vercel MCP が設定されていません。
-      .claude/docs/SETUP_VERCEL_MCP.md の手順に従って設定してください。
-      設定後、再度 /project:deploy を実行してください」
+     .claude/docs/SETUP_VERCEL_MCP.md の手順に従って設定してください。
+     設定後、再度 /project:deploy を実行してください」
 
 2. デプロイ前の確認
    - `npm run build` でビルドが成功するか確認
@@ -61,4 +61,3 @@ description: デプロイを行う
 8. README.md を更新
    - デプロイ URL を追記
    - 本番環境の情報を追加
-

@@ -14,29 +14,29 @@
 
 ### メインカラー
 
-| 用途 | カラー | Tailwind | 意味 |
-|------|--------|----------|------|
-| Primary | #3B82F6 | blue-500 | 集中、信頼、行動 |
-| Primary Dark | #2563EB | blue-600 | ホバー状態 |
+| 用途         | カラー  | Tailwind | 意味             |
+| ------------ | ------- | -------- | ---------------- |
+| Primary      | #3B82F6 | blue-500 | 集中、信頼、行動 |
+| Primary Dark | #2563EB | blue-600 | ホバー状態       |
 
 ### セマンティックカラー
 
-| 用途 | カラー | Tailwind | 意味 |
-|------|--------|----------|------|
-| Success / Invest | #22C55E | green-500 | 成長、生産的な時間 |
-| Warning / Block | #F59E0B | amber-500 | 注意、ブロック機能 |
-| Danger / Waste | #EF4444 | red-500 | 警告、浪費した時間 |
-| Premium | #F59E0B | amber-500 | プレミアム機能、Crown |
+| 用途             | カラー  | Tailwind  | 意味                  |
+| ---------------- | ------- | --------- | --------------------- |
+| Success / Invest | #22C55E | green-500 | 成長、生産的な時間    |
+| Warning / Block  | #F59E0B | amber-500 | 注意、ブロック機能    |
+| Danger / Waste   | #EF4444 | red-500   | 警告、浪費した時間    |
+| Premium          | #F59E0B | amber-500 | プレミアム機能、Crown |
 
 ### ニュートラルカラー
 
-| 用途 | カラー | Tailwind |
-|------|--------|----------|
-| Background | #FFFFFF | white |
-| Surface | #F9FAFB | gray-50 |
-| Text Primary | #1F2937 | gray-800 |
+| 用途           | カラー  | Tailwind |
+| -------------- | ------- | -------- |
+| Background     | #FFFFFF | white    |
+| Surface        | #F9FAFB | gray-50  |
+| Text Primary   | #1F2937 | gray-800 |
 | Text Secondary | #6B7280 | gray-500 |
-| Border | #E5E7EB | gray-200 |
+| Border         | #E5E7EB | gray-200 |
 
 ## 3. タイポグラフィ
 

@@ -371,15 +371,15 @@ graph TD
 Plasmo提供のストレージ同期フック。chrome.storage の値をReactで自動同期。
 
 ```typescript
-import { useStorage } from '@plasmohq/storage/hook'
+import { useStorage } from '@plasmohq/storage/hook';
 
 const [settings, setSettings] = useStorage<AppSettings>(
   {
     key: 'settings',
-    instance: storage,
+    instance: storage
   },
   DEFAULT_SETTINGS
-)
+);
 ```
 
 ---
@@ -390,15 +390,15 @@ const [settings, setSettings] = useStorage<AppSettings>(
 
 ```typescript
 function useBlocklist(props: {
-  settings: AppSettings | undefined
-  setSettings: (settings: AppSettings) => void
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
 }): {
-  newDomain: string
-  setNewDomain: (domain: string) => void
-  blockError: string
-  handleAddDomain: () => void
-  handleRemoveDomain: (domain: string) => void
-}
+  newDomain: string;
+  setNewDomain: (domain: string) => void;
+  blockError: string;
+  handleAddDomain: () => void;
+  handleRemoveDomain: (domain: string) => void;
+};
 ```
 
 **機能**
@@ -416,28 +416,28 @@ function useBlocklist(props: {
 
 ```typescript
 interface ScheduleFormData {
-  name: string
-  startTime: string
-  endTime: string
-  days: number[]
-  presetId: string
+  name: string;
+  startTime: string;
+  endTime: string;
+  days: number[];
+  presetId: string;
 }
 
 function useSchedules(props: {
-  settings: AppSettings | undefined
-  setSettings: (settings: AppSettings) => void
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
 }): {
-  showScheduleModal: boolean
-  setShowScheduleModal: (show: boolean) => void
-  editingSchedule: Schedule | null
-  scheduleForm: ScheduleFormData
-  setScheduleForm: (form: ScheduleFormData) => void
-  openAddSchedule: () => void
-  openEditSchedule: (schedule: Schedule) => void
-  handleSaveSchedule: () => void
-  handleDeleteSchedule: (id: string) => void
-  handleToggleSchedule: (id: string) => void
-}
+  showScheduleModal: boolean;
+  setShowScheduleModal: (show: boolean) => void;
+  editingSchedule: Schedule | null;
+  scheduleForm: ScheduleFormData;
+  setScheduleForm: (form: ScheduleFormData) => void;
+  openAddSchedule: () => void;
+  openEditSchedule: (schedule: Schedule) => void;
+  handleSaveSchedule: () => void;
+  handleDeleteSchedule: (id: string) => void;
+  handleToggleSchedule: (id: string) => void;
+};
 ```
 
 **機能**
@@ -454,41 +454,41 @@ function useSchedules(props: {
 
 ```typescript
 function usePresets(props: {
-  vision: VisionSettings | undefined
-  setVision: (vision: VisionSettings) => void
+  vision: VisionSettings | undefined;
+  setVision: (vision: VisionSettings) => void;
 }): {
   // スタイル一覧（ドラフト状態）
-  draftPresets: DashboardPreset[]
-  selectedPresetId: string | null
-  draftDisplaySettings: DashboardDisplaySettings
-  editingPresetName: string
-  isDirty: boolean
-  visionSaved: boolean
+  draftPresets: DashboardPreset[];
+  selectedPresetId: string | null;
+  draftDisplaySettings: DashboardDisplaySettings;
+  editingPresetName: string;
+  isDirty: boolean;
+  visionSaved: boolean;
 
   // モーダル制御
-  showSavePresetModal: boolean
-  setShowSavePresetModal: (show: boolean) => void
-  presetName: string
-  setPresetName: (name: string) => void
+  showSavePresetModal: boolean;
+  setShowSavePresetModal: (show: boolean) => void;
+  presetName: string;
+  setPresetName: (name: string) => void;
 
   // スタイル操作
-  handleSelectPreset: (id: string | null) => void
-  handleCreatePreset: () => void
-  handleDeletePreset: (id: string) => void
-  handleApplyPreset: () => void
-  handleSaveSelectedPreset: () => void
+  handleSelectPreset: (id: string | null) => void;
+  handleCreatePreset: () => void;
+  handleDeletePreset: (id: string) => void;
+  handleApplyPreset: () => void;
+  handleSaveSelectedPreset: () => void;
 
   // 設定変更
-  handlePresetNameChange: (name: string) => void
-  handleGoalTextChange: (text: string) => void
-  handleGoalSubTextChange: (text: string) => void
-  handleTextColorChange: (color: string) => void
-  handleBackgroundTypeChange: (type: 'image' | 'color') => void
-  handleBackgroundChange: (imageId: string) => void
-  handleBackgroundColorChange: (color: string) => void
-  handleCustomBackgroundChange: (data: string | null) => void
-  handleFontSettingsChange: (settings: Partial<FontSettings>) => void
-}
+  handlePresetNameChange: (name: string) => void;
+  handleGoalTextChange: (text: string) => void;
+  handleGoalSubTextChange: (text: string) => void;
+  handleTextColorChange: (color: string) => void;
+  handleBackgroundTypeChange: (type: 'image' | 'color') => void;
+  handleBackgroundChange: (imageId: string) => void;
+  handleBackgroundColorChange: (color: string) => void;
+  handleCustomBackgroundChange: (data: string | null) => void;
+  handleFontSettingsChange: (settings: Partial<FontSettings>) => void;
+};
 ```
 
 **機能**
@@ -505,12 +505,12 @@ function usePresets(props: {
 
 ```typescript
 function useAnalytics(period: 'today' | 'week' | 'month'): {
-  dailyStats: DailyStat[]
-  siteRanking: SiteTime[]
-  totalWasteTime: number
-  totalInvestTime: number
-  loading: boolean
-}
+  dailyStats: DailyStat[];
+  siteRanking: SiteTime[];
+  totalWasteTime: number;
+  totalInvestTime: number;
+  loading: boolean;
+};
 ```
 
 ---
@@ -521,10 +521,10 @@ function useAnalytics(period: 'today' | 'week' | 'month'): {
 
 ```typescript
 function usePremium(): {
-  isPremium: boolean
-  expiresAt: Date | null
-  checkLicense: () => Promise<void>
-}
+  isPremium: boolean;
+  expiresAt: Date | null;
+  checkLicense: () => Promise<void>;
+};
 ```
 
 ## 5. 型定義
@@ -533,10 +533,10 @@ function usePremium(): {
 
 ```typescript
 interface BlockItem {
-  id: string
-  domain: string // ドメイン（ワイルドカード可）
-  isWildcard: boolean // ワイルドカードかどうか
-  createdAt: string // 作成日時
+  id: string;
+  domain: string; // ドメイン（ワイルドカード可）
+  isWildcard: boolean; // ワイルドカードかどうか
+  createdAt: string; // 作成日時
 }
 ```
 
@@ -544,13 +544,13 @@ interface BlockItem {
 
 ```typescript
 interface Schedule {
-  id: string
-  name: string // スケジュール名
-  startTime: string // 開始時刻 (HH:mm)
-  endTime: string // 終了時刻 (HH:mm)
-  days: number[] // 曜日 (0=日, 1=月, ..., 6=土)
-  enabled: boolean // 有効/無効
-  presetId?: string // このスケジュールで適用するスタイルID
+  id: string;
+  name: string; // スケジュール名
+  startTime: string; // 開始時刻 (HH:mm)
+  endTime: string; // 終了時刻 (HH:mm)
+  days: number[]; // 曜日 (0=日, 1=月, ..., 6=土)
+  enabled: boolean; // 有効/無効
+  presetId?: string; // このスケジュールで適用するスタイルID
 }
 ```
 
@@ -558,14 +558,14 @@ interface Schedule {
 
 ```typescript
 interface DashboardDisplaySettings {
-  goalText: string // 目標テキスト
-  goalSubText: string // サブテキスト
-  textColor: string // テキスト色
-  backgroundType: 'image' | 'color'
-  backgroundImage: string // 背景画像ID
-  backgroundColor: string // 背景色
-  customBackgroundData: string | null // Base64アップロード画像（Premium）
-  fontSettings: FontSettings // フォント設定
+  goalText: string; // 目標テキスト
+  goalSubText: string; // サブテキスト
+  textColor: string; // テキスト色
+  backgroundType: 'image' | 'color';
+  backgroundImage: string; // 背景画像ID
+  backgroundColor: string; // 背景色
+  customBackgroundData: string | null; // Base64アップロード画像（Premium）
+  fontSettings: FontSettings; // フォント設定
 }
 ```
 
@@ -573,9 +573,9 @@ interface DashboardDisplaySettings {
 
 ```typescript
 interface DashboardPreset extends DashboardDisplaySettings {
-  id: string
-  name: string
-  createdAt: string
+  id: string;
+  name: string;
+  createdAt: string;
 }
 ```
 
@@ -583,9 +583,9 @@ interface DashboardPreset extends DashboardDisplaySettings {
 
 ```typescript
 interface VisionSettings {
-  defaultSettings: DashboardDisplaySettings // デフォルト設定
-  presets: DashboardPreset[] // ユーザー作成スタイル
-  activePresetId: string | null // 現在有効なスタイルID
+  defaultSettings: DashboardDisplaySettings; // デフォルト設定
+  presets: DashboardPreset[]; // ユーザー作成スタイル
+  activePresetId: string | null; // 現在有効なスタイルID
 }
 ```
 
@@ -605,33 +605,33 @@ interface FontSettings {
 
 ```typescript
 interface FeatureLimits {
-  maxBlockList: number
-  historyDays: number
-  maxPresets: number // スタイル数の上限
+  maxBlockList: number;
+  historyDays: number;
+  maxPresets: number; // スタイル数の上限
 }
 
 const FEATURE_LIMITS = {
   free: {
     maxBlockList: Infinity, // Unlimited for all users
     historyDays: 7,
-    maxPresets: 1,
+    maxPresets: 1
   },
   premium: {
     maxBlockList: Infinity,
     historyDays: Infinity,
-    maxPresets: 5,
-  },
-}
+    maxPresets: 5
+  }
+};
 ```
 
 ### DailyStat
 
 ```typescript
 interface DailyStat {
-  date: string // YYYY-MM-DD
-  wasteTime: number // 浪費時間（秒）
-  investTime: number // 投資時間（秒）
-  blockCount: number // ブロック回数
+  date: string; // YYYY-MM-DD
+  wasteTime: number; // 浪費時間（秒）
+  investTime: number; // 投資時間（秒）
+  blockCount: number; // ブロック回数
 }
 ```
 
@@ -639,8 +639,8 @@ interface DailyStat {
 
 ```typescript
 interface SiteTime {
-  domain: string // ドメイン
-  time: number // 滞在時間（秒）
-  category: 'waste' | 'invest' | 'neutral'
+  domain: string; // ドメイン
+  time: number; // 滞在時間（秒）
+  category: 'waste' | 'invest' | 'neutral';
 }
 ```

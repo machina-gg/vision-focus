@@ -5,10 +5,12 @@ description: 環境構築を行う
 開発環境を構築するため、以下の手順を実行してください：
 
 ## 前提条件
+
 - docs/PRD.md が存在すること
 - docs/DESIGN.md が存在すること
 
 ## 実行条件
+
 - src/ ディレクトリが存在しない場合のみ実行
 - 既に src/ が存在する場合は「環境構築済みです」と案内し、`/project:prototype` を促す
 
@@ -37,9 +39,11 @@ description: 環境構築を行う
    - Supabase 使用時: `http://127.0.0.1:54323` で Studio が開けることを確認
 
 ## 完了条件
+
 - 開発サーバーが起動できる
 - Storybook が起動できる
 - Supabase 使用時: Supabase Local が起動できる
 
 ## 次のステップ
+
 環境構築が完了したら `/project:prototype` でデザインコンセプトを固める

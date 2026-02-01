@@ -5,6 +5,7 @@ description: プロトタイプ実装（デザインコンセプト確定）
 デザインコンセプトを確定させるため、以下の手順でプロトタイプを実装してください：
 
 ## 前提条件
+
 - docs/PRD.md が存在すること
 - docs/DESIGN.md（SCREEN.md, COMPONENT.md 含む）が存在すること
 - src/ が存在すること（なければ `/project:setup` を先に実行）
@@ -45,9 +46,11 @@ description: プロトタイプ実装（デザインコンセプト確定）
    - 修正点があれば対応
 
 ## 完了条件
+
 - 共通UIコンポーネントが Storybook で確認できる
 - TOP画面のデザインがユーザーに承認される
 - docs/DESIGN_CONCEPT.md が作成されている
 
 ## 次のステップ
+
 デザインが確定したら `/project:implement` で本実装を開始

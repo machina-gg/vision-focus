@@ -147,10 +147,10 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 ### 外部連携
 
-| 機能 | API | 備考 |
-| ---- | --- | ---- |
-| 決済・ライセンス | ExtensionPay (Stripe) | サブスクリプション管理 |
-| 使用統計 | Google Analytics 4 | オプトイン、匿名データのみ |
+| 機能             | API                   | 備考                       |
+| ---------------- | --------------------- | -------------------------- |
+| 決済・ライセンス | ExtensionPay (Stripe) | サブスクリプション管理     |
+| 使用統計         | Google Analytics 4    | オプトイン、匿名データのみ |
 
 ### GA4で収集するデータ
 
@@ -186,19 +186,20 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 
 ### 権限の最小化
 
-| 権限 | 用途 |
-|------|------|
-| storage | データ保存 |
-| tabs | タブ情報取得 |
-| declarativeNetRequest | サイトブロック |
-| alarms | 定期処理 |
-| host_permissions: <all_urls> | 滞在時間計測 |
+| 権限                         | 用途           |
+| ---------------------------- | -------------- |
+| storage                      | データ保存     |
+| tabs                         | タブ情報取得   |
+| declarativeNetRequest        | サイトブロック |
+| alarms                       | 定期処理       |
+| host_permissions: <all_urls> | 滞在時間計測   |
 
 ### データ保護
 
 セキュリティ・プライバシー要件は [PRD.md](./PRD.md) の非機能要件を参照。
 
 実装上の注意点：
+
 - chrome.storage.local を使用（同期不要）
 - パスワード等の機密情報は扱わない設計
 
