@@ -1,34 +1,63 @@
 import { isExtPayPremium } from './extpay';
+import { storage } from './storage';
 import {
   FEATURE_LIMITS,
   type FeatureLimits,
   type PremiumFeature
 } from '~/types/storage';
 
+/** Cache duration: 1 hour */
+const CACHE_DURATION = 60 * 60 * 1000;
+
+interface PremiumCache {
+  status: {
+    isPremium: boolean;
+    source: 'extpay' | null;
+  };
+  timestamp: number;
+}
+
 /**
  * Check if user has premium access (via ExtensionPay)
+ * Results are cached for 1 hour to reduce API calls
  */
 export async function checkPremiumStatus(): Promise<{
   isPremium: boolean;
   source: 'extpay' | null;
 }> {
+  // Check cache first
+  const cached = (await storage.get('premiumCache')) as
+    | PremiumCache
+    | undefined;
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.status;
+  }
+
   // Check ExtensionPay subscription status
   try {
     const isPaid = await isExtPayPremium();
-    if (isPaid) {
-      return {
-        isPremium: true,
-        source: 'extpay'
-      };
-    }
-  } catch {
-    // Assume not premium if check fails
-  }
+    const status = {
+      isPremium: isPaid,
+      source: (isPaid ? 'extpay' : null) as 'extpay' | null
+    };
 
-  return {
-    isPremium: false,
-    source: null
-  };
+    // Save to cache
+    await storage.set('premiumCache', {
+      status,
+      timestamp: Date.now()
+    });
+
+    return status;
+  } catch {
+    // On error, use previous cache if available (even if expired)
+    if (cached) {
+      return cached.status;
+    }
+    return {
+      isPremium: false,
+      source: null
+    };
+  }
 }
 
 /**
