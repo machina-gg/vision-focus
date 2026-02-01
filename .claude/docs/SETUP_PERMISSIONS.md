@@ -16,6 +16,7 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git fetch:*)",
+      "Bash(git pull:*)",
       "Bash(git checkout:*)",
       "Bash(git branch:*)",
       "Bash(git worktree:*)",
@@ -29,6 +30,22 @@
   }
 }
 ```
+
+## 重要：コマンド実行時の注意
+
+**複数コマンドは分割して実行すること**
+
+```bash
+# ❌ NG: && で連結すると権限が適用されない
+git fetch origin && git checkout develop && git pull origin develop
+
+# ✅ OK: 個別に実行する
+git fetch origin
+git checkout develop
+git pull origin develop
+```
+
+**理由**: Claude Code の権限パターン（例: `Bash(git fetch:*)`）は、コマンド文字列の先頭からマッチします。`&&` で連結すると「git fetch origin && ...」という文字列全体がコマンドとして評価され、`git fetch:*` パターンにマッチしなくなります。
 
 ## 許可コマンド一覧
 
@@ -45,6 +62,7 @@
 | `git commit:*` | コミット |
 | `git push:*` | プッシュ |
 | `git fetch:*` | リモート最新化 |
+| `git pull:*` | リモートから取得・マージ |
 | `git checkout:*` | ブランチ切り替え |
 | `git branch:*` | ブランチ操作 |
 | `git worktree:*` | 並行開発用worktree操作 |
