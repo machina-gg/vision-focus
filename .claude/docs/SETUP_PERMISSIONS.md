@@ -27,16 +27,16 @@
 
 ## 許可コマンド一覧
 
-| コマンド | 用途 |
-|----------|------|
-| `pnpm:*` | format, lint, test, build等 |
-| `git commit:*` | コミット |
-| `git push:*` | プッシュ |
-| `gh pr create:*` | PR作成 |
-| `gh pr edit:*` | PR編集 |
-| `gh issue create:*` | Issue作成 |
-| `gh issue close:*` | Issueクローズ |
-| `gh issue comment:*` | Issueコメント |
+| コマンド             | 用途                        |
+| -------------------- | --------------------------- |
+| `pnpm:*`             | format, lint, test, build等 |
+| `git commit:*`       | コミット                    |
+| `git push:*`         | プッシュ                    |
+| `gh pr create:*`     | PR作成                      |
+| `gh pr edit:*`       | PR編集                      |
+| `gh issue create:*`  | Issue作成                   |
+| `gh issue close:*`   | Issueクローズ               |
+| `gh issue comment:*` | Issueコメント               |
 
 ## 補足
 

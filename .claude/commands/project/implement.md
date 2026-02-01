@@ -4,6 +4,47 @@ description: 実装を行う
 
 以下の手順で本実装を行ってください：
 
+## 引数
+
+- Issue番号（必須）: 単一または複数指定可能
+  - 単一: `30`
+  - 複数: `30,31,32` または `30 31 32`
+
+## 実装フロー
+
+### 単一Issue の場合
+
+1. develop から feature/#XX ブランチを作成
+2. 実装
+3. コミット（メッセージに `Closes #XX` を含める）
+4. プッシュ・PR作成
+
+### 複数Issue の場合（並行開発）
+
+1. git worktree で各Issue用の作業ディレクトリを作成
+   ```bash
+   git fetch origin
+   git worktree add ../プロジェクト名-XX -b feature/#XX origin/develop
+   ```
+2. Task ツールで各worktreeに対して並列で実装を実行
+3. 各worktreeでコミット・プッシュ・PR作成
+4. 完了後、worktree を削除
+   ```bash
+   git worktree remove ../プロジェクト名-XX
+   ```
+
+### コミットメッセージ規則
+
+- `Closes #XX` をメッセージに含める（PRマージ時にIssue自動クローズ）
+- 1コミット1Issueを基本とする
+
+## 注意事項
+
+- 並行開発時、各worktreeで `pnpm install` が必要
+- worktree作成前に `git fetch origin` で最新化すること
+
+---
+
 ## 前提条件の確認
 
 1. プロトタイプ確認
