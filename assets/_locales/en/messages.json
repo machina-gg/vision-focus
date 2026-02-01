@@ -236,8 +236,8 @@
     }
   },
   "settingsTitle": {
-    "message": "VisionFocus Settings",
-    "description": "Settings page title"
+    "message": "VisionFocus Dashboard",
+    "description": "Dashboard page title"
   },
   "saveChanges": {
     "message": "Save Changes",
