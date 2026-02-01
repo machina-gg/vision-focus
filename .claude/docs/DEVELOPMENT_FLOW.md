@@ -1,6 +1,6 @@
 # 開発フロー
 
-← [README に戻る](../README.md#workflow)
+← [README に戻る](../../README.md#workflow)
 
 ```mermaid
 flowchart TB
@@ -75,6 +75,13 @@ flowchart TB
         F4 --> F6["Analytics 有効化"]
     end
 
+    subgraph phase10 [10. 改善サイクル]
+        G1["improvements"] --> G2["改善リスト作成"]
+        G2 --> G3["Issue一括登録"]
+        G3 --> G4["関連Issueをまとめて作業"]
+        G4 --> G5["1 PRで複数Issue完了"]
+    end
+
     A3 --> B0
     B6 -->|Yes| C1
     B6 -->|No| S1
@@ -86,51 +93,48 @@ flowchart TB
     D4 --> E1
     E3 --> D3
     E2 -->|全Issue完了| F1
+    F6 --> G1
+    G5 --> G1
 ```
 
 ## 事前準備（MCP設定）
 
 開発を始める前に、以下の MCP を設定してください：
 
-| MCP        | 用途       | 必要なタイミング         |
-| ---------- | ---------- | ------------------------ |
-| GitHub MCP | Issue 管理 | 設計フェーズ（必須）     |
-| Vercel MCP | デプロイ   | デプロイフェーズ（必須） |
+| MCP | 用途 | 必要なタイミング |
+|-----|------|-----------------|
+| GitHub MCP | Issue 管理 | 設計フェーズ（必須） |
+| Vercel MCP | デプロイ | デプロイフェーズ（必須） |
 
 設定ガイド：
-
 - [GitHub MCP 設定](./SETUP_GITHUB_MCP.md)
 - [Vercel MCP 設定](./SETUP_VERCEL_MCP.md)
 
 ## フェーズ詳細
 
 ### 1. 要件定義
-
 - **コマンド**: `/project:requirements`
 - **処理内容**: INPUT.md 確認 → 競合調査 → PRD 作成
 - **成果物**: reports/COMPETITIVE_ANALYSIS.md, docs/PRD.md
 - **MCP確認**: GitHub MCP 未設定の場合、設定を推奨（ブロックしない）
 
 ### 2. 設計
-
 - **コマンド**: `/project:design`
 - **処理内容**:
   - PRD.md 確認 → 全体設計・画面設計
   - データストレージ方針決定（Supabase / なし）
   - Supabase 使用時: 認証方式・ファイルストレージの決定
   - タスク起票（GitHub Issues）
-- **成果物**: docs/DESIGN.md, docs/SCREEN.md, docs/COMPONENT.md, docs/ERD.md（DB使用時）, GitHub Issues
+- **成果物**: docs/DESIGN.md, docs/SCREEN.md, docs/COMPONENT.md, docs/DATA_MODEL.md（DB使用時）, GitHub Issues
 - **MCP確認**: GitHub MCP 未設定の場合、設定を要求（Issue 作成に必須）
 
 ### 3. API設計（オプション）
-
 - **コマンド**: `/project:api`
 - **処理内容**: DESIGN.md 確認 → API定義
 - **成果物**: docs/openapi.yaml
 - **スキップ条件**: フロントエンドのみのアプリ（外部API/バックエンド不要）
 
 ### 4. 環境構築
-
 - **コマンド**: `/project:setup`
 - **処理内容**:
   - src/ 無ければ環境構築（一時ディレクトリ経由で create-next-app）
@@ -143,7 +147,6 @@ flowchart TB
 - **前提条件**: Supabase 使用時は Docker Desktop が起動していること
 
 ### 5. プロトタイプ
-
 - **コマンド**: `/project:prototype`
 - **処理内容**:
   - 共通UIコンポーネント実装
@@ -155,7 +158,6 @@ flowchart TB
 - **完了条件**: デザインコンセプトがユーザーに承認されること
 
 ### 6. テスト設計
-
 - **コマンド**: `/project:test-design`
 - **処理内容**:
   - PRD.md と SCREEN.md を確認
@@ -166,7 +168,6 @@ flowchart TB
 - **前提条件**: `/project:prototype` が完了していること（UIが確定していること）
 
 ### 7. 本実装
-
 - **コマンド**: `/project:implement`
 - **処理内容**:
   - テスト設計完了を確認
@@ -181,12 +182,10 @@ flowchart TB
 - **前提条件**: `/project:prototype` と `/project:test-design` が完了していること
 
 ### 8. 繰り返し
-
 - **コマンド**: `/project:continue`
 - **処理内容**: Open な Issue 確認 → 次のタスク実装
 
 ### 9. デプロイ
-
 - **コマンド**: `/project:deploy`
 - **処理内容**:
   - ビルド確認（npm run build）
@@ -198,11 +197,24 @@ flowchart TB
 - **成果物**: 本番環境 URL
 - **MCP確認**: Vercel MCP 未設定の場合、設定を要求
 
+### 10. 改善サイクル
+- **コマンド**: `/project:improvements`
+- **処理内容**:
+  - 改善リスト（docs/IMPROVEMENTS.md）の作成・編集
+  - 改善項目を GitHub Issue に一括登録
+  - カテゴリ別にラベル付与（UI/UX, パフォーマンス, バグ修正など）
+- **成果物**: docs/IMPROVEMENTS.md, GitHub Issues
+- **作業フロー**:
+  1. 関連する複数の Issue をまとめて1ブランチで作業
+  2. 1つの PR で複数 Issue をクローズ（`Closes #10, #11, #12`）
+- **タイミング**: デプロイ後、継続的な改善時
+
 ## その他のコマンド
 
-| コマンド          | 説明                 |
-| ----------------- | -------------------- |
+| コマンド | 説明 |
+|----------|------|
 | `/project:review` | コードレビューと修正 |
+| `/project:improvements` | 改善リスト作成・Issue一括登録 |
 
 ## 環境構築の注意
 
@@ -212,4 +224,4 @@ flowchart TB
 
 ---
 
-← [README に戻る](../README.md#workflow)
+← [README に戻る](../../README.md#workflow)

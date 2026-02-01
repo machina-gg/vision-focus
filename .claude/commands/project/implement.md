@@ -47,14 +47,9 @@ description: 実装を行う
    - npm run test（Vitest で単体テスト）
    - npm run test:e2e（Playwright でE2Eテスト）
 
-10. 完了したら Issue を更新・クローズ
+10. **ドキュメント更新（該当する場合）**
+    - データモデル変更 → docs/DATA_MODEL.md を更新
+    - 新規コンポーネント追加 → docs/COMPONENT.md を更新
+    - 画面追加・変更 → docs/SCREEN.md を更新
 
-11. **【必須】reports/WORK_LOG.md に作業履歴を追記**
-
-- 日付（## YYYY-MM-DD 形式）※同日の場合は日付見出しを再利用
-- フェーズ名（### 実装）
-- 対応した Issue 番号とタイトル
-- 実施内容の概要
-- 主な変更ファイル一覧
-  ※ 新しい履歴はファイル上部に追記
-  ※ このステップを省略しないこと
+11. 完了したら Issue を更新・クローズ
