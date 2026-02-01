@@ -176,18 +176,22 @@ flowchart TB
 
 ### 7. 本実装
 
-- **コマンド**: `/project:implement`
+- **コマンド**: `/project:implement <Issue番号>`
+- **引数**:
+  - 単一: `/project:implement 30`
+  - 複数: `/project:implement 30,31,32` または `/project:implement 30 31 32`
 - **処理内容**:
   - テスト設計完了を確認
-  - GitHub Issue からタスク取得
+  - 指定された Issue の実装
   - コード実装（承認済みコンポーネントを活用）
   - E2Eテスト実装（TEST_CASES.md に基づく）
   - Storybook 追加（新規UIの場合）
   - lint / format 実行
   - 単体テスト・E2Eテスト実行
-  - Issue 更新・クローズ
-- **成果物**: src/, e2e/, Issue更新
+  - コミット・プッシュ・PR作成
+- **成果物**: src/, e2e/, PR
 - **前提条件**: `/project:prototype` と `/project:test-design` が完了していること
+- **並行開発**: 複数Issue指定時は git worktree を使用して並列実装
 
 ### 8. 繰り返し
 
