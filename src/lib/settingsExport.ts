@@ -9,7 +9,7 @@
  * Note: Premium status is NOT included for security reasons
  */
 
-import z from 'zod';
+import { z } from 'zod';
 
 import type {
   AppSettings,
