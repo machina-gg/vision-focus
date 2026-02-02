@@ -98,8 +98,8 @@
     "description": "General settings tab"
   },
   "styles": {
-    "message": "Styles",
-    "description": "Styles settings tab"
+    "message": "Customize",
+    "description": "Customize settings tab"
   },
   "blockList": {
     "message": "Block List",
@@ -236,8 +236,8 @@
     }
   },
   "settingsTitle": {
-    "message": "VisionFocus Settings",
-    "description": "Settings page title"
+    "message": "VisionFocus Dashboard",
+    "description": "Dashboard page title"
   },
   "saveChanges": {
     "message": "Save Changes",

@@ -32,6 +32,7 @@ import { getMessage, setCurrentLanguage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { openPaymentPage, openManagementPage } from '~/lib/extpay';
 import { parseDomainInput, isValidDomain } from '~/lib/domain';
+import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import type {
   AppSettings,
   VisionSettings,
@@ -62,21 +63,9 @@ function OptionsApp() {
     DEFAULT_VISION
   );
   // Read initial tab from URL hash (e.g., #help)
-  const getInitialTab = () => {
-    const hash = window.location.hash.slice(1); // Remove #
-    const validTabs = [
-      'blocklist',
-      'styles',
-      'schedules',
-      'analytics',
-      'license',
-      'help'
-    ];
-    // Support legacy 'general' hash
-    if (hash === 'general') return 'styles';
-    return validTabs.includes(hash) ? hash : 'blocklist';
-  };
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState<TabName>(() =>
+    getTabFromHash(window.location.hash)
+  );
 
   // Sync URL hash with active tab
   useEffect(() => {
@@ -130,35 +119,35 @@ function OptionsApp() {
     }
   }, [settings?.language]);
 
-  // Tabs configuration
-  const tabs = [
+  // Tabs configuration (using TABS constant for type safety)
+  const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
     {
-      id: 'blocklist',
+      id: TABS.BLOCKLIST,
       label: getMessage('blockList'),
       icon: <Ban className="w-4 h-4" />
     },
     {
-      id: 'styles',
+      id: TABS.STYLES,
       label: getMessage('styles'),
       icon: <Palette className="w-4 h-4" />
     },
     {
-      id: 'schedules',
+      id: TABS.SCHEDULES,
       label: getMessage('schedules'),
       icon: <Calendar className="w-4 h-4" />
     },
     {
-      id: 'analytics',
+      id: TABS.ANALYTICS,
       label: getMessage('analytics'),
       icon: <TrendingUp className="w-4 h-4" />
     },
     {
-      id: 'license',
+      id: TABS.LICENSE,
       label: getMessage('premium'),
       icon: <Crown className="w-4 h-4" />
     },
     {
-      id: 'help',
+      id: TABS.HELP,
       label: getMessage('help'),
       icon: <HelpCircle className="w-4 h-4" />
     }
@@ -321,12 +310,16 @@ function OptionsApp() {
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
-          onChange={setActiveTab}
+          onChange={(tabId) => {
+            if (isValidTab(tabId)) {
+              setActiveTab(tabId);
+            }
+          }}
           className="mb-8"
         />
 
         {/* Styles Tab */}
-        {activeTab === 'styles' && (
+        {activeTab === TABS.STYLES && (
           <GeneralTab
             vision={vision}
             draftPresets={presets.draftPresets}
@@ -355,7 +348,7 @@ function OptionsApp() {
         )}
 
         {/* Block List Tab */}
-        {activeTab === 'blocklist' && (
+        {activeTab === TABS.BLOCKLIST && (
           <BlocklistTab
             settings={settings}
             newDomain={blocklist.newDomain}
@@ -368,7 +361,7 @@ function OptionsApp() {
         )}
 
         {/* Schedules Tab */}
-        {activeTab === 'schedules' && (
+        {activeTab === TABS.SCHEDULES && (
           <SchedulesTab
             settings={settings}
             vision={vision}
@@ -380,7 +373,7 @@ function OptionsApp() {
         )}
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
+        {activeTab === TABS.ANALYTICS && (
           <AnalyticsTab
             unblockHistory={unblockHistory}
             analyticsData={analyticsData}
@@ -395,7 +388,7 @@ function OptionsApp() {
         )}
 
         {/* Premium Tab */}
-        {activeTab === 'license' && (
+        {activeTab === TABS.LICENSE && (
           <PremiumTab
             isPremium={isPremium}
             onUpgrade={handleUpgrade}
@@ -404,7 +397,7 @@ function OptionsApp() {
         )}
 
         {/* Help Tab */}
-        {activeTab === 'help' && (
+        {activeTab === TABS.HELP && (
           <HelpTab
             onSettingsChange={async () => {
               // Reload settings and vision after import

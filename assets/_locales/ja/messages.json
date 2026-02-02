@@ -98,8 +98,8 @@
     "description": "一般設定タブ"
   },
   "styles": {
-    "message": "スタイル",
-    "description": "スタイル設定タブ"
+    "message": "カスタマイズ",
+    "description": "カスタマイズ設定タブ"
   },
   "blockList": {
     "message": "ブロックリスト",
@@ -236,8 +236,8 @@
     }
   },
   "settingsTitle": {
-    "message": "VisionFocus 設定",
-    "description": "設定ページタイトル"
+    "message": "VisionFocus ダッシュボード",
+    "description": "ダッシュボードページタイトル"
   },
   "saveChanges": {
     "message": "変更を保存",
