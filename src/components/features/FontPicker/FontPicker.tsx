@@ -10,7 +10,7 @@ import {
   FONT_CATEGORIES,
   getFontDefinition,
   getFontCategory
-} from '~/types/storage';
+} from '~/types/font';
 import { getMessage } from '~/lib/i18n';
 
 export interface FontPickerProps {

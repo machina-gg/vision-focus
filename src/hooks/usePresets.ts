@@ -6,15 +6,11 @@ import { loadGoogleFont } from '~/constants/fonts';
 import type {
   VisionSettings,
   DashboardPreset,
-  DashboardDisplaySettings,
-  FontSettings
+  DashboardDisplaySettings
 } from '~/types/storage';
-import {
-  DEFAULT_VISION,
-  DEFAULT_FONT_SETTINGS,
-  DEFAULT_DISPLAY_SETTINGS,
-  getFontDefinition
-} from '~/types/storage';
+import type { FontSettings } from '~/types/font';
+import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
+import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
 interface UsePresetsOptions {
   vision: VisionSettings | undefined;

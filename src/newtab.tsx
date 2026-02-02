@@ -36,10 +36,10 @@ import {
   DEFAULT_VISION,
   DEFAULT_DISPLAY_SETTINGS,
   DEFAULT_SETTINGS,
-  DEFAULT_ANALYTICS,
-  FEATURE_LIMITS,
-  getFontDefinition
+  DEFAULT_ANALYTICS
 } from '~/types/storage';
+import { getFontDefinition } from '~/types/font';
+import { FEATURE_LIMITS } from '~/types/premium';
 
 import './styles/globals.css';
 

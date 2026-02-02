@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { checkPremiumStatus, getFeatureLimits } from '~/lib/license';
-import { FEATURE_LIMITS, type FeatureLimits } from '~/types/storage';
+import { FEATURE_LIMITS, type FeatureLimits } from '~/types/premium';
 
 interface PremiumStatusResult {
   isPremium: boolean;
