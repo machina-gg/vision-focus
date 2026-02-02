@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging';
 import { useStorage } from '@plasmohq/storage/hook';
 import {
   Ban,
@@ -23,27 +22,18 @@ import {
   ScheduleModal
 } from '~/components/options';
 import {
+  useAnalytics,
   useBlocklist,
+  useLicense,
   useSchedules,
   usePresets,
   usePremiumStatus
 } from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
-import { openPaymentPage, openManagementPage } from '~/lib/extpay';
-import { parseDomainInput, isValidDomain } from '~/lib/domain';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
-import type {
-  AppSettings,
-  VisionSettings,
-  AnalyticsData,
-  UnblockHistory
-} from '~/types/storage';
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_VISION,
-  DEFAULT_UNBLOCK_HISTORY
-} from '~/types/storage';
+import type { AppSettings, VisionSettings } from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 
 import './styles/globals.css';
 
@@ -62,6 +52,7 @@ function OptionsApp() {
     },
     DEFAULT_VISION
   );
+
   // Read initial tab from URL hash (e.g., #help)
   const [activeTab, setActiveTab] = useState<TabName>(() =>
     getTabFromHash(window.location.hash)
@@ -72,45 +63,15 @@ function OptionsApp() {
     window.location.hash = activeTab;
   }, [activeTab]);
 
-  // Analytics state
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
-    dailyStats: {},
-    siteTime: {},
-    siteCategories: {},
-    siteBlockCounts: {}
-  });
-
-  // Unblock history state
-  const [unblockHistory, setUnblockHistory] = useState<UnblockHistory>(
-    DEFAULT_UNBLOCK_HISTORY
-  );
-
   // Premium status (from hook)
   const { isPremium, featureLimits } = usePremiumStatus();
 
   // Custom hooks
+  const analytics = useAnalytics({ setSettings });
   const blocklist = useBlocklist({ settings, setSettings });
+  const license = useLicense();
   const schedules = useSchedules({ settings, setSettings });
   const presets = usePresets({ vision, setVision });
-
-  // Helper function to reload analytics data
-  const reloadAnalyticsData = useCallback(async () => {
-    const [analyticsResult, unblockResult] = await Promise.all([
-      storage.get('analytics') as Promise<AnalyticsData | undefined>,
-      storage.get('unblockHistory') as Promise<UnblockHistory | undefined>
-    ]);
-    if (analyticsResult) {
-      setAnalyticsData(analyticsResult);
-    }
-    if (unblockResult) {
-      setUnblockHistory(unblockResult);
-    }
-  }, []);
-
-  // Load analytics and unblock history on mount
-  useEffect(() => {
-    reloadAnalyticsData();
-  }, [reloadAnalyticsData]);
 
   // Sync language setting with i18n module
   useEffect(() => {
@@ -152,147 +113,6 @@ function OptionsApp() {
       icon: <HelpCircle className="w-4 h-4" />
     }
   ];
-
-  // Re-block handler
-  const handleReblock = useCallback(
-    async (domain: string) => {
-      try {
-        await sendToBackground({
-          name: 'add-block',
-          body: { domain }
-        });
-        // Refresh data after re-blocking
-        await reloadAnalyticsData();
-        const settingsResult = (await storage.get('settings')) as
-          | AppSettings
-          | undefined;
-        if (settingsResult) {
-          setSettings(settingsResult);
-        }
-      } catch {
-        // Silently handle error
-      }
-    },
-    [setSettings, reloadAnalyticsData]
-  );
-
-  // Reset analytics handler (reset time only, keep site list)
-  const handleResetAnalytics = useCallback(async () => {
-    try {
-      // Reset time for all sites but keep the list
-      const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
-      if (currentHistory) {
-        const resetHistory: UnblockHistory = {
-          sites: Object.fromEntries(
-            Object.entries(currentHistory.sites).map(([domain, site]) => [
-              domain,
-              { ...site, timeAfterUnblock: 0, lastActivity: null }
-            ])
-          )
-        };
-        await storage.set('unblockHistory', resetHistory);
-        setUnblockHistory(resetHistory);
-      }
-
-      // Clear analytics data
-      const emptyAnalytics: AnalyticsData = {
-        dailyStats: {},
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {}
-      };
-      await storage.set('analytics', emptyAnalytics);
-      setAnalyticsData(emptyAnalytics);
-    } catch {
-      // Silently handle error
-    }
-  }, []);
-
-  // Stop tracking a site (remove from unblock history)
-  const handleStopTracking = useCallback(async (domain: string) => {
-    try {
-      const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
-      if (currentHistory && currentHistory.sites[domain]) {
-        const { [domain]: _, ...remainingSites } = currentHistory.sites;
-        const updatedHistory: UnblockHistory = { sites: remainingSites };
-        await storage.set('unblockHistory', updatedHistory);
-        setUnblockHistory(updatedHistory);
-
-        // Also remove from analytics siteTime
-        const currentAnalytics = (await storage.get('analytics')) as
-          | AnalyticsData
-          | undefined;
-        if (currentAnalytics && currentAnalytics.siteTime[domain]) {
-          const { [domain]: __, ...remainingSiteTime } =
-            currentAnalytics.siteTime;
-          const updatedAnalytics: AnalyticsData = {
-            ...currentAnalytics,
-            siteTime: remainingSiteTime
-          };
-          await storage.set('analytics', updatedAnalytics);
-          setAnalyticsData(updatedAnalytics);
-        }
-      }
-    } catch {
-      // Silently handle error
-    }
-  }, []);
-
-  // Refresh analytics data
-  const handleRefreshAnalytics = useCallback(async () => {
-    try {
-      await reloadAnalyticsData();
-    } catch {
-      // Silently handle error
-    }
-  }, [reloadAnalyticsData]);
-
-  // Add site to track manually
-  const handleAddSiteToTrack = useCallback(async (domain: string) => {
-    try {
-      // Validate and parse domain
-      const { domain: parsedDomain } = parseDomainInput(domain);
-      if (!isValidDomain(parsedDomain)) {
-        return; // Invalid domain format
-      }
-
-      const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
-      const history = currentHistory || { sites: {} };
-
-      // Don't add if already tracking
-      if (history.sites[parsedDomain]) {
-        return;
-      }
-
-      history.sites[parsedDomain] = {
-        domain: parsedDomain,
-        status: 'unblocked',
-        blockedAt: new Date().toISOString(),
-        unblockedAt: new Date().toISOString(),
-        timeAfterUnblock: 0,
-        lastActivity: null
-      };
-      await storage.set('unblockHistory', history);
-      setUnblockHistory(history);
-    } catch {
-      // Silently handle error
-    }
-  }, []);
-
-  // Premium handlers
-  const handleUpgrade = useCallback(() => {
-    openPaymentPage();
-  }, []);
-
-  const handleManageSubscription = useCallback(() => {
-    openManagementPage();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -356,7 +176,7 @@ function OptionsApp() {
             blockError={blocklist.blockError}
             onAddDomain={blocklist.handleAddDomain}
             onRemoveDomain={blocklist.handleRemoveDomain}
-            siteBlockCounts={analyticsData.siteBlockCounts}
+            siteBlockCounts={analytics.analyticsData.siteBlockCounts}
           />
         )}
 
@@ -375,15 +195,15 @@ function OptionsApp() {
         {/* Analytics Tab */}
         {activeTab === TABS.ANALYTICS && (
           <AnalyticsTab
-            unblockHistory={unblockHistory}
-            analyticsData={analyticsData}
+            unblockHistory={analytics.unblockHistory}
+            analyticsData={analytics.analyticsData}
             settings={settings}
             isPremium={isPremium}
-            onReblock={handleReblock}
-            onReset={handleResetAnalytics}
-            onStopTracking={handleStopTracking}
-            onRefresh={handleRefreshAnalytics}
-            onAddSite={handleAddSiteToTrack}
+            onReblock={analytics.handleReblock}
+            onReset={analytics.handleResetAnalytics}
+            onStopTracking={analytics.handleStopTracking}
+            onRefresh={analytics.handleRefreshAnalytics}
+            onAddSite={analytics.handleAddSiteToTrack}
           />
         )}
 
@@ -391,8 +211,8 @@ function OptionsApp() {
         {activeTab === TABS.LICENSE && (
           <PremiumTab
             isPremium={isPremium}
-            onUpgrade={handleUpgrade}
-            onManageSubscription={handleManageSubscription}
+            onUpgrade={license.handleUpgrade}
+            onManageSubscription={license.handleManageSubscription}
           />
         )}
 
@@ -407,7 +227,7 @@ function OptionsApp() {
               ]);
               if (newSettings) setSettings(newSettings);
               if (newVision) setVision(newVision);
-              await reloadAnalyticsData();
+              await analytics.reloadAnalyticsData();
             }}
           />
         )}
