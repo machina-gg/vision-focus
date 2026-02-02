@@ -98,8 +98,8 @@
     "description": "General settings tab"
   },
   "styles": {
-    "message": "Styles",
-    "description": "Styles settings tab"
+    "message": "Customize",
+    "description": "Customize settings tab"
   },
   "blockList": {
     "message": "Block List",

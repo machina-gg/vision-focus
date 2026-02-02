@@ -98,8 +98,8 @@
     "description": "一般設定タブ"
   },
   "styles": {
-    "message": "スタイル",
-    "description": "スタイル設定タブ"
+    "message": "カスタマイズ",
+    "description": "カスタマイズ設定タブ"
   },
   "blockList": {
     "message": "ブロックリスト",
