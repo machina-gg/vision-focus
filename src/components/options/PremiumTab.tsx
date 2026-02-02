@@ -3,7 +3,7 @@ import { Check, X, Crown, Sparkles } from 'lucide-react';
 
 import { Button, Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import { FEATURE_LIMITS } from '~/types/storage';
+import { FEATURE_LIMITS } from '~/types/premium';
 
 interface PremiumTabProps {
   isPremium: boolean;

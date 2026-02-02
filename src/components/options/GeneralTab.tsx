@@ -13,11 +13,11 @@ import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts';
 import type {
   VisionSettings,
   DashboardPreset,
-  DashboardDisplaySettings,
-  FontSettings,
-  FeatureLimits
+  DashboardDisplaySettings
 } from '~/types/storage';
-import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/storage';
+import type { FontSettings } from '~/types/font';
+import type { FeatureLimits } from '~/types/premium';
+import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
 
 interface GeneralTabProps {
   // Vision data

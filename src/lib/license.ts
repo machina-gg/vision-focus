@@ -4,7 +4,7 @@ import {
   FEATURE_LIMITS,
   type FeatureLimits,
   type PremiumFeature
-} from '~/types/storage';
+} from '~/types/premium';
 
 /** Cache duration: 1 hour */
 const CACHE_DURATION = 60 * 60 * 1000;

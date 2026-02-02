@@ -3,7 +3,8 @@ import { Lock } from 'lucide-react';
 
 import { Button, Input, Modal } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import type { Schedule, VisionSettings, FeatureLimits } from '~/types/storage';
+import type { Schedule, VisionSettings } from '~/types/storage';
+import type { FeatureLimits } from '~/types/premium';
 import type { ScheduleFormData } from '~/hooks/useSchedules';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
