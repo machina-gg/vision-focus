@@ -397,7 +397,20 @@ function OptionsApp() {
         )}
 
         {/* Help Tab */}
-        {activeTab === TABS.HELP && <HelpTab />}
+        {activeTab === TABS.HELP && (
+          <HelpTab
+            onSettingsChange={async () => {
+              // Reload settings and vision after import
+              const [newSettings, newVision] = await Promise.all([
+                storage.get('settings') as Promise<AppSettings | undefined>,
+                storage.get('vision') as Promise<VisionSettings | undefined>
+              ]);
+              if (newSettings) setSettings(newSettings);
+              if (newVision) setVision(newVision);
+              await reloadAnalyticsData();
+            }}
+          />
+        )}
       </main>
 
       {/* New Preset Modal */}

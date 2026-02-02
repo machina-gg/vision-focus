@@ -1280,5 +1280,81 @@
   "noBlockedSitesYet": {
     "message": "まだなし",
     "description": "ブロックサイトがまだない場合のメッセージ"
+  },
+  "settingsBackup": {
+    "message": "設定のバックアップ",
+    "description": "設定バックアップセクションタイトル"
+  },
+  "settingsBackupDescription": {
+    "message": "設定をエクスポート・インポートして、バックアップしたり他のデバイスに移行できます",
+    "description": "設定バックアップの説明"
+  },
+  "exportSettings": {
+    "message": "設定をエクスポート",
+    "description": "設定エクスポートボタン"
+  },
+  "importSettings": {
+    "message": "設定をインポート",
+    "description": "設定インポートボタン"
+  },
+  "exportSettingsDescription": {
+    "message": "ブロックリスト、スケジュール、スタイルをJSONファイルとしてダウンロード",
+    "description": "設定エクスポートの説明"
+  },
+  "importSettingsDescription": {
+    "message": "以前エクスポートしたファイルから設定を復元",
+    "description": "設定インポートの説明"
+  },
+  "exportLargeWarning": {
+    "message": "設定ファイルが大きいです（カスタム背景画像を含む）。ダウンロードに時間がかかる場合があります。",
+    "description": "大きなエクスポートファイルの警告"
+  },
+  "exportSuccess": {
+    "message": "設定をエクスポートしました！",
+    "description": "エクスポート成功メッセージ"
+  },
+  "importSuccess": {
+    "message": "設定をインポートしました！",
+    "description": "インポート成功メッセージ"
+  },
+  "importSuccessWithMerge": {
+    "message": "設定をインポートし、既存のデータとマージしました",
+    "description": "マージ付きインポート成功メッセージ"
+  },
+  "importErrorFileTooLarge": {
+    "message": "ファイルが大きすぎます（最大5MB）",
+    "description": "インポートエラー: ファイルが大きすぎる"
+  },
+  "importErrorInvalidJson": {
+    "message": "無効なファイル形式です。有効なJSONファイルを選択してください。",
+    "description": "インポートエラー: 無効なJSON"
+  },
+  "importErrorInvalidFormat": {
+    "message": "無効な設定ファイル形式です。VisionFocusの設定ファイルを選択してください。",
+    "description": "インポートエラー: 無効な形式"
+  },
+  "importWarningNewerVersion": {
+    "message": "このファイルはより新しいバージョンのVisionFocusからエクスポートされました。一部の設定が完全に互換性がない可能性があります。",
+    "description": "インポート警告: より新しいバージョン"
+  },
+  "importWarningOrphanedPresets": {
+    "message": "一部のスケジュールが存在しないスタイルを参照していたため、クリアされました。",
+    "description": "インポート警告: 孤立したプリセット"
+  },
+  "importWarningActivePresetNotFound": {
+    "message": "アクティブなスタイルが見つからなかったため、デフォルトにリセットされました。",
+    "description": "インポート警告: アクティブなプリセットが見つからない"
+  },
+  "selectFile": {
+    "message": "ファイルを選択",
+    "description": "ファイル選択ボタン"
+  },
+  "settingsIncluded": {
+    "message": "含まれる: ブロックリスト、スケジュール、スタイル、ダッシュボード設定",
+    "description": "設定エクスポートに含まれるもの"
+  },
+  "settingsNotIncluded": {
+    "message": "含まれない: プレミアムステータス、分析データ",
+    "description": "設定エクスポートに含まれないもの"
   }
 }
