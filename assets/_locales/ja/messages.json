@@ -236,8 +236,8 @@
     }
   },
   "settingsTitle": {
-    "message": "VisionFocus 設定",
-    "description": "設定ページタイトル"
+    "message": "VisionFocus ダッシュボード",
+    "description": "ダッシュボードページタイトル"
   },
   "saveChanges": {
     "message": "変更を保存",
