@@ -1,37 +1,49 @@
 /**
  * Settings page tab names
  */
-export const TABS = [
-  'blocklist',
-  'styles',
-  'schedules',
-  'analytics',
-  'license',
-  'help'
-] as const;
+export const TABS = {
+  BLOCKLIST: 'blocklist',
+  STYLES: 'styles',
+  SCHEDULES: 'schedules',
+  ANALYTICS: 'analytics',
+  LICENSE: 'license',
+  HELP: 'help'
+} as const;
 
 /**
  * Type for tab names
  */
-export type TabName = (typeof TABS)[number];
+export type TabName = (typeof TABS)[keyof typeof TABS];
+
+/**
+ * Tab order for UI rendering
+ */
+export const TAB_ORDER: TabName[] = [
+  TABS.BLOCKLIST,
+  TABS.STYLES,
+  TABS.SCHEDULES,
+  TABS.ANALYTICS,
+  TABS.LICENSE,
+  TABS.HELP
+];
 
 /**
  * Default tab when no valid tab is specified
  */
-export const DEFAULT_TAB: TabName = 'blocklist';
+export const DEFAULT_TAB: TabName = TABS.BLOCKLIST;
 
 /**
  * Legacy tab mapping (for backward compatibility)
  */
-export const LEGACY_TAB_MAP: Record<string, TabName> = {
-  general: 'styles'
+export const LEGACY_TAB_MAP: Partial<Record<string, TabName>> = {
+  general: TABS.STYLES
 } as const;
 
 /**
  * Check if a string is a valid tab name
  */
 export function isValidTab(tab: string): tab is TabName {
-  return (TABS as readonly string[]).includes(tab);
+  return Object.values(TABS).includes(tab as TabName);
 }
 
 /**
@@ -42,7 +54,7 @@ export function getTabFromHash(hash: string): TabName {
 
   // Check legacy mapping first
   if (tabName in LEGACY_TAB_MAP) {
-    return LEGACY_TAB_MAP[tabName];
+    return LEGACY_TAB_MAP[tabName] as TabName;
   }
 
   // Return valid tab or default
