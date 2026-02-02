@@ -13,7 +13,7 @@ import {
 
 import { Tabs } from '~/components/ui';
 import {
-  GeneralTab,
+  StylesTab,
   BlocklistTab,
   SchedulesTab,
   AnalyticsTab,
@@ -320,7 +320,7 @@ function OptionsApp() {
 
         {/* Styles Tab */}
         {activeTab === TABS.STYLES && (
-          <GeneralTab
+          <StylesTab
             vision={vision}
             draftPresets={presets.draftPresets}
             selectedPresetId={presets.selectedPresetId}

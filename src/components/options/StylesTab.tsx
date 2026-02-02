@@ -19,7 +19,7 @@ import type { FontSettings } from '~/types/font';
 import type { FeatureLimits } from '~/types/premium';
 import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
 
-interface GeneralTabProps {
+interface StylesTabProps {
   // Vision data
   vision: VisionSettings | undefined;
   draftPresets: DashboardPreset[];
@@ -52,7 +52,7 @@ interface GeneralTabProps {
   onFontSettingsChange: (fontSettings: FontSettings) => void;
 }
 
-export function GeneralTab({
+export function StylesTab({
   vision,
   draftPresets,
   selectedPresetId,
@@ -76,7 +76,7 @@ export function GeneralTab({
   onBackgroundColorChange,
   onCustomBackgroundChange,
   onFontSettingsChange
-}: GeneralTabProps) {
+}: StylesTabProps) {
   const selectedPreset = draftPresets.find((p) => p.id === selectedPresetId);
 
   // Determine if we're in editing mode

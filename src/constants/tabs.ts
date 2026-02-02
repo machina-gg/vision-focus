@@ -33,13 +33,6 @@ export const TAB_ORDER: TabName[] = [
 export const DEFAULT_TAB: TabName = TABS.BLOCKLIST;
 
 /**
- * Legacy tab mapping (for backward compatibility)
- */
-export const LEGACY_TAB_MAP: Partial<Record<string, TabName>> = {
-  general: TABS.STYLES
-} as const;
-
-/**
  * Check if a string is a valid tab name
  */
 export function isValidTab(tab: string): tab is TabName {
@@ -47,16 +40,9 @@ export function isValidTab(tab: string): tab is TabName {
 }
 
 /**
- * Get the tab name from URL hash, handling legacy mappings
+ * Get the tab name from URL hash
  */
 export function getTabFromHash(hash: string): TabName {
   const tabName = hash.slice(1); // Remove #
-
-  // Check legacy mapping first
-  if (tabName in LEGACY_TAB_MAP) {
-    return LEGACY_TAB_MAP[tabName] as TabName;
-  }
-
-  // Return valid tab or default
   return isValidTab(tabName) ? tabName : DEFAULT_TAB;
 }
