@@ -1482,5 +1482,57 @@
   "sat": {
     "message": "Sat",
     "description": "Saturday abbreviation"
+  },
+  "notificationSettings": {
+    "message": "Notification Settings",
+    "description": "Notification settings section title"
+  },
+  "notificationTimeLimitEnabled": {
+    "message": "Time Limit Notifications",
+    "description": "Enable time limit notifications toggle"
+  },
+  "notificationTimeLimitEnabledDescription": {
+    "message": "Get notified when you're running low on time for a site",
+    "description": "Time limit notification description"
+  },
+  "notificationTimeLimitMinutes": {
+    "message": "Notify before limit",
+    "description": "Notification timing selection label"
+  },
+  "notificationMinutesOption": {
+    "message": "$COUNT$ minute(s) before",
+    "description": "Minutes before option",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "notificationTimeLimitTitle": {
+    "message": "⏰ Time Running Low",
+    "description": "Time limit notification title"
+  },
+  "notificationTimeLimitMessage": {
+    "message": "$DOMAIN$ has $REMAINING$ min left of your $TOTAL$ min$TYPE$ limit",
+    "description": "Time limit notification message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      },
+      "remaining": {
+        "content": "$2",
+        "example": "5"
+      },
+      "total": {
+        "content": "$3",
+        "example": "30"
+      },
+      "type": {
+        "content": "$4",
+        "example": "/day"
+      }
+    }
   }
 }

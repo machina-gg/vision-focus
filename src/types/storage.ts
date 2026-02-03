@@ -128,11 +128,20 @@ export interface VisionSettings {
 // Supported languages
 export type SupportedLanguage = 'en' | 'ja';
 
+// Notification settings
+export type NotificationMinutes = 1 | 3 | 5 | 10;
+
+export interface NotificationSettings {
+  timeLimitEnabled: boolean; // Enable/disable time limit notifications
+  timeLimitMinutes: NotificationMinutes; // Minutes before limit to notify (1, 3, 5, 10)
+}
+
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
   paused: boolean; // Global pause for all blocking
   language: SupportedLanguage | null; // null = use browser language
+  notifications: NotificationSettings; // Notification preferences
 }
 
 // Analytics data
@@ -170,12 +179,19 @@ export interface StorageSchema {
   unblockHistory: UnblockHistory;
 }
 
+// Default notification settings
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  timeLimitEnabled: true, // Enabled by default
+  timeLimitMinutes: 5 // Notify 5 minutes before limit
+};
+
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
   paused: false,
-  language: null // Use browser language by default
+  language: null, // Use browser language by default
+  notifications: DEFAULT_NOTIFICATION_SETTINGS
 };
 
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {

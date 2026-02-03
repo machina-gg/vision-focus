@@ -16,9 +16,10 @@ import type {
   VisionSettings,
   BlockItem,
   Schedule,
-  DashboardPreset
+  DashboardPreset,
+  NotificationSettings
 } from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_VISION, DEFAULT_NOTIFICATION_SETTINGS } from '~/types/storage';
 
 // Export data version for future compatibility
 const EXPORT_VERSION = 1;
@@ -42,6 +43,7 @@ export interface ExportedSettings {
     defaultDisplaySettings: VisionSettings['defaultSettings'];
     activePresetId: string | null;
     language: AppSettings['language'];
+    notifications?: NotificationSettings;
   };
 }
 
@@ -105,6 +107,11 @@ const presetSchema = displaySettingsSchema.extend({
   createdAt: z.string()
 });
 
+const notificationSettingsSchema = z.object({
+  timeLimitEnabled: z.boolean(),
+  timeLimitMinutes: z.union([z.literal(1), z.literal(3), z.literal(5), z.literal(10)])
+});
+
 const exportDataSchema = z.object({
   version: z.number(),
   exportedAt: z.string(),
@@ -114,7 +121,8 @@ const exportDataSchema = z.object({
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
     activePresetId: z.string().nullable(),
-    language: z.enum(['en', 'ja']).nullable()
+    language: z.enum(['en', 'ja']).nullable(),
+    notifications: notificationSettingsSchema.optional()
   })
 });
 
@@ -157,7 +165,8 @@ export function exportSettings(
       presets: vision.presets,
       defaultDisplaySettings: vision.defaultSettings,
       activePresetId: vision.activePresetId,
-      language: settings.language
+      language: settings.language,
+      notifications: settings.notifications
     }
   };
 
@@ -300,7 +309,8 @@ export function applyImportedSettings(
     ...currentSettings,
     blockList: mergedBlockList,
     schedules: mergedSchedules,
-    language: data.language ?? currentSettings.language
+    language: data.language ?? currentSettings.language,
+    notifications: data.notifications ?? currentSettings.notifications ?? DEFAULT_NOTIFICATION_SETTINGS
   };
 
   const newVision: VisionSettings = {
@@ -326,7 +336,8 @@ export function createDefaultExportData(): ExportedSettings {
       presets: DEFAULT_VISION.presets,
       defaultDisplaySettings: DEFAULT_VISION.defaultSettings,
       activePresetId: DEFAULT_VISION.activePresetId,
-      language: DEFAULT_SETTINGS.language
+      language: DEFAULT_SETTINGS.language,
+      notifications: DEFAULT_SETTINGS.notifications
     }
   };
 }

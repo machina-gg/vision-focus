@@ -1,0 +1,118 @@
+import { getSettings } from '~/lib/storage';
+import { findBlockItemForDomain, getRemainingTime } from './time-limit';
+import { getMessage } from '~/lib/i18n';
+
+// In-memory state to track which domains have been notified
+// Key: domain, Value: reset key (YYYY-MM-DD for daily, YYYY-MM-DD-HH for hourly)
+const notifiedDomains = new Map<string, string>();
+
+// Get the reset key for a domain based on its time limit type
+function getResetKey(type: 'daily' | 'hourly'): string {
+  const now = new Date();
+  const dateKey = now.toISOString().split('T')[0];
+
+  if (type === 'hourly') {
+    const hour = now.getHours().toString().padStart(2, '0');
+    return `${dateKey}-${hour}`;
+  }
+
+  return dateKey;
+}
+
+// Check if a domain has already been notified in the current period
+function hasBeenNotified(domain: string, type: 'daily' | 'hourly'): boolean {
+  const resetKey = getResetKey(type);
+  const notifiedKey = notifiedDomains.get(domain);
+  return notifiedKey === resetKey;
+}
+
+// Mark a domain as notified for the current period
+function markAsNotified(domain: string, type: 'daily' | 'hourly'): void {
+  const resetKey = getResetKey(type);
+  notifiedDomains.set(domain, resetKey);
+}
+
+// Clear notification state for domains that have reset
+export function clearExpiredNotifications(): void {
+  const dailyKey = getResetKey('daily');
+  const hourlyKey = getResetKey('hourly');
+
+  for (const [domain, resetKey] of notifiedDomains.entries()) {
+    // If the stored key doesn't match current daily or hourly key, remove it
+    if (resetKey !== dailyKey && resetKey !== hourlyKey) {
+      notifiedDomains.delete(domain);
+    }
+  }
+}
+
+// Show a time limit notification
+async function showTimeLimitNotification(
+  domain: string,
+  remainingMinutes: number,
+  totalMinutes: number,
+  type: 'daily' | 'hourly'
+): Promise<void> {
+  const typeLabel =
+    type === 'daily' ? getMessage('perDay') : getMessage('perHour');
+
+  await chrome.notifications.create(`time-limit-${domain}-${Date.now()}`, {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('assets/icon-128.png'),
+    title: getMessage('notificationTimeLimitTitle'),
+    message: getMessage('notificationTimeLimitMessage', [
+      domain,
+      remainingMinutes.toString(),
+      totalMinutes.toString(),
+      typeLabel
+    ]),
+    priority: 2
+  });
+}
+
+// Check and potentially send notification for a domain
+export async function checkTimeLimitNotification(
+  domain: string
+): Promise<void> {
+  const settings = await getSettings();
+
+  // Check if notifications are enabled
+  if (!settings.notifications?.timeLimitEnabled) {
+    return;
+  }
+
+  const blockItem = await findBlockItemForDomain(domain);
+
+  // Only process domains with time limits
+  if (!blockItem || !blockItem.timeLimit) {
+    return;
+  }
+
+  const { type, limitSeconds } = blockItem.timeLimit;
+
+  // Check if already notified in this period
+  if (hasBeenNotified(domain, type)) {
+    return;
+  }
+
+  const remainingSeconds = await getRemainingTime(domain);
+
+  // If no remaining time info or already exceeded, skip
+  if (remainingSeconds === null || remainingSeconds <= 0) {
+    return;
+  }
+
+  const remainingMinutes = Math.ceil(remainingSeconds / 60);
+  const notifyAtMinutes = settings.notifications.timeLimitMinutes;
+
+  // Check if we should notify
+  if (remainingMinutes <= notifyAtMinutes) {
+    const totalMinutes = Math.round(limitSeconds / 60);
+    await showTimeLimitNotification(domain, remainingMinutes, totalMinutes, type);
+    markAsNotified(domain, type);
+  }
+}
+
+// Reset notification state (useful for testing or when user changes settings)
+export function resetNotificationState(): void {
+  notifiedDomains.clear();
+}

@@ -14,6 +14,7 @@ import { isWithinSchedule } from '~/lib/time';
 import { updateBlockRules } from './blocker';
 import { startTracking } from './tracker';
 import { resetExpiredUsage } from './time-limit';
+import { clearExpiredNotifications } from './notifications';
 
 // Initialize ExtensionPay at top level (required for Manifest V3)
 startExtPayBackgroundListener();
@@ -57,6 +58,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'time-limit-reset') {
     // Reset expired time limit usage
     await resetExpiredUsage();
+    // Clear notification state for domains that have reset
+    clearExpiredNotifications();
   }
 });
 
