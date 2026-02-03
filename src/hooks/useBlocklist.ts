@@ -4,7 +4,7 @@ import { sendToBackground } from '@plasmohq/messaging';
 import { parseDomainInput } from '~/lib/domain';
 import { storage } from '~/lib/storage';
 import { canAddToBlocklist } from '~/lib/license';
-import type { AppSettings } from '~/types/storage';
+import type { AppSettings, TimeLimit } from '~/types/storage';
 
 interface UseBlocklistOptions {
   settings: AppSettings | undefined;
@@ -18,6 +18,7 @@ interface UseBlocklistReturn {
   handleAddDomain: () => Promise<void>;
   handleRemoveDomain: (id: string) => Promise<void>;
   handleToggleDomain: (id: string, enabled: boolean) => Promise<void>;
+  handleUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => Promise<void>;
 }
 
 export function useBlocklist({
@@ -100,12 +101,31 @@ export function useBlocklist({
     [setSettings]
   );
 
+  const handleUpdateTimeLimit = useCallback(
+    async (id: string, timeLimit: TimeLimit | null) => {
+      try {
+        await sendToBackground({
+          name: 'update-time-limit',
+          body: { id, timeLimit }
+        });
+        const updatedSettings = await storage.get<AppSettings>('settings');
+        if (updatedSettings) {
+          setSettings(updatedSettings);
+        }
+      } catch {
+        // Silently handle error - list will refresh on next settings change
+      }
+    },
+    [setSettings]
+  );
+
   return {
     newDomain,
     setNewDomain,
     blockError,
     handleAddDomain,
     handleRemoveDomain,
-    handleToggleDomain
+    handleToggleDomain,
+    handleUpdateTimeLimit
   };
 }

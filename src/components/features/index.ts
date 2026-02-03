@@ -6,4 +6,5 @@ export * from './Header';
 export * from './ImageUploader';
 export * from './QuickBlockButton';
 export * from './StatsCard';
+export * from './TimeLimitBadge';
 export * from './UpgradePrompt';

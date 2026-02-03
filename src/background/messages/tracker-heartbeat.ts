@@ -11,6 +11,7 @@ import type { BlockItem } from '~/types/storage';
 import { getTodayKey } from '~/lib/time';
 import { TRACKER_CONFIG } from '~/constants/limits';
 import type { DailyStat, SiteTime } from '~/types/storage';
+import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 
 // Track active pages and their last heartbeat
 interface ActivePage {
@@ -95,7 +96,8 @@ function findUnblockedSite(
       id: '',
       domain: unblockedDomain,
       isWildcard: unblockedDomain.startsWith('*.'),
-      createdAt: ''
+      createdAt: '',
+      enabled: true
     };
 
     if (matchesDomain(domain, blockItem)) {
@@ -111,16 +113,23 @@ function findUnblockedSite(
   return null;
 }
 
-// Record time for a domain (only tracks unblocked sites)
+// Record time for a domain (tracks unblocked sites and time-limited sites)
 async function recordTime(domain: string, seconds: number): Promise<void> {
   if (seconds <= 0 || !domain) return;
+
+  // Check if this domain has a time limit (record usage for time-limited sites)
+  const blockItem = await findBlockItemForDomain(domain);
+  if (blockItem && blockItem.timeLimit) {
+    await recordTimeLimitUsage(domain, seconds);
+    // Don't return here - also track in analytics if it's an unblocked site
+  }
 
   // Only track sites that are in the unblock history
   const history = await getUnblockHistory();
   const matchedDomain = findUnblockedSite(domain, history);
 
   if (!matchedDomain) {
-    // Not an unblocked site, skip tracking
+    // Not an unblocked site, skip tracking (but time limit was already recorded above)
     return;
   }
 

@@ -34,6 +34,23 @@ export { type WeeklyReport, type MonthlyReport } from './report';
 import type { FontSettings } from './font';
 import { DEFAULT_FONT_SETTINGS } from './font';
 
+// Time limit configuration for a site
+export type TimeLimitType = 'daily' | 'hourly';
+
+export interface TimeLimit {
+  type: TimeLimitType;
+  limitSeconds: number; // Limit in seconds (e.g., 1800 = 30 minutes)
+}
+
+// Time limit usage tracking for a domain
+export interface TimeLimitUsage {
+  domain: string;
+  dailyUsedSeconds: number;
+  hourlyUsedSeconds: number;
+  lastDailyReset: string; // YYYY-MM-DD
+  lastHourlyReset: string; // YYYY-MM-DD-HH
+}
+
 // Block list item
 export interface BlockItem {
   id: string;
@@ -41,6 +58,7 @@ export interface BlockItem {
   isWildcard: boolean;
   createdAt: string;
   enabled: boolean; // Whether blocking is active for this item (default: true)
+  timeLimit?: TimeLimit | null; // If null/undefined, site is always blocked when enabled
 }
 
 // Schedule for time-based blocking
@@ -123,6 +141,7 @@ export interface AnalyticsData {
   siteTime: Record<string, SiteTime>; // key: domain
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
   siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
+  timeLimitUsage: Record<string, TimeLimitUsage>; // key: domain
 }
 
 // Tracked site - tracks sites from when they are blocked
@@ -202,7 +221,8 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   dailyStats: {},
   siteTime: {},
   siteCategories: {},
-  siteBlockCounts: {}
+  siteBlockCounts: {},
+  timeLimitUsage: {}
 };
 
 export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {

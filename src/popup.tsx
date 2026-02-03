@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 import { useStorage } from '@plasmohq/storage/hook';
-import { Ban, Shield, TrendingUp } from 'lucide-react';
+import { Ban, Shield, TrendingUp, Clock } from 'lucide-react';
 
-import { GoalCard, Header, QuickBlockButton } from '~/components/features';
+import { GoalCard, Header, QuickBlockButton, TimeLimitBadge } from '~/components/features';
 import { useBackgroundStats, usePremiumStatus } from '~/hooks';
 import { extractDomain } from '~/lib/domain';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
@@ -39,6 +39,14 @@ function PopupApp() {
   // Counter to force re-render when language changes (value unused intentionally)
   const [, setRenderKey] = useState(0);
 
+  // Time limit info for current site
+  const [timeLimitInfo, setTimeLimitInfo] = useState<{
+    hasTimeLimit: boolean;
+    remainingSeconds: number | null;
+    limitType: 'daily' | 'hourly' | null;
+    limitSeconds: number | null;
+  } | null>(null);
+
   // Sync language setting with i18n module
   useEffect(() => {
     if (settings?.language !== undefined) {
@@ -46,9 +54,9 @@ function PopupApp() {
     }
   }, [settings?.language]);
 
-  // Get current tab's domain
+  // Get current tab's domain and time limit info
   useEffect(() => {
-    const getCurrentDomain = async () => {
+    const getCurrentDomainAndTimeLimit = async () => {
       try {
         const [tab] = await chrome.tabs.query({
           active: true,
@@ -57,13 +65,28 @@ function PopupApp() {
         if (tab?.url) {
           const domain = extractDomain(tab.url);
           setCurrentDomain(domain || undefined);
+
+          // Get time limit info for this URL
+          if (tab.url) {
+            const response = await sendToBackground({
+              name: 'get-remaining-time',
+              body: { url: tab.url }
+            });
+            if (response.success && response.data) {
+              setTimeLimitInfo(response.data);
+            }
+          }
         }
       } catch {
         // Silently handle error - domain will be undefined
       }
     };
 
-    getCurrentDomain();
+    getCurrentDomainAndTimeLimit();
+
+    // Refresh time limit info every 10 seconds
+    const interval = setInterval(getCurrentDomainAndTimeLimit, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSettingsClick = useCallback(() => {
@@ -140,6 +163,27 @@ function PopupApp() {
       />
 
       <div className="p-4 space-y-4">
+        {/* Time Limit Info for current site */}
+        {timeLimitInfo?.hasTimeLimit &&
+          timeLimitInfo.remainingSeconds !== null &&
+          timeLimitInfo.limitType &&
+          timeLimitInfo.limitSeconds && (
+            <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-blue-500" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-700">
+                  {currentDomain}
+                </p>
+                <TimeLimitBadge
+                  remainingSeconds={timeLimitInfo.remainingSeconds}
+                  limitSeconds={timeLimitInfo.limitSeconds}
+                  limitType={timeLimitInfo.limitType}
+                  compact
+                />
+              </div>
+            </div>
+          )}
+
         {/* Block Websites - Top priority action */}
         <QuickBlockButton currentDomain={currentDomain} onBlock={handleBlock} />
 

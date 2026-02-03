@@ -75,6 +75,24 @@ export function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
+// Get current hour key in YYYY-MM-DD-HH format
+export function getCurrentHourKey(): string {
+  const now = new Date();
+  const dateKey = now.toISOString().split('T')[0];
+  const hour = now.getHours().toString().padStart(2, '0');
+  return `${dateKey}-${hour}`;
+}
+
+// Check if daily reset is needed
+export function needsDailyReset(lastDailyReset: string): boolean {
+  return lastDailyReset !== getTodayKey();
+}
+
+// Check if hourly reset is needed
+export function needsHourlyReset(lastHourlyReset: string): boolean {
+  return lastHourlyReset !== getCurrentHourKey();
+}
+
 // Check if current time is within schedule
 export function isWithinSchedule(
   startTime: string,

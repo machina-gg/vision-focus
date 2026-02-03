@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
-import { Settings, ShieldX } from 'lucide-react';
+import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
@@ -85,12 +85,22 @@ function NewtabApp() {
     count: number;
   } | null>(null);
 
+  // Block reason (from URL parameter)
+  const [blockReason, setBlockReason] = useState<string | null>(null);
+
   // Time tick for schedule checking (updates when tab becomes visible)
   const [timeTick, setTimeTick] = useState(0);
 
   // Check if we were redirected from a blocked site
   useEffect(() => {
     const loadBlockedInfo = async () => {
+      // Check for block reason in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const reason = urlParams.get('reason');
+      if (reason) {
+        setBlockReason(reason);
+      }
+
       const domain = await getLastBlockedDomain();
       if (domain) {
         const count = await getSiteBlockCount(domain);
@@ -305,12 +315,23 @@ function NewtabApp() {
           {blockedInfo ? (
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-white mb-2">
-                {getMessage('siteBlocked')}
+                {blockReason === 'time_limit_exceeded'
+                  ? getMessage('timeLimitReached')
+                  : getMessage('siteBlocked')}
               </h1>
               <p className="text-gray-300 mb-4">{blockedInfo.domain}</p>
-              <p className="text-red-300 text-sm">
-                {getMessage('blockedTimes', blockedInfo.count.toString())}
-              </p>
+              {blockReason === 'time_limit_exceeded' ? (
+                <p className="text-amber-300 text-sm">
+                  {getMessage(
+                    'timeLimitReachedDescription',
+                    blockedInfo.domain
+                  )}
+                </p>
+              ) : (
+                <p className="text-red-300 text-sm">
+                  {getMessage('blockedTimes', blockedInfo.count.toString())}
+                </p>
+              )}
             </div>
           ) : (
             <div className="mb-8">
@@ -389,14 +410,37 @@ function NewtabApp() {
         {/* Blocked Site Info */}
         {blockedInfo && (
           <div className="mb-8 animate-fade-in">
-            <div className="inline-flex items-center gap-3 bg-red-500/20 backdrop-blur-sm rounded-xl px-6 py-4 border border-red-500/30">
-              <ShieldX className="w-6 h-6 text-red-400" />
+            <div
+              className={`inline-flex items-center gap-3 ${
+                blockReason === 'time_limit_exceeded'
+                  ? 'bg-amber-500/20 border-amber-500/30'
+                  : 'bg-red-500/20 border-red-500/30'
+              } backdrop-blur-sm rounded-xl px-6 py-4 border`}
+            >
+              {blockReason === 'time_limit_exceeded' ? (
+                <Clock className="w-6 h-6 text-amber-400" />
+              ) : (
+                <ShieldX className="w-6 h-6 text-red-400" />
+              )}
               <div className="text-left">
                 <p className="text-white font-medium">
-                  {getMessage('siteBlockedMessage', blockedInfo.domain)}
+                  {blockReason === 'time_limit_exceeded'
+                    ? getMessage('timeLimitReached')
+                    : getMessage('siteBlockedMessage', blockedInfo.domain)}
                 </p>
-                <p className="text-red-200 text-sm">
-                  {getMessage('blockedTimes', blockedInfo.count.toString())}
+                <p
+                  className={`${
+                    blockReason === 'time_limit_exceeded'
+                      ? 'text-amber-200'
+                      : 'text-red-200'
+                  } text-sm`}
+                >
+                  {blockReason === 'time_limit_exceeded'
+                    ? getMessage(
+                        'timeLimitReachedDescription',
+                        blockedInfo.domain
+                      )
+                    : getMessage('blockedTimes', blockedInfo.count.toString())}
                 </p>
               </div>
             </div>

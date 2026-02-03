@@ -71,15 +71,22 @@ const displaySettingsSchema = z.object({
   backgroundType: z.enum(['image', 'color']),
   backgroundImage: z.string(),
   backgroundColor: z.string(),
-  customBackgroundData: z.string().nullable(),
+  customBackgroundData: z.string().nullable().default(null),
   fontSettings: fontSettingsSchema
+});
+
+const timeLimitSchema = z.object({
+  type: z.enum(['daily', 'hourly']),
+  limitSeconds: z.number()
 });
 
 const blockItemSchema = z.object({
   id: z.string(),
   domain: z.string(),
   isWildcard: z.boolean(),
-  createdAt: z.string()
+  createdAt: z.string(),
+  enabled: z.boolean().optional().default(true),
+  timeLimit: timeLimitSchema.nullable().optional()
 });
 
 const scheduleSchema = z.object({
@@ -241,7 +248,7 @@ export function validateImportedData(jsonString: string): ImportResult {
   return {
     success: true,
     warnings: warnings.length > 0 ? warnings : undefined,
-    data: result.data.data
+    data: result.data.data as unknown as ExportedSettings['data']
   };
 }
 

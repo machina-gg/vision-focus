@@ -1357,6 +1357,100 @@
     "message": "Not included: Premium status, Analytics data",
     "description": "What's not included in settings export"
   },
+  "alwaysBlocked": {
+    "message": "Always Blocked",
+    "description": "Option for always blocking a site"
+  },
+  "dailyLimit": {
+    "message": "Daily Limit",
+    "description": "Option for daily time limit"
+  },
+  "hourlyLimit": {
+    "message": "Hourly Limit",
+    "description": "Option for hourly time limit"
+  },
+  "timeLimitRemaining": {
+    "message": "$TIME$ remaining",
+    "description": "Remaining time display",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15m"
+      }
+    }
+  },
+  "timeLimitReached": {
+    "message": "Time limit reached",
+    "description": "Message when time limit is exceeded"
+  },
+  "timeLimitReachedDescription": {
+    "message": "You've used all your allowed time for $DOMAIN$",
+    "description": "Detailed message when time limit is exceeded",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "perDay": {
+    "message": "/day",
+    "description": "Per day suffix"
+  },
+  "perHour": {
+    "message": "/hour",
+    "description": "Per hour suffix"
+  },
+  "limitMinutes": {
+    "message": "$COUNT$ min",
+    "description": "Minutes limit display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "30"
+      }
+    }
+  },
+  "timeLimitType": {
+    "message": "Limit Type",
+    "description": "Time limit type selection label"
+  },
+  "timeLimitDuration": {
+    "message": "Limit Duration",
+    "description": "Time limit duration input label"
+  },
+  "minutes": {
+    "message": "minutes",
+    "description": "Minutes unit label"
+  },
+  "usedTime": {
+    "message": "Used: $TIME$",
+    "description": "Used time display",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15m"
+      }
+    }
+  },
+  "resetDaily": {
+    "message": "Resets daily",
+    "description": "Daily reset note"
+  },
+  "resetHourly": {
+    "message": "Resets hourly",
+    "description": "Hourly reset note"
+  },
+  "timeLimitWarning": {
+    "message": "Only $TIME$ remaining!",
+    "description": "Warning when time is running low",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "5m"
+      }
+    }
+  },
   "weeklyCalendar": {
     "message": "Weekly Calendar",
     "description": "Weekly calendar title"

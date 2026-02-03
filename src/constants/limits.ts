@@ -53,3 +53,17 @@ export const DOMAIN_CONFIG = {
   /** Maximum label length (each part between dots) */
   MAX_LABEL_LENGTH: 63
 } as const;
+
+// Time limit configuration
+export const TIME_LIMIT_CONFIG = {
+  /** Minimum limit in seconds (1 minute) */
+  MIN_LIMIT_SECONDS: 60,
+  /** Maximum limit in seconds (24 hours) */
+  MAX_LIMIT_SECONDS: 24 * 60 * 60,
+  /** Default daily limit in seconds (30 minutes) */
+  DEFAULT_DAILY_LIMIT: 30 * 60,
+  /** Default hourly limit in seconds (10 minutes) */
+  DEFAULT_HOURLY_LIMIT: 10 * 60,
+  /** Warning threshold (show warning when remaining is below this percentage) */
+  WARNING_THRESHOLD: 0.2
+} as const;
