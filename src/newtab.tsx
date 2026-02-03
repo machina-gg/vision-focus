@@ -74,10 +74,14 @@ function NewtabApp() {
     DEFAULT_ANALYTICS
   );
   const stats = useBackgroundStats(10000);
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, isLoading: isPremiumLoading } = usePremiumStatus();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track if storage data has been loaded (to prevent flicker)
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+  const [isBackgroundReady, setIsBackgroundReady] = useState(false);
 
   // Blocked site info (shown when redirected from a blocked site)
   const [blockedInfo, setBlockedInfo] = useState<{
@@ -118,6 +122,29 @@ function NewtabApp() {
       setCurrentLanguage(settings.language);
     }
   }, [settings?.language]);
+
+  // Mark storage as loaded once we have vision data beyond default
+  // useStorage returns default first, then updates with stored data
+  useEffect(() => {
+    // Check if vision has been loaded from storage (not just default)
+    // We detect this by checking if the storage hook has returned actual data
+    const checkStorageLoaded = async () => {
+      const storedVision = await storage.get<VisionSettings>('vision');
+      // If there's stored vision data, or we've waited long enough for storage check
+      if (storedVision !== undefined) {
+        setIsStorageLoaded(true);
+      }
+    };
+    checkStorageLoaded();
+  }, []);
+
+  // Also mark as loaded after a short timeout to handle first-time users
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsStorageLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Re-check schedule when tab becomes visible
   useEffect(() => {
@@ -203,6 +230,26 @@ function NewtabApp() {
       ? getBackgroundUrl(displaySettings.backgroundImage)
       : getBackgroundUrl('default-1');
   const backgroundColor = displaySettings.backgroundColor;
+
+  // Preload background image to prevent flicker
+  useEffect(() => {
+    if (isColorBackground) {
+      // Color backgrounds don't need preloading
+      setIsBackgroundReady(true);
+      return;
+    }
+
+    // Preload the background image
+    const img = new Image();
+    img.onload = () => {
+      setIsBackgroundReady(true);
+    };
+    img.onerror = () => {
+      // On error, still show the page (will use fallback or show error state)
+      setIsBackgroundReady(true);
+    };
+    img.src = backgroundUrl;
+  }, [backgroundUrl, isColorBackground]);
 
   // Get font styles
   const fontSettings = displaySettings.fontSettings;
@@ -293,6 +340,21 @@ function NewtabApp() {
 
   // Check if user has any presets configured
   const hasPresets = (vision?.presets?.length ?? 0) > 0;
+
+  // Show loading state until storage is loaded and background is ready
+  // This prevents the flicker when switching from default to custom background
+  const isReady = isStorageLoaded && (isBackgroundReady || !isPremiumLoading);
+
+  if (!isReady) {
+    // Show a minimal loading state with transparent background
+    // This prevents the white flash while data loads
+    return (
+      <div
+        className="newtab-container relative flex flex-col items-center justify-center"
+        style={{ backgroundColor: '#1a1a2e' }}
+      />
+    );
+  }
 
   // Simple block page UI (when no presets are configured)
   if (!hasPresets) {
