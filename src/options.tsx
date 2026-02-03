@@ -178,6 +178,7 @@ function OptionsApp() {
             onRemoveDomain={blocklist.handleRemoveDomain}
             onToggleDomain={blocklist.handleToggleDomain}
             onUpdateTimeLimit={blocklist.handleUpdateTimeLimit}
+            onUpdateNotifications={blocklist.handleUpdateNotifications}
             siteBlockCounts={analytics.analyticsData.siteBlockCounts}
             timeLimitUsage={analytics.analyticsData.timeLimitUsage}
           />

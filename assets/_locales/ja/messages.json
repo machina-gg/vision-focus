@@ -1482,5 +1482,57 @@
   "sat": {
     "message": "土",
     "description": "土曜日の略称"
+  },
+  "notificationSettings": {
+    "message": "通知設定",
+    "description": "通知設定セクションタイトル"
+  },
+  "notificationTimeLimitEnabled": {
+    "message": "時間制限の通知",
+    "description": "時間制限通知の有効化トグル"
+  },
+  "notificationTimeLimitEnabledDescription": {
+    "message": "サイトの残り時間が少なくなったら通知を受け取る",
+    "description": "時間制限通知の説明"
+  },
+  "notificationTimeLimitMinutes": {
+    "message": "通知タイミング",
+    "description": "通知タイミング選択ラベル"
+  },
+  "notificationMinutesOption": {
+    "message": "$COUNT$分前",
+    "description": "通知タイミングオプション",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "notificationTimeLimitTitle": {
+    "message": "⏰ 残り時間わずか",
+    "description": "時間制限通知タイトル"
+  },
+  "notificationTimeLimitMessage": {
+    "message": "$DOMAIN$ はあと$REMAINING$分で今日の制限（$TOTAL$分$TYPE$）に達します",
+    "description": "時間制限通知メッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      },
+      "remaining": {
+        "content": "$2",
+        "example": "5"
+      },
+      "total": {
+        "content": "$3",
+        "example": "30"
+      },
+      "type": {
+        "content": "$4",
+        "example": "/日"
+      }
+    }
   }
 }
