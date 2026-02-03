@@ -4,8 +4,8 @@ import {
   BarChart,
   Bar,
   Cell,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -168,6 +168,26 @@ export function AnalyticsChart({
     );
   }, [unblockHistory.sites]);
 
+  // Dynamic Y-axis unit switching for daily chart
+  const maxDailyValue = Math.max(...dailyData.map((d) => d.time), 0);
+  const useDailyHours = maxDailyValue >= 120;
+  const displayDailyData = useDailyHours
+    ? dailyData.map((d) => ({ ...d, time: d.time / 60 }))
+    : dailyData;
+  const dailyTickFormatter = (v: number) => (useDailyHours ? `${v}h` : `${v}m`);
+
+  // Dynamic Y-axis unit switching for cumulative chart
+  const maxCumulativeValue = Math.max(
+    ...cumulativeData.map((d) => d.cumulative),
+    0
+  );
+  const useCumulativeHours = maxCumulativeValue >= 120;
+  const displayCumulativeData = useCumulativeHours
+    ? cumulativeData.map((d) => ({ ...d, cumulative: d.cumulative / 60 }))
+    : cumulativeData;
+  const cumulativeTickFormatter = (v: number) =>
+    useCumulativeHours ? `${v}h` : `${v}m`;
+
   const renderChart = () => {
     switch (chartType) {
       case 'daily':
@@ -180,17 +200,17 @@ export function AnalyticsChart({
         }
         return (
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={dailyData}>
+            <LineChart data={displayDailyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
               <YAxis
                 stroke="#6b7280"
                 fontSize={12}
-                tickFormatter={(v) => `${v}m`}
+                tickFormatter={dailyTickFormatter}
               />
               <Tooltip
                 formatter={(value: number) => [
-                  formatMinutes(value),
+                  formatMinutes(useDailyHours ? value * 60 : value),
                   getMessage('chartDailyLabel')
                 ]}
                 contentStyle={{
@@ -199,13 +219,16 @@ export function AnalyticsChart({
                   borderRadius: '8px'
                 }}
               />
-              <Bar
+              <Line
+                type="monotone"
                 dataKey="time"
-                fill="#fdba74"
-                radius={[4, 4, 0, 0]}
+                stroke="#fdba74"
+                strokeWidth={2}
+                dot={{ fill: '#fdba74', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#fb923c' }}
                 name={getMessage('chartDailyLabel')}
               />
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         );
 
@@ -269,17 +292,17 @@ export function AnalyticsChart({
         }
         return (
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={cumulativeData}>
+            <BarChart data={displayCumulativeData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
               <YAxis
                 stroke="#6b7280"
                 fontSize={12}
-                tickFormatter={(v) => `${v}m`}
+                tickFormatter={cumulativeTickFormatter}
               />
               <Tooltip
                 formatter={(value: number) => [
-                  formatMinutes(value),
+                  formatMinutes(useCumulativeHours ? value * 60 : value),
                   getMessage('chartCumulativeLabel')
                 ]}
                 contentStyle={{
@@ -288,15 +311,13 @@ export function AnalyticsChart({
                   borderRadius: '8px'
                 }}
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="cumulative"
-                stroke="#fdba74"
-                fill="#fef3c7"
-                strokeWidth={2}
+                fill="#fdba74"
+                radius={[4, 4, 0, 0]}
                 name={getMessage('chartCumulativeLabel')}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         );
     }
