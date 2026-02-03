@@ -176,6 +176,7 @@ function OptionsApp() {
             blockError={blocklist.blockError}
             onAddDomain={blocklist.handleAddDomain}
             onRemoveDomain={blocklist.handleRemoveDomain}
+            onToggleDomain={blocklist.handleToggleDomain}
             siteBlockCounts={analytics.analyticsData.siteBlockCounts}
           />
         )}

@@ -77,7 +77,7 @@ function getActiveBlockedDomains(
     return [];
   }
 
-  return blockList.map((item) => item.domain);
+  return blockList.filter((item) => item.enabled).map((item) => item.domain);
 }
 
 // Check if a specific URL should be blocked
@@ -90,9 +90,9 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   // If paused, don't block
   if (settings.paused) return false;
 
-  // Check if domain is in block list
-  const isBlocked = settings.blockList.some((item) =>
-    matchesDomain(domain, item)
+  // Check if domain is in block list and enabled
+  const isBlocked = settings.blockList.some(
+    (item) => item.enabled && matchesDomain(domain, item)
   );
   if (!isBlocked) return false;
 

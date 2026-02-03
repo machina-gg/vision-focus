@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Trash2, Shield } from 'lucide-react';
 
-import { Button, Card, Input } from '~/components/ui';
+import { Button, Card, Input, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { AppSettings, SiteBlockCount } from '~/types/storage';
 
@@ -12,6 +12,7 @@ interface BlocklistTabProps {
   blockError: string;
   onAddDomain: () => void;
   onRemoveDomain: (id: string) => void;
+  onToggleDomain: (id: string, enabled: boolean) => void;
   siteBlockCounts?: Record<string, SiteBlockCount>;
 }
 
@@ -22,6 +23,7 @@ export function BlocklistTab({
   blockError,
   onAddDomain,
   onRemoveDomain,
+  onToggleDomain,
   siteBlockCounts = {}
 }: BlocklistTabProps) {
   return (
@@ -71,10 +73,23 @@ export function BlocklistTab({
                   className="flex items-center justify-between py-3"
                 >
                   <div className="flex items-center gap-3">
+                    <Toggle
+                      checked={item.enabled}
+                      onChange={(checked) => onToggleDomain(item.id, checked)}
+                      size="sm"
+                    />
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p
+                        className={`font-medium ${item.enabled ? 'text-gray-900' : 'text-gray-400'}`}
+                      >
                         {item.isWildcard && (
-                          <span className="text-blue-600">*.</span>
+                          <span
+                            className={
+                              item.enabled ? 'text-blue-600' : 'text-blue-300'
+                            }
+                          >
+                            *.
+                          </span>
                         )}
                         {item.domain}
                       </p>

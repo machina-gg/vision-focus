@@ -63,7 +63,8 @@ const handler: PlasmoMessaging.MessageHandler<
     id: generateId(),
     domain: parsedDomain,
     isWildcard,
-    createdAt: now
+    createdAt: now,
+    enabled: true
   });
 
   await setSettings(settings);

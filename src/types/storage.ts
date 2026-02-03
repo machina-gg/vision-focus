@@ -40,6 +40,7 @@ export interface BlockItem {
   domain: string;
   isWildcard: boolean;
   createdAt: string;
+  enabled: boolean; // Whether blocking is active for this item (default: true)
 }
 
 // Schedule for time-based blocking

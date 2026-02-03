@@ -17,6 +17,7 @@ interface UseBlocklistReturn {
   blockError: string;
   handleAddDomain: () => Promise<void>;
   handleRemoveDomain: (id: string) => Promise<void>;
+  handleToggleDomain: (id: string, enabled: boolean) => Promise<void>;
 }
 
 export function useBlocklist({
@@ -84,11 +85,27 @@ export function useBlocklist({
     [setSettings]
   );
 
+  const handleToggleDomain = useCallback(
+    async (id: string, enabled: boolean) => {
+      try {
+        await sendToBackground({ name: 'toggle-block', body: { id, enabled } });
+        const updatedSettings = await storage.get<AppSettings>('settings');
+        if (updatedSettings) {
+          setSettings(updatedSettings);
+        }
+      } catch {
+        // Silently handle error - list will refresh on next settings change
+      }
+    },
+    [setSettings]
+  );
+
   return {
     newDomain,
     setNewDomain,
     blockError,
     handleAddDomain,
-    handleRemoveDomain
+    handleRemoveDomain,
+    handleToggleDomain
   };
 }
