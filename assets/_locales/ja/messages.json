@@ -1450,5 +1450,37 @@
         "example": "5分"
       }
     }
+  },
+  "weeklyCalendar": {
+    "message": "週間カレンダー",
+    "description": "週間カレンダータイトル"
+  },
+  "sun": {
+    "message": "日",
+    "description": "日曜日の略称"
+  },
+  "mon": {
+    "message": "月",
+    "description": "月曜日の略称"
+  },
+  "tue": {
+    "message": "火",
+    "description": "火曜日の略称"
+  },
+  "wed": {
+    "message": "水",
+    "description": "水曜日の略称"
+  },
+  "thu": {
+    "message": "木",
+    "description": "木曜日の略称"
+  },
+  "fri": {
+    "message": "金",
+    "description": "金曜日の略称"
+  },
+  "sat": {
+    "message": "土",
+    "description": "土曜日の略称"
   }
 }

@@ -1450,5 +1450,37 @@
         "example": "5m"
       }
     }
+  },
+  "weeklyCalendar": {
+    "message": "Weekly Calendar",
+    "description": "Weekly calendar title"
+  },
+  "sun": {
+    "message": "Sun",
+    "description": "Sunday abbreviation"
+  },
+  "mon": {
+    "message": "Mon",
+    "description": "Monday abbreviation"
+  },
+  "tue": {
+    "message": "Tue",
+    "description": "Tuesday abbreviation"
+  },
+  "wed": {
+    "message": "Wed",
+    "description": "Wednesday abbreviation"
+  },
+  "thu": {
+    "message": "Thu",
+    "description": "Thursday abbreviation"
+  },
+  "fri": {
+    "message": "Fri",
+    "description": "Friday abbreviation"
+  },
+  "sat": {
+    "message": "Sat",
+    "description": "Saturday abbreviation"
   }
 }
