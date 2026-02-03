@@ -13,6 +13,7 @@ import { isWithinSchedule } from '~/lib/time';
 
 import { updateBlockRules } from './blocker';
 import { startTracking } from './tracker';
+import { resetExpiredUsage } from './time-limit';
 
 // Initialize ExtensionPay at top level (required for Manifest V3)
 startExtPayBackgroundListener();
@@ -53,11 +54,16 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     // Update block rules every minute to handle schedule changes
     await updateBlockRules();
   }
+  if (alarm.name === 'time-limit-reset') {
+    // Reset expired time limit usage
+    await resetExpiredUsage();
+  }
 });
 
 // Set up alarms
 chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 });
 chrome.alarms.create('check-schedule', { periodInMinutes: 1 });
+chrome.alarms.create('time-limit-reset', { periodInMinutes: 1 });
 
 // Track blocked navigations and increment site block count
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {

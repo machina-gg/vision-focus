@@ -1356,5 +1356,99 @@
   "settingsNotIncluded": {
     "message": "含まれない: プレミアムステータス、分析データ",
     "description": "設定エクスポートに含まれないもの"
+  },
+  "alwaysBlocked": {
+    "message": "常時ブロック",
+    "description": "常時ブロックオプション"
+  },
+  "dailyLimit": {
+    "message": "1日の制限",
+    "description": "1日の時間制限オプション"
+  },
+  "hourlyLimit": {
+    "message": "1時間の制限",
+    "description": "1時間の時間制限オプション"
+  },
+  "timeLimitRemaining": {
+    "message": "残り $TIME$",
+    "description": "残り時間表示",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15分"
+      }
+    }
+  },
+  "timeLimitReached": {
+    "message": "時間制限に達しました",
+    "description": "時間制限超過時のメッセージ"
+  },
+  "timeLimitReachedDescription": {
+    "message": "$DOMAIN$ の許可された時間を使い切りました",
+    "description": "時間制限超過時の詳細メッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "perDay": {
+    "message": "/日",
+    "description": "1日あたりの接尾辞"
+  },
+  "perHour": {
+    "message": "/時間",
+    "description": "1時間あたりの接尾辞"
+  },
+  "limitMinutes": {
+    "message": "$COUNT$分",
+    "description": "分単位の制限表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "30"
+      }
+    }
+  },
+  "timeLimitType": {
+    "message": "制限タイプ",
+    "description": "時間制限タイプ選択ラベル"
+  },
+  "timeLimitDuration": {
+    "message": "制限時間",
+    "description": "時間制限入力ラベル"
+  },
+  "minutes": {
+    "message": "分",
+    "description": "分の単位ラベル"
+  },
+  "usedTime": {
+    "message": "使用: $TIME$",
+    "description": "使用時間表示",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15分"
+      }
+    }
+  },
+  "resetDaily": {
+    "message": "毎日リセット",
+    "description": "日次リセット注記"
+  },
+  "resetHourly": {
+    "message": "毎時リセット",
+    "description": "時間リセット注記"
+  },
+  "timeLimitWarning": {
+    "message": "残り $TIME$ です！",
+    "description": "残り時間が少ない場合の警告",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "5分"
+      }
+    }
   }
 }

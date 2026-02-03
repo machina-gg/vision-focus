@@ -1,8 +1,9 @@
-import { extractDomain, matchesDomain, generateId } from '~/lib/domain';
+import { extractDomain, generateId } from '~/lib/domain';
 import { getSettings } from '~/lib/storage';
 import { isWithinSchedule } from '~/lib/time';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import type { AppSettings, BlockItem, Schedule } from '~/types/storage';
+import { hasExceededTimeLimit, findBlockItemForDomain } from './time-limit';
 
 // Check if any schedule is currently active
 function isAnyScheduleActive(schedules: Schedule[]): boolean {
@@ -67,7 +68,8 @@ export async function updateBlockRules(): Promise<void> {
   });
 }
 
-// Get list of domains that should be actively blocked
+// Get list of domains that should be actively blocked (always-blocked sites only)
+// Sites with time limits are handled dynamically, not via declarativeNetRequest
 function getActiveBlockedDomains(
   blockList: BlockItem[],
   settings: AppSettings
@@ -77,27 +79,54 @@ function getActiveBlockedDomains(
     return [];
   }
 
-  return blockList.filter((item) => item.enabled).map((item) => item.domain);
+  // Only include always-blocked sites (no time limit)
+  return blockList
+    .filter((item) => item.enabled && !item.timeLimit)
+    .map((item) => item.domain);
 }
 
-// Check if a specific URL should be blocked
-export async function shouldBlockUrl(url: string): Promise<boolean> {
+// Block reason type
+export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
+
+// Check if a specific URL should be blocked and return the reason
+export async function shouldBlockUrl(
+  url: string
+): Promise<{ blocked: boolean; reason: BlockReason }> {
   const domain = extractDomain(url);
-  if (!domain) return false;
+  if (!domain) return { blocked: false, reason: null };
 
   const settings = await getSettings();
 
   // If paused, don't block
-  if (settings.paused) return false;
+  if (settings.paused) return { blocked: false, reason: null };
 
   // Check if domain is in block list and enabled
-  const isBlocked = settings.blockList.some(
-    (item) => item.enabled && matchesDomain(domain, item)
-  );
-  if (!isBlocked) return false;
+  const blockItem = await findBlockItemForDomain(domain);
+  if (!blockItem) return { blocked: false, reason: null };
 
   // Check if any schedule is active
-  return isAnyScheduleActive(settings.schedules);
+  if (!isAnyScheduleActive(settings.schedules)) {
+    return { blocked: false, reason: null };
+  }
+
+  // Check if site has a time limit
+  if (blockItem.timeLimit) {
+    // Site has time limit - check if exceeded
+    const exceeded = await hasExceededTimeLimit(domain);
+    return {
+      blocked: exceeded,
+      reason: exceeded ? 'time_limit_exceeded' : null
+    };
+  }
+
+  // No time limit - always blocked
+  return { blocked: true, reason: 'always_blocked' };
+}
+
+// Legacy function for backward compatibility
+export async function isUrlBlocked(url: string): Promise<boolean> {
+  const result = await shouldBlockUrl(url);
+  return result.blocked;
 }
 
 // Add domain to block list and update rules
@@ -117,7 +146,8 @@ export async function addBlockedDomain(
     id: generateId(),
     domain: isWildcard ? `*.${domain.replace('*.', '')}` : domain,
     isWildcard,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    enabled: true
   };
 
   settings.blockList.push(newItem);
@@ -153,9 +183,13 @@ export async function blockExistingTabs(): Promise<void> {
     )
       continue;
 
-    const shouldBlock = await shouldBlockUrl(tab.url);
-    if (shouldBlock) {
-      await chrome.tabs.update(tab.id, { url: newtabUrl });
+    const result = await shouldBlockUrl(tab.url);
+    if (result.blocked) {
+      // Add reason to URL for newtab page to display appropriate message
+      const redirectUrl = result.reason
+        ? `${newtabUrl}?reason=${result.reason}`
+        : newtabUrl;
+      await chrome.tabs.update(tab.id, { url: redirectUrl });
     }
   }
 }
