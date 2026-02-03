@@ -5,7 +5,9 @@ import { Button, Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { AppSettings, Schedule, VisionSettings } from '~/types/storage';
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+import { WeeklyCalendar } from './WeeklyCalendar';
+
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 interface SchedulesTabProps {
   settings: AppSettings | undefined;
@@ -26,6 +28,13 @@ export function SchedulesTab({
 }: SchedulesTabProps) {
   return (
     <div className="space-y-6">
+      {/* Weekly Calendar */}
+      <WeeklyCalendar
+        schedules={settings?.schedules ?? []}
+        vision={vision}
+        onScheduleClick={onEditSchedule}
+      />
+
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -62,7 +71,7 @@ export function SchedulesTab({
                     {schedule.startTime} - {schedule.endTime}
                   </p>
                   <div className="flex gap-1 mt-1">
-                    {DAY_NAMES.map((day, idx) => (
+                    {DAY_KEYS.map((day, idx) => (
                       <span
                         key={day}
                         className={`text-xs px-1.5 py-0.5 rounded ${
@@ -71,7 +80,7 @@ export function SchedulesTab({
                             : 'bg-gray-200 text-gray-400'
                         }`}
                       >
-                        {day}
+                        {getMessage(day)}
                       </span>
                     ))}
                   </div>

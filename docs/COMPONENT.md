@@ -52,6 +52,7 @@
 | GeneralTab       | options | スタイル設定（スタイル管理） |
 | BlocklistTab     | options | ブロックリスト管理           |
 | SchedulesTab     | options | スケジュール管理             |
+| WeeklyCalendar   | options | 週間カレンダー表示           |
 | AnalyticsTab     | options | 分析タブ                     |
 | PremiumTab       | options | プレミアムタブ               |
 | HelpTab          | options | ヘルプタブ                   |
@@ -341,6 +342,41 @@ graph TD
 | schedules    | `Schedule[]`                      | -          | 現在のスケジュール |
 | onChange     | `(schedules: Schedule[]) => void` | -          | 変更ハンドラ       |
 | maxSchedules | `number`                          | `10`       | 最大スケジュール数 |
+
+---
+
+### WeeklyCalendar
+
+週間カレンダー表示コンポーネント。スケジュールを時間軸で可視化。
+
+**Props**
+
+| Prop            | 型                             | デフォルト | 説明                             |
+| --------------- | ------------------------------ | ---------- | -------------------------------- |
+| schedules       | `Schedule[]`                   | -          | 表示するスケジュール一覧         |
+| vision          | `VisionSettings \| undefined`  | -          | スタイル設定（スタイル名表示用） |
+| onScheduleClick | `(schedule: Schedule) => void` | -          | スケジュールクリック時のハンドラ |
+
+**機能**
+
+- タイムライン形式の週間カレンダー表示
+- 縦軸: 時間（0:00〜24:00、3時間単位で目盛り）
+- 横軸: 曜日（日〜土）
+- スケジュールを色付きブロックで表示
+- スタイル連携時はスタイル名をブロック内に表示
+- 無効なスケジュールは半透明・取り消し線で表示
+- ブロッククリックでスケジュール編集モーダルを開く
+- 凡例でスケジュール名と色の対応を表示
+
+**使用例**
+
+```tsx
+<WeeklyCalendar
+  schedules={settings.schedules}
+  vision={vision}
+  onScheduleClick={(schedule) => openEditSchedule(schedule)}
+/>
+```
 
 ---
 
