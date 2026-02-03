@@ -46,6 +46,17 @@ export interface SetSiteCategoryResponse {
   error?: string;
 }
 
+// Toggle Block
+export interface ToggleBlockRequest {
+  id: string;
+  enabled: boolean;
+}
+
+export interface ToggleBlockResponse {
+  success: boolean;
+  error?: string;
+}
+
 // Tracker Heartbeat
 export interface TrackerHeartbeatRequest {
   url: string;
