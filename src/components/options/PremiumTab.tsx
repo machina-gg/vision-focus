@@ -185,7 +185,7 @@ export function PremiumTab({
               </h2>
 
               <div className="flex items-baseline justify-center gap-1 mb-1">
-                <span className="text-4xl font-bold text-blue-600">$2.99</span>
+                <span className="text-4xl font-bold text-blue-600">$1.99</span>
                 <span className="text-gray-500">/月</span>
               </div>
 
