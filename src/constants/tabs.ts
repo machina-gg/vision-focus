@@ -3,7 +3,6 @@
  */
 export const TABS = {
   BLOCKLIST: 'blocklist',
-  YOUTUBE: 'youtube',
   STYLES: 'styles',
   SCHEDULES: 'schedules',
   ANALYTICS: 'analytics',
@@ -21,7 +20,6 @@ export type TabName = (typeof TABS)[keyof typeof TABS];
  */
 export const TAB_ORDER: TabName[] = [
   TABS.BLOCKLIST,
-  TABS.YOUTUBE,
   TABS.STYLES,
   TABS.SCHEDULES,
   TABS.ANALYTICS,

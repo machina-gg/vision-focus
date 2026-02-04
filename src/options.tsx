@@ -7,8 +7,7 @@ import {
   Crown,
   HelpCircle,
   Palette,
-  TrendingUp,
-  Youtube
+  TrendingUp
 } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
@@ -19,7 +18,6 @@ import {
   AnalyticsTab,
   PremiumTab,
   HelpTab,
-  YouTubeTab,
   NewPresetModal,
   ScheduleModal
 } from '~/components/options';
@@ -115,11 +113,6 @@ function OptionsApp() {
       icon: <Ban className="w-4 h-4" />
     },
     {
-      id: TABS.YOUTUBE,
-      label: getMessage('youtube'),
-      icon: <Youtube className="w-4 h-4" />
-    },
-    {
       id: TABS.STYLES,
       label: getMessage('styles'),
       icon: <Palette className="w-4 h-4" />
@@ -213,12 +206,6 @@ function OptionsApp() {
             onUpdateNotifications={blocklist.handleUpdateNotifications}
             siteBlockCounts={analytics.analyticsData.siteBlockCounts}
             timeLimitUsage={analytics.analyticsData.timeLimitUsage}
-          />
-        )}
-
-        {/* YouTube Tab */}
-        {activeTab === TABS.YOUTUBE && (
-          <YouTubeTab
             youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
             onYouTubeChange={handleYouTubeChange}
           />
