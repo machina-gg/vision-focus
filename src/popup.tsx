@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 import { useStorage } from '@plasmohq/storage/hook';
-import { Ban, Shield, TrendingUp, Clock } from 'lucide-react';
+import { Ban, Shield, TrendingUp, Clock, Lock, Eye, EyeOff, X } from 'lucide-react';
 
 import { GoalCard, Header, QuickBlockButton, TimeLimitBadge } from '~/components/features';
 import { useBackgroundStats, usePremiumStatus } from '~/hooks';
 import { extractDomain } from '~/lib/domain';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { verifyPassword } from '~/lib/password';
 import { storage } from '~/lib/storage';
 import type {
   AppSettings,
@@ -46,6 +47,13 @@ function PopupApp() {
     limitType: 'daily' | 'hourly' | null;
     limitSeconds: number | null;
   } | null>(null);
+
+  // Password modal state for pause toggle
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Sync language setting with i18n module
   useEffect(() => {
@@ -105,15 +113,70 @@ function PopupApp() {
     });
   }, []);
 
-  const handlePausedChange = useCallback(async (paused: boolean) => {
-    try {
-      await sendToBackground({
-        name: 'toggle-pause',
-        body: { paused }
-      });
-    } catch {
-      // Silently handle error
+  const isPasswordProtected =
+    settings?.password?.enabled && settings?.password?.passwordHash;
+
+  const handlePausedChange = useCallback(
+    async (paused: boolean) => {
+      // Only require password when pausing (disabling blocking)
+      if (paused && isPasswordProtected) {
+        setShowPasswordModal(true);
+        setPasswordInput('');
+        setPasswordError(null);
+        setShowPassword(false);
+        return;
+      }
+
+      try {
+        await sendToBackground({
+          name: 'toggle-pause',
+          body: { paused }
+        });
+      } catch {
+        // Silently handle error
+      }
+    },
+    [isPasswordProtected]
+  );
+
+  const handlePasswordSubmit = useCallback(async () => {
+    if (!passwordInput || !settings?.password?.passwordHash) {
+      setPasswordError(getMessage('passwordRequired'));
+      return;
     }
+
+    setIsVerifying(true);
+    setPasswordError(null);
+
+    try {
+      const isValid = await verifyPassword(
+        passwordInput,
+        settings.password.passwordHash
+      );
+
+      if (isValid) {
+        setShowPasswordModal(false);
+        setPasswordInput('');
+        // Now actually toggle pause
+        await sendToBackground({
+          name: 'toggle-pause',
+          body: { paused: true }
+        });
+      } else {
+        setPasswordError(getMessage('passwordIncorrect'));
+      }
+    } catch {
+      setPasswordError(getMessage('passwordVerificationFailed'));
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [passwordInput, settings?.password?.passwordHash]);
+
+  const handlePasswordModalClose = useCallback(() => {
+    setShowPasswordModal(false);
+    setPasswordInput('');
+    setPasswordError(null);
+    setShowPassword(false);
   }, []);
 
   const handleLanguageChange = useCallback(
@@ -258,6 +321,88 @@ function PopupApp() {
           )}
         </div>
       </div>
+
+      {/* Password Modal for Pause */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handlePasswordModalClose}
+          />
+          <div className="relative w-full mx-4 max-w-sm bg-white rounded-xl shadow-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {getMessage('passwordRequired')}
+              </h2>
+              <button
+                onClick={handlePasswordModalClose}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+                <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  {getMessage('passwordRequiredForPause')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {getMessage('enterPassword')}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isVerifying) {
+                        handlePasswordSubmit();
+                      }
+                    }}
+                    placeholder={getMessage('passwordPlaceholder')}
+                    className="w-full px-3 py-2 pr-10 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className="text-sm text-red-600">{passwordError}</p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePasswordModalClose}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  {getMessage('cancel')}
+                </button>
+                <button
+                  onClick={handlePasswordSubmit}
+                  disabled={isVerifying || !passwordInput}
+                  className="flex-1 px-4 py-2 text-white bg-primary-500 rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isVerifying ? getMessage('verifying') : getMessage('confirm')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

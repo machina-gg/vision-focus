@@ -1602,5 +1602,149 @@
   "youtubePreviewTitle": {
     "message": "What gets hidden",
     "description": "Preview section title"
+  },
+  "passwordProtection": {
+    "message": "Password Protection",
+    "description": "Password protection section title"
+  },
+  "passwordProtectionDescription": {
+    "message": "Require a password to disable blocking or remove sites. Great for family accountability.",
+    "description": "Password protection description"
+  },
+  "passwordProtectionEnabled": {
+    "message": "Password protection is enabled",
+    "description": "Password protection enabled status"
+  },
+  "passwordProtectionDisabled": {
+    "message": "Password protection is not enabled",
+    "description": "Password protection disabled status"
+  },
+  "passwordProtectionActive": {
+    "message": "Password protection is active for these actions",
+    "description": "Password protection active indicator"
+  },
+  "setPassword": {
+    "message": "Set Password",
+    "description": "Set password button"
+  },
+  "changePassword": {
+    "message": "Change Password",
+    "description": "Change password button"
+  },
+  "removePassword": {
+    "message": "Remove Password",
+    "description": "Remove password button"
+  },
+  "newPassword": {
+    "message": "New Password",
+    "description": "New password label"
+  },
+  "currentPassword": {
+    "message": "Current Password",
+    "description": "Current password label"
+  },
+  "confirmPassword": {
+    "message": "Confirm Password",
+    "description": "Confirm password label"
+  },
+  "enterPassword": {
+    "message": "Enter Password",
+    "description": "Enter password label"
+  },
+  "passwordPlaceholder": {
+    "message": "Enter your password",
+    "description": "Password input placeholder"
+  },
+  "currentPasswordPlaceholder": {
+    "message": "Enter current password",
+    "description": "Current password placeholder"
+  },
+  "confirmPasswordPlaceholder": {
+    "message": "Confirm your password",
+    "description": "Confirm password placeholder"
+  },
+  "passwordRequired": {
+    "message": "Password Required",
+    "description": "Password required title"
+  },
+  "passwordRequiredDescription": {
+    "message": "Enter your password to continue with this action.",
+    "description": "Password required description"
+  },
+  "passwordRequiredForUnblock": {
+    "message": "Password Required",
+    "description": "Password required for unblock title"
+  },
+  "passwordRequiredForUnblockDescription": {
+    "message": "Enter your password to remove or disable this blocked site.",
+    "description": "Password required for unblock description"
+  },
+  "passwordRequiredForPause": {
+    "message": "Enter your password to pause blocking.",
+    "description": "Password required for pause description"
+  },
+  "passwordIncorrect": {
+    "message": "Incorrect password. Please try again.",
+    "description": "Incorrect password error"
+  },
+  "passwordVerificationFailed": {
+    "message": "Failed to verify password. Please try again.",
+    "description": "Password verification failed error"
+  },
+  "verifying": {
+    "message": "Verifying...",
+    "description": "Verifying text"
+  },
+  "passwordTooShort": {
+    "message": "Password must be at least 4 characters",
+    "description": "Password too short error"
+  },
+  "passwordTooLong": {
+    "message": "Password is too long",
+    "description": "Password too long error"
+  },
+  "passwordMismatch": {
+    "message": "Passwords do not match",
+    "description": "Password mismatch error"
+  },
+  "passwordNotSet": {
+    "message": "Password is not set",
+    "description": "Password not set error"
+  },
+  "currentPasswordIncorrect": {
+    "message": "Current password is incorrect",
+    "description": "Current password incorrect error"
+  },
+  "passwordSetSuccess": {
+    "message": "Password has been set successfully",
+    "description": "Password set success message"
+  },
+  "passwordChangedSuccess": {
+    "message": "Password has been changed successfully",
+    "description": "Password changed success message"
+  },
+  "passwordRemovedSuccess": {
+    "message": "Password protection has been disabled",
+    "description": "Password removed success message"
+  },
+  "passwordSetFailed": {
+    "message": "Failed to set password",
+    "description": "Password set failed error"
+  },
+  "passwordChangeFailed": {
+    "message": "Failed to change password",
+    "description": "Password change failed error"
+  },
+  "passwordRemoveFailed": {
+    "message": "Failed to remove password",
+    "description": "Password remove failed error"
+  },
+  "passwordSetInstructions": {
+    "message": "Set a password to protect your blocking settings. Share it with a family member or partner for accountability.",
+    "description": "Password set instructions"
+  },
+  "passwordRemoveWarning": {
+    "message": "Removing password protection will allow anyone to disable blocking without entering a password.",
+    "description": "Password remove warning"
   }
 }

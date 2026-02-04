@@ -1602,5 +1602,149 @@
   "youtubePreviewTitle": {
     "message": "非表示になる要素",
     "description": "プレビューセクションタイトル"
+  },
+  "passwordProtection": {
+    "message": "パスワード保護",
+    "description": "パスワード保護セクションタイトル"
+  },
+  "passwordProtectionDescription": {
+    "message": "ブロックの無効化やサイトの削除にパスワードを必要とします。家族やパートナーとの約束に最適です。",
+    "description": "パスワード保護の説明"
+  },
+  "passwordProtectionEnabled": {
+    "message": "パスワード保護が有効です",
+    "description": "パスワード保護有効状態"
+  },
+  "passwordProtectionDisabled": {
+    "message": "パスワード保護が無効です",
+    "description": "パスワード保護無効状態"
+  },
+  "passwordProtectionActive": {
+    "message": "これらの操作にはパスワードが必要です",
+    "description": "パスワード保護アクティブ表示"
+  },
+  "setPassword": {
+    "message": "パスワードを設定",
+    "description": "パスワード設定ボタン"
+  },
+  "changePassword": {
+    "message": "パスワードを変更",
+    "description": "パスワード変更ボタン"
+  },
+  "removePassword": {
+    "message": "パスワードを解除",
+    "description": "パスワード解除ボタン"
+  },
+  "newPassword": {
+    "message": "新しいパスワード",
+    "description": "新しいパスワードラベル"
+  },
+  "currentPassword": {
+    "message": "現在のパスワード",
+    "description": "現在のパスワードラベル"
+  },
+  "confirmPassword": {
+    "message": "パスワードの確認",
+    "description": "パスワード確認ラベル"
+  },
+  "enterPassword": {
+    "message": "パスワードを入力",
+    "description": "パスワード入力ラベル"
+  },
+  "passwordPlaceholder": {
+    "message": "パスワードを入力してください",
+    "description": "パスワード入力プレースホルダー"
+  },
+  "currentPasswordPlaceholder": {
+    "message": "現在のパスワードを入力",
+    "description": "現在のパスワードプレースホルダー"
+  },
+  "confirmPasswordPlaceholder": {
+    "message": "パスワードを再入力",
+    "description": "パスワード確認プレースホルダー"
+  },
+  "passwordRequired": {
+    "message": "パスワードが必要です",
+    "description": "パスワード必須タイトル"
+  },
+  "passwordRequiredDescription": {
+    "message": "この操作を続行するにはパスワードを入力してください。",
+    "description": "パスワード必須説明"
+  },
+  "passwordRequiredForUnblock": {
+    "message": "パスワードが必要です",
+    "description": "ブロック解除用パスワード必須タイトル"
+  },
+  "passwordRequiredForUnblockDescription": {
+    "message": "ブロックサイトを削除または無効にするにはパスワードを入力してください。",
+    "description": "ブロック解除用パスワード必須説明"
+  },
+  "passwordRequiredForPause": {
+    "message": "ブロックを一時停止するにはパスワードを入力してください。",
+    "description": "一時停止用パスワード必須説明"
+  },
+  "passwordIncorrect": {
+    "message": "パスワードが正しくありません。再度お試しください。",
+    "description": "パスワード不正エラー"
+  },
+  "passwordVerificationFailed": {
+    "message": "パスワードの確認に失敗しました。再度お試しください。",
+    "description": "パスワード確認失敗エラー"
+  },
+  "verifying": {
+    "message": "確認中...",
+    "description": "確認中テキスト"
+  },
+  "passwordTooShort": {
+    "message": "パスワードは4文字以上で入力してください",
+    "description": "パスワード短すぎエラー"
+  },
+  "passwordTooLong": {
+    "message": "パスワードが長すぎます",
+    "description": "パスワード長すぎエラー"
+  },
+  "passwordMismatch": {
+    "message": "パスワードが一致しません",
+    "description": "パスワード不一致エラー"
+  },
+  "passwordNotSet": {
+    "message": "パスワードが設定されていません",
+    "description": "パスワード未設定エラー"
+  },
+  "currentPasswordIncorrect": {
+    "message": "現在のパスワードが正しくありません",
+    "description": "現在のパスワード不正エラー"
+  },
+  "passwordSetSuccess": {
+    "message": "パスワードを設定しました",
+    "description": "パスワード設定成功メッセージ"
+  },
+  "passwordChangedSuccess": {
+    "message": "パスワードを変更しました",
+    "description": "パスワード変更成功メッセージ"
+  },
+  "passwordRemovedSuccess": {
+    "message": "パスワード保護を解除しました",
+    "description": "パスワード解除成功メッセージ"
+  },
+  "passwordSetFailed": {
+    "message": "パスワードの設定に失敗しました",
+    "description": "パスワード設定失敗エラー"
+  },
+  "passwordChangeFailed": {
+    "message": "パスワードの変更に失敗しました",
+    "description": "パスワード変更失敗エラー"
+  },
+  "passwordRemoveFailed": {
+    "message": "パスワードの解除に失敗しました",
+    "description": "パスワード解除失敗エラー"
+  },
+  "passwordSetInstructions": {
+    "message": "ブロック設定を保護するパスワードを設定します。家族やパートナーと共有して、お互いに責任を持ちましょう。",
+    "description": "パスワード設定の説明"
+  },
+  "passwordRemoveWarning": {
+    "message": "パスワード保護を解除すると、誰でもパスワードなしでブロックを無効にできるようになります。",
+    "description": "パスワード解除の警告"
   }
 }

@@ -37,7 +37,8 @@ import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import type {
   AppSettings,
   VisionSettings,
-  YouTubeSettings
+  YouTubeSettings,
+  PasswordSettings
 } from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
@@ -94,6 +95,14 @@ function OptionsApp() {
   const handleYouTubeChange = async (youtube: YouTubeSettings) => {
     if (!settings) return;
     const updated = { ...settings, youtube };
+    await storage.set('settings', updated);
+    setSettings(updated);
+  };
+
+  // Password settings handler
+  const handlePasswordUpdate = async (password: PasswordSettings) => {
+    if (!settings) return;
+    const updated = { ...settings, password };
     await storage.set('settings', updated);
     setSettings(updated);
   };
@@ -254,6 +263,7 @@ function OptionsApp() {
         {/* Help Tab */}
         {activeTab === TABS.HELP && (
           <HelpTab
+            settings={settings}
             onSettingsChange={async () => {
               // Reload settings and vision after import
               const [newSettings, newVision] = await Promise.all([
@@ -264,6 +274,7 @@ function OptionsApp() {
               if (newVision) setVision(newVision);
               await analytics.reloadAnalyticsData();
             }}
+            onPasswordUpdate={handlePasswordUpdate}
           />
         )}
       </main>
