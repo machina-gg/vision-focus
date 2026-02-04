@@ -5,6 +5,7 @@ export * from './GoalCard';
 export * from './Header';
 export * from './ImageUploader';
 export * from './QuickBlockButton';
+export * from './ReportCard';
 export * from './StatsCard';
 export * from './TimeLimitBadge';
 export * from './UpgradePrompt';
