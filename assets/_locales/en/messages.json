@@ -1534,5 +1534,73 @@
         "example": "/day"
       }
     }
+  },
+  "youtube": {
+    "message": "YouTube",
+    "description": "YouTube tab"
+  },
+  "youtubeBlockingTitle": {
+    "message": "YouTube In-App Blocking",
+    "description": "YouTube blocking section title"
+  },
+  "youtubeBlockingDescription": {
+    "message": "Hide distracting elements on YouTube without blocking the entire site. Watch educational content while avoiding the rabbit hole.",
+    "description": "YouTube blocking description"
+  },
+  "youtubeEnabled": {
+    "message": "Enable YouTube blocking",
+    "description": "Master switch for YouTube blocking"
+  },
+  "youtubeEnabledDescription": {
+    "message": "Turn on to hide distracting YouTube elements based on your settings below",
+    "description": "YouTube enabled description"
+  },
+  "youtubeHideShorts": {
+    "message": "Hide Shorts",
+    "description": "Hide Shorts option"
+  },
+  "youtubeHideShortsDescription": {
+    "message": "Hide the Shorts shelf, tab, and Shorts in search results",
+    "description": "Hide Shorts description"
+  },
+  "youtubeHideRecommendations": {
+    "message": "Hide Recommendations",
+    "description": "Hide recommendations option"
+  },
+  "youtubeHideRecommendationsDescription": {
+    "message": "Hide video recommendations at the end of videos",
+    "description": "Hide recommendations description"
+  },
+  "youtubeHideComments": {
+    "message": "Hide Comments",
+    "description": "Hide comments option"
+  },
+  "youtubeHideCommentsDescription": {
+    "message": "Hide the comment section below videos",
+    "description": "Hide comments description"
+  },
+  "youtubeHideSidebar": {
+    "message": "Hide Sidebar",
+    "description": "Hide sidebar option"
+  },
+  "youtubeHideSidebarDescription": {
+    "message": "Hide related videos sidebar when watching videos",
+    "description": "Hide sidebar description"
+  },
+  "youtubeHideHomeFeed": {
+    "message": "Hide Home Feed",
+    "description": "Hide home feed option"
+  },
+  "youtubeHideHomeFeedDescription": {
+    "message": "Hide the home page feed, allowing only search to find specific videos",
+    "description": "Hide home feed description"
+  },
+  "youtubeDisabledNote": {
+    "message": "Enable YouTube blocking above to configure these options",
+    "description": "Note shown when YouTube blocking is disabled"
+  },
+  "youtubePreviewTitle": {
+    "message": "What gets hidden",
+    "description": "Preview section title"
   }
 }

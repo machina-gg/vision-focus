@@ -1534,5 +1534,73 @@
         "example": "/日"
       }
     }
+  },
+  "youtube": {
+    "message": "YouTube",
+    "description": "YouTubeタブ"
+  },
+  "youtubeBlockingTitle": {
+    "message": "YouTube内ブロック",
+    "description": "YouTubeブロックセクションタイトル"
+  },
+  "youtubeBlockingDescription": {
+    "message": "YouTube全体をブロックせずに、気が散る要素だけを非表示にします。教育コンテンツを見ながら、時間の無駄遣いを防ぎましょう。",
+    "description": "YouTubeブロック説明"
+  },
+  "youtubeEnabled": {
+    "message": "YouTubeブロックを有効にする",
+    "description": "YouTubeブロックのマスタースイッチ"
+  },
+  "youtubeEnabledDescription": {
+    "message": "オンにすると、下の設定に基づいてYouTubeの気が散る要素を非表示にします",
+    "description": "YouTube有効化の説明"
+  },
+  "youtubeHideShorts": {
+    "message": "Shortsを非表示",
+    "description": "Shorts非表示オプション"
+  },
+  "youtubeHideShortsDescription": {
+    "message": "Shortsシェルフ、タブ、検索結果のShortsを非表示にします",
+    "description": "Shorts非表示の説明"
+  },
+  "youtubeHideRecommendations": {
+    "message": "おすすめを非表示",
+    "description": "おすすめ非表示オプション"
+  },
+  "youtubeHideRecommendationsDescription": {
+    "message": "動画終了時のおすすめ動画を非表示にします",
+    "description": "おすすめ非表示の説明"
+  },
+  "youtubeHideComments": {
+    "message": "コメントを非表示",
+    "description": "コメント非表示オプション"
+  },
+  "youtubeHideCommentsDescription": {
+    "message": "動画下のコメント欄を非表示にします",
+    "description": "コメント非表示の説明"
+  },
+  "youtubeHideSidebar": {
+    "message": "サイドバーを非表示",
+    "description": "サイドバー非表示オプション"
+  },
+  "youtubeHideSidebarDescription": {
+    "message": "動画再生時の関連動画サイドバーを非表示にします",
+    "description": "サイドバー非表示の説明"
+  },
+  "youtubeHideHomeFeed": {
+    "message": "ホームフィードを非表示",
+    "description": "ホームフィード非表示オプション"
+  },
+  "youtubeHideHomeFeedDescription": {
+    "message": "ホームページのフィードを非表示にし、検索のみで動画を探せるようにします",
+    "description": "ホームフィード非表示の説明"
+  },
+  "youtubeDisabledNote": {
+    "message": "これらのオプションを設定するには、上のYouTubeブロックを有効にしてください",
+    "description": "YouTubeブロックが無効時の注記"
+  },
+  "youtubePreviewTitle": {
+    "message": "非表示になる要素",
+    "description": "プレビューセクションタイトル"
   }
 }

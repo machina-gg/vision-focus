@@ -7,7 +7,8 @@ import {
   Crown,
   HelpCircle,
   Palette,
-  TrendingUp
+  TrendingUp,
+  Youtube
 } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
@@ -18,6 +19,7 @@ import {
   AnalyticsTab,
   PremiumTab,
   HelpTab,
+  YouTubeTab,
   NewPresetModal,
   ScheduleModal
 } from '~/components/options';
@@ -32,8 +34,16 @@ import {
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
-import type { AppSettings, VisionSettings } from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import type {
+  AppSettings,
+  VisionSettings,
+  YouTubeSettings
+} from '~/types/storage';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  DEFAULT_YOUTUBE_SETTINGS
+} from '~/types/storage';
 
 import './styles/globals.css';
 
@@ -80,12 +90,25 @@ function OptionsApp() {
     }
   }, [settings?.language]);
 
+  // YouTube settings handler
+  const handleYouTubeChange = async (youtube: YouTubeSettings) => {
+    if (!settings) return;
+    const updated = { ...settings, youtube };
+    await storage.set('settings', updated);
+    setSettings(updated);
+  };
+
   // Tabs configuration (using TABS constant for type safety)
   const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
     {
       id: TABS.BLOCKLIST,
       label: getMessage('blockList'),
       icon: <Ban className="w-4 h-4" />
+    },
+    {
+      id: TABS.YOUTUBE,
+      label: getMessage('youtube'),
+      icon: <Youtube className="w-4 h-4" />
     },
     {
       id: TABS.STYLES,
@@ -181,6 +204,14 @@ function OptionsApp() {
             onUpdateNotifications={blocklist.handleUpdateNotifications}
             siteBlockCounts={analytics.analyticsData.siteBlockCounts}
             timeLimitUsage={analytics.analyticsData.timeLimitUsage}
+          />
+        )}
+
+        {/* YouTube Tab */}
+        {activeTab === TABS.YOUTUBE && (
+          <YouTubeTab
+            youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
+            onYouTubeChange={handleYouTubeChange}
           />
         )}
 
