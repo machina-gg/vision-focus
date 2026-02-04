@@ -27,7 +27,7 @@ export const FEATURE_LIMITS: {
   free: {
     maxBlockList: Infinity, // Unlimited for all users
     historyDays: 7,
-    maxPresets: 2
+    maxPresets: 3
   },
   premium: {
     maxBlockList: Infinity,
