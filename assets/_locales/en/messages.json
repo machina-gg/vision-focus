@@ -1603,6 +1603,26 @@
     "message": "What gets hidden",
     "description": "Preview section title"
   },
+  "shareToX": {
+    "message": "Share to X",
+    "description": "Share to X button"
+  },
+  "downloadImage": {
+    "message": "Download Image",
+    "description": "Download image button"
+  },
+  "shareSuccess": {
+    "message": "Image copied to clipboard! Paste it in the X post.",
+    "description": "Share success message"
+  },
+  "shareError": {
+    "message": "Failed to copy image. Please try again.",
+    "description": "Share error message"
+  },
+  "topBlockedSite": {
+    "message": "Most Blocked",
+    "description": "Top blocked site label"
+  },
   "passwordProtection": {
     "message": "Password Protection",
     "description": "Password protection section title"

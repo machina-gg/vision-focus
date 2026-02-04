@@ -1603,6 +1603,26 @@
     "message": "非表示になる要素",
     "description": "プレビューセクションタイトル"
   },
+  "shareToX": {
+    "message": "Xでシェア",
+    "description": "Xでシェアボタン"
+  },
+  "downloadImage": {
+    "message": "画像をダウンロード",
+    "description": "画像ダウンロードボタン"
+  },
+  "shareSuccess": {
+    "message": "画像をクリップボードにコピーしました！Xの投稿画面に貼り付けてください。",
+    "description": "シェア成功メッセージ"
+  },
+  "shareError": {
+    "message": "画像のコピーに失敗しました。もう一度お試しください。",
+    "description": "シェアエラーメッセージ"
+  },
+  "topBlockedSite": {
+    "message": "最もブロック",
+    "description": "最もブロックしたサイトラベル"
+  },
   "passwordProtection": {
     "message": "パスワード保護",
     "description": "パスワード保護セクションタイトル"
