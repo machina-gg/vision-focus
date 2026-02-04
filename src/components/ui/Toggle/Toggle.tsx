@@ -5,7 +5,7 @@ export interface ToggleProps {
   onChange: (checked: boolean) => void;
   label?: string;
   disabled?: boolean;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const sizeClasses = {
@@ -18,6 +18,11 @@ const sizeClasses = {
     button: 'h-6 w-11',
     thumb: 'h-5 w-5',
     translate: 'translate-x-5'
+  },
+  lg: {
+    button: 'h-7 w-14',
+    thumb: 'h-6 w-6',
+    translate: 'translate-x-7'
   }
 };
 

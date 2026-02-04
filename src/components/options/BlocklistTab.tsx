@@ -1,5 +1,21 @@
 import React, { useState, useCallback } from 'react';
-import { Plus, Trash2, Shield, Clock, ChevronDown, ChevronUp, Bell, Lock } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Shield,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Bell,
+  Lock,
+  Youtube,
+  PlaySquare,
+  ThumbsUp,
+  MessageSquare,
+  LayoutPanelLeft,
+  Home,
+  Info
+} from 'lucide-react';
 
 import { Button, Card, Input, Toggle, Select } from '~/components/ui';
 import { PasswordModal } from '~/components/options/modals';
@@ -14,7 +30,8 @@ import type {
   TimeLimitType,
   TimeLimitUsage,
   NotificationSettings,
-  NotificationMinutes
+  NotificationMinutes,
+  YouTubeSettings
 } from '~/types/storage';
 
 interface BlocklistTabProps {
@@ -29,6 +46,8 @@ interface BlocklistTabProps {
   onUpdateNotifications: (notifications: NotificationSettings) => void;
   siteBlockCounts?: Record<string, SiteBlockCount>;
   timeLimitUsage?: Record<string, TimeLimitUsage>;
+  youtube: YouTubeSettings;
+  onYouTubeChange: (youtube: YouTubeSettings) => void;
 }
 
 type LimitTypeOption = 'always' | 'daily' | 'hourly';
@@ -282,6 +301,174 @@ function NotificationSettingsSection({
   );
 }
 
+// YouTube feature toggle item
+interface YouTubeFeatureToggleProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}
+
+function YouTubeFeatureToggle({
+  icon,
+  title,
+  description,
+  checked,
+  onChange,
+  disabled = false
+}: YouTubeFeatureToggleProps) {
+  return (
+    <div
+      className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+        disabled
+          ? 'bg-gray-50 opacity-60'
+          : checked
+            ? 'bg-red-50'
+            : 'bg-gray-50 hover:bg-gray-100'
+      }`}
+    >
+      <div
+        className={`p-1.5 rounded-lg ${checked && !disabled ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <h4
+            className={`text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}
+          >
+            {title}
+          </h4>
+          <Toggle
+            checked={checked}
+            onChange={onChange}
+            disabled={disabled}
+            size="sm"
+          />
+        </div>
+        <p
+          className={`text-xs mt-0.5 ${disabled ? 'text-gray-400' : 'text-gray-500'}`}
+        >
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// YouTube settings section
+interface YouTubeSectionProps {
+  youtube: YouTubeSettings;
+  onYouTubeChange: (youtube: YouTubeSettings) => void;
+}
+
+function YouTubeSection({ youtube, onYouTubeChange }: YouTubeSectionProps) {
+  const isEnabled = youtube?.enabled ?? false;
+
+  const handleToggle = useCallback(
+    (key: keyof YouTubeSettings) => (checked: boolean) => {
+      onYouTubeChange({ ...youtube, [key]: checked });
+    },
+    [youtube, onYouTubeChange]
+  );
+
+  const features = [
+    {
+      key: 'hideShorts' as const,
+      icon: <PlaySquare className="w-4 h-4" />,
+      title: getMessage('youtubeHideShorts'),
+      description: getMessage('youtubeHideShortsDescription')
+    },
+    {
+      key: 'hideRecommendations' as const,
+      icon: <ThumbsUp className="w-4 h-4" />,
+      title: getMessage('youtubeHideRecommendations'),
+      description: getMessage('youtubeHideRecommendationsDescription')
+    },
+    {
+      key: 'hideComments' as const,
+      icon: <MessageSquare className="w-4 h-4" />,
+      title: getMessage('youtubeHideComments'),
+      description: getMessage('youtubeHideCommentsDescription')
+    },
+    {
+      key: 'hideSidebar' as const,
+      icon: <LayoutPanelLeft className="w-4 h-4" />,
+      title: getMessage('youtubeHideSidebar'),
+      description: getMessage('youtubeHideSidebarDescription')
+    },
+    {
+      key: 'hideHomeFeed' as const,
+      icon: <Home className="w-4 h-4" />,
+      title: getMessage('youtubeHideHomeFeed'),
+      description: getMessage('youtubeHideHomeFeedDescription')
+    }
+  ];
+
+  return (
+    <Card>
+      <div className="flex items-start gap-3 mb-4">
+        <div className="p-2 bg-red-100 rounded-lg">
+          <Youtube className="w-5 h-5 text-red-600" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {getMessage('youtubeBlockingTitle')}
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {getMessage('youtubeBlockingDescription')}
+          </p>
+        </div>
+      </div>
+
+      {/* Master Toggle */}
+      <div className="p-3 bg-gray-50 rounded-lg mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-gray-900">
+              {getMessage('youtubeEnabled')}
+            </h3>
+            <p className="text-xs text-gray-500">
+              {getMessage('youtubeEnabledDescription')}
+            </p>
+          </div>
+          <Toggle
+            checked={isEnabled}
+            onChange={handleToggle('enabled')}
+            size="lg"
+          />
+        </div>
+      </div>
+
+      {/* Feature Toggles */}
+      {!isEnabled && (
+        <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+          <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <p className="text-xs text-amber-700">
+            {getMessage('youtubeDisabledNote')}
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {features.map((feature) => (
+          <YouTubeFeatureToggle
+            key={feature.key}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+            checked={youtube?.[feature.key] ?? false}
+            onChange={handleToggle(feature.key)}
+            disabled={!isEnabled}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function BlocklistTab({
   settings,
   newDomain,
@@ -293,7 +480,9 @@ export function BlocklistTab({
   onUpdateTimeLimit,
   onUpdateNotifications,
   siteBlockCounts = {},
-  timeLimitUsage = {}
+  timeLimitUsage = {},
+  youtube,
+  onYouTubeChange
 }: BlocklistTabProps) {
   // Password protection state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -463,6 +652,9 @@ export function BlocklistTab({
           </div>
         )}
       </Card>
+
+      {/* YouTube In-App Blocking Section */}
+      <YouTubeSection youtube={youtube} onYouTubeChange={onYouTubeChange} />
 
       {/* Password Protection Indicator */}
       {isPasswordProtected && (
