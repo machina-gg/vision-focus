@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Plus, Trash2, Shield, Clock, ChevronDown, ChevronUp, Bell } from 'lucide-react';
+import { Plus, Trash2, Shield, Clock, ChevronDown, ChevronUp, Bell, Lock } from 'lucide-react';
 
 import { Button, Card, Input, Toggle, Select } from '~/components/ui';
+import { PasswordModal } from '~/components/options/modals';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG } from '~/constants/limits';
@@ -294,6 +295,60 @@ export function BlocklistTab({
   siteBlockCounts = {},
   timeLimitUsage = {}
 }: BlocklistTabProps) {
+  // Password protection state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
+
+  const isPasswordProtected =
+    settings?.password?.enabled && settings?.password?.passwordHash;
+
+  // Handle remove with password check
+  const handleRemoveClick = useCallback(
+    (id: string) => {
+      if (isPasswordProtected) {
+        setPendingRemoveId(id);
+        setShowPasswordModal(true);
+      } else {
+        onRemoveDomain(id);
+      }
+    },
+    [isPasswordProtected, onRemoveDomain]
+  );
+
+  // Handle toggle with password check (only when disabling)
+  const handleToggleClick = useCallback(
+    (id: string, enabled: boolean) => {
+      // Only require password when disabling (turning off blocking)
+      if (!enabled && isPasswordProtected) {
+        setPendingToggleId(id);
+        setShowPasswordModal(true);
+      } else {
+        onToggleDomain(id, enabled);
+      }
+    },
+    [isPasswordProtected, onToggleDomain]
+  );
+
+  // Handle password confirmation success
+  const handlePasswordSuccess = useCallback(() => {
+    if (pendingRemoveId) {
+      onRemoveDomain(pendingRemoveId);
+      setPendingRemoveId(null);
+    }
+    if (pendingToggleId) {
+      onToggleDomain(pendingToggleId, false);
+      setPendingToggleId(null);
+    }
+  }, [pendingRemoveId, pendingToggleId, onRemoveDomain, onToggleDomain]);
+
+  // Handle modal close
+  const handlePasswordModalClose = useCallback(() => {
+    setShowPasswordModal(false);
+    setPendingRemoveId(null);
+    setPendingToggleId(null);
+  }, []);
+
   // Check if any sites have time limits configured
   const hasTimeLimitSites =
     settings?.blockList.some((item) => item.timeLimit !== null && item.timeLimit !== undefined) ??
@@ -356,7 +411,7 @@ export function BlocklistTab({
                     <div className="flex items-center gap-3">
                       <Toggle
                         checked={item.enabled}
-                        onChange={(checked) => onToggleDomain(item.id, checked)}
+                        onChange={(checked) => handleToggleClick(item.id, checked)}
                         size="sm"
                       />
                       <div>
@@ -388,7 +443,7 @@ export function BlocklistTab({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onRemoveDomain(item.id)}
+                      onClick={() => handleRemoveClick(item.id)}
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
@@ -408,6 +463,26 @@ export function BlocklistTab({
           </div>
         )}
       </Card>
+
+      {/* Password Protection Indicator */}
+      {isPasswordProtected && (
+        <div className="flex items-center gap-2 text-sm text-amber-600">
+          <Lock className="w-4 h-4" />
+          <span>{getMessage('passwordProtectionActive')}</span>
+        </div>
+      )}
+
+      {/* Password Modal */}
+      {isPasswordProtected && settings?.password?.passwordHash && (
+        <PasswordModal
+          isOpen={showPasswordModal}
+          onClose={handlePasswordModalClose}
+          onSuccess={handlePasswordSuccess}
+          passwordHash={settings.password.passwordHash}
+          title={getMessage('passwordRequiredForUnblock')}
+          description={getMessage('passwordRequiredForUnblockDescription')}
+        />
+      )}
     </div>
   );
 }

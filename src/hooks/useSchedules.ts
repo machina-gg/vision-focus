@@ -92,6 +92,8 @@ export function useSchedules({
       if (!settings) return;
       const updated = {
         ...settings,
+        // When enabling a schedule, also enable blocking (paused=false)
+        paused: enabled ? false : settings.paused,
         schedules: settings.schedules.map((s) =>
           s.id === id ? { ...s, enabled } : s
         )
