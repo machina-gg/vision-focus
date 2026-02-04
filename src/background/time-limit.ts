@@ -15,7 +15,11 @@ export {
   getRemainingTime,
   recordTimeLimitUsage,
   resetExpiredUsage,
-  getTimeLimitInfo as getTimeLimitInfoForUrl
+  getTimeLimitInfo as getTimeLimitInfoForUrl,
+  recordYouTubeTimeLimitUsage,
+  hasYouTubeExceededTimeLimit,
+  getYouTubeRemainingTime,
+  incrementYouTubeBlockCount
 } from '~/lib/blockService';
 
 // Type re-exports

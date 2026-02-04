@@ -144,6 +144,7 @@ export interface YouTubeSettings {
   hideComments: boolean; // Hide comment section
   hideSidebar: boolean; // Hide related videos sidebar on watch page
   hideHomeFeed: boolean; // Hide home feed (show only search)
+  timeLimit?: TimeLimit | null; // Optional time limit for YouTube usage
 }
 
 // Password protection settings for unblock operations
@@ -210,7 +211,8 @@ export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
   hideRecommendations: false,
   hideComments: false,
   hideSidebar: false,
-  hideHomeFeed: false
+  hideHomeFeed: false,
+  timeLimit: null
 };
 
 // Default password settings

@@ -1611,6 +1611,14 @@
     "message": "ホームページのフィードを非表示にし、検索のみで動画を探せるようにします",
     "description": "ホームフィード非表示の説明"
   },
+  "youtubeTimeLimit": {
+    "message": "時間制限",
+    "description": "YouTube時間制限ラベル"
+  },
+  "youtubeNoTimeLimit": {
+    "message": "制限なし",
+    "description": "YouTube時間制限なしオプション"
+  },
   "youtubeDisabledNote": {
     "message": "これらのオプションを設定するには、上のYouTubeブロックを有効にしてください",
     "description": "YouTubeブロックが無効時の注記"
