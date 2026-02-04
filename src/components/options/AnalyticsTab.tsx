@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import {
   AlertTriangle,
   Clock,
@@ -10,7 +10,9 @@ import {
   Plus,
   Shield,
   Download,
-  ChevronDown
+  ChevronDown,
+  Share2,
+  Image
 } from 'lucide-react';
 
 import { Card, Button, Modal, Input } from '~/components/ui';
@@ -23,6 +25,13 @@ import {
   exportDailyStats,
   exportUnblockedSites
 } from '~/lib/export';
+import {
+  shareToX,
+  generateShareText,
+  captureElementAsCanvas,
+  copyImageToClipboard,
+  downloadImage
+} from '~/lib/share';
 import type {
   UnblockHistory,
   AnalyticsData,
@@ -78,6 +87,11 @@ export function AnalyticsTab({
   const [newSiteDomain, setNewSiteDomain] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [shareMessage, setShareMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const handleAddSite = () => {
     if (newSiteDomain.trim()) {
@@ -162,6 +176,84 @@ export function AnalyticsTab({
       exportUnblockedSites(unblockHistory);
     }
     setShowExportMenu(false);
+  };
+
+  // Calculate total stats for sharing
+  const totalBlockCount = useMemo(() => {
+    return Object.values(analyticsData.siteBlockCounts || {}).reduce(
+      (sum, site) => sum + site.count,
+      0
+    );
+  }, [analyticsData.siteBlockCounts]);
+
+  const totalWasteTime = useMemo(() => {
+    return Object.values(analyticsData.dailyStats || {}).reduce(
+      (sum, stat) => sum + stat.wasteTime,
+      0
+    );
+  }, [analyticsData.dailyStats]);
+
+  const totalInvestTime = useMemo(() => {
+    return Object.values(analyticsData.dailyStats || {}).reduce(
+      (sum, stat) => sum + stat.investTime,
+      0
+    );
+  }, [analyticsData.dailyStats]);
+
+  const handleShareToX = async () => {
+    if (!chartRef.current) return;
+
+    try {
+      // Capture the chart as canvas
+      const canvas = await captureElementAsCanvas(chartRef.current);
+      if (!canvas) {
+        setShareMessage({ type: 'error', text: getMessage('shareError') });
+        return;
+      }
+
+      // Copy to clipboard
+      const success = await copyImageToClipboard(canvas);
+      if (!success) {
+        setShareMessage({ type: 'error', text: getMessage('shareError') });
+        return;
+      }
+
+      // Generate share text
+      const text = generateShareText({
+        totalBlockCount,
+        totalWasteTime,
+        totalInvestTime,
+        topBlockedSite: topBlockedSites[0]?.domain
+      });
+
+      // Show success message
+      setShareMessage({ type: 'success', text: getMessage('shareSuccess') });
+
+      // Open X intent
+      shareToX(text);
+
+      // Clear message after a delay
+      setTimeout(() => setShareMessage(null), 5000);
+    } catch {
+      setShareMessage({ type: 'error', text: getMessage('shareError') });
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!chartRef.current) return;
+
+    try {
+      const canvas = await captureElementAsCanvas(chartRef.current);
+      if (!canvas) {
+        setShareMessage({ type: 'error', text: getMessage('shareError') });
+        return;
+      }
+
+      const filename = `visionfocus-analytics-${new Date().toISOString().split('T')[0]}.png`;
+      downloadImage(canvas, filename);
+    } catch {
+      setShareMessage({ type: 'error', text: getMessage('shareError') });
+    }
   };
 
   return (
@@ -487,20 +579,56 @@ export function AnalyticsTab({
             <h3 className="text-lg font-semibold text-gray-900">
               {getMessage('usageChart')}
             </h3>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowResetModal(true)}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-red-500"
-            >
-              <Trash2 className="w-4 h-4" />
-              {getMessage('reset')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleShareToX}
+                className="flex items-center gap-1.5"
+                title={getMessage('shareToX')}
+              >
+                <Share2 className="w-4 h-4" />
+                {getMessage('shareToX')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownloadImage}
+                className="flex items-center gap-1.5"
+                title={getMessage('downloadImage')}
+              >
+                <Image className="w-4 h-4" />
+                {getMessage('downloadImage')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowResetModal(true)}
+                className="flex items-center gap-1.5 text-gray-500 hover:text-red-500"
+              >
+                <Trash2 className="w-4 h-4" />
+                {getMessage('reset')}
+              </Button>
+            </div>
           </div>
-          <AnalyticsChart
-            analytics={analyticsData}
-            unblockHistory={unblockHistory}
-          />
+          {/* Share message */}
+          {shareMessage && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-sm ${
+                shareMessage.type === 'success'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {shareMessage.text}
+            </div>
+          )}
+          <div ref={chartRef}>
+            <AnalyticsChart
+              analytics={analyticsData}
+              unblockHistory={unblockHistory}
+            />
+          </div>
         </Card>
       )}
 
