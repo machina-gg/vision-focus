@@ -13,6 +13,8 @@ import { TRACKER_CONFIG } from '~/constants/limits';
 import type { DailyStat, SiteTime } from '~/types/storage';
 import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
+import { recordYouTubeTimeLimitUsage } from '~/lib/blockService';
+import { checkYouTubeTimeLimitNotification } from '../notifications';
 
 // Track active pages and their last heartbeat
 interface ActivePage {
@@ -125,6 +127,13 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     // Check if we need to send a notification about time running low
     await checkTimeLimitNotification(domain);
     // Don't return here - also track in analytics if it's an unblocked site
+  }
+
+  // YouTube-specific time limit recording
+  const normalizedDomain = normalizeDomain(domain);
+  if (normalizedDomain === 'youtube.com') {
+    await recordYouTubeTimeLimitUsage(seconds);
+    await checkYouTubeTimeLimitNotification();
   }
 
   // Only track sites that are in the unblock history

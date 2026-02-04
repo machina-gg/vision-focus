@@ -2,7 +2,7 @@ import type { PlasmoCSConfig } from 'plasmo';
 
 import { Storage } from '@plasmohq/storage';
 
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeSettings, TimeLimitUsage, AnalyticsData } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 // Run only on YouTube
@@ -42,8 +42,32 @@ const SELECTORS = {
 
 // Current settings
 let currentSettings: YouTubeSettings = DEFAULT_YOUTUBE_SETTINGS;
+let timeLimitExceeded = false;
 let styleElement: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
+
+// Check if the YouTube time limit has been exceeded based on usage data
+function checkTimeLimitExceeded(settings: YouTubeSettings, usage: TimeLimitUsage | undefined): boolean {
+  if (!settings.enabled || !settings.timeLimit || !usage) {
+    return false;
+  }
+
+  const { type, limitSeconds } = settings.timeLimit;
+
+  // Check if daily/hourly reset is needed
+  const now = new Date();
+  const todayKey = now.toISOString().split('T')[0];
+  const hourKey = `${todayKey}-${now.getHours().toString().padStart(2, '0')}`;
+
+  let usedSeconds: number;
+  if (type === 'daily') {
+    usedSeconds = usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
+  } else {
+    usedSeconds = usage.lastHourlyReset === hourKey ? usage.hourlyUsedSeconds : 0;
+  }
+
+  return usedSeconds >= limitSeconds;
+}
 
 // Generate CSS based on current settings
 function generateCSS(settings: YouTubeSettings): string {
@@ -52,6 +76,29 @@ function generateCSS(settings: YouTubeSettings): string {
   }
 
   const rules: string[] = [];
+
+  // If time limit is exceeded, hide all content
+  if (timeLimitExceeded) {
+    rules.push(`
+      /* Time limit exceeded - hide all YouTube content */
+      ytd-app #content {
+        display: none !important;
+      }
+      ytd-app::after {
+        content: 'YouTube time limit reached. Take a break!';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: var(--yt-spec-text-secondary, #606060);
+        font-size: 20px;
+        font-weight: 500;
+        text-align: center;
+        padding: 40px;
+      }
+    `);
+    return rules.join('\n');
+  }
 
   if (settings.hideShorts) {
     rules.push(`
@@ -146,7 +193,7 @@ function applyStyles(settings: YouTubeSettings): void {
 
 // Handle dynamic content (YouTube is an SPA)
 function handleDynamicContent(): void {
-  if (!currentSettings.enabled) return;
+  if (!currentSettings.enabled || timeLimitExceeded) return;
 
   // Additional DOM manipulation for dynamic elements
   if (currentSettings.hideShorts) {
@@ -203,23 +250,35 @@ function setupObserver(): void {
   startObserving();
 }
 
+// Load analytics to check time limit
+async function loadTimeLimitState(): Promise<void> {
+  try {
+    const analytics = await storage.get('analytics') as AnalyticsData | undefined;
+    const usage = analytics?.timeLimitUsage?.['youtube.com'];
+    timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
+  } catch {
+    timeLimitExceeded = false;
+  }
+}
+
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
-    const stored = await storage.get('settings');
-    if (stored && typeof stored === 'object' && 'youtube' in stored) {
-      currentSettings = (stored as { youtube: YouTubeSettings }).youtube;
+    const stored = await storage.get('settings') as Record<string, unknown> | null;
+    if (stored && 'youtube' in stored) {
+      currentSettings = stored.youtube as YouTubeSettings;
     }
   } catch {
     // Use default settings on error
     currentSettings = DEFAULT_YOUTUBE_SETTINGS;
   }
 
+  await loadTimeLimitState();
   applyStyles(currentSettings);
   handleDynamicContent();
 }
 
-// Watch for settings changes
+// Watch for settings and analytics changes
 function watchSettings(): void {
   storage.watch({
     settings: (change) => {
@@ -227,8 +286,23 @@ function watchSettings(): void {
         const newSettings = change.newValue as { youtube?: YouTubeSettings };
         if (newSettings.youtube) {
           currentSettings = newSettings.youtube;
+          // Re-check time limit when settings change
+          loadTimeLimitState().then(() => {
+            applyStyles(currentSettings);
+            handleDynamicContent();
+          });
+        }
+      }
+    },
+    analytics: (change) => {
+      if (change.newValue && typeof change.newValue === 'object') {
+        const analytics = change.newValue as AnalyticsData;
+        const usage = analytics.timeLimitUsage?.['youtube.com'];
+        const wasExceeded = timeLimitExceeded;
+        timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
+
+        if (wasExceeded !== timeLimitExceeded) {
           applyStyles(currentSettings);
-          handleDynamicContent();
         }
       }
     }

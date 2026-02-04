@@ -1611,6 +1611,14 @@
     "message": "Hide the home page feed, allowing only search to find specific videos",
     "description": "Hide home feed description"
   },
+  "youtubeTimeLimit": {
+    "message": "Time limit",
+    "description": "YouTube time limit label"
+  },
+  "youtubeNoTimeLimit": {
+    "message": "No limit",
+    "description": "YouTube no time limit option"
+  },
   "youtubeDisabledNote": {
     "message": "Enable YouTube blocking above to configure these options",
     "description": "Note shown when YouTube blocking is disabled"

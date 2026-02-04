@@ -1,5 +1,5 @@
 import { getSettings } from '~/lib/storage';
-import { findEnabledBlockItemForDomain, getRemainingTime } from '~/lib/blockService';
+import { findEnabledBlockItemForDomain, getRemainingTime, getYouTubeRemainingTime } from '~/lib/blockService';
 import { getMessage } from '~/lib/i18n';
 
 // In-memory state to track which domains have been notified
@@ -112,6 +112,41 @@ export async function checkTimeLimitNotification(
     const totalMinutes = Math.round(limitSeconds / 60);
     await showTimeLimitNotification(domain, remainingMinutes, totalMinutes, type);
     markAsNotified(domain, type);
+  }
+}
+
+// Check and potentially send notification for YouTube time limit
+export async function checkYouTubeTimeLimitNotification(): Promise<void> {
+  const settings = await getSettings();
+
+  if (!settings.notifications?.timeLimitEnabled) {
+    return;
+  }
+
+  const youtube = settings.youtube;
+  if (!youtube.enabled || !youtube.timeLimit) {
+    return;
+  }
+
+  const { type, limitSeconds } = youtube.timeLimit;
+
+  if (hasBeenNotified('youtube.com', type)) {
+    return;
+  }
+
+  const remainingSeconds = await getYouTubeRemainingTime();
+
+  if (remainingSeconds === null || remainingSeconds <= 0) {
+    return;
+  }
+
+  const remainingMinutes = Math.ceil(remainingSeconds / 60);
+  const notifyAtMinutes = settings.notifications.timeLimitMinutes;
+
+  if (remainingMinutes <= notifyAtMinutes) {
+    const totalMinutes = Math.round(limitSeconds / 60);
+    await showTimeLimitNotification('youtube.com', remainingMinutes, totalMinutes, type);
+    markAsNotified('youtube.com', type);
   }
 }
 
