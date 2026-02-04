@@ -2,19 +2,18 @@ import {
   getAnalytics,
   setAnalytics,
   storage,
-  getSettings,
   incrementSiteBlockCount,
   setLastBlockedDomain
 } from '~/lib/storage';
 import { startExtPayBackgroundListener } from '~/lib/extpay';
 import { getFeatureLimits } from '~/lib/license';
-import { extractDomain, matchesDomain } from '~/lib/domain';
-import { isWithinSchedule } from '~/lib/time';
+import { extractDomain } from '~/lib/domain';
 
 import { updateBlockRules } from './blocker';
 import { startTracking } from './tracker';
 import { resetExpiredUsage } from './time-limit';
 import { clearExpiredNotifications } from './notifications';
+import { shouldTrackBlockForDomain } from '~/lib/blockService';
 
 // Initialize ExtensionPay at top level (required for Manifest V3)
 startExtPayBackgroundListener();
@@ -69,6 +68,7 @@ chrome.alarms.create('check-schedule', { periodInMinutes: 1 });
 chrome.alarms.create('time-limit-reset', { periodInMinutes: 1 });
 
 // Track blocked navigations and increment site block count
+// Uses centralized BlockService for consistent state checking
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Only track main frame navigations
   if (details.frameId !== 0) return;
@@ -77,26 +77,10 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   const domain = extractDomain(url);
   if (!domain) return;
 
-  const settings = await getSettings();
-
-  // Check if paused
-  if (settings.paused) return;
-
-  // Check if domain is in block list
-  const isBlocked = settings.blockList.some((item) =>
-    matchesDomain(domain, item)
-  );
-  if (!isBlocked) return;
-
-  // Check schedules
-  if (settings.schedules.length > 0) {
-    const isScheduled = settings.schedules.some(
-      (schedule) =>
-        schedule.enabled &&
-        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
-    );
-    if (!isScheduled) return;
-  }
+  // Use centralized service for block state validation
+  // This ensures enabled flag, schedules, and paused state are all checked
+  const shouldTrack = await shouldTrackBlockForDomain(domain);
+  if (!shouldTrack) return;
 
   // Increment block count for this domain
   await incrementSiteBlockCount(domain);

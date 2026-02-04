@@ -1,5 +1,5 @@
 import { getSettings } from '~/lib/storage';
-import { findBlockItemForDomain, getRemainingTime } from './time-limit';
+import { findEnabledBlockItemForDomain, getRemainingTime } from '~/lib/blockService';
 import { getMessage } from '~/lib/i18n';
 
 // In-memory state to track which domains have been notified
@@ -70,6 +70,7 @@ async function showTimeLimitNotification(
 }
 
 // Check and potentially send notification for a domain
+// Uses centralized BlockService for consistent state checking
 export async function checkTimeLimitNotification(
   domain: string
 ): Promise<void> {
@@ -80,7 +81,8 @@ export async function checkTimeLimitNotification(
     return;
   }
 
-  const blockItem = await findBlockItemForDomain(domain);
+  // Use centralized service to find enabled block item
+  const blockItem = await findEnabledBlockItemForDomain(domain);
 
   // Only process domains with time limits
   if (!blockItem || !blockItem.timeLimit) {
@@ -94,7 +96,8 @@ export async function checkTimeLimitNotification(
     return;
   }
 
-  const remainingSeconds = await getRemainingTime(domain);
+  // Use centralized service for remaining time
+  const remainingSeconds = await getRemainingTime(domain, blockItem);
 
   // If no remaining time info or already exceeded, skip
   if (remainingSeconds === null || remainingSeconds <= 0) {
