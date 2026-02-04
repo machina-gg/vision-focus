@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import {
   AlertTriangle,
+  BarChart3,
   Clock,
   Lock,
   RefreshCw,
@@ -16,7 +17,16 @@ import {
 } from 'lucide-react';
 
 import { Card, Button, Modal, Input } from '~/components/ui';
-import { UpgradePrompt, AnalyticsChart } from '~/components/features';
+import {
+  UpgradePrompt,
+  AnalyticsChart,
+  WeeklyReportCard,
+  MonthlyReportCard
+} from '~/components/features';
+import {
+  generateWeeklyReport,
+  generateMonthlyReport
+} from '~/lib/report';
 import { formatTime } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import {
@@ -92,6 +102,8 @@ export function AnalyticsTab({
     text: string;
   } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const [weeklyOffset, setWeeklyOffset] = useState(0);
+  const [monthlyOffset, setMonthlyOffset] = useState(0);
 
   const handleAddSite = () => {
     if (newSiteDomain.trim()) {
@@ -134,6 +146,32 @@ export function AnalyticsTab({
     const counts = Object.values(analyticsData.siteBlockCounts || {});
     return counts.sort((a, b) => b.count - a.count).slice(0, 10);
   }, [analyticsData.siteBlockCounts]);
+
+  // Generate reports
+  const weeklyReport = useMemo(() => {
+    return generateWeeklyReport(analyticsData, weeklyOffset);
+  }, [analyticsData, weeklyOffset]);
+
+  const monthlyReport = useMemo(() => {
+    return generateMonthlyReport(analyticsData, monthlyOffset);
+  }, [analyticsData, monthlyOffset]);
+
+  // Report navigation handlers
+  const handlePreviousWeek = useCallback(() => {
+    setWeeklyOffset((prev) => prev - 1);
+  }, []);
+
+  const handleNextWeek = useCallback(() => {
+    setWeeklyOffset((prev) => Math.min(prev + 1, 0));
+  }, []);
+
+  const handlePreviousMonth = useCallback(() => {
+    setMonthlyOffset((prev) => prev - 1);
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
+    setMonthlyOffset((prev) => Math.min(prev + 1, 0));
+  }, []);
 
   const handleReset = () => {
     onReset();
@@ -628,6 +666,58 @@ export function AnalyticsTab({
               analytics={analyticsData}
               unblockHistory={unblockHistory}
             />
+          </div>
+        </Card>
+      )}
+
+      {/* Reports Section (Premium only) */}
+      {isPremium && (
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {getMessage('reportsSection')}
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <WeeklyReportCard
+              report={weeklyReport}
+              onPrevious={handlePreviousWeek}
+              onNext={handleNextWeek}
+              canGoNext={weeklyOffset < 0}
+            />
+            <MonthlyReportCard
+              report={monthlyReport}
+              onPrevious={handlePreviousMonth}
+              onNext={handleNextMonth}
+              canGoNext={monthlyOffset < 0}
+            />
+          </div>
+        </Card>
+      )}
+
+      {/* Reports Upgrade Prompt for Free Users */}
+      {!isPremium && (
+        <Card>
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-purple-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {getMessage('reportsSection')}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {getMessage('reportsPremiumDescription')}
+              </p>
+              <div className="mt-4">
+                <UpgradePrompt
+                  variant="inline"
+                  features={[
+                    getMessage('weeklyReport'),
+                    getMessage('monthlyReport'),
+                    getMessage('productivityImproving').replace('!', '')
+                  ]}
+                />
+              </div>
+            </div>
           </div>
         </Card>
       )}

@@ -631,6 +631,22 @@
     "message": "投資サイトトップ",
     "description": "投資サイトトップ見出し"
   },
+  "dailyBreakdown": {
+    "message": "日別内訳",
+    "description": "日別内訳チャートタイトル"
+  },
+  "weeklyBreakdown": {
+    "message": "週別内訳",
+    "description": "週別内訳チャートタイトル"
+  },
+  "reportsSection": {
+    "message": "レポート",
+    "description": "レポートセクションタイトル"
+  },
+  "reportsPremiumDescription": {
+    "message": "週次・月次レポートで生産性の推移を確認",
+    "description": "レポートプレミアム機能の説明"
+  },
   "close": {
     "message": "閉じる",
     "description": "閉じるボタン"

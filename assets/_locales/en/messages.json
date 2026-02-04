@@ -631,6 +631,22 @@
     "message": "Top Invest Sites",
     "description": "Top invest sites heading"
   },
+  "dailyBreakdown": {
+    "message": "Daily Breakdown",
+    "description": "Daily breakdown chart title"
+  },
+  "weeklyBreakdown": {
+    "message": "Weekly Breakdown",
+    "description": "Weekly breakdown chart title"
+  },
+  "reportsSection": {
+    "message": "Reports",
+    "description": "Reports section title"
+  },
+  "reportsPremiumDescription": {
+    "message": "View detailed weekly and monthly reports to track your productivity trends",
+    "description": "Reports premium feature description"
+  },
   "close": {
     "message": "Close",
     "description": "Close button"
