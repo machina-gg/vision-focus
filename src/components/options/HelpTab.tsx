@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { Button, Card } from '~/components/ui';
+import { PasswordSettingsSection } from '~/components/options/PasswordSettingsSection';
 import { getMessage } from '~/lib/i18n';
 import {
   exportSettings,
@@ -21,14 +22,18 @@ import {
   applyImportedSettings
 } from '~/lib/settingsExport';
 import { getSettings, getVision, setSettings, setVision } from '~/lib/storage';
+import type { PasswordSettings, AppSettings } from '~/types/storage';
+import { DEFAULT_PASSWORD_SETTINGS } from '~/types/storage';
 
 const VERSION = '1.0.0';
 
 interface HelpTabProps {
   onSettingsChange?: () => void;
+  settings?: AppSettings;
+  onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
 }
 
-export function HelpTab({ onSettingsChange }: HelpTabProps) {
+export function HelpTab({ onSettingsChange, settings, onPasswordUpdate }: HelpTabProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
@@ -226,6 +231,14 @@ export function HelpTab({ onSettingsChange }: HelpTabProps) {
           </details>
         </div>
       </Card>
+
+      {/* Password Protection */}
+      {onPasswordUpdate && (
+        <PasswordSettingsSection
+          passwordSettings={settings?.password ?? DEFAULT_PASSWORD_SETTINGS}
+          onUpdate={onPasswordUpdate}
+        />
+      )}
 
       {/* Settings Backup */}
       <Card>

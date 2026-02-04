@@ -146,6 +146,12 @@ export interface YouTubeSettings {
   hideHomeFeed: boolean; // Hide home feed (show only search)
 }
 
+// Password protection settings for unblock operations
+export interface PasswordSettings {
+  enabled: boolean; // Whether password protection is enabled
+  passwordHash: string | null; // SHA-256 hash of the password (null if not set)
+}
+
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
@@ -153,6 +159,7 @@ export interface AppSettings {
   language: SupportedLanguage | null; // null = use browser language
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
+  password: PasswordSettings; // Password protection for unblock operations
 }
 
 // Analytics data
@@ -206,6 +213,12 @@ export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
   hideHomeFeed: false
 };
 
+// Default password settings
+export const DEFAULT_PASSWORD_SETTINGS: PasswordSettings = {
+  enabled: false,
+  passwordHash: null
+};
+
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
@@ -213,7 +226,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   paused: false,
   language: null, // Use browser language by default
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
-  youtube: DEFAULT_YOUTUBE_SETTINGS
+  youtube: DEFAULT_YOUTUBE_SETTINGS,
+  password: DEFAULT_PASSWORD_SETTINGS
 };
 
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
