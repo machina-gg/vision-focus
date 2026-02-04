@@ -5,4 +5,5 @@ export * from './WeeklyCalendar';
 export * from './AnalyticsTab';
 export * from './PremiumTab';
 export * from './HelpTab';
+export * from './YouTubeTab';
 export * from './modals';

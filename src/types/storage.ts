@@ -136,12 +136,23 @@ export interface NotificationSettings {
   timeLimitMinutes: NotificationMinutes; // Minutes before limit to notify (1, 3, 5, 10)
 }
 
+// YouTube in-app blocking settings
+export interface YouTubeSettings {
+  enabled: boolean; // Master switch for YouTube blocking features
+  hideShorts: boolean; // Hide Shorts shelf and tab
+  hideRecommendations: boolean; // Hide recommended videos on home and watch pages
+  hideComments: boolean; // Hide comment section
+  hideSidebar: boolean; // Hide related videos sidebar on watch page
+  hideHomeFeed: boolean; // Hide home feed (show only search)
+}
+
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
   paused: boolean; // Global pause for all blocking
   language: SupportedLanguage | null; // null = use browser language
   notifications: NotificationSettings; // Notification preferences
+  youtube: YouTubeSettings; // YouTube in-app blocking settings
 }
 
 // Analytics data
@@ -185,13 +196,24 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   timeLimitMinutes: 5 // Notify 5 minutes before limit
 };
 
+// Default YouTube settings
+export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
+  enabled: false, // Disabled by default
+  hideShorts: false,
+  hideRecommendations: false,
+  hideComments: false,
+  hideSidebar: false,
+  hideHomeFeed: false
+};
+
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
   paused: false,
   language: null, // Use browser language by default
-  notifications: DEFAULT_NOTIFICATION_SETTINGS
+  notifications: DEFAULT_NOTIFICATION_SETTINGS,
+  youtube: DEFAULT_YOUTUBE_SETTINGS
 };
 
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
