@@ -278,9 +278,10 @@ async function loadTimeLimitState(): Promise<void> {
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
-    const stored = await storage.get('settings');
-    if (stored && typeof stored === 'object' && 'youtube' in stored) {
-      const raw = (stored as Record<string, unknown>).youtube;
+    const stored =
+      await storage.get<Record<string, unknown> | null>('settings');
+    if (stored && 'youtube' in stored) {
+      const raw = stored.youtube;
       const parsed = YouTubeSettingsSchema.safeParse(raw);
       if (parsed.success) {
         currentSettings = parsed.data;
