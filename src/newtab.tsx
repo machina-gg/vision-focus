@@ -11,6 +11,7 @@ import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
+import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
   useBackgroundPreload,
   useBackgroundStats,
@@ -135,9 +136,7 @@ function NewtabApp() {
   }, [blockedInfo?.domain, settings?.blockList]);
 
   const handleAnalyticsClick = useCallback(() => {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('options.html#analytics')
-    });
+    openExtensionPage('options.html#analytics');
   }, []);
 
   const handleStartEdit = useCallback(() => {
@@ -174,7 +173,7 @@ function NewtabApp() {
   );
 
   const handleSettingsClick = useCallback(() => {
-    chrome.runtime.openOptionsPage();
+    openOptionsPage();
   }, []);
 
   const hasPresets = (vision?.presets?.length ?? 0) > 0;

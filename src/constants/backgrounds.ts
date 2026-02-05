@@ -1,3 +1,5 @@
+import { getExtensionURL } from '~/lib/chromeApi';
+
 // Background images for selection
 export const BACKGROUND_OPTIONS = [
   { id: 'default-1', name: 'Sky1' },
@@ -18,5 +20,5 @@ export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number];
 
 // Helper to get background URL
 export function getBackgroundUrl(bgId: string): string {
-  return chrome.runtime.getURL(`assets/images/backgrounds/${bgId}.webp`);
+  return getExtensionURL(`assets/images/backgrounds/${bgId}.webp`);
 }

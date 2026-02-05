@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 
+import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import { setCurrentLanguage } from '~/lib/i18n';
 import type { AppSettings, SupportedLanguage } from '~/types/storage';
 
@@ -49,21 +50,19 @@ export function usePopupActions({
   }, [settings?.language]);
 
   const handleSettingsClick = useCallback(() => {
-    chrome.runtime.openOptionsPage();
+    openOptionsPage();
   }, []);
 
   const handleHelpClick = useCallback(() => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('options.html#help') });
+    openExtensionPage('options.html#help');
   }, []);
 
   const handleAnalyticsClick = useCallback(() => {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('options.html#analytics')
-    });
+    openExtensionPage('options.html#analytics');
   }, []);
 
   const handleGoalClick = useCallback(() => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') });
+    openExtensionPage('newtab.html');
   }, []);
 
   const handleLanguageChange = useCallback(
