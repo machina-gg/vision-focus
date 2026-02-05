@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
@@ -73,11 +73,27 @@ function getBlockStyle(block: ScheduleBlock): React.CSSProperties {
   };
 }
 
+function useCurrentTime(): Date {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return now;
+}
+
 export function WeeklyCalendar({
   schedules,
   vision,
   onScheduleClick
 }: WeeklyCalendarProps) {
+  const now = useCurrentTime();
+  const todayDayIndex = now.getDay();
+  const currentTimePercent =
+    ((now.getHours() * 60 + now.getMinutes()) / (24 * 60)) * 100;
+
   // Create color map for schedules
   const colorMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -121,14 +137,21 @@ export function WeeklyCalendar({
           <div className="p-2 text-center text-xs font-medium text-gray-500 border-r border-gray-200">
             {/* Empty cell for time column */}
           </div>
-          {DAY_KEYS.map((day) => (
-            <div
-              key={day}
-              className="p-2 text-center text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0"
-            >
-              {getMessage(day)}
-            </div>
-          ))}
+          {DAY_KEYS.map((day, index) => {
+            const isToday = index === todayDayIndex;
+            return (
+              <div
+                key={day}
+                className={`p-2 text-center text-xs font-medium border-r border-gray-200 last:border-r-0 ${
+                  isToday
+                    ? 'text-red-600 bg-red-50 font-semibold'
+                    : 'text-gray-700'
+                }`}
+              >
+                {getMessage(day)}
+              </div>
+            );
+          })}
         </div>
 
         {/* Calendar Body */}
@@ -167,6 +190,19 @@ export function WeeklyCalendar({
                     style={{ top: `${(hour / 24) * 100}%` }}
                   />
                 ))}
+
+                {/* Current time indicator */}
+                {dayIndex === todayDayIndex && (
+                  <div
+                    className="absolute left-0 right-0 z-10 pointer-events-none"
+                    style={{ top: `${currentTimePercent}%` }}
+                  >
+                    <div className="relative flex items-center">
+                      <div className="absolute -left-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                      <div className="w-full h-0.5 bg-red-500" />
+                    </div>
+                  </div>
+                )}
 
                 {/* Schedule Blocks */}
                 {blocks.map((block) => {
