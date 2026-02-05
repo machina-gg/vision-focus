@@ -2,19 +2,18 @@ import type { PlasmoMessaging } from '@plasmohq/messaging';
 
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules } from '../blocker';
-import type { TimeLimit } from '~/types/storage';
+import { UpdateTimeLimitBodySchema } from '~/types/messageSchemas';
 
 // Message handler for updating time limit for a blocked site
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { id, timeLimit } = req.body as {
-    id: string;
-    timeLimit: TimeLimit | null;
-  };
+  const parsed = UpdateTimeLimitBodySchema.safeParse(req.body);
 
-  if (!id || typeof id !== 'string') {
-    res.send({ success: false, error: 'Invalid ID' });
+  if (!parsed.success) {
+    res.send({ success: false, error: 'Invalid request body' });
     return;
   }
+
+  const { id, timeLimit } = parsed.data;
 
   try {
     const settings = await getSettings();

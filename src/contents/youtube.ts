@@ -2,12 +2,12 @@ import type { PlasmoCSConfig } from 'plasmo';
 
 import { Storage } from '@plasmohq/storage';
 
-import type {
-  YouTubeSettings,
-  TimeLimitUsage,
-  AnalyticsData
-} from '~/types/storage';
+import type { YouTubeSettings, TimeLimitUsage } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
+import {
+  AnalyticsDataSchema,
+  YouTubeSettingsSchema
+} from '~/types/messageSchemas';
 
 // Run only on YouTube
 export const config: PlasmoCSConfig = {
@@ -262,10 +262,13 @@ function setupObserver(): void {
 // Load analytics to check time limit
 async function loadTimeLimitState(): Promise<void> {
   try {
-    const analytics = (await storage.get('analytics')) as
-      | AnalyticsData
-      | undefined;
-    const usage = analytics?.timeLimitUsage?.['youtube.com'];
+    const raw = await storage.get('analytics');
+    const parsed = AnalyticsDataSchema.safeParse(raw);
+    if (!parsed.success) {
+      timeLimitExceeded = false;
+      return;
+    }
+    const usage = parsed.data.timeLimitUsage['youtube.com'];
     timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
   } catch {
     timeLimitExceeded = false;
@@ -275,12 +278,15 @@ async function loadTimeLimitState(): Promise<void> {
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
-    const stored = (await storage.get('settings')) as Record<
-      string,
-      unknown
-    > | null;
+    const stored = await storage.get<Record<string, unknown> | null>(
+      'settings'
+    );
     if (stored && 'youtube' in stored) {
-      currentSettings = stored.youtube as YouTubeSettings;
+      const raw = stored.youtube;
+      const parsed = YouTubeSettingsSchema.safeParse(raw);
+      if (parsed.success) {
+        currentSettings = parsed.data;
+      }
     }
   } catch {
     // Use default settings on error
@@ -297,21 +303,24 @@ function watchSettings(): void {
   storage.watch({
     settings: (change) => {
       if (change.newValue && typeof change.newValue === 'object') {
-        const newSettings = change.newValue as { youtube?: YouTubeSettings };
-        if (newSettings.youtube) {
-          currentSettings = newSettings.youtube;
-          // Re-check time limit when settings change
-          loadTimeLimitState().then(() => {
+        const raw = (change.newValue as Record<string, unknown>).youtube;
+        const parsed = YouTubeSettingsSchema.safeParse(raw);
+        if (parsed.success) {
+          currentSettings = parsed.data;
+          // Re-check time limit when settings change (async IIFE to avoid .then)
+          void (async () => {
+            await loadTimeLimitState();
             applyStyles(currentSettings);
             handleDynamicContent();
-          });
+          })();
         }
       }
     },
     analytics: (change) => {
       if (change.newValue && typeof change.newValue === 'object') {
-        const analytics = change.newValue as AnalyticsData;
-        const usage = analytics.timeLimitUsage?.['youtube.com'];
+        const parsed = AnalyticsDataSchema.safeParse(change.newValue);
+        if (!parsed.success) return;
+        const usage = parsed.data.timeLimitUsage['youtube.com'];
         const wasExceeded = timeLimitExceeded;
         timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
 
