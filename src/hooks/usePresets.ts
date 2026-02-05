@@ -17,7 +17,7 @@ interface UsePresetsOptions {
   setVision: (vision: VisionSettings) => void;
 }
 
-interface UsePresetsReturn {
+export interface UsePresetsReturn {
   // State
   draftDisplaySettings: DashboardDisplaySettings;
   draftPresets: DashboardPreset[];
