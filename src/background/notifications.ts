@@ -1,9 +1,7 @@
 import { getSettings } from '~/lib/storage';
-import {
-  findEnabledBlockItemForDomain,
-  getRemainingTime,
-  getYouTubeRemainingTime
-} from '~/lib/blockService';
+import { findEnabledBlockItemForDomain } from '~/lib/blockService';
+import { getRemainingTime } from '~/lib/timeLimitService';
+import { getYouTubeRemainingTime } from '~/lib/youtubeBlockService';
 import { getMessage } from '~/lib/i18n';
 
 // In-memory state to track which domains have been notified
