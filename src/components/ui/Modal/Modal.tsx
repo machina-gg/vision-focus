@@ -40,14 +40,14 @@ export function Modal({
       <div
         className={`
           relative w-full mx-4
-          bg-white rounded-xl shadow-xl
+          bg-white rounded-2xl shadow-xl
           ${sizeStyles[size]}
         `}
       >
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
             <button
               onClick={onClose}
               className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
