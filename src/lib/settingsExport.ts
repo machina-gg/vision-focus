@@ -19,7 +19,11 @@ import type {
   DashboardPreset,
   NotificationSettings
 } from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_VISION, DEFAULT_NOTIFICATION_SETTINGS } from '~/types/storage';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  DEFAULT_NOTIFICATION_SETTINGS
+} from '~/types/storage';
 
 // Export data version for future compatibility
 const EXPORT_VERSION = 1;
@@ -109,7 +113,12 @@ const presetSchema = displaySettingsSchema.extend({
 
 const notificationSettingsSchema = z.object({
   timeLimitEnabled: z.boolean(),
-  timeLimitMinutes: z.union([z.literal(1), z.literal(3), z.literal(5), z.literal(10)])
+  timeLimitMinutes: z.union([
+    z.literal(1),
+    z.literal(3),
+    z.literal(5),
+    z.literal(10)
+  ])
 });
 
 const exportDataSchema = z.object({
@@ -310,7 +319,10 @@ export function applyImportedSettings(
     blockList: mergedBlockList,
     schedules: mergedSchedules,
     language: data.language ?? currentSettings.language,
-    notifications: data.notifications ?? currentSettings.notifications ?? DEFAULT_NOTIFICATION_SETTINGS
+    notifications:
+      data.notifications ??
+      currentSettings.notifications ??
+      DEFAULT_NOTIFICATION_SETTINGS
   };
 
   const newVision: VisionSettings = {

@@ -58,13 +58,13 @@ npx storybook@latest init
 claude_desktop_config.json
 ```
 
-| 項目 | 用途 |
-| ---- | ---- |
+| 項目                          | 用途                                                    |
+| ----------------------------- | ------------------------------------------------------- |
 | `.claude/settings.local.json` | ローカル権限設定（チーム共有は `settings.json` を使用） |
-| `.claude/tmp/` | 一時ファイル（コミットメッセージ等） |
-| `.claude/logs/` | デバッグログ |
-| `.claude/mcp-cache/` | MCP サーバーキャッシュ |
-| `claude_desktop_config.json` | Claude Desktop 個人設定 |
+| `.claude/tmp/`                | 一時ファイル（コミットメッセージ等）                    |
+| `.claude/logs/`               | デバッグログ                                            |
+| `.claude/mcp-cache/`          | MCP サーバーキャッシュ                                  |
+| `claude_desktop_config.json`  | Claude Desktop 個人設定                                 |
 
 ### .prettierrc
 

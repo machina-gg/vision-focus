@@ -2,7 +2,11 @@ import type { PlasmoCSConfig } from 'plasmo';
 
 import { Storage } from '@plasmohq/storage';
 
-import type { YouTubeSettings, TimeLimitUsage, AnalyticsData } from '~/types/storage';
+import type {
+  YouTubeSettings,
+  TimeLimitUsage,
+  AnalyticsData
+} from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 // Run only on YouTube
@@ -47,7 +51,10 @@ let styleElement: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
 
 // Check if the YouTube time limit has been exceeded based on usage data
-function checkTimeLimitExceeded(settings: YouTubeSettings, usage: TimeLimitUsage | undefined): boolean {
+function checkTimeLimitExceeded(
+  settings: YouTubeSettings,
+  usage: TimeLimitUsage | undefined
+): boolean {
   if (!settings.enabled || !settings.timeLimit || !usage) {
     return false;
   }
@@ -61,9 +68,11 @@ function checkTimeLimitExceeded(settings: YouTubeSettings, usage: TimeLimitUsage
 
   let usedSeconds: number;
   if (type === 'daily') {
-    usedSeconds = usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
+    usedSeconds =
+      usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
   } else {
-    usedSeconds = usage.lastHourlyReset === hourKey ? usage.hourlyUsedSeconds : 0;
+    usedSeconds =
+      usage.lastHourlyReset === hourKey ? usage.hourlyUsedSeconds : 0;
   }
 
   return usedSeconds >= limitSeconds;
@@ -253,7 +262,9 @@ function setupObserver(): void {
 // Load analytics to check time limit
 async function loadTimeLimitState(): Promise<void> {
   try {
-    const analytics = await storage.get('analytics') as AnalyticsData | undefined;
+    const analytics = (await storage.get('analytics')) as
+      | AnalyticsData
+      | undefined;
     const usage = analytics?.timeLimitUsage?.['youtube.com'];
     timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
   } catch {
@@ -264,7 +275,10 @@ async function loadTimeLimitState(): Promise<void> {
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
-    const stored = await storage.get('settings') as Record<string, unknown> | null;
+    const stored = (await storage.get('settings')) as Record<
+      string,
+      unknown
+    > | null;
     if (stored && 'youtube' in stored) {
       currentSettings = stored.youtube as YouTubeSettings;
     }

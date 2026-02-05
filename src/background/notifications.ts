@@ -1,5 +1,9 @@
 import { getSettings } from '~/lib/storage';
-import { findEnabledBlockItemForDomain, getRemainingTime, getYouTubeRemainingTime } from '~/lib/blockService';
+import {
+  findEnabledBlockItemForDomain,
+  getRemainingTime,
+  getYouTubeRemainingTime
+} from '~/lib/blockService';
 import { getMessage } from '~/lib/i18n';
 
 // In-memory state to track which domains have been notified
@@ -110,7 +114,12 @@ export async function checkTimeLimitNotification(
   // Check if we should notify
   if (remainingMinutes <= notifyAtMinutes) {
     const totalMinutes = Math.round(limitSeconds / 60);
-    await showTimeLimitNotification(domain, remainingMinutes, totalMinutes, type);
+    await showTimeLimitNotification(
+      domain,
+      remainingMinutes,
+      totalMinutes,
+      type
+    );
     markAsNotified(domain, type);
   }
 }
@@ -145,7 +154,12 @@ export async function checkYouTubeTimeLimitNotification(): Promise<void> {
 
   if (remainingMinutes <= notifyAtMinutes) {
     const totalMinutes = Math.round(limitSeconds / 60);
-    await showTimeLimitNotification('youtube.com', remainingMinutes, totalMinutes, type);
+    await showTimeLimitNotification(
+      'youtube.com',
+      remainingMinutes,
+      totalMinutes,
+      type
+    );
     markAsNotified('youtube.com', type);
   }
 }

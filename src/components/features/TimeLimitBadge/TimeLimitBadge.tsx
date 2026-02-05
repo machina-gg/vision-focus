@@ -38,7 +38,8 @@ export function TimeLimitBadge({
   const textColor = isLow ? 'text-amber-700' : 'text-blue-700';
 
   const timeDisplay = formatTime(remainingSeconds);
-  const suffix = limitType === 'daily' ? getMessage('perDay') : getMessage('perHour');
+  const suffix =
+    limitType === 'daily' ? getMessage('perDay') : getMessage('perHour');
 
   if (compact) {
     return (

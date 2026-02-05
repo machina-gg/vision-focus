@@ -32,11 +32,7 @@ interface MonthlyReportCardProps {
 }
 
 // Trend icon component
-function TrendIcon({
-  trend
-}: {
-  trend: 'improving' | 'declining' | 'stable';
-}) {
+function TrendIcon({ trend }: { trend: 'improving' | 'declining' | 'stable' }) {
   if (trend === 'improving') {
     return (
       <div className="flex items-center gap-1 text-green-600">
@@ -77,7 +73,9 @@ function StatsGrid({
         <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
           <Clock className="w-4 h-4" />
         </div>
-        <p className="text-lg font-bold text-red-700">{formatTime(wasteTime)}</p>
+        <p className="text-lg font-bold text-red-700">
+          {formatTime(wasteTime)}
+        </p>
         <p className="text-xs text-red-600">{getMessage('wasteTime')}</p>
       </div>
       <div className="text-center p-3 bg-green-50 rounded-lg">
@@ -220,9 +218,7 @@ export function WeeklyReportCard({
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm text-gray-600 min-w-[120px] text-center">
-            {report
-              ? formatWeekRange(report.weekStart, report.weekEnd)
-              : '---'}
+            {report ? formatWeekRange(report.weekStart, report.weekEnd) : '---'}
           </span>
           <Button
             variant="ghost"

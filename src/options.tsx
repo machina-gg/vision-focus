@@ -106,7 +106,9 @@ function OptionsApp() {
     if (!prevEnabled && newEnabled) {
       // YouTube blocking enabled - create TrackedSite entry
       await incrementYouTubeBlockCount();
-      const history = (await storage.get('unblockHistory') as UnblockHistory) ?? DEFAULT_UNBLOCK_HISTORY;
+      const history =
+        ((await storage.get('unblockHistory')) as UnblockHistory) ??
+        DEFAULT_UNBLOCK_HISTORY;
       history.sites['youtube.com'] = {
         domain: 'youtube.com',
         status: 'blocked',
@@ -118,7 +120,9 @@ function OptionsApp() {
       await storage.set('unblockHistory', history);
     } else if (prevEnabled && !newEnabled) {
       // YouTube blocking disabled - mark as unblocked in history
-      const history = (await storage.get('unblockHistory') as UnblockHistory) ?? DEFAULT_UNBLOCK_HISTORY;
+      const history =
+        ((await storage.get('unblockHistory')) as UnblockHistory) ??
+        DEFAULT_UNBLOCK_HISTORY;
       const existing = history.sites['youtube.com'];
       if (existing) {
         existing.status = 'unblocked';
