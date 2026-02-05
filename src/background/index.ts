@@ -8,6 +8,13 @@ import {
 import { startExtPayBackgroundListener } from '~/lib/extpay';
 import { getFeatureLimits } from '~/lib/license';
 import { extractDomain } from '~/lib/domain';
+import {
+  STORAGE_SETTLE_DELAY_MS,
+  ALARM_DAILY_CLEANUP_MINUTES,
+  ALARM_CHECK_SCHEDULE_MINUTES,
+  ALARM_TIME_LIMIT_RESET_MINUTES,
+  MAX_HISTORY_DAYS_FALLBACK
+} from '~/constants/intervals';
 
 import { updateBlockRules } from './blocker';
 import { startTracking } from './tracker';
@@ -22,7 +29,9 @@ startExtPayBackgroundListener();
 storage.watch({
   settings: async () => {
     // Small delay to ensure storage is fully updated
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) =>
+      setTimeout(resolve, STORAGE_SETTLE_DELAY_MS)
+    );
     await updateBlockRules();
   }
 });
@@ -63,9 +72,15 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 // Set up alarms
-chrome.alarms.create('daily-cleanup', { periodInMinutes: 60 });
-chrome.alarms.create('check-schedule', { periodInMinutes: 1 });
-chrome.alarms.create('time-limit-reset', { periodInMinutes: 1 });
+chrome.alarms.create('daily-cleanup', {
+  periodInMinutes: ALARM_DAILY_CLEANUP_MINUTES
+});
+chrome.alarms.create('check-schedule', {
+  periodInMinutes: ALARM_CHECK_SCHEDULE_MINUTES
+});
+chrome.alarms.create('time-limit-reset', {
+  periodInMinutes: ALARM_TIME_LIMIT_RESET_MINUTES
+});
 
 // Track blocked navigations and increment site block count
 // Uses centralized BlockService for consistent state checking
@@ -116,7 +131,10 @@ async function cleanupOldAnalytics() {
   const limits = await getFeatureLimits();
 
   // Determine max days based on tier
-  const maxDays = limits.historyDays === Infinity ? 365 : limits.historyDays;
+  const maxDays =
+    limits.historyDays === Infinity
+      ? MAX_HISTORY_DAYS_FALLBACK
+      : limits.historyDays;
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - maxDays);
   const cutoffKey = cutoffDate.toISOString().slice(0, 10);

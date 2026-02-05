@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { Card } from '~/components/ui';
+import { CURRENT_TIME_REFRESH_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
 import type { Schedule, VisionSettings } from '~/types/storage';
 
@@ -77,7 +78,10 @@ function useCurrentTime(): Date {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60000);
+    const interval = setInterval(
+      () => setNow(new Date()),
+      CURRENT_TIME_REFRESH_MS
+    );
     return () => clearInterval(interval);
   }, []);
 

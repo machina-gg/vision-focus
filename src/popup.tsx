@@ -10,6 +10,7 @@ import {
   TimeLimitBadge
 } from '~/components/features';
 import { PasswordModal } from '~/components/options/modals';
+import { POPUP_STATS_POLLING_MS } from '~/constants/intervals';
 import {
   useBackgroundStats,
   useCurrentDomain,
@@ -33,7 +34,7 @@ function PopupApp() {
     { key: 'vision', instance: storage },
     DEFAULT_VISION
   );
-  const stats = useBackgroundStats(5000);
+  const stats = useBackgroundStats(POPUP_STATS_POLLING_MS);
   const { isPremium } = usePremiumStatus();
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
 

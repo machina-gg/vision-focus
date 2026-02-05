@@ -1,3 +1,5 @@
+import { MS_PER_DAY } from '~/constants/intervals';
+
 // Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
   if (seconds < 60) {
@@ -42,7 +44,7 @@ export function isWithinDays(dateKey: string, days: number): boolean {
   const date = new Date(dateKey);
   const now = new Date();
   const diffTime = now.getTime() - date.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const diffDays = diffTime / MS_PER_DAY;
   return diffDays <= days;
 }
 

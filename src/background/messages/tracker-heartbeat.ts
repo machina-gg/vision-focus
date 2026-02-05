@@ -10,6 +10,7 @@ import {
 import type { BlockItem } from '~/types/storage';
 import { getTodayKey } from '~/lib/time';
 import { TRACKER_CONFIG } from '~/constants/limits';
+import { STALE_ENTRY_TIMEOUT_MS } from '~/constants/intervals';
 import type { DailyStat, SiteTime } from '~/types/storage';
 import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
@@ -58,9 +59,8 @@ function ensureRecordingTimer() {
     }
 
     // Clean up stale entries (no heartbeat for over 1 minute)
-    const STALE_TIMEOUT_MS = 60 * 1000;
     for (const [key, page] of activePages.entries()) {
-      if (now - page.lastHeartbeat > STALE_TIMEOUT_MS) {
+      if (now - page.lastHeartbeat > STALE_ENTRY_TIMEOUT_MS) {
         activePages.delete(key);
       }
     }

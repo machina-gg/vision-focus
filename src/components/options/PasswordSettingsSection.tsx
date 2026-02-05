@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Lock, Shield } from 'lucide-react';
 
 import { Card, Toggle } from '~/components/ui';
+import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
 import {
   hashPassword,
@@ -67,7 +68,7 @@ export function PasswordSettingsSection({
         const hash = await hashPassword(newPassword);
         await onUpdate({ enabled: true, passwordHash: hash });
         setSuccess(getMessage(successMessageKey));
-        setTimeout(resetForm, 2000);
+        setTimeout(resetForm, STATUS_RESET_DELAY_MS);
         return true;
       } catch {
         return false;
@@ -121,7 +122,7 @@ export function PasswordSettingsSection({
     try {
       await onUpdate({ enabled: false, passwordHash: null });
       setSuccess(getMessage('passwordRemovedSuccess'));
-      setTimeout(resetForm, 2000);
+      setTimeout(resetForm, STATUS_RESET_DELAY_MS);
     } catch {
       setError(getMessage('passwordRemoveFailed'));
     } finally {

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { storage } from '~/lib/storage';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
+import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type {
   VisionSettings,
   DashboardPreset,
@@ -163,7 +164,7 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
 
 // ============ Hook ============
 
-const SAVED_FEEDBACK_MS = 2000;
+const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
 export function usePresets({
   vision,

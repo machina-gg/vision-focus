@@ -11,6 +11,10 @@ import {
 
 import { Card, Button, Modal } from '~/components/ui';
 import { AnalyticsChart } from '~/components/features';
+import {
+  REFRESH_SPINNER_DELAY_MS,
+  SHARE_MESSAGE_DELAY_MS
+} from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
 import {
   exportBlockList,
@@ -62,7 +66,7 @@ export function AnalyticsExportBar({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await onRefresh();
-    setTimeout(() => setIsRefreshing(false), 500);
+    setTimeout(() => setIsRefreshing(false), REFRESH_SPINNER_DELAY_MS);
   };
 
   const hasBlockList = (settings?.blockList?.length ?? 0) > 0;
@@ -154,7 +158,7 @@ export function AnalyticsExportBar({
 
       shareToX(text);
 
-      setTimeout(() => setShareMessage(null), 5000);
+      setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     } catch {
       setShareMessage({ type: 'error', text: getMessage('shareError') });
     }

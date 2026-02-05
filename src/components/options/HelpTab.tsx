@@ -13,6 +13,10 @@ import {
 
 import { Button, Card } from '~/components/ui';
 import { PasswordSettingsSection } from '~/components/options/PasswordSettingsSection';
+import {
+  EXPORT_STATUS_DELAY_MS,
+  SHARE_MESSAGE_DELAY_MS
+} from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
 import {
   exportSettings,
@@ -67,14 +71,14 @@ export function HelpTab({
       downloadSettings(data);
       setExportStatus('success');
 
-      // Reset status after 3 seconds
+      // Reset status after a short delay
       setTimeout(() => {
         setExportStatus('idle');
         setExportWarning(null);
-      }, 3000);
+      }, EXPORT_STATUS_DELAY_MS);
     } catch {
       setExportStatus('error');
-      setTimeout(() => setExportStatus('idle'), 3000);
+      setTimeout(() => setExportStatus('idle'), EXPORT_STATUS_DELAY_MS);
     }
   };
 
@@ -102,7 +106,7 @@ export function HelpTab({
         setTimeout(() => {
           setImportStatus('idle');
           setImportMessage(null);
-        }, 5000);
+        }, SHARE_MESSAGE_DELAY_MS);
         return;
       }
 
@@ -131,19 +135,19 @@ export function HelpTab({
       // Notify parent of settings change
       onSettingsChange?.();
 
-      // Reset status after 5 seconds
+      // Reset status after a short delay
       setTimeout(() => {
         setImportStatus('idle');
         setImportMessage(null);
         setImportWarnings([]);
-      }, 5000);
+      }, SHARE_MESSAGE_DELAY_MS);
     } catch {
       setImportStatus('error');
       setImportMessage(getMessage('importErrorInvalidFormat'));
       setTimeout(() => {
         setImportStatus('idle');
         setImportMessage(null);
-      }, 5000);
+      }, SHARE_MESSAGE_DELAY_MS);
     }
 
     // Reset file input

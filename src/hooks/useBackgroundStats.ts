@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 
+import { DEFAULT_STATS_POLLING_MS } from '~/constants/intervals';
+
 export interface BackgroundStats {
   wasteTime: number;
   investTime: number;
@@ -18,9 +20,11 @@ const DEFAULT_STATS: BackgroundStats = {
 
 /**
  * Hook to fetch stats from background with polling
- * @param interval - Polling interval in milliseconds (default: 10000)
+ * @param interval - Polling interval in milliseconds (default: DEFAULT_STATS_POLLING_MS)
  */
-export function useBackgroundStats(interval = 10000): BackgroundStats {
+export function useBackgroundStats(
+  interval = DEFAULT_STATS_POLLING_MS
+): BackgroundStats {
   const [stats, setStats] = useState<BackgroundStats>(DEFAULT_STATS);
 
   useEffect(() => {

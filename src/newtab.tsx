@@ -11,6 +11,7 @@ import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
+import { NEWTAB_STATS_POLLING_MS, MS_PER_DAY } from '~/constants/intervals';
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
   useBackgroundPreload,
@@ -60,7 +61,7 @@ function NewtabApp() {
     },
     DEFAULT_ANALYTICS
   );
-  const stats = useBackgroundStats(10000);
+  const stats = useBackgroundStats(NEWTAB_STATS_POLLING_MS);
   const { isPremium, isLoading: isPremiumLoading } = usePremiumStatus();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
@@ -130,7 +131,7 @@ function NewtabApp() {
     const createdDate = new Date(blockItem.createdAt);
     const now = new Date();
     const diffTime = now.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(diffTime / MS_PER_DAY);
 
     return Math.max(1, diffDays);
   }, [blockedInfo?.domain, settings?.blockList]);
