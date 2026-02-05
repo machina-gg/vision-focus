@@ -13,7 +13,7 @@ import { TRACKER_CONFIG } from '~/constants/limits';
 import type { DailyStat, SiteTime } from '~/types/storage';
 import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
-import { recordYouTubeTimeLimitUsage } from '~/lib/blockService';
+import { recordYouTubeTimeLimitUsage } from '~/lib/youtubeBlockService';
 import { checkYouTubeTimeLimitNotification } from '../notifications';
 
 // Track active pages and their last heartbeat

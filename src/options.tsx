@@ -43,7 +43,7 @@ import {
   DEFAULT_YOUTUBE_SETTINGS,
   DEFAULT_UNBLOCK_HISTORY
 } from '~/types/storage';
-import { incrementYouTubeBlockCount } from '~/lib/blockService';
+import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
 
 import './styles/globals.css';
 

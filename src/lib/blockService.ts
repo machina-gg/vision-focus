@@ -4,26 +4,17 @@
  * This service provides a single source of truth for block state determination.
  * All block-related logic should go through this service to ensure consistency.
  *
+ * Time limit logic has been extracted to ~/lib/timeLimitService.ts
+ * YouTube-specific logic has been extracted to ~/lib/youtubeBlockService.ts
+ *
  * @see docs/BLOCK_STATE_MACHINE.md for state transition diagrams
  */
 
-import { getSettings, getAnalytics, setAnalytics } from '~/lib/storage';
+import { getSettings } from '~/lib/storage';
 import { extractDomain, matchesDomain } from '~/lib/domain';
-import {
-  isWithinSchedule,
-  getTodayKey,
-  getCurrentHourKey,
-  needsDailyReset,
-  needsHourlyReset
-} from '~/lib/time';
-import type {
-  AppSettings,
-  BlockItem,
-  Schedule,
-  TimeLimitUsage,
-  AnalyticsData,
-  YouTubeSettings
-} from '~/types/storage';
+import { isWithinSchedule } from '~/lib/time';
+import type { AppSettings, BlockItem, Schedule } from '~/types/storage';
+import { hasExceededTimeLimit, getRemainingTime } from '~/lib/timeLimitService';
 
 // Block reason type - matches the state machine documentation
 export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
@@ -33,16 +24,6 @@ export interface BlockState {
   blocked: boolean;
   reason: BlockReason;
   remainingSeconds?: number;
-}
-
-// Time limit info for UI display
-export interface TimeLimitInfo {
-  hasTimeLimit: boolean;
-  remainingSeconds: number | null;
-  limitType: 'daily' | 'hourly' | null;
-  limitSeconds: number | null;
-  usedSeconds: number | null;
-  isExceeded: boolean;
 }
 
 /**
@@ -80,107 +61,6 @@ export function isAnyScheduleActive(schedules: Schedule[]): boolean {
       schedule.enabled &&
       isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
   );
-}
-
-/**
- * Get or create time limit usage for a domain
- */
-function getOrCreateUsage(
-  domain: string,
-  analytics: AnalyticsData
-): TimeLimitUsage {
-  const existing = analytics.timeLimitUsage[domain];
-
-  if (existing) {
-    return existing;
-  }
-
-  return {
-    domain,
-    dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
-  };
-}
-
-/**
- * Apply resets to usage if needed and return the effective usage values
- */
-function getEffectiveUsage(usage: TimeLimitUsage): {
-  dailyUsedSeconds: number;
-  hourlyUsedSeconds: number;
-  wasReset: boolean;
-} {
-  let dailyUsedSeconds = usage.dailyUsedSeconds;
-  let hourlyUsedSeconds = usage.hourlyUsedSeconds;
-  let wasReset = false;
-
-  if (needsDailyReset(usage.lastDailyReset)) {
-    dailyUsedSeconds = 0;
-    wasReset = true;
-  }
-
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    hourlyUsedSeconds = 0;
-    wasReset = true;
-  }
-
-  return { dailyUsedSeconds, hourlyUsedSeconds, wasReset };
-}
-
-/**
- * Check if a domain has exceeded its time limit
- */
-export async function hasExceededTimeLimit(
-  domain: string,
-  blockItem?: BlockItem | null
-): Promise<boolean> {
-  const item = blockItem ?? (await findEnabledBlockItemForDomain(domain));
-
-  if (!item) {
-    return false;
-  }
-
-  if (!item.timeLimit) {
-    // No time limit configured - always blocked when enabled
-    return true;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = getOrCreateUsage(domain, analytics);
-  const effective = getEffectiveUsage(usage);
-
-  const { type, limitSeconds } = item.timeLimit;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
-
-  return usedSeconds >= limitSeconds;
-}
-
-/**
- * Get remaining time in seconds for a domain
- * Returns null if no time limit is set
- */
-export async function getRemainingTime(
-  domain: string,
-  blockItem?: BlockItem | null
-): Promise<number | null> {
-  const item = blockItem ?? (await findEnabledBlockItemForDomain(domain));
-
-  if (!item || !item.timeLimit) {
-    return null;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = getOrCreateUsage(domain, analytics);
-  const effective = getEffectiveUsage(usage);
-
-  const { type, limitSeconds } = item.timeLimit;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
-
-  return Math.max(0, limitSeconds - usedSeconds);
 }
 
 /**
@@ -278,129 +158,6 @@ export async function shouldTrackBlockForDomain(
 }
 
 /**
- * Record time usage for a domain
- */
-export async function recordTimeLimitUsage(
-  domain: string,
-  seconds: number
-): Promise<void> {
-  if (seconds <= 0) return;
-
-  const blockItem = await findEnabledBlockItemForDomain(domain);
-
-  if (!blockItem || !blockItem.timeLimit) {
-    return;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = analytics.timeLimitUsage[domain] || {
-    domain,
-    dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
-  };
-
-  const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
-
-  // Check and apply daily reset
-  if (needsDailyReset(usage.lastDailyReset)) {
-    usage.dailyUsedSeconds = 0;
-    usage.lastDailyReset = todayKey;
-  }
-
-  // Check and apply hourly reset
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    usage.hourlyUsedSeconds = 0;
-    usage.lastHourlyReset = hourKey;
-  }
-
-  // Add the time
-  usage.dailyUsedSeconds += seconds;
-  usage.hourlyUsedSeconds += seconds;
-
-  // Save
-  analytics.timeLimitUsage[domain] = usage;
-  await setAnalytics(analytics);
-}
-
-/**
- * Reset expired usage entries (called periodically by alarm)
- */
-export async function resetExpiredUsage(): Promise<void> {
-  const analytics = await getAnalytics();
-  const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
-  let updated = false;
-
-  for (const domain of Object.keys(analytics.timeLimitUsage)) {
-    const usage = analytics.timeLimitUsage[domain];
-
-    if (needsDailyReset(usage.lastDailyReset)) {
-      usage.dailyUsedSeconds = 0;
-      usage.lastDailyReset = todayKey;
-      updated = true;
-    }
-
-    if (needsHourlyReset(usage.lastHourlyReset)) {
-      usage.hourlyUsedSeconds = 0;
-      usage.lastHourlyReset = hourKey;
-      updated = true;
-    }
-  }
-
-  if (updated) {
-    await setAnalytics(analytics);
-  }
-}
-
-/**
- * Get time limit info for a URL (used by popup/newtab)
- */
-export async function getTimeLimitInfo(
-  url: string
-): Promise<TimeLimitInfo | null> {
-  const domain = extractDomain(url);
-  if (!domain) return null;
-
-  const blockItem = await findEnabledBlockItemForDomain(domain);
-  if (!blockItem) return null;
-
-  if (!blockItem.timeLimit) {
-    return {
-      hasTimeLimit: false,
-      remainingSeconds: null,
-      limitType: null,
-      limitSeconds: null,
-      usedSeconds: null,
-      isExceeded: true // Always blocked
-    };
-  }
-
-  const remaining = await getRemainingTime(domain, blockItem);
-  const analytics = await getAnalytics();
-  const usage = analytics.timeLimitUsage[domain];
-  const effective = usage
-    ? getEffectiveUsage(usage)
-    : { dailyUsedSeconds: 0, hourlyUsedSeconds: 0 };
-
-  const usedSeconds =
-    blockItem.timeLimit.type === 'daily'
-      ? effective.dailyUsedSeconds
-      : effective.hourlyUsedSeconds;
-
-  return {
-    hasTimeLimit: true,
-    remainingSeconds: remaining,
-    limitType: blockItem.timeLimit.type,
-    limitSeconds: blockItem.timeLimit.limitSeconds,
-    usedSeconds,
-    isExceeded: remaining !== null && remaining <= 0
-  };
-}
-
-/**
  * Get list of domains that should be actively blocked via declarativeNetRequest
  * Only includes always-blocked sites (no time limit) that are enabled and within schedule
  */
@@ -421,113 +178,4 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
   return settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
-}
-
-// YouTube domain key used for analytics storage
-const YOUTUBE_DOMAIN = 'youtube.com';
-
-/**
- * Record YouTube time limit usage
- * Uses settings.youtube.timeLimit instead of blocklist
- */
-export async function recordYouTubeTimeLimitUsage(
-  seconds: number
-): Promise<void> {
-  if (seconds <= 0) return;
-
-  const settings = await getSettings();
-  const youtube: YouTubeSettings = settings.youtube;
-
-  if (!youtube.enabled || !youtube.timeLimit) {
-    return;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = analytics.timeLimitUsage[YOUTUBE_DOMAIN] || {
-    domain: YOUTUBE_DOMAIN,
-    dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
-  };
-
-  const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
-
-  if (needsDailyReset(usage.lastDailyReset)) {
-    usage.dailyUsedSeconds = 0;
-    usage.lastDailyReset = todayKey;
-  }
-
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    usage.hourlyUsedSeconds = 0;
-    usage.lastHourlyReset = hourKey;
-  }
-
-  usage.dailyUsedSeconds += seconds;
-  usage.hourlyUsedSeconds += seconds;
-
-  analytics.timeLimitUsage[YOUTUBE_DOMAIN] = usage;
-  await setAnalytics(analytics);
-}
-
-/**
- * Check if YouTube has exceeded its time limit
- */
-export async function hasYouTubeExceededTimeLimit(): Promise<boolean> {
-  const settings = await getSettings();
-  const youtube: YouTubeSettings = settings.youtube;
-
-  if (!youtube.enabled || !youtube.timeLimit) {
-    return false;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = getOrCreateUsage(YOUTUBE_DOMAIN, analytics);
-  const effective = getEffectiveUsage(usage);
-
-  const { type, limitSeconds } = youtube.timeLimit;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
-
-  return usedSeconds >= limitSeconds;
-}
-
-/**
- * Get remaining time in seconds for YouTube
- * Returns null if no time limit is set
- */
-export async function getYouTubeRemainingTime(): Promise<number | null> {
-  const settings = await getSettings();
-  const youtube: YouTubeSettings = settings.youtube;
-
-  if (!youtube.enabled || !youtube.timeLimit) {
-    return null;
-  }
-
-  const analytics = await getAnalytics();
-  const usage = getOrCreateUsage(YOUTUBE_DOMAIN, analytics);
-  const effective = getEffectiveUsage(usage);
-
-  const { type, limitSeconds } = youtube.timeLimit;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
-
-  return Math.max(0, limitSeconds - usedSeconds);
-}
-
-/**
- * Increment YouTube block count in analytics
- */
-export async function incrementYouTubeBlockCount(): Promise<void> {
-  const analytics = await getAnalytics();
-  const existing = analytics.siteBlockCounts[YOUTUBE_DOMAIN];
-
-  analytics.siteBlockCounts[YOUTUBE_DOMAIN] = {
-    domain: YOUTUBE_DOMAIN,
-    count: (existing?.count ?? 0) + 1,
-    lastBlocked: new Date().toISOString()
-  };
-
-  await setAnalytics(analytics);
 }
