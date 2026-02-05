@@ -55,7 +55,7 @@ export function UpgradePrompt({
   if (variant === 'inline') {
     return (
       <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-        <Crown className="w-4 h-4 flex-shrink-0" />
+        <Crown className="w-4 h-4 shrink-0" />
         <span>{message || defaultMessage}</span>
         <button
           onClick={handleUpgradeClick}
@@ -117,7 +117,7 @@ export function UpgradePrompt({
                     key={index}
                     className="flex items-center gap-2 text-sm text-gray-600"
                   >
-                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-green-500 shrink-0" />
                     {feature}
                   </li>
                 )

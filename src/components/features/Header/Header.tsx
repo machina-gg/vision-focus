@@ -61,7 +61,7 @@ export function Header({
               onChange={(e) =>
                 onLanguageChange(e.target.value as SupportedLanguage)
               }
-              className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-2 py-1 pr-6 text-xs text-gray-600 cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-2 py-1 pr-6 text-xs text-gray-600 cursor-pointer hover:bg-gray-100 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
             >
               {supportedLanguages.map((lang) => (
                 <option key={lang.code} value={lang.code}>

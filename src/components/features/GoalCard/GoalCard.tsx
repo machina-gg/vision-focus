@@ -45,7 +45,7 @@ export function GoalCard({
       className="relative group"
     >
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 p-2 bg-primary-100 rounded-lg">
+        <div className="shrink-0 p-2 bg-primary-100 rounded-lg">
           <Target className="w-5 h-5 text-primary-600" />
         </div>
         <div className="flex-1 min-w-0">
@@ -58,7 +58,7 @@ export function GoalCard({
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={handleSave}
-              className="w-full p-2 text-base font-medium text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full p-2 text-base font-medium text-gray-800 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary-500 resize-none"
               rows={2}
               autoFocus
             />

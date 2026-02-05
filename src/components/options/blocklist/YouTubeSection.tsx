@@ -103,7 +103,7 @@ export function YouTubeSection({
       {/* Feature Toggles */}
       {!isEnabled && (
         <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
-          <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <Info className="w-4 h-4 text-amber-600 shrink-0" />
           <p className="text-xs text-amber-700">
             {getMessage('youtubeDisabledNote')}
           </p>

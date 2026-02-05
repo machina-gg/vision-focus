@@ -81,7 +81,7 @@ export function PresetSelector({
               draftPresets.findIndex((p) => p.id === vision.activePresetId) >=
                 featureLimits.maxPresets && (
                 <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
-                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
                   <span>{getMessage('lockedPresetWarning')}</span>
                 </div>
               )}

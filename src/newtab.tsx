@@ -302,7 +302,7 @@ function NewtabApp() {
                 blockReason === 'time_limit_exceeded'
                   ? 'bg-amber-500/20 border-amber-500/30'
                   : 'bg-red-500/20 border-red-500/30'
-              } backdrop-blur-sm rounded-xl px-6 py-4 border`}
+              } backdrop-blur-xs rounded-xl px-6 py-4 border`}
             >
               {blockReason === 'time_limit_exceeded' ? (
                 <Clock className="w-6 h-6 text-amber-400" />
@@ -382,7 +382,7 @@ function NewtabApp() {
         {/* Settings Button */}
         <button
           onClick={handleSettingsClick}
-          className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+          className="p-3 bg-white/20 backdrop-blur-xs rounded-full text-white hover:bg-white/30 transition-colors"
         >
           <Settings className="w-5 h-5" />
         </button>

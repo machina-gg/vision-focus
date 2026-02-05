@@ -36,7 +36,7 @@ export function Input({
           text-gray-800 placeholder-gray-400
           bg-white border rounded-md
           transition-colors duration-200
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+          focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent
           disabled:bg-gray-100 disabled:cursor-not-allowed
           ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
           ${className}

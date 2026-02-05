@@ -302,7 +302,7 @@ export function HelpTab({
             </div>
             {exportWarning && (
               <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{exportWarning}</span>
               </div>
             )}
@@ -359,9 +359,9 @@ export function HelpTab({
                 }`}
               >
                 {importStatus === 'success' ? (
-                  <Check className="w-4 h-4 flex-shrink-0" />
+                  <Check className="w-4 h-4 shrink-0" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                 )}
                 <span>{importMessage}</span>
               </div>
@@ -373,7 +373,7 @@ export function HelpTab({
                     key={index}
                     className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg"
                   >
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{warning}</span>
                   </div>
                 ))}

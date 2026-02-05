@@ -72,7 +72,7 @@ export function PremiumTab({
               <h2 className="text-lg font-semibold text-gray-900">
                 {getMessage('currentPlan')}
               </h2>
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-full text-sm font-bold shadow-sm">
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-full text-sm font-bold shadow-xs">
                 <Crown className="w-4 h-4" />
                 Premium
               </span>

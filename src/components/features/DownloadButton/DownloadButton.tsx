@@ -80,7 +80,7 @@ export function DownloadButton({
         disabled={disabled || isDownloading}
         className={`
           flex items-center gap-2 px-4 py-2 rounded-lg text-white
-          transition-all shadow-lg backdrop-blur-sm
+          transition-all shadow-lg backdrop-blur-xs
           ${getButtonColor()}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}

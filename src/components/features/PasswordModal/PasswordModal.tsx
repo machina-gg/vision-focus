@@ -28,7 +28,7 @@ export function PasswordModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs"
         onClick={onClose}
       />
       <div className="relative w-full mx-4 max-w-sm bg-white rounded-xl shadow-xl">
@@ -45,7 +45,7 @@ export function PasswordModal({
         </div>
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
-            <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <Lock className="w-5 h-5 text-amber-600 shrink-0" />
             <p className="text-sm text-amber-800">
               {getMessage('passwordRequiredForPause')}
             </p>
@@ -66,7 +66,7 @@ export function PasswordModal({
                   }
                 }}
                 placeholder={getMessage('passwordPlaceholder')}
-                className="w-full px-3 py-2 pr-10 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 pr-10 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 autoFocus
               />
               <button
@@ -89,14 +89,14 @@ export function PasswordModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               {getMessage('cancel')}
             </button>
             <button
               onClick={onSubmit}
               disabled={isVerifying || !passwordInput}
-              className="flex-1 px-4 py-2 text-white bg-primary-500 rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-white bg-primary-500 rounded-lg hover:bg-primary-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerifying ? getMessage('verifying') : getMessage('confirm')}
             </button>

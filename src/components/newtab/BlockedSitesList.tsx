@@ -33,7 +33,7 @@ export function BlockedSitesList({
     <div className="w-full max-w-md mx-auto mt-8">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-5 py-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl border border-white/10 transition-all duration-200"
+        className="w-full flex items-center justify-between px-5 py-3 bg-white/10 hover:bg-white/15 backdrop-blur-xs rounded-xl border border-white/10 transition-all duration-200"
       >
         <div className="flex items-center gap-3">
           <div className="p-1.5 bg-red-500/20 rounded-lg">
@@ -52,7 +52,7 @@ export function BlockedSitesList({
       </button>
 
       {isExpanded && (
-        <div className="mt-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+        <div className="mt-3 bg-white/5 backdrop-blur-xs rounded-xl border border-white/10 overflow-hidden">
           <ul className="divide-y divide-white/5">
             {visibleSites.map((item) => {
               const count = blockCounts[item.domain]?.count ?? 0;
@@ -62,13 +62,13 @@ export function BlockedSitesList({
                   className="px-5 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
+                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
                     <span className="text-sm text-white/80 truncate font-medium">
                       {item.domain}
                     </span>
                   </div>
                   {count > 0 && (
-                    <span className="text-xs text-white/50 flex-shrink-0 ml-3 bg-white/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-white/50 shrink-0 ml-3 bg-white/10 px-2 py-0.5 rounded-full">
                       {getMessage('blockedTimesShort', count.toString())}
                     </span>
                   )}
