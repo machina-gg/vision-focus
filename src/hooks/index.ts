@@ -4,6 +4,7 @@ export * from './useBackgroundStats';
 export * from './useBlocklist';
 export * from './useCurrentDomain';
 export * from './useLicense';
+export * from './usePasswordVerification';
 export * from './usePopupActions';
 export * from './usePresets';
 export * from './usePremiumStatus';

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
 import { Ban, Shield, TrendingUp, Clock } from 'lucide-react';
@@ -6,18 +6,18 @@ import { Ban, Shield, TrendingUp, Clock } from 'lucide-react';
 import {
   GoalCard,
   Header,
-  PasswordModal,
   QuickBlockButton,
   TimeLimitBadge
 } from '~/components/features';
+import { PasswordModal } from '~/components/options/modals';
 import {
   useBackgroundStats,
   useCurrentDomain,
+  usePasswordVerification,
   usePopupActions,
   usePremiumStatus
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { verifyPassword } from '~/lib/password';
 import { storage } from '~/lib/storage';
 import type { AppSettings, VisionSettings } from '~/types/storage';
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
@@ -48,62 +48,24 @@ function PopupApp() {
     isPasswordProtected
   } = usePopupActions({ settings, setSettings, clearDomain });
 
-  // Password modal state (kept here until #94 merges usePasswordVerification)
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  // Password verification for pause toggle
+  const passwordVerification = usePasswordVerification({
+    passwordHash: settings?.password?.passwordHash ?? null,
+    onSuccess: async () => {
+      await handlePausedChange(true);
+    }
+  });
 
   const handlePausedChangeWithPassword = useCallback(
     async (paused: boolean) => {
       if (paused && isPasswordProtected) {
-        setShowPasswordModal(true);
-        setPasswordInput('');
-        setPasswordError(null);
-        setShowPassword(false);
+        passwordVerification.openModal();
         return;
       }
       await handlePausedChange(paused);
     },
-    [isPasswordProtected, handlePausedChange]
+    [isPasswordProtected, passwordVerification, handlePausedChange]
   );
-
-  const handlePasswordSubmit = useCallback(async () => {
-    if (!passwordInput || !settings?.password?.passwordHash) {
-      setPasswordError(getMessage('passwordRequired'));
-      return;
-    }
-
-    setIsVerifying(true);
-    setPasswordError(null);
-
-    try {
-      const isValid = await verifyPassword(
-        passwordInput,
-        settings.password.passwordHash
-      );
-
-      if (isValid) {
-        setShowPasswordModal(false);
-        setPasswordInput('');
-        await handlePausedChange(true);
-      } else {
-        setPasswordError(getMessage('passwordIncorrect'));
-      }
-    } catch {
-      setPasswordError(getMessage('passwordVerificationFailed'));
-    } finally {
-      setIsVerifying(false);
-    }
-  }, [passwordInput, settings?.password?.passwordHash, handlePausedChange]);
-
-  const handlePasswordModalClose = useCallback(() => {
-    setShowPasswordModal(false);
-    setPasswordInput('');
-    setPasswordError(null);
-    setShowPassword(false);
-  }, []);
 
   return (
     <div className="popup-container bg-white">
@@ -206,16 +168,17 @@ function PopupApp() {
         </div>
       </div>
 
-      {showPasswordModal && (
+      {/* Password Modal for Pause */}
+      {settings?.password?.passwordHash && (
         <PasswordModal
-          passwordInput={passwordInput}
-          onPasswordInputChange={setPasswordInput}
-          passwordError={passwordError}
-          showPassword={showPassword}
-          onToggleShowPassword={() => setShowPassword(!showPassword)}
-          isVerifying={isVerifying}
-          onSubmit={handlePasswordSubmit}
-          onClose={handlePasswordModalClose}
+          isOpen={passwordVerification.showModal}
+          onClose={passwordVerification.closeModal}
+          onSuccess={async () => {
+            await handlePausedChange(true);
+          }}
+          passwordHash={settings.password.passwordHash}
+          title={getMessage('passwordRequired')}
+          description={getMessage('passwordRequiredForPause')}
         />
       )}
     </div>

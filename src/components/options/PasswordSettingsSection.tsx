@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { Lock, Shield, Eye, EyeOff, Check, AlertTriangle } from 'lucide-react';
+import { Lock, Shield } from 'lucide-react';
 
-import { Button, Card, Input, Toggle } from '~/components/ui';
+import { Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import {
   hashPassword,
@@ -9,6 +9,8 @@ import {
   validatePasswordStrength
 } from '~/lib/password';
 import type { PasswordSettings } from '~/types/storage';
+
+import { FormActions, FormFeedback, PasswordField } from './password';
 
 interface PasswordSettingsSectionProps {
   passwordSettings: PasswordSettings;
@@ -46,138 +48,90 @@ export function PasswordSettingsSection({
     setMode('view');
   }, []);
 
+  /** Validates new password and confirmation, then hashes and saves */
+  const saveNewPassword = useCallback(
+    async (successMessageKey: string) => {
+      const validation = validatePasswordStrength(newPassword);
+      if (!validation.isValid && validation.errorKey) {
+        setError(getMessage(validation.errorKey));
+        return false;
+      }
+      if (newPassword !== confirmPassword) {
+        setError(getMessage('passwordMismatch'));
+        return false;
+      }
+      setIsProcessing(true);
+      try {
+        const hash = await hashPassword(newPassword);
+        await onUpdate({ enabled: true, passwordHash: hash });
+        setSuccess(getMessage(successMessageKey));
+        setTimeout(resetForm, 2000);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [newPassword, confirmPassword, onUpdate, resetForm]
+  );
+
+  /** Verifies the current password against stored hash */
+  const verifyCurrentPassword = useCallback(async (): Promise<boolean> => {
+    if (!passwordSettings.passwordHash) {
+      setError(getMessage('passwordNotSet'));
+      return false;
+    }
+    const isValid = await verifyPassword(
+      currentPassword,
+      passwordSettings.passwordHash
+    );
+    if (!isValid) {
+      setError(getMessage('currentPasswordIncorrect'));
+      return false;
+    }
+    return true;
+  }, [currentPassword, passwordSettings.passwordHash]);
+
   const handleSetPassword = useCallback(async () => {
     setError(null);
-
-    // Validate new password
-    const validation = validatePasswordStrength(newPassword);
-    if (!validation.isValid && validation.errorKey) {
-      setError(getMessage(validation.errorKey));
-      return;
-    }
-
-    // Check confirmation matches
-    if (newPassword !== confirmPassword) {
-      setError(getMessage('passwordMismatch'));
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const hash = await hashPassword(newPassword);
-      await onUpdate({
-        enabled: true,
-        passwordHash: hash
-      });
-      setSuccess(getMessage('passwordSetSuccess'));
-      setTimeout(() => {
-        resetForm();
-      }, 2000);
-    } catch {
+    const saved = await saveNewPassword('passwordSetSuccess');
+    if (!saved && !error) {
       setError(getMessage('passwordSetFailed'));
-    } finally {
-      setIsProcessing(false);
     }
-  }, [newPassword, confirmPassword, onUpdate, resetForm]);
+  }, [saveNewPassword, error]);
 
   const handleChangePassword = useCallback(async () => {
     setError(null);
-
-    // Verify current password
-    if (!passwordSettings.passwordHash) {
-      setError(getMessage('passwordNotSet'));
-      return;
-    }
-
-    const isCurrentValid = await verifyPassword(
-      currentPassword,
-      passwordSettings.passwordHash
-    );
-    if (!isCurrentValid) {
-      setError(getMessage('currentPasswordIncorrect'));
-      return;
-    }
-
-    // Validate new password
-    const validation = validatePasswordStrength(newPassword);
-    if (!validation.isValid && validation.errorKey) {
-      setError(getMessage(validation.errorKey));
-      return;
-    }
-
-    // Check confirmation matches
-    if (newPassword !== confirmPassword) {
-      setError(getMessage('passwordMismatch'));
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const hash = await hashPassword(newPassword);
-      await onUpdate({
-        enabled: true,
-        passwordHash: hash
-      });
-      setSuccess(getMessage('passwordChangedSuccess'));
-      setTimeout(() => {
-        resetForm();
-      }, 2000);
-    } catch {
+    const verified = await verifyCurrentPassword();
+    if (!verified) return;
+    const saved = await saveNewPassword('passwordChangedSuccess');
+    if (!saved && !error) {
       setError(getMessage('passwordChangeFailed'));
-    } finally {
-      setIsProcessing(false);
     }
-  }, [
-    currentPassword,
-    newPassword,
-    confirmPassword,
-    passwordSettings,
-    onUpdate,
-    resetForm
-  ]);
+  }, [verifyCurrentPassword, saveNewPassword, error]);
 
   const handleRemovePassword = useCallback(async () => {
     setError(null);
-
-    // Verify current password
-    if (!passwordSettings.passwordHash) {
-      setError(getMessage('passwordNotSet'));
-      return;
-    }
-
-    const isCurrentValid = await verifyPassword(
-      currentPassword,
-      passwordSettings.passwordHash
-    );
-    if (!isCurrentValid) {
-      setError(getMessage('currentPasswordIncorrect'));
-      return;
-    }
-
+    const verified = await verifyCurrentPassword();
+    if (!verified) return;
     setIsProcessing(true);
     try {
-      await onUpdate({
-        enabled: false,
-        passwordHash: null
-      });
+      await onUpdate({ enabled: false, passwordHash: null });
       setSuccess(getMessage('passwordRemovedSuccess'));
-      setTimeout(() => {
-        resetForm();
-      }, 2000);
+      setTimeout(resetForm, 2000);
     } catch {
       setError(getMessage('passwordRemoveFailed'));
     } finally {
       setIsProcessing(false);
     }
-  }, [currentPassword, passwordSettings, onUpdate, resetForm]);
+  }, [verifyCurrentPassword, onUpdate, resetForm]);
 
   const handleToggle = useCallback(
     (enabled: boolean) => {
       if (enabled && !isEnabled) {
-        // Start setting password
         setMode('set');
       } else if (!enabled && isEnabled) {
-        // Start removing password
         setMode('remove');
       }
     },
@@ -203,7 +157,6 @@ export function PasswordSettingsSection({
         )}
       </div>
 
-      {/* Status indicator */}
       {mode === 'view' && (
         <div
           className={`flex items-center gap-2 p-3 rounded-lg ${
@@ -231,7 +184,6 @@ export function PasswordSettingsSection({
         </div>
       )}
 
-      {/* Set Password Form */}
       {mode === 'set' && (
         <div className="space-y-4">
           <div className="p-3 bg-blue-50 rounded-lg">
@@ -239,212 +191,79 @@ export function PasswordSettingsSection({
               {getMessage('passwordSetInstructions')}
             </p>
           </div>
-
           <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {getMessage('newPassword')}
-              </label>
-              <div className="relative">
-                <Input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={setNewPassword}
-                  placeholder={getMessage('passwordPlaceholder')}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                >
-                  {showNewPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {getMessage('confirmPassword')}
-              </label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  placeholder={getMessage('confirmPasswordPlaceholder')}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <PasswordField
+              label={getMessage('newPassword')}
+              value={newPassword}
+              onChange={setNewPassword}
+              show={showNewPassword}
+              onToggleShow={() => setShowNewPassword(!showNewPassword)}
+              placeholder={getMessage('passwordPlaceholder')}
+            />
+            <PasswordField
+              label={getMessage('confirmPassword')}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              show={showConfirmPassword}
+              onToggleShow={() => setShowConfirmPassword(!showConfirmPassword)}
+              placeholder={getMessage('confirmPasswordPlaceholder')}
+            />
           </div>
-
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <AlertTriangle className="w-4 h-4" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <Check className="w-4 h-4" />
-              <span>{success}</span>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={resetForm} className="flex-1">
-              {getMessage('cancel')}
-            </Button>
-            <Button
-              onClick={handleSetPassword}
-              disabled={isProcessing || !newPassword || !confirmPassword}
-              className="flex-1"
-            >
-              {isProcessing
-                ? getMessage('processing')
-                : getMessage('setPassword')}
-            </Button>
-          </div>
+          <FormFeedback error={error} success={success} />
+          <FormActions
+            onCancel={resetForm}
+            onSubmit={handleSetPassword}
+            submitLabel={getMessage('setPassword')}
+            submitDisabled={isProcessing || !newPassword || !confirmPassword}
+            isProcessing={isProcessing}
+          />
         </div>
       )}
 
-      {/* Change Password Form */}
       {mode === 'change' && (
         <div className="space-y-4">
           <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {getMessage('currentPassword')}
-              </label>
-              <div className="relative">
-                <Input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={setCurrentPassword}
-                  placeholder={getMessage('currentPasswordPlaceholder')}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {getMessage('newPassword')}
-              </label>
-              <div className="relative">
-                <Input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={setNewPassword}
-                  placeholder={getMessage('passwordPlaceholder')}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                >
-                  {showNewPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {getMessage('confirmPassword')}
-              </label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  placeholder={getMessage('confirmPasswordPlaceholder')}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <PasswordField
+              label={getMessage('currentPassword')}
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              show={showCurrentPassword}
+              onToggleShow={() => setShowCurrentPassword(!showCurrentPassword)}
+              placeholder={getMessage('currentPasswordPlaceholder')}
+            />
+            <PasswordField
+              label={getMessage('newPassword')}
+              value={newPassword}
+              onChange={setNewPassword}
+              show={showNewPassword}
+              onToggleShow={() => setShowNewPassword(!showNewPassword)}
+              placeholder={getMessage('passwordPlaceholder')}
+            />
+            <PasswordField
+              label={getMessage('confirmPassword')}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              show={showConfirmPassword}
+              onToggleShow={() => setShowConfirmPassword(!showConfirmPassword)}
+              placeholder={getMessage('confirmPasswordPlaceholder')}
+            />
           </div>
-
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <AlertTriangle className="w-4 h-4" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <Check className="w-4 h-4" />
-              <span>{success}</span>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={resetForm} className="flex-1">
-              {getMessage('cancel')}
-            </Button>
-            <Button
-              onClick={handleChangePassword}
-              disabled={
-                isProcessing ||
-                !currentPassword ||
-                !newPassword ||
-                !confirmPassword
-              }
-              className="flex-1"
-            >
-              {isProcessing
-                ? getMessage('processing')
-                : getMessage('changePassword')}
-            </Button>
-          </div>
+          <FormFeedback error={error} success={success} />
+          <FormActions
+            onCancel={resetForm}
+            onSubmit={handleChangePassword}
+            submitLabel={getMessage('changePassword')}
+            submitDisabled={
+              isProcessing ||
+              !currentPassword ||
+              !newPassword ||
+              !confirmPassword
+            }
+            isProcessing={isProcessing}
+          />
         </div>
       )}
 
-      {/* Remove Password Form */}
       {mode === 'remove' && (
         <div className="space-y-4">
           <div className="p-3 bg-amber-50 rounded-lg">
@@ -452,62 +271,23 @@ export function PasswordSettingsSection({
               {getMessage('passwordRemoveWarning')}
             </p>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {getMessage('currentPassword')}
-            </label>
-            <div className="relative">
-              <Input
-                type={showCurrentPassword ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={setCurrentPassword}
-                placeholder={getMessage('currentPasswordPlaceholder')}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-              >
-                {showCurrentPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <AlertTriangle className="w-4 h-4" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <Check className="w-4 h-4" />
-              <span>{success}</span>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={resetForm} className="flex-1">
-              {getMessage('cancel')}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleRemovePassword}
-              disabled={isProcessing || !currentPassword}
-              className="flex-1"
-            >
-              {isProcessing
-                ? getMessage('processing')
-                : getMessage('removePassword')}
-            </Button>
-          </div>
+          <PasswordField
+            label={getMessage('currentPassword')}
+            value={currentPassword}
+            onChange={setCurrentPassword}
+            show={showCurrentPassword}
+            onToggleShow={() => setShowCurrentPassword(!showCurrentPassword)}
+            placeholder={getMessage('currentPasswordPlaceholder')}
+          />
+          <FormFeedback error={error} success={success} />
+          <FormActions
+            onCancel={resetForm}
+            onSubmit={handleRemovePassword}
+            submitLabel={getMessage('removePassword')}
+            submitDisabled={isProcessing || !currentPassword}
+            isProcessing={isProcessing}
+            submitVariant="danger"
+          />
         </div>
       )}
     </Card>
