@@ -62,6 +62,12 @@
     "typescript-eslint": "^8.53.1",
     "vitest": "^2.1.8"
   },
+  "pnpm": {
+    "patchedDependencies": {
+      "jiti": "patches/jiti.patch",
+      "@tailwindcss/oxide": "patches/@tailwindcss__oxide.patch"
+    }
+  },
   "manifest": {
     "default_locale": "en",
     "host_permissions": [
