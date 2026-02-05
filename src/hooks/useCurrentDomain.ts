@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 
+import { DOMAIN_POLLING_MS } from '~/constants/intervals';
 import { getActiveTab } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
-
-const POLLING_INTERVAL_MS = 10000;
 
 export interface TimeLimitInfo {
   hasTimeLimit: boolean;
@@ -62,7 +61,7 @@ export function useCurrentDomain(): UseCurrentDomainReturn {
     // Refresh time limit info periodically
     const interval = setInterval(
       getCurrentDomainAndTimeLimit,
-      POLLING_INTERVAL_MS
+      DOMAIN_POLLING_MS
     );
     return () => clearInterval(interval);
   }, []);

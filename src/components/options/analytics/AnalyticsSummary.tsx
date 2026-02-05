@@ -3,6 +3,7 @@ import { AlertTriangle, Clock, Lock, RefreshCw, EyeOff } from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
 import { UpgradePrompt } from '~/components/features';
+import { MS_PER_DAY } from '~/constants/intervals';
 import { formatTime } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import type { UnblockHistory, TrackedSite } from '~/types/storage';
@@ -11,7 +12,7 @@ function formatRelativeTime(isoDate: string): string {
   const date = new Date(isoDate);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(diffMs / MS_PER_DAY);
 
   if (diffDays === 0) {
     return getMessage('today');

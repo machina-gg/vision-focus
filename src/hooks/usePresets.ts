@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { storage } from '~/lib/storage';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
+import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type {
   VisionSettings,
   DashboardPreset,
@@ -239,7 +240,7 @@ export function usePresets({
     setVision(toSave);
     setIsDirty(false);
     setVisionSaved(true);
-    setTimeout(() => setVisionSaved(false), 2000);
+    setTimeout(() => setVisionSaved(false), STATUS_RESET_DELAY_MS);
   }, [
     selectedPresetId,
     draftDisplaySettings,
@@ -259,7 +260,7 @@ export function usePresets({
     await storage.set('vision', toSave);
     setVision(toSave);
     setVisionSaved(true);
-    setTimeout(() => setVisionSaved(false), 2000);
+    setTimeout(() => setVisionSaved(false), STATUS_RESET_DELAY_MS);
   }, [selectedPresetId, vision, setVision]);
 
   const handleCreatePreset = useCallback(async () => {

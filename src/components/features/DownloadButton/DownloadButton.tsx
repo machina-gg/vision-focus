@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 
 import { Download, Check, X, ChevronDown } from 'lucide-react';
 
+import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import {
   downloadWallpaper,
   type Resolution,
@@ -42,10 +43,10 @@ export function DownloadButton({
         quality: 0.95
       });
       setDownloadStatus('success');
-      setTimeout(() => setDownloadStatus('idle'), 2000);
+      setTimeout(() => setDownloadStatus('idle'), STATUS_RESET_DELAY_MS);
     } catch {
       setDownloadStatus('error');
-      setTimeout(() => setDownloadStatus('idle'), 2000);
+      setTimeout(() => setDownloadStatus('idle'), STATUS_RESET_DELAY_MS);
     } finally {
       setIsDownloading(false);
     }

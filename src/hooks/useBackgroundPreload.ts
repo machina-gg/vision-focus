@@ -5,6 +5,7 @@ import {
   loadGoogleFont,
   FONT_WEIGHT_VALUE
 } from '~/constants';
+import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
 import { storage } from '~/lib/storage';
 import type { DashboardDisplaySettings, VisionSettings } from '~/types/storage';
 import { getFontDefinition } from '~/types/font';
@@ -51,7 +52,7 @@ export function useBackgroundPreload({
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsStorageLoaded(true);
-    }, 100);
+    }, STORAGE_LOADED_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, []);
 

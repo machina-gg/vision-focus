@@ -1,6 +1,7 @@
 import { extractDomain } from '~/lib/domain';
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { getTodayKey } from '~/lib/time';
+import { TRACKING_UPDATE_INTERVAL_MS } from '~/constants/intervals';
 import type { DailyStat, SiteTime } from '~/types/storage';
 
 let activeTabId: number | null = null;
@@ -15,7 +16,7 @@ export function startTracking(): void {
   }
 
   // Update every second
-  trackingInterval = setInterval(updateTracking, 1000);
+  trackingInterval = setInterval(updateTracking, TRACKING_UPDATE_INTERVAL_MS);
 
   // Listen for tab changes
   chrome.tabs.onActivated.addListener(handleTabActivated);
