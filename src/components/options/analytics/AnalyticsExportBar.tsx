@@ -192,8 +192,8 @@ export function AnalyticsExportBar({
       <Card>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-info-100 rounded-lg">
+              <Shield className="w-5 h-5 text-info-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
@@ -308,7 +308,7 @@ export function AnalyticsExportBar({
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowResetModal(true)}
-                className="flex items-center gap-1.5 text-gray-500 hover:text-red-500"
+                className="flex items-center gap-1.5 text-gray-500 hover:text-danger-500"
               >
                 <Trash2 className="w-4 h-4" />
                 {getMessage('reset')}
@@ -320,8 +320,8 @@ export function AnalyticsExportBar({
             <div
               className={`mb-4 p-3 rounded-lg text-sm ${
                 shareMessage.type === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
+                  ? 'bg-success-50 text-success-700'
+                  : 'bg-danger-50 text-danger-700'
               }`}
             >
               {shareMessage.text}

@@ -35,7 +35,7 @@ interface MonthlyReportCardProps {
 function TrendIcon({ trend }: { trend: 'improving' | 'declining' | 'stable' }) {
   if (trend === 'improving') {
     return (
-      <div className="flex items-center gap-1 text-green-600">
+      <div className="flex items-center gap-1 text-success-600">
         <TrendingUp className="w-4 h-4" />
         <span className="text-sm font-medium">{getMessage('improving')}</span>
       </div>
@@ -43,7 +43,7 @@ function TrendIcon({ trend }: { trend: 'improving' | 'declining' | 'stable' }) {
   }
   if (trend === 'declining') {
     return (
-      <div className="flex items-center gap-1 text-red-600">
+      <div className="flex items-center gap-1 text-danger-600">
         <TrendingDown className="w-4 h-4" />
         <span className="text-sm font-medium">{getMessage('declining')}</span>
       </div>
@@ -69,30 +69,30 @@ function StatsGrid({
 }) {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <div className="text-center p-3 bg-red-50 rounded-lg">
-        <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
+      <div className="text-center p-3 bg-danger-50 rounded-lg">
+        <div className="flex items-center justify-center gap-1 text-danger-600 mb-1">
           <Clock className="w-4 h-4" />
         </div>
-        <p className="text-lg font-bold text-red-700">
+        <p className="text-lg font-bold text-danger-700">
           {formatTime(wasteTime)}
         </p>
-        <p className="text-xs text-red-600">{getMessage('wasteTime')}</p>
+        <p className="text-xs text-danger-600">{getMessage('wasteTime')}</p>
       </div>
-      <div className="text-center p-3 bg-green-50 rounded-lg">
-        <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
+      <div className="text-center p-3 bg-success-50 rounded-lg">
+        <div className="flex items-center justify-center gap-1 text-success-600 mb-1">
           <Clock className="w-4 h-4" />
         </div>
-        <p className="text-lg font-bold text-green-700">
+        <p className="text-lg font-bold text-success-700">
           {formatTime(investTime)}
         </p>
-        <p className="text-xs text-green-600">{getMessage('investTime')}</p>
+        <p className="text-xs text-success-600">{getMessage('investTime')}</p>
       </div>
-      <div className="text-center p-3 bg-blue-50 rounded-lg">
-        <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+      <div className="text-center p-3 bg-info-50 rounded-lg">
+        <div className="flex items-center justify-center gap-1 text-info-600 mb-1">
           <Shield className="w-4 h-4" />
         </div>
-        <p className="text-lg font-bold text-blue-700">{blockCount}</p>
-        <p className="text-xs text-blue-600">{getMessage('blockedCount')}</p>
+        <p className="text-lg font-bold text-info-700">{blockCount}</p>
+        <p className="text-xs text-info-600">{getMessage('blockedCount')}</p>
       </div>
     </div>
   );
@@ -114,8 +114,8 @@ function TopSitesList({
     );
   }
 
-  const bgColor = type === 'waste' ? 'bg-red-50' : 'bg-green-50';
-  const textColor = type === 'waste' ? 'text-red-600' : 'text-green-600';
+  const bgColor = type === 'waste' ? 'bg-danger-50' : 'bg-success-50';
+  const textColor = type === 'waste' ? 'text-danger-600' : 'text-success-600';
 
   return (
     <div className="space-y-2">
@@ -166,12 +166,12 @@ function MiniBarChart({
           <div key={index} className="flex flex-col items-center flex-1">
             <div className="flex gap-0.5 items-end h-16 w-full justify-center">
               <div
-                className="w-2 bg-red-400 rounded-t"
+                className="w-2 bg-danger-400 rounded-t"
                 style={{ height: `${Math.max(wasteHeight, 2)}%` }}
                 title={`${getMessage('waste')}: ${formatTime(item.wasteTime)}`}
               />
               <div
-                className="w-2 bg-green-400 rounded-t"
+                className="w-2 bg-success-400 rounded-t"
                 style={{ height: `${Math.max(investHeight, 2)}%` }}
                 title={`${getMessage('invest')}: ${formatTime(item.investTime)}`}
               />
@@ -264,13 +264,13 @@ export function WeeklyReportCard({
           {/* Top Sites */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <div>
-              <h4 className="text-sm font-medium text-red-700 mb-2">
+              <h4 className="text-sm font-medium text-danger-700 mb-2">
                 {getMessage('topWasteSites')}
               </h4>
               <TopSitesList sites={report.topWasteSites} type="waste" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-green-700 mb-2">
+              <h4 className="text-sm font-medium text-success-700 mb-2">
                 {getMessage('topInvestSites')}
               </h4>
               <TopSitesList sites={report.topInvestSites} type="invest" />
@@ -344,13 +344,13 @@ export function MonthlyReportCard({
           {/* Top Sites */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <div>
-              <h4 className="text-sm font-medium text-red-700 mb-2">
+              <h4 className="text-sm font-medium text-danger-700 mb-2">
                 {getMessage('topWasteSites')}
               </h4>
               <TopSitesList sites={report.topWasteSites} type="waste" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-green-700 mb-2">
+              <h4 className="text-sm font-medium text-success-700 mb-2">
                 {getMessage('topInvestSites')}
               </h4>
               <TopSitesList sites={report.topInvestSites} type="invest" />

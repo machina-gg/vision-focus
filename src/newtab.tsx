@@ -202,8 +202,8 @@ function NewtabApp() {
         <div className="relative z-10 w-full max-w-md px-8 text-center">
           {/* Block Icon */}
           <div className="mb-6">
-            <div className="w-24 h-24 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
-              <ShieldX className="w-12 h-12 text-red-400" />
+            <div className="w-24 h-24 mx-auto bg-danger-500/20 rounded-full flex items-center justify-center">
+              <ShieldX className="w-12 h-12 text-danger-400" />
             </div>
           </div>
 
@@ -217,14 +217,14 @@ function NewtabApp() {
               </h1>
               <p className="text-gray-300 mb-4">{blockedInfo.domain}</p>
               {blockReason === 'time_limit_exceeded' ? (
-                <p className="text-amber-300 text-sm">
+                <p className="text-warning-300 text-sm">
                   {getMessage(
                     'timeLimitReachedDescription',
                     blockedInfo.domain
                   )}
                 </p>
               ) : (
-                <p className="text-red-300 text-sm">
+                <p className="text-danger-300 text-sm">
                   {getMessage('blockedTimes', blockedInfo.count.toString())}
                 </p>
               )}
@@ -259,7 +259,7 @@ function NewtabApp() {
             </p>
             <button
               onClick={handleSettingsClick}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-info-600 hover:bg-info-700 text-white font-medium rounded-lg transition-colors"
             >
               <Settings className="w-4 h-4" />
               {getMessage('createFirstPreset')}
@@ -301,14 +301,14 @@ function NewtabApp() {
             <div
               className={`inline-flex items-center gap-3 ${
                 blockReason === 'time_limit_exceeded'
-                  ? 'bg-amber-500/20 border-amber-500/30'
-                  : 'bg-red-500/20 border-red-500/30'
+                  ? 'bg-warning-500/20 border-warning-500/30'
+                  : 'bg-danger-500/20 border-danger-500/30'
               } backdrop-blur-sm rounded-xl px-6 py-4 border`}
             >
               {blockReason === 'time_limit_exceeded' ? (
-                <Clock className="w-6 h-6 text-amber-400" />
+                <Clock className="w-6 h-6 text-warning-400" />
               ) : (
-                <ShieldX className="w-6 h-6 text-red-400" />
+                <ShieldX className="w-6 h-6 text-danger-400" />
               )}
               <div className="text-left">
                 <p className="text-white font-medium">
@@ -319,8 +319,8 @@ function NewtabApp() {
                 <p
                   className={`${
                     blockReason === 'time_limit_exceeded'
-                      ? 'text-amber-200'
-                      : 'text-red-200'
+                      ? 'text-warning-200'
+                      : 'text-danger-200'
                   } text-sm`}
                 >
                   {blockReason === 'time_limit_exceeded'

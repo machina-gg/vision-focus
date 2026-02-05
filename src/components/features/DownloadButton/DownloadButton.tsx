@@ -68,8 +68,9 @@ export function DownloadButton({
   };
 
   const getButtonColor = () => {
-    if (downloadStatus === 'success') return 'bg-green-500 hover:bg-green-600';
-    if (downloadStatus === 'error') return 'bg-red-500 hover:bg-red-600';
+    if (downloadStatus === 'success')
+      return 'bg-success-500 hover:bg-success-600';
+    if (downloadStatus === 'error') return 'bg-danger-500 hover:bg-danger-600';
     return 'bg-black/50 hover:bg-black/70';
   };
 

@@ -135,7 +135,7 @@ export function BlocklistTab({
           </Button>
         </div>
         {blockError && (
-          <p className="mt-2 text-sm text-red-600">{blockError}</p>
+          <p className="mt-2 text-sm text-danger-600">{blockError}</p>
         )}
       </Card>
 
@@ -181,7 +181,7 @@ export function BlocklistTab({
 
       {/* Password Protection Indicator */}
       {isPasswordProtected && (
-        <div className="flex items-center gap-2 text-sm text-amber-600">
+        <div className="flex items-center gap-2 text-sm text-block-600">
           <Lock className="w-4 h-4" />
           <span>{getMessage('passwordProtectionActive')}</span>
         </div>

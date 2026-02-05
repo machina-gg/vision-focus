@@ -45,7 +45,7 @@ export function PresetSelector({
             {getMessage('dashboardPresets')}
           </h2>
           {!isPremium && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+            <span className="text-xs text-premium-600 bg-premium-50 px-2 py-1 rounded-full">
               {getMessage('premium')}
             </span>
           )}
@@ -67,7 +67,7 @@ export function PresetSelector({
             />
 
             {!isPremium && draftPresets.length >= featureLimits.maxPresets && (
-              <p className="text-xs text-amber-600 mt-2">
+              <p className="text-xs text-premium-600 mt-2">
                 {getMessage(
                   'maxPresetsReached',
                   String(featureLimits.maxPresets)
@@ -80,7 +80,7 @@ export function PresetSelector({
               vision?.activePresetId &&
               draftPresets.findIndex((p) => p.id === vision.activePresetId) >=
                 featureLimits.maxPresets && (
-                <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
+                <div className="flex items-center gap-2 text-xs text-premium-600 bg-premium-50 px-3 py-2 rounded-lg mt-2">
                   <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{getMessage('lockedPresetWarning')}</span>
                 </div>
@@ -165,7 +165,7 @@ function PresetButtons({
               isLocked
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : isSelected
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-info-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -173,7 +173,7 @@ function PresetButtons({
             {!isLocked && isActive && (
               <Check
                 className={`w-3.5 h-3.5 ${
-                  isSelected ? 'text-white' : 'text-green-600'
+                  isSelected ? 'text-white' : 'text-success-600'
                 }`}
               />
             )}
@@ -222,14 +222,14 @@ function EditingIndicator({
   onSavePreset
 }: EditingIndicatorProps) {
   return (
-    <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+    <div className="flex items-center justify-between bg-info-50 border border-info-200 rounded-lg px-4 py-3">
       <div className="flex items-center gap-2">
-        <Target className="w-5 h-5 text-blue-600" />
-        <span className="text-sm font-medium text-blue-900">
+        <Target className="w-5 h-5 text-info-600" />
+        <span className="text-sm font-medium text-info-900">
           {getMessage('editingPreset', selectedPreset.name)}
         </span>
         {isDirty && (
-          <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-premium-600 bg-premium-100 px-2 py-0.5 rounded-full">
             {getMessage('unsavedChanges')}
           </span>
         )}
@@ -240,10 +240,10 @@ function EditingIndicator({
           size="sm"
           onClick={() => onDeletePreset(selectedPreset.id)}
         >
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 className="w-4 h-4 text-danger-500" />
         </Button>
         {vision?.activePresetId === selectedPresetId ? (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg">
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-success-700 bg-success-100 rounded-lg">
             <Check className="w-4 h-4" />
             {getMessage('activePreset')}
           </span>

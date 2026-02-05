@@ -161,8 +161,8 @@ export function HelpTab({
       {/* Getting Started */}
       <Card>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-info-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -199,8 +199,8 @@ export function HelpTab({
       {/* FAQ */}
       <Card>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-            <MessageCircle className="w-5 h-5 text-green-600" />
+          <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-success-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -214,7 +214,7 @@ export function HelpTab({
 
         <div className="space-y-4">
           <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-blue-600">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
               {getMessage('helpFaqWildcard')}
             </summary>
             <p className="mt-2 text-sm text-gray-600 pl-4">
@@ -222,7 +222,7 @@ export function HelpTab({
             </p>
           </details>
           <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-blue-600">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
               {getMessage('helpFaqPause')}
             </summary>
             <p className="mt-2 text-sm text-gray-600 pl-4">
@@ -230,7 +230,7 @@ export function HelpTab({
             </p>
           </details>
           <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-blue-600">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
               {getMessage('helpFaqPresets')}
             </summary>
             <p className="mt-2 text-sm text-gray-600 pl-4">
@@ -251,8 +251,8 @@ export function HelpTab({
       {/* Settings Backup */}
       <Card>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-            <HardDrive className="w-5 h-5 text-amber-600" />
+          <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+            <HardDrive className="w-5 h-5 text-warning-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -305,7 +305,7 @@ export function HelpTab({
               </Button>
             </div>
             {exportWarning && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              <div className="mt-3 flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>{exportWarning}</span>
               </div>
@@ -358,8 +358,8 @@ export function HelpTab({
               <div
                 className={`mt-3 flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
                   importStatus === 'success'
-                    ? 'text-green-600 bg-green-50'
-                    : 'text-red-600 bg-red-50'
+                    ? 'text-success-600 bg-success-50'
+                    : 'text-danger-600 bg-danger-50'
                 }`}
               >
                 {importStatus === 'success' ? (
@@ -375,7 +375,7 @@ export function HelpTab({
                 {importWarnings.map((warning, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg"
+                    className="flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg"
                   >
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                     <span>{warning}</span>
@@ -390,8 +390,8 @@ export function HelpTab({
       {/* Support */}
       <Card>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Mail className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 bg-premium-100 rounded-lg flex items-center justify-center">
+            <Mail className="w-5 h-5 text-premium-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -408,7 +408,7 @@ export function HelpTab({
             href="https://github.com/user/vision-focus/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+            className="flex items-center gap-2 text-sm text-info-600 hover:text-info-800"
           >
             <ExternalLink className="w-4 h-4" />
             {getMessage('helpReportIssue')}

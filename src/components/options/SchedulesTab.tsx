@@ -76,7 +76,7 @@ export function SchedulesTab({
                         key={day}
                         className={`text-xs px-1.5 py-0.5 rounded ${
                           schedule.days.includes(idx)
-                            ? 'bg-blue-100 text-blue-700'
+                            ? 'bg-info-100 text-info-700'
                             : 'bg-gray-200 text-gray-400'
                         }`}
                       >
@@ -105,7 +105,7 @@ export function SchedulesTab({
                     size="sm"
                     onClick={() => onDeleteSchedule(schedule.id)}
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 text-danger-500" />
                   </Button>
                 </div>
               </div>

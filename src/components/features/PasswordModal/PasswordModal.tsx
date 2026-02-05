@@ -44,9 +44,9 @@ export function PasswordModal({
           </button>
         </div>
         <div className="p-4 space-y-4">
-          <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
-            <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
+          <div className="flex items-center gap-3 p-3 bg-warning-50 rounded-lg">
+            <Lock className="w-5 h-5 text-warning-600 flex-shrink-0" />
+            <p className="text-sm text-warning-800">
               {getMessage('passwordRequiredForPause')}
             </p>
           </div>
@@ -82,7 +82,7 @@ export function PasswordModal({
               </button>
             </div>
             {passwordError && (
-              <p className="text-sm text-red-600">{passwordError}</p>
+              <p className="text-sm text-danger-600">{passwordError}</p>
             )}
           </div>
 

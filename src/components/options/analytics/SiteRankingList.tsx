@@ -22,7 +22,7 @@ export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
   return (
     <Card>
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="w-5 h-5 text-red-500" />
+        <Shield className="w-5 h-5 text-danger-500" />
         <h3 className="text-lg font-semibold text-gray-900">
           {getMessage('topBlockedSites')}
         </h3>
@@ -39,7 +39,7 @@ export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
               </span>
               <span className="font-medium text-gray-900">{site.domain}</span>
             </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-danger-100 text-danger-700 text-sm font-medium rounded-full">
               <Shield className="w-3.5 h-3.5" />
               {getMessage('blockedTimesShort', site.count.toString())}
             </span>

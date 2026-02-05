@@ -7,14 +7,22 @@ import type { Schedule, VisionSettings } from '~/types/storage';
 
 // Predefined colors for schedule blocks
 const SCHEDULE_COLORS = [
-  { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800' },
-  { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' },
-  { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-800' },
-  { bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-800' },
+  { bg: 'bg-info-100', border: 'border-info-300', text: 'text-info-800' },
+  {
+    bg: 'bg-premium-100',
+    border: 'border-premium-300',
+    text: 'text-premium-800'
+  },
+  {
+    bg: 'bg-success-100',
+    border: 'border-success-300',
+    text: 'text-success-800'
+  },
+  { bg: 'bg-block-100', border: 'border-block-300', text: 'text-block-800' },
   { bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-800' },
   { bg: 'bg-teal-100', border: 'border-teal-300', text: 'text-teal-800' },
   { bg: 'bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-800' },
-  { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-800' }
+  { bg: 'bg-danger-100', border: 'border-danger-300', text: 'text-danger-800' }
 ];
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -148,7 +156,7 @@ export function WeeklyCalendar({
                 key={day}
                 className={`p-2 text-center text-xs font-medium border-r border-gray-200 last:border-r-0 ${
                   isToday
-                    ? 'text-red-600 bg-red-50 font-semibold'
+                    ? 'text-danger-600 bg-danger-50 font-semibold'
                     : 'text-gray-700'
                 }`}
               >
@@ -202,8 +210,8 @@ export function WeeklyCalendar({
                     style={{ top: `${currentTimePercent}%` }}
                   >
                     <div className="relative flex items-center">
-                      <div className="absolute -left-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
-                      <div className="w-full h-0.5 bg-red-500" />
+                      <div className="absolute -left-1 w-2.5 h-2.5 bg-danger-500 rounded-full" />
+                      <div className="w-full h-0.5 bg-danger-500" />
                     </div>
                   </div>
                 )}

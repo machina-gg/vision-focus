@@ -21,25 +21,25 @@ export function MiniStats({
       <div className="flex justify-center gap-4">
         {/* Today's Blocks */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-          <div className="flex items-center justify-center gap-2 text-amber-500 mb-1">
+          <div className="flex items-center justify-center gap-2 text-block-500 mb-1">
             <Ban className="w-4 h-4" />
             <span className="text-xs font-medium">
               {getMessage('todayBlocks')}
             </span>
           </div>
-          <p className="text-xl font-bold text-amber-600">{blockCount}</p>
+          <p className="text-xl font-bold text-block-600">{blockCount}</p>
         </div>
 
         {/* Blocking Days */}
         {blockingDays !== null && (
           <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-blue-500 mb-1">
+            <div className="flex items-center justify-center gap-2 text-info-500 mb-1">
               <Calendar className="w-4 h-4" />
               <span className="text-xs font-medium">
                 {getMessage('blockingDays')}
               </span>
             </div>
-            <p className="text-xl font-bold text-blue-600">
+            <p className="text-xl font-bold text-info-600">
               {getMessage('blockedForDays', blockingDays.toString())}
             </p>
           </div>
