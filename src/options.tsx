@@ -18,7 +18,6 @@ import {
   AnalyticsTab,
   PremiumTab,
   HelpTab,
-  NewPresetModal,
   ScheduleModal
 } from '~/components/options';
 import {
@@ -26,7 +25,6 @@ import {
   useBlocklist,
   useLicense,
   useSchedules,
-  usePresets,
   usePremiumStatus
 } from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
@@ -83,7 +81,6 @@ function OptionsApp() {
   const blocklist = useBlocklist({ settings, setSettings });
   const license = useLicense();
   const schedules = useSchedules({ settings, setSettings });
-  const presets = usePresets({ vision, setVision });
 
   // Sync language setting with i18n module
   useEffect(() => {
@@ -209,31 +206,7 @@ function OptionsApp() {
 
         {/* Styles Tab */}
         {activeTab === TABS.STYLES && (
-          <StylesTab
-            vision={vision}
-            draftPresets={presets.draftPresets}
-            selectedPresetId={presets.selectedPresetId}
-            draftDisplaySettings={presets.draftDisplaySettings}
-            editingPresetName={presets.editingPresetName}
-            isDirty={presets.isDirty}
-            visionSaved={presets.visionSaved}
-            isPremium={isPremium}
-            featureLimits={featureLimits}
-            onSelectPreset={presets.handleSelectPreset}
-            onCreatePresetClick={() => presets.setShowSavePresetModal(true)}
-            onDeletePreset={presets.handleDeletePreset}
-            onApplyPreset={presets.handleApplyPreset}
-            onSavePreset={presets.handleSaveSelectedPreset}
-            onPresetNameChange={presets.handlePresetNameChange}
-            onGoalTextChange={presets.handleGoalTextChange}
-            onGoalSubTextChange={presets.handleGoalSubTextChange}
-            onTextColorChange={presets.handleTextColorChange}
-            onBackgroundTypeChange={presets.handleBackgroundTypeChange}
-            onBackgroundChange={presets.handleBackgroundChange}
-            onBackgroundColorChange={presets.handleBackgroundColorChange}
-            onCustomBackgroundChange={presets.handleCustomBackgroundChange}
-            onFontSettingsChange={presets.handleFontSettingsChange}
-          />
+          <StylesTab isPremium={isPremium} featureLimits={featureLimits} />
         )}
 
         {/* Block List Tab */}
@@ -309,15 +282,6 @@ function OptionsApp() {
           />
         )}
       </main>
-
-      {/* New Preset Modal */}
-      <NewPresetModal
-        isOpen={presets.showSavePresetModal}
-        onClose={() => presets.setShowSavePresetModal(false)}
-        presetName={presets.presetName}
-        onPresetNameChange={presets.setPresetName}
-        onCreate={presets.handleCreatePreset}
-      />
 
       {/* Schedule Modal */}
       <ScheduleModal
