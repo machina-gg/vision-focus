@@ -3,6 +3,7 @@ export * from './useBackgroundPreload';
 export * from './useBackgroundStats';
 export * from './useBlocklist';
 export * from './useLicense';
+export * from './usePasswordVerification';
 export * from './usePresets';
 export * from './usePremiumStatus';
 export * from './useResolvedPreset';
