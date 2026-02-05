@@ -18,5 +18,5 @@ export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number];
 
 // Helper to get background URL
 export function getBackgroundUrl(bgId: string): string {
-  return chrome.runtime.getURL(`assets/images/backgrounds/${bgId}.jpg`);
+  return chrome.runtime.getURL(`assets/images/backgrounds/${bgId}.webp`);
 }
