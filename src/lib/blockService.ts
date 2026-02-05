@@ -9,8 +9,21 @@
 
 import { getSettings, getAnalytics, setAnalytics } from '~/lib/storage';
 import { extractDomain, matchesDomain } from '~/lib/domain';
-import { isWithinSchedule, getTodayKey, getCurrentHourKey, needsDailyReset, needsHourlyReset } from '~/lib/time';
-import type { AppSettings, BlockItem, Schedule, TimeLimitUsage, AnalyticsData, YouTubeSettings } from '~/types/storage';
+import {
+  isWithinSchedule,
+  getTodayKey,
+  getCurrentHourKey,
+  needsDailyReset,
+  needsHourlyReset
+} from '~/lib/time';
+import type {
+  AppSettings,
+  BlockItem,
+  Schedule,
+  TimeLimitUsage,
+  AnalyticsData,
+  YouTubeSettings
+} from '~/types/storage';
 
 // Block reason type - matches the state machine documentation
 export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
@@ -40,10 +53,8 @@ export async function findBlockItemForDomain(
   domain: string,
   settings?: AppSettings
 ): Promise<BlockItem | null> {
-  const s = settings ?? await getSettings();
-  return (
-    s.blockList.find((item) => matchesDomain(domain, item)) || null
-  );
+  const s = settings ?? (await getSettings());
+  return s.blockList.find((item) => matchesDomain(domain, item)) || null;
 }
 
 /**
@@ -125,7 +136,7 @@ export async function hasExceededTimeLimit(
   domain: string,
   blockItem?: BlockItem | null
 ): Promise<boolean> {
-  const item = blockItem ?? await findEnabledBlockItemForDomain(domain);
+  const item = blockItem ?? (await findEnabledBlockItemForDomain(domain));
 
   if (!item) {
     return false;
@@ -155,7 +166,7 @@ export async function getRemainingTime(
   domain: string,
   blockItem?: BlockItem | null
 ): Promise<number | null> {
-  const item = blockItem ?? await findEnabledBlockItemForDomain(domain);
+  const item = blockItem ?? (await findEnabledBlockItemForDomain(domain));
 
   if (!item || !item.timeLimit) {
     return null;
@@ -237,7 +248,9 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
  * Check if a domain should be tracked for block count
  * This validates all conditions: enabled, schedule, etc.
  */
-export async function shouldTrackBlockForDomain(domain: string): Promise<boolean> {
+export async function shouldTrackBlockForDomain(
+  domain: string
+): Promise<boolean> {
   const settings = await getSettings();
 
   // Check global pause
@@ -345,7 +358,9 @@ export async function resetExpiredUsage(): Promise<void> {
 /**
  * Get time limit info for a URL (used by popup/newtab)
  */
-export async function getTimeLimitInfo(url: string): Promise<TimeLimitInfo | null> {
+export async function getTimeLimitInfo(
+  url: string
+): Promise<TimeLimitInfo | null> {
   const domain = extractDomain(url);
   if (!domain) return null;
 
@@ -366,7 +381,9 @@ export async function getTimeLimitInfo(url: string): Promise<TimeLimitInfo | nul
   const remaining = await getRemainingTime(domain, blockItem);
   const analytics = await getAnalytics();
   const usage = analytics.timeLimitUsage[domain];
-  const effective = usage ? getEffectiveUsage(usage) : { dailyUsedSeconds: 0, hourlyUsedSeconds: 0 };
+  const effective = usage
+    ? getEffectiveUsage(usage)
+    : { dailyUsedSeconds: 0, hourlyUsedSeconds: 0 };
 
   const usedSeconds =
     blockItem.timeLimit.type === 'daily'

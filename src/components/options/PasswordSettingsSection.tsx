@@ -127,7 +127,14 @@ export function PasswordSettingsSection({
     } finally {
       setIsProcessing(false);
     }
-  }, [currentPassword, newPassword, confirmPassword, passwordSettings, onUpdate, resetForm]);
+  }, [
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    passwordSettings,
+    onUpdate,
+    resetForm
+  ]);
 
   const handleRemovePassword = useCallback(async () => {
     setError(null);
@@ -310,7 +317,9 @@ export function PasswordSettingsSection({
               disabled={isProcessing || !newPassword || !confirmPassword}
               className="flex-1"
             >
-              {isProcessing ? getMessage('processing') : getMessage('setPassword')}
+              {isProcessing
+                ? getMessage('processing')
+                : getMessage('setPassword')}
             </Button>
           </div>
         </div>
@@ -420,7 +429,10 @@ export function PasswordSettingsSection({
             <Button
               onClick={handleChangePassword}
               disabled={
-                isProcessing || !currentPassword || !newPassword || !confirmPassword
+                isProcessing ||
+                !currentPassword ||
+                !newPassword ||
+                !confirmPassword
               }
               className="flex-1"
             >

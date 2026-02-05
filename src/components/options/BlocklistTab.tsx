@@ -70,7 +70,8 @@ function TimeLimitEditor({ item, onUpdate, usage }: TimeLimitEditorProps) {
       ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
       : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
 
-  const [selectedType, setSelectedType] = useState<LimitTypeOption>(currentType);
+  const [selectedType, setSelectedType] =
+    useState<LimitTypeOption>(currentType);
   const [minutes, setMinutes] = useState(currentMinutes);
 
   const handleTypeChange = useCallback(
@@ -277,10 +278,7 @@ function NotificationSettingsSection({
               {getMessage('notificationTimeLimitEnabledDescription')}
             </p>
           </div>
-          <Toggle
-            checked={timeLimitEnabled}
-            onChange={handleToggle}
-          />
+          <Toggle checked={timeLimitEnabled} onChange={handleToggle} />
         </div>
 
         {timeLimitEnabled && (
@@ -540,8 +538,9 @@ export function BlocklistTab({
 
   // Check if any sites have time limits configured
   const hasTimeLimitSites =
-    settings?.blockList.some((item) => item.timeLimit !== null && item.timeLimit !== undefined) ??
-    false;
+    settings?.blockList.some(
+      (item) => item.timeLimit !== null && item.timeLimit !== undefined
+    ) ?? false;
 
   return (
     <div className="space-y-6">
@@ -600,7 +599,9 @@ export function BlocklistTab({
                     <div className="flex items-center gap-3">
                       <Toggle
                         checked={item.enabled}
-                        onChange={(checked) => handleToggleClick(item.id, checked)}
+                        onChange={(checked) =>
+                          handleToggleClick(item.id, checked)
+                        }
                         size="sm"
                       />
                       <div>
@@ -625,7 +626,10 @@ export function BlocklistTab({
                       {blockCount > 0 && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
                           <Shield className="w-3 h-3" />
-                          {getMessage('blockedTimesShort', blockCount.toString())}
+                          {getMessage(
+                            'blockedTimesShort',
+                            blockCount.toString()
+                          )}
                         </span>
                       )}
                     </div>
@@ -642,7 +646,9 @@ export function BlocklistTab({
                   <div className="ml-11">
                     <TimeLimitEditor
                       item={item}
-                      onUpdate={(timeLimit) => onUpdateTimeLimit(item.id, timeLimit)}
+                      onUpdate={(timeLimit) =>
+                        onUpdateTimeLimit(item.id, timeLimit)
+                      }
                       usage={usage}
                     />
                   </div>
