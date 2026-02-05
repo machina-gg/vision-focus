@@ -328,14 +328,14 @@ export function AnalyticsChart({
       className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
       {/* Summary */}
-      <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
-        <p className="text-sm text-orange-600 font-medium">
+      <div className="p-4 bg-block-50 rounded-lg border border-block-100">
+        <p className="text-sm text-block-600 font-medium">
           {getMessage('totalTimeOnUnblockedSites')}
         </p>
-        <p className="text-2xl font-bold text-orange-700">
+        <p className="text-2xl font-bold text-block-700">
           {formatTime(totalTime)}
         </p>
-        <p className="text-xs text-orange-500 mt-1">
+        <p className="text-xs text-block-500 mt-1">
           {getMessage('chartSiteCount', String(unblockedDomains.length))}
         </p>
       </div>

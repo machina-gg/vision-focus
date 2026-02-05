@@ -38,7 +38,7 @@ export function DomainListItem({
             >
               {item.isWildcard && (
                 <span
-                  className={item.enabled ? 'text-blue-600' : 'text-blue-300'}
+                  className={item.enabled ? 'text-info-600' : 'text-info-300'}
                 >
                   *.
                 </span>
@@ -50,14 +50,14 @@ export function DomainListItem({
             </p>
           </div>
           {blockCount > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-danger-100 text-danger-700 text-xs rounded-full">
               <Shield className="w-3 h-3" />
               {getMessage('blockedTimesShort', blockCount.toString())}
             </span>
           )}
         </div>
         <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)}>
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 className="w-4 h-4 text-danger-500" />
         </Button>
       </div>
 

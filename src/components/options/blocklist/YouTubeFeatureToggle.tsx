@@ -25,12 +25,12 @@ export function YouTubeFeatureToggle({
         disabled
           ? 'bg-gray-50 opacity-60'
           : checked
-            ? 'bg-red-50'
+            ? 'bg-danger-50'
             : 'bg-gray-50 hover:bg-gray-100'
       }`}
     >
       <div
-        className={`p-1.5 rounded-lg ${checked && !disabled ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}
+        className={`p-1.5 rounded-lg ${checked && !disabled ? 'bg-danger-100 text-danger-600' : 'bg-gray-200 text-gray-500'}`}
       >
         {icon}
       </div>

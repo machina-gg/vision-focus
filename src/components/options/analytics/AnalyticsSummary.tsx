@@ -68,7 +68,7 @@ export function AnalyticsSummary({
       {!hasTrackedSites && (
         <Card>
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">&#10003;</span>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -85,7 +85,7 @@ export function AnalyticsSummary({
       {blockedSites.length > 0 && (
         <Card>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-green-600" />
+            <Lock className="w-4 h-4 text-success-600" />
             {getMessage('statusBlocked')} ({blockedSites.length})
           </h3>
           <div className="space-y-3">
@@ -100,7 +100,7 @@ export function AnalyticsSummary({
       {unblockedSites.length > 0 && (
         <Card>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            <AlertTriangle className="w-4 h-4 text-block-500" />
             {getMessage('statusUnblocked')} ({unblockedSites.length})
           </h3>
           <div className="space-y-3">
@@ -116,12 +116,12 @@ export function AnalyticsSummary({
 
             {/* Total time (Premium only) */}
             {isPremium && unblockedSites.length > 1 && (
-              <div className="pt-4 border-t border-orange-200">
+              <div className="pt-4 border-t border-block-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">
                     {getMessage('totalTimeOnUnblockedSites')}
                   </span>
-                  <span className="text-lg font-bold text-orange-600">
+                  <span className="text-lg font-bold text-block-600">
                     {formatTime(totalTimeSpent)}
                   </span>
                 </div>
@@ -150,15 +150,15 @@ export function AnalyticsSummary({
 
 function BlockedSiteItem({ site }: { site: TrackedSite }) {
   return (
-    <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+    <div className="p-3 bg-success-50 rounded-lg border border-success-100">
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <div className="w-2 h-2 bg-success-500 rounded-full" />
             <span className="font-medium text-gray-900 truncate">
               {site.domain}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-700">
               {getMessage('statusBlocked')}
             </span>
           </div>
@@ -167,7 +167,7 @@ function BlockedSiteItem({ site }: { site: TrackedSite }) {
           </p>
         </div>
         <div className="text-right">
-          <span className="text-lg font-bold text-green-600">
+          <span className="text-lg font-bold text-success-600">
             0{getMessage('time') === 'Time' ? 'm' : '\u5206'}
           </span>
           <p className="text-xs text-gray-500">{getMessage('timeSaved')}</p>
@@ -191,15 +191,15 @@ function UnblockedSiteItem({
   onStopTracking
 }: UnblockedSiteItemProps) {
   return (
-    <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
+    <div className="p-4 bg-block-50 rounded-lg border border-block-100">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-orange-500 rounded-full" />
+            <div className="w-2 h-2 bg-block-500 rounded-full" />
             <span className="font-medium text-gray-900 truncate">
               {site.domain}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-block-100 text-block-700">
               {getMessage('statusUnblocked')}
             </span>
           </div>
@@ -212,7 +212,7 @@ function UnblockedSiteItem({
           <div className="flex items-center gap-2 mt-2">
             <Clock className="w-4 h-4 text-gray-400" />
             {isPremium ? (
-              <span className="text-sm font-medium text-orange-600">
+              <span className="text-sm font-medium text-block-600">
                 {getMessage('timeSpentSinceUnblock')}:{' '}
                 {formatTime(site.timeAfterUnblock)}
               </span>

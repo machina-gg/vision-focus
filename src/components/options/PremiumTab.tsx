@@ -72,15 +72,15 @@ export function PremiumTab({
               <h2 className="text-lg font-semibold text-gray-900">
                 {getMessage('currentPlan')}
               </h2>
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-full text-sm font-bold shadow-sm">
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-premium-400 to-premium-500 text-white rounded-full text-sm font-bold shadow-sm">
                 <Crown className="w-4 h-4" />
                 Premium
               </span>
             </div>
 
-            <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl">
+            <div className="p-4 bg-gradient-to-br from-premium-50 to-premium-50 border border-premium-200 rounded-xl">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-premium-400 to-premium-500 rounded-full flex items-center justify-center shadow-lg">
                   <Crown className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -115,14 +115,14 @@ export function PremiumTab({
               {comparisonFeatures.map((feature, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 border border-amber-100 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-gradient-to-r from-premium-50/50 to-premium-50/50 border border-premium-100 rounded-lg"
                 >
                   <span className="text-gray-700">{feature.name}</span>
                   <div className="flex items-center gap-2">
                     {feature.premium === true ? (
-                      <Check className="w-5 h-5 text-green-500" />
+                      <Check className="w-5 h-5 text-success-500" />
                     ) : (
-                      <span className="font-medium text-amber-600">
+                      <span className="font-medium text-premium-600">
                         {feature.premium}
                       </span>
                     )}
@@ -173,9 +173,9 @@ export function PremiumTab({
           </Card>
 
           {/* Upgrade CTA with Price Anchoring */}
-          <Card className="bg-gradient-to-br from-sky-50 to-blue-100 border border-blue-200">
+          <Card className="bg-gradient-to-br from-info-50 to-info-100 border border-info-200">
             <div className="text-center">
-              <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-medium mb-3">
+              <div className="inline-flex items-center gap-1 px-3 py-1 bg-info-500 text-white rounded-full text-sm font-medium mb-3">
                 <Sparkles className="w-4 h-4" />
                 Premium
               </div>
@@ -185,7 +185,7 @@ export function PremiumTab({
               </h2>
 
               <div className="flex items-baseline justify-center gap-1 mb-1">
-                <span className="text-4xl font-bold text-blue-600">$1.99</span>
+                <span className="text-4xl font-bold text-info-600">$1.99</span>
                 <span className="text-gray-500">/月</span>
               </div>
 
@@ -198,7 +198,7 @@ export function PremiumTab({
 
               <Button
                 onClick={onUpgrade}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
+                className="w-full bg-info-500 hover:bg-info-600 text-white font-bold py-3"
               >
                 <Crown className="w-5 h-5" />
                 {getMessage('upgradeToPremium')}
@@ -226,7 +226,7 @@ export function PremiumTab({
                     <th className="text-center py-3 px-3 font-medium text-gray-600 w-24">
                       Free
                     </th>
-                    <th className="text-center py-3 px-3 font-medium text-blue-600 w-24 bg-blue-50">
+                    <th className="text-center py-3 px-3 font-medium text-info-600 w-24 bg-info-50">
                       Premium
                     </th>
                   </tr>
@@ -235,7 +235,7 @@ export function PremiumTab({
                   {comparisonFeatures.map((feature, index) => (
                     <tr
                       key={index}
-                      className={feature.highlight ? 'bg-amber-50/50' : ''}
+                      className={feature.highlight ? 'bg-premium-50/50' : ''}
                     >
                       <td className="py-3 px-4 text-gray-700">
                         {feature.name}
@@ -247,11 +247,11 @@ export function PremiumTab({
                           <span className="text-gray-600">{feature.free}</span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-center bg-blue-50/50">
+                      <td className="py-3 px-3 text-center bg-info-50/50">
                         {feature.premium === true ? (
-                          <Check className="w-5 h-5 text-green-500 mx-auto" />
+                          <Check className="w-5 h-5 text-success-500 mx-auto" />
                         ) : (
-                          <span className="font-medium text-blue-600">
+                          <span className="font-medium text-info-600">
                             {feature.premium}
                           </span>
                         )}

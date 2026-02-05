@@ -36,8 +36,8 @@ export function BlockedSitesList({
         className="w-full flex items-center justify-between px-5 py-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl border border-white/10 transition-all duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-red-500/20 rounded-lg">
-            <Shield className="w-4 h-4 text-red-400" />
+          <div className="p-1.5 bg-danger-500/20 rounded-lg">
+            <Shield className="w-4 h-4 text-danger-400" />
           </div>
           <span className="text-sm font-medium text-white/90">
             {getMessage('blockedSites')} ({enabledBlockList.length})
@@ -62,7 +62,7 @@ export function BlockedSitesList({
                   className="px-5 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
+                    <span className="w-2 h-2 rounded-full bg-danger-400 flex-shrink-0 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
                     <span className="text-sm text-white/80 truncate font-medium">
                       {item.domain}
                     </span>

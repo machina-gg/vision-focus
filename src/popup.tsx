@@ -84,10 +84,10 @@ function PopupApp() {
           timeLimitInfo.remainingSeconds !== null &&
           timeLimitInfo.limitType &&
           timeLimitInfo.limitSeconds && (
-            <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
-              <Clock className="w-5 h-5 text-blue-500" />
+            <div className="bg-info-50 rounded-xl p-3 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-info-500" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-blue-700">
+                <p className="text-sm font-medium text-info-700">
                   {currentDomain}
                 </p>
                 <TimeLimitBadge
@@ -115,21 +115,21 @@ function PopupApp() {
             {getMessage('todaysSummary')}
           </h2>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-amber-50 rounded-xl p-4">
+            <div className="bg-block-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Ban className="w-4 h-4 text-amber-500" />
+                <Ban className="w-4 h-4 text-block-500" />
                 <span className="text-xs font-medium text-gray-500">
                   {getMessage('todayBlocks')}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-block-600">
                 {stats.blockCount}
               </p>
             </div>
 
-            <div className="bg-blue-50 rounded-xl p-4">
+            <div className="bg-info-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-blue-500" />
+                <Shield className="w-4 h-4 text-info-500" />
                 <span className="text-xs font-medium text-gray-500">
                   {getMessage('topBlockedSite')}
                 </span>
@@ -137,12 +137,12 @@ function PopupApp() {
               {stats.topBlockedSite ? (
                 <div>
                   <p
-                    className="text-sm font-bold text-blue-600 truncate"
+                    className="text-sm font-bold text-info-600 truncate"
                     title={stats.topBlockedSite.domain}
                   >
                     {stats.topBlockedSite.domain}
                   </p>
-                  <p className="text-xs text-blue-500">
+                  <p className="text-xs text-info-500">
                     {getMessage(
                       'blockedTimesShort',
                       stats.topBlockedSite.count.toString()
@@ -160,7 +160,7 @@ function PopupApp() {
           {isPremium && (
             <button
               onClick={handleAnalyticsClick}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm text-info-600 hover:text-info-700 hover:bg-info-50 rounded-lg transition-colors"
             >
               <TrendingUp className="w-4 h-4" />
               {getMessage('viewAnalytics')}

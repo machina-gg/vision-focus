@@ -144,8 +144,8 @@ export function PasswordSettingsSection({
   return (
     <Card>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-          <Lock className="w-5 h-5 text-amber-600" />
+        <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+          <Lock className="w-5 h-5 text-warning-600" />
         </div>
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -163,14 +163,14 @@ export function PasswordSettingsSection({
       {mode === 'view' && (
         <div
           className={`flex items-center gap-2 p-3 rounded-lg ${
-            isEnabled ? 'bg-green-50' : 'bg-gray-50'
+            isEnabled ? 'bg-success-50' : 'bg-gray-50'
           }`}
         >
           <Shield
-            className={`w-4 h-4 ${isEnabled ? 'text-green-600' : 'text-gray-400'}`}
+            className={`w-4 h-4 ${isEnabled ? 'text-success-600' : 'text-gray-400'}`}
           />
           <span
-            className={`text-sm ${isEnabled ? 'text-green-700' : 'text-gray-500'}`}
+            className={`text-sm ${isEnabled ? 'text-success-700' : 'text-gray-500'}`}
           >
             {isEnabled
               ? getMessage('passwordProtectionEnabled')
@@ -179,7 +179,7 @@ export function PasswordSettingsSection({
           {isEnabled && (
             <button
               onClick={() => setMode('change')}
-              className="ml-auto text-sm text-blue-600 hover:text-blue-800"
+              className="ml-auto text-sm text-info-600 hover:text-info-800"
             >
               {getMessage('changePassword')}
             </button>
@@ -189,8 +189,8 @@ export function PasswordSettingsSection({
 
       {mode === 'set' && (
         <div className="space-y-4">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
+          <div className="p-3 bg-info-50 rounded-lg">
+            <p className="text-sm text-info-700">
               {getMessage('passwordSetInstructions')}
             </p>
           </div>
@@ -269,8 +269,8 @@ export function PasswordSettingsSection({
 
       {mode === 'remove' && (
         <div className="space-y-4">
-          <div className="p-3 bg-amber-50 rounded-lg">
-            <p className="text-sm text-amber-700">
+          <div className="p-3 bg-warning-50 rounded-lg">
+            <p className="text-sm text-warning-700">
               {getMessage('passwordRemoveWarning')}
             </p>
           </div>

@@ -94,7 +94,7 @@ export function DisplaySettingsForm({
               placeholder={getMessage('goalSubTextPlaceholder')}
               maxLength={100}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-sm"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">
               {draftDisplaySettings.goalSubText.length} / 100
@@ -141,7 +141,7 @@ export function DisplaySettingsForm({
               onClick={() => handleBackgroundTypeChange('image')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 (draftDisplaySettings.backgroundType || 'image') === 'image'
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-info-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -151,7 +151,7 @@ export function DisplaySettingsForm({
               onClick={() => handleBackgroundTypeChange('color')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 draftDisplaySettings.backgroundType === 'color'
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-info-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -169,7 +169,7 @@ export function DisplaySettingsForm({
                 onClick={() => handleBackgroundChange(bg.id)}
                 className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-colors ${
                   draftDisplaySettings.backgroundImage === bg.id
-                    ? 'border-blue-500'
+                    ? 'border-info-500'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -217,7 +217,7 @@ export function DisplaySettingsForm({
               {getMessage('customBackground')}
             </h3>
             {!isPremium && (
-              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+              <span className="text-xs text-premium-600 bg-premium-50 px-2 py-1 rounded-full">
                 {getMessage('premium')}
               </span>
             )}

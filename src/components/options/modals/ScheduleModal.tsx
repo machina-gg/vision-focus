@@ -71,7 +71,7 @@ export function ScheduleModal({
               onChange={(e) =>
                 onFormChange({ ...scheduleForm, startTime: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <div>
@@ -84,7 +84,7 @@ export function ScheduleModal({
               onChange={(e) =>
                 onFormChange({ ...scheduleForm, endTime: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -100,7 +100,7 @@ export function ScheduleModal({
                 onClick={() => toggleDay(idx)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   scheduleForm.days.includes(idx)
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-info-500 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -120,7 +120,7 @@ export function ScheduleModal({
             onChange={(e) =>
               onFormChange({ ...scheduleForm, presetId: e.target.value })
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
           >
             <option value="">{getMessage('noPresetSelected')}</option>
             {vision?.presets?.map((preset, index) => {
@@ -141,7 +141,7 @@ export function ScheduleModal({
             vision?.presets &&
             vision.presets.findIndex((p) => p.id === scheduleForm.presetId) >=
               featureLimits.maxPresets && (
-              <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mt-2">
+              <div className="flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg mt-2">
                 <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{getMessage('scheduleLockedPresetWarning')}</span>
               </div>

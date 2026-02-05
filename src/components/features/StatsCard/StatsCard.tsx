@@ -14,9 +14,17 @@ const typeStyles: Record<
   StatsType,
   { bg: string; text: string; icon: string }
 > = {
-  waste: { bg: 'bg-red-50', text: 'text-red-600', icon: 'text-red-500' },
-  invest: { bg: 'bg-green-50', text: 'text-green-600', icon: 'text-green-500' },
-  block: { bg: 'bg-amber-50', text: 'text-amber-600', icon: 'text-amber-500' },
+  waste: {
+    bg: 'bg-danger-50',
+    text: 'text-danger-600',
+    icon: 'text-danger-500'
+  },
+  invest: {
+    bg: 'bg-success-50',
+    text: 'text-success-600',
+    icon: 'text-success-500'
+  },
+  block: { bg: 'bg-block-50', text: 'text-block-600', icon: 'text-block-500' },
   neutral: { bg: 'bg-gray-50', text: 'text-gray-600', icon: 'text-gray-500' }
 };
 

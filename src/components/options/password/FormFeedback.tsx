@@ -11,13 +11,13 @@ export function FormFeedback({ error, success }: FormFeedbackProps) {
   return (
     <>
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600">
+        <div className="flex items-center gap-2 text-sm text-danger-600">
           <AlertTriangle className="w-4 h-4" />
           <span>{error}</span>
         </div>
       )}
       {success && (
-        <div className="flex items-center gap-2 text-sm text-green-600">
+        <div className="flex items-center gap-2 text-sm text-success-600">
           <Check className="w-4 h-4" />
           <span>{success}</span>
         </div>

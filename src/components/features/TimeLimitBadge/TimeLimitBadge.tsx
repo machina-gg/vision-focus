@@ -27,15 +27,15 @@ export function TimeLimitBadge({
 
   if (isExceeded) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-danger-100 text-danger-700 text-xs rounded-full">
         <AlertTriangle className="w-3 h-3" />
         {getMessage('timeLimitReached')}
       </span>
     );
   }
 
-  const bgColor = isLow ? 'bg-amber-100' : 'bg-blue-100';
-  const textColor = isLow ? 'text-amber-700' : 'text-blue-700';
+  const bgColor = isLow ? 'bg-warning-100' : 'bg-info-100';
+  const textColor = isLow ? 'text-warning-700' : 'text-info-700';
 
   const timeDisplay = formatTime(remainingSeconds);
   const suffix =

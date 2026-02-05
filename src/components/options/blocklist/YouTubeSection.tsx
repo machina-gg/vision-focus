@@ -68,8 +68,8 @@ export function YouTubeSection({
   return (
     <Card>
       <div className="flex items-start gap-3 mb-4">
-        <div className="p-2 bg-red-100 rounded-lg">
-          <Youtube className="w-5 h-5 text-red-600" />
+        <div className="p-2 bg-danger-100 rounded-lg">
+          <Youtube className="w-5 h-5 text-danger-600" />
         </div>
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -102,9 +102,9 @@ export function YouTubeSection({
 
       {/* Feature Toggles */}
       {!isEnabled && (
-        <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
-          <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <p className="text-xs text-amber-700">
+        <div className="mb-3 p-2 bg-block-50 border border-block-200 rounded-lg flex items-center gap-2">
+          <Info className="w-4 h-4 text-block-600 flex-shrink-0" />
+          <p className="text-xs text-block-700">
             {getMessage('youtubeDisabledNote')}
           </p>
         </div>

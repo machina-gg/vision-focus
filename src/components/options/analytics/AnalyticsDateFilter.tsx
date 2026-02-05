@@ -74,8 +74,8 @@ export function AnalyticsDateFilter({
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-purple-100 rounded-lg">
-          <BarChart3 className="w-5 h-5 text-purple-600" />
+        <div className="p-2 bg-premium-100 rounded-lg">
+          <BarChart3 className="w-5 h-5 text-premium-600" />
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900">

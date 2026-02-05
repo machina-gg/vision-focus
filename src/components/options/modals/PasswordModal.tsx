@@ -78,9 +78,9 @@ export function PasswordModal({
       size="sm"
     >
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg">
-          <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <p className="text-sm text-amber-800">
+        <div className="flex items-center gap-3 p-4 bg-warning-50 rounded-lg">
+          <Lock className="w-5 h-5 text-warning-600 flex-shrink-0" />
+          <p className="text-sm text-warning-800">
             {description || getMessage('passwordRequiredDescription')}
           </p>
         </div>
@@ -111,7 +111,7 @@ export function PasswordModal({
               )}
             </button>
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger-600">{error}</p>}
         </div>
 
         <div className="flex gap-3 pt-2">
