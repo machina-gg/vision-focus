@@ -34,7 +34,9 @@ export function PasswordSettingsSection({
   const [success, setSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isEnabled = passwordSettings.enabled && passwordSettings.passwordHash;
+  const isEnabled = Boolean(
+    passwordSettings.enabled && passwordSettings.passwordHash
+  );
 
   const resetForm = useCallback(() => {
     setCurrentPassword('');
