@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { sendToBackground } from '@plasmohq/messaging';
 
+import { getActiveTab } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
 
 const POLLING_INTERVAL_MS = 10000;
@@ -35,10 +36,7 @@ export function useCurrentDomain(): UseCurrentDomainReturn {
   useEffect(() => {
     const getCurrentDomainAndTimeLimit = async () => {
       try {
-        const [tab] = await chrome.tabs.query({
-          active: true,
-          currentWindow: true
-        });
+        const tab = await getActiveTab();
         if (tab?.url) {
           const domain = extractDomain(tab.url);
           setCurrentDomain(domain || undefined);
