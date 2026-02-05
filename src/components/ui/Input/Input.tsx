@@ -33,18 +33,18 @@ export function Input({
         id={inputId}
         className={`
           w-full px-3 py-2
-          text-gray-800 placeholder-gray-400
-          bg-white border rounded-md
+          text-gray-900 placeholder-gray-400
+          bg-white border rounded-lg
           transition-colors duration-200
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
           disabled:bg-gray-100 disabled:cursor-not-allowed
-          ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
+          ${error ? 'border-danger-500 focus:ring-danger-500' : 'border-gray-300'}
           ${className}
         `}
         onChange={(e) => onChange?.(e.target.value)}
         {...props}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger-500">{error}</p>}
     </div>
   );
 }

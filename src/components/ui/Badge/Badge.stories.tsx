@@ -14,7 +14,7 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'success', 'warning', 'danger', 'info']
+      options: ['default', 'success', 'warning', 'danger', 'info', 'premium']
     }
   }
 } satisfies Meta<typeof Badge>;
@@ -57,6 +57,13 @@ export const Info: Story = {
   }
 };
 
+export const Premium: Story = {
+  args: {
+    variant: 'premium',
+    children: 'Premium'
+  }
+};
+
 export const AllVariants: Story = {
   args: {
     children: 'Badge'
@@ -68,6 +75,7 @@ export const AllVariants: Story = {
       <Badge variant="warning">Warning</Badge>
       <Badge variant="danger">Danger</Badge>
       <Badge variant="info">Info</Badge>
+      <Badge variant="premium">Premium</Badge>
     </div>
   )
 };
