@@ -13,8 +13,10 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.1",
