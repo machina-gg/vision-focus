@@ -11,45 +11,31 @@ import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
-import { useBackgroundStats, usePremiumStatus } from '~/hooks';
+import {
+  useBackgroundPreload,
+  useBackgroundStats,
+  usePremiumStatus,
+  useResolvedPreset
+} from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
-import { presetToDisplaySettings } from '~/lib/presetUtils';
 import {
   getLastBlockedDomain,
   clearLastBlockedDomain,
   getSiteBlockCount
 } from '~/lib/storage';
-import { isWithinSchedule } from '~/lib/time';
 import { storage } from '~/lib/storage';
-import {
-  getBackgroundUrl,
-  loadGoogleFont,
-  FONT_WEIGHT_VALUE
-} from '~/constants';
 import type {
   VisionSettings,
-  DashboardDisplaySettings,
   AppSettings,
   AnalyticsData
 } from '~/types/storage';
 import {
   DEFAULT_VISION,
-  DEFAULT_DISPLAY_SETTINGS,
   DEFAULT_SETTINGS,
   DEFAULT_ANALYTICS
 } from '~/types/storage';
-import { getFontDefinition } from '~/types/font';
-import { FEATURE_LIMITS } from '~/types/premium';
 
 import './styles/globals.css';
-
-// Font size in pixels for newtab (larger than options preview)
-const FONT_SIZE_PX: Record<string, number> = {
-  sm: 30,
-  md: 36,
-  lg: 48,
-  xl: 60
-};
 
 function NewtabApp() {
   const [vision, setVision] = useStorage<VisionSettings>(
@@ -79,10 +65,6 @@ function NewtabApp() {
   const [editText, setEditText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track if storage data has been loaded (to prevent flicker)
-  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
-  const [isBackgroundReady, setIsBackgroundReady] = useState(false);
-
   // Blocked site info (shown when redirected from a blocked site)
   const [blockedInfo, setBlockedInfo] = useState<{
     domain: string;
@@ -92,13 +74,18 @@ function NewtabApp() {
   // Block reason (from URL parameter)
   const [blockReason, setBlockReason] = useState<string | null>(null);
 
-  // Time tick for schedule checking (updates when tab becomes visible)
-  const [timeTick, setTimeTick] = useState(0);
+  const { displaySettings } = useResolvedPreset({
+    vision,
+    settings,
+    isPremium
+  });
+
+  const { isStorageLoaded, isBackgroundReady, containerStyle, fontStyle } =
+    useBackgroundPreload({ displaySettings });
 
   // Check if we were redirected from a blocked site
   useEffect(() => {
     const loadBlockedInfo = async () => {
-      // Check for block reason in URL
       const urlParams = new URLSearchParams(window.location.search);
       const reason = urlParams.get('reason');
       if (reason) {
@@ -109,7 +96,6 @@ function NewtabApp() {
       if (domain) {
         const count = await getSiteBlockCount(domain);
         setBlockedInfo({ domain, count });
-        // Clear it so it doesn't show on next new tab
         await clearLastBlockedDomain();
       }
     };
@@ -123,152 +109,6 @@ function NewtabApp() {
     }
   }, [settings?.language]);
 
-  // Mark storage as loaded once we have vision data beyond default
-  // useStorage returns default first, then updates with stored data
-  useEffect(() => {
-    // Check if vision has been loaded from storage (not just default)
-    // We detect this by checking if the storage hook has returned actual data
-    const checkStorageLoaded = async () => {
-      const storedVision = await storage.get<VisionSettings>('vision');
-      // If there's stored vision data, or we've waited long enough for storage check
-      if (storedVision !== undefined) {
-        setIsStorageLoaded(true);
-      }
-    };
-    checkStorageLoaded();
-  }, []);
-
-  // Also mark as loaded after a short timeout to handle first-time users
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsStorageLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Re-check schedule when tab becomes visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setTimeTick((prev) => prev + 1);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // Helper to check if a preset is within free tier limits
-  const isPresetAvailable = useCallback(
-    (presetId: string, presets: VisionSettings['presets']) => {
-      if (isPremium) return true;
-      const index = presets?.findIndex((p) => p.id === presetId) ?? -1;
-      return index >= 0 && index < FEATURE_LIMITS.free.maxPresets;
-    },
-    [isPremium]
-  );
-
-  // Get current display settings
-  // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
-  const displaySettings: DashboardDisplaySettings = useMemo(() => {
-    if (!vision) return DEFAULT_DISPLAY_SETTINGS;
-
-    // Check for active schedule with a preset
-    const activeScheduleWithPreset = settings?.schedules?.find(
-      (schedule) =>
-        schedule.enabled &&
-        schedule.presetId &&
-        isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
-    );
-
-    if (activeScheduleWithPreset?.presetId) {
-      // Check if preset is available for free tier
-      if (
-        isPresetAvailable(activeScheduleWithPreset.presetId, vision.presets)
-      ) {
-        const schedulePreset = vision.presets?.find(
-          (p) => p.id === activeScheduleWithPreset.presetId
-        );
-        if (schedulePreset) {
-          return presetToDisplaySettings(schedulePreset, isPremium);
-        }
-      }
-      // If preset is not available (beyond free limit), fall through to next priority
-    }
-
-    // Check for user-selected preset
-    if (vision.activePresetId) {
-      // Check if preset is available for free tier
-      if (isPresetAvailable(vision.activePresetId, vision.presets)) {
-        const activePreset = vision.presets?.find(
-          (p) => p.id === vision.activePresetId
-        );
-        if (activePreset) {
-          return presetToDisplaySettings(activePreset, isPremium);
-        }
-      }
-      // If preset is not available (beyond free limit), fall through to default
-    }
-
-    // Fall back to default settings
-    const defaultSettings = vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS;
-    return {
-      ...defaultSettings,
-      // Custom background requires premium
-      customBackgroundData: isPremium
-        ? defaultSettings.customBackgroundData
-        : null
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
-  }, [vision, settings, timeTick, isPremium, isPresetAvailable]);
-
-  // Get background style - supports custom uploaded background
-  const isColorBackground = displaySettings.backgroundType === 'color';
-  const backgroundUrl = displaySettings.customBackgroundData
-    ? displaySettings.customBackgroundData
-    : displaySettings.backgroundImage
-      ? getBackgroundUrl(displaySettings.backgroundImage)
-      : getBackgroundUrl('default-1');
-  const backgroundColor = displaySettings.backgroundColor;
-
-  // Preload background image to prevent flicker
-  useEffect(() => {
-    if (isColorBackground) {
-      // Color backgrounds don't need preloading
-      setIsBackgroundReady(true);
-      return;
-    }
-
-    // Preload the background image
-    const img = new Image();
-    img.onload = () => {
-      setIsBackgroundReady(true);
-    };
-    img.onerror = () => {
-      // On error, still show the page (will use fallback or show error state)
-      setIsBackgroundReady(true);
-    };
-    img.src = backgroundUrl;
-  }, [backgroundUrl, isColorBackground]);
-
-  // Get font styles
-  const fontSettings = displaySettings.fontSettings;
-  const fontDef = getFontDefinition(fontSettings.family);
-
-  // Load Google Font
-  useEffect(() => {
-    if (fontDef.googleFont) {
-      loadGoogleFont(fontDef.googleFont);
-    }
-  }, [fontDef.googleFont]);
-
-  const fontStyle = {
-    fontFamily: fontDef.css,
-    fontSize: `${FONT_SIZE_PX[fontSettings.size]}px`,
-    fontWeight: FONT_WEIGHT_VALUE[fontSettings.weight]
-  };
-
-  // Get goal from display settings
   const goalText = displaySettings.goalText;
   const goalSubText = displaySettings.goalSubText;
   const textColor = displaySettings.textColor;
@@ -277,7 +117,6 @@ function NewtabApp() {
   const blockingDays = useMemo(() => {
     if (!blockedInfo?.domain || !settings?.blockList) return null;
 
-    // Find the block item for this domain
     const blockItem = settings.blockList.find(
       (item) =>
         item.domain === blockedInfo.domain ||
@@ -292,7 +131,7 @@ function NewtabApp() {
     const diffTime = now.getTime() - createdDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    return Math.max(1, diffDays); // At least 1 day
+    return Math.max(1, diffDays);
   }, [blockedInfo?.domain, settings?.blockList]);
 
   const handleAnalyticsClick = useCallback(() => {
@@ -338,16 +177,11 @@ function NewtabApp() {
     chrome.runtime.openOptionsPage();
   }, []);
 
-  // Check if user has any presets configured
   const hasPresets = (vision?.presets?.length ?? 0) > 0;
 
-  // Show loading state until storage is loaded and background is ready
-  // This prevents the flicker when switching from default to custom background
   const isReady = isStorageLoaded && (isBackgroundReady || !isPremiumLoading);
 
   if (!isReady) {
-    // Show a minimal loading state with transparent background
-    // This prevents the white flash while data loads
     return (
       <div
         className="newtab-container relative flex flex-col items-center justify-center"
@@ -454,15 +288,7 @@ function NewtabApp() {
     <div
       ref={containerRef}
       className="newtab-container relative flex flex-col items-center justify-center"
-      style={
-        isColorBackground
-          ? { backgroundColor }
-          : {
-              backgroundImage: `url(${backgroundUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }
-      }
+      style={containerStyle}
     >
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/30" />
