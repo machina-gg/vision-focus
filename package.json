@@ -16,8 +16,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "type-check": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.1",
@@ -55,7 +54,6 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "jsdom": "^26.0.0",
-    "patch-package": "^8.0.1",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "storybook": "^8.5.0",
