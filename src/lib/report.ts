@@ -132,7 +132,8 @@ export function generateWeeklyReport(
   );
 
   // Only return null if there's absolutely no data
-  const hasData = totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
+  const hasData =
+    totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
   if (!hasData && weekOffset < 0) {
     // For past weeks, return null if no data
     return null;
@@ -169,10 +170,22 @@ export function generateMonthlyReport(
   monthOffset: number = 0 // 0 = current month, -1 = last month, etc.
 ): MonthlyReport | null {
   const today = new Date();
-  const targetDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const targetDate = new Date(
+    today.getFullYear(),
+    today.getMonth() + monthOffset,
+    1
+  );
 
-  const monthStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-  const monthEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
+  const monthStart = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth(),
+    1
+  );
+  const monthEnd = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth() + 1,
+    0
+  );
   const dates = getDatesInRange(monthStart, monthEnd);
 
   // Calculate totals
@@ -190,7 +203,8 @@ export function generateMonthlyReport(
   });
 
   // Only return null if there's absolutely no data
-  const hasData = totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
+  const hasData =
+    totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
   if (!hasData && monthOffset < 0) {
     // For past months, return null if no data
     return null;

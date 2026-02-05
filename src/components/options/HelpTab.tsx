@@ -33,7 +33,11 @@ interface HelpTabProps {
   onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
 }
 
-export function HelpTab({ onSettingsChange, settings, onPasswordUpdate }: HelpTabProps) {
+export function HelpTab({
+  onSettingsChange,
+  settings,
+  onPasswordUpdate
+}: HelpTabProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
