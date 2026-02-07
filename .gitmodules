@@ -1,0 +1,4 @@
+[submodule ".claude/vibe-coding-utils"]
+	path = .claude/vibe-coding-utils
+	url = git@github.com:machina-gg/vibe-coding-utils.git
+	branch = develop

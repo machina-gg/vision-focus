@@ -19,13 +19,13 @@ description: コードレビューと修正を行う
 - [ ] 機密情報のハードコード
 - [ ] CSRF対策
 
-### React / Next.js
+### React
 
 - [ ] 不要な再レンダリング（useMemo, useCallback の検討）
 - [ ] useEffect の依存配列の正確性
-- [ ] Server Component / Client Component の適切な使い分け
 - [ ] key プロパティの適切な設定
 - [ ] 状態管理の適切性
+- [ ] CLAUDE.md の技術スタックに基づくフレームワーク固有の観点
 
 ### API設計
 

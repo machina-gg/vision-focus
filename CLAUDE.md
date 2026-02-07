@@ -15,7 +15,9 @@
 - `.then` チェーン（async/await を使う）
 - クラスコンポーネント
 - インラインスタイル（Tailwind を使う）
-- default export（app/ 配下以外）
+- default export（フレームワークのエントリファイル以外）
+  - Next.js の場合: `app/` 配下のページコンポーネント
+  - Plasmo の場合: `newtab.tsx`, `popup.tsx`, `options.tsx`, `background/index.ts`, `contents/*.ts`
 - PRD.md の無断変更（確認必須）
 - テストなしでの複雑なロジック実装
 - Git コマンドの `&&` 連結（権限パターンがマッチしなくなるため、個別に実行すること）
@@ -41,36 +43,7 @@
 
 ---
 
-## 3. 技術スタック
-
-### 必須
-
-| カテゴリ           | 技術                           |
-| ------------------ | ------------------------------ |
-| フレームワーク     | Next.js (App Router) 16.x      |
-| 言語               | TypeScript 5.x                 |
-| スタイリング       | Tailwind CSS 4.x               |
-| バリデーション     | Zod                            |
-| Linter / Formatter | ESLint / Prettier              |
-| パッケージ管理     | npm                            |
-| Node.js            | 24.x                           |
-| 単体テスト         | Vitest + React Testing Library |
-| E2Eテスト          | Playwright                     |
-| コンポーネント管理 | Storybook                      |
-
-### プロジェクトに応じて追加
-
-| カテゴリ         | 選択肢                                                      |
-| ---------------- | ----------------------------------------------------------- |
-| データストレージ | Supabase（ローカル: Supabase Local / 本番: Supabase Cloud） |
-| UIコンポーネント | shadcn/ui                                                   |
-| アイコン         | Lucide                                                      |
-| フォーム         | React Hook Form                                             |
-| データフェッチ   | SWR / TanStack Query                                        |
-
----
-
-## 4. コマンド一覧
+## 3. コマンド一覧
 
 以下のスラッシュコマンドが使用可能です：
 
@@ -83,45 +56,15 @@
 | `/project:prototype`             | プロトタイプ実装（デザインコンセプト確定） |
 | `/project:test-design`           | E2Eテスト設計を行う                        |
 | `/project:implement <Issue番号>` | 本実装を行う（複数指定で並行開発）         |
-| `/project:continue`              | 進捗確認・作業再開                         |
+| `/project:status`                | 現在の状況を確認                           |
 | `/project:review`                | コードレビューと修正                       |
 | `/project:deploy`                | デプロイを行う                             |
-| `/project:improvements`          | 改善リスト作成・Issue一括登録              |
 
 詳細は `.claude/commands/` 配下の各ファイルを参照。
 
 ---
 
-## 5. ディレクトリ構成
-
-```
-├── src/
-│   ├── app/              # ページ（App Router）
-│   ├── components/       # UIコンポーネント
-│   │   └── ui/           # 汎用部品
-│   │       └── Button/
-│   │           ├── Button.tsx
-│   │           ├── Button.test.tsx
-│   │           └── Button.stories.tsx
-│   ├── hooks/            # カスタムフック
-│   ├── lib/              # ユーティリティ関数
-│   ├── types/            # 型定義
-│   └── styles/           # グローバルCSS
-├── supabase/             # Supabase 設定（使用時のみ）
-│   ├── migrations/       # DBマイグレーション
-│   └── config.toml       # Supabase設定
-├── .storybook/           # Storybook 設定
-└── docs/                 # ドキュメント
-```
-
-### コロケーションルール
-
-- コンポーネント、テスト、stories は同じディレクトリに配置
-- `ComponentName/` フォルダでグループ化
-
----
-
-## 6. 命名規則
+## 4. 命名規則
 
 | 対象           | 規則             | 例               |
 | -------------- | ---------------- | ---------------- |
@@ -133,14 +76,14 @@
 
 ---
 
-## 7. コーディング規約
+## 5. コーディング規約
 
 ### 基本ルール
 
 - 関数コンポーネントを使用（クラスコンポーネント禁止）
 - `any` 型は禁止、必ず型を定義する
 - コンポーネントは1ファイル1コンポーネント
-- named export を基本（default export は app/ 配下のみ）
+- named export を基本（default export はフレームワークのエントリファイルのみ）
 
 ### インポート順序
 
@@ -158,26 +101,25 @@
 
 ---
 
-## 8. ドキュメントテンプレート
+## 6. ドキュメントテンプレート
 
-テンプレートは `.claude/templates/` に配置されています。
+テンプレートは `.claude/vibe-coding-utils/templates/` に配置されています。
 
-| テンプレート                                                           | 用途               |
-| ---------------------------------------------------------------------- | ------------------ |
-| [COMPETITIVE_ANALYSIS.md](./.claude/templates/COMPETITIVE_ANALYSIS.md) | 競合調査レポート   |
-| [PRD.md](./.claude/templates/PRD.md)                                   | 要件定義書         |
-| [DESIGN.md](./.claude/templates/DESIGN.md)                             | 設計書             |
-| [SCREEN.md](./.claude/templates/SCREEN.md)                             | 画面設計           |
-| [COMPONENT.md](./.claude/templates/COMPONENT.md)                       | コンポーネント設計 |
-| [DATA_MODEL.md](./.claude/templates/DATA_MODEL.md)                     | データモデル       |
-| [TEST_CASES.md](./.claude/templates/TEST_CASES.md)                     | E2Eテストケース    |
-| [DESIGN_CONCEPT.md](./.claude/templates/DESIGN_CONCEPT.md)             | デザインコンセプト |
-| [IMPROVEMENTS.md](./.claude/templates/IMPROVEMENTS.md)                 | 改善リスト         |
-| [openapi.yaml](./.claude/templates/openapi.yaml)                       | API定義            |
+| テンプレート                                                                             | 用途               |
+| ---------------------------------------------------------------------------------------- | ------------------ |
+| [COMPETITIVE_ANALYSIS.md](./.claude/vibe-coding-utils/templates/COMPETITIVE_ANALYSIS.md) | 競合調査レポート   |
+| [PRD.md](./.claude/vibe-coding-utils/templates/PRD.md)                                   | 要件定義書         |
+| [DESIGN.md](./.claude/vibe-coding-utils/templates/DESIGN.md)                             | 設計書             |
+| [SCREEN.md](./.claude/vibe-coding-utils/templates/SCREEN.md)                             | 画面設計           |
+| [COMPONENT.md](./.claude/vibe-coding-utils/templates/COMPONENT.md)                       | コンポーネント設計 |
+| [DATA_MODEL.md](./.claude/vibe-coding-utils/templates/DATA_MODEL.md)                     | データモデル       |
+| [TEST_CASES.md](./.claude/vibe-coding-utils/templates/TEST_CASES.md)                     | E2Eテストケース    |
+| [DESIGN_CONCEPT.md](./.claude/vibe-coding-utils/templates/DESIGN_CONCEPT.md)             | デザインコンセプト |
+| [openapi.yaml](./.claude/vibe-coding-utils/templates/openapi.yaml)                       | API定義            |
 
 ---
 
-## 9. SSOT（Single Source of Truth）
+## 7. SSOT（Single Source of Truth）
 
 各情報の正式な管理場所：
 
@@ -191,17 +133,79 @@
 | 画面設計         | docs/SCREEN.md     | -                   |
 | 実装状況         | GitHub Issues      | PRDにはチェック不要 |
 
+
+---
+
+## 8. 技術スタック
+
+### 共通（全プロジェクト）
+
+| カテゴリ           | 技術                           |
+| ------------------ | ------------------------------ |
+| 言語               | TypeScript 5.x                 |
+| スタイリング       | Tailwind CSS 4.x               |
+| バリデーション     | Zod                            |
+| Linter / Formatter | ESLint / Prettier              |
+| Node.js            | 24.x                           |
+| 単体テスト         | Vitest + React Testing Library |
+| E2Eテスト          | Playwright                     |
+| コンポーネント管理 | Storybook                      |
+
+### フレームワーク
+
+| フレームワーク | パッケージ管理 | 用途     |
+| -------------- | -------------- | -------- |
+| Plasmo 0.90.x  | pnpm           | Chrome拡張 |
+
+### プロジェクトに応じて追加
+
+| カテゴリ         | 選択肢                                                      |
+| ---------------- | ----------------------------------------------------------- |
+| データストレージ | Chrome Storage API / Supabase                               |
+| UIコンポーネント | shadcn/ui                                                   |
+| アイコン         | Lucide                                                      |
+| フォーム         | React Hook Form                                             |
+| データフェッチ   | SWR / TanStack Query                                        |
+
+---
+
+## 9. ディレクトリ構成
+
+### Plasmo（Chrome拡張）プロジェクト
+
+```
+├── src/
+│   ├── newtab.tsx          # 新しいタブページ
+│   ├── popup.tsx           # ポップアップ
+│   ├── options.tsx         # オプションページ
+│   ├── background/         # バックグラウンドスクリプト
+│   ├── contents/           # コンテンツスクリプト
+│   ├── components/         # UIコンポーネント
+│   ├── hooks/              # カスタムフック
+│   ├── lib/                # ユーティリティ関数
+│   ├── types/              # 型定義
+│   ├── constants/          # 定数
+│   └── styles/             # グローバルCSS
+├── assets/                 # 静的アセット（アイコン、背景画像、i18n）
+├── scripts/                # ビルド・ユーティリティスクリプト
+├── .storybook/             # Storybook 設定
+└── docs/                   # ドキュメント
+```
+
+### コロケーションルール
+
+- コンポーネント、テスト、stories は同じディレクトリに配置
+- `ComponentName/` フォルダでグループ化
+
 ---
 
 ## 10. 参照ドキュメント
 
 - [README](./README.md)
-- [開発フロー](./.claude/docs/DEVELOPMENT_FLOW.md)
-- [GitHub MCP 設定](./.claude/docs/SETUP_GITHUB_MCP.md)
-- [Vercel MCP 設定](./.claude/docs/SETUP_VERCEL_MCP.md)
-- [権限設定](./.claude/docs/SETUP_PERMISSIONS.md)
+- [開発フロー](./.claude/vibe-coding-utils/docs/shared/DEVELOPMENT_FLOW.md)
+- [GitHub MCP 設定](./.claude/vibe-coding-utils/docs/shared/SETUP_GITHUB_MCP.md)
+- [権限設定](./.claude/vibe-coding-utils/docs/shared/SETUP_PERMISSIONS.md)
 
 ### 環境構築手順（/project:setup 時に参照）
 
-- [Next.js セットアップ](./.claude/docs/SETUP_NEXTJS.md)
-- [Supabase セットアップ](./.claude/docs/SETUP_SUPABASE.md)
+- [Plasmo セットアップ](./.claude/vibe-coding-utils/docs/chrome-extension/SETUP_PLASMO.md)
