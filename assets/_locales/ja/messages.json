@@ -1595,6 +1595,14 @@
     "message": "オンにすると、下の設定に基づいてYouTubeの気が散る要素を非表示にします",
     "description": "YouTube有効化の説明"
   },
+  "youtubeBlockAccess": {
+    "message": "YouTubeへのアクセスをブロック",
+    "description": "YouTubeへのアクセスブロックオプション"
+  },
+  "youtubeBlockAccessDescription": {
+    "message": "YouTubeへのアクセスを完全にブロックします。有効にすると、YouTube訪問時にブロックページが表示されます。",
+    "description": "YouTubeへのアクセスブロックの説明"
+  },
   "youtubeHideShorts": {
     "message": "Shortsを非表示",
     "description": "Shorts非表示オプション"

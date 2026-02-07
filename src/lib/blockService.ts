@@ -158,8 +158,14 @@ export async function shouldTrackBlockForDomain(
 }
 
 /**
+ * YouTube domains to block when blockAccess is enabled
+ */
+const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
+
+/**
  * Get list of domains that should be actively blocked via declarativeNetRequest
  * Only includes always-blocked sites (no time limit) that are enabled and within schedule
+ * Also includes YouTube domains when YouTube blockAccess is enabled
  */
 export async function getActiveBlockedDomains(): Promise<string[]> {
   const settings = await getSettings();
@@ -175,7 +181,18 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
   }
 
   // Only include always-blocked sites (enabled and no time limit)
-  return settings.blockList
+  const blockedDomains = settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
+
+  // Add YouTube domains if YouTube blockAccess is enabled
+  if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
+    for (const domain of YOUTUBE_DOMAINS) {
+      if (!blockedDomains.includes(domain)) {
+        blockedDomains.push(domain);
+      }
+    }
+  }
+
+  return blockedDomains;
 }

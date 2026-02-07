@@ -74,6 +74,7 @@ export const AnalyticsDataSchema = z.object({
 // Schema for YouTubeSettings validation (used in youtube.ts content script)
 export const YouTubeSettingsSchema = z.object({
   enabled: z.boolean(),
+  blockAccess: z.boolean().optional().default(false),
   hideShorts: z.boolean(),
   hideRecommendations: z.boolean(),
   hideComments: z.boolean(),

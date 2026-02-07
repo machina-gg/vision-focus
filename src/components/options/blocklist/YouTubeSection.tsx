@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import {
   Youtube,
+  ShieldBan,
   PlaySquare,
   ThumbsUp,
   MessageSquare,
@@ -99,6 +100,20 @@ export function YouTubeSection({
           />
         </div>
       </div>
+
+      {/* Block Access Toggle */}
+      {isEnabled && (
+        <div className="mb-4">
+          <YouTubeFeatureToggle
+            icon={<ShieldBan className="w-4 h-4" />}
+            title={getMessage('youtubeBlockAccess')}
+            description={getMessage('youtubeBlockAccessDescription')}
+            checked={youtube?.blockAccess ?? false}
+            onChange={handleToggle('blockAccess')}
+            disabled={!isEnabled}
+          />
+        </div>
+      )}
 
       {/* Feature Toggles */}
       {!isEnabled && (

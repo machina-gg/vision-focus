@@ -139,6 +139,7 @@ export interface NotificationSettings {
 // YouTube in-app blocking settings
 export interface YouTubeSettings {
   enabled: boolean; // Master switch for YouTube blocking features
+  blockAccess: boolean; // Block access to YouTube entirely (redirects to block page)
   hideShorts: boolean; // Hide Shorts shelf and tab
   hideRecommendations: boolean; // Hide recommended videos on home and watch pages
   hideComments: boolean; // Hide comment section
@@ -207,6 +208,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 // Default YouTube settings
 export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
   enabled: false, // Disabled by default
+  blockAccess: false, // Do not block access by default
   hideShorts: false,
   hideRecommendations: false,
   hideComments: false,

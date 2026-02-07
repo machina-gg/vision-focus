@@ -84,6 +84,12 @@ function generateCSS(settings: YouTubeSettings): string {
     return '';
   }
 
+  // When blockAccess is true, the background script handles the redirect
+  // via declarativeNetRequest rules, so no CSS hiding is needed
+  if (settings.blockAccess) {
+    return '';
+  }
+
   const rules: string[] = [];
 
   // If time limit is exceeded, hide all content
@@ -203,6 +209,9 @@ function applyStyles(settings: YouTubeSettings): void {
 // Handle dynamic content (YouTube is an SPA)
 function handleDynamicContent(): void {
   if (!currentSettings.enabled || timeLimitExceeded) return;
+
+  // When blockAccess is true, the background script handles the redirect
+  if (currentSettings.blockAccess) return;
 
   // Additional DOM manipulation for dynamic elements
   if (currentSettings.hideShorts) {
