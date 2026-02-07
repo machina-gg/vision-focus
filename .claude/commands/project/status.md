@@ -7,7 +7,6 @@ description: 現在の状況を確認する
 ## 1. ドキュメント確認
 
 以下の存在有無を確認：
-
 - docs/INPUT.md
 - docs/PRD.md
 - docs/DESIGN.md
@@ -32,20 +31,19 @@ description: 現在の状況を確認する
 
 ## 4. フェーズ判定
 
-| 条件                    | フェーズ                                     |
-| ----------------------- | -------------------------------------------- |
-| docs/PRD.md なし        | 要件定義前（`/project:requirements`）        |
-| docs/DESIGN.md なし     | 設計前（`/project:design`）                  |
-| src/ なし               | 環境構築前（`/project:setup`）               |
-| コンポーネントのみ      | プロトタイプ中（`/project:prototype`）       |
-| docs/TEST_CASES.md なし | テスト設計前（`/project:test-design`）       |
-| Open Issue あり         | 本実装中（`/project:implement <Issue番号>`） |
-| 全 Issue Closed         | デプロイ可能（`/project:deploy`）            |
+| 条件 | フェーズ |
+| ---- | -------- |
+| docs/PRD.md なし | 要件定義前（`/project:requirements`） |
+| docs/DESIGN.md なし | 設計前（`/project:design`） |
+| src/ なし | 環境構築前（`/project:setup`） |
+| コンポーネントのみ | プロトタイプ中（`/project:prototype`） |
+| docs/TEST_CASES.md なし | テスト設計前（`/project:test-design`） |
+| Open Issue あり | 本実装中（`/project:implement <Issue番号>`） |
+| 全 Issue Closed | デプロイ可能（`/project:deploy`） |
 
 ## 5. サマリー報告
 
 以下をユーザーに報告：
-
 - 現在のフェーズ
 - 完了している作業
 - 残っているタスク
