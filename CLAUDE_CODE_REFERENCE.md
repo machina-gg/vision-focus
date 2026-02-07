@@ -44,11 +44,11 @@
 テンプレートに更新が入った場合、以下で最新版を反映できます：
 
 ```bash
-git subtree pull --prefix=.claude/vibe-coding-utils https://github.com/machina-gg/vibe-coding-utils.git develop --squash
+git submodule update --remote
 bash .claude/vibe-coding-utils/scripts/setup-framework.sh <nextjs|chrome-extension>
 ```
 
-詳細: [Subtree セットアップガイド](./.claude/vibe-coding-utils/docs/shared/SETUP_SUBTREE.md)
+詳細: [Submodule セットアップガイド](./.claude/vibe-coding-utils/docs/shared/SETUP_SUBMODULE.md)
 
 ## ドキュメント構成
 
