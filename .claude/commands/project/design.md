@@ -15,7 +15,7 @@ description: 設計を行う
      Issue 管理と PR 作成に必須のため、以下を設定してください：
      - GitHub MCP: .claude/vibe-coding-utils/docs/shared/SETUP_GITHUB_MCP.md
      - gh コマンド: https://cli.github.com/ からインストール後 `gh auth login` で認証
-     設定後、再度 /project:design を実行してください」
+       設定後、再度 /project:design を実行してください」
 
 ## 設計作成
 
