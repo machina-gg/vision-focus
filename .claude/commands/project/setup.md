@@ -16,39 +16,27 @@ description: 環境構築を行う
 
 ## 実装手順
 
-### 1. Next.js 環境構築
+### 1. Plasmo 環境構築
 
-[.claude/docs/SETUP_NEXTJS.md](../../docs/SETUP_NEXTJS.md) を読み、手順に従って環境を構築：
+.claude/vibe-coding-utils/docs/chrome-extension/SETUP_PLASMO.md を読み、手順に従って環境を構築：
 
-- Next.js プロジェクト作成（一時ディレクトリ経由）
+- Plasmo プロジェクト作成（一時ディレクトリ経由）
 - 追加パッケージのインストール
 - 設定ファイル作成
-- npm scripts 追加
+- pnpm scripts 追加
 - GitHub Actions 追加
-- Analytics 設定
 
-### 2. Supabase セットアップ（条件付き）
+### 2. 動作確認
 
-DESIGN.md の「データストレージ」セクションを確認：
-
-- **Supabase を使用する場合**:
-  - Docker Desktop が起動していることを確認
-  - [.claude/docs/SETUP_SUPABASE.md](../../docs/SETUP_SUPABASE.md) を読み、手順に従ってセットアップ
-  - `npx supabase start` でローカル環境を起動
-  - 環境変数（.env.local）を設定
-- **使用しない場合**: スキップ
-
-### 3. 動作確認
-
-- `npm run dev` で起動確認
-- `npm run storybook` で Storybook 起動確認
-- Supabase 使用時: `http://127.0.0.1:54323` で Studio が開けることを確認
+- `pnpm dev` で開発ビルド起動確認
+- Chrome の拡張機能管理画面（`chrome://extensions`）で読み込み確認
+- `pnpm storybook` で Storybook 起動確認
 
 ## 完了条件
 
-- 開発サーバーが起動できる
+- 開発ビルドが起動できる
+- Chrome拡張として読み込みできる
 - Storybook が起動できる
-- Supabase 使用時: Supabase Local が起動できる
 
 ## 次のステップ
 
