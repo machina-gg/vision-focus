@@ -42,7 +42,7 @@
     }
   },
   "topBlockedSites": {
-    "message": "よくブロックするサイト",
+    "message": "よくブロックしたサイト",
     "description": "ブロック回数ランキング見出し"
   },
   "rememberGoal": {
@@ -630,6 +630,30 @@
   "topInvestSites": {
     "message": "投資サイトトップ",
     "description": "投資サイトトップ見出し"
+  },
+  "previousPeriodComparison": {
+    "message": "前期比",
+    "description": "前期比較ラベル"
+  },
+  "wasteTimeReduction": {
+    "message": "浪費時間削減",
+    "description": "浪費時間削減ラベル"
+  },
+  "wasteTimeIncrease": {
+    "message": "浪費時間増加",
+    "description": "浪費時間増加ラベル"
+  },
+  "noComparisonData": {
+    "message": "比較データなし",
+    "description": "比較データなしメッセージ"
+  },
+  "dailyBlockCount": {
+    "message": "日別ブロック数",
+    "description": "日別ブロック数チャートタイトル"
+  },
+  "weeklyTrend": {
+    "message": "週次トレンド",
+    "description": "週次トレンドチャートタイトル"
   },
   "dailyBreakdown": {
     "message": "日別内訳",

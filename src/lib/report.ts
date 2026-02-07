@@ -1,6 +1,11 @@
 // Report generation logic for weekly and monthly reports
 
-import type { AnalyticsData, DailyStat, SiteTime } from '~/types/storage';
+import type {
+  AnalyticsData,
+  DailyStat,
+  SiteBlockCount,
+  SiteTime
+} from '~/types/storage';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';
 
 // Get the start of the week (Monday) for a given date
@@ -56,9 +61,21 @@ function getTopSites(
     .map((site) => ({ domain: site.domain, time: site.time }));
 }
 
-// Calculate trend based on comparing first half vs second half of data
+// Get top blocked sites from siteBlockCounts data
+function getTopBlockedSites(
+  siteBlockCounts: Record<string, SiteBlockCount>,
+  limit: number = 5
+): { domain: string; count: number }[] {
+  return Object.values(siteBlockCounts)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map((site) => ({ domain: site.domain, count: site.count }));
+}
+
+// Calculate trend based on comparing waste time between first half vs second half
+// If waste time decreases in second half, that's "improving"
 function calculateTrend(
-  data: { wasteTime: number; investTime: number }[]
+  data: { wasteTime: number }[]
 ): 'improving' | 'declining' | 'stable' {
   if (data.length < 2) {
     return 'stable';
@@ -68,27 +85,43 @@ function calculateTrend(
   const firstHalf = data.slice(0, midpoint);
   const secondHalf = data.slice(midpoint);
 
-  // Calculate productivity ratio (invest / (waste + invest))
-  const calcRatio = (items: { wasteTime: number; investTime: number }[]) => {
-    const totalWaste = items.reduce((sum, item) => sum + item.wasteTime, 0);
-    const totalInvest = items.reduce((sum, item) => sum + item.investTime, 0);
-    const total = totalWaste + totalInvest;
-    return total > 0 ? totalInvest / total : 0;
-  };
+  const firstWaste = firstHalf.reduce((sum, item) => sum + item.wasteTime, 0);
+  const secondWaste = secondHalf.reduce((sum, item) => sum + item.wasteTime, 0);
 
-  const firstRatio = calcRatio(firstHalf);
-  const secondRatio = calcRatio(secondHalf);
-  const change = secondRatio - firstRatio;
+  // Avoid division by zero
+  if (firstWaste === 0 && secondWaste === 0) {
+    return 'stable';
+  }
+
+  // Calculate change ratio
+  const total = firstWaste + secondWaste;
+  const change = (secondWaste - firstWaste) / (total > 0 ? total : 1);
 
   // Threshold for determining trend (5% change)
   const threshold = 0.05;
 
-  if (change > threshold) {
+  // Less waste time in second half = improving
+  if (change < -threshold) {
     return 'improving';
-  } else if (change < -threshold) {
+  } else if (change > threshold) {
     return 'declining';
   }
   return 'stable';
+}
+
+// Calculate waste time change percent between current and previous period
+function calculateWasteTimeChangePercent(
+  currentWasteTime: number,
+  previousWasteTime: number
+): number | null {
+  if (previousWasteTime === 0 && currentWasteTime === 0) {
+    return null;
+  }
+  if (previousWasteTime === 0) {
+    // No previous data to compare
+    return null;
+  }
+  return ((currentWasteTime - previousWasteTime) / previousWasteTime) * 100;
 }
 
 // Generate weekly report
@@ -122,18 +155,16 @@ export function generateWeeklyReport(
     (sum, day) => sum + day.wasteTime,
     0
   );
-  const totalInvestTime = dailyBreakdown.reduce(
-    (sum, day) => sum + day.investTime,
-    0
-  );
   const totalBlockCount = dailyBreakdown.reduce(
     (sum, day) => sum + day.blockCount,
     0
   );
 
+  // Daily block counts for chart
+  const dailyBlockCounts = dailyBreakdown.map((d) => d.blockCount);
+
   // Only return null if there's absolutely no data
-  const hasData =
-    totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
+  const hasData = totalWasteTime > 0 || totalBlockCount > 0;
   if (!hasData && weekOffset < 0) {
     // For past weeks, return null if no data
     return null;
@@ -141,13 +172,29 @@ export function generateWeeklyReport(
 
   // Get top sites
   const topWasteSites = getTopSites(analytics.siteTime, 'waste');
-  const topInvestSites = getTopSites(analytics.siteTime, 'invest');
+  const topBlockedSites = getTopBlockedSites(analytics.siteBlockCounts);
+
+  // Calculate previous week waste time for comparison
+  const prevWeekDate = new Date(today);
+  prevWeekDate.setDate(today.getDate() + (weekOffset - 1) * 7);
+  const prevWeekStart = getWeekStart(prevWeekDate);
+  const prevWeekEnd = getWeekEnd(prevWeekDate);
+  const prevDates = getDatesInRange(prevWeekStart, prevWeekEnd);
+
+  const prevWasteTime = prevDates.reduce((sum, date) => {
+    const stat = analytics.dailyStats[date];
+    return sum + (stat ? stat.wasteTime : 0);
+  }, 0);
+
+  const wasteTimeChangePercent = calculateWasteTimeChangePercent(
+    totalWasteTime,
+    prevWasteTime
+  );
 
   // Calculate trend
   const trend = calculateTrend(
     dailyBreakdown.map((d) => ({
-      wasteTime: d.wasteTime,
-      investTime: d.investTime
+      wasteTime: d.wasteTime
     }))
   );
 
@@ -155,11 +202,12 @@ export function generateWeeklyReport(
     weekStart: formatDateKey(weekStart),
     weekEnd: formatDateKey(weekEnd),
     totalWasteTime,
-    totalInvestTime,
     totalBlockCount,
     dailyBreakdown,
+    dailyBlockCounts,
     topWasteSites,
-    topInvestSites,
+    topBlockedSites,
+    wasteTimeChangePercent,
     trend
   };
 }
@@ -190,21 +238,18 @@ export function generateMonthlyReport(
 
   // Calculate totals
   let totalWasteTime = 0;
-  let totalInvestTime = 0;
   let totalBlockCount = 0;
 
   dates.forEach((date) => {
     const stat = analytics.dailyStats[date];
     if (stat) {
       totalWasteTime += stat.wasteTime;
-      totalInvestTime += stat.investTime;
       totalBlockCount += stat.blockCount;
     }
   });
 
   // Only return null if there's absolutely no data
-  const hasData =
-    totalWasteTime > 0 || totalInvestTime > 0 || totalBlockCount > 0;
+  const hasData = totalWasteTime > 0 || totalBlockCount > 0;
   if (!hasData && monthOffset < 0) {
     // For past months, return null if no data
     return null;
@@ -214,7 +259,7 @@ export function generateMonthlyReport(
   const weeklyBreakdown: {
     weekStart: string;
     wasteTime: number;
-    investTime: number;
+    blockCount: number;
   }[] = [];
 
   const initialWeekStart = getWeekStart(monthStart);
@@ -233,26 +278,54 @@ export function generateMonthlyReport(
     );
 
     let weekWaste = 0;
-    let weekInvest = 0;
+    let weekBlockCount = 0;
 
     weekDates.forEach((date) => {
       const stat = analytics.dailyStats[date];
       if (stat) {
         weekWaste += stat.wasteTime;
-        weekInvest += stat.investTime;
+        weekBlockCount += stat.blockCount;
       }
     });
 
     weeklyBreakdown.push({
       weekStart: formatDateKey(currentWeekStart),
       wasteTime: weekWaste,
-      investTime: weekInvest
+      blockCount: weekBlockCount
     });
   }
 
   // Get top sites
   const topWasteSites = getTopSites(analytics.siteTime, 'waste');
-  const topInvestSites = getTopSites(analytics.siteTime, 'invest');
+  const topBlockedSites = getTopBlockedSites(analytics.siteBlockCounts);
+
+  // Calculate previous month waste time for comparison
+  const prevMonthDate = new Date(
+    today.getFullYear(),
+    today.getMonth() + monthOffset - 1,
+    1
+  );
+  const prevMonthStart = new Date(
+    prevMonthDate.getFullYear(),
+    prevMonthDate.getMonth(),
+    1
+  );
+  const prevMonthEnd = new Date(
+    prevMonthDate.getFullYear(),
+    prevMonthDate.getMonth() + 1,
+    0
+  );
+  const prevDates = getDatesInRange(prevMonthStart, prevMonthEnd);
+
+  const prevWasteTime = prevDates.reduce((sum, date) => {
+    const stat = analytics.dailyStats[date];
+    return sum + (stat ? stat.wasteTime : 0);
+  }, 0);
+
+  const wasteTimeChangePercent = calculateWasteTimeChangePercent(
+    totalWasteTime,
+    prevWasteTime
+  );
 
   // Calculate trend
   const trend = calculateTrend(weeklyBreakdown);
@@ -260,11 +333,11 @@ export function generateMonthlyReport(
   return {
     month: formatMonthKey(targetDate),
     totalWasteTime,
-    totalInvestTime,
     totalBlockCount,
     weeklyBreakdown,
     topWasteSites,
-    topInvestSites,
+    topBlockedSites,
+    wasteTimeChangePercent,
     trend
   };
 }

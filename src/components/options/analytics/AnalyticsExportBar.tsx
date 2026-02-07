@@ -119,13 +119,6 @@ export function AnalyticsExportBar({
     );
   }, [analyticsData.dailyStats]);
 
-  const totalInvestTime = useMemo(() => {
-    return Object.values(analyticsData.dailyStats || {}).reduce(
-      (sum, stat) => sum + stat.investTime,
-      0
-    );
-  }, [analyticsData.dailyStats]);
-
   const topBlockedSites = useMemo(() => {
     const counts = Object.values(analyticsData.siteBlockCounts || {});
     return counts.sort((a, b) => b.count - a.count).slice(0, 10);
@@ -150,7 +143,6 @@ export function AnalyticsExportBar({
       const text = generateShareText({
         totalBlockCount,
         totalWasteTime,
-        totalInvestTime,
         topBlockedSite: topBlockedSites[0]?.domain
       });
 
@@ -162,7 +154,7 @@ export function AnalyticsExportBar({
     } catch {
       setShareMessage({ type: 'error', text: getMessage('shareError') });
     }
-  }, [totalBlockCount, totalWasteTime, totalInvestTime, topBlockedSites]);
+  }, [totalBlockCount, totalWasteTime, topBlockedSites]);
 
   const handleDownloadImage = useCallback(async () => {
     if (!chartRef.current) return;
