@@ -40,7 +40,6 @@ interface AnalyticsExportBarProps {
   analyticsData: AnalyticsData;
   unblockHistory: UnblockHistory;
   isPremium: boolean;
-  hasUnblockedSites: boolean;
   onRefresh: () => Promise<void>;
   onReset: () => void;
 }
@@ -50,7 +49,6 @@ export function AnalyticsExportBar({
   analyticsData,
   unblockHistory,
   isPremium,
-  hasUnblockedSites,
   onRefresh,
   onReset
 }: AnalyticsExportBarProps) {
@@ -269,7 +267,7 @@ export function AnalyticsExportBar({
       </Card>
 
       {/* Analytics Chart (Premium only) */}
-      {hasUnblockedSites && isPremium && (
+      {isPremium && (
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">

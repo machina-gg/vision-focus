@@ -48,10 +48,6 @@ export function AnalyticsTab({
     }
   };
 
-  const hasUnblockedSites = Object.values(unblockHistory.sites).some(
-    (s) => s.status === 'unblocked'
-  );
-
   return (
     <div className="space-y-6">
       <AnalyticsExportBar
@@ -59,7 +55,6 @@ export function AnalyticsTab({
         analyticsData={analyticsData}
         unblockHistory={unblockHistory}
         isPremium={isPremium}
-        hasUnblockedSites={hasUnblockedSites}
         onRefresh={onRefresh}
         onReset={onReset}
       />
