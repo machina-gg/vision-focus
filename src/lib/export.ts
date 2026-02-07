@@ -94,13 +94,12 @@ export function exportBlockCounts(
  * Export daily stats to CSV
  */
 export function exportDailyStats(dailyStats: Record<string, DailyStat>): void {
-  const headers = ['Date', 'Waste Time', 'Invest Time', 'Block Count'];
+  const headers = ['Date', 'Waste Time', 'Block Count'];
   const rows = Object.entries(dailyStats)
     .sort(([a], [b]) => b.localeCompare(a)) // Sort by date descending
     .map(([date, stat]) => [
       date,
       formatTime(stat.wasteTime),
-      formatTime(stat.investTime),
       String(stat.blockCount)
     ]);
 

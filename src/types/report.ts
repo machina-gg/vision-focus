@@ -7,11 +7,12 @@ export interface WeeklyReport {
   weekStart: string; // YYYY-MM-DD
   weekEnd: string; // YYYY-MM-DD
   totalWasteTime: number; // seconds
-  totalInvestTime: number; // seconds
   totalBlockCount: number;
   dailyBreakdown: DailyStat[];
+  dailyBlockCounts: number[];
   topWasteSites: { domain: string; time: number }[];
-  topInvestSites: { domain: string; time: number }[];
+  topBlockedSites: { domain: string; count: number }[];
+  wasteTimeChangePercent: number | null; // null if no previous period data
   trend: 'improving' | 'declining' | 'stable';
 }
 
@@ -19,14 +20,14 @@ export interface WeeklyReport {
 export interface MonthlyReport {
   month: string; // YYYY-MM
   totalWasteTime: number; // seconds
-  totalInvestTime: number; // seconds
   totalBlockCount: number;
   weeklyBreakdown: {
     weekStart: string;
     wasteTime: number;
-    investTime: number;
+    blockCount: number;
   }[];
   topWasteSites: { domain: string; time: number }[];
-  topInvestSites: { domain: string; time: number }[];
+  topBlockedSites: { domain: string; count: number }[];
+  wasteTimeChangePercent: number | null; // null if no previous period data
   trend: 'improving' | 'declining' | 'stable';
 }

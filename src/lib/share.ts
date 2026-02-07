@@ -8,11 +8,15 @@ import { formatTime } from './time';
 export function generateShareText(data: {
   totalBlockCount: number;
   totalWasteTime: number;
-  totalInvestTime: number;
+  wasteTimeChangePercent?: number | null;
   topBlockedSite?: string;
 }): string {
-  const { totalBlockCount, totalWasteTime, totalInvestTime, topBlockedSite } =
-    data;
+  const {
+    totalBlockCount,
+    totalWasteTime,
+    wasteTimeChangePercent,
+    topBlockedSite
+  } = data;
 
   const lines: string[] = [];
 
@@ -25,12 +29,13 @@ export function generateShareText(data: {
     lines.push(`🚫 Blocked: ${totalBlockCount} times`);
   }
 
-  if (totalInvestTime > 0) {
-    lines.push(`🎯 Invest Time: ${formatTime(totalInvestTime)}`);
-  }
-
   if (totalWasteTime > 0) {
     lines.push(`⏰ Waste Time: ${formatTime(totalWasteTime)}`);
+  }
+
+  if (wasteTimeChangePercent !== undefined && wasteTimeChangePercent !== null) {
+    const sign = wasteTimeChangePercent > 0 ? '+' : '';
+    lines.push(`📈 vs Previous: ${sign}${wasteTimeChangePercent.toFixed(1)}%`);
   }
 
   if (topBlockedSite) {

@@ -42,7 +42,7 @@
     }
   },
   "topBlockedSites": {
-    "message": "Most Blocked Sites",
+    "message": "Top Blocked Sites",
     "description": "Block count ranking heading"
   },
   "rememberGoal": {
@@ -630,6 +630,30 @@
   "topInvestSites": {
     "message": "Top Invest Sites",
     "description": "Top invest sites heading"
+  },
+  "previousPeriodComparison": {
+    "message": "vs Previous Period",
+    "description": "Previous period comparison label"
+  },
+  "wasteTimeReduction": {
+    "message": "Waste Time Reduction",
+    "description": "Waste time reduction label"
+  },
+  "wasteTimeIncrease": {
+    "message": "Waste Time Increase",
+    "description": "Waste time increase label"
+  },
+  "noComparisonData": {
+    "message": "No comparison data",
+    "description": "No comparison data message"
+  },
+  "dailyBlockCount": {
+    "message": "Daily Block Count",
+    "description": "Daily block count chart title"
+  },
+  "weeklyTrend": {
+    "message": "Weekly Trend",
+    "description": "Weekly trend chart title"
   },
   "dailyBreakdown": {
     "message": "Daily Breakdown",
