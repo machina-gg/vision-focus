@@ -1571,6 +1571,14 @@
     "message": "Turn on to hide distracting YouTube elements based on your settings below",
     "description": "YouTube enabled description"
   },
+  "youtubeBlockAccess": {
+    "message": "Block access to YouTube",
+    "description": "Block access to YouTube option"
+  },
+  "youtubeBlockAccessDescription": {
+    "message": "Block access to YouTube entirely. When enabled, visiting YouTube will show the block page.",
+    "description": "Block access to YouTube description"
+  },
   "youtubeHideShorts": {
     "message": "Hide Shorts",
     "description": "Hide Shorts option"
