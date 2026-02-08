@@ -1243,6 +1243,22 @@
     "message": "目標、背景画像、フォントで新しいタブページをカスタマイズして、モチベーションを維持しましょう。",
     "description": "ヘルプダッシュボード説明"
   },
+  "helpTimeLimits": {
+    "message": "時間制限を設定",
+    "description": "ヘルプ時間制限タイトル"
+  },
+  "helpTimeLimitsDescription": {
+    "message": "サイトを完全にブロックする代わりに、1日または1時間ごとの使用時間を制限できます。制限時間を使い切ると、その期間中はサイトがブロックされます。",
+    "description": "ヘルプ時間制限説明"
+  },
+  "helpAnalytics": {
+    "message": "進捗を確認",
+    "description": "ヘルプ統計タイトル"
+  },
+  "helpAnalyticsDescription": {
+    "message": "統計タブでブロック状況を確認できます。最もブロックしたサイトの確認、日次のトレンド追跡、サイトの「浪費」「投資」「中立」カテゴリ分けが可能です。",
+    "description": "ヘルプ統計説明"
+  },
   "helpFaq": {
     "message": "よくある質問",
     "description": "ヘルプFAQタイトル"
@@ -1274,6 +1290,94 @@
   "helpFaqPresetsAnswer": {
     "message": "スタイルはダッシュボード設定（目標、背景、フォント）を保存し、仕事、勉強、リラックスなど、異なる設定をすぐに切り替えられるようにします。",
     "description": "ヘルプFAQスタイル回答"
+  },
+  "helpFaqTimeLimit": {
+    "message": "時間制限はどう機能しますか？",
+    "description": "ヘルプFAQ時間制限質問"
+  },
+  "helpFaqTimeLimitAnswer": {
+    "message": "時間制限を使うと、1日または1時間あたりの使用時間を設定できます。制限時間に達すると、リセットされるまでサイトがブロックされます。ブロックリストで「常時ブロック」の代わりに「1日の制限」または「1時間の制限」を選択して設定できます。",
+    "description": "ヘルプFAQ時間制限回答"
+  },
+  "helpFaqPassword": {
+    "message": "パスワード保護はどう機能しますか？",
+    "description": "ヘルプFAQパスワード質問"
+  },
+  "helpFaqPasswordAnswer": {
+    "message": "パスワード保護を有効にすると、ブロック設定の変更（一時停止、サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。ヘルプタブの「パスワード保護」から設定できます。",
+    "description": "ヘルプFAQパスワード回答"
+  },
+  "helpFaqBackup": {
+    "message": "設定のバックアップ・復元方法は？",
+    "description": "ヘルプFAQバックアップ質問"
+  },
+  "helpFaqBackupAnswer": {
+    "message": "ヘルプタブの「設定バックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
+    "description": "ヘルプFAQバックアップ回答"
+  },
+  "helpFaqPremium": {
+    "message": "Premium版には何が含まれますか？",
+    "description": "ヘルプFAQプレミアム質問"
+  },
+  "helpFaqPremiumAnswer": {
+    "message": "Premiumでは、ブロックリスト無制限（無料版：5件）、スタイル最大5個（無料版：1個）、カスタム背景、壁紙ダウンロード、全期間の統計履歴（無料版：7日間）、週次・月次レポートが利用できます。詳しくはPremiumタブをご確認ください。",
+    "description": "ヘルプFAQプレミアム回答"
+  },
+  "helpFaqDataStorage": {
+    "message": "データはどこに保存されますか？",
+    "description": "ヘルプFAQデータ保存場所質問"
+  },
+  "helpFaqDataStorageAnswer": {
+    "message": "すべてのデータ（ブロックリスト、スケジュール、統計、設定）はChromeのストレージにローカル保存されます。外部サーバーには送信されません。匿名使用統計をオプトインした場合のみ、集計された機能使用データがGoogle Analytics経由で共有されます（個人情報は含まれません）。",
+    "description": "ヘルプFAQデータ保存場所回答"
+  },
+  "helpFaqBlockLimit": {
+    "message": "ブロックリストにサイトを追加できないのはなぜ？",
+    "description": "ヘルプFAQブロック上限質問"
+  },
+  "helpFaqBlockLimitAnswer": {
+    "message": "無料プランではブロックリストに最大5件まで登録できます。Premiumにアップグレードすると無制限になります。ワイルドカード（*.example.com）を使えば、1つのエントリでドメインとすべてのサブドメインをブロックできます。",
+    "description": "ヘルプFAQブロック上限回答"
+  },
+  "helpTroubleshooting": {
+    "message": "トラブルシューティング",
+    "description": "ヘルプトラブルシューティングタイトル"
+  },
+  "helpTroubleshootingDescription": {
+    "message": "よくある問題と解決方法",
+    "description": "ヘルプトラブルシューティング説明"
+  },
+  "helpTroubleshootSiteNotBlocked": {
+    "message": "サイトがブロックされない",
+    "description": "ヘルプトラブルシューティングブロックされない"
+  },
+  "helpTroubleshootSiteNotBlockedAnswer": {
+    "message": "ブロックリストにドメインが登録され有効になっていることを確認してください。ポップアップの「一時停止」がオンになっていないか確認してください。サブドメイン（例：m.example.com）を使用している場合は、ワイルドカード（*.example.com）を追加してください。また、現在の時間帯と曜日にスケジュールが有効か確認してください。",
+    "description": "ヘルプトラブルシューティングブロックされない回答"
+  },
+  "helpTroubleshootNewTab": {
+    "message": "新しいタブページが表示されない",
+    "description": "ヘルプトラブルシューティング新しいタブ"
+  },
+  "helpTroubleshootNewTabAnswer": {
+    "message": "chrome://extensions でVisionFocusが有効になっていることを確認してください。他の拡張機能が新しいタブページを上書きしている可能性があります。他の新しいタブ系の拡張機能を一時的に無効にしてみてください。問題が解決しない場合は、VisionFocusを再インストールしてください。",
+    "description": "ヘルプトラブルシューティング新しいタブ回答"
+  },
+  "helpTroubleshootSchedule": {
+    "message": "スケジュールが動作しない",
+    "description": "ヘルプトラブルシューティングスケジュール"
+  },
+  "helpTroubleshootScheduleAnswer": {
+    "message": "スケジュールが有効（トグルがオン）であることを確認してください。時間範囲と選択した曜日を確認してください（ローカルタイムゾーンが使用されます）。複数のスケジュールがある場合、競合していないか確認してください。変更は即座に反映され、再起動は不要です。",
+    "description": "ヘルプトラブルシューティングスケジュール回答"
+  },
+  "helpTroubleshootSettingsReset": {
+    "message": "設定がリセットされた",
+    "description": "ヘルプトラブルシューティング設定リセット"
+  },
+  "helpTroubleshootSettingsResetAnswer": {
+    "message": "Chromeが拡張機能のストレージをクリアした場合（例：閲覧データの全削除）、設定がリセットされることがあります。データ損失を防ぐため、定期的に「設定バックアップ」機能でエクスポートしておくことをお勧めします。バックアップファイルがあれば、インポートで復元できます。",
+    "description": "ヘルプトラブルシューティング設定リセット回答"
   },
   "helpSupport": {
     "message": "サポート",

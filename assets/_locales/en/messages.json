@@ -1243,6 +1243,22 @@
     "message": "Personalize your new tab page with your goals, background images, and fonts to stay motivated.",
     "description": "Help dashboard description"
   },
+  "helpTimeLimits": {
+    "message": "Set Time Limits",
+    "description": "Help time limits title"
+  },
+  "helpTimeLimitsDescription": {
+    "message": "Instead of fully blocking a site, set daily or hourly time limits. Once your allotted time is used up, the site will be blocked for the rest of the period.",
+    "description": "Help time limits description"
+  },
+  "helpAnalytics": {
+    "message": "Track Your Progress",
+    "description": "Help analytics title"
+  },
+  "helpAnalyticsDescription": {
+    "message": "View your blocking statistics in the Analytics tab. See which sites you block most, track daily trends, and categorize sites as Waste, Invest, or Neutral.",
+    "description": "Help analytics description"
+  },
   "helpFaq": {
     "message": "FAQ",
     "description": "Help FAQ title"
@@ -1274,6 +1290,94 @@
   "helpFaqPresetsAnswer": {
     "message": "Styles save your dashboard settings (goal, background, fonts) so you can quickly switch between different configurations for work, study, or relaxation.",
     "description": "Help FAQ styles answer"
+  },
+  "helpFaqTimeLimit": {
+    "message": "How do time limits work?",
+    "description": "Help FAQ time limit question"
+  },
+  "helpFaqTimeLimitAnswer": {
+    "message": "Time limits let you allow a site for a set amount of time per day or per hour. Once you reach the limit, the site is blocked until the period resets. You can configure this in the block list by selecting 'Daily Limit' or 'Hourly Limit' instead of 'Always Blocked'.",
+    "description": "Help FAQ time limit answer"
+  },
+  "helpFaqPassword": {
+    "message": "How does password protection work?",
+    "description": "Help FAQ password question"
+  },
+  "helpFaqPasswordAnswer": {
+    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to pause blocking, remove sites from the block list, or disable blocking rules. Set it up in the Help tab under Password Protection.",
+    "description": "Help FAQ password answer"
+  },
+  "helpFaqBackup": {
+    "message": "How do I back up or restore my settings?",
+    "description": "Help FAQ backup question"
+  },
+  "helpFaqBackupAnswer": {
+    "message": "Use the Settings Backup section in the Help tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
+    "description": "Help FAQ backup answer"
+  },
+  "helpFaqPremium": {
+    "message": "What's included in Premium?",
+    "description": "Help FAQ premium question"
+  },
+  "helpFaqPremiumAnswer": {
+    "message": "Premium unlocks unlimited block list entries (Free: 5), up to 5 dashboard styles (Free: 1), custom backgrounds, wallpaper downloads, full analytics history (Free: 7 days), and weekly/monthly reports. Check the Premium tab for details.",
+    "description": "Help FAQ premium answer"
+  },
+  "helpFaqDataStorage": {
+    "message": "Where is my data stored?",
+    "description": "Help FAQ data storage question"
+  },
+  "helpFaqDataStorageAnswer": {
+    "message": "All your data (block list, schedules, statistics, settings) is stored locally in Chrome's storage on your device. Nothing is sent to external servers. If you opt in to anonymous usage statistics, only aggregated feature usage data is shared via Google Analytics — no personal information.",
+    "description": "Help FAQ data storage answer"
+  },
+  "helpFaqBlockLimit": {
+    "message": "Why can't I add more sites to the block list?",
+    "description": "Help FAQ block limit question"
+  },
+  "helpFaqBlockLimitAnswer": {
+    "message": "The free plan allows up to 5 blocked sites. Upgrade to Premium for unlimited block list entries. You can still use wildcards (*.example.com) to block entire domains and their subdomains with a single entry.",
+    "description": "Help FAQ block limit answer"
+  },
+  "helpTroubleshooting": {
+    "message": "Troubleshooting",
+    "description": "Help troubleshooting title"
+  },
+  "helpTroubleshootingDescription": {
+    "message": "Common issues and how to fix them",
+    "description": "Help troubleshooting description"
+  },
+  "helpTroubleshootSiteNotBlocked": {
+    "message": "A site isn't being blocked",
+    "description": "Help troubleshoot site not blocked title"
+  },
+  "helpTroubleshootSiteNotBlockedAnswer": {
+    "message": "Make sure the domain is in your block list and enabled. Check that blocking isn't paused (look for the Paused toggle in the popup). If the site uses a subdomain (e.g., m.example.com), add a wildcard entry (*.example.com) to cover all subdomains. Also verify that your schedule is active for the current time and day.",
+    "description": "Help troubleshoot site not blocked answer"
+  },
+  "helpTroubleshootNewTab": {
+    "message": "The new tab page isn't showing",
+    "description": "Help troubleshoot new tab title"
+  },
+  "helpTroubleshootNewTabAnswer": {
+    "message": "Check that VisionFocus is enabled in chrome://extensions. Another extension may be overriding the new tab page — try disabling other new-tab extensions temporarily. If the issue persists, try removing and reinstalling VisionFocus.",
+    "description": "Help troubleshoot new tab answer"
+  },
+  "helpTroubleshootSchedule": {
+    "message": "My schedule isn't working",
+    "description": "Help troubleshoot schedule title"
+  },
+  "helpTroubleshootScheduleAnswer": {
+    "message": "Verify that the schedule is enabled (toggle is on). Check the time range and selected days — schedules use your local timezone. If you have multiple schedules, make sure they don't conflict. Note that changes take effect immediately, no restart is needed.",
+    "description": "Help troubleshoot schedule answer"
+  },
+  "helpTroubleshootSettingsReset": {
+    "message": "My settings were reset",
+    "description": "Help troubleshoot settings reset title"
+  },
+  "helpTroubleshootSettingsResetAnswer": {
+    "message": "Settings may reset if Chrome clears extension storage (e.g., clearing all browsing data). To prevent data loss, regularly export your settings using the Settings Backup feature. If you have a backup file, you can restore your settings by importing it.",
+    "description": "Help troubleshoot settings reset answer"
   },
   "helpSupport": {
     "message": "Support",
