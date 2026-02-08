@@ -3,6 +3,7 @@ import React from 'react';
 import { Settings, HelpCircle, ChevronDown } from 'lucide-react';
 
 import { Toggle } from '~/components/ui';
+import { getExtensionURL } from '~/lib/chromeApi';
 import {
   getMessage,
   getSupportedLanguages,
@@ -38,9 +39,11 @@ export function Header({
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
       {/* Logo + Name + Version */}
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-xs">VF</span>
-        </div>
+        <img
+          src={getExtensionURL('assets/icon.png')}
+          alt="VisionFocus"
+          className="w-7 h-7"
+        />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-800 text-sm leading-tight">
             VisionFocus

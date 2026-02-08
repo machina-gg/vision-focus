@@ -4,6 +4,10 @@
 - [ ] ソースコード確認
 - [ ] あとはissueに沿ってやっていく
 
+<p align="center">
+  <img src="assets/images/logo.png" alt="VisionFocus" width="400">
+</p>
+
 # VisionFocus
 
 ## About
