@@ -43,8 +43,7 @@ git worktree add ../プロジェクト名-XX -b feature/#XX origin/develop
 package.json が存在する場合：
 
 ```bash
-cd ../プロジェクト名-XX
-pnpm install
+pnpm --dir ../プロジェクト名-XX install
 ```
 
 ### 3. GitHub Issue の内容を確認
@@ -71,10 +70,10 @@ pnpm install
 ### 7. lint / format / テスト実行
 
 ```bash
-pnpm format
-pnpm lint
-pnpm test
-pnpm test:e2e
+pnpm --dir ../プロジェクト名-XX format
+pnpm --dir ../プロジェクト名-XX lint
+pnpm --dir ../プロジェクト名-XX test
+pnpm --dir ../プロジェクト名-XX test:e2e
 ```
 
 ### 8. ドキュメント更新（該当する場合）
@@ -85,6 +84,7 @@ pnpm test:e2e
 
 ### 9. コミット・プッシュ・PR作成
 
+- `git -C ../プロジェクト名-XX` でコマンドを実行する
 - コミットメッセージに `Closes #XX` を含める
 - 例: `Prettier設定を変更 Closes #34`
 - PR を作成する（PRマージ時にIssueが自動クローズされる）
@@ -98,12 +98,10 @@ gh pr checks <PR番号> --watch
 - **成功**: 次のステップへ
 - **失敗**: エラー内容を確認し、修正してプッシュ → 再度CIを待つ
 
-### 11. worktree を削除
+### 11. 完了
 
-```bash
-cd ../プロジェクト名
-git worktree remove ../プロジェクト名-XX
-```
+- worktree はこのタイミングでは削除しない（CI失敗時の追加修正に備える）
+- マージ後のクリーンアップは `/project:cleanup` で一括実行する
 
 ## コミットメッセージ規則
 
