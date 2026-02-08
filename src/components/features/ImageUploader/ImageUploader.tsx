@@ -2,8 +2,9 @@ import React, { useCallback, useState, useRef } from 'react';
 
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
-import { compressImage, validateImageFile } from '~/lib/image';
+import { trackFeatureUse, trackError } from '~/lib/analytics';
 import { getMessage } from '~/lib/i18n';
+import { compressImage, validateImageFile } from '~/lib/image';
 
 export interface ImageUploaderProps {
   value: string | null;
@@ -37,7 +38,9 @@ export function ImageUploader({
       try {
         const dataUrl = await compressImage(file, maxSizeMB);
         onChange(dataUrl);
+        trackFeatureUse('image_upload', true);
       } catch (err) {
+        trackError('image_upload_failed');
         setError(
           err instanceof Error ? err.message : 'Failed to process image'
         );

@@ -9,7 +9,10 @@ import {
   QuickBlockButton,
   TimeLimitBadge
 } from '~/components/features';
-import { PasswordModal } from '~/components/options/modals';
+import {
+  AnalyticsOptInModal,
+  PasswordModal
+} from '~/components/options/modals';
 import { POPUP_STATS_POLLING_MS } from '~/constants/intervals';
 import {
   useBackgroundStats,
@@ -20,7 +23,11 @@ import {
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
-import type { AppSettings, VisionSettings } from '~/types/storage';
+import type {
+  AnalyticsOptIn,
+  AppSettings,
+  VisionSettings
+} from '~/types/storage';
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 
 import './styles/globals.css';
@@ -56,6 +63,14 @@ function PopupApp() {
       await handlePausedChange(true);
     }
   });
+
+  // Analytics opt-in handler
+  const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
+    if (!settings) return;
+    const updated = { ...settings, analyticsOptIn: optIn };
+    await storage.set('settings', updated);
+    setSettings(updated);
+  };
 
   const handlePausedChangeWithPassword = useCallback(
     async (paused: boolean) => {
@@ -168,6 +183,26 @@ function PopupApp() {
           )}
         </div>
       </div>
+
+      {/* Analytics Opt-In Modal */}
+      <AnalyticsOptInModal
+        isOpen={
+          settings?.analyticsOptIn === undefined ||
+          settings?.analyticsOptIn === null
+        }
+        onAllow={() =>
+          handleAnalyticsOptIn({
+            enabled: true,
+            decidedAt: new Date().toISOString()
+          })
+        }
+        onDeny={() =>
+          handleAnalyticsOptIn({
+            enabled: false,
+            decidedAt: new Date().toISOString()
+          })
+        }
+      />
 
       {/* Password Modal for Pause */}
       {settings?.password?.passwordHash && (

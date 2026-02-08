@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { sendToBackground } from '@plasmohq/messaging';
 
+import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { storage } from '~/lib/storage';
 import { canAddToBlocklist } from '~/lib/license';
+import { storage } from '~/lib/storage';
 import type {
   AppSettings,
   TimeLimit,
@@ -67,6 +68,7 @@ export function useBlocklist({
       });
 
       if (response.success) {
+        trackFeatureUse('block_add');
         setNewDomain('');
         setBlockError('');
         const updatedSettings = await storage.get<AppSettings>('settings');
@@ -85,6 +87,7 @@ export function useBlocklist({
     async (id: string) => {
       try {
         await sendToBackground({ name: 'remove-block', body: { id } });
+        trackFeatureUse('block_remove');
         const updatedSettings = await storage.get<AppSettings>('settings');
         if (updatedSettings) {
           setSettings(updatedSettings);

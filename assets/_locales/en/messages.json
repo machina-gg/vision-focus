@@ -1822,5 +1822,37 @@
   "passwordRemoveWarning": {
     "message": "Removing password protection will allow anyone to disable blocking without entering a password.",
     "description": "Password remove warning"
+  },
+  "analyticsOptInTitle": {
+    "message": "Help improve VisionFocus",
+    "description": "Analytics opt-in modal title"
+  },
+  "analyticsOptInDescription": {
+    "message": "Send anonymous usage statistics to help us improve the app. No personal information (blocked sites, goals, browsing history) is ever collected.",
+    "description": "Analytics opt-in modal description"
+  },
+  "analyticsOptInAllow": {
+    "message": "Allow",
+    "description": "Analytics opt-in allow button"
+  },
+  "analyticsOptInDeny": {
+    "message": "No thanks",
+    "description": "Analytics opt-in deny button"
+  },
+  "analyticsPrivacyTitle": {
+    "message": "Data & Privacy",
+    "description": "Analytics privacy section title in Help tab"
+  },
+  "analyticsPrivacyDescription": {
+    "message": "Manage anonymous usage statistics",
+    "description": "Analytics privacy section description"
+  },
+  "analyticsShareStats": {
+    "message": "Share anonymous usage statistics",
+    "description": "Analytics toggle label"
+  },
+  "analyticsShareStatsDescription": {
+    "message": "Help us improve VisionFocus by sharing anonymous feature usage data. No personal information is collected.",
+    "description": "Analytics toggle description"
   }
 }

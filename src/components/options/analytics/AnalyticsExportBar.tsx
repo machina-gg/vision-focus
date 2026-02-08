@@ -11,6 +11,7 @@ import {
 
 import { Card, Button, Modal } from '~/components/ui';
 import { AnalyticsChart } from '~/components/features';
+import { trackFeatureUse } from '~/lib/analytics';
 import {
   REFRESH_SPINNER_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
@@ -78,6 +79,7 @@ export function AnalyticsExportBar({
   const handleExportBlockList = () => {
     if (settings?.blockList) {
       exportBlockList(settings.blockList);
+      trackFeatureUse('csv_export', true);
     }
     setShowExportMenu(false);
   };
@@ -85,6 +87,7 @@ export function AnalyticsExportBar({
   const handleExportBlockCounts = () => {
     if (analyticsData.siteBlockCounts) {
       exportBlockCounts(analyticsData.siteBlockCounts);
+      trackFeatureUse('csv_export', true);
     }
     setShowExportMenu(false);
   };
@@ -92,6 +95,7 @@ export function AnalyticsExportBar({
   const handleExportDailyStats = () => {
     if (analyticsData.dailyStats) {
       exportDailyStats(analyticsData.dailyStats);
+      trackFeatureUse('csv_export', true);
     }
     setShowExportMenu(false);
   };
@@ -99,6 +103,7 @@ export function AnalyticsExportBar({
   const handleExportUnblockedSites = () => {
     if (isPremium) {
       exportUnblockedSites(unblockHistory);
+      trackFeatureUse('csv_export', true);
     }
     setShowExportMenu(false);
   };

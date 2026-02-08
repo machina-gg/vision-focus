@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 
 import { Download, Check, X, ChevronDown } from 'lucide-react';
 
+import { trackFeatureUse } from '~/lib/analytics';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import {
   downloadWallpaper,
@@ -42,6 +43,7 @@ export function DownloadButton({
         resolution,
         quality: 0.95
       });
+      trackFeatureUse('wallpaper_download', true);
       setDownloadStatus('success');
       setTimeout(() => setDownloadStatus('idle'), STATUS_RESET_DELAY_MS);
     } catch {

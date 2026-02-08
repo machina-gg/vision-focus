@@ -5,6 +5,7 @@ import {
   incrementSiteBlockCount,
   setLastBlockedDomain
 } from '~/lib/storage';
+import { sendDailyActive } from '~/lib/analytics';
 import { startExtPayBackgroundListener } from '~/lib/extpay';
 import { getFeatureLimits } from '~/lib/license';
 import { extractDomain } from '~/lib/domain';
@@ -58,6 +59,7 @@ chrome.runtime.onStartup.addListener(async () => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'daily-cleanup') {
     await cleanupOldAnalytics();
+    await sendDailyActive();
   }
   if (alarm.name === 'check-schedule') {
     // Update block rules every minute to handle schedule changes

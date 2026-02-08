@@ -154,6 +154,12 @@ export interface PasswordSettings {
   passwordHash: string | null; // SHA-256 hash of the password (null if not set)
 }
 
+// Analytics opt-in settings (GA4)
+export interface AnalyticsOptIn {
+  enabled: boolean; // Whether anonymous usage stats are allowed
+  decidedAt: string; // ISO8601 timestamp when user made the decision
+}
+
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
@@ -162,6 +168,7 @@ export interface AppSettings {
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
+  analyticsOptIn?: AnalyticsOptIn | null; // null = not yet decided (show modal)
 }
 
 // Analytics data
