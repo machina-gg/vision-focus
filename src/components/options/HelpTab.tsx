@@ -463,7 +463,7 @@ export function HelpTab({
             {getMessage('helpReportIssue')}
           </a>
           <a
-            href="https://forms.gle/PLACEHOLDER"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSf3yxG71Z4YQWkoZqBMFuUb0Zxvj0DQFS9FEODjUVDQSnzXhg/viewform"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-info-600 hover:text-info-800"
