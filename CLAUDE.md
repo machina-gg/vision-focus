@@ -59,6 +59,8 @@
 | `/project:status`                | 現在の状況を確認                           |
 | `/project:review`                | コードレビューと修正                       |
 | `/project:deploy`                | デプロイを行う                             |
+| `/project:cleanup`               | マージ済みブランチと worktree をクリーンアップ |
+| `/project:update`                | vibe-coding-utils を最新化                 |
 
 詳細は `.claude/commands/` 配下の各ファイルを参照。
 
