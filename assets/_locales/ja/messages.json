@@ -1287,9 +1287,9 @@
     "message": "GitHubで問題を報告する",
     "description": "ヘルプ問題報告リンク"
   },
-  "helpComingSoon": {
-    "message": "その他のヘルプリソースは近日公開予定...",
-    "description": "ヘルプ近日公開テキスト"
+  "helpContactUs": {
+    "message": "フィードバックを送る",
+    "description": "ヘルプお問い合わせフォームリンク"
   },
   "todayBlocks": {
     "message": "今日のブロック",

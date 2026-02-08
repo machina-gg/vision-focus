@@ -454,7 +454,7 @@ export function HelpTab({
 
         <div className="space-y-3">
           <a
-            href="https://github.com/user/vision-focus/issues"
+            href="https://github.com/machina-gg/vision-focus/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-info-600 hover:text-info-800"
@@ -462,9 +462,15 @@ export function HelpTab({
             <ExternalLink className="w-4 h-4" />
             {getMessage('helpReportIssue')}
           </a>
-          <p className="text-xs text-gray-400">
-            {getMessage('helpComingSoon')}
-          </p>
+          <a
+            href="https://forms.gle/PLACEHOLDER"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm text-info-600 hover:text-info-800"
+          >
+            <ExternalLink className="w-4 h-4" />
+            {getMessage('helpContactUs')}
+          </a>
         </div>
       </Card>
 
