@@ -8,10 +8,11 @@ import {
   Upload,
   HardDrive,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3
 } from 'lucide-react';
 
-import { Button, Card } from '~/components/ui';
+import { Button, Card, Toggle } from '~/components/ui';
 import { PasswordSettingsSection } from '~/components/options/PasswordSettingsSection';
 import {
   EXPORT_STATUS_DELAY_MS,
@@ -26,7 +27,11 @@ import {
   applyImportedSettings
 } from '~/lib/settingsExport';
 import { getSettings, getVision, setSettings, setVision } from '~/lib/storage';
-import type { PasswordSettings, AppSettings } from '~/types/storage';
+import type {
+  PasswordSettings,
+  AppSettings,
+  AnalyticsOptIn
+} from '~/types/storage';
 import { DEFAULT_PASSWORD_SETTINGS } from '~/types/storage';
 
 const VERSION = '1.0.0';
@@ -35,12 +40,14 @@ interface HelpTabProps {
   onSettingsChange?: () => void;
   settings?: AppSettings;
   onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
+  onAnalyticsOptInChange?: (optIn: AnalyticsOptIn) => Promise<void>;
 }
 
 export function HelpTab({
   onSettingsChange,
   settings,
-  onPasswordUpdate
+  onPasswordUpdate,
+  onAnalyticsOptInChange
 }: HelpTabProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
@@ -246,6 +253,48 @@ export function HelpTab({
           passwordSettings={settings?.password ?? DEFAULT_PASSWORD_SETTINGS}
           onUpdate={onPasswordUpdate}
         />
+      )}
+
+      {/* Data & Privacy */}
+      {onAnalyticsOptInChange && (
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-primary-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {getMessage('analyticsPrivacyTitle')}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {getMessage('analyticsPrivacyDescription')}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 mr-4">
+                <h3 className="font-medium text-gray-800 mb-1">
+                  {getMessage('analyticsShareStats')}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {getMessage('analyticsShareStatsDescription')}
+                </p>
+              </div>
+              <Toggle
+                checked={settings?.analyticsOptIn?.enabled === true}
+                onChange={(checked) =>
+                  onAnalyticsOptInChange({
+                    enabled: checked,
+                    decidedAt: new Date().toISOString()
+                  })
+                }
+                size="sm"
+              />
+            </div>
+          </div>
+        </Card>
       )}
 
       {/* Settings Backup */}

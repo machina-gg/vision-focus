@@ -1822,5 +1822,37 @@
   "passwordRemoveWarning": {
     "message": "パスワード保護を解除すると、誰でもパスワードなしでブロックを無効にできるようになります。",
     "description": "パスワード解除の警告"
+  },
+  "analyticsOptInTitle": {
+    "message": "VisionFocusの改善にご協力ください",
+    "description": "アナリティクスオプトインモーダルのタイトル"
+  },
+  "analyticsOptInDescription": {
+    "message": "匿名の使用統計を送信して、アプリの改善にご協力ください。個人情報（ブロックサイト、目標、閲覧履歴）は一切収集されません。",
+    "description": "アナリティクスオプトインモーダルの説明"
+  },
+  "analyticsOptInAllow": {
+    "message": "許可する",
+    "description": "アナリティクスオプトイン許可ボタン"
+  },
+  "analyticsOptInDeny": {
+    "message": "許可しない",
+    "description": "アナリティクスオプトイン拒否ボタン"
+  },
+  "analyticsPrivacyTitle": {
+    "message": "データとプライバシー",
+    "description": "ヘルプタブのプライバシーセクションタイトル"
+  },
+  "analyticsPrivacyDescription": {
+    "message": "匿名の使用統計を管理",
+    "description": "プライバシーセクションの説明"
+  },
+  "analyticsShareStats": {
+    "message": "匿名の使用統計を共有する",
+    "description": "アナリティクストグルのラベル"
+  },
+  "analyticsShareStatsDescription": {
+    "message": "匿名の機能使用データを共有して、VisionFocusの改善にご協力ください。個人情報は一切収集されません。",
+    "description": "アナリティクストグルの説明"
   }
 }

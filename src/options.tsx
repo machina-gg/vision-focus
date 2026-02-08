@@ -20,6 +20,7 @@ import {
   HelpTab,
   ScheduleModal
 } from '~/components/options';
+import { AnalyticsOptInModal } from '~/components/options/modals';
 import {
   useAnalytics,
   useBlocklist,
@@ -31,6 +32,7 @@ import { getMessage, setCurrentLanguage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import type {
+  AnalyticsOptIn,
   AppSettings,
   VisionSettings,
   YouTubeSettings,
@@ -142,6 +144,14 @@ function OptionsApp() {
   const handlePasswordUpdate = async (password: PasswordSettings) => {
     if (!settings) return;
     const updated = { ...settings, password };
+    await storage.set('settings', updated);
+    setSettings(updated);
+  };
+
+  // Analytics opt-in handler
+  const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
+    if (!settings) return;
+    const updated = { ...settings, analyticsOptIn: optIn };
     await storage.set('settings', updated);
     setSettings(updated);
   };
@@ -268,6 +278,7 @@ function OptionsApp() {
         {activeTab === TABS.HELP && (
           <HelpTab
             settings={settings}
+            onAnalyticsOptInChange={handleAnalyticsOptIn}
             onSettingsChange={async () => {
               // Reload settings and vision after import
               const [newSettings, newVision] = await Promise.all([
@@ -294,6 +305,25 @@ function OptionsApp() {
         vision={vision}
         isPremium={isPremium}
         featureLimits={featureLimits}
+      />
+      {/* Analytics Opt-In Modal (shown once on first visit if not yet decided) */}
+      <AnalyticsOptInModal
+        isOpen={
+          settings?.analyticsOptIn === undefined ||
+          settings?.analyticsOptIn === null
+        }
+        onAllow={() =>
+          handleAnalyticsOptIn({
+            enabled: true,
+            decidedAt: new Date().toISOString()
+          })
+        }
+        onDeny={() =>
+          handleAnalyticsOptIn({
+            enabled: false,
+            decidedAt: new Date().toISOString()
+          })
+        }
       />
     </div>
   );

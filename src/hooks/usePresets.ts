@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
+import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
@@ -336,6 +337,7 @@ export function usePresets({
     await storage.set('vision', toSave);
     setVision(toSave);
     showSavedFeedback();
+    trackFeatureUse('preset_switch');
   }, [state.selectedPresetId, vision, setVision, showSavedFeedback]);
 
   const handleCreatePreset = useCallback(async () => {
@@ -362,6 +364,7 @@ export function usePresets({
     };
     await storage.set('vision', toSave);
     setVision(toSave);
+    trackFeatureUse('preset_create');
   }, [state.presetName, state.draftPresets, vision, setVision]);
 
   return {

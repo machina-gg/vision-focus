@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
 import type { AppSettings, Schedule } from '~/types/storage';
 
@@ -69,6 +70,11 @@ export function useSchedules({
     const updated = { ...settings, schedules: updatedSchedules };
     await storage.set('settings', updated);
     setSettings(updated);
+
+    if (!editingSchedule) {
+      trackFeatureUse('schedule_create');
+    }
+
     setShowScheduleModal(false);
     setEditingSchedule(null);
     setScheduleForm(DEFAULT_SCHEDULE_FORM);
@@ -100,6 +106,7 @@ export function useSchedules({
       };
       await storage.set('settings', updated);
       setSettings(updated);
+      trackFeatureUse('schedule_toggle');
     },
     [settings, setSettings]
   );
