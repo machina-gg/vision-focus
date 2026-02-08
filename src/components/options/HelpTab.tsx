@@ -9,7 +9,8 @@ import {
   HardDrive,
   Check,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Wrench
 } from 'lucide-react';
 
 import { Button, Card, Toggle } from '~/components/ui';
@@ -200,6 +201,18 @@ export function HelpTab({
             </h3>
             <p>{getMessage('helpDashboardDescription')}</p>
           </div>
+          <div>
+            <h3 className="font-medium text-gray-800 mb-1">
+              {getMessage('helpTimeLimits')}
+            </h3>
+            <p>{getMessage('helpTimeLimitsDescription')}</p>
+          </div>
+          <div>
+            <h3 className="font-medium text-gray-800 mb-1">
+              {getMessage('helpAnalytics')}
+            </h3>
+            <p>{getMessage('helpAnalyticsDescription')}</p>
+          </div>
         </div>
       </Card>
 
@@ -242,6 +255,106 @@ export function HelpTab({
             </summary>
             <p className="mt-2 text-sm text-gray-600 pl-4">
               {getMessage('helpFaqPresetsAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqTimeLimit')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqTimeLimitAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqPassword')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqPasswordAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqBackup')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqBackupAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqPremium')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqPremiumAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqDataStorage')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqDataStorageAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpFaqBlockLimit')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpFaqBlockLimitAnswer')}
+            </p>
+          </details>
+        </div>
+      </Card>
+
+      {/* Troubleshooting */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-danger-100 rounded-lg flex items-center justify-center">
+            <Wrench className="w-5 h-5 text-danger-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {getMessage('helpTroubleshooting')}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {getMessage('helpTroubleshootingDescription')}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpTroubleshootSiteNotBlocked')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpTroubleshootSiteNotBlockedAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpTroubleshootNewTab')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpTroubleshootNewTabAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpTroubleshootSchedule')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpTroubleshootScheduleAnswer')}
+            </p>
+          </details>
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
+              {getMessage('helpTroubleshootSettingsReset')}
+            </summary>
+            <p className="mt-2 text-sm text-gray-600 pl-4">
+              {getMessage('helpTroubleshootSettingsResetAnswer')}
             </p>
           </details>
         </div>
