@@ -1287,9 +1287,9 @@
     "message": "Report an issue on GitHub",
     "description": "Help report issue link"
   },
-  "helpComingSoon": {
-    "message": "More help resources coming soon...",
-    "description": "Help coming soon text"
+  "helpContactUs": {
+    "message": "Send us feedback",
+    "description": "Help contact form link"
   },
   "todayBlocks": {
     "message": "Today's Blocks",
