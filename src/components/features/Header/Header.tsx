@@ -40,7 +40,7 @@ export function Header({
       {/* Logo + Name + Version */}
       <div className="flex items-center gap-2">
         <img
-          src={getExtensionURL('assets/icon.png')}
+          src={getExtensionURL('assets/images/icon.png')}
           alt="VisionFocus"
           className="w-7 h-7"
         />
