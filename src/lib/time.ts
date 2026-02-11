@@ -63,18 +63,26 @@ export function getLastNDays(n: number): string[] {
 }
 
 // Validate time string format (HH:mm)
+// Accepts 00:00-23:59 and 24:00 (end of day)
 export function isValidTimeString(time: string): boolean {
   if (!time || typeof time !== 'string') return false;
+  if (time === '24:00') return true;
   const match = time.match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/);
   return match !== null;
 }
 
 // Parse time string (HH:mm) to minutes from midnight
 // Returns 0 if invalid time string
+// "24:00" returns 1440 (end of day)
 export function parseTimeToMinutes(time: string): number {
   if (!isValidTimeString(time)) return 0;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
+}
+
+// Normalize end time: convert "00:00" to "24:00" for end-of-day semantics
+export function normalizeEndTime(endTime: string): string {
+  return endTime === '00:00' ? '24:00' : endTime;
 }
 
 // Get current hour key in YYYY-MM-DD-HH format
@@ -101,8 +109,10 @@ export function isWithinSchedule(
   endTime: string,
   days: number[]
 ): boolean {
+  const normalizedEndTime = normalizeEndTime(endTime);
+
   // Validate inputs
-  if (!isValidTimeString(startTime) || !isValidTimeString(endTime)) {
+  if (!isValidTimeString(startTime) || !isValidTimeString(normalizedEndTime)) {
     return false;
   }
   if (!Array.isArray(days) || days.length === 0) {
@@ -119,10 +129,10 @@ export function isWithinSchedule(
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
+  const endMinutes = parseTimeToMinutes(normalizedEndTime);
 
   // Handle overnight schedules (e.g., 22:00 - 06:00)
-  if (endMinutes < startMinutes) {
+  if (endMinutes <= startMinutes) {
     return currentMinutes >= startMinutes || currentMinutes < endMinutes;
   }
 

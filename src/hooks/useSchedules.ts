@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
+import { normalizeEndTime } from '~/lib/time';
 import type { AppSettings, Schedule } from '~/types/storage';
 
 export interface ScheduleFormData {
@@ -55,7 +56,7 @@ export function useSchedules({
       id: editingSchedule?.id || crypto.randomUUID(),
       name: scheduleForm.name,
       startTime: scheduleForm.startTime,
-      endTime: scheduleForm.endTime,
+      endTime: normalizeEndTime(scheduleForm.endTime),
       days: scheduleForm.days,
       enabled: true,
       presetId: scheduleForm.presetId || undefined

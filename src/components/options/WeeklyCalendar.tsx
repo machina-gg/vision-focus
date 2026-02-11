@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '~/components/ui';
 import { CURRENT_TIME_REFRESH_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
+import { normalizeEndTime } from '~/lib/time';
 import type { Schedule, VisionSettings } from '~/types/storage';
 
 // Predefined colors for schedule blocks
@@ -44,6 +45,8 @@ interface ScheduleBlock {
 }
 
 function parseTime(time: string): { hour: number; minute: number } {
+  // Handle "24:00" as end of day
+  if (time === '24:00') return { hour: 24, minute: 0 };
   const [hour, minute] = time.split(':').map(Number);
   return { hour, minute };
 }
@@ -57,7 +60,7 @@ function getScheduleBlocksForDay(
     .filter((s) => s.days.includes(dayIndex))
     .map((schedule) => {
       const start = parseTime(schedule.startTime);
-      const end = parseTime(schedule.endTime);
+      const end = parseTime(normalizeEndTime(schedule.endTime));
       return {
         schedule,
         startHour: start.hour,
