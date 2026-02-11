@@ -10,7 +10,12 @@ import {
   Check,
   AlertTriangle,
   BarChart3,
-  Wrench
+  Wrench,
+  ChevronRight,
+  Shield,
+  Clock,
+  Calendar,
+  BarChart2
 } from 'lucide-react';
 
 import { Button, Card, Toggle } from '~/components/ui';
@@ -182,37 +187,59 @@ export function HelpTab({
           </div>
         </div>
 
-        <div className="space-y-4 text-sm text-gray-600">
-          <div>
-            <h3 className="font-medium text-gray-800 mb-1">
-              {getMessage('helpBlockSites')}
-            </h3>
-            <p>{getMessage('helpBlockSitesDescription')}</p>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-800 mb-1">
-              {getMessage('helpSchedules')}
-            </h3>
-            <p>{getMessage('helpSchedulesDescription')}</p>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-800 mb-1">
-              {getMessage('helpDashboard')}
-            </h3>
-            <p>{getMessage('helpDashboardDescription')}</p>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-800 mb-1">
-              {getMessage('helpTimeLimits')}
-            </h3>
-            <p>{getMessage('helpTimeLimitsDescription')}</p>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-800 mb-1">
-              {getMessage('helpAnalytics')}
-            </h3>
-            <p>{getMessage('helpAnalyticsDescription')}</p>
-          </div>
+        <div className="space-y-3 text-sm">
+          {[
+            {
+              icon: Shield,
+              color: 'text-danger-500',
+              bg: 'bg-danger-50',
+              title: getMessage('helpBlockSites'),
+              desc: getMessage('helpBlockSitesDescription')
+            },
+            {
+              icon: Calendar,
+              color: 'text-info-500',
+              bg: 'bg-info-50',
+              title: getMessage('helpSchedules'),
+              desc: getMessage('helpSchedulesDescription')
+            },
+            {
+              icon: BarChart2,
+              color: 'text-success-500',
+              bg: 'bg-success-50',
+              title: getMessage('helpDashboard'),
+              desc: getMessage('helpDashboardDescription')
+            },
+            {
+              icon: Clock,
+              color: 'text-warning-500',
+              bg: 'bg-warning-50',
+              title: getMessage('helpTimeLimits'),
+              desc: getMessage('helpTimeLimitsDescription')
+            },
+            {
+              icon: BarChart3,
+              color: 'text-primary-500',
+              bg: 'bg-primary-50',
+              title: getMessage('helpAnalytics'),
+              desc: getMessage('helpAnalyticsDescription')
+            }
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="flex items-start gap-3 p-3 rounded-lg bg-gray-50"
+            >
+              <div
+                className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}
+              >
+                <item.icon className={`w-4 h-4 ${item.color}`} />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800">{item.title}</h3>
+                <p className="text-gray-500 mt-0.5">{item.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
 
@@ -232,79 +259,53 @@ export function HelpTab({
           </div>
         </div>
 
-        <div className="space-y-4">
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqWildcard')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqWildcardAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqPause')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqPauseAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqPresets')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqPresetsAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqTimeLimit')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqTimeLimitAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqPassword')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqPasswordAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqBackup')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqBackupAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqPremium')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqPremiumAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqDataStorage')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqDataStorageAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpFaqBlockLimit')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpFaqBlockLimitAnswer')}
-            </p>
-          </details>
+        <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
+          {[
+            {
+              q: getMessage('helpFaqWildcard'),
+              a: getMessage('helpFaqWildcardAnswer')
+            },
+            {
+              q: getMessage('helpFaqPause'),
+              a: getMessage('helpFaqPauseAnswer')
+            },
+            {
+              q: getMessage('helpFaqPresets'),
+              a: getMessage('helpFaqPresetsAnswer')
+            },
+            {
+              q: getMessage('helpFaqTimeLimit'),
+              a: getMessage('helpFaqTimeLimitAnswer')
+            },
+            {
+              q: getMessage('helpFaqPassword'),
+              a: getMessage('helpFaqPasswordAnswer')
+            },
+            {
+              q: getMessage('helpFaqBackup'),
+              a: getMessage('helpFaqBackupAnswer')
+            },
+            {
+              q: getMessage('helpFaqPremium'),
+              a: getMessage('helpFaqPremiumAnswer')
+            },
+            {
+              q: getMessage('helpFaqDataStorage'),
+              a: getMessage('helpFaqDataStorageAnswer')
+            },
+            {
+              q: getMessage('helpFaqBlockLimit'),
+              a: getMessage('helpFaqBlockLimitAnswer')
+            }
+          ].map((item) => (
+            <details key={item.q} className="group">
+              <summary className="cursor-pointer flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors">
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-90" />
+                {item.q}
+              </summary>
+              <p className="px-4 pb-3 pl-10 text-sm text-gray-500">{item.a}</p>
+            </details>
+          ))}
         </div>
       </Card>
 
@@ -324,39 +325,33 @@ export function HelpTab({
           </div>
         </div>
 
-        <div className="space-y-4">
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpTroubleshootSiteNotBlocked')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpTroubleshootSiteNotBlockedAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpTroubleshootNewTab')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpTroubleshootNewTabAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpTroubleshootSchedule')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpTroubleshootScheduleAnswer')}
-            </p>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-gray-800 hover:text-info-600">
-              {getMessage('helpTroubleshootSettingsReset')}
-            </summary>
-            <p className="mt-2 text-sm text-gray-600 pl-4">
-              {getMessage('helpTroubleshootSettingsResetAnswer')}
-            </p>
-          </details>
+        <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
+          {[
+            {
+              q: getMessage('helpTroubleshootSiteNotBlocked'),
+              a: getMessage('helpTroubleshootSiteNotBlockedAnswer')
+            },
+            {
+              q: getMessage('helpTroubleshootNewTab'),
+              a: getMessage('helpTroubleshootNewTabAnswer')
+            },
+            {
+              q: getMessage('helpTroubleshootSchedule'),
+              a: getMessage('helpTroubleshootScheduleAnswer')
+            },
+            {
+              q: getMessage('helpTroubleshootSettingsReset'),
+              a: getMessage('helpTroubleshootSettingsResetAnswer')
+            }
+          ].map((item) => (
+            <details key={item.q} className="group">
+              <summary className="cursor-pointer flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors">
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-90" />
+                {item.q}
+              </summary>
+              <p className="px-4 pb-3 pl-10 text-sm text-gray-500">{item.a}</p>
+            </details>
+          ))}
         </div>
       </Card>
 
