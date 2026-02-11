@@ -103,6 +103,7 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 | docs/COMPONENT.md               | コンポーネント設計   | `/project:design`       |
 | docs/DESIGN_CONCEPT.md          | デザインコンセプト   | `/project:prototype`    |
 | docs/TEST_CASES.md              | E2Eテストケース      | `/project:test-design`  |
+| docs/ANALYTICS.md               | GA4計測ドキュメント  | 随時更新                |
 | reports/COMPETITIVE_ANALYSIS.md | 競合調査レポート     | `/project:requirements` |
 | GitHub Issues                   | タスク・進捗管理     | 随時更新                |
 
