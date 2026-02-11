@@ -80,7 +80,11 @@ export function ScheduleModal({
             </label>
             <input
               type="time"
-              value={scheduleForm.endTime}
+              value={
+                scheduleForm.endTime === '24:00'
+                  ? '00:00'
+                  : scheduleForm.endTime
+              }
               onChange={(e) =>
                 onFormChange({ ...scheduleForm, endTime: e.target.value })
               }
