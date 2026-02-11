@@ -2,8 +2,9 @@ import React from 'react';
 
 import { Settings, HelpCircle, ChevronDown } from 'lucide-react';
 
+import iconBase64 from 'data-base64:assets/icon.png';
+
 import { Toggle } from '~/components/ui';
-import { getExtensionURL } from '~/lib/chromeApi';
 import {
   getMessage,
   getSupportedLanguages,
@@ -39,11 +40,7 @@ export function Header({
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
       {/* Logo + Name + Version */}
       <div className="flex items-center gap-2">
-        <img
-          src={getExtensionURL('assets/icon.png')}
-          alt="VisionFocus"
-          className="w-7 h-7"
-        />
+        <img src={iconBase64} alt="VisionFocus" className="w-7 h-7" />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-800 text-sm leading-tight">
             VisionFocus
