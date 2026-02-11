@@ -77,8 +77,7 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/images/backgrounds/*",
-          "assets/images/icon.png"
+          "assets/images/backgrounds/*"
         ],
         "matches": [
           "<all_urls>"
