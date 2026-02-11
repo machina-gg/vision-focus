@@ -7,7 +7,7 @@ import type { Schedule, VisionSettings } from '~/types/storage';
 import type { FeatureLimits } from '~/types/premium';
 import type { ScheduleFormData } from '~/hooks/useSchedules';
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -94,7 +94,7 @@ export function ScheduleModal({
             {getMessage('activeDays')}
           </label>
           <div className="flex gap-2">
-            {DAY_NAMES.map((day, idx) => (
+            {DAY_KEYS.map((day, idx) => (
               <button
                 key={day}
                 onClick={() => toggleDay(idx)}
@@ -104,7 +104,7 @@ export function ScheduleModal({
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {day}
+                {getMessage(day)}
               </button>
             ))}
           </div>
