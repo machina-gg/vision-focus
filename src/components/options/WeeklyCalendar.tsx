@@ -170,15 +170,23 @@ export function WeeklyCalendar({
         <div className="relative grid grid-cols-8" style={{ height: '400px' }}>
           {/* Time Labels Column */}
           <div className="relative border-r border-gray-200">
-            {HOURS.filter((h) => h % 3 === 0).map((hour) => (
-              <div
-                key={hour}
-                className="absolute left-0 right-0 text-right pr-2 text-xs text-gray-400 transform -translate-y-1/2"
-                style={{ top: `${(hour / 24) * 100}%` }}
-              >
-                {hour.toString().padStart(2, '0')}:00
-              </div>
-            ))}
+            {HOURS.filter((h) => h % 3 === 0).map((hour) => {
+              const translateClass =
+                hour === 0
+                  ? ''
+                  : hour === 24
+                    ? '-translate-y-full'
+                    : '-translate-y-1/2';
+              return (
+                <div
+                  key={hour}
+                  className={`absolute left-0 right-0 text-right pr-2 text-xs text-gray-400 transform ${translateClass}`}
+                  style={{ top: `${(hour / 24) * 100}%` }}
+                >
+                  {hour.toString().padStart(2, '0')}:00
+                </div>
+              );
+            })}
           </div>
 
           {/* Day Columns */}
