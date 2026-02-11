@@ -567,15 +567,6 @@ export function HelpTab({
 
         <div className="space-y-3">
           <a
-            href="https://github.com/machina-gg/vision-focus/issues"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-info-600 hover:text-info-800"
-          >
-            <ExternalLink className="w-4 h-4" />
-            {getMessage('helpReportIssue')}
-          </a>
-          <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSf3yxG71Z4YQWkoZqBMFuUb0Zxvj0DQFS9FEODjUVDQSnzXhg/viewform"
             target="_blank"
             rel="noopener noreferrer"
