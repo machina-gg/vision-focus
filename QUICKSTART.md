@@ -38,7 +38,7 @@
                                                               改善サイクル
 ```
 
-詳細: [開発フロー図](./.claude/docs/DEVELOPMENT_FLOW.md)
+詳細: [開発フロー図](https://github.com/machina-gg/vibe-coding-utils/blob/develop/docs/shared/DEVELOPMENT_FLOW.md)
 
 ## ドキュメント構成
 
@@ -75,16 +75,15 @@ npm run supabase:reset   # DBリセット
 
 ## セットアップ
 
-1. [GitHub MCP 設定](./.claude/docs/SETUP_GITHUB_MCP.md) - Issue管理に必要
-2. [Vercel MCP 設定](./.claude/docs/SETUP_VERCEL_MCP.md) - デプロイに必要
-3. [権限設定](./.claude/docs/SETUP_PERMISSIONS.md) - コミット・PR確認スキップ（任意）
+1. [GitHub MCP 設定](https://github.com/machina-gg/vibe-coding-utils/blob/develop/docs/shared/SETUP_GITHUB_MCP.md) - Issue管理に必要
+2. [権限設定](https://github.com/machina-gg/vibe-coding-utils/blob/develop/docs/shared/SETUP_PERMISSIONS.md) - コミット・PR確認スキップ（任意）
 
 ## テンプレート
 
-ドキュメント作成時のテンプレートは `.claude/templates/` にあります。
+ドキュメント作成時のテンプレートは `.claude/vibe-coding-utils/templates/` にあります。
 
 ## 困ったら
 
 - `/project:continue` で現状確認
 - GitHub Issues で進捗確認
-- [開発フロー図](./.claude/docs/DEVELOPMENT_FLOW.md) で次のステップ確認
+- [開発フロー図](https://github.com/machina-gg/vibe-coding-utils/blob/develop/docs/shared/DEVELOPMENT_FLOW.md) で次のステップ確認
