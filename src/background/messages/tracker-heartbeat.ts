@@ -16,6 +16,8 @@ import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
 import { recordYouTubeTimeLimitUsage } from '~/lib/youtubeBlockService';
 import { checkYouTubeTimeLimitNotification } from '../notifications';
+import { hasExceededTimeLimit } from '~/lib/timeLimitService';
+import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
 
 // Track active pages and their last heartbeat
@@ -127,6 +129,12 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     await recordTimeLimitUsage(domain, seconds);
     // Check if we need to send a notification about time running low
     await checkTimeLimitNotification(domain);
+
+    // If time limit is now exceeded, update block rules immediately
+    if (await hasExceededTimeLimit(domain, blockItem)) {
+      await updateBlockRules();
+      await blockExistingTabs();
+    }
     // Don't return here - also track in analytics if it's an unblocked site
   }
 

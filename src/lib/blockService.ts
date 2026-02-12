@@ -10,11 +10,15 @@
  * @see docs/BLOCK_STATE_MACHINE.md for state transition diagrams
  */
 
-import { getSettings } from '~/lib/storage';
+import { getSettings, getAnalytics } from '~/lib/storage';
 import { extractDomain, matchesDomain } from '~/lib/domain';
 import { isWithinSchedule } from '~/lib/time';
 import type { AppSettings, BlockItem, Schedule } from '~/types/storage';
-import { hasExceededTimeLimit, getRemainingTime } from '~/lib/timeLimitService';
+import {
+  hasExceededTimeLimit,
+  getRemainingTime,
+  checkTimeLimitExceeded
+} from '~/lib/timeLimitService';
 
 // Block reason type - matches the state machine documentation
 export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
@@ -164,7 +168,7 @@ const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
 
 /**
  * Get list of domains that should be actively blocked via declarativeNetRequest
- * Only includes always-blocked sites (no time limit) that are enabled and within schedule
+ * Includes always-blocked sites and time-limited sites that have exceeded their limit
  * Also includes YouTube domains when YouTube blockAccess is enabled
  */
 export async function getActiveBlockedDomains(): Promise<string[]> {
@@ -180,10 +184,21 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
     return [];
   }
 
-  // Only include always-blocked sites (enabled and no time limit)
+  // Always-blocked sites (enabled and no time limit)
   const blockedDomains = settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
+
+  // Also include time-limited sites that have exceeded their limit
+  const analytics = await getAnalytics();
+  for (const item of settings.blockList) {
+    if (!item.enabled || !item.timeLimit) continue;
+    if (blockedDomains.includes(item.domain)) continue;
+
+    if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
+      blockedDomains.push(item.domain);
+    }
+  }
 
   // Add YouTube domains if YouTube blockAccess is enabled
   if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
