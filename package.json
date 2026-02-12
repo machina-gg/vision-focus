@@ -72,7 +72,8 @@
       "tabs",
       "declarativeNetRequest",
       "alarms",
-      "webNavigation"
+      "webNavigation",
+      "notifications"
     ],
     "web_accessible_resources": [
       {

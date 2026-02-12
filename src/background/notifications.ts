@@ -47,6 +47,11 @@ export function clearExpiredNotifications(): void {
   }
 }
 
+// Check if chrome.notifications API is available
+function isNotificationsApiAvailable(): boolean {
+  return !!chrome?.notifications?.create;
+}
+
 // Show a time limit notification
 async function showTimeLimitNotification(
   domain: string,
@@ -54,6 +59,11 @@ async function showTimeLimitNotification(
   totalMinutes: number,
   type: 'daily' | 'hourly'
 ): Promise<void> {
+  // Guard: skip if chrome.notifications API is unavailable
+  if (!isNotificationsApiAvailable()) {
+    return;
+  }
+
   const typeLabel =
     type === 'daily' ? getMessage('perDay') : getMessage('perHour');
 
