@@ -243,11 +243,18 @@ export function WeeklyCalendar({
                       title={`${block.schedule.name}\n${block.schedule.startTime} - ${block.schedule.endTime}${presetName ? `\n${getMessage('presetLabel')}: ${presetName}` : ''}`}
                     >
                       <div
-                        className={`p-1 text-xs truncate ${colors.text} ${
+                        className={`p-1 text-xs ${colors.text} ${
                           !block.schedule.enabled ? 'line-through' : ''
                         }`}
                       >
-                        {presetName || block.schedule.name}
+                        <div className="truncate font-medium">
+                          {block.schedule.name}
+                        </div>
+                        {presetName && (
+                          <div className="truncate opacity-70 text-[10px] leading-tight">
+                            {presetName}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
