@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Clock, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
 import { Input, Select } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
@@ -12,11 +12,13 @@ import type {
   TimeLimitUsage
 } from '~/types/storage';
 
+const SAVED_FEEDBACK_DURATION_MS = 2000;
+
 type LimitTypeOption = 'always' | 'daily' | 'hourly';
 
 interface TimeLimitEditorProps {
   item: BlockItem;
-  onUpdate: (timeLimit: TimeLimit | null) => void;
+  onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
   usage?: TimeLimitUsage;
 }
 
@@ -26,6 +28,28 @@ export function TimeLimitEditor({
   usage
 }: TimeLimitEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showSavedFeedback = useCallback(() => {
+    setShowSaved(true);
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+    }
+    savedTimerRef.current = setTimeout(() => {
+      setShowSaved(false);
+      savedTimerRef.current = null;
+    }, SAVED_FEEDBACK_DURATION_MS);
+  }, []);
 
   const currentType: LimitTypeOption = item.timeLimit
     ? item.timeLimit.type
@@ -41,28 +65,29 @@ export function TimeLimitEditor({
   const [minutes, setMinutes] = useState(currentMinutes);
 
   const handleTypeChange = useCallback(
-    (newType: LimitTypeOption) => {
+    async (newType: LimitTypeOption) => {
       setSelectedType(newType);
 
       if (newType === 'always') {
-        onUpdate(null);
+        await onUpdate(null);
       } else {
         const defaultMinutes =
           newType === 'daily'
             ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
             : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
         setMinutes(defaultMinutes);
-        onUpdate({
+        await onUpdate({
           type: newType as TimeLimitType,
           limitSeconds: defaultMinutes * 60
         });
       }
+      showSavedFeedback();
     },
-    [onUpdate]
+    [onUpdate, showSavedFeedback]
   );
 
   const handleMinutesChange = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const newMinutes = parseInt(value, 10);
       if (isNaN(newMinutes) || newMinutes < 1) return;
 
@@ -73,13 +98,14 @@ export function TimeLimitEditor({
       setMinutes(clampedMinutes);
 
       if (selectedType !== 'always') {
-        onUpdate({
+        await onUpdate({
           type: selectedType as TimeLimitType,
           limitSeconds: clampedMinutes * 60
         });
+        showSavedFeedback();
       }
     },
-    [selectedType, onUpdate]
+    [selectedType, onUpdate, showSavedFeedback]
   );
 
   const typeOptions = [
@@ -157,6 +183,13 @@ export function TimeLimitEditor({
                   ? getMessage('resetDaily')
                   : getMessage('resetHourly')}
               </p>
+            </div>
+          )}
+
+          {showSaved && (
+            <div className="flex items-center gap-1 text-xs text-success-600 animate-fade-in">
+              <Check className="w-3 h-3" />
+              <span>{getMessage('saved')}</span>
             </div>
           )}
         </div>
