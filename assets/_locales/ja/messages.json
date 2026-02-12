@@ -1958,5 +1958,43 @@
   "analyticsShareStatsDescription": {
     "message": "匿名の機能使用データを共有して、VisionFocusの改善にご協力ください。個人情報は一切収集されません。",
     "description": "アナリティクストグルの説明"
+  },
+  "unblockConfirmTitle": {
+    "message": "ブロック解除の確認",
+    "description": "ブロック解除確認ダイアログタイトル"
+  },
+  "unblockConfirmDescription": {
+    "message": "$DOMAIN$ のブロックを解除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "description": "ブロック解除確認の説明",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "deleteBlockConfirmDescription": {
+    "message": "$DOMAIN$ のブロックを削除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "description": "ブロック削除確認の説明",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "unblockConfirmHoldButton": {
+    "message": "長押しして確認",
+    "description": "長押しボタンラベル"
+  },
+  "unblockConfirmBlockStyle": {
+    "message": "ブロック方式: $STYLE$",
+    "description": "確認ダイアログのブロック方式表示",
+    "placeholders": {
+      "style": {
+        "content": "$1",
+        "example": "常時ブロック"
+      }
+    }
   }
 }

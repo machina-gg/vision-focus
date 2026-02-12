@@ -2,7 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { Plus, Lock } from 'lucide-react';
 
 import { Button, Card, Input } from '~/components/ui';
-import { PasswordModal } from '~/components/options/modals';
+import {
+  PasswordModal,
+  UnblockConfirmModal
+} from '~/components/options/modals';
 import { getMessage } from '~/lib/i18n';
 import {
   NotificationSettingsSection,
@@ -11,6 +14,7 @@ import {
 } from '~/components/options/blocklist';
 import type {
   AppSettings,
+  BlockItem,
   SiteBlockCount,
   TimeLimit,
   TimeLimitUsage,
@@ -54,34 +58,65 @@ export function BlocklistTab({
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
   const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
 
+  // Unblock confirmation modal state (for non-password flow)
+  const [showUnblockConfirm, setShowUnblockConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'toggle' | 'delete'>(
+    'toggle'
+  );
+  const [pendingItem, setPendingItem] = useState<BlockItem | null>(null);
+
   const isPasswordProtected =
     settings?.password?.enabled && settings?.password?.passwordHash;
 
-  // Handle remove with password check
+  // Get block style label for a block item
+  const getBlockStyleLabel = useCallback((item: BlockItem): string => {
+    if (item.timeLimit) {
+      return item.timeLimit.type === 'daily'
+        ? getMessage('dailyLimit')
+        : getMessage('hourlyLimit');
+    }
+    return getMessage('alwaysBlocked');
+  }, []);
+
+  // Handle remove with password or confirmation check
   const handleRemoveClick = useCallback(
     (id: string) => {
       if (isPasswordProtected) {
         setPendingRemoveId(id);
         setShowPasswordModal(true);
       } else {
-        onRemoveDomain(id);
+        const item = settings?.blockList.find((b) => b.id === id);
+        if (item) {
+          setPendingItem(item);
+          setPendingAction('delete');
+          setShowUnblockConfirm(true);
+        }
       }
     },
-    [isPasswordProtected, onRemoveDomain]
+    [isPasswordProtected, settings?.blockList]
   );
 
-  // Handle toggle with password check (only when disabling)
+  // Handle toggle with password or confirmation check (only when disabling)
   const handleToggleClick = useCallback(
     (id: string, enabled: boolean) => {
-      // Only require password when disabling (turning off blocking)
-      if (!enabled && isPasswordProtected) {
-        setPendingToggleId(id);
-        setShowPasswordModal(true);
+      // Only require confirmation when disabling (turning off blocking)
+      if (!enabled) {
+        if (isPasswordProtected) {
+          setPendingToggleId(id);
+          setShowPasswordModal(true);
+        } else {
+          const item = settings?.blockList.find((b) => b.id === id);
+          if (item) {
+            setPendingItem(item);
+            setPendingAction('toggle');
+            setShowUnblockConfirm(true);
+          }
+        }
       } else {
         onToggleDomain(id, enabled);
       }
     },
-    [isPasswordProtected, onToggleDomain]
+    [isPasswordProtected, onToggleDomain, settings?.blockList]
   );
 
   // Handle password confirmation success
@@ -101,6 +136,23 @@ export function BlocklistTab({
     setShowPasswordModal(false);
     setPendingRemoveId(null);
     setPendingToggleId(null);
+  }, []);
+
+  // Handle unblock confirmation
+  const handleUnblockConfirm = useCallback(() => {
+    if (!pendingItem) return;
+
+    if (pendingAction === 'delete') {
+      onRemoveDomain(pendingItem.id);
+    } else {
+      onToggleDomain(pendingItem.id, false);
+    }
+  }, [pendingItem, pendingAction, onRemoveDomain, onToggleDomain]);
+
+  // Handle unblock confirm modal close
+  const handleUnblockConfirmClose = useCallback(() => {
+    setShowUnblockConfirm(false);
+    setPendingItem(null);
   }, []);
 
   // Check if any sites have time limits configured
@@ -196,6 +248,18 @@ export function BlocklistTab({
           passwordHash={settings.password.passwordHash}
           title={getMessage('passwordRequiredForUnblock')}
           description={getMessage('passwordRequiredForUnblockDescription')}
+        />
+      )}
+
+      {/* Unblock Confirmation Modal (non-password flow) */}
+      {pendingItem && (
+        <UnblockConfirmModal
+          isOpen={showUnblockConfirm}
+          onClose={handleUnblockConfirmClose}
+          onConfirm={handleUnblockConfirm}
+          domain={pendingItem.domain}
+          blockStyle={getBlockStyleLabel(pendingItem)}
+          action={pendingAction}
         />
       )}
     </div>

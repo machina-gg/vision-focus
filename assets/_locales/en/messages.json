@@ -1958,5 +1958,43 @@
   "analyticsShareStatsDescription": {
     "message": "Help us improve VisionFocus by sharing anonymous feature usage data. No personal information is collected.",
     "description": "Analytics toggle description"
+  },
+  "unblockConfirmTitle": {
+    "message": "Confirm Unblock",
+    "description": "Unblock confirmation dialog title"
+  },
+  "unblockConfirmDescription": {
+    "message": "You are about to unblock $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "description": "Unblock confirmation description",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "deleteBlockConfirmDescription": {
+    "message": "You are about to delete the block for $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "description": "Delete block confirmation description",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "unblockConfirmHoldButton": {
+    "message": "Hold to Confirm",
+    "description": "Long press button label"
+  },
+  "unblockConfirmBlockStyle": {
+    "message": "Block style: $STYLE$",
+    "description": "Block style display in confirmation dialog",
+    "placeholders": {
+      "style": {
+        "content": "$1",
+        "example": "Always Blocked"
+      }
+    }
   }
 }
