@@ -23,8 +23,8 @@ export function matchesDomain(domain: string, blockItem: BlockItem): boolean {
     return target.endsWith('.' + baseDomain) || target === baseDomain;
   }
 
-  // Exact match
-  return target === pattern;
+  // Exact match or subdomain match (consistent with declarativeNetRequest ||domain behavior)
+  return target === pattern || target.endsWith('.' + pattern);
 }
 
 // Check if domain is blocked by any item in the list
