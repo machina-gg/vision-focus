@@ -94,12 +94,20 @@ const handler: PlasmoMessaging.MessageHandler<
   }
   await setUnblockHistory(history);
 
-  // Clean up analytics data for this domain (reset time tracking)
+  // Initialize analytics tracking for this domain as 'waste' category
   const analytics = await getAnalytics();
-  if (analytics.siteTime[parsedDomain]) {
-    delete analytics.siteTime[parsedDomain];
-    await setAnalytics(analytics);
+  if (!analytics.siteTime[parsedDomain]) {
+    analytics.siteTime[parsedDomain] = {
+      domain: parsedDomain,
+      time: 0,
+      category: 'waste',
+      lastUpdated: now
+    };
+  } else {
+    analytics.siteTime[parsedDomain].category = 'waste';
   }
+  analytics.siteCategories[parsedDomain] = 'waste';
+  await setAnalytics(analytics);
 
   res.send({ success: true });
 };
