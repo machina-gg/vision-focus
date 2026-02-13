@@ -1,4 +1,5 @@
 import { MS_PER_DAY } from '~/constants/intervals';
+import { getCurrentLanguage } from '~/lib/i18n';
 
 // Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
@@ -16,8 +17,10 @@ export function formatTime(seconds: number): string {
   return `${minutes}m`;
 }
 
-// Format seconds to localized time string (e.g., "23分" for Japanese, "23 min" for English)
-export function formatTimeLocalized(seconds: number, language: 'ja' | 'en' = 'ja'): string {
+// ローカライズされた時間表記（例: "23分" / "23 min"）
+export function formatTimeLocalized(seconds: number): string {
+  const language = getCurrentLanguage();
+
   if (seconds < 60) {
     return language === 'ja' ? `${seconds}秒` : `${seconds} sec`;
   }
