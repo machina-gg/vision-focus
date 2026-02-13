@@ -1051,6 +1051,10 @@
     "message": "Time saved",
     "description": "Time saved label for blocked sites"
   },
+  "timeSavedTooltip": {
+    "message": "Calculated as: blocked access attempts × avg. browsing time (5 min)",
+    "description": "Tooltip explaining how time saved is calculated"
+  },
   "noUnblockedSites": {
     "message": "No unblocked sites",
     "description": "No unblocked sites title"
