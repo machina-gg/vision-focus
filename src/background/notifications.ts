@@ -3,6 +3,7 @@ import { findEnabledBlockItemForDomain } from '~/lib/blockService';
 import { getRemainingTime } from '~/lib/timeLimitService';
 import { getYouTubeRemainingTime } from '~/lib/youtubeBlockService';
 import { getMessage } from '~/lib/i18n';
+import { isExtensionContextValid } from '~/lib/chromeApi';
 
 // In-memory state to track which domains have been notified
 // Key: domain, Value: reset key (YYYY-MM-DD for daily, YYYY-MM-DD-HH for hourly)
@@ -61,6 +62,11 @@ async function showTimeLimitNotification(
 ): Promise<void> {
   // Guard: skip if chrome.notifications API is unavailable
   if (!isNotificationsApiAvailable()) {
+    return;
+  }
+
+  // Check if extension context is still valid
+  if (!isExtensionContextValid()) {
     return;
   }
 

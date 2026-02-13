@@ -6,6 +6,18 @@
  * since they use background-specific APIs or run in a different context.
  */
 
+/**
+ * Check if extension context is still valid.
+ * Returns false if the extension has been updated/reloaded and this script is stale.
+ */
+export function isExtensionContextValid(): boolean {
+  try {
+    return !!chrome.runtime?.id;
+  } catch {
+    return false;
+  }
+}
+
 /** Get the currently active tab in the current window */
 export async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
   const [tab] = await chrome.tabs.query({
@@ -17,6 +29,9 @@ export async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 
 /** Open the extension's options page */
 export function openOptionsPage(): void {
+  if (!isExtensionContextValid()) {
+    return;
+  }
   chrome.runtime.openOptionsPage();
 }
 
@@ -27,6 +42,10 @@ export function createTab(url: string): void {
 
 /** Get the full URL for an extension resource */
 export function getExtensionURL(path: string): string {
+  if (!isExtensionContextValid()) {
+    // Return empty string if context is invalid
+    return '';
+  }
   return chrome.runtime.getURL(path);
 }
 
