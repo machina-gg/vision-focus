@@ -102,7 +102,9 @@ describe('checkPremiumStatus', () => {
   it('saves status to cache after checking', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    const setSpy = vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
+    const setSpy = vi
+      .spyOn(storageLib.storage, 'set')
+      .mockResolvedValue(undefined);
 
     await checkPremiumStatus();
 
