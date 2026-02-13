@@ -1724,7 +1724,7 @@
     "description": "おすすめ非表示オプション"
   },
   "youtubeHideRecommendationsDescription": {
-    "message": "動画終了時のおすすめ動画を非表示にします",
+    "message": "エンドスクリーンのおすすめ動画・サイドバーの関連動画・自動再生を非表示にします",
     "description": "おすすめ非表示の説明"
   },
   "youtubeHideComments": {

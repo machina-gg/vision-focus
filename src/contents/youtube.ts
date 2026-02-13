@@ -133,10 +133,27 @@ function generateCSS(settings: YouTubeSettings): string {
   }
 
   if (settings.hideRecommendations) {
+    // Note: This selector intentionally overlaps with hideSidebar setting.
+    // hideRecommendations targets end screen + sidebar related videos + autoplay.
+    // hideSidebar only targets sidebar related videos (no end screen/autoplay).
+    // This allows users to hide end screen without hiding sidebar if desired.
     rules.push(`
       /* Hide end screen recommendations */
       ${SELECTORS.endScreen} {
         display: none !important;
+      }
+      /* Hide related videos in sidebar */
+      ytd-watch-flexy ${SELECTORS.relatedVideos},
+      ytd-watch-flexy ${SELECTORS.secondaryInner} #related {
+        display: none !important;
+      }
+      /* Hide autoplay toggle button */
+      ${SELECTORS.autoplayToggle} {
+        display: none !important;
+      }
+      /* Expand video player when recommendations are hidden */
+      ytd-watch-flexy[flexy][is-two-columns_] #primary {
+        max-width: 100% !important;
       }
     `);
   }
@@ -224,7 +241,7 @@ function handleDynamicContent(): void {
       .forEach((el) => ((el as HTMLElement).style.display = 'none'));
   }
 
-  if (currentSettings.hideRecommendations && currentSettings.hideHomeFeed) {
+  if (currentSettings.hideRecommendations) {
     // Disable autoplay when recommendations are hidden
     const autoplayToggle = document.querySelector(
       SELECTORS.autoplayToggle

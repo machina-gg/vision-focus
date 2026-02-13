@@ -1724,7 +1724,7 @@
     "description": "Hide recommendations option"
   },
   "youtubeHideRecommendationsDescription": {
-    "message": "Hide video recommendations at the end of videos",
+    "message": "Hide end screen recommendations, related videos in sidebar, and autoplay",
     "description": "Hide recommendations description"
   },
   "youtubeHideComments": {
