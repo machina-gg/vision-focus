@@ -44,7 +44,7 @@ jobs:
         run: pnpm build
 
       - name: E2E tests
-        if: hashFiles('e2e/**/*.spec.ts', 'e2e/**/*.test.ts', 'playwright.config.ts') != ''
+        if: hashFiles('tests/e2e/**/*.spec.ts', 'tests/e2e/**/*.test.ts', 'playwright.config.ts') != ''
         run: |
           pnpm exec playwright install --with-deps chromium
-          pnpm test:e2e
+          xvfb-run --auto-servernum -- pnpm test:e2e
