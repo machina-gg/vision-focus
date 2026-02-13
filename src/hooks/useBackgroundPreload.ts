@@ -104,12 +104,16 @@ export function useBackgroundPreload({
     () =>
       isColorBackground
         ? { backgroundColor }
-        : {
-            backgroundImage: `url(${backgroundUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          },
-    [isColorBackground, backgroundColor, backgroundUrl]
+        : isBackgroundReady
+          ? {
+              backgroundImage: `url(${backgroundUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }
+          : {
+              backgroundColor: '#1a1a2e'
+            },
+    [isColorBackground, backgroundColor, backgroundUrl, isBackgroundReady]
   );
 
   return {
