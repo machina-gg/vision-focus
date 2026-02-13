@@ -73,7 +73,8 @@
       "declarativeNetRequest",
       "alarms",
       "webNavigation",
-      "notifications"
+      "notifications",
+      "clipboardWrite"
     ],
     "web_accessible_resources": [
       {
