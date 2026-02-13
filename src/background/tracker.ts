@@ -184,7 +184,8 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     investTime:
       (existingDailyStat?.investTime || 0) +
       (category === 'invest' ? seconds : 0),
-    blockCount: existingDailyStat?.blockCount || 0
+    blockCount: existingDailyStat?.blockCount || 0,
+    unblockCount: existingDailyStat?.unblockCount || 0
   };
   analytics.dailyStats[todayKey] = updatedDailyStat;
 
@@ -201,7 +202,8 @@ export async function incrementBlockCount(): Promise<void> {
     date: todayKey,
     wasteTime: existingDailyStat?.wasteTime || 0,
     investTime: existingDailyStat?.investTime || 0,
-    blockCount: (existingDailyStat?.blockCount || 0) + 1
+    blockCount: (existingDailyStat?.blockCount || 0) + 1,
+    unblockCount: existingDailyStat?.unblockCount || 0
   };
   analytics.dailyStats[todayKey] = updatedDailyStat;
 
@@ -234,7 +236,8 @@ export async function getTodayStats(): Promise<DailyStat> {
       date: todayKey,
       wasteTime: 0,
       investTime: 0,
-      blockCount: 0
+      blockCount: 0,
+      unblockCount: 0
     }
   );
 }

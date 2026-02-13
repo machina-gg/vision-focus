@@ -8,6 +8,7 @@ export interface BackgroundStats {
   wasteTime: number;
   investTime: number;
   blockCount: number;
+  unblockCount: number;
   topBlockedSite: { domain: string; count: number } | null;
 }
 
@@ -15,6 +16,7 @@ const DEFAULT_STATS: BackgroundStats = {
   wasteTime: 0,
   investTime: 0,
   blockCount: 0,
+  unblockCount: 0,
   topBlockedSite: null
 };
 
