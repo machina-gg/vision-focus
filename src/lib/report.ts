@@ -4,6 +4,7 @@ import type {
   AnalyticsData,
   DailyStat,
   SiteBlockCount,
+  SiteUnblockCount,
   SiteTime
 } from '~/types/storage';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';
@@ -67,6 +68,17 @@ function getTopBlockedSites(
   limit: number = 5
 ): { domain: string; count: number }[] {
   return Object.values(siteBlockCounts)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map((site) => ({ domain: site.domain, count: site.count }));
+}
+
+// Get top unblocked sites from siteUnblockCounts data
+function getTopUnblockedSites(
+  siteUnblockCounts: Record<string, SiteUnblockCount>,
+  limit: number = 5
+): { domain: string; count: number }[] {
+  return Object.values(siteUnblockCounts)
     .sort((a, b) => b.count - a.count)
     .slice(0, limit)
     .map((site) => ({ domain: site.domain, count: site.count }));
@@ -145,7 +157,8 @@ export function generateWeeklyReport(
         date,
         wasteTime: 0,
         investTime: 0,
-        blockCount: 0
+        blockCount: 0,
+        unblockCount: 0
       }
     );
   });
@@ -157,6 +170,10 @@ export function generateWeeklyReport(
   );
   const totalBlockCount = dailyBreakdown.reduce(
     (sum, day) => sum + day.blockCount,
+    0
+  );
+  const totalUnblockCount = dailyBreakdown.reduce(
+    (sum, day) => sum + day.unblockCount,
     0
   );
 
@@ -173,6 +190,9 @@ export function generateWeeklyReport(
   // Get top sites
   const topWasteSites = getTopSites(analytics.siteTime, 'waste');
   const topBlockedSites = getTopBlockedSites(analytics.siteBlockCounts);
+  const topUnblockedSites = getTopUnblockedSites(
+    analytics.siteUnblockCounts || {}
+  );
 
   // Calculate previous week waste time for comparison
   const prevWeekDate = new Date(today);
@@ -203,10 +223,12 @@ export function generateWeeklyReport(
     weekEnd: formatDateKey(weekEnd),
     totalWasteTime,
     totalBlockCount,
+    totalUnblockCount,
     dailyBreakdown,
     dailyBlockCounts,
     topWasteSites,
     topBlockedSites,
+    topUnblockedSites,
     wasteTimeChangePercent,
     trend
   };
@@ -239,12 +261,14 @@ export function generateMonthlyReport(
   // Calculate totals
   let totalWasteTime = 0;
   let totalBlockCount = 0;
+  let totalUnblockCount = 0;
 
   dates.forEach((date) => {
     const stat = analytics.dailyStats[date];
     if (stat) {
       totalWasteTime += stat.wasteTime;
       totalBlockCount += stat.blockCount;
+      totalUnblockCount += stat.unblockCount || 0;
     }
   });
 
@@ -260,6 +284,7 @@ export function generateMonthlyReport(
     weekStart: string;
     wasteTime: number;
     blockCount: number;
+    unblockCount: number;
   }[] = [];
 
   const initialWeekStart = getWeekStart(monthStart);
@@ -279,25 +304,31 @@ export function generateMonthlyReport(
 
     let weekWaste = 0;
     let weekBlockCount = 0;
+    let weekUnblockCount = 0;
 
     weekDates.forEach((date) => {
       const stat = analytics.dailyStats[date];
       if (stat) {
         weekWaste += stat.wasteTime;
         weekBlockCount += stat.blockCount;
+        weekUnblockCount += stat.unblockCount || 0;
       }
     });
 
     weeklyBreakdown.push({
       weekStart: formatDateKey(currentWeekStart),
       wasteTime: weekWaste,
-      blockCount: weekBlockCount
+      blockCount: weekBlockCount,
+      unblockCount: weekUnblockCount
     });
   }
 
   // Get top sites
   const topWasteSites = getTopSites(analytics.siteTime, 'waste');
   const topBlockedSites = getTopBlockedSites(analytics.siteBlockCounts);
+  const topUnblockedSites = getTopUnblockedSites(
+    analytics.siteUnblockCounts || {}
+  );
 
   // Calculate previous month waste time for comparison
   const prevMonthDate = new Date(
@@ -334,9 +365,11 @@ export function generateMonthlyReport(
     month: formatMonthKey(targetDate),
     totalWasteTime,
     totalBlockCount,
+    totalUnblockCount,
     weeklyBreakdown,
     topWasteSites,
     topBlockedSites,
+    topUnblockedSites,
     wasteTimeChangePercent,
     trend
   };

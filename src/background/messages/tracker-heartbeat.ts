@@ -183,7 +183,8 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     date: todayKey,
     wasteTime: (existingDailyStat?.wasteTime || 0) + seconds,
     investTime: existingDailyStat?.investTime || 0,
-    blockCount: existingDailyStat?.blockCount || 0
+    blockCount: existingDailyStat?.blockCount || 0,
+    unblockCount: existingDailyStat?.unblockCount || 0
   };
   analytics.dailyStats[todayKey] = updatedDailyStat;
 

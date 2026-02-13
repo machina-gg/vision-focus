@@ -29,6 +29,7 @@ export interface GetStatsResponse {
   wasteTime: number;
   investTime: number;
   blockCount: number;
+  unblockCount: number;
   topBlockedSite: {
     domain: string;
     count: number;

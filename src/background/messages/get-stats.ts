@@ -25,6 +25,7 @@ const handler: PlasmoMessaging.MessageHandler<
     wasteTime: stats.wasteTime,
     investTime: stats.investTime,
     blockCount: stats.blockCount,
+    unblockCount: stats.unblockCount,
     topBlockedSite
   });
 };

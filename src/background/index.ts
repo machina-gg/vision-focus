@@ -112,7 +112,8 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     date: today,
     wasteTime: 0,
     investTime: 0,
-    blockCount: 0
+    blockCount: 0,
+    unblockCount: 0
   };
 
   await setAnalytics({

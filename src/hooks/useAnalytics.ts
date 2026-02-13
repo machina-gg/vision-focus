@@ -34,6 +34,7 @@ export function useAnalytics({
     siteTime: {},
     siteCategories: {},
     siteBlockCounts: {},
+    siteUnblockCounts: {},
     timeLimitUsage: {}
   });
 
@@ -109,6 +110,7 @@ export function useAnalytics({
         siteTime: {},
         siteCategories: {},
         siteBlockCounts: {},
+        siteUnblockCounts: {},
         timeLimitUsage: {}
       };
       await storage.set('analytics', emptyAnalytics);

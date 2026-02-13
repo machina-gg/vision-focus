@@ -78,6 +78,7 @@ export interface DailyStat {
   wasteTime: number; // seconds
   investTime: number; // seconds
   blockCount: number;
+  unblockCount: number; // Number of times sites were unblocked (toggle OFF)
 }
 
 // Site time tracking
@@ -93,6 +94,13 @@ export interface SiteBlockCount {
   domain: string;
   count: number; // cumulative block count
   lastBlocked: string; // ISO8601 timestamp
+}
+
+// Site unblock count tracking (parallel to SiteBlockCount)
+export interface SiteUnblockCount {
+  domain: string;
+  count: number; // cumulative unblock count
+  lastUnblocked: string; // ISO8601 timestamp
 }
 
 // Dashboard display settings (shared between default and presets)
@@ -177,6 +185,7 @@ export interface AnalyticsData {
   siteTime: Record<string, SiteTime>; // key: domain
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
   siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
+  siteUnblockCounts: Record<string, SiteUnblockCount>; // key: domain (tracks unblock toggle-off actions)
   timeLimitUsage: Record<string, TimeLimitUsage>; // key: domain
 }
 
@@ -285,6 +294,7 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
+  siteUnblockCounts: {},
   timeLimitUsage: {}
 };
 
