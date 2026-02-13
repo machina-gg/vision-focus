@@ -11,7 +11,6 @@ import {
   formatDate,
   getSupportedLanguages
 } from '~/lib/i18n';
-import type { SupportedLanguage } from '~/types/storage';
 
 // Mock chrome.i18n API
 const mockChromeI18n = {
@@ -24,7 +23,7 @@ describe('i18n utilities', () => {
     // Reset global chrome mock
     global.chrome = {
       i18n: mockChromeI18n
-    } as any;
+    } as unknown as typeof chrome;
 
     // Reset current language to default
     setCurrentLanguage(null);
@@ -356,7 +355,7 @@ describe('i18n utilities', () => {
     });
 
     it('chrome.i18nが完全に利用できない環境でも動作する', () => {
-      global.chrome = undefined as any;
+      global.chrome = undefined as unknown as typeof chrome;
       expect(() => getBrowserLanguage()).not.toThrow();
       expect(getBrowserLanguage()).toBe('en'); // Default fallback
     });

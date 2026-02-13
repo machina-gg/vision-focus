@@ -64,7 +64,7 @@ describe('validateImageFile', () => {
   });
 
   it('ファイルが提供されない場合にエラーを返す', () => {
-    const result = validateImageFile(null as any);
+    const result = validateImageFile(null as unknown as File);
     expect(result.valid).toBe(false);
     expect(result.error).toBe('No file provided');
   });
@@ -92,9 +92,18 @@ describe('validateImageFile', () => {
 });
 
 describe('compressImage', () => {
-  let mockCanvas: any;
-  let mockContext: any;
-  let mockImage: any;
+  let mockCanvas: HTMLCanvasElement & {
+    getContext: ReturnType<typeof vi.fn>;
+    toDataURL: ReturnType<typeof vi.fn>;
+  };
+  let mockContext: CanvasRenderingContext2D & {
+    drawImage: ReturnType<typeof vi.fn>;
+    fillRect: ReturnType<typeof vi.fn>;
+  };
+  let mockImage: HTMLImageElement & {
+    onload: (() => void) | null;
+    onerror: (() => void) | null;
+  };
 
   beforeEach(() => {
     // Mock canvas and context
@@ -102,6 +111,9 @@ describe('compressImage', () => {
       fillStyle: '',
       fillRect: vi.fn(),
       drawImage: vi.fn()
+    } as unknown as CanvasRenderingContext2D & {
+      drawImage: ReturnType<typeof vi.fn>;
+      fillRect: ReturnType<typeof vi.fn>;
     };
 
     mockCanvas = {
@@ -109,43 +121,49 @@ describe('compressImage', () => {
       height: 0,
       getContext: vi.fn(() => mockContext),
       toDataURL: vi.fn(() => 'data:image/jpeg;base64,mockBase64Data')
+    } as unknown as HTMLCanvasElement & {
+      getContext: ReturnType<typeof vi.fn>;
+      toDataURL: ReturnType<typeof vi.fn>;
     };
 
     global.document.createElement = vi.fn((tag: string) => {
       if (tag === 'canvas') return mockCanvas;
       return {};
-    }) as any;
+    }) as unknown as typeof document.createElement;
 
     // Mock Image
     mockImage = {
       width: 1920,
       height: 1080,
-      onload: null as any,
-      onerror: null as any,
+      onload: null,
+      onerror: null,
       src: ''
+    } as unknown as HTMLImageElement & {
+      onload: (() => void) | null;
+      onerror: (() => void) | null;
     };
 
-    global.Image = vi.fn(() => mockImage) as any;
+    global.Image = vi.fn(() => mockImage) as unknown as typeof Image;
 
     // Mock FileReader
     const mockFileReader = {
-      onload: null as any,
-      onerror: null as any,
-      readAsDataURL: vi.fn(function (this: any) {
+      onload: null,
+      onerror: null,
+      readAsDataURL: vi.fn(function (this: FileReader & { onload: ((event: ProgressEvent<FileReader>) => void) | null }) {
         // Simulate successful load
         setTimeout(() => {
           if (this.onload) {
-            this.onload({ target: { result: 'data:image/jpeg;base64,test' } });
+            this.onload({ target: { result: 'data:image/jpeg;base64,test' } } as ProgressEvent<FileReader>);
           }
         }, 0);
       })
     };
 
-    global.FileReader = vi.fn(() => mockFileReader) as any;
+    global.FileReader = vi.fn(() => mockFileReader) as unknown as typeof FileReader;
 
     // Trigger image onload after src is set
     Object.defineProperty(mockImage, 'src', {
-      set(value: string) {
+      set(_value: string) {
         setTimeout(() => {
           if (mockImage.onload) mockImage.onload();
         }, 0);

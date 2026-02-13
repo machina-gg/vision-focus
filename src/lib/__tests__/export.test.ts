@@ -79,9 +79,9 @@ describe('export utilities', () => {
     mockAppendChild = vi.fn();
     mockRemoveChild = vi.fn();
 
-    global.document.createElement = mockCreateElement as any;
-    global.document.body.appendChild = mockAppendChild as any;
-    global.document.body.removeChild = mockRemoveChild as any;
+    global.document.createElement = mockCreateElement as unknown as typeof document.createElement;
+    global.document.body.appendChild = mockAppendChild as unknown as typeof document.body.appendChild;
+    global.document.body.removeChild = mockRemoveChild as unknown as typeof document.body.removeChild;
 
     // Mock URL APIs
     mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
@@ -93,7 +93,7 @@ describe('export utilities', () => {
     global.Blob = vi.fn((content, options) => ({
       content,
       options
-    })) as any;
+    })) as unknown as typeof Blob;
 
     // Mock Date for consistent filename
     vi.useFakeTimers();
@@ -184,7 +184,7 @@ describe('export utilities', () => {
         'example.com': {
           domain: 'example.com',
           count: 10,
-          lastBlocked: null as any // Force null for testing
+          lastBlocked: null as unknown as string // Force null for testing
         }
       };
       expect(() => exportBlockCounts(siteBlockCounts)).not.toThrow();
@@ -481,7 +481,7 @@ describe('export utilities', () => {
 
       // Verify Blob was created (BOM is added in downloadCSV)
       expect(global.Blob).toHaveBeenCalled();
-      const blobCall = (global.Blob as any).mock.calls[0];
+      const blobCall = (global.Blob as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
       const content = blobCall[0][0];
       // BOM is '\uFEFF', should be prepended
       expect(content.startsWith('\uFEFF')).toBe(true);
