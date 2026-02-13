@@ -17,9 +17,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 vi.mock('~/lib/time', () => ({
-  normalizeEndTime: vi.fn((time: string) =>
-    time === '00:00' ? '24:00' : time
-  )
+  normalizeEndTime: vi.fn((time: string) => (time === '00:00' ? '24:00' : time))
 }));
 
 import { trackFeatureUse } from '~/lib/analytics';
@@ -281,7 +279,8 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(storage.set).mock.calls[0][1] as AppSettings;
+      const savedSchedule = vi.mocked(storage.set).mock
+        .calls[0][1] as AppSettings;
       expect(savedSchedule.schedules[1].presetId).toBeUndefined();
     });
 
@@ -347,7 +346,8 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(storage.set).mock.calls[0][1] as AppSettings;
+      const savedSchedule = vi.mocked(storage.set).mock
+        .calls[0][1] as AppSettings;
       expect(savedSchedule.schedules[1].endTime).toBe('24:00');
     });
   });

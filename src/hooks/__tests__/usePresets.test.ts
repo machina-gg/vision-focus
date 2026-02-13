@@ -2,14 +2,8 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { usePresets } from '~/hooks/usePresets';
-import type {
-  VisionSettings,
-  DashboardPreset
-} from '~/types/storage';
-import {
-  DEFAULT_VISION,
-  DEFAULT_DISPLAY_SETTINGS
-} from '~/types/storage';
+import type { VisionSettings, DashboardPreset } from '~/types/storage';
+import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 import { DEFAULT_FONT_SETTINGS } from '~/types/font';
 
 // Mock dependencies
@@ -368,7 +362,8 @@ describe('usePresets', () => {
         await result.current.handleSaveSelectedPreset();
       });
 
-      const savedVision = vi.mocked(storage.set).mock.calls[0][1] as VisionSettings;
+      const savedVision = vi.mocked(storage.set).mock
+        .calls[0][1] as VisionSettings;
       expect(savedVision.presets[0].name).toBe('Updated Name');
       expect(savedVision.presets[0].goalText).toBe('Updated Goal');
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
@@ -496,7 +491,8 @@ describe('usePresets', () => {
         await result.current.handleApplyPreset();
       });
 
-      const savedVision = vi.mocked(storage.set).mock.calls[0][1] as VisionSettings;
+      const savedVision = vi.mocked(storage.set).mock
+        .calls[0][1] as VisionSettings;
       expect(savedVision.activePresetId).toBe('preset-1');
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(trackFeatureUse).toHaveBeenCalledWith('preset_switch');
@@ -573,7 +569,8 @@ describe('usePresets', () => {
         await result.current.handleCreatePreset();
       });
 
-      const savedVision = vi.mocked(storage.set).mock.calls[0][1] as VisionSettings;
+      const savedVision = vi.mocked(storage.set).mock
+        .calls[0][1] as VisionSettings;
       expect(savedVision.presets).toHaveLength(2);
       expect(savedVision.presets[1].id).toBe('new-preset-id');
       expect(savedVision.presets[1].name).toBe('New Preset');
@@ -625,7 +622,8 @@ describe('usePresets', () => {
         await result.current.handleDeletePreset('preset-1');
       });
 
-      const savedVision = vi.mocked(storage.set).mock.calls[0][1] as VisionSettings;
+      const savedVision = vi.mocked(storage.set).mock
+        .calls[0][1] as VisionSettings;
       expect(savedVision.presets).toHaveLength(0);
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(result.current.selectedPresetId).toBeNull();
@@ -693,7 +691,8 @@ describe('usePresets', () => {
         await result.current.handleDeletePreset('preset-1');
       });
 
-      const savedVision = vi.mocked(storage.set).mock.calls[0][1] as VisionSettings;
+      const savedVision = vi.mocked(storage.set).mock
+        .calls[0][1] as VisionSettings;
       expect(savedVision.activePresetId).toBeNull();
     });
   });
