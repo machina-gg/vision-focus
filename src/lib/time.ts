@@ -1,4 +1,5 @@
 import { MS_PER_DAY } from '~/constants/intervals';
+import { getCurrentLanguage } from '~/lib/i18n';
 
 // Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
@@ -14,6 +15,28 @@ export function formatTime(seconds: number): string {
   }
 
   return `${minutes}m`;
+}
+
+// ローカライズされた時間表記（例: "23分" / "23 min"）
+export function formatTimeLocalized(seconds: number): string {
+  const language = getCurrentLanguage();
+
+  if (seconds < 60) {
+    return language === 'ja' ? `${seconds}秒` : `${seconds} sec`;
+  }
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (hours > 0) {
+    if (language === 'ja') {
+      return minutes > 0 ? `${hours}時間${minutes}分` : `${hours}時間`;
+    } else {
+      return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+    }
+  }
+
+  return language === 'ja' ? `${minutes}分` : `${minutes} min`;
 }
 
 // Format seconds to short format (e.g., "1:23:45")
