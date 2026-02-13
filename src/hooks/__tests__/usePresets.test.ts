@@ -4,8 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePresets } from '~/hooks/usePresets';
 import type {
   VisionSettings,
-  DashboardPreset,
-  DashboardDisplaySettings
+  DashboardPreset
 } from '~/types/storage';
 import {
   DEFAULT_VISION,
