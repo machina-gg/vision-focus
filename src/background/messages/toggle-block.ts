@@ -9,10 +9,7 @@ import {
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { getTodayKey } from '~/lib/time';
 import { trackEvent } from '~/lib/analytics';
-import type {
-  ToggleBlockRequest,
-  ToggleBlockResponse
-} from '~/types/messages';
+import type { ToggleBlockRequest, ToggleBlockResponse } from '~/types/messages';
 import type { DailyStat, SiteUnblockCount } from '~/types/storage';
 
 export type { ToggleBlockRequest, ToggleBlockResponse };
