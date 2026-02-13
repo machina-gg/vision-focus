@@ -7,6 +7,7 @@ import {
   getActiveBlockedDomains,
   type BlockReason
 } from '~/lib/blockService';
+import { isExtensionContextValid } from '~/lib/chromeApi';
 
 // Re-export types for backwards compatibility
 export type { BlockReason };
@@ -127,6 +128,11 @@ export async function removeBlockedDomain(id: string): Promise<void> {
 
 // Check all open tabs and redirect any that match blocked domains
 export async function blockExistingTabs(): Promise<void> {
+  // Check if extension context is still valid
+  if (!isExtensionContextValid()) {
+    return;
+  }
+
   const tabs = await chrome.tabs.query({});
   const newtabUrl = chrome.runtime.getURL('newtab.html');
 

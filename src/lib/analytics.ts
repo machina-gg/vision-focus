@@ -7,6 +7,7 @@
 
 import { getSettings } from '~/lib/storage';
 import { getCurrentLanguage } from '~/lib/i18n';
+import { isExtensionContextValid } from '~/lib/chromeApi';
 
 const GA_MEASUREMENT_ID = process.env.PLASMO_PUBLIC_GA_MEASUREMENT_ID ?? '';
 const GA_API_SECRET = process.env.PLASMO_PUBLIC_GA_API_SECRET ?? '';
@@ -119,6 +120,11 @@ export async function trackError(type: string): Promise<void> {
 export async function sendDailyActive(): Promise<void> {
   const enabled = await isAnalyticsEnabled();
   if (!enabled) return;
+
+  // Check if extension context is still valid
+  if (!isExtensionContextValid()) {
+    return;
+  }
 
   const settings = await getSettings();
   const version = chrome.runtime.getManifest().version;
