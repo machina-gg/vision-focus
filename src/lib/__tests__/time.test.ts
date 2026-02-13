@@ -246,8 +246,8 @@ describe('isValidTimeString', () => {
 
   it('rejects non-string inputs', () => {
     expect(isValidTimeString('')).toBe(false);
-    expect(isValidTimeString(null as any)).toBe(false);
-    expect(isValidTimeString(undefined as any)).toBe(false);
+    expect(isValidTimeString(null as never)).toBe(false);
+    expect(isValidTimeString(undefined as never)).toBe(false);
   });
 
   it('accepts single-digit hours with leading zero', () => {
