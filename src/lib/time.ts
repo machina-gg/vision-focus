@@ -16,6 +16,26 @@ export function formatTime(seconds: number): string {
   return `${minutes}m`;
 }
 
+// Format seconds to localized time string (e.g., "23分" for Japanese, "23 min" for English)
+export function formatTimeLocalized(seconds: number, language: 'ja' | 'en' = 'ja'): string {
+  if (seconds < 60) {
+    return language === 'ja' ? `${seconds}秒` : `${seconds} sec`;
+  }
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (hours > 0) {
+    if (language === 'ja') {
+      return minutes > 0 ? `${hours}時間${minutes}分` : `${hours}時間`;
+    } else {
+      return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+    }
+  }
+
+  return language === 'ja' ? `${minutes}分` : `${minutes} min`;
+}
+
 // Format seconds to short format (e.g., "1:23:45")
 export function formatTimeShort(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
