@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, Clock, Info, Lock, RefreshCw, EyeOff } from 'lucide-react';
+import {
+  AlertTriangle,
+  Clock,
+  Info,
+  Lock,
+  RefreshCw,
+  EyeOff
+} from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
 import { UpgradePrompt } from '~/components/features';
