@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, Clock, Lock, RefreshCw, EyeOff } from 'lucide-react';
+import { AlertTriangle, Clock, Info, Lock, RefreshCw, EyeOff } from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
 import { UpgradePrompt } from '~/components/features';
@@ -170,7 +170,13 @@ function BlockedSiteItem({ site }: { site: TrackedSite }) {
           <span className="text-lg font-bold text-success-600">
             0{getMessage('time') === 'Time' ? 'm' : '\u5206'}
           </span>
-          <p className="text-xs text-gray-500">{getMessage('timeSaved')}</p>
+          <p className="text-xs text-gray-500 inline-flex items-center gap-1">
+            {getMessage('timeSaved')}
+            <Info
+              className="w-3 h-3 text-gray-400 cursor-help"
+              title={getMessage('timeSavedTooltip')}
+            />
+          </p>
         </div>
       </div>
     </div>

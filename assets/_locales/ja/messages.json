@@ -1051,6 +1051,10 @@
     "message": "節約した時間",
     "description": "ブロック中サイトの節約時間ラベル"
   },
+  "timeSavedTooltip": {
+    "message": "ブロック中にアクセスを試みた回数 × 平均滞在時間（5分）で算出",
+    "description": "節約した時間の算出方法の説明ツールチップ"
+  },
   "noUnblockedSites": {
     "message": "ブロック解除したサイトはありません",
     "description": "ブロック解除サイトなしタイトル"
