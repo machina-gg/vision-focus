@@ -423,7 +423,7 @@ describe('useBlocklist', () => {
     });
 
     it('通知設定を更新', async () => {
-      vi.mocked(storage.set).mockResolvedValue();
+      vi.mocked(storage.set).mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })

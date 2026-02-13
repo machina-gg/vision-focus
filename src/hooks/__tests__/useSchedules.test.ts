@@ -174,7 +174,7 @@ describe('useSchedules', () => {
 
   describe('handleSaveSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue();
+      vi.mocked(storage.set).mockResolvedValue(undefined);
       // crypto.randomUUID のモック
       vi.stubGlobal('crypto', {
         ...global.crypto,
@@ -354,7 +354,7 @@ describe('useSchedules', () => {
 
   describe('handleDeleteSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue();
+      vi.mocked(storage.set).mockResolvedValue(undefined);
     });
 
     it('settingsがundefinedの場合、何もしない', async () => {
@@ -408,7 +408,7 @@ describe('useSchedules', () => {
 
   describe('handleToggleSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue();
+      vi.mocked(storage.set).mockResolvedValue(undefined);
     });
 
     it('settingsがundefinedの場合、何もしない', async () => {

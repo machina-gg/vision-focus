@@ -68,7 +68,7 @@ describe('usePresets', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(storage.get).mockResolvedValue(mockVision);
-    vi.mocked(storage.set).mockResolvedValue();
+    vi.mocked(storage.set).mockResolvedValue(undefined);
     // crypto.randomUUID のモック
     vi.stubGlobal('crypto', {
       ...global.crypto,
@@ -268,7 +268,7 @@ describe('usePresets', () => {
 
       const newFontSettings = {
         ...DEFAULT_FONT_SETTINGS,
-        family: 'Inter' as const
+        family: 'inter' as const
       };
 
       act(() => {
