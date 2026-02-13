@@ -1732,7 +1732,7 @@
     "description": "Hide comments option"
   },
   "youtubeHideCommentsDescription": {
-    "message": "Hide the comment section below videos",
+    "message": "Hide the comment section below videos and live chat",
     "description": "Hide comments description"
   },
   "youtubeHideSidebar": {
