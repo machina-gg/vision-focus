@@ -172,10 +172,14 @@ function BlockedSiteItem({ site }: { site: TrackedSite }) {
           </span>
           <p className="text-xs text-gray-500 inline-flex items-center gap-1">
             {getMessage('timeSaved')}
-            <Info
-              className="w-3 h-3 text-gray-400 cursor-help"
+            <button
+              type="button"
+              className="inline-flex text-gray-400 hover:text-gray-600"
               title={getMessage('timeSavedTooltip')}
-            />
+              aria-label={getMessage('timeSavedTooltip')}
+            >
+              <Info className="w-3 h-3" />
+            </button>
           </p>
         </div>
       </div>
