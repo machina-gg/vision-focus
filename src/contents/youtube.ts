@@ -40,6 +40,7 @@ const SELECTORS = {
 
   // Comments
   comments: 'ytd-comments#comments',
+  liveChat: 'ytd-live-chat-frame#chat',
 
   // Sidebar (related videos on watch page)
   sidebar: '#secondary #related',
@@ -160,8 +161,9 @@ function generateCSS(settings: YouTubeSettings): string {
 
   if (settings.hideComments) {
     rules.push(`
-      /* Hide comments section */
-      ${SELECTORS.comments} {
+      /* Hide comments section and live chat */
+      ${SELECTORS.comments},
+      ${SELECTORS.liveChat} {
         display: none !important;
       }
     `);

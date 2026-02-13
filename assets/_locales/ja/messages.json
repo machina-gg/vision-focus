@@ -1732,7 +1732,7 @@
     "description": "コメント非表示オプション"
   },
   "youtubeHideCommentsDescription": {
-    "message": "動画下のコメント欄を非表示にします",
+    "message": "動画下のコメント欄とライブチャットを非表示にします",
     "description": "コメント非表示の説明"
   },
   "youtubeHideSidebar": {
