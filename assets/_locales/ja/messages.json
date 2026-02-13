@@ -1783,6 +1783,10 @@
     "message": "画像のコピーに失敗しました。もう一度お試しください。",
     "description": "シェアエラーメッセージ"
   },
+  "downloadSuccess": {
+    "message": "画像をダウンロードしました。",
+    "description": "ダウンロード成功メッセージ"
+  },
   "topBlockedSite": {
     "message": "最もブロック",
     "description": "最もブロックしたサイトラベル"

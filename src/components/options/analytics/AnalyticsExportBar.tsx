@@ -134,12 +134,14 @@ export function AnalyticsExportBar({
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
+        setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
         return;
       }
 
       const success = await copyImageToClipboard(canvas);
       if (!success) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
+        setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
         return;
       }
 
@@ -154,8 +156,10 @@ export function AnalyticsExportBar({
       shareToX(text);
 
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
-    } catch {
+    } catch (error) {
+      console.error('Share to X failed:', error);
       setShareMessage({ type: 'error', text: getMessage('shareError') });
+      setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
   }, [totalBlockCount, totalWasteTime, topBlockedSites]);
 
@@ -166,13 +170,18 @@ export function AnalyticsExportBar({
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
+        setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
         return;
       }
 
       const filename = `visionfocus-analytics-${new Date().toISOString().split('T')[0]}.png`;
       downloadImage(canvas, filename);
-    } catch {
+      setShareMessage({ type: 'success', text: getMessage('downloadSuccess') });
+      setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
+    } catch (error) {
+      console.error('Download image failed:', error);
       setShareMessage({ type: 'error', text: getMessage('shareError') });
+      setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
   }, []);
 

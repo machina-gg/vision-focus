@@ -1783,6 +1783,10 @@
     "message": "Failed to copy image. Please try again.",
     "description": "Share error message"
   },
+  "downloadSuccess": {
+    "message": "Image downloaded successfully.",
+    "description": "Download success message"
+  },
   "topBlockedSite": {
     "message": "Most Blocked",
     "description": "Top blocked site label"
