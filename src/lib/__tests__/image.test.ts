@@ -76,10 +76,7 @@ describe('validateImageFile', () => {
   });
 
   it('境界値: 1バイトオーバーのファイルを拒否する', () => {
-    const file = createMockFile(
-      'image/jpeg',
-      IMAGE_LIMITS.MAX_FILE_SIZE + 1
-    );
+    const file = createMockFile('image/jpeg', IMAGE_LIMITS.MAX_FILE_SIZE + 1);
     const result = validateImageFile(file);
     expect(result.valid).toBe(false);
   });
@@ -149,17 +146,25 @@ describe('compressImage', () => {
     const mockFileReader = {
       onload: null,
       onerror: null,
-      readAsDataURL: vi.fn(function (this: FileReader & { onload: ((event: ProgressEvent<FileReader>) => void) | null }) {
+      readAsDataURL: vi.fn(function (
+        this: FileReader & {
+          onload: ((event: ProgressEvent<FileReader>) => void) | null;
+        }
+      ) {
         // Simulate successful load
         setTimeout(() => {
           if (this.onload) {
-            this.onload({ target: { result: 'data:image/jpeg;base64,test' } } as ProgressEvent<FileReader>);
+            this.onload({
+              target: { result: 'data:image/jpeg;base64,test' }
+            } as ProgressEvent<FileReader>);
           }
         }, 0);
       })
     };
 
-    global.FileReader = vi.fn(() => mockFileReader) as unknown as typeof FileReader;
+    global.FileReader = vi.fn(
+      () => mockFileReader
+    ) as unknown as typeof FileReader;
 
     // Trigger image onload after src is set
     Object.defineProperty(mockImage, 'src', {
@@ -185,9 +190,7 @@ describe('compressImage', () => {
   it('無効なファイルを拒否する', async () => {
     const file = createMockFile('text/plain', 1024);
 
-    await expect(compressImage(file)).rejects.toThrow(
-      'Unsupported file type'
-    );
+    await expect(compressImage(file)).rejects.toThrow('Unsupported file type');
   });
 
   it('最大サイズを超えるファイルを拒否する', async () => {
