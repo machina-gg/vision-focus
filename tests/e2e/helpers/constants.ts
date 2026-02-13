@@ -35,25 +35,24 @@ export const SELECTORS = {
 
   // GoalCard
   goalCard: {
-    container: "text=/今日の目標|Today's Goal/i",
-    goalText: "text=/今日の目標|Today's Goal/i >> .. >> p.text-base"
+    container: '[class*="group"]',
+    heading: "text=/今日の目標|Today's Goal/i",
+    goalText: 'p.text-base.font-medium.text-gray-800'
   },
 
   // QuickBlockButton
   quickBlock: {
     heading: 'text=/ウェブサイトをブロック|Block Websites/i',
-    input: 'input[placeholder*="example.com"]',
+    input: 'input[type="text"]',
     button: 'button:has-text("ブロック"), button:has-text("Block")'
   },
 
   // Today's Summary
   summary: {
     heading: "text=/今日のサマリー|Today's Summary/i",
-    blockCount: "text=/今日のブロック|Today's Blocks/i >> .. >> p.text-2xl",
-    topBlockedSite:
-      'text=/トップブロックサイト|Top Blocked Site/i >> .. >> p.text-sm',
-    noBlockedSites:
-      'text=/まだブロックサイトはありません|No blocked sites yet/i'
+    blockCount: 'p.text-2xl.font-bold.text-block-600',
+    topBlockedSiteDomain: 'p.text-sm.font-bold.text-info-600',
+    noBlockedSites: 'p.text-sm.text-gray-400'
   },
 
   // Premium
@@ -77,6 +76,8 @@ export const TEST_DATA = {
   },
   password: {
     valid: 'test1234',
+    validHash:
+      '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014', // SHA-256("test1234")
     invalid: 'wrong'
   }
 };

@@ -255,6 +255,7 @@ test.describe('Popup 画面', () => {
     // 外部サイトを開いてからポップアップを開く
     const externalPage = await context.newPage();
     await externalPage.goto('https://example.com');
+    await externalPage.waitForLoadState('domcontentloaded');
 
     const page = await openPopup(context, extensionId);
 
@@ -403,12 +404,13 @@ test.describe('Popup 画面', () => {
     const page = await openPopup(context, extensionId);
 
     // Time Limit バッジが表示される
-    const timeLimitBadge = page.locator('text=/残り|Remaining/i');
+    const timeLimitBadge = page
+      .locator('span.inline-flex.items-center.gap-1')
+      .filter({ hasText: /残り|Remaining/i });
     await expect(timeLimitBadge).toBeVisible();
 
-    // 残り時間が表示される（約10分）
-    // TimeLimitBadge コンポーネントは "10m 0s" のような形式で表示
-    await expect(page.locator('text=/10m|10分/i')).toBeVisible();
+    // 残り時間が約10分であることを確認（柔軟な正規表現）
+    await expect(timeLimitBadge).toContainText(/10m|10分|10 min/i);
 
     await page.close();
     await youtubePage.close();

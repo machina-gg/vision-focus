@@ -1,4 +1,5 @@
-import type { BrowserContext, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { TEST_DATA } from './constants';
 
 /**
  * chrome.storage.local のテストデータ設定・取得ヘルパー
@@ -88,10 +89,8 @@ export async function setupTestStorage(
   };
 
   if (withPassword) {
-    // パスワードハッシュ（"test1234" の SHA-256）
     defaultSettings['password'] = {
-      passwordHash:
-        '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014'
+      passwordHash: TEST_DATA.password.validHash
     };
   }
 
