@@ -28,7 +28,9 @@ const SELECTORS = {
     'ytd-guide-entry-renderer a[title="Shorts"], ytd-guide-entry-renderer a[href="/shorts"]',
 
   // Recommendations (Home page)
-  homeFeed: 'ytd-browse[page-subtype="home"] #contents',
+  // ホームフィードの動画一覧を確実に非表示にするため、複数のセレクタを使用
+  homeFeed: 'ytd-browse[page-subtype="home"] ytd-rich-grid-renderer',
+  homeFeedContents: 'ytd-browse[page-subtype="home"] #contents',
   homeChips: 'ytd-feed-filter-chip-bar-renderer',
 
   // Recommendations (Watch page)
@@ -165,13 +167,14 @@ function generateCSS(settings: YouTubeSettings): string {
   if (settings.hideHomeFeed) {
     rules.push(`
       /* Hide home feed - show only search bar */
-      ytd-browse[page-subtype="home"] ${SELECTORS.homeFeed},
-      ytd-browse[page-subtype="home"] ${SELECTORS.homeChips} {
+      ${SELECTORS.homeFeed},
+      ${SELECTORS.homeFeedContents},
+      ${SELECTORS.homeChips} {
         display: none !important;
       }
       /* Show a message instead */
       ytd-browse[page-subtype="home"]::after {
-        content: 'Home feed is hidden. Use search to find specific videos.';
+        content: 'ホームフィードが隠れています';
         display: block;
         text-align: center;
         padding: 100px 20px;
