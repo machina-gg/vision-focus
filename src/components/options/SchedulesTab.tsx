@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Info } from 'lucide-react';
 
 import { Button, Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
@@ -45,6 +45,18 @@ export function SchedulesTab({
             {getMessage('addSchedule')}
           </Button>
         </div>
+
+        {/* スケジュールが1件以上ある場合に注意書きを表示 */}
+        {settings && settings.schedules.length > 0 && (
+          <div className="mb-4 p-3 bg-info-50 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-5 h-5 text-info-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-info-700">
+                {getMessage('scheduleBlockingNotice')}
+              </p>
+            </div>
+          </div>
+        )}
 
         {settings?.schedules.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
