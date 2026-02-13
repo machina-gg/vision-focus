@@ -42,7 +42,7 @@ describe('checkPremiumStatus', () => {
   it('returns premium status when ExtensionPay reports paid', async () => {
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const status = await checkPremiumStatus();
 
@@ -55,7 +55,7 @@ describe('checkPremiumStatus', () => {
   it('returns non-premium status when ExtensionPay reports not paid', async () => {
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const status = await checkPremiumStatus();
 
@@ -88,7 +88,7 @@ describe('checkPremiumStatus', () => {
     };
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(oldCachedData);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const status = await checkPremiumStatus();
 
@@ -102,7 +102,7 @@ describe('checkPremiumStatus', () => {
   it('saves status to cache after checking', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    const setSpy = vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    const setSpy = vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     await checkPremiumStatus();
 
@@ -158,7 +158,7 @@ describe('canAccessFeature', () => {
   it('returns true when user is premium', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const canAccess = await canAccessFeature('custom_background');
 
@@ -168,7 +168,7 @@ describe('canAccessFeature', () => {
   it('returns false when user is not premium', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const canAccess = await canAccessFeature('custom_background');
 
@@ -178,7 +178,7 @@ describe('canAccessFeature', () => {
   it('handles all premium feature types', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const features: PremiumFeature[] = [
       'unlimited_blocklist',
@@ -212,7 +212,7 @@ describe('getFeatureLimits', () => {
   it('returns premium limits when user is premium', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const limits = await getFeatureLimits();
 
@@ -222,7 +222,7 @@ describe('getFeatureLimits', () => {
   it('returns free limits when user is not premium', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const limits = await getFeatureLimits();
 
@@ -232,7 +232,7 @@ describe('getFeatureLimits', () => {
   it('returns limits with expected structure', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const limits = await getFeatureLimits();
 
@@ -255,7 +255,7 @@ describe('canAddToBlocklist', () => {
   it('allows adding when under free limit', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const result = await canAddToBlocklist(5);
 
@@ -267,7 +267,7 @@ describe('canAddToBlocklist', () => {
   it('allows adding when under premium limit', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const result = await canAddToBlocklist(50);
 
@@ -279,7 +279,7 @@ describe('canAddToBlocklist', () => {
   it('allows adding when both limits are Infinity', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     // Both free and premium limits are Infinity for maxBlockList
     const result = await canAddToBlocklist(999999);
@@ -291,7 +291,7 @@ describe('canAddToBlocklist', () => {
     // This test demonstrates the logic even though maxBlockList is Infinity
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     // Mock FEATURE_LIMITS temporarily
     const originalLimits = FEATURE_LIMITS.free.maxBlockList;
@@ -319,7 +319,7 @@ describe('canAddToBlocklist', () => {
   it('provides upgrade message for free users at limit', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const originalLimits = FEATURE_LIMITS.free.maxBlockList;
     Object.defineProperty(FEATURE_LIMITS.free, 'maxBlockList', {
@@ -343,7 +343,7 @@ describe('canAddToBlocklist', () => {
   it('does not provide upgrade message for premium users at limit', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(true);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const originalLimits = FEATURE_LIMITS.premium.maxBlockList;
     Object.defineProperty(FEATURE_LIMITS.premium, 'maxBlockList', {
@@ -367,7 +367,7 @@ describe('canAddToBlocklist', () => {
   it('handles zero count', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const result = await canAddToBlocklist(0);
 
@@ -377,7 +377,7 @@ describe('canAddToBlocklist', () => {
   it('returns correct limit value in response', async () => {
     vi.spyOn(storageLib.storage, 'get').mockResolvedValue(undefined);
     vi.spyOn(extpay, 'isExtPayPremium').mockResolvedValue(false);
-    vi.spyOn(storageLib.storage, 'set').mockResolvedValue();
+    vi.spyOn(storageLib.storage, 'set').mockResolvedValue(undefined);
 
     const result = await canAddToBlocklist(3);
 
