@@ -2000,5 +2000,9 @@
         "example": "Always Blocked"
       }
     }
+  },
+  "scheduleBlockingNotice": {
+    "message": "Blocking is only active during scheduled times. Outside of schedules, sites will not be blocked.",
+    "description": "Notice shown when schedules are configured"
   }
 }
