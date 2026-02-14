@@ -1651,6 +1651,14 @@
     "message": "毎時リセット",
     "description": "時間リセット注記"
   },
+  "timeLimitSettings": {
+    "message": "時間制限の設定",
+    "description": "時間制限設定セクションのタイトル"
+  },
+  "currentSetting": {
+    "message": "現在の設定",
+    "description": "現在の設定表示ラベル"
+  },
   "timeLimitWarning": {
     "message": "残り $TIME$ です！",
     "description": "残り時間が少ない場合の警告",
