@@ -51,7 +51,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Shorts が非表示になる CSS が適用されているか確認
     const shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('[title*="Shorts"]');
     });
 
@@ -89,7 +89,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Recommendations が非表示になる CSS が適用されているか確認
     const recsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes(
         'ytd-watch-next-secondary-results-renderer'
       );
@@ -129,7 +129,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Comments が非表示になる CSS が適用されているか確認
     const commentsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('ytd-comments');
     });
 
@@ -225,13 +225,23 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       }
     });
 
-    // 既に超過
-    await setStorageData(page, 'youtubeTimeLimitUsage', {
-      daily: {
-        used: 10, // 超過
-        resetAt: new Date(Date.now() + 86400000).toISOString()
-      },
-      hourly: null
+    // 既に超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
+    const todayKey = new Date().toISOString().split('T')[0];
+    await setStorageData(page, 'analytics', {
+      dailyStats: {},
+      siteTime: {},
+      siteCategories: {},
+      siteBlockCounts: {},
+      siteUnblockCounts: {},
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 10, // 超過（limitSeconds: 1）
+          hourlyUsedSeconds: 0,
+          lastDailyReset: todayKey,
+          lastHourlyReset: ''
+        }
+      }
     });
 
     await page.close();
@@ -245,9 +255,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // 全コンテンツが非表示になる CSS が適用されているか確認
     const contentHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector(
-        'style[data-visionfocus-youtube-limit]'
-      );
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('display: none !important');
     });
 
@@ -286,7 +294,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Shorts が表示されていることを確認
     let shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('[title*="Shorts"]');
     });
     expect(shortsHidden).toBeFalsy();
@@ -313,7 +321,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Shorts が非表示になることを確認
     shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('[title*="Shorts"]');
     });
     expect(shortsHidden).toBeTruthy();
@@ -389,13 +397,23 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       }
     });
 
-    // Time Limit は未超過
-    await setStorageData(page, 'youtubeTimeLimitUsage', {
-      daily: {
-        used: 30,
-        resetAt: new Date(Date.now() + 86400000).toISOString()
-      },
-      hourly: null
+    // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
+    const todayKey = new Date().toISOString().split('T')[0];
+    await setStorageData(page, 'analytics', {
+      dailyStats: {},
+      siteTime: {},
+      siteCategories: {},
+      siteBlockCounts: {},
+      siteUnblockCounts: {},
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
+          hourlyUsedSeconds: 0,
+          lastDailyReset: todayKey,
+          lastHourlyReset: ''
+        }
+      }
     });
 
     await page.close();
@@ -409,16 +427,14 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // Shorts 非表示の CSS が適用されていることを確認
     const shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.querySelector('style[data-visionfocus-youtube]');
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent?.includes('[title*="Shorts"]');
     });
     expect(shortsHidden).toBeTruthy();
 
     // Time Limit 超過の CSS は適用されていないことを確認
     const limitExceeded = await youtubePage.evaluate(() => {
-      const style = document.querySelector(
-        'style[data-visionfocus-youtube-limit]'
-      );
+      const style = document.getElementById('vision-focus-youtube-blocker');
       return style !== null;
     });
     expect(limitExceeded).toBeFalsy();
@@ -448,13 +464,23 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       }
     });
 
-    // Time Limit は未超過
-    await setStorageData(page, 'youtubeTimeLimitUsage', {
-      daily: {
-        used: 30,
-        resetAt: new Date(Date.now() + 86400000).toISOString()
-      },
-      hourly: null
+    // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
+    const todayKey = new Date().toISOString().split('T')[0];
+    await setStorageData(page, 'analytics', {
+      dailyStats: {},
+      siteTime: {},
+      siteCategories: {},
+      siteBlockCounts: {},
+      siteUnblockCounts: {},
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
+          hourlyUsedSeconds: 0,
+          lastDailyReset: todayKey,
+          lastHourlyReset: ''
+        }
+      }
     });
 
     await page.close();

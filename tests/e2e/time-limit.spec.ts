@@ -135,7 +135,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     expect(blockedPage.url()).toContain('newtab.html');
 
     // reason パラメータが含まれることを確認
-    expect(blockedPage.url()).toContain('reason=time-limit');
+    expect(blockedPage.url()).toContain('reason=time_limit_exceeded');
 
     await blockedPage.close();
   });
