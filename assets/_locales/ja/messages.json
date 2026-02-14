@@ -573,6 +573,10 @@
     "message": "ブロック",
     "description": "ブロック数ラベル"
   },
+  "unblockedCount": {
+    "message": "ブロック解除",
+    "description": "ブロック解除数ラベル"
+  },
   "noData": {
     "message": "データがありません",
     "description": "データなしメッセージ"
