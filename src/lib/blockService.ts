@@ -169,7 +169,7 @@ const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
 /**
  * Get list of domains that should be actively blocked via declarativeNetRequest
  * Includes always-blocked sites and time-limited sites that have exceeded their limit
- * Also includes YouTube domains when YouTube blockAccess is enabled
+ * Also includes YouTube domains when YouTube blockAccess is enabled (subject to schedule)
  */
 export async function getActiveBlockedDomains(): Promise<string[]> {
   const settings = await getSettings();
@@ -180,33 +180,30 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
     return [];
   }
 
-  // Add YouTube domains if YouTube blockAccess is enabled
-  // YouTube blocking is independent of schedules
-  if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
-    for (const domain of YOUTUBE_DOMAINS) {
-      blockedDomains.push(domain);
-    }
-  }
-
-  // If no schedule is active, return only YouTube blocks (if any)
-  if (!isAnyScheduleActive(settings.schedules)) {
-    return blockedDomains;
-  }
-
-  // Always-blocked sites (enabled and no time limit)
-  const scheduleBasedDomains = settings.blockList
+  // Always-blocked sites (enabled and no time limit) — スケジュールに関係なく常にブロック
+  const alwaysBlockedDomains = settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
-  blockedDomains.push(...scheduleBasedDomains);
+  blockedDomains.push(...alwaysBlockedDomains);
 
-  // Also include time-limited sites that have exceeded their limit
-  const analytics = await getAnalytics();
-  for (const item of settings.blockList) {
-    if (!item.enabled || !item.timeLimit) continue;
-    if (blockedDomains.includes(item.domain)) continue;
+  // スケジュールがアクティブな場合のみ、YouTube と時間制限サイトをブロック
+  if (isAnyScheduleActive(settings.schedules)) {
+    // Add YouTube domains if YouTube blockAccess is enabled
+    if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
+      for (const domain of YOUTUBE_DOMAINS) {
+        blockedDomains.push(domain);
+      }
+    }
 
-    if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
-      blockedDomains.push(item.domain);
+    // Also include time-limited sites that have exceeded their limit
+    const analytics = await getAnalytics();
+    for (const item of settings.blockList) {
+      if (!item.enabled || !item.timeLimit) continue;
+      if (blockedDomains.includes(item.domain)) continue;
+
+      if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
+        blockedDomains.push(item.domain);
+      }
     }
   }
 
