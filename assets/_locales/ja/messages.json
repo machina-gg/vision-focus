@@ -1089,6 +1089,10 @@
     "message": "ブロック解除サイトの合計利用時間",
     "description": "合計利用時間ラベル"
   },
+  "totalTimeOnTrackedSites": {
+    "message": "追跡サイト全体の合計利用時間",
+    "description": "追跡サイト全体の合計利用時間ラベル"
+  },
   "yesterday": {
     "message": "昨日",
     "description": "昨日ラベル"

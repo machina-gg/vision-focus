@@ -1089,6 +1089,10 @@
     "message": "Total time on unblocked sites",
     "description": "Total time on unblocked sites label"
   },
+  "totalTimeOnTrackedSites": {
+    "message": "Total time on tracked sites",
+    "description": "Total time on tracked sites label"
+  },
   "yesterday": {
     "message": "Yesterday",
     "description": "Yesterday label"
