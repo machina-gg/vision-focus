@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Clock, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
-import { Input, Select, Button } from '~/components/ui';
+import { Select, Button } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
-import { TIME_LIMIT_CONFIG } from '~/constants/limits';
+import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
 import type {
   BlockItem,
   TimeLimit,
@@ -40,6 +40,30 @@ export function TimeLimitEditor({
     };
   }, []);
 
+  // 既存の非プリセット値を最も近いプリセット値にマイグレーション
+  useEffect(() => {
+    if (!item.timeLimit) return;
+
+    const existingMinutes = Math.floor(item.timeLimit.limitSeconds / 60);
+    const presets =
+      item.timeLimit.type === 'daily'
+        ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
+        : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+
+    // 既存の値がプリセットに含まれていない場合、マイグレーションを実行
+    if (!presets.includes(existingMinutes as never)) {
+      const nearestPreset = roundToNearestPreset(
+        existingMinutes,
+        item.timeLimit.type
+      );
+      setMinutes(nearestPreset);
+      onUpdate({
+        type: item.timeLimit.type,
+        limitSeconds: nearestPreset * 60
+      });
+    }
+  }, [item.timeLimit, onUpdate]);
+
   const showSavedFeedback = useCallback(() => {
     setShowSaved(true);
     if (savedTimerRef.current) {
@@ -55,16 +79,31 @@ export function TimeLimitEditor({
   const currentType: LimitTypeOption = item.timeLimit
     ? item.timeLimit.type
     : 'always';
+
+  // 現在の保存済み分数
   const currentMinutes = item.timeLimit
     ? Math.floor(item.timeLimit.limitSeconds / 60)
     : currentType === 'daily'
       ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
       : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
 
+  // 既存の制限時間を取得し、プリセット値に丸める
+  const getInitialMinutes = () => {
+    if (!item.timeLimit) {
+      return currentType === 'daily'
+        ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
+        : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+    }
+
+    const existingMinutes = Math.floor(item.timeLimit.limitSeconds / 60);
+    // 既存の値がプリセット外の場合、最も近いプリセット値に丸める
+    return roundToNearestPreset(existingMinutes, item.timeLimit.type);
+  };
+
   // ローカルステートで編集中の値を管理
   const [selectedType, setSelectedType] =
     useState<LimitTypeOption>(currentType);
-  const [minutes, setMinutes] = useState(currentMinutes);
+  const [minutes, setMinutes] = useState(getInitialMinutes());
 
   // 保存済み値が変更されたときにローカルステートを更新
   useEffect(() => {
@@ -80,25 +119,21 @@ export function TimeLimitEditor({
   const handleTypeChange = useCallback((newType: LimitTypeOption) => {
     setSelectedType(newType);
 
-    // タイプ変更時にデフォルト値を設定
+    // タイプ変更時にデフォルトのプリセット値を設定
     if (newType !== 'always') {
       const defaultMinutes =
         newType === 'daily'
           ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
           : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
-      setMinutes(defaultMinutes);
+      const presetMinutes = roundToNearestPreset(defaultMinutes, newType);
+      setMinutes(presetMinutes);
     }
   }, []);
 
   const handleMinutesChange = useCallback((value: string) => {
     const newMinutes = parseInt(value, 10);
     if (isNaN(newMinutes) || newMinutes < 1) return;
-
-    const clampedMinutes = Math.min(
-      Math.max(newMinutes, TIME_LIMIT_CONFIG.MIN_LIMIT_SECONDS / 60),
-      TIME_LIMIT_CONFIG.MAX_LIMIT_SECONDS / 60
-    );
-    setMinutes(clampedMinutes);
+    setMinutes(newMinutes);
   }, []);
 
   // 保存ボタンのハンドラー
@@ -119,6 +154,19 @@ export function TimeLimitEditor({
     { value: 'daily', label: getMessage('dailyLimit') },
     { value: 'hourly', label: getMessage('hourlyLimit') }
   ];
+
+  // プリセット選択肢を生成（タイプに応じて daily または hourly のプリセットを使用）
+  const getPresetOptions = () => {
+    const presets =
+      selectedType === 'daily'
+        ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
+        : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+
+    return presets.map((preset) => ({
+      value: preset.toString(),
+      label: `${preset} ${getMessage('minutes')}`
+    }));
+  };
 
   // Calculate remaining time for display
   const remainingSeconds =
@@ -171,19 +219,11 @@ export function TimeLimitEditor({
               <label className="block text-xs font-medium text-gray-600 mb-1">
                 {getMessage('timeLimitDuration')}
               </label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={minutes.toString()}
-                  onChange={handleMinutesChange}
-                  min={1}
-                  max={TIME_LIMIT_CONFIG.MAX_LIMIT_SECONDS / 60}
-                  className="w-24"
-                />
-                <span className="text-sm text-gray-500">
-                  {getMessage('minutes')}
-                </span>
-              </div>
+              <Select
+                value={minutes.toString()}
+                onChange={handleMinutesChange}
+                options={getPresetOptions()}
+              />
               <p className="text-xs text-gray-400 mt-1">
                 {selectedType === 'daily'
                   ? getMessage('resetDaily')
