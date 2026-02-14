@@ -23,7 +23,6 @@ vi.mock('~/lib/timeLimitService', () => ({
 }));
 
 import { getSettings, getAnalytics, setAnalytics } from '~/lib/storage';
-import { needsDailyReset, needsHourlyReset } from '~/lib/time';
 import {
   checkTimeLimitExceeded,
   calculateRemainingTime
