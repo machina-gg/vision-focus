@@ -167,7 +167,10 @@ export async function getSiteWastedTime(domain: string): Promise<number> {
   const siteTime = analytics.siteTime?.[domain];
 
   // 浪費カテゴリまたは未分類のサイトの時間を返す
-  if (siteTime && (siteTime.category === 'waste' || siteTime.category === 'neutral')) {
+  if (
+    siteTime &&
+    (siteTime.category === 'waste' || siteTime.category === 'neutral')
+  ) {
     return siteTime.time;
   }
 

@@ -234,7 +234,10 @@ function NewtabApp() {
                   </p>
                   {blockedInfo.wastedTime > 0 && (
                     <p className="text-danger-200 text-sm">
-                      {getMessage('wastedTime', formatTimeLocalized(blockedInfo.wastedTime))}
+                      {getMessage(
+                        'wastedTime',
+                        formatTimeLocalized(blockedInfo.wastedTime)
+                      )}
                     </p>
                   )}
                 </div>
@@ -341,7 +344,10 @@ function NewtabApp() {
                     </p>
                     {blockedInfo.wastedTime > 0 && (
                       <p className="text-danger-100 text-sm">
-                        {getMessage('wastedTime', formatTimeLocalized(blockedInfo.wastedTime))}
+                        {getMessage(
+                          'wastedTime',
+                          formatTimeLocalized(blockedInfo.wastedTime)
+                        )}
                       </p>
                     )}
                   </div>
