@@ -32,6 +32,7 @@ interface WeeklyReportCardProps {
   onPrevious: () => void;
   onNext: () => void;
   canGoNext: boolean;
+  isCurrentWeek?: boolean; // 当週の途中経過かどうか
 }
 
 interface MonthlyReportCardProps {
@@ -39,6 +40,7 @@ interface MonthlyReportCardProps {
   onPrevious: () => void;
   onNext: () => void;
   canGoNext: boolean;
+  isCurrentMonth?: boolean; // 当月の途中経過かどうか
 }
 
 // Trend icon component
@@ -405,7 +407,8 @@ export function WeeklyReportCard({
   report,
   onPrevious,
   onNext,
-  canGoNext
+  canGoNext,
+  isCurrentWeek = false
 }: WeeklyReportCardProps) {
   return (
     <Card>
@@ -416,6 +419,11 @@ export function WeeklyReportCard({
           <h3 className="text-lg font-semibold text-gray-900">
             {getMessage('weeklyReport')}
           </h3>
+          {isCurrentWeek && (
+            <span className="px-2 py-1 text-xs font-medium text-primary-700 bg-primary-100 rounded-md">
+              {getMessage('inProgress')}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onPrevious}>
@@ -491,7 +499,8 @@ export function MonthlyReportCard({
   report,
   onPrevious,
   onNext,
-  canGoNext
+  canGoNext,
+  isCurrentMonth = false
 }: MonthlyReportCardProps) {
   return (
     <Card>
@@ -502,6 +511,11 @@ export function MonthlyReportCard({
           <h3 className="text-lg font-semibold text-gray-900">
             {getMessage('monthlyReport')}
           </h3>
+          {isCurrentMonth && (
+            <span className="px-2 py-1 text-xs font-medium text-primary-700 bg-primary-100 rounded-md">
+              {getMessage('inProgress')}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onPrevious}>
