@@ -10,7 +10,8 @@ import { getMessage } from '~/lib/i18n';
 import {
   NotificationSettingsSection,
   YouTubeSection,
-  DomainListItem
+  DomainListItem,
+  TrackedSitesSection
 } from '~/components/options/blocklist';
 import type {
   AppSettings,
@@ -19,7 +20,8 @@ import type {
   TimeLimit,
   TimeLimitUsage,
   NotificationSettings,
-  YouTubeSettings
+  YouTubeSettings,
+  UnblockHistory
 } from '~/types/storage';
 
 interface BlocklistTabProps {
@@ -36,6 +38,7 @@ interface BlocklistTabProps {
   timeLimitUsage?: Record<string, TimeLimitUsage>;
   youtube: YouTubeSettings;
   onYouTubeChange: (youtube: YouTubeSettings) => void;
+  unblockHistory: UnblockHistory;
 }
 
 export function BlocklistTab({
@@ -51,7 +54,8 @@ export function BlocklistTab({
   siteBlockCounts = {},
   timeLimitUsage = {},
   youtube,
-  onYouTubeChange
+  onYouTubeChange,
+  unblockHistory
 }: BlocklistTabProps) {
   // Password protection state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -163,6 +167,9 @@ export function BlocklistTab({
 
   return (
     <div className="space-y-6">
+      {/* Tracked Sites Section - 追跡中のサイト一覧 */}
+      <TrackedSitesSection unblockHistory={unblockHistory} />
+
       {/* Notification Settings - only show if time limit sites exist */}
       <NotificationSettingsSection
         notifications={settings?.notifications}

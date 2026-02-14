@@ -2008,5 +2008,19 @@
   "scheduleBlockingNotice": {
     "message": "Blocking is only active during scheduled times. Outside of schedules, sites will not be blocked.",
     "description": "Notice shown when schedules are configured"
+  },
+  "trackedSites": {
+    "message": "Tracked Sites",
+    "description": "Tracked sites section title in blocklist tab"
+  },
+  "trackedSitesCount": {
+    "message": "$COUNT$ tracked",
+    "description": "Number of tracked sites",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
   }
 }

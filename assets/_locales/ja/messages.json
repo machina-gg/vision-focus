@@ -2008,5 +2008,19 @@
   "scheduleBlockingNotice": {
     "message": "スケジュール設定中は、設定された時間帯のみブロックが有効になります。スケジュール対象外の時間帯はブロックされません。",
     "description": "スケジュール設定時に表示される注意書き"
+  },
+  "trackedSites": {
+    "message": "追跡中のサイト",
+    "description": "ブロックリストタブの追跡サイトセクションタイトル"
+  },
+  "trackedSitesCount": {
+    "message": "$COUNT$ サイト追跡中",
+    "description": "追跡中のサイト数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
   }
 }
