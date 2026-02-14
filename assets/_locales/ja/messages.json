@@ -41,6 +41,16 @@
       }
     }
   },
+  "wastedTime": {
+    "message": "このサイトで $TIME$ 浪費",
+    "description": "ブロック中画面での浪費時間表示",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "2時間15分"
+      }
+    }
+  },
   "topBlockedSites": {
     "message": "よくブロックしたサイト",
     "description": "ブロック回数ランキング見出し"

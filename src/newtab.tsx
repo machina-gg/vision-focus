@@ -20,10 +20,12 @@ import {
   useResolvedPreset
 } from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { formatTimeLocalized } from '~/lib/time';
 import {
   getLastBlockedDomain,
   clearLastBlockedDomain,
-  getSiteBlockCount
+  getSiteBlockCount,
+  getSiteWastedTime
 } from '~/lib/storage';
 import { storage } from '~/lib/storage';
 import type {
@@ -71,6 +73,7 @@ function NewtabApp() {
   const [blockedInfo, setBlockedInfo] = useState<{
     domain: string;
     count: number;
+    wastedTime: number; // 浪費時間（秒）
   } | null>(null);
 
   // Block reason (from URL parameter)
@@ -97,7 +100,8 @@ function NewtabApp() {
       const domain = await getLastBlockedDomain();
       if (domain) {
         const count = await getSiteBlockCount(domain);
-        setBlockedInfo({ domain, count });
+        const wastedTime = await getSiteWastedTime(domain);
+        setBlockedInfo({ domain, count, wastedTime });
         await clearLastBlockedDomain();
       }
     };
@@ -224,9 +228,19 @@ function NewtabApp() {
                   )}
                 </p>
               ) : (
-                <p className="text-danger-300 text-sm">
-                  {getMessage('blockedTimes', blockedInfo.count.toString())}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-danger-300 text-sm">
+                    {getMessage('blockedTimes', blockedInfo.count.toString())}
+                  </p>
+                  {blockedInfo.wastedTime > 0 && (
+                    <p className="text-danger-200 text-sm">
+                      {getMessage(
+                        'wastedTime',
+                        formatTimeLocalized(blockedInfo.wastedTime)
+                      )}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           ) : (
@@ -316,20 +330,28 @@ function NewtabApp() {
                     ? getMessage('timeLimitReached')
                     : getMessage('siteBlockedMessage', blockedInfo.domain)}
                 </p>
-                <p
-                  className={`${
-                    blockReason === 'time_limit_exceeded'
-                      ? 'text-warning-200'
-                      : 'text-danger-200'
-                  } text-sm`}
-                >
-                  {blockReason === 'time_limit_exceeded'
-                    ? getMessage(
-                        'timeLimitReachedDescription',
-                        blockedInfo.domain
-                      )
-                    : getMessage('blockedTimes', blockedInfo.count.toString())}
-                </p>
+                {blockReason === 'time_limit_exceeded' ? (
+                  <p className="text-warning-200 text-sm">
+                    {getMessage(
+                      'timeLimitReachedDescription',
+                      blockedInfo.domain
+                    )}
+                  </p>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p className="text-danger-200 text-sm">
+                      {getMessage('blockedTimes', blockedInfo.count.toString())}
+                    </p>
+                    {blockedInfo.wastedTime > 0 && (
+                      <p className="text-danger-100 text-sm">
+                        {getMessage(
+                          'wastedTime',
+                          formatTimeLocalized(blockedInfo.wastedTime)
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

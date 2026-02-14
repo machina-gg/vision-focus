@@ -41,6 +41,16 @@
       }
     }
   },
+  "wastedTime": {
+    "message": "$TIME$ wasted on this site",
+    "description": "Wasted time display on blocked page",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "2 hr 15 min"
+      }
+    }
+  },
   "topBlockedSites": {
     "message": "Top Blocked Sites",
     "description": "Block count ranking heading"

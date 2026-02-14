@@ -161,5 +161,21 @@ export async function clearLastBlockedDomain(): Promise<void> {
   await chrome.storage.session.remove(SESSION_KEYS.lastBlockedDomain);
 }
 
+// Get site wasted time in seconds
+export async function getSiteWastedTime(domain: string): Promise<number> {
+  const analytics = await getAnalytics();
+  const siteTime = analytics.siteTime?.[domain];
+
+  // 浪費カテゴリまたは未分類のサイトの時間を返す
+  if (
+    siteTime &&
+    (siteTime.category === 'waste' || siteTime.category === 'neutral')
+  ) {
+    return siteTime.time;
+  }
+
+  return 0;
+}
+
 // Export storage instance for direct use with hooks
 export { storage };
