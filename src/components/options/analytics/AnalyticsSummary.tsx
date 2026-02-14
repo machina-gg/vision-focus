@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  AlertTriangle,
-  Clock,
-  Info,
-  Lock,
-  RefreshCw,
-  EyeOff
-} from 'lucide-react';
+import { Clock, Lock, RefreshCw, EyeOff, List } from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
 import { UpgradePrompt } from '~/components/features';
@@ -49,23 +42,27 @@ export function AnalyticsSummary({
   onReblock,
   onStopTracking
 }: AnalyticsSummaryProps) {
-  const { blockedSites, unblockedSites } = useMemo(() => {
+  // 全追跡サイト（ブロック中・解除済み両方）
+  const allTrackedSites = useMemo(() => {
     const allSites = Object.values(unblockHistory.sites);
-    const blocked = allSites
-      .filter((s) => s.status === 'blocked')
-      .sort(
-        (a, b) =>
-          new Date(b.blockedAt).getTime() - new Date(a.blockedAt).getTime()
-      );
-    const unblocked = allSites
-      .filter((s) => s.status === 'unblocked')
-      .sort((a, b) => b.timeAfterUnblock - a.timeAfterUnblock);
-    return { blockedSites: blocked, unblockedSites: unblocked };
+    return allSites.sort((a, b) => {
+      // ブロック中を先に、その後解除済み
+      if (a.status === 'blocked' && b.status !== 'blocked') return -1;
+      if (a.status !== 'blocked' && b.status === 'blocked') return 1;
+      // 同じステータス内では最近のものを先に
+      return new Date(b.blockedAt).getTime() - new Date(a.blockedAt).getTime();
+    });
   }, [unblockHistory.sites]);
 
-  const hasTrackedSites = blockedSites.length > 0 || unblockedSites.length > 0;
+  // 解除済みサイトのリスト（浪費時間表示用）
+  const unblockedSites = useMemo(() => {
+    return allTrackedSites.filter((s) => s.status === 'unblocked');
+  }, [allTrackedSites]);
 
-  const totalTimeSpent = useMemo(() => {
+  const hasTrackedSites = allTrackedSites.length > 0;
+
+  // 合計浪費時間（解除済みサイトの閲覧時間の合計）
+  const totalWastedTime = useMemo(() => {
     return unblockedSites.reduce((sum, site) => sum + site.timeAfterUnblock, 0);
   }, [unblockedSites]);
 
@@ -75,44 +72,32 @@ export function AnalyticsSummary({
       {!hasTrackedSites && (
         <Card>
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">&#10003;</span>
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <List className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {getMessage('noUnblockedSites')}
+              {getMessage('noTrackedSites')}
             </h3>
             <p className="text-sm text-gray-500">
-              {getMessage('noUnblockedSitesDescription')}
+              {getMessage('noTrackedSitesDescription')}
             </p>
           </div>
         </Card>
       )}
 
-      {/* Blocked Sites List */}
-      {blockedSites.length > 0 && (
+      {/* 追跡中のサイト一覧 */}
+      {hasTrackedSites && (
         <Card>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-success-600" />
-            {getMessage('statusBlocked')} ({blockedSites.length})
+            <List className="w-4 h-4 text-gray-600" />
+            {getMessage('trackedSitesList')} ({allTrackedSites.length})
           </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            {getMessage('trackedSitesListDescription')}
+          </p>
           <div className="space-y-3">
-            {blockedSites.map((site) => (
-              <BlockedSiteItem key={site.domain} site={site} />
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Unblocked Sites List */}
-      {unblockedSites.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-block-500" />
-            {getMessage('statusUnblocked')} ({unblockedSites.length})
-          </h3>
-          <div className="space-y-3">
-            {unblockedSites.map((site) => (
-              <UnblockedSiteItem
+            {allTrackedSites.map((site) => (
+              <TrackedSiteItem
                 key={site.domain}
                 site={site}
                 isPremium={isPremium}
@@ -120,16 +105,38 @@ export function AnalyticsSummary({
                 onStopTracking={onStopTracking}
               />
             ))}
+          </div>
+        </Card>
+      )}
 
-            {/* Total time (Premium only) */}
+      {/* 浪費時間セクション */}
+      {unblockedSites.length > 0 && (
+        <Card>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-block-500" />
+            {getMessage('wastedTimeSite')}
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            {getMessage('wastedTimeDescription')}
+          </p>
+          <div className="space-y-3">
+            {unblockedSites.map((site) => (
+              <WastedTimeItem
+                key={site.domain}
+                site={site}
+                isPremium={isPremium}
+              />
+            ))}
+
+            {/* 合計浪費時間 (Premium only) */}
             {isPremium && unblockedSites.length > 1 && (
               <div className="pt-4 border-t border-block-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">
-                    {getMessage('totalTimeOnUnblockedSites')}
+                    {getMessage('totalWastedTime')}
                   </span>
                   <span className="text-lg font-bold text-block-600">
-                    {formatTime(totalTimeSpent)}
+                    {formatTime(totalWastedTime)}
                   </span>
                 </div>
               </div>
@@ -155,116 +162,108 @@ export function AnalyticsSummary({
   );
 }
 
-function BlockedSiteItem({ site }: { site: TrackedSite }) {
-  return (
-    <div className="p-3 bg-success-50 rounded-lg border border-success-100">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-success-500 rounded-full" />
-            <span className="font-medium text-gray-900 truncate">
-              {site.domain}
-            </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-700">
-              {getMessage('statusBlocked')}
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            {getMessage('blockedSince')}: {formatRelativeTime(site.blockedAt)}
-          </p>
-        </div>
-        <div className="text-right">
-          <span className="text-lg font-bold text-success-600">
-            0{getMessage('time') === 'Time' ? 'm' : '\u5206'}
-          </span>
-          <p className="text-xs text-gray-500 inline-flex items-center gap-1">
-            {getMessage('timeSaved')}
-            <button
-              type="button"
-              className="inline-flex text-gray-400 hover:text-gray-600"
-              title={getMessage('timeSavedTooltip')}
-              aria-label={getMessage('timeSavedTooltip')}
-            >
-              <Info className="w-3 h-3" />
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface UnblockedSiteItemProps {
+// 追跡中サイトのアイテム表示（ステータス表示のみ）
+interface TrackedSiteItemProps {
   site: TrackedSite;
   isPremium: boolean;
   onReblock: (domain: string) => void;
   onStopTracking: (domain: string) => void;
 }
 
-function UnblockedSiteItem({
+function TrackedSiteItem({
   site,
   isPremium,
   onReblock,
   onStopTracking
-}: UnblockedSiteItemProps) {
+}: TrackedSiteItemProps) {
+  const isBlocked = site.status === 'blocked';
+  const bgColor = isBlocked ? 'bg-success-50' : 'bg-gray-50';
+  const borderColor = isBlocked ? 'border-success-100' : 'border-gray-200';
+  const dotColor = isBlocked ? 'bg-success-500' : 'bg-gray-400';
+  const statusBgColor = isBlocked ? 'bg-success-100' : 'bg-gray-100';
+  const statusTextColor = isBlocked ? 'text-success-700' : 'text-gray-700';
+
   return (
-    <div className="p-4 bg-block-50 rounded-lg border border-block-100">
+    <div className={`p-3 ${bgColor} rounded-lg border ${borderColor}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-block-500 rounded-full" />
+            <div className={`w-2 h-2 ${dotColor} rounded-full`} />
             <span className="font-medium text-gray-900 truncate">
               {site.domain}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-block-100 text-block-700">
-              {getMessage('statusUnblocked')}
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusBgColor} ${statusTextColor}`}
+            >
+              {getMessage(isBlocked ? 'statusBlocked' : 'statusUnblocked')}
             </span>
           </div>
-
           <p className="text-sm text-gray-500 mt-1">
-            {getMessage('unblockedOn')}:{' '}
-            {site.unblockedAt ? formatRelativeTime(site.unblockedAt) : '-'}
+            {getMessage('blockedSince')}: {formatRelativeTime(site.blockedAt)}
           </p>
-
-          <div className="flex items-center gap-2 mt-2">
-            <Clock className="w-4 h-4 text-gray-400" />
-            {isPremium ? (
-              <span className="text-sm font-medium text-block-600">
-                {getMessage('timeSpentSinceUnblock')}:{' '}
-                {formatTime(site.timeAfterUnblock)}
-              </span>
-            ) : (
-              <span className="text-sm text-gray-400 flex items-center gap-1">
-                {getMessage('timeSpentSinceUnblock')}:{' '}
-                <span className="tracking-widest">******</span>
-                <Lock className="w-3 h-3" />
-              </span>
-            )}
-          </div>
+          {!isBlocked && site.unblockedAt && (
+            <p className="text-sm text-gray-500">
+              {getMessage('unblockedOn')}:{' '}
+              {formatRelativeTime(site.unblockedAt)}
+            </p>
+          )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          {isPremium && (
+        {/* アクションボタン（解除済みサイトのみ） */}
+        {!isBlocked && (
+          <div className="flex items-center gap-2">
+            {isPremium && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onReblock(site.domain)}
+                className="flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {getMessage('reblock')}
+              </Button>
+            )}
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              onClick={() => onReblock(site.domain)}
-              className="flex items-center gap-1.5"
+              onClick={() => onStopTracking(site.domain)}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700"
             >
-              <RefreshCw className="w-4 h-4" />
-              {getMessage('reblock')}
+              <EyeOff className="w-4 h-4" />
+              {getMessage('stopTracking')}
             </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 浪費時間表示アイテム（解除済みサイトのみ）
+interface WastedTimeItemProps {
+  site: TrackedSite;
+  isPremium: boolean;
+}
+
+function WastedTimeItem({ site, isPremium }: WastedTimeItemProps) {
+  return (
+    <div className="p-3 bg-block-50 rounded-lg border border-block-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-block-500 rounded-full" />
+          <span className="font-medium text-gray-900">{site.domain}</span>
+        </div>
+        <div className="text-right">
+          {isPremium ? (
+            <span className="text-lg font-bold text-block-600">
+              {formatTime(site.timeAfterUnblock)}
+            </span>
+          ) : (
+            <span className="text-sm text-gray-400 flex items-center gap-1">
+              <span className="tracking-widest">******</span>
+              <Lock className="w-3 h-3" />
+            </span>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onStopTracking(site.domain)}
-            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700"
-          >
-            <EyeOff className="w-4 h-4" />
-            {getMessage('stopTracking')}
-          </Button>
         </div>
       </div>
     </div>

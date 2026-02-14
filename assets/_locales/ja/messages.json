@@ -1193,6 +1193,38 @@
     "message": "追跡サイトを追加",
     "description": "追跡サイト追加見出し"
   },
+  "trackedSitesList": {
+    "message": "追跡中のサイト",
+    "description": "追跡中サイト一覧セクションタイトル"
+  },
+  "trackedSitesListDescription": {
+    "message": "現在追跡しているサイトの一覧です。",
+    "description": "追跡中サイト一覧セクション説明"
+  },
+  "noTrackedSites": {
+    "message": "追跡中のサイトはありません",
+    "description": "追跡中サイトなしタイトル"
+  },
+  "noTrackedSitesDescription": {
+    "message": "サイトを追加して、ブロック状況や利用時間を追跡しましょう。",
+    "description": "追跡中サイトなし説明"
+  },
+  "wastedTime": {
+    "message": "浪費時間",
+    "description": "浪費時間ラベル"
+  },
+  "wastedTimeSite": {
+    "message": "サイト別浪費時間",
+    "description": "サイト別浪費時間セクションタイトル"
+  },
+  "totalWastedTime": {
+    "message": "合計浪費時間",
+    "description": "合計浪費時間ラベル"
+  },
+  "wastedTimeDescription": {
+    "message": "1日の制限を超えて閲覧した時間（または制限内での閲覧時間）",
+    "description": "浪費時間の説明"
+  },
   "trackSitePlaceholder": {
     "message": "example.com",
     "description": "追跡サイト入力プレースホルダー"

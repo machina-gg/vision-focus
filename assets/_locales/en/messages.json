@@ -1193,6 +1193,38 @@
     "message": "Add Tracking Site",
     "description": "Add site to track heading"
   },
+  "trackedSitesList": {
+    "message": "Tracked Sites",
+    "description": "Tracked sites list section title"
+  },
+  "trackedSitesListDescription": {
+    "message": "List of sites currently being tracked.",
+    "description": "Tracked sites list section description"
+  },
+  "noTrackedSites": {
+    "message": "No tracked sites",
+    "description": "No tracked sites title"
+  },
+  "noTrackedSitesDescription": {
+    "message": "Add sites to track their blocking status and usage time.",
+    "description": "No tracked sites description"
+  },
+  "wastedTime": {
+    "message": "Wasted Time",
+    "description": "Wasted time label"
+  },
+  "wastedTimeSite": {
+    "message": "Wasted Time by Site",
+    "description": "Wasted time by site section title"
+  },
+  "totalWastedTime": {
+    "message": "Total Wasted Time",
+    "description": "Total wasted time label"
+  },
+  "wastedTimeDescription": {
+    "message": "Time spent browsing beyond daily limit (or within limit)",
+    "description": "Wasted time description"
+  },
   "trackSitePlaceholder": {
     "message": "example.com",
     "description": "Track site input placeholder"

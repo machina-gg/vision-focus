@@ -68,7 +68,7 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  test('OPT-A03: Unblock History（ブロック解除サイト）が表示される', async ({
+  test('OPT-A03: 追跡中のサイト一覧が表示される', async ({
     context,
     extensionId
   }) => {
@@ -90,9 +90,9 @@ test.describe('Options - Analytics Tab', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // Unblock Historyセクションが表示される
+    // 追跡中のサイト一覧セクションが表示される
     await expect(
-      page.locator(SELECTORS.analytics.unblockHistory)
+      page.locator(SELECTORS.analytics.trackedSitesList)
     ).toBeVisible();
 
     // youtube.com が表示される
@@ -101,7 +101,7 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  test('OPT-A04: ブロック解除サイトの滞在時間が表示される', async ({
+  test('OPT-A04: 浪費時間セクションにサイト別の時間が表示される', async ({
     context,
     extensionId
   }) => {
@@ -123,9 +123,9 @@ test.describe('Options - Analytics Tab', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // Unblock Historyセクションが表示される
+    // 追跡中のサイト一覧セクションが表示される
     await expect(
-      page.locator(SELECTORS.analytics.unblockHistory)
+      page.locator(SELECTORS.analytics.trackedSitesList)
     ).toBeVisible();
 
     // reddit.com が表示される
