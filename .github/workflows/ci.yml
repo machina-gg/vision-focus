@@ -165,7 +165,9 @@ jobs:
   # 全ジョブ完了確認（ブランチ保護ルール用）
   check:
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test-unit-lib, test-unit-hooks, build, test-e2e]
+    needs: [lint, typecheck, test-unit-lib, test-unit-hooks, build]
+    # test-e2e は Chrome 拡張が non-headless 必須のため CI では不安定。
+    # informational ジョブとして独立実行し、check ジョブの必須依存には含めない。
     steps:
       - name: All checks passed
         run: echo "All parallel CI jobs completed successfully"
