@@ -62,9 +62,39 @@ const mockAnalytics: AnalyticsData = {
     'twitter.com': 'waste',
     'youtube.com': 'waste'
   },
-  siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteBlockCounts: {
+    'twitter.com': {
+      domain: 'twitter.com',
+      count: 5,
+      lastBlocked: '2026-02-15T10:00:00Z'
+    },
+    'youtube.com': {
+      domain: 'youtube.com',
+      count: 3,
+      lastBlocked: '2026-02-15T11:00:00Z'
+    }
+  },
+  siteUnblockCounts: {
+    'twitter.com': {
+      domain: 'twitter.com',
+      count: 2,
+      lastUnblocked: '2026-02-10T10:00:00Z'
+    },
+    'youtube.com': {
+      domain: 'youtube.com',
+      count: 1,
+      lastUnblocked: '2026-02-11T14:30:00Z'
+    }
+  },
+  timeLimitUsage: {
+    'youtube.com': {
+      domain: 'youtube.com',
+      dailyUsedSeconds: 1200,
+      hourlyUsedSeconds: 300,
+      lastDailyReset: '2026-02-15',
+      lastHourlyReset: '2026-02-15-12'
+    }
+  }
 };
 
 const meta = {
@@ -117,7 +147,14 @@ export const Premium: Story = {
 export const Empty: Story = {
   args: {
     unblockHistory: { sites: {} },
-    analyticsData: { dailyStats: {}, siteTime: {} },
+    analyticsData: {
+      dailyStats: {},
+      siteTime: {},
+      siteCategories: {},
+      siteBlockCounts: {},
+      siteUnblockCounts: {},
+      timeLimitUsage: {}
+    },
     settings: DEFAULT_SETTINGS,
     isPremium: false,
     onReblock: () => {},

@@ -72,7 +72,21 @@ const meta = {
         <Story />
       </div>
     )
-  ]
+  ],
+  args: {
+    goalText: '',
+    goalSubText: '',
+    textColor: '#ffffff',
+    fontStyle: {},
+    isEditing: false,
+    editText: '',
+    canEdit: true,
+    onEditTextChange: () => {},
+    onStartEdit: () => {},
+    onSave: () => {},
+    onCancel: () => {},
+    onKeyDown: () => {}
+  }
 } satisfies Meta<typeof GoalDisplay>;
 
 export default meta;

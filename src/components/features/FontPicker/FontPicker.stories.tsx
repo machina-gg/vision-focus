@@ -41,7 +41,12 @@ const meta = {
         <Story />
       </div>
     )
-  ]
+  ],
+  args: {
+    value: defaultFontSettings,
+    onChange: () => {},
+    disabled: false
+  }
 } satisfies Meta<typeof FontPicker>;
 
 export default meta;

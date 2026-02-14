@@ -34,7 +34,13 @@ const meta = {
         <Story />
       </div>
     )
-  ]
+  ],
+  args: {
+    value: null,
+    onChange: () => {},
+    maxSizeMB: 2,
+    disabled: false
+  }
 } satisfies Meta<typeof ImageUploader>;
 
 export default meta;

@@ -1,0 +1,1285 @@
+{
+  "v": 5,
+  "entries": {
+    "features-analyticschart--docs": {
+      "id": "features-analyticschart--docs",
+      "title": "Features/AnalyticsChart",
+      "name": "Docs",
+      "importPath": "./src/components/features/AnalyticsChart/AnalyticsChart.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-analyticschart--daily-view": {
+      "type": "story",
+      "id": "features-analyticschart--daily-view",
+      "name": "Daily View",
+      "title": "Features/AnalyticsChart",
+      "importPath": "./src/components/features/AnalyticsChart/AnalyticsChart.stories.tsx",
+      "componentPath": "./src/components/features/AnalyticsChart/AnalyticsChart.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-analyticschart--empty": {
+      "type": "story",
+      "id": "features-analyticschart--empty",
+      "name": "Empty",
+      "title": "Features/AnalyticsChart",
+      "importPath": "./src/components/features/AnalyticsChart/AnalyticsChart.stories.tsx",
+      "componentPath": "./src/components/features/AnalyticsChart/AnalyticsChart.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-analyticschart--disabled": {
+      "type": "story",
+      "id": "features-analyticschart--disabled",
+      "name": "Disabled",
+      "title": "Features/AnalyticsChart",
+      "importPath": "./src/components/features/AnalyticsChart/AnalyticsChart.stories.tsx",
+      "componentPath": "./src/components/features/AnalyticsChart/AnalyticsChart.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-analyticschart--single-site": {
+      "type": "story",
+      "id": "features-analyticschart--single-site",
+      "name": "Single Site",
+      "title": "Features/AnalyticsChart",
+      "importPath": "./src/components/features/AnalyticsChart/AnalyticsChart.stories.tsx",
+      "componentPath": "./src/components/features/AnalyticsChart/AnalyticsChart.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-downloadbutton--docs": {
+      "id": "features-downloadbutton--docs",
+      "title": "Features/DownloadButton",
+      "name": "Docs",
+      "importPath": "./src/components/features/DownloadButton/DownloadButton.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-downloadbutton--default": {
+      "type": "story",
+      "id": "features-downloadbutton--default",
+      "name": "Default",
+      "title": "Features/DownloadButton",
+      "importPath": "./src/components/features/DownloadButton/DownloadButton.stories.tsx",
+      "componentPath": "./src/components/features/DownloadButton/DownloadButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-downloadbutton--disabled": {
+      "type": "story",
+      "id": "features-downloadbutton--disabled",
+      "name": "Disabled",
+      "title": "Features/DownloadButton",
+      "importPath": "./src/components/features/DownloadButton/DownloadButton.stories.tsx",
+      "componentPath": "./src/components/features/DownloadButton/DownloadButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-fontpicker--docs": {
+      "id": "features-fontpicker--docs",
+      "title": "Features/FontPicker",
+      "name": "Docs",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-fontpicker--default": {
+      "type": "story",
+      "id": "features-fontpicker--default",
+      "name": "Default",
+      "title": "Features/FontPicker",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "componentPath": "./src/components/features/FontPicker/FontPicker.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-fontpicker--custom-preview": {
+      "type": "story",
+      "id": "features-fontpicker--custom-preview",
+      "name": "Custom Preview",
+      "title": "Features/FontPicker",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "componentPath": "./src/components/features/FontPicker/FontPicker.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-fontpicker--disabled": {
+      "type": "story",
+      "id": "features-fontpicker--disabled",
+      "name": "Disabled",
+      "title": "Features/FontPicker",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "componentPath": "./src/components/features/FontPicker/FontPicker.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-fontpicker--modern-font": {
+      "type": "story",
+      "id": "features-fontpicker--modern-font",
+      "name": "Modern Font",
+      "title": "Features/FontPicker",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "componentPath": "./src/components/features/FontPicker/FontPicker.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-fontpicker--japanese-font": {
+      "type": "story",
+      "id": "features-fontpicker--japanese-font",
+      "name": "Japanese Font",
+      "title": "Features/FontPicker",
+      "importPath": "./src/components/features/FontPicker/FontPicker.stories.tsx",
+      "componentPath": "./src/components/features/FontPicker/FontPicker.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-goalcard--docs": {
+      "id": "features-goalcard--docs",
+      "title": "Features/GoalCard",
+      "name": "Docs",
+      "importPath": "./src/components/features/GoalCard/GoalCard.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-goalcard--default": {
+      "type": "story",
+      "id": "features-goalcard--default",
+      "name": "Default",
+      "title": "Features/GoalCard",
+      "importPath": "./src/components/features/GoalCard/GoalCard.stories.tsx",
+      "componentPath": "./src/components/features/GoalCard/GoalCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-goalcard--long-text": {
+      "type": "story",
+      "id": "features-goalcard--long-text",
+      "name": "Long Text",
+      "title": "Features/GoalCard",
+      "importPath": "./src/components/features/GoalCard/GoalCard.stories.tsx",
+      "componentPath": "./src/components/features/GoalCard/GoalCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-goalcard--clickable": {
+      "type": "story",
+      "id": "features-goalcard--clickable",
+      "name": "Clickable",
+      "title": "Features/GoalCard",
+      "importPath": "./src/components/features/GoalCard/GoalCard.stories.tsx",
+      "componentPath": "./src/components/features/GoalCard/GoalCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-goalcard--editable": {
+      "type": "story",
+      "id": "features-goalcard--editable",
+      "name": "Editable",
+      "title": "Features/GoalCard",
+      "importPath": "./src/components/features/GoalCard/GoalCard.stories.tsx",
+      "componentPath": "./src/components/features/GoalCard/GoalCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-header--docs": {
+      "id": "features-header--docs",
+      "title": "Features/Header",
+      "name": "Docs",
+      "importPath": "./src/components/features/Header/Header.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-header--default": {
+      "type": "story",
+      "id": "features-header--default",
+      "name": "Default",
+      "title": "Features/Header",
+      "importPath": "./src/components/features/Header/Header.stories.tsx",
+      "componentPath": "./src/components/features/Header/Header.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-header--without-settings": {
+      "type": "story",
+      "id": "features-header--without-settings",
+      "name": "Without Settings",
+      "title": "Features/Header",
+      "importPath": "./src/components/features/Header/Header.stories.tsx",
+      "componentPath": "./src/components/features/Header/Header.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-imageuploader--docs": {
+      "id": "features-imageuploader--docs",
+      "title": "Features/ImageUploader",
+      "name": "Docs",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-imageuploader--empty": {
+      "type": "story",
+      "id": "features-imageuploader--empty",
+      "name": "Empty",
+      "title": "Features/ImageUploader",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "componentPath": "./src/components/features/ImageUploader/ImageUploader.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-imageuploader--with-image": {
+      "type": "story",
+      "id": "features-imageuploader--with-image",
+      "name": "With Image",
+      "title": "Features/ImageUploader",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "componentPath": "./src/components/features/ImageUploader/ImageUploader.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-imageuploader--disabled": {
+      "type": "story",
+      "id": "features-imageuploader--disabled",
+      "name": "Disabled",
+      "title": "Features/ImageUploader",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "componentPath": "./src/components/features/ImageUploader/ImageUploader.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-imageuploader--disabled-with-image": {
+      "type": "story",
+      "id": "features-imageuploader--disabled-with-image",
+      "name": "Disabled With Image",
+      "title": "Features/ImageUploader",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "componentPath": "./src/components/features/ImageUploader/ImageUploader.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-imageuploader--custom-max-size": {
+      "type": "story",
+      "id": "features-imageuploader--custom-max-size",
+      "name": "Custom Max Size",
+      "title": "Features/ImageUploader",
+      "importPath": "./src/components/features/ImageUploader/ImageUploader.stories.tsx",
+      "componentPath": "./src/components/features/ImageUploader/ImageUploader.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-quickblockbutton--docs": {
+      "id": "features-quickblockbutton--docs",
+      "title": "Features/QuickBlockButton",
+      "name": "Docs",
+      "importPath": "./src/components/features/QuickBlockButton/QuickBlockButton.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-quickblockbutton--with-domain": {
+      "type": "story",
+      "id": "features-quickblockbutton--with-domain",
+      "name": "With Domain",
+      "title": "Features/QuickBlockButton",
+      "importPath": "./src/components/features/QuickBlockButton/QuickBlockButton.stories.tsx",
+      "componentPath": "./src/components/features/QuickBlockButton/QuickBlockButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-quickblockbutton--no-domain": {
+      "type": "story",
+      "id": "features-quickblockbutton--no-domain",
+      "name": "No Domain",
+      "title": "Features/QuickBlockButton",
+      "importPath": "./src/components/features/QuickBlockButton/QuickBlockButton.stories.tsx",
+      "componentPath": "./src/components/features/QuickBlockButton/QuickBlockButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-quickblockbutton--long-domain": {
+      "type": "story",
+      "id": "features-quickblockbutton--long-domain",
+      "name": "Long Domain",
+      "title": "Features/QuickBlockButton",
+      "importPath": "./src/components/features/QuickBlockButton/QuickBlockButton.stories.tsx",
+      "componentPath": "./src/components/features/QuickBlockButton/QuickBlockButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-quickblockbutton--disabled": {
+      "type": "story",
+      "id": "features-quickblockbutton--disabled",
+      "name": "Disabled",
+      "title": "Features/QuickBlockButton",
+      "importPath": "./src/components/features/QuickBlockButton/QuickBlockButton.stories.tsx",
+      "componentPath": "./src/components/features/QuickBlockButton/QuickBlockButton.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-statscard--docs": {
+      "id": "features-statscard--docs",
+      "title": "Features/StatsCard",
+      "name": "Docs",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-statscard--waste-time": {
+      "type": "story",
+      "id": "features-statscard--waste-time",
+      "name": "Waste Time",
+      "title": "Features/StatsCard",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "componentPath": "./src/components/features/StatsCard/StatsCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-statscard--invest-time": {
+      "type": "story",
+      "id": "features-statscard--invest-time",
+      "name": "Invest Time",
+      "title": "Features/StatsCard",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "componentPath": "./src/components/features/StatsCard/StatsCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-statscard--block-count": {
+      "type": "story",
+      "id": "features-statscard--block-count",
+      "name": "Block Count",
+      "title": "Features/StatsCard",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "componentPath": "./src/components/features/StatsCard/StatsCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-statscard--neutral": {
+      "type": "story",
+      "id": "features-statscard--neutral",
+      "name": "Neutral",
+      "title": "Features/StatsCard",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "componentPath": "./src/components/features/StatsCard/StatsCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-statscard--all-types": {
+      "type": "story",
+      "id": "features-statscard--all-types",
+      "name": "All Types",
+      "title": "Features/StatsCard",
+      "importPath": "./src/components/features/StatsCard/StatsCard.stories.tsx",
+      "componentPath": "./src/components/features/StatsCard/StatsCard.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--docs": {
+      "id": "features-upgradeprompt--docs",
+      "title": "Features/UpgradePrompt",
+      "name": "Docs",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "features-upgradeprompt--card-variant": {
+      "type": "story",
+      "id": "features-upgradeprompt--card-variant",
+      "name": "Card Variant",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--inline-variant": {
+      "type": "story",
+      "id": "features-upgradeprompt--inline-variant",
+      "name": "Inline Variant",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--banner-variant": {
+      "type": "story",
+      "id": "features-upgradeprompt--banner-variant",
+      "name": "Banner Variant",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--custom-background-limit": {
+      "type": "story",
+      "id": "features-upgradeprompt--custom-background-limit",
+      "name": "Custom Background Limit",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--without-features": {
+      "type": "story",
+      "id": "features-upgradeprompt--without-features",
+      "name": "Without Features",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--custom-message": {
+      "type": "story",
+      "id": "features-upgradeprompt--custom-message",
+      "name": "Custom Message",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "features-upgradeprompt--custom-features": {
+      "type": "story",
+      "id": "features-upgradeprompt--custom-features",
+      "name": "Custom Features",
+      "title": "Features/UpgradePrompt",
+      "importPath": "./src/components/features/UpgradePrompt/UpgradePrompt.stories.tsx",
+      "componentPath": "./src/components/features/UpgradePrompt/UpgradePrompt.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-blockedsiteslist--docs": {
+      "id": "newtab-blockedsiteslist--docs",
+      "title": "Newtab/BlockedSitesList",
+      "name": "Docs",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "newtab-blockedsiteslist--default": {
+      "type": "story",
+      "id": "newtab-blockedsiteslist--default",
+      "name": "Default",
+      "title": "Newtab/BlockedSitesList",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "componentPath": "./src/components/newtab/BlockedSitesList.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-blockedsiteslist--empty": {
+      "type": "story",
+      "id": "newtab-blockedsiteslist--empty",
+      "name": "Empty",
+      "title": "Newtab/BlockedSitesList",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "componentPath": "./src/components/newtab/BlockedSitesList.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-blockedsiteslist--few-sites": {
+      "type": "story",
+      "id": "newtab-blockedsiteslist--few-sites",
+      "name": "Few Sites",
+      "title": "Newtab/BlockedSitesList",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "componentPath": "./src/components/newtab/BlockedSitesList.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-blockedsiteslist--no-counts": {
+      "type": "story",
+      "id": "newtab-blockedsiteslist--no-counts",
+      "name": "No Counts",
+      "title": "Newtab/BlockedSitesList",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "componentPath": "./src/components/newtab/BlockedSitesList.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-blockedsiteslist--with-disabled": {
+      "type": "story",
+      "id": "newtab-blockedsiteslist--with-disabled",
+      "name": "With Disabled",
+      "title": "Newtab/BlockedSitesList",
+      "importPath": "./src/components/newtab/BlockedSitesList.stories.tsx",
+      "componentPath": "./src/components/newtab/BlockedSitesList.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-goaldisplay--docs": {
+      "id": "newtab-goaldisplay--docs",
+      "title": "Newtab/GoalDisplay",
+      "name": "Docs",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "newtab-goaldisplay--default": {
+      "type": "story",
+      "id": "newtab-goaldisplay--default",
+      "name": "Default",
+      "title": "Newtab/GoalDisplay",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "componentPath": "./src/components/newtab/GoalDisplay.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-goaldisplay--with-sub-text": {
+      "type": "story",
+      "id": "newtab-goaldisplay--with-sub-text",
+      "name": "With Sub Text",
+      "title": "Newtab/GoalDisplay",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "componentPath": "./src/components/newtab/GoalDisplay.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-goaldisplay--long-goal": {
+      "type": "story",
+      "id": "newtab-goaldisplay--long-goal",
+      "name": "Long Goal",
+      "title": "Newtab/GoalDisplay",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "componentPath": "./src/components/newtab/GoalDisplay.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-goaldisplay--not-editable": {
+      "type": "story",
+      "id": "newtab-goaldisplay--not-editable",
+      "name": "Not Editable",
+      "title": "Newtab/GoalDisplay",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "componentPath": "./src/components/newtab/GoalDisplay.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-goaldisplay--multiline-sub-text": {
+      "type": "story",
+      "id": "newtab-goaldisplay--multiline-sub-text",
+      "name": "Multiline Sub Text",
+      "title": "Newtab/GoalDisplay",
+      "importPath": "./src/components/newtab/GoalDisplay.stories.tsx",
+      "componentPath": "./src/components/newtab/GoalDisplay.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-ministats--docs": {
+      "id": "newtab-ministats--docs",
+      "title": "Newtab/MiniStats",
+      "name": "Docs",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "newtab-ministats--default": {
+      "type": "story",
+      "id": "newtab-ministats--default",
+      "name": "Default",
+      "title": "Newtab/MiniStats",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "componentPath": "./src/components/newtab/MiniStats.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-ministats--with-analytics": {
+      "type": "story",
+      "id": "newtab-ministats--with-analytics",
+      "name": "With Analytics",
+      "title": "Newtab/MiniStats",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "componentPath": "./src/components/newtab/MiniStats.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-ministats--no-blocks": {
+      "type": "story",
+      "id": "newtab-ministats--no-blocks",
+      "name": "No Blocks",
+      "title": "Newtab/MiniStats",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "componentPath": "./src/components/newtab/MiniStats.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-ministats--not-in-blocklist": {
+      "type": "story",
+      "id": "newtab-ministats--not-in-blocklist",
+      "name": "Not In Blocklist",
+      "title": "Newtab/MiniStats",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "componentPath": "./src/components/newtab/MiniStats.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "newtab-ministats--high-numbers": {
+      "type": "story",
+      "id": "newtab-ministats--high-numbers",
+      "name": "High Numbers",
+      "title": "Newtab/MiniStats",
+      "importPath": "./src/components/newtab/MiniStats.stories.tsx",
+      "componentPath": "./src/components/newtab/MiniStats.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-analyticstab--docs": {
+      "id": "options-analyticstab--docs",
+      "title": "Options/AnalyticsTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/AnalyticsTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-analyticstab--free-tier": {
+      "type": "story",
+      "id": "options-analyticstab--free-tier",
+      "name": "Free Tier",
+      "title": "Options/AnalyticsTab",
+      "importPath": "./src/components/options/AnalyticsTab.stories.tsx",
+      "componentPath": "./src/components/options/AnalyticsTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-analyticstab--premium": {
+      "type": "story",
+      "id": "options-analyticstab--premium",
+      "name": "Premium",
+      "title": "Options/AnalyticsTab",
+      "importPath": "./src/components/options/AnalyticsTab.stories.tsx",
+      "componentPath": "./src/components/options/AnalyticsTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-analyticstab--empty": {
+      "type": "story",
+      "id": "options-analyticstab--empty",
+      "name": "Empty",
+      "title": "Options/AnalyticsTab",
+      "importPath": "./src/components/options/AnalyticsTab.stories.tsx",
+      "componentPath": "./src/components/options/AnalyticsTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-blocklisttab--docs": {
+      "id": "options-blocklisttab--docs",
+      "title": "Options/BlocklistTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/BlocklistTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-blocklisttab--default": {
+      "type": "story",
+      "id": "options-blocklisttab--default",
+      "name": "Default",
+      "title": "Options/BlocklistTab",
+      "importPath": "./src/components/options/BlocklistTab.stories.tsx",
+      "componentPath": "./src/components/options/BlocklistTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-helptab--docs": {
+      "id": "options-helptab--docs",
+      "title": "Options/HelpTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/HelpTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-helptab--default": {
+      "type": "story",
+      "id": "options-helptab--default",
+      "name": "Default",
+      "title": "Options/HelpTab",
+      "importPath": "./src/components/options/HelpTab.stories.tsx",
+      "componentPath": "./src/components/options/HelpTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-helptab--without-callbacks": {
+      "type": "story",
+      "id": "options-helptab--without-callbacks",
+      "name": "Without Callbacks",
+      "title": "Options/HelpTab",
+      "importPath": "./src/components/options/HelpTab.stories.tsx",
+      "componentPath": "./src/components/options/HelpTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-premiumtab--docs": {
+      "id": "options-premiumtab--docs",
+      "title": "Options/PremiumTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/PremiumTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-premiumtab--free-tier": {
+      "type": "story",
+      "id": "options-premiumtab--free-tier",
+      "name": "Free Tier",
+      "title": "Options/PremiumTab",
+      "importPath": "./src/components/options/PremiumTab.stories.tsx",
+      "componentPath": "./src/components/options/PremiumTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-premiumtab--premium-user": {
+      "type": "story",
+      "id": "options-premiumtab--premium-user",
+      "name": "Premium User",
+      "title": "Options/PremiumTab",
+      "importPath": "./src/components/options/PremiumTab.stories.tsx",
+      "componentPath": "./src/components/options/PremiumTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-schedulestab--docs": {
+      "id": "options-schedulestab--docs",
+      "title": "Options/SchedulesTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/SchedulesTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-schedulestab--default": {
+      "type": "story",
+      "id": "options-schedulestab--default",
+      "name": "Default",
+      "title": "Options/SchedulesTab",
+      "importPath": "./src/components/options/SchedulesTab.stories.tsx",
+      "componentPath": "./src/components/options/SchedulesTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-schedulestab--empty": {
+      "type": "story",
+      "id": "options-schedulestab--empty",
+      "name": "Empty",
+      "title": "Options/SchedulesTab",
+      "importPath": "./src/components/options/SchedulesTab.stories.tsx",
+      "componentPath": "./src/components/options/SchedulesTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-stylestab--docs": {
+      "id": "options-stylestab--docs",
+      "title": "Options/StylesTab",
+      "name": "Docs",
+      "importPath": "./src/components/options/StylesTab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-stylestab--free-tier": {
+      "type": "story",
+      "id": "options-stylestab--free-tier",
+      "name": "Free Tier",
+      "title": "Options/StylesTab",
+      "importPath": "./src/components/options/StylesTab.stories.tsx",
+      "componentPath": "./src/components/options/StylesTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-stylestab--premium": {
+      "type": "story",
+      "id": "options-stylestab--premium",
+      "name": "Premium",
+      "title": "Options/StylesTab",
+      "importPath": "./src/components/options/StylesTab.stories.tsx",
+      "componentPath": "./src/components/options/StylesTab.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-weeklycalendar--docs": {
+      "id": "options-weeklycalendar--docs",
+      "title": "Options/WeeklyCalendar",
+      "name": "Docs",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "options-weeklycalendar--default": {
+      "type": "story",
+      "id": "options-weeklycalendar--default",
+      "name": "Default",
+      "title": "Options/WeeklyCalendar",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "componentPath": "./src/components/options/WeeklyCalendar.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-weeklycalendar--single-schedule": {
+      "type": "story",
+      "id": "options-weeklycalendar--single-schedule",
+      "name": "Single Schedule",
+      "title": "Options/WeeklyCalendar",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "componentPath": "./src/components/options/WeeklyCalendar.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-weeklycalendar--many-schedules": {
+      "type": "story",
+      "id": "options-weeklycalendar--many-schedules",
+      "name": "Many Schedules",
+      "title": "Options/WeeklyCalendar",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "componentPath": "./src/components/options/WeeklyCalendar.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-weeklycalendar--with-disabled-schedule": {
+      "type": "story",
+      "id": "options-weeklycalendar--with-disabled-schedule",
+      "name": "With Disabled Schedule",
+      "title": "Options/WeeklyCalendar",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "componentPath": "./src/components/options/WeeklyCalendar.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "options-weeklycalendar--no-schedules": {
+      "type": "story",
+      "id": "options-weeklycalendar--no-schedules",
+      "name": "No Schedules",
+      "title": "Options/WeeklyCalendar",
+      "importPath": "./src/components/options/WeeklyCalendar.stories.tsx",
+      "componentPath": "./src/components/options/WeeklyCalendar.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--docs": {
+      "id": "ui-badge--docs",
+      "title": "UI/Badge",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-badge--default": {
+      "type": "story",
+      "id": "ui-badge--default",
+      "name": "Default",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--success": {
+      "type": "story",
+      "id": "ui-badge--success",
+      "name": "Success",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--warning": {
+      "type": "story",
+      "id": "ui-badge--warning",
+      "name": "Warning",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--danger": {
+      "type": "story",
+      "id": "ui-badge--danger",
+      "name": "Danger",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--info": {
+      "type": "story",
+      "id": "ui-badge--info",
+      "name": "Info",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--premium": {
+      "type": "story",
+      "id": "ui-badge--premium",
+      "name": "Premium",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-badge--all-variants": {
+      "type": "story",
+      "id": "ui-badge--all-variants",
+      "name": "All Variants",
+      "title": "UI/Badge",
+      "importPath": "./src/components/ui/Badge/Badge.stories.tsx",
+      "componentPath": "./src/components/ui/Badge/Badge.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--docs": {
+      "id": "ui-button--docs",
+      "title": "UI/Button",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-button--primary": {
+      "type": "story",
+      "id": "ui-button--primary",
+      "name": "Primary",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--secondary": {
+      "type": "story",
+      "id": "ui-button--secondary",
+      "name": "Secondary",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--danger": {
+      "type": "story",
+      "id": "ui-button--danger",
+      "name": "Danger",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--ghost": {
+      "type": "story",
+      "id": "ui-button--ghost",
+      "name": "Ghost",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--small": {
+      "type": "story",
+      "id": "ui-button--small",
+      "name": "Small",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--large": {
+      "type": "story",
+      "id": "ui-button--large",
+      "name": "Large",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--loading": {
+      "type": "story",
+      "id": "ui-button--loading",
+      "name": "Loading",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--disabled": {
+      "type": "story",
+      "id": "ui-button--disabled",
+      "name": "Disabled",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-button--full-width": {
+      "type": "story",
+      "id": "ui-button--full-width",
+      "name": "Full Width",
+      "title": "UI/Button",
+      "importPath": "./src/components/ui/Button/Button.stories.tsx",
+      "componentPath": "./src/components/ui/Button/Button.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-card--docs": {
+      "id": "ui-card--docs",
+      "title": "UI/Card",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Card/Card.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-card--default": {
+      "type": "story",
+      "id": "ui-card--default",
+      "name": "Default",
+      "title": "UI/Card",
+      "importPath": "./src/components/ui/Card/Card.stories.tsx",
+      "componentPath": "./src/components/ui/Card/Card.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-card--outlined": {
+      "type": "story",
+      "id": "ui-card--outlined",
+      "name": "Outlined",
+      "title": "UI/Card",
+      "importPath": "./src/components/ui/Card/Card.stories.tsx",
+      "componentPath": "./src/components/ui/Card/Card.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-card--elevated": {
+      "type": "story",
+      "id": "ui-card--elevated",
+      "name": "Elevated",
+      "title": "UI/Card",
+      "importPath": "./src/components/ui/Card/Card.stories.tsx",
+      "componentPath": "./src/components/ui/Card/Card.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-card--clickable": {
+      "type": "story",
+      "id": "ui-card--clickable",
+      "name": "Clickable",
+      "title": "UI/Card",
+      "importPath": "./src/components/ui/Card/Card.stories.tsx",
+      "componentPath": "./src/components/ui/Card/Card.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-input--docs": {
+      "id": "ui-input--docs",
+      "title": "UI/Input",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-input--default": {
+      "type": "story",
+      "id": "ui-input--default",
+      "name": "Default",
+      "title": "UI/Input",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "componentPath": "./src/components/ui/Input/Input.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-input--with-label": {
+      "type": "story",
+      "id": "ui-input--with-label",
+      "name": "With Label",
+      "title": "UI/Input",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "componentPath": "./src/components/ui/Input/Input.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-input--with-error": {
+      "type": "story",
+      "id": "ui-input--with-error",
+      "name": "With Error",
+      "title": "UI/Input",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "componentPath": "./src/components/ui/Input/Input.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-input--disabled": {
+      "type": "story",
+      "id": "ui-input--disabled",
+      "name": "Disabled",
+      "title": "UI/Input",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "componentPath": "./src/components/ui/Input/Input.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-input--url": {
+      "type": "story",
+      "id": "ui-input--url",
+      "name": "URL",
+      "title": "UI/Input",
+      "importPath": "./src/components/ui/Input/Input.stories.tsx",
+      "componentPath": "./src/components/ui/Input/Input.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-modal--docs": {
+      "id": "ui-modal--docs",
+      "title": "UI/Modal",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Modal/Modal.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-modal--default": {
+      "type": "story",
+      "id": "ui-modal--default",
+      "name": "Default",
+      "title": "UI/Modal",
+      "importPath": "./src/components/ui/Modal/Modal.stories.tsx",
+      "componentPath": "./src/components/ui/Modal/Modal.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-modal--small": {
+      "type": "story",
+      "id": "ui-modal--small",
+      "name": "Small",
+      "title": "UI/Modal",
+      "importPath": "./src/components/ui/Modal/Modal.stories.tsx",
+      "componentPath": "./src/components/ui/Modal/Modal.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-modal--large": {
+      "type": "story",
+      "id": "ui-modal--large",
+      "name": "Large",
+      "title": "UI/Modal",
+      "importPath": "./src/components/ui/Modal/Modal.stories.tsx",
+      "componentPath": "./src/components/ui/Modal/Modal.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-modal--interactive": {
+      "type": "story",
+      "id": "ui-modal--interactive",
+      "name": "Interactive",
+      "title": "UI/Modal",
+      "importPath": "./src/components/ui/Modal/Modal.stories.tsx",
+      "componentPath": "./src/components/ui/Modal/Modal.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-tabs--docs": {
+      "id": "ui-tabs--docs",
+      "title": "UI/Tabs",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Tabs/Tabs.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-tabs--default": {
+      "type": "story",
+      "id": "ui-tabs--default",
+      "name": "Default",
+      "title": "UI/Tabs",
+      "importPath": "./src/components/ui/Tabs/Tabs.stories.tsx",
+      "componentPath": "./src/components/ui/Tabs/Tabs.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-tabs--with-icons": {
+      "type": "story",
+      "id": "ui-tabs--with-icons",
+      "name": "With Icons",
+      "title": "UI/Tabs",
+      "importPath": "./src/components/ui/Tabs/Tabs.stories.tsx",
+      "componentPath": "./src/components/ui/Tabs/Tabs.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-tabs--interactive": {
+      "type": "story",
+      "id": "ui-tabs--interactive",
+      "name": "Interactive",
+      "title": "UI/Tabs",
+      "importPath": "./src/components/ui/Tabs/Tabs.stories.tsx",
+      "componentPath": "./src/components/ui/Tabs/Tabs.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-toggle--docs": {
+      "id": "ui-toggle--docs",
+      "title": "UI/Toggle",
+      "name": "Docs",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "ui-toggle--default": {
+      "type": "story",
+      "id": "ui-toggle--default",
+      "name": "Default",
+      "title": "UI/Toggle",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "componentPath": "./src/components/ui/Toggle/Toggle.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-toggle--checked": {
+      "type": "story",
+      "id": "ui-toggle--checked",
+      "name": "Checked",
+      "title": "UI/Toggle",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "componentPath": "./src/components/ui/Toggle/Toggle.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-toggle--with-label": {
+      "type": "story",
+      "id": "ui-toggle--with-label",
+      "name": "With Label",
+      "title": "UI/Toggle",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "componentPath": "./src/components/ui/Toggle/Toggle.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-toggle--disabled": {
+      "type": "story",
+      "id": "ui-toggle--disabled",
+      "name": "Disabled",
+      "title": "UI/Toggle",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "componentPath": "./src/components/ui/Toggle/Toggle.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "ui-toggle--interactive": {
+      "type": "story",
+      "id": "ui-toggle--interactive",
+      "name": "Interactive",
+      "title": "UI/Toggle",
+      "importPath": "./src/components/ui/Toggle/Toggle.stories.tsx",
+      "componentPath": "./src/components/ui/Toggle/Toggle.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-newtab--docs": {
+      "id": "pages-newtab--docs",
+      "title": "Pages/Newtab",
+      "name": "Docs",
+      "importPath": "./src/newtab.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "pages-newtab--default": {
+      "type": "story",
+      "id": "pages-newtab--default",
+      "name": "Default",
+      "title": "Pages/Newtab",
+      "importPath": "./src/newtab.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-newtab--long-goal": {
+      "type": "story",
+      "id": "pages-newtab--long-goal",
+      "name": "Long Goal",
+      "title": "Pages/Newtab",
+      "importPath": "./src/newtab.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-newtab--premium-user": {
+      "type": "story",
+      "id": "pages-newtab--premium-user",
+      "name": "Premium User",
+      "title": "Pages/Newtab",
+      "importPath": "./src/newtab.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-options--docs": {
+      "id": "pages-options--docs",
+      "title": "Pages/Options",
+      "name": "Docs",
+      "importPath": "./src/options.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "pages-options--default": {
+      "type": "story",
+      "id": "pages-options--default",
+      "name": "Default",
+      "title": "Pages/Options",
+      "importPath": "./src/options.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-options--schedules-view": {
+      "type": "story",
+      "id": "pages-options--schedules-view",
+      "name": "Schedules View",
+      "title": "Pages/Options",
+      "importPath": "./src/options.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-options--premium-view": {
+      "type": "story",
+      "id": "pages-options--premium-view",
+      "name": "Premium View",
+      "title": "Pages/Options",
+      "importPath": "./src/options.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    },
+    "pages-popup--docs": {
+      "id": "pages-popup--docs",
+      "title": "Pages/Popup",
+      "name": "Docs",
+      "importPath": "./src/popup.stories.tsx",
+      "type": "docs",
+      "tags": ["dev", "test", "autodocs"],
+      "storiesImports": []
+    },
+    "pages-popup--default": {
+      "type": "story",
+      "id": "pages-popup--default",
+      "name": "Default",
+      "title": "Pages/Popup",
+      "importPath": "./src/popup.stories.tsx",
+      "tags": ["dev", "test", "autodocs"]
+    }
+  }
+}

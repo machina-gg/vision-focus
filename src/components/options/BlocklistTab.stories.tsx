@@ -43,6 +43,7 @@ const mockBlockList: BlockItem[] = [
 const mockSettings: AppSettings = {
   blockList: mockBlockList,
   schedules: [],
+  paused: false,
   language: 'en',
   notifications: {
     timeLimitEnabled: true,
@@ -55,13 +56,16 @@ const mockSettings: AppSettings = {
   youtube: {
     enabled: false,
     blockAccess: false,
-    blockShorts: false,
-    blockRecommendations: false,
-    blockComments: false
+    hideShorts: false,
+    hideRecommendations: false,
+    hideComments: false,
+    hideSidebar: false,
+    hideHomeFeed: false,
+    timeLimit: null
   },
   analyticsOptIn: {
     enabled: false,
-    decidedAt: null
+    decidedAt: '2026-02-01T00:00:00Z'
   }
 };
 
@@ -126,6 +130,8 @@ const BlocklistTabWrapper = () => {
       onToggleDomain={handleToggleDomain}
       onUpdateTimeLimit={() => {}}
       onUpdateNotifications={handleUpdateNotifications}
+      siteBlockCounts={{}}
+      timeLimitUsage={{}}
       youtube={settings.youtube}
       onYouTubeChange={handleYouTubeChange}
     />
@@ -145,7 +151,22 @@ const meta = {
         <Story />
       </div>
     )
-  ]
+  ],
+  args: {
+    settings: mockSettings,
+    newDomain: '',
+    setNewDomain: () => {},
+    blockError: '',
+    onAddDomain: () => {},
+    onRemoveDomain: () => {},
+    onToggleDomain: () => {},
+    onUpdateTimeLimit: () => {},
+    onUpdateNotifications: () => {},
+    siteBlockCounts: {},
+    timeLimitUsage: {},
+    youtube: mockSettings.youtube,
+    onYouTubeChange: () => {}
+  }
 } satisfies Meta<typeof BlocklistTab>;
 
 export default meta;

@@ -81,7 +81,15 @@ const meta = {
         <Story />
       </div>
     )
-  ]
+  ],
+  args: {
+    settings: DEFAULT_SETTINGS,
+    vision: DEFAULT_VISION,
+    onAddSchedule: () => {},
+    onEditSchedule: () => {},
+    onDeleteSchedule: () => {},
+    onToggleSchedule: () => {}
+  }
 } satisfies Meta<typeof SchedulesTab>;
 
 export default meta;

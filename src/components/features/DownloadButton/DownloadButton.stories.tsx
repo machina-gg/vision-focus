@@ -38,7 +38,11 @@ const meta = {
   parameters: {
     layout: 'centered'
   },
-  tags: ['autodocs']
+  tags: ['autodocs'],
+  args: {
+    targetRef: { current: null },
+    disabled: false
+  }
 } satisfies Meta<typeof DownloadButton>;
 
 export default meta;

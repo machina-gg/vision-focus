@@ -10,6 +10,7 @@ const mockBlockList: BlockItem[] = [
     id: '1',
     domain: 'twitter.com',
     isWildcard: false,
+    createdAt: '2026-02-10T10:00:00Z',
     enabled: true,
     timeLimit: null
   },
@@ -17,6 +18,7 @@ const mockBlockList: BlockItem[] = [
     id: '2',
     domain: 'youtube.com',
     isWildcard: false,
+    createdAt: '2026-02-10T11:00:00Z',
     enabled: true,
     timeLimit: null
   },
@@ -24,6 +26,7 @@ const mockBlockList: BlockItem[] = [
     id: '3',
     domain: 'reddit.com',
     isWildcard: false,
+    createdAt: '2026-02-10T12:00:00Z',
     enabled: true,
     timeLimit: null
   },
@@ -31,6 +34,7 @@ const mockBlockList: BlockItem[] = [
     id: '4',
     domain: 'facebook.com',
     isWildcard: false,
+    createdAt: '2026-02-10T13:00:00Z',
     enabled: true,
     timeLimit: null
   },
@@ -38,6 +42,7 @@ const mockBlockList: BlockItem[] = [
     id: '5',
     domain: 'instagram.com',
     isWildcard: false,
+    createdAt: '2026-02-10T14:00:00Z',
     enabled: true,
     timeLimit: null
   },
@@ -45,6 +50,7 @@ const mockBlockList: BlockItem[] = [
     id: '6',
     domain: 'tiktok.com',
     isWildcard: false,
+    createdAt: '2026-02-10T15:00:00Z',
     enabled: true,
     timeLimit: null
   }
@@ -146,6 +152,7 @@ export const WithDisabled: Story = {
         id: '7',
         domain: 'disabled-site.com',
         isWildcard: false,
+        createdAt: '2026-02-10T16:00:00Z',
         enabled: false,
         timeLimit: null
       }

@@ -96,7 +96,7 @@ function OptionsDemo() {
             tabs={tabs.map((tab) => ({
               id: tab.id,
               label: tab.label,
-              icon: tab.icon
+              icon: <tab.icon className="w-4 h-4" />
             }))}
             activeTab={activeTab}
             onChange={(id) => setActiveTab(id as TabId)}
@@ -140,7 +140,7 @@ const SchedulesViewWrapper = () => {
             tabs={tabs.map((tab) => ({
               id: tab.id,
               label: tab.label,
-              icon: tab.icon
+              icon: <tab.icon className="w-4 h-4" />
             }))}
             activeTab={activeTab}
             onChange={(id) => setActiveTab(id as TabId)}
@@ -181,7 +181,7 @@ const PremiumViewWrapper = () => {
             tabs={tabs.map((tab) => ({
               id: tab.id,
               label: tab.label,
-              icon: tab.icon
+              icon: <tab.icon className="w-4 h-4" />
             }))}
             activeTab={activeTab}
             onChange={(id) => setActiveTab(id as TabId)}
