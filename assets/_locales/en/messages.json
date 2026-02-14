@@ -1643,6 +1643,14 @@
     "message": "Resets hourly",
     "description": "Hourly reset note"
   },
+  "timeLimitSettings": {
+    "message": "Time Limit Settings",
+    "description": "Time limit settings section title"
+  },
+  "currentSetting": {
+    "message": "Current setting",
+    "description": "Label for current setting display"
+  },
   "timeLimitWarning": {
     "message": "Only $TIME$ remaining!",
     "description": "Warning when time is running low",
