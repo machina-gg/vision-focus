@@ -411,7 +411,7 @@ describe('getActiveBlockedDomains', () => {
     expect(result).toEqual([]);
   });
 
-  it('スケジュール外ではブロックリストのサイトは返さない', async () => {
+  it('スケジュール外でも常時ブロックサイト（timeLimit なし）はブロックする', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
     mockGetSettings.mockResolvedValue(
       createSettings({
@@ -438,8 +438,7 @@ describe('getActiveBlockedDomains', () => {
     );
     mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
     const result = await getActiveBlockedDomains();
-    expect(result).toEqual([]);
-    expect(result).not.toContain('twitter.com');
+    expect(result).toContain('twitter.com');
   });
 
   it('タイムリミットなしの有効アイテムをリストに含む', async () => {

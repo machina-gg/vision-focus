@@ -180,32 +180,30 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
     return [];
   }
 
-  // If no schedule is active, don't block anything
-  if (!isAnyScheduleActive(settings.schedules)) {
-    return [];
-  }
-
-  // Always-blocked sites (enabled and no time limit)
-  const scheduleBasedDomains = settings.blockList
+  // Always-blocked sites (enabled and no time limit) — スケジュールに関係なく常にブロック
+  const alwaysBlockedDomains = settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
-  blockedDomains.push(...scheduleBasedDomains);
+  blockedDomains.push(...alwaysBlockedDomains);
 
-  // Add YouTube domains if YouTube blockAccess is enabled
-  if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
-    for (const domain of YOUTUBE_DOMAINS) {
-      blockedDomains.push(domain);
+  // スケジュールがアクティブな場合のみ、YouTube と時間制限サイトをブロック
+  if (isAnyScheduleActive(settings.schedules)) {
+    // Add YouTube domains if YouTube blockAccess is enabled
+    if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
+      for (const domain of YOUTUBE_DOMAINS) {
+        blockedDomains.push(domain);
+      }
     }
-  }
 
-  // Also include time-limited sites that have exceeded their limit
-  const analytics = await getAnalytics();
-  for (const item of settings.blockList) {
-    if (!item.enabled || !item.timeLimit) continue;
-    if (blockedDomains.includes(item.domain)) continue;
+    // Also include time-limited sites that have exceeded their limit
+    const analytics = await getAnalytics();
+    for (const item of settings.blockList) {
+      if (!item.enabled || !item.timeLimit) continue;
+      if (blockedDomains.includes(item.domain)) continue;
 
-    if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
-      blockedDomains.push(item.domain);
+      if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
+        blockedDomains.push(item.domain);
+      }
     }
   }
 
