@@ -131,6 +131,7 @@ export function AnalyticsExportBar({
     if (!chartRef.current) return;
 
     try {
+      // チャートをキャンバスとしてキャプチャ
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -138,6 +139,7 @@ export function AnalyticsExportBar({
         return;
       }
 
+      // クリップボードに画像をコピー
       const success = await copyImageToClipboard(canvas);
       if (!success) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -145,6 +147,7 @@ export function AnalyticsExportBar({
         return;
       }
 
+      // シェアテキストを生成
       const text = generateShareText({
         totalBlockCount,
         totalWasteTime,
@@ -153,11 +156,12 @@ export function AnalyticsExportBar({
 
       setShareMessage({ type: 'success', text: getMessage('shareSuccess') });
 
+      // Xでシェア
       shareToX(text);
 
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
-    } catch (error) {
-      console.error('Share to X failed:', error);
+    } catch {
+      // Xシェアに失敗
       setShareMessage({ type: 'error', text: getMessage('shareError') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
@@ -167,6 +171,7 @@ export function AnalyticsExportBar({
     if (!chartRef.current) return;
 
     try {
+      // チャートをキャンバスとしてキャプチャ
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -174,12 +179,13 @@ export function AnalyticsExportBar({
         return;
       }
 
+      // ファイル名を生成
       const filename = `visionfocus-analytics-${new Date().toISOString().split('T')[0]}.png`;
       downloadImage(canvas, filename);
       setShareMessage({ type: 'success', text: getMessage('downloadSuccess') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
-    } catch (error) {
-      console.error('Download image failed:', error);
+    } catch {
+      // 画像ダウンロードに失敗
       setShareMessage({ type: 'error', text: getMessage('shareError') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
