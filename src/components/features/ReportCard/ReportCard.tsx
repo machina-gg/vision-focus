@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  BarChart3
+  BarChart3,
+  Unlock
 } from 'lucide-react';
 import {
   Bar,
@@ -80,10 +81,12 @@ function formatChangePercent(value: number | null): string {
 function StatsGrid({
   wasteTime,
   blockCount,
+  unblockCount,
   wasteTimeChangePercent
 }: {
   wasteTime: number;
   blockCount: number;
+  unblockCount: number;
   wasteTimeChangePercent: number | null;
 }) {
   // Determine color for change percent: negative (less waste) = green, positive (more waste) = red
@@ -112,7 +115,7 @@ function StatsGrid({
   const changeColors = getChangeColor(wasteTimeChangePercent);
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-4 gap-4">
       <div className="text-center p-3 bg-danger-50 rounded-lg">
         <div className="flex items-center justify-center gap-1 text-danger-600 mb-1">
           <Clock className="w-4 h-4" />
@@ -147,6 +150,13 @@ function StatsGrid({
         </div>
         <p className="text-lg font-bold text-info-700">{blockCount}</p>
         <p className="text-xs text-info-600">{getMessage('blockedCount')}</p>
+      </div>
+      <div className="text-center p-3 bg-warning-50 rounded-lg">
+        <div className="flex items-center justify-center gap-1 text-warning-600 mb-1">
+          <Unlock className="w-4 h-4" />
+        </div>
+        <p className="text-lg font-bold text-warning-700">{unblockCount}</p>
+        <p className="text-xs text-warning-600">{getMessage('unblockedCount')}</p>
       </div>
     </div>
   );
@@ -448,6 +458,7 @@ export function WeeklyReportCard({
           <StatsGrid
             wasteTime={report.totalWasteTime}
             blockCount={report.totalBlockCount}
+            unblockCount={report.totalUnblockCount}
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
@@ -534,6 +545,7 @@ export function MonthlyReportCard({
           <StatsGrid
             wasteTime={report.totalWasteTime}
             blockCount={report.totalBlockCount}
+            unblockCount={report.totalUnblockCount}
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
