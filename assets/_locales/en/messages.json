@@ -292,7 +292,7 @@
     "description": "Goal input placeholder"
   },
   "todaysGoal": {
-    "message": "Today's Goal",
+    "message": "Current Goal",
     "description": "Goal card label"
   },
   "saved": {

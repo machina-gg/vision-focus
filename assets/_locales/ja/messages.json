@@ -292,7 +292,7 @@
     "description": "目標入力プレースホルダー"
   },
   "todaysGoal": {
-    "message": "今日の目標",
+    "message": "只今の目標",
     "description": "目標カードラベル"
   },
   "saved": {
