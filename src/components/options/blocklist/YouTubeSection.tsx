@@ -256,7 +256,9 @@ export function YouTubeSection({
                 </label>
                 <Select
                   value={selectedType}
-                  onChange={(value) => handleTypeChange(value as LimitTypeOption)}
+                  onChange={(value) =>
+                    handleTypeChange(value as LimitTypeOption)
+                  }
                   options={typeOptions}
                 />
               </div>
