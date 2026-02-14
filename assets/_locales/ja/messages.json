@@ -601,6 +601,10 @@
     "message": "月次レポート",
     "description": "月次レポートタイトル"
   },
+  "inProgress": {
+    "message": "途中経過",
+    "description": "途中経過バッジラベル"
+  },
   "noReportData": {
     "message": "レポート用のデータが不足しています",
     "description": "レポートデータなしメッセージ"

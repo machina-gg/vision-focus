@@ -59,12 +59,14 @@ export function AnalyticsDateFilter({
             onPrevious={handlePreviousWeek}
             onNext={handleNextWeek}
             canGoNext={weeklyOffset < 0}
+            isCurrentWeek={weeklyOffset === 0}
           />
           <MonthlyReportCard
             report={monthlyReport}
             onPrevious={handlePreviousMonth}
             onNext={handleNextMonth}
             canGoNext={monthlyOffset < 0}
+            isCurrentMonth={monthlyOffset === 0}
           />
         </div>
       </Card>

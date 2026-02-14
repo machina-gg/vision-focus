@@ -601,6 +601,10 @@
     "message": "Monthly Report",
     "description": "Monthly report title"
   },
+  "inProgress": {
+    "message": "In Progress",
+    "description": "In progress badge label"
+  },
   "noReportData": {
     "message": "Not enough data for report",
     "description": "No report data message"
