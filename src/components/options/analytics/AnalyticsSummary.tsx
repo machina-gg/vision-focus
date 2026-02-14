@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  AlertTriangle,
   Clock,
   Lock,
   RefreshCw,
