@@ -15,7 +15,8 @@ import {
   Shield,
   Clock,
   Calendar,
-  BarChart2
+  BarChart2,
+  Globe
 } from 'lucide-react';
 
 import { Button, Card, Toggle } from '~/components/ui';
@@ -24,7 +25,7 @@ import {
   EXPORT_STATUS_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
-import { getMessage } from '~/lib/i18n';
+import { getMessage, getSupportedLanguages } from '~/lib/i18n';
 import {
   exportSettings,
   downloadSettings,
@@ -36,7 +37,8 @@ import { getSettings, getVision, setSettings, setVision } from '~/lib/storage';
 import type {
   PasswordSettings,
   AppSettings,
-  AnalyticsOptIn
+  AnalyticsOptIn,
+  SupportedLanguage
 } from '~/types/storage';
 import { DEFAULT_PASSWORD_SETTINGS } from '~/types/storage';
 
@@ -47,13 +49,15 @@ interface HelpTabProps {
   settings?: AppSettings;
   onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
   onAnalyticsOptInChange?: (optIn: AnalyticsOptIn) => Promise<void>;
+  onLanguageChange?: (language: SupportedLanguage | null) => Promise<void>;
 }
 
 export function HelpTab({
   onSettingsChange,
   settings,
   onPasswordUpdate,
-  onAnalyticsOptInChange
+  onAnalyticsOptInChange,
+  onLanguageChange
 }: HelpTabProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
@@ -354,6 +358,54 @@ export function HelpTab({
           ))}
         </div>
       </Card>
+
+      {/* Language Settings */}
+      {onLanguageChange && (
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+              <Globe className="w-5 h-5 text-info-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {getMessage('languageSettingsTitle')}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {getMessage('languageSettingsDescription')}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 mb-2 block">
+                  {getMessage('languageLabel')}
+                </span>
+                <select
+                  value={settings?.language ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    onLanguageChange(
+                      value === '' ? null : (value as SupportedLanguage)
+                    );
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">
+                    {getMessage('languageSelectDescription')}
+                  </option>
+                  {getSupportedLanguages().map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Password Protection */}
       {onPasswordUpdate && (

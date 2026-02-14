@@ -2068,5 +2068,21 @@
         "example": "5"
       }
     }
+  },
+  "languageSettingsTitle": {
+    "message": "言語設定",
+    "description": "言語設定セクションのタイトル"
+  },
+  "languageSettingsDescription": {
+    "message": "ダッシュボードの表示言語を変更",
+    "description": "言語設定セクションの説明"
+  },
+  "languageLabel": {
+    "message": "表示言語",
+    "description": "言語選択のラベル"
+  },
+  "languageSelectDescription": {
+    "message": "ダッシュボードの表示言語を選択してください",
+    "description": "言語選択の説明"
   }
 }
