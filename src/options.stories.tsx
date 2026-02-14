@@ -11,7 +11,7 @@ import {
   HelpTab
 } from '~/components/options';
 import type { AppSettings } from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
 
 import './styles/globals.css';
 
@@ -44,7 +44,6 @@ function OptionsDemo() {
             onUpdateNotifications={() => {}}
             youtube={settings.youtube}
             onYouTubeChange={() => {}}
-            unblockHistory={DEFAULT_UNBLOCK_HISTORY}
           />
         );
       case 'schedules':
