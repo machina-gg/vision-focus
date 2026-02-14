@@ -85,7 +85,7 @@ export function AnalyticsSummary({
         </Card>
       )}
 
-      {/* 追跡中のサイト一覧 */}
+      {/* 追跡中のサイト一覧（浪費時間統合） */}
       {hasTrackedSites && (
         <Card>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
@@ -106,42 +106,20 @@ export function AnalyticsSummary({
               />
             ))}
           </div>
-        </Card>
-      )}
 
-      {/* 浪費時間セクション */}
-      {unblockedSites.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-block-500" />
-            {getMessage('wastedTimeSite')}
-          </h3>
-          <p className="text-xs text-gray-500 mb-4">
-            {getMessage('wastedTimeDescription')}
-          </p>
-          <div className="space-y-3">
-            {unblockedSites.map((site) => (
-              <WastedTimeItem
-                key={site.domain}
-                site={site}
-                isPremium={isPremium}
-              />
-            ))}
-
-            {/* 合計浪費時間 (Premium only) */}
-            {isPremium && unblockedSites.length > 1 && (
-              <div className="pt-4 border-t border-block-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    {getMessage('totalWastedTime')}
-                  </span>
-                  <span className="text-lg font-bold text-block-600">
-                    {formatTime(totalWastedTime)}
-                  </span>
-                </div>
+          {/* 合計浪費時間 (Premium only、解除済みサイトが2つ以上の場合) */}
+          {isPremium && unblockedSites.length > 1 && (
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">
+                  {getMessage('totalWastedTime')}
+                </span>
+                <span className="text-lg font-bold text-block-600">
+                  {formatTime(totalWastedTime)}
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       )}
 
@@ -162,7 +140,7 @@ export function AnalyticsSummary({
   );
 }
 
-// 追跡中サイトのアイテム表示（ステータス表示のみ）
+// 追跡中サイトのアイテム表示（ステータス + 浪費時間統合表示）
 interface TrackedSiteItemProps {
   site: TrackedSite;
   isPremium: boolean;
@@ -177,15 +155,15 @@ function TrackedSiteItem({
   onStopTracking
 }: TrackedSiteItemProps) {
   const isBlocked = site.status === 'blocked';
-  const bgColor = isBlocked ? 'bg-success-50' : 'bg-gray-50';
-  const borderColor = isBlocked ? 'border-success-100' : 'border-gray-200';
-  const dotColor = isBlocked ? 'bg-success-500' : 'bg-gray-400';
+  const bgColor = isBlocked ? 'bg-success-50' : 'bg-block-50';
+  const borderColor = isBlocked ? 'border-success-100' : 'border-block-100';
+  const dotColor = isBlocked ? 'bg-success-500' : 'bg-block-500';
   const statusBgColor = isBlocked ? 'bg-success-100' : 'bg-gray-100';
   const statusTextColor = isBlocked ? 'text-success-700' : 'text-gray-700';
 
   return (
     <div className={`p-3 ${bgColor} rounded-lg border ${borderColor}`}>
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 ${dotColor} rounded-full`} />
@@ -206,6 +184,23 @@ function TrackedSiteItem({
               {getMessage('unblockedOn')}:{' '}
               {formatRelativeTime(site.unblockedAt)}
             </p>
+          )}
+
+          {/* 浪費時間表示（解除済みサイトのみ） */}
+          {!isBlocked && (
+            <div className="mt-2 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-block-500" />
+              {isPremium ? (
+                <span className="text-sm font-bold text-block-600">
+                  {formatTime(site.timeAfterUnblock)}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400 flex items-center gap-1">
+                  <span className="tracking-widest">******</span>
+                  <Lock className="w-3 h-3" />
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -234,37 +229,6 @@ function TrackedSiteItem({
             </Button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// 浪費時間表示アイテム（解除済みサイトのみ）
-interface WastedTimeItemProps {
-  site: TrackedSite;
-  isPremium: boolean;
-}
-
-function WastedTimeItem({ site, isPremium }: WastedTimeItemProps) {
-  return (
-    <div className="p-3 bg-block-50 rounded-lg border border-block-100">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-block-500 rounded-full" />
-          <span className="font-medium text-gray-900">{site.domain}</span>
-        </div>
-        <div className="text-right">
-          {isPremium ? (
-            <span className="text-lg font-bold text-block-600">
-              {formatTime(site.timeAfterUnblock)}
-            </span>
-          ) : (
-            <span className="text-sm text-gray-400 flex items-center gap-1">
-              <span className="tracking-widest">******</span>
-              <Lock className="w-3 h-3" />
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );
