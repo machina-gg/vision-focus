@@ -235,6 +235,7 @@ function OptionsApp() {
             timeLimitUsage={analytics.analyticsData.timeLimitUsage}
             youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
             onYouTubeChange={handleYouTubeChange}
+            unblockHistory={analytics.unblockHistory}
           />
         )}
 
