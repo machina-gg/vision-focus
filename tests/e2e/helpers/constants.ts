@@ -64,7 +64,38 @@ export const SELECTORS = {
   // Modals
   modal: {
     analyticsOptIn: '[role="dialog"], .modal',
-    passwordModal: '[role="dialog"], .modal'
+    passwordModal: '[role="dialog"], .modal',
+    unblockConfirm: '[role="dialog"], .modal'
+  },
+
+  // NewTab
+  newtab: {
+    container: '.newtab-container',
+    goalText: 'h1',
+    subText: 'p',
+    blockInfo: '.animate-fade-in',
+    overlay: '.absolute.inset-0.bg-black\\/30',
+    miniStats: {
+      blockCount: 'p.text-xl.font-bold.text-block-600',
+      blockingDays: 'p.text-xl.font-bold.text-info-600'
+    },
+    downloadButton: 'button',
+    settingsButton: 'button'
+  },
+
+  // Options
+  options: {
+    header: 'header',
+    title: 'h1',
+    tabsNav: 'nav[aria-label="Tabs"]',
+    blocklistTab: 'button',
+    domainInput: 'input[type="text"]',
+    addButton: 'button',
+    deleteButton:
+      'button[title*="削除"], button[title*="Delete"], button[title*="Remove"]',
+    toggle: '[role="switch"]',
+    youtubeSection: 'text=/YouTube/i',
+    notificationSection: 'text=/Notification|通知/i'
   }
 };
 
