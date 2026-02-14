@@ -9,6 +9,9 @@ out/
 dist/
 build/
 
+# Coverage
+coverage/
+
 # Plasmo
 .plasmo/
 
