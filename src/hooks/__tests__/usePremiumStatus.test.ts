@@ -21,14 +21,20 @@ beforeEach(() => {
 
 describe('usePremiumStatus', () => {
   it('初期状態ではisLoading=true', () => {
-    mockCheckPremiumStatus.mockResolvedValue({ isPremium: false, source: 'extpay' as const });
+    mockCheckPremiumStatus.mockResolvedValue({
+      isPremium: false,
+      source: 'extpay' as const
+    });
     mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.free);
     const { result } = renderHook(() => usePremiumStatus());
     expect(result.current.isLoading).toBe(true);
   });
 
   it('無料ユーザーの場合', async () => {
-    mockCheckPremiumStatus.mockResolvedValue({ isPremium: false, source: 'extpay' as const });
+    mockCheckPremiumStatus.mockResolvedValue({
+      isPremium: false,
+      source: 'extpay' as const
+    });
     mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.free);
     const { result } = renderHook(() => usePremiumStatus());
     await waitFor(() => {
@@ -39,7 +45,10 @@ describe('usePremiumStatus', () => {
   });
 
   it('プレミアムユーザーの場合', async () => {
-    mockCheckPremiumStatus.mockResolvedValue({ isPremium: true, source: 'extpay' as const });
+    mockCheckPremiumStatus.mockResolvedValue({
+      isPremium: true,
+      source: 'extpay' as const
+    });
     mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.premium);
     const { result } = renderHook(() => usePremiumStatus());
     await waitFor(() => {

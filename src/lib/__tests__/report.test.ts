@@ -246,7 +246,8 @@ describe('generateWeeklyReport', () => {
   it('siteUnblockCountsがundefinedの場合でも動作する', () => {
     const analytics = createAnalyticsData();
     // siteUnblockCountsをundefined相当に
-    (analytics as unknown as Record<string, unknown>).siteUnblockCounts = undefined;
+    (analytics as unknown as Record<string, unknown>).siteUnblockCounts =
+      undefined;
     const report = generateWeeklyReport(analytics, 0);
     expect(report).not.toBeNull();
   });
