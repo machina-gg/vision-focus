@@ -197,7 +197,11 @@ describe('incrementSiteBlockCount', () => {
     await incrementSiteBlockCount('youtube.com');
     const savedData = vi.mocked(storage.set).mock.calls[0][1];
     expect(
-      (savedData as Record<string, unknown> & { siteBlockCounts: Record<string, { count: number }> }).siteBlockCounts['youtube.com'].count
+      (
+        savedData as Record<string, unknown> & {
+          siteBlockCounts: Record<string, { count: number }>;
+        }
+      ).siteBlockCounts['youtube.com'].count
     ).toBe(1);
   });
 
@@ -216,7 +220,11 @@ describe('incrementSiteBlockCount', () => {
     await incrementSiteBlockCount('youtube.com');
     const savedData = vi.mocked(storage.set).mock.calls[0][1];
     expect(
-      (savedData as Record<string, unknown> & { siteBlockCounts: Record<string, { count: number }> }).siteBlockCounts['youtube.com'].count
+      (
+        savedData as Record<string, unknown> & {
+          siteBlockCounts: Record<string, { count: number }>;
+        }
+      ).siteBlockCounts['youtube.com'].count
     ).toBe(6);
   });
 });

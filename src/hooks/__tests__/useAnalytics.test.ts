@@ -85,7 +85,9 @@ describe('useAnalytics', () => {
         await result.current.reloadAnalyticsData();
       });
 
-      expect(result.current.analyticsData.dailyStats['2024-06-12']).toBeTruthy();
+      expect(
+        result.current.analyticsData.dailyStats['2024-06-12']
+      ).toBeTruthy();
     });
   });
 
@@ -141,9 +143,7 @@ describe('useAnalytics', () => {
       );
       if (setCall) {
         const savedHistory = setCall[1] as UnblockHistory;
-        expect(
-          savedHistory.sites['youtube.com'].timeAfterUnblock
-        ).toBe(0);
+        expect(savedHistory.sites['youtube.com'].timeAfterUnblock).toBe(0);
         expect(savedHistory.sites['youtube.com'].lastActivity).toBeNull();
       }
     });

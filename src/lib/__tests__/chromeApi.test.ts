@@ -50,7 +50,9 @@ describe('isExtensionContextValid', () => {
 describe('getActiveTab', () => {
   it('アクティブタブを返す', async () => {
     const mockTab = { id: 1, url: 'https://youtube.com' };
-    vi.mocked(chrome.tabs.query).mockResolvedValue([mockTab] as chrome.tabs.Tab[]);
+    vi.mocked(chrome.tabs.query).mockResolvedValue([
+      mockTab
+    ] as chrome.tabs.Tab[]);
     const tab = await getActiveTab();
     expect(tab).toEqual(mockTab);
     expect(chrome.tabs.query).toHaveBeenCalledWith({
