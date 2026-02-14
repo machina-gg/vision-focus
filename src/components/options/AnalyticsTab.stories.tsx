@@ -8,6 +8,14 @@ import { DEFAULT_SETTINGS } from '~/types/storage';
 
 const mockUnblockHistory: UnblockHistory = {
   sites: {
+    'reddit.com': {
+      domain: 'reddit.com',
+      status: 'blocked',
+      blockedAt: '2026-02-12T09:00:00Z',
+      unblockedAt: null,
+      timeAfterUnblock: 0,
+      lastActivity: null
+    },
     'twitter.com': {
       domain: 'twitter.com',
       status: 'unblocked',
@@ -23,6 +31,14 @@ const mockUnblockHistory: UnblockHistory = {
       unblockedAt: '2026-02-11T14:30:00Z',
       timeAfterUnblock: 2400,
       lastActivity: '2026-02-15T12:00:00Z'
+    },
+    'facebook.com': {
+      domain: 'facebook.com',
+      status: 'blocked',
+      blockedAt: '2026-02-14T15:00:00Z',
+      unblockedAt: null,
+      timeAfterUnblock: 0,
+      lastActivity: null
     }
   }
 };
