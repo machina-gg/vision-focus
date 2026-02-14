@@ -400,11 +400,9 @@ test.describe('Options - Style Tab', () => {
     await expect(preview).toBeVisible();
 
     // フォントサイズを変更
-    const fontSizeSelect = page
-      .locator('select')
-      .filter({
-        has: page.locator('option:has-text("Medium"), option:has-text("中")')
-      });
+    const fontSizeSelect = page.locator('select').filter({
+      has: page.locator('option:has-text("Medium"), option:has-text("中")')
+    });
     if (await fontSizeSelect.isVisible()) {
       await fontSizeSelect.selectOption({ index: 1 });
 
