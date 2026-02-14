@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
-import { Ban, Shield, TrendingUp, Clock } from 'lucide-react';
+import { Ban, Shield, TrendingUp, Clock, Timer, Unlock } from 'lucide-react';
 
 import {
   GoalCard,
@@ -23,6 +23,7 @@ import {
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
+import { formatTimeLocalized } from '~/lib/time';
 import type {
   AnalyticsOptIn,
   AppSettings,
@@ -169,6 +170,30 @@ function PopupApp() {
                   {getMessage('noBlockedSitesYet')}
                 </p>
               )}
+            </div>
+
+            <div className="bg-warning-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Timer className="w-4 h-4 text-warning-500" />
+                <span className="text-xs font-medium text-gray-500">
+                  {getMessage('todayWastedTime')}
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-warning-600">
+                {formatTimeLocalized(stats.wasteTime)}
+              </p>
+            </div>
+
+            <div className="bg-success-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Unlock className="w-4 h-4 text-success-500" />
+                <span className="text-xs font-medium text-gray-500">
+                  {getMessage('todayUnblocks')}
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-success-600">
+                {stats.unblockCount}
+              </p>
             </div>
           </div>
 

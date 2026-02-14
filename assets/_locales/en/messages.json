@@ -1483,6 +1483,14 @@
     "message": "None yet",
     "description": "No blocked sites yet message"
   },
+  "todayWastedTime": {
+    "message": "Wasted Time",
+    "description": "Today's wasted time label"
+  },
+  "todayUnblocks": {
+    "message": "Unblock Count",
+    "description": "Today's unblock count label"
+  },
   "settingsBackup": {
     "message": "Settings Backup",
     "description": "Settings backup section title"

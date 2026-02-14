@@ -1483,6 +1483,14 @@
     "message": "まだなし",
     "description": "ブロックサイトがまだない場合のメッセージ"
   },
+  "todayWastedTime": {
+    "message": "浪費時間",
+    "description": "今日の浪費時間ラベル"
+  },
+  "todayUnblocks": {
+    "message": "ブロック解除",
+    "description": "今日のブロック解除回数ラベル"
+  },
   "settingsBackup": {
     "message": "設定のバックアップ",
     "description": "設定バックアップセクションタイトル"
