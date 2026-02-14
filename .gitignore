@@ -8,6 +8,10 @@ out/
 # Build
 dist/
 build/
+*.tsbuildinfo
+
+# Coverage
+coverage/
 
 # Plasmo
 .plasmo/
