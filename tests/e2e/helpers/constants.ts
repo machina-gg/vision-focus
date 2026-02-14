@@ -64,18 +64,45 @@ export const SELECTORS = {
   // Modals
   modal: {
     analyticsOptIn: '[role="dialog"], .modal',
-    passwordModal: '[role="dialog"], .modal'
+    passwordModal: '[role="dialog"], .modal',
+    unblockConfirm: '[role="dialog"], .modal'
   },
 
-  // Options - Tabs
+  // NewTab
+  newtab: {
+    container: '.newtab-container',
+    goalText: 'h1',
+    subText: 'p',
+    blockInfo: '.animate-fade-in',
+    overlay: '.absolute.inset-0.bg-black\\/30',
+    miniStats: {
+      blockCount: 'p.text-xl.font-bold.text-block-600',
+      blockingDays: 'p.text-xl.font-bold.text-info-600'
+    },
+    downloadButton: 'button',
+    settingsButton: 'button'
+  },
+
+  // Options（共通）
   options: {
+    header: 'header',
+    title: 'h1',
+    tabsNav: 'nav[aria-label="Tabs"]',
     tabs: '[role="tablist"]',
+    blocklistTab: 'button',
     stylesTab: 'button:has-text("スタイル"), button:has-text("Styles")',
     schedulesTab:
       'button:has-text("スケジュール"), button:has-text("Schedules")',
     analyticsTab: 'button:has-text("分析"), button:has-text("Analytics")',
     premiumTab: 'button:has-text("Premium")',
-    helpTab: 'button:has-text("ヘルプ"), button:has-text("Help")'
+    helpTab: 'button:has-text("ヘルプ"), button:has-text("Help")',
+    domainInput: 'input[type="text"]',
+    addButton: 'button',
+    deleteButton:
+      'button[title*="削除"], button[title*="Delete"], button[title*="Remove"]',
+    toggle: '[role="switch"]',
+    youtubeSection: 'text=/YouTube/i',
+    notificationSection: 'text=/Notification|通知/i'
   },
 
   // Options - Styles Tab
