@@ -482,7 +482,7 @@ describe('getActiveBlockedDomains', () => {
     expect(result).toContain('twitter.com');
   });
 
-  it('YouTube blockAccessが有効ならYouTubeドメインを含む', async () => {
+  it('YouTube blockAccessが有効でスケジュール内ならYouTubeドメインを含む', async () => {
     mockGetSettings.mockResolvedValue(
       createSettings({
         youtube: {
@@ -522,7 +522,7 @@ describe('getActiveBlockedDomains', () => {
     expect(result).not.toContain('youtube.com');
   });
 
-  it('YouTube blockAccessはスケジュール外でも動作する', async () => {
+  it('YouTube blockAccessはスケジュール外では動作しない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
     mockGetSettings.mockResolvedValue(
       createSettings({
@@ -550,8 +550,7 @@ describe('getActiveBlockedDomains', () => {
     );
     mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
     const result = await getActiveBlockedDomains();
-    expect(result).toContain('youtube.com');
-    expect(result).toContain('www.youtube.com');
+    expect(result).toEqual([]);
   });
 
   it('一時停止中はYouTubeブロックも無効になる', async () => {
