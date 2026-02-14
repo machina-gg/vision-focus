@@ -98,7 +98,8 @@ export function checkTimeLimitExceeded(
   const usedSeconds =
     type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
 
-  return usedSeconds >= limitSeconds;
+  // 制限時間を超えた場合のみブロック（制限時間ちょうどはブロックしない）
+  return usedSeconds > limitSeconds;
 }
 
 /**
