@@ -1,0 +1,42 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'テスト対象ブランチ'
+        required: false
+        default: 'develop'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E tests
+        timeout-minutes: 10
+        run: xvfb-run --auto-servernum -- pnpm test:e2e
