@@ -16,7 +16,7 @@ import { Card, Toggle, Select, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import type { YouTubeSettings, TimeLimit, TimeLimitType } from '~/types/storage';
+import type { YouTubeSettings, TimeLimitType } from '~/types/storage';
 
 interface YouTubeSectionProps {
   youtube: YouTubeSettings;
