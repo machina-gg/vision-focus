@@ -29,7 +29,9 @@ export function TrackedSitesSection({
     return a.status === 'blocked' ? -1 : 1;
   });
 
-  const blockedCount = trackedSites.filter((s) => s.status === 'blocked').length;
+  const blockedCount = trackedSites.filter(
+    (s) => s.status === 'blocked'
+  ).length;
   const unblockedCount = trackedSites.filter(
     (s) => s.status === 'unblocked'
   ).length;
