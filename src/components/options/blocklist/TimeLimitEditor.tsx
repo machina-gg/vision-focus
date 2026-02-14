@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Clock, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
-import { Input, Select } from '~/components/ui';
+import { Input, Select, Button } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG } from '~/constants/limits';
@@ -51,6 +51,7 @@ export function TimeLimitEditor({
     }, SAVED_FEEDBACK_DURATION_MS);
   }, []);
 
+  // 現在の保存済み値
   const currentType: LimitTypeOption = item.timeLimit
     ? item.timeLimit.type
     : 'always';
@@ -60,53 +61,58 @@ export function TimeLimitEditor({
       ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
       : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
 
+  // ローカルステートで編集中の値を管理
   const [selectedType, setSelectedType] =
     useState<LimitTypeOption>(currentType);
   const [minutes, setMinutes] = useState(currentMinutes);
 
-  const handleTypeChange = useCallback(
-    async (newType: LimitTypeOption) => {
-      setSelectedType(newType);
+  // 保存済み値が変更されたときにローカルステートを更新
+  useEffect(() => {
+    setSelectedType(currentType);
+    setMinutes(currentMinutes);
+  }, [currentType, currentMinutes]);
 
-      if (newType === 'always') {
-        await onUpdate(null);
-      } else {
-        const defaultMinutes =
-          newType === 'daily'
-            ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-            : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
-        setMinutes(defaultMinutes);
-        await onUpdate({
-          type: newType as TimeLimitType,
-          limitSeconds: defaultMinutes * 60
-        });
-      }
-      showSavedFeedback();
-    },
-    [onUpdate, showSavedFeedback]
-  );
+  // 変更があるかチェック
+  const hasChanges =
+    selectedType !== currentType ||
+    (selectedType !== 'always' && minutes !== currentMinutes);
 
-  const handleMinutesChange = useCallback(
-    async (value: string) => {
-      const newMinutes = parseInt(value, 10);
-      if (isNaN(newMinutes) || newMinutes < 1) return;
+  const handleTypeChange = useCallback((newType: LimitTypeOption) => {
+    setSelectedType(newType);
 
-      const clampedMinutes = Math.min(
-        Math.max(newMinutes, TIME_LIMIT_CONFIG.MIN_LIMIT_SECONDS / 60),
-        TIME_LIMIT_CONFIG.MAX_LIMIT_SECONDS / 60
-      );
-      setMinutes(clampedMinutes);
+    // タイプ変更時にデフォルト値を設定
+    if (newType !== 'always') {
+      const defaultMinutes =
+        newType === 'daily'
+          ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
+          : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+      setMinutes(defaultMinutes);
+    }
+  }, []);
 
-      if (selectedType !== 'always') {
-        await onUpdate({
-          type: selectedType as TimeLimitType,
-          limitSeconds: clampedMinutes * 60
-        });
-        showSavedFeedback();
-      }
-    },
-    [selectedType, onUpdate, showSavedFeedback]
-  );
+  const handleMinutesChange = useCallback((value: string) => {
+    const newMinutes = parseInt(value, 10);
+    if (isNaN(newMinutes) || newMinutes < 1) return;
+
+    const clampedMinutes = Math.min(
+      Math.max(newMinutes, TIME_LIMIT_CONFIG.MIN_LIMIT_SECONDS / 60),
+      TIME_LIMIT_CONFIG.MAX_LIMIT_SECONDS / 60
+    );
+    setMinutes(clampedMinutes);
+  }, []);
+
+  // 保存ボタンのハンドラー
+  const handleSave = useCallback(async () => {
+    if (selectedType === 'always') {
+      await onUpdate(null);
+    } else {
+      await onUpdate({
+        type: selectedType as TimeLimitType,
+        limitSeconds: minutes * 60
+      });
+    }
+    showSavedFeedback();
+  }, [selectedType, minutes, onUpdate, showSavedFeedback]);
 
   const typeOptions = [
     { value: 'always', label: getMessage('alwaysBlocked') },
@@ -186,12 +192,23 @@ export function TimeLimitEditor({
             </div>
           )}
 
-          {showSaved && (
-            <div className="flex items-center gap-1 text-xs text-success-600 animate-fade-in">
-              <Check className="w-3 h-3" />
-              <span>{getMessage('saved')}</span>
-            </div>
-          )}
+          {/* 保存ボタン */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges}
+              size="sm"
+              variant="primary"
+            >
+              {getMessage('save')}
+            </Button>
+            {showSaved && (
+              <div className="flex items-center gap-1 text-xs text-success-600 animate-fade-in">
+                <Check className="w-3 h-3" />
+                <span>{getMessage('saved')}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
