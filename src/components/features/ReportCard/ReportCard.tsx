@@ -156,7 +156,9 @@ function StatsGrid({
           <Unlock className="w-4 h-4" />
         </div>
         <p className="text-lg font-bold text-warning-700">{unblockCount}</p>
-        <p className="text-xs text-warning-600">{getMessage('unblockedCount')}</p>
+        <p className="text-xs text-warning-600">
+          {getMessage('unblockedCount')}
+        </p>
       </div>
     </div>
   );
