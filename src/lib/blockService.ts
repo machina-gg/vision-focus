@@ -173,21 +173,31 @@ const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
  */
 export async function getActiveBlockedDomains(): Promise<string[]> {
   const settings = await getSettings();
+  const blockedDomains: string[] = [];
 
   // If paused, don't block anything
   if (settings.paused) {
     return [];
   }
 
-  // If no schedule is active, don't block anything
+  // Add YouTube domains if YouTube blockAccess is enabled
+  // YouTube blocking is independent of schedules
+  if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
+    for (const domain of YOUTUBE_DOMAINS) {
+      blockedDomains.push(domain);
+    }
+  }
+
+  // If no schedule is active, return only YouTube blocks (if any)
   if (!isAnyScheduleActive(settings.schedules)) {
-    return [];
+    return blockedDomains;
   }
 
   // Always-blocked sites (enabled and no time limit)
-  const blockedDomains = settings.blockList
+  const scheduleBasedDomains = settings.blockList
     .filter((item) => item.enabled && !item.timeLimit)
     .map((item) => item.domain);
+  blockedDomains.push(...scheduleBasedDomains);
 
   // Also include time-limited sites that have exceeded their limit
   const analytics = await getAnalytics();
@@ -197,15 +207,6 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
 
     if (checkTimeLimitExceeded(item.domain, item.timeLimit, analytics)) {
       blockedDomains.push(item.domain);
-    }
-  }
-
-  // Add YouTube domains if YouTube blockAccess is enabled
-  if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
-    for (const domain of YOUTUBE_DOMAINS) {
-      if (!blockedDomains.includes(domain)) {
-        blockedDomains.push(domain);
-      }
     }
   }
 

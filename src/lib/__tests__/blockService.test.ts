@@ -411,10 +411,19 @@ describe('getActiveBlockedDomains', () => {
     expect(result).toEqual([]);
   });
 
-  it('スケジュール外では空配列を返す', async () => {
+  it('スケジュール外ではブロックリストのサイトは返さない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
     mockGetSettings.mockResolvedValue(
       createSettings({
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'twitter.com',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: true
+          }
+        ],
         schedules: [
           {
             id: 's1',
@@ -427,8 +436,10 @@ describe('getActiveBlockedDomains', () => {
         ]
       })
     );
+    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
     const result = await getActiveBlockedDomains();
     expect(result).toEqual([]);
+    expect(result).not.toContain('twitter.com');
   });
 
   it('タイムリミットなしの有効アイテムをリストに含む', async () => {
@@ -509,5 +520,57 @@ describe('getActiveBlockedDomains', () => {
     mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
     const result = await getActiveBlockedDomains();
     expect(result).not.toContain('youtube.com');
+  });
+
+  it('YouTube blockAccessはスケジュール外でも動作する', async () => {
+    mockIsWithinSchedule.mockReturnValue(false);
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        youtube: {
+          enabled: true,
+          blockAccess: true,
+          hideShorts: false,
+          hideRecommendations: false,
+          hideComments: false,
+          hideSidebar: false,
+          hideHomeFeed: false,
+          timeLimit: null
+        },
+        schedules: [
+          {
+            id: 's1',
+            name: 'Test',
+            startTime: '09:00',
+            endTime: '17:00',
+            days: [1],
+            enabled: true
+          }
+        ]
+      })
+    );
+    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
+    const result = await getActiveBlockedDomains();
+    expect(result).toContain('youtube.com');
+    expect(result).toContain('www.youtube.com');
+  });
+
+  it('一時停止中はYouTubeブロックも無効になる', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        paused: true,
+        youtube: {
+          enabled: true,
+          blockAccess: true,
+          hideShorts: false,
+          hideRecommendations: false,
+          hideComments: false,
+          hideSidebar: false,
+          hideHomeFeed: false,
+          timeLimit: null
+        }
+      })
+    );
+    const result = await getActiveBlockedDomains();
+    expect(result).toEqual([]);
   });
 });
