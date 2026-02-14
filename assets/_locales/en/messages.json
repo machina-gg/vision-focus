@@ -2068,5 +2068,21 @@
         "example": "5"
       }
     }
+  },
+  "languageSettingsTitle": {
+    "message": "Language Settings",
+    "description": "Language settings section title"
+  },
+  "languageSettingsDescription": {
+    "message": "Change dashboard display language",
+    "description": "Language settings section description"
+  },
+  "languageLabel": {
+    "message": "Display Language",
+    "description": "Language selection label"
+  },
+  "languageSelectDescription": {
+    "message": "Select the language for the dashboard",
+    "description": "Language selection description"
   }
 }
