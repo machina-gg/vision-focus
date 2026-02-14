@@ -9,7 +9,6 @@ import type {
   NotificationSettings,
   YouTubeSettings
 } from '~/types/storage';
-import { DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 const mockBlockList: BlockItem[] = [
   {
@@ -135,7 +134,6 @@ const BlocklistTabWrapper = () => {
       timeLimitUsage={{}}
       youtube={settings.youtube}
       onYouTubeChange={handleYouTubeChange}
-      unblockHistory={DEFAULT_UNBLOCK_HISTORY}
     />
   );
 };
@@ -167,8 +165,7 @@ const meta = {
     siteBlockCounts: {},
     timeLimitUsage: {},
     youtube: mockSettings.youtube,
-    onYouTubeChange: () => {},
-    unblockHistory: DEFAULT_UNBLOCK_HISTORY
+    onYouTubeChange: () => {}
   }
 } satisfies Meta<typeof BlocklistTab>;
 
@@ -177,38 +174,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: () => <BlocklistTabWrapper />
-};
-
-// ストーリー: 追跡サイトがある場合
-export const WithTrackedSites: Story = {
-  args: {
-    unblockHistory: {
-      sites: {
-        'twitter.com': {
-          domain: 'twitter.com',
-          status: 'blocked',
-          blockedAt: '2026-02-10T10:00:00Z',
-          unblockedAt: null,
-          timeAfterUnblock: 0,
-          lastActivity: null
-        },
-        'facebook.com': {
-          domain: 'facebook.com',
-          status: 'unblocked',
-          blockedAt: '2026-02-05T08:00:00Z',
-          unblockedAt: '2026-02-12T16:30:00Z',
-          timeAfterUnblock: 3600,
-          lastActivity: '2026-02-14T12:00:00Z'
-        },
-        'reddit.com': {
-          domain: 'reddit.com',
-          status: 'blocked',
-          blockedAt: '2026-02-08T14:00:00Z',
-          unblockedAt: null,
-          timeAfterUnblock: 0,
-          lastActivity: null
-        }
-      }
-    }
-  }
 };
