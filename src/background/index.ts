@@ -46,18 +46,25 @@ storage.watch({
 
     if (previousSettings) {
       // Check if YouTube blockAccess was enabled
-      const prevYouTubeBlock = previousSettings.youtube?.enabled && previousSettings.youtube?.blockAccess;
-      const newYouTubeBlock = newSettings.youtube?.enabled && newSettings.youtube?.blockAccess;
+      const prevYouTubeBlock =
+        previousSettings.youtube?.enabled &&
+        previousSettings.youtube?.blockAccess;
+      const newYouTubeBlock =
+        newSettings.youtube?.enabled && newSettings.youtube?.blockAccess;
       if (!prevYouTubeBlock && newYouTubeBlock) {
         shouldBlockExisting = true;
       }
 
       // Check if any block item was enabled
       const prevEnabledIds = new Set(
-        previousSettings.blockList.filter(item => item.enabled).map(item => item.id)
+        previousSettings.blockList
+          .filter((item) => item.enabled)
+          .map((item) => item.id)
       );
       const newEnabledIds = new Set(
-        newSettings.blockList.filter(item => item.enabled).map(item => item.id)
+        newSettings.blockList
+          .filter((item) => item.enabled)
+          .map((item) => item.id)
       );
       for (const id of newEnabledIds) {
         if (!prevEnabledIds.has(id)) {
