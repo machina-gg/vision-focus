@@ -61,6 +61,32 @@ export function useAnalytics({
     reloadAnalyticsData();
   }, [reloadAnalyticsData]);
 
+  // Listen for storage changes to unblockHistory and analytics
+  // This ensures UI updates when background scripts modify the data
+  useEffect(() => {
+    // Check if chrome.storage is available (not in test environment)
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local) {
+      return;
+    }
+
+    const handleStorageChange = (
+      changes: Record<string, chrome.storage.StorageChange>
+    ) => {
+      // Check if unblockHistory or analytics changed
+      if (changes.unblockHistory || changes.analytics) {
+        reloadAnalyticsData();
+      }
+    };
+
+    // Add listener for local storage changes
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
+  }, [reloadAnalyticsData]);
+
   // Re-block handler
   const handleReblock = useCallback(
     async (domain: string) => {
