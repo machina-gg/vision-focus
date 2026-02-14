@@ -57,12 +57,12 @@ export function AnalyticsChart({
 }: AnalyticsChartProps) {
   const [chartType, setChartType] = useState<ChartType>('daily');
 
-  // Get list of unblocked domains
-  const unblockedDomains = useMemo(() => {
+  // Get list of all tracked domains (both blocked and unblocked)
+  const trackedDomains = useMemo(() => {
     return Object.keys(unblockHistory.sites);
   }, [unblockHistory.sites]);
 
-  // A. Daily total time on unblocked sites
+  // A. Daily total time on all tracked sites
   const dailyData = useMemo(() => {
     const entries = Object.entries(analytics.dailyStats)
       .map(([date, stat]) => ({
@@ -100,7 +100,7 @@ export function AnalyticsChart({
   const bySiteData = useMemo(() => {
     // Get daily breakdown per site from siteTime
     // For now, show total per site as a simple bar chart
-    const siteData = unblockedDomains
+    const siteData = trackedDomains
       .map((domain) => ({
         domain: domain.length > 15 ? domain.slice(0, 15) + '...' : domain,
         fullDomain: domain,
@@ -113,7 +113,7 @@ export function AnalyticsChart({
       .slice(0, 8); // Top 8 sites
 
     return siteData;
-  }, [unblockedDomains, unblockHistory.sites]);
+  }, [trackedDomains, unblockHistory.sites]);
 
   // C. Cumulative time since unblock
   const cumulativeData = useMemo(() => {
@@ -160,7 +160,7 @@ export function AnalyticsChart({
     return data.slice(-14); // Last 14 days
   }, [analytics.dailyStats, unblockHistory.sites]);
 
-  // Total time across all unblocked sites
+  // Total time across all tracked sites
   const totalTime = useMemo(() => {
     return Object.values(unblockHistory.sites).reduce(
       (sum, site) => sum + site.timeAfterUnblock,
@@ -330,13 +330,13 @@ export function AnalyticsChart({
       {/* Summary */}
       <div className="p-4 bg-block-50 rounded-lg border border-block-100">
         <p className="text-sm text-block-600 font-medium">
-          {getMessage('totalTimeOnUnblockedSites')}
+          {getMessage('totalTimeOnTrackedSites')}
         </p>
         <p className="text-2xl font-bold text-block-700">
           {formatTime(totalTime)}
         </p>
         <p className="text-xs text-block-500 mt-1">
-          {getMessage('chartSiteCount', String(unblockedDomains.length))}
+          {getMessage('chartSiteCount', String(trackedDomains.length))}
         </p>
       </div>
 
