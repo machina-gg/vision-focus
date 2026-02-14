@@ -151,7 +151,7 @@ describe('checkTimeLimitExceeded', () => {
       timeLimitUsage: {
         'youtube.com': {
           domain: 'youtube.com',
-          dailyUsedSeconds: 3600,
+          dailyUsedSeconds: 3601, // 制限時間を超えている
           hourlyUsedSeconds: 0,
           lastDailyReset: '2024-06-12',
           lastHourlyReset: '2024-06-12-12'
@@ -183,6 +183,25 @@ describe('checkTimeLimitExceeded', () => {
     );
   });
 
+  it('日次リミットちょうどの場合falseを返す（制限時間内として扱う）', () => {
+    const analytics: AnalyticsData = {
+      ...DEFAULT_ANALYTICS,
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 3600, // 制限時間ちょうど
+          hourlyUsedSeconds: 0,
+          lastDailyReset: '2024-06-12',
+          lastHourlyReset: '2024-06-12-12'
+        }
+      }
+    };
+    const timeLimit: TimeLimit = { type: 'daily', limitSeconds: 3600 };
+    expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
+      false
+    );
+  });
+
   it('時間リミット超過の場合trueを返す', () => {
     const analytics: AnalyticsData = {
       ...DEFAULT_ANALYTICS,
@@ -190,7 +209,7 @@ describe('checkTimeLimitExceeded', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 0,
-          hourlyUsedSeconds: 1800,
+          hourlyUsedSeconds: 1801, // 制限時間を超えている
           lastDailyReset: '2024-06-12',
           lastHourlyReset: '2024-06-12-12'
         }
@@ -199,6 +218,25 @@ describe('checkTimeLimitExceeded', () => {
     const timeLimit: TimeLimit = { type: 'hourly', limitSeconds: 1800 };
     expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
       true
+    );
+  });
+
+  it('時間リミットちょうどの場合falseを返す（制限時間内として扱う）', () => {
+    const analytics: AnalyticsData = {
+      ...DEFAULT_ANALYTICS,
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 0,
+          hourlyUsedSeconds: 1800, // 制限時間ちょうど
+          lastDailyReset: '2024-06-12',
+          lastHourlyReset: '2024-06-12-12'
+        }
+      }
+    };
+    const timeLimit: TimeLimit = { type: 'hourly', limitSeconds: 1800 };
+    expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
+      false
     );
   });
 
