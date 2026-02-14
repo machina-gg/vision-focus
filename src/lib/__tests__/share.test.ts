@@ -121,6 +121,8 @@ describe('shareToX', () => {
 describe('downloadImage', () => {
   it('canvasからダウンロードリンクを作成してクリックする', () => {
     const mockClick = vi.fn();
+    const mockAppendChild = vi.fn();
+    const mockRemoveChild = vi.fn();
     const mockCanvas = {
       toDataURL: vi.fn(() => 'data:image/png;base64,test')
     } as unknown as HTMLCanvasElement;
@@ -135,12 +137,18 @@ describe('downloadImage', () => {
       mockLink as unknown as HTMLAnchorElement
     );
 
+    // document.bodyのappendChild/removeChildをモック
+    vi.spyOn(document.body, 'appendChild').mockImplementation(mockAppendChild);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(mockRemoveChild);
+
     downloadImage(mockCanvas, 'test.png');
 
     expect(mockCanvas.toDataURL).toHaveBeenCalledWith('image/png', 1.0);
     expect(mockLink.download).toBe('test.png');
     expect(mockLink.href).toBe('data:image/png;base64,test');
+    expect(mockAppendChild).toHaveBeenCalledWith(mockLink);
     expect(mockClick).toHaveBeenCalled();
+    expect(mockRemoveChild).toHaveBeenCalledWith(mockLink);
 
     vi.restoreAllMocks();
   });

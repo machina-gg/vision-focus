@@ -79,21 +79,21 @@ export async function copyImageToClipboard(
     });
 
     if (!blob) {
-      console.error('Blob creation failed: blob is null');
+      // Blob生成に失敗
       return false;
     }
 
-    // Check if clipboard API is available
+    // クリップボードAPIの利用可能性をチェック
     if (!navigator.clipboard || !navigator.clipboard.write) {
-      console.error('Clipboard API not available');
+      // クリップボードAPIが利用できない場合は失敗として扱う
       return false;
     }
 
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
 
     return true;
-  } catch (error) {
-    console.error('Failed to copy image to clipboard:', error);
+  } catch {
+    // クリップボードへの書き込みに失敗
     return false;
   }
 }
@@ -105,16 +105,13 @@ export function downloadImage(
   canvas: HTMLCanvasElement,
   filename: string
 ): void {
-  try {
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = dataUrl;
-    link.click();
-  } catch (error) {
-    console.error('Failed to download image:', error);
-    throw error;
-  }
+  const dataUrl = canvas.toDataURL('image/png', 1.0);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 /**
@@ -125,21 +122,22 @@ export async function captureElementAsCanvas(
   element: HTMLElement
 ): Promise<HTMLCanvasElement | null> {
   try {
-    // Dynamically import html2canvas
-    const html2canvas = (await import('html2canvas')).default;
+    // html2canvasを動的にインポート
+    const html2canvasModule = await import('html2canvas');
+    const html2canvas = html2canvasModule.default;
 
-    // Wait a brief moment to ensure all elements are rendered
+    // 要素が完全にレンダリングされるまで少し待機
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 2, // Higher resolution
+      scale: 2, // 高解像度
       logging: false,
       useCORS: true,
       allowTaint: true,
-      foreignObjectRendering: true, // Better support for complex elements
+      foreignObjectRendering: true, // 複雑な要素のサポート向上
       onclone: (clonedDoc) => {
-        // Ensure SVG elements are properly sized in the clone
+        // SVG要素のサイズをクローン内で適切に設定
         const svgs = clonedDoc.querySelectorAll('svg');
         svgs.forEach((svg) => {
           const bbox = svg.getBoundingClientRect();
@@ -151,18 +149,15 @@ export async function captureElementAsCanvas(
       }
     });
 
-    // Validate canvas was created with content
+    // キャンバスが有効なコンテンツで作成されたかを検証
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
-      console.error('Canvas creation failed: invalid dimensions', {
-        width: canvas?.width,
-        height: canvas?.height
-      });
+      // キャンバスの生成に失敗（無効なサイズ）
       return null;
     }
 
     return canvas;
-  } catch (error) {
-    console.error('Failed to capture element as canvas:', error);
+  } catch {
+    // 要素のキャンバス化に失敗
     return null;
   }
 }
