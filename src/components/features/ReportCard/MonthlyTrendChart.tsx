@@ -33,9 +33,7 @@ function formatChartMinutes(seconds: number): string {
 /**
  * 月次トレンドチャート: 週別の無駄時間（棒グラフ）+ ブロック数（折れ線グラフ）
  */
-export function MonthlyTrendChart({
-  weeklyBreakdown
-}: MonthlyTrendChartProps) {
+export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
   const chartData = weeklyBreakdown.map((w, i) => ({
     week: `W${i + 1}`,
     wasteTime: Math.round(w.wasteTime / 60), // 分に変換
