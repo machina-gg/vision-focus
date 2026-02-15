@@ -1,6 +1,11 @@
 import { test, expect } from './fixtures/extension';
 import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
-import { setStorageData, clearStorage } from './helpers/storage';
+import {
+  setStorageData,
+  clearStorage,
+  clearStorageFromExtension,
+  setStorageDataFromExtension
+} from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
 /**
@@ -10,10 +15,8 @@ import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
  */
 
 test.describe('Block - ブロック機能', () => {
-  test.beforeEach(async ({ context }) => {
-    const page = await context.newPage();
-    await clearStorage(page);
-    await page.close();
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
   });
 
   test('BLOCK-001: ブロックリストに追加したサイトが newtab.html にリダイレクト', async ({
@@ -21,8 +24,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ブロックリストにexample.comを追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -35,7 +37,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     // ブロックルールが適用されるまで待機
     await new Promise((resolve) => setTimeout(resolve, 1000));

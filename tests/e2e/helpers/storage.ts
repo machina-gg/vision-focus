@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, BrowserContext } from '@playwright/test';
 import { TEST_DATA } from './constants';
 
 /**
@@ -47,12 +47,74 @@ export async function getStorageData<T = unknown>(
 /**
  * chrome.storage.local をクリアする
  *
- * @param page - Playwright Page オブジェクト
+ * @param page - Playwright Page オブジェクト（拡張機能コンテキストのページである必要がある）
  */
 export async function clearStorage(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await chrome.storage.local.clear();
   });
+}
+
+/**
+ * 拡張機能のオプションページを開いて chrome.storage.local をクリアする
+ * beforeEach で使用するためのヘルパー関数
+ *
+ * @param context - BrowserContext
+ * @param extensionId - 拡張機能ID
+ */
+export async function clearStorageFromExtension(
+  context: BrowserContext,
+  extensionId: string
+): Promise<void> {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForLoadState('domcontentloaded');
+  await clearStorage(page);
+  await page.close();
+}
+
+/**
+ * 拡張機能のオプションページを開いて chrome.storage.local にデータをセットする
+ * テスト内で使用するためのヘルパー関数
+ *
+ * @param context - BrowserContext
+ * @param extensionId - 拡張機能ID
+ * @param key - ストレージキー
+ * @param value - セットする値
+ */
+export async function setStorageDataFromExtension(
+  context: BrowserContext,
+  extensionId: string,
+  key: string,
+  value: unknown
+): Promise<void> {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForLoadState('domcontentloaded');
+  await setStorageData(page, key, value);
+  await page.close();
+}
+
+/**
+ * 拡張機能のオプションページを開いて chrome.storage.local からデータを取得する
+ * テスト内で使用するためのヘルパー関数
+ *
+ * @param context - BrowserContext
+ * @param extensionId - 拡張機能ID
+ * @param key - ストレージキー
+ * @returns 取得した値
+ */
+export async function getStorageDataFromExtension<T = unknown>(
+  context: BrowserContext,
+  extensionId: string,
+  key: string
+): Promise<T | null> {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForLoadState('domcontentloaded');
+  const result = await getStorageData<T>(page, key);
+  await page.close();
+  return result;
 }
 
 /**

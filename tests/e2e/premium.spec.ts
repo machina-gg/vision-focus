@@ -3,7 +3,8 @@ import { openOptions } from './helpers/pages';
 import {
   setStorageData,
   getStorageData,
-  clearStorage
+  clearStorage,
+  clearStorageFromExtension
 } from './helpers/storage';
 
 /**
@@ -13,10 +14,8 @@ import {
  */
 
 test.describe('Premium - Premium 機能', () => {
-  test.beforeEach(async ({ context }) => {
-    const page = await context.newPage();
-    await clearStorage(page);
-    await page.close();
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
   });
 
   test('PR-001: ライセンスキー入力で Premium が有効化される', async ({
