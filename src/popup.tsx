@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
 import { Ban, Shield, TrendingUp, Clock, Timer, Unlock } from 'lucide-react';
 
 import {
@@ -24,24 +23,14 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { formatTimeLocalized } from '~/lib/time';
-import type {
-  AnalyticsOptIn,
-  AppSettings,
-  VisionSettings
-} from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
+import type { AnalyticsOptIn } from '~/types/storage';
+import { DEFAULT_VISION } from '~/types/storage';
 
 import './styles/globals.css';
 
-function PopupApp() {
-  const [settings, setSettings] = useStorage<AppSettings>(
-    { key: 'settings', instance: storage },
-    DEFAULT_SETTINGS
-  );
-  const [vision] = useStorage<VisionSettings>(
-    { key: 'vision', instance: storage },
-    DEFAULT_VISION
-  );
+function PopupAppContent() {
+  const { settings, setSettings, vision } = useSettings();
   const stats = useBackgroundStats(POPUP_STATS_POLLING_MS);
   const { isPremium } = usePremiumStatus();
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
@@ -211,10 +200,6 @@ function PopupApp() {
 
       {/* Analytics Opt-In Modal */}
       <AnalyticsOptInModal
-        isOpen={
-          settings?.analyticsOptIn === undefined ||
-          settings?.analyticsOptIn === null
-        }
         onAllow={() =>
           handleAnalyticsOptIn({
             enabled: true,
@@ -243,6 +228,14 @@ function PopupApp() {
         />
       )}
     </div>
+  );
+}
+
+function PopupApp() {
+  return (
+    <SettingsProvider>
+      <PopupAppContent />
+    </SettingsProvider>
   );
 }
 

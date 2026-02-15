@@ -4,18 +4,22 @@ import { BarChart3 } from 'lucide-react';
 
 import { Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
+import { useSettings } from '~/contexts/SettingsContext';
 
 interface AnalyticsOptInModalProps {
-  isOpen: boolean;
   onAllow: () => void;
   onDeny: () => void;
 }
 
 export function AnalyticsOptInModal({
-  isOpen,
   onAllow,
   onDeny
 }: AnalyticsOptInModalProps) {
+  const { settings } = useSettings();
+
+  const isOpen =
+    settings?.analyticsOptIn === undefined || settings?.analyticsOptIn === null;
+
   if (!isOpen) return null;
 
   return (

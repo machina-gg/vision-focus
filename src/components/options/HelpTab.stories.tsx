@@ -3,7 +3,7 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { HelpTab } from './HelpTab';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import { SettingsProvider } from '~/contexts/SettingsContext';
 
 const meta = {
   title: 'Options/HelpTab',
@@ -14,9 +14,11 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <Story />
-      </div>
+      <SettingsProvider>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <Story />
+        </div>
+      </SettingsProvider>
     )
   ]
 } satisfies Meta<typeof HelpTab>;
@@ -26,7 +28,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    settings: DEFAULT_SETTINGS,
     onSettingsChange: () => alert('Settings changed'),
     onPasswordUpdate: async () => alert('Password updated'),
     onAnalyticsOptInChange: async () => alert('Analytics opt-in changed')
@@ -34,7 +35,5 @@ export const Default: Story = {
 };
 
 export const WithoutCallbacks: Story = {
-  args: {
-    settings: DEFAULT_SETTINGS
-  }
+  args: {}
 };

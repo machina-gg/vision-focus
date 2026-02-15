@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { BlocklistTab } from './BlocklistTab';
+import { SettingsProvider } from '~/contexts/SettingsContext';
 import type {
   AppSettings,
   BlockItem,
@@ -120,21 +121,22 @@ const BlocklistTabWrapper = () => {
   };
 
   return (
-    <BlocklistTab
-      settings={settings}
-      newDomain={newDomain}
-      setNewDomain={setNewDomain}
-      blockError={blockError}
-      onAddDomain={handleAddDomain}
-      onRemoveDomain={handleRemoveDomain}
-      onToggleDomain={handleToggleDomain}
-      onUpdateTimeLimit={() => {}}
-      onUpdateNotifications={handleUpdateNotifications}
-      siteBlockCounts={{}}
-      timeLimitUsage={{}}
-      youtube={settings.youtube}
-      onYouTubeChange={handleYouTubeChange}
-    />
+    <SettingsProvider>
+      <BlocklistTab
+        newDomain={newDomain}
+        setNewDomain={setNewDomain}
+        blockError={blockError}
+        onAddDomain={handleAddDomain}
+        onRemoveDomain={handleRemoveDomain}
+        onToggleDomain={handleToggleDomain}
+        onUpdateTimeLimit={() => {}}
+        onUpdateNotifications={handleUpdateNotifications}
+        siteBlockCounts={{}}
+        timeLimitUsage={{}}
+        youtube={settings.youtube}
+        onYouTubeChange={handleYouTubeChange}
+      />
+    </SettingsProvider>
   );
 };
 
@@ -153,7 +155,6 @@ const meta = {
     )
   ],
   args: {
-    settings: mockSettings,
     newDomain: '',
     setNewDomain: () => {},
     blockError: '',

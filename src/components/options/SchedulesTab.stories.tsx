@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { SchedulesTab } from './SchedulesTab';
-import type { AppSettings, VisionSettings, Schedule } from '~/types/storage';
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { SettingsProvider } from '~/contexts/SettingsContext';
+import type { AppSettings, Schedule } from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
 
 const mockSchedules: Schedule[] = [
   {
@@ -30,7 +31,6 @@ const SchedulesTabWrapper = () => {
     ...DEFAULT_SETTINGS,
     schedules: mockSchedules
   });
-  const [vision] = useState<VisionSettings>(DEFAULT_VISION);
 
   const handleAddSchedule = () => {
     alert('Add schedule modal would open here');
@@ -57,14 +57,14 @@ const SchedulesTabWrapper = () => {
   };
 
   return (
-    <SchedulesTab
-      settings={settings}
-      vision={vision}
-      onAddSchedule={handleAddSchedule}
-      onEditSchedule={handleEditSchedule}
-      onDeleteSchedule={handleDeleteSchedule}
-      onToggleSchedule={handleToggleSchedule}
-    />
+    <SettingsProvider>
+      <SchedulesTab
+        onAddSchedule={handleAddSchedule}
+        onEditSchedule={handleEditSchedule}
+        onDeleteSchedule={handleDeleteSchedule}
+        onToggleSchedule={handleToggleSchedule}
+      />
+    </SettingsProvider>
   );
 };
 
@@ -83,8 +83,6 @@ const meta = {
     )
   ],
   args: {
-    settings: DEFAULT_SETTINGS,
-    vision: DEFAULT_VISION,
     onAddSchedule: () => {},
     onEditSchedule: () => {},
     onDeleteSchedule: () => {},
@@ -101,13 +99,13 @@ export const Default: Story = {
 
 export const Empty: Story = {
   render: () => (
-    <SchedulesTab
-      settings={DEFAULT_SETTINGS}
-      vision={DEFAULT_VISION}
-      onAddSchedule={() => alert('Add schedule')}
-      onEditSchedule={() => {}}
-      onDeleteSchedule={() => {}}
-      onToggleSchedule={() => {}}
-    />
+    <SettingsProvider>
+      <SchedulesTab
+        onAddSchedule={() => alert('Add schedule')}
+        onEditSchedule={() => {}}
+        onDeleteSchedule={() => {}}
+        onToggleSchedule={() => {}}
+      />
+    </SettingsProvider>
   )
 };

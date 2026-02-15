@@ -3,8 +3,8 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { AnalyticsTab } from './AnalyticsTab';
+import { SettingsProvider } from '~/contexts/SettingsContext';
 import type { UnblockHistory, AnalyticsData } from '~/types/storage';
-import { DEFAULT_SETTINGS } from '~/types/storage';
 
 const mockUnblockHistory: UnblockHistory = {
   sites: {
@@ -122,9 +122,11 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <Story />
-      </div>
+      <SettingsProvider>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <Story />
+        </div>
+      </SettingsProvider>
     )
   ]
 } satisfies Meta<typeof AnalyticsTab>;
@@ -136,7 +138,6 @@ export const FreeTier: Story = {
   args: {
     unblockHistory: mockUnblockHistory,
     analyticsData: mockAnalytics,
-    settings: DEFAULT_SETTINGS,
     isPremium: false,
     onReblock: (domain) => alert(`Reblock: ${domain}`),
     onReset: () => alert('Reset analytics'),
@@ -150,7 +151,6 @@ export const Premium: Story = {
   args: {
     unblockHistory: mockUnblockHistory,
     analyticsData: mockAnalytics,
-    settings: DEFAULT_SETTINGS,
     isPremium: true,
     onReblock: (domain) => alert(`Reblock: ${domain}`),
     onReset: () => alert('Reset analytics'),
@@ -171,7 +171,6 @@ export const Empty: Story = {
       siteUnblockCounts: {},
       timeLimitUsage: {}
     },
-    settings: DEFAULT_SETTINGS,
     isPremium: false,
     onReblock: () => {},
     onReset: () => {},

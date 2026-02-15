@@ -9,9 +9,9 @@ import { HelpTroubleshooting } from '~/components/options/HelpTroubleshooting';
 import { HelpDataPrivacy } from '~/components/options/HelpDataPrivacy';
 import { HelpSettingsBackup } from '~/components/options/HelpSettingsBackup';
 import { getMessage, getSupportedLanguages } from '~/lib/i18n';
+import { useSettings } from '~/contexts/SettingsContext';
 import type {
   PasswordSettings,
-  AppSettings,
   AnalyticsOptIn,
   SupportedLanguage
 } from '~/types/storage';
@@ -21,7 +21,6 @@ const VERSION = '1.0.0';
 
 interface HelpTabProps {
   onSettingsChange?: () => void;
-  settings?: AppSettings;
   onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
   onAnalyticsOptInChange?: (optIn: AnalyticsOptIn) => Promise<void>;
   onLanguageChange?: (language: SupportedLanguage | null) => Promise<void>;
@@ -29,11 +28,11 @@ interface HelpTabProps {
 
 export function HelpTab({
   onSettingsChange,
-  settings,
   onPasswordUpdate,
   onAnalyticsOptInChange,
   onLanguageChange
 }: HelpTabProps) {
+  const { settings } = useSettings();
   return (
     <div className="space-y-6">
       {/* Getting Started */}

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
 import {
   Ban,
   Calendar,
@@ -28,20 +27,17 @@ import {
   useSchedules,
   usePremiumStatus
 } from '~/hooks';
-import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
+import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type {
   AnalyticsOptIn,
-  AppSettings,
-  VisionSettings,
   YouTubeSettings,
   PasswordSettings,
   UnblockHistory
 } from '~/types/storage';
 import {
-  DEFAULT_SETTINGS,
-  DEFAULT_VISION,
   DEFAULT_YOUTUBE_SETTINGS,
   DEFAULT_UNBLOCK_HISTORY
 } from '~/types/storage';
@@ -49,21 +45,8 @@ import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
 
 import './styles/globals.css';
 
-function OptionsApp() {
-  const [settings, setSettings] = useStorage<AppSettings>(
-    {
-      key: 'settings',
-      instance: storage
-    },
-    DEFAULT_SETTINGS
-  );
-  const [vision, setVision] = useStorage<VisionSettings>(
-    {
-      key: 'vision',
-      instance: storage
-    },
-    DEFAULT_VISION
-  );
+function OptionsAppContent() {
+  const { settings, setSettings, vision, setVision } = useSettings();
 
   // Read initial tab from URL hash (e.g., #help)
   const [activeTab, setActiveTab] = useState<TabName>(() =>
@@ -83,13 +66,6 @@ function OptionsApp() {
   const blocklist = useBlocklist({ settings, setSettings });
   const license = useLicense();
   const schedules = useSchedules({ settings, setSettings });
-
-  // Sync language setting with i18n module
-  useEffect(() => {
-    if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language);
-    }
-  }, [settings?.language]);
 
   // YouTube settings handler with block count and unblockHistory tracking
   const handleYouTubeChange = async (youtube: YouTubeSettings) => {
@@ -237,7 +213,6 @@ function OptionsApp() {
         {/* Block List Tab */}
         {activeTab === TABS.BLOCKLIST && (
           <BlocklistTab
-            settings={settings}
             newDomain={blocklist.newDomain}
             setNewDomain={blocklist.setNewDomain}
             blockError={blocklist.blockError}
@@ -256,8 +231,6 @@ function OptionsApp() {
         {/* Schedules Tab */}
         {activeTab === TABS.SCHEDULES && (
           <SchedulesTab
-            settings={settings}
-            vision={vision}
             onAddSchedule={schedules.openAddSchedule}
             onEditSchedule={schedules.openEditSchedule}
             onDeleteSchedule={schedules.handleDeleteSchedule}
@@ -270,7 +243,6 @@ function OptionsApp() {
           <AnalyticsTab
             unblockHistory={analytics.unblockHistory}
             analyticsData={analytics.analyticsData}
-            settings={settings}
             isPremium={isPremium}
             onReblock={analytics.handleReblock}
             onReset={analytics.handleResetAnalytics}
@@ -292,13 +264,12 @@ function OptionsApp() {
         {/* Help Tab */}
         {activeTab === TABS.HELP && (
           <HelpTab
-            settings={settings}
             onAnalyticsOptInChange={handleAnalyticsOptIn}
             onSettingsChange={async () => {
               // Reload settings and vision after import
               const [newSettings, newVision] = await Promise.all([
-                storage.get('settings') as Promise<AppSettings | undefined>,
-                storage.get('vision') as Promise<VisionSettings | undefined>
+                storage.get('settings') as Promise<typeof settings>,
+                storage.get('vision') as Promise<typeof vision>
               ]);
               if (newSettings) setSettings(newSettings);
               if (newVision) setVision(newVision);
@@ -324,10 +295,6 @@ function OptionsApp() {
       />
       {/* Analytics Opt-In Modal (shown once on first visit if not yet decided) */}
       <AnalyticsOptInModal
-        isOpen={
-          settings?.analyticsOptIn === undefined ||
-          settings?.analyticsOptIn === null
-        }
         onAllow={() =>
           handleAnalyticsOptIn({
             enabled: true,
@@ -342,6 +309,14 @@ function OptionsApp() {
         }
       />
     </div>
+  );
+}
+
+function OptionsApp() {
+  return (
+    <SettingsProvider>
+      <OptionsAppContent />
+    </SettingsProvider>
   );
 }
 
