@@ -3,7 +3,9 @@ import { openExternalSite, openPopup } from './helpers/pages';
 import {
   setStorageData,
   clearStorage,
-  clearStorageFromExtension
+  clearStorageFromExtension,
+  setStorageDataFromExtension,
+  getStorageDataFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 
@@ -22,10 +24,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Pause 有効 + Time Limit 超過
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: true, // Pause 有効
       blockList: [
@@ -43,7 +43,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
+    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
       [TEST_DOMAINS.example]: {
         daily: {
           used: 10, // 超過
@@ -52,8 +52,6 @@ test.describe('Interaction - 機能間相互作用', () => {
         hourly: null
       }
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -74,14 +72,12 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     const now = new Date();
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
     // Pause 有効 + Schedule でブロック有効化時間帯
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: true, // Pause 有効
       blockList: [
@@ -106,8 +102,6 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await page.close();
-
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // サイトにアクセス（Pause が優先されてアクセス可能）
@@ -127,14 +121,12 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     const now = new Date();
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
     // Time Limit 未超過 + Schedule でブロック有効化時間帯
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -163,7 +155,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
+    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
       [TEST_DOMAINS.example]: {
         daily: {
           used: 30, // 未超過
@@ -172,8 +164,6 @@ test.describe('Interaction - 機能間相互作用', () => {
         hourly: null
       }
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -193,14 +183,12 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     const now = new Date();
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
     // Pause 有効 + Time Limit 超過 + Schedule 有効
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: true, // Pause が最優先
       blockList: [
@@ -229,7 +217,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
+    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
       [TEST_DOMAINS.example]: {
         daily: {
           used: 10, // 超過
@@ -238,8 +226,6 @@ test.describe('Interaction - 機能間相互作用', () => {
         hourly: null
       }
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -260,25 +246,21 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Opt-Out 状態
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
 
-    await setStorageData(page, 'unblockHistory', {
+    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
       entries: []
     });
 
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     // 外部サイトにアクセス
     const externalPage = await openExternalSite(
@@ -290,10 +272,11 @@ test.describe('Interaction - 機能間相互作用', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Unblock History が記録されないことを確認
-    const unblockHistory = await externalPage.evaluate(async () => {
-      const result = await chrome.storage.local.get('unblockHistory');
-      return result.unblockHistory;
-    });
+    const unblockHistory = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'unblockHistory'
+    )) as any;
 
     expect(unblockHistory.entries.length).toBe(0);
 
@@ -304,10 +287,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // パスワード保護を有効化
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       password: {
@@ -316,8 +297,6 @@ test.describe('Interaction - 機能間相互作用', () => {
           '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014' // SHA-256("test1234")
       }
     });
-
-    await page.close();
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -341,10 +320,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // パスワード保護を有効化
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       password: {
@@ -362,8 +339,6 @@ test.describe('Interaction - 機能間相互作用', () => {
         }
       ]
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 

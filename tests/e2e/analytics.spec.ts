@@ -4,7 +4,9 @@ import {
   setStorageData,
   clearStorage,
   clearStorageFromExtension,
-  getStorageData
+  getStorageData,
+  setStorageDataFromExtension,
+  getStorageDataFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 
@@ -23,9 +25,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
@@ -40,12 +40,10 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -61,24 +59,23 @@ test.describe('Analytics - アナリティクス機能', () => {
     }
 
     // Analytics データを確認
-    const page2 = await context.newPage();
-    const analytics = (await getStorageData(page2, 'analytics')) as any;
+    const analytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
 
     expect(analytics.siteStats[TEST_DOMAINS.example]).toBeDefined();
     expect(
       analytics.siteStats[TEST_DOMAINS.example].blockCount
     ).toBeGreaterThanOrEqual(3);
-
-    await page2.close();
   });
 
   test('AN-002: Unblock History（ブロック解除サイト）が記録される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
@@ -93,11 +90,9 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
-    await setStorageData(page, 'unblockHistory', {
+    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
       entries: []
     });
-
-    await page.close();
 
     // Options ページでブロックを一時解除
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
@@ -113,8 +108,10 @@ test.describe('Analytics - アナリティクス機能', () => {
     }
 
     // Unblock History を確認
-    const unblockHistory = (await getStorageData(
-      optionsPage,
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const unblockHistory = (await getStorageDataFromExtension(
+      context,
+      extensionId,
       'unblockHistory'
     )) as any;
     expect(unblockHistory.entries.length).toBeGreaterThan(0);
@@ -126,20 +123,16 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     // 解除サイトにアクセス（ブロックリストに含まれていないサイト）
     const externalPage = await openExternalSite(
@@ -153,7 +146,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // トラッキングデータを確認
-    const analytics = (await getStorageData(externalPage, 'analytics')) as any;
+    const analytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
 
     // Heartbeatが記録されていることを確認（時間は短いが記録されている）
     if (analytics.siteStats[TEST_DOMAINS.reddit]) {
@@ -169,20 +166,16 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     // 外部サイトにアクセス
     const externalPage = await openExternalSite(
@@ -194,7 +187,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Analytics データを確認
-    const analytics = (await getStorageData(externalPage, 'analytics')) as any;
+    const analytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
 
     // dailyStats に記録があることを確認
     const today = new Date().toISOString().slice(0, 10);
@@ -209,16 +206,12 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Opt-In が未決定の状態
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: null
     });
-
-    await page.close();
 
     // Options ページを開く
     const optionsPage = await openOptions(context, extensionId, 'analytics');
@@ -235,7 +228,11 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     // 設定が保存されたことを確認
     await new Promise((resolve) => setTimeout(resolve, 300));
-    const settings = (await getStorageData(optionsPage, 'settings')) as any;
+    const settings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
     expect(settings.analyticsOptIn).toBeDefined();
     expect(settings.analyticsOptIn.enabled).toBe(true);
 
@@ -246,21 +243,17 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Opt-Out 状態
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
 
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     // 外部サイトにアクセス
     const externalPage = await openExternalSite(
@@ -272,7 +265,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Analytics データが記録されていないことを確認
-    const analytics = (await getStorageData(externalPage, 'analytics')) as any;
+    const analytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
     expect(Object.keys(analytics.dailyStats).length).toBe(0);
 
     await externalPage.close();
@@ -282,16 +279,14 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
     // Analytics データを設定
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {
         '2024-01-01': {
           date: '2024-01-01',
@@ -311,8 +306,6 @@ test.describe('Analytics - アナリティクス機能', () => {
       }
     });
 
-    await page.close();
-
     // Options ページを開く
     const optionsPage = await openOptions(context, extensionId, 'analytics');
 
@@ -325,7 +318,11 @@ test.describe('Analytics - アナリティクス機能', () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Analytics データがリセットされたことを確認
-      const analytics = (await getStorageData(optionsPage, 'analytics')) as any;
+      const analytics = (await getStorageDataFromExtension(
+        context,
+        extensionId,
+        'analytics'
+      )) as any;
       expect(Object.keys(analytics.dailyStats).length).toBe(0);
       expect(Object.keys(analytics.siteStats).length).toBe(0);
     }
@@ -337,15 +334,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
-
-    await page.close();
 
     // オフラインモードに設定
     const externalPage = await openExternalSite(
@@ -358,10 +351,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // ローカルキューに保存されているか確認（実装に応じて調整）
-    const queueData = await externalPage.evaluate(async () => {
-      const result = await chrome.storage.local.get('heartbeatQueue');
-      return result.heartbeatQueue;
-    });
+    const queueData = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'heartbeatQueue'
+    )) as any;
 
     // キューが存在する場合は記録されていることを確認
     if (queueData) {
@@ -376,24 +370,20 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
     // ダミーのキューデータを設定
-    await setStorageData(page, 'heartbeatQueue', [
+    await setStorageDataFromExtension(context, extensionId, 'heartbeatQueue', [
       {
         domain: TEST_DOMAINS.example,
         duration: 30,
         timestamp: new Date().toISOString()
       }
     ]);
-
-    await page.close();
 
     // ネットワークオンラインに復旧
     const externalPage = await openExternalSite(
@@ -406,10 +396,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // キューが送信されてクリアされたことを確認
-    const queueData = await externalPage.evaluate(async () => {
-      const result = await chrome.storage.local.get('heartbeatQueue');
-      return result.heartbeatQueue;
-    });
+    const queueData = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'heartbeatQueue'
+    )) as any;
 
     // キューが空になっている、またはundefined
     expect(queueData?.length || 0).toBe(0);
@@ -421,10 +412,8 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Opt-Out 状態
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },
@@ -439,11 +428,9 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
-    await setStorageData(page, 'unblockHistory', {
+    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
       entries: []
     });
-
-    await page.close();
 
     // Options ページでブロック解除を試みる
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
@@ -458,8 +445,9 @@ test.describe('Analytics - アナリティクス機能', () => {
     }
 
     // Unblock History に記録されないことを確認
-    const unblockHistory = (await getStorageData(
-      optionsPage,
+    const unblockHistory = (await getStorageDataFromExtension(
+      context,
+      extensionId,
       'unblockHistory'
     )) as any;
     expect(unblockHistory.entries.length).toBe(0);
