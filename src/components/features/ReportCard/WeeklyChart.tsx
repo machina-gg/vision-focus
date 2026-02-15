@@ -16,8 +16,14 @@ interface WeeklyChartProps {
   dailyBlockCounts: number[];
 }
 
-// 曜日ラベル
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+/**
+ * 曜日ラベルを i18n から取得
+ */
+function getDayLabels(): string[] {
+  return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((key) =>
+    getMessage(key)
+  );
+}
 
 /**
  * 週次チャート用のフォーマット（秒 → 分/時間）
@@ -37,8 +43,9 @@ export function WeeklyChart({
   dailyBreakdown,
   dailyBlockCounts
 }: WeeklyChartProps) {
+  const dayLabels = getDayLabels();
   const chartData = dailyBreakdown.map((d, i) => ({
-    day: DAY_LABELS[i] || `D${i + 1}`,
+    day: dayLabels[i] || `D${i + 1}`,
     wasteTime: Math.round(d.wasteTime / 60), // 分に変換
     blockCount: dailyBlockCounts[i] || 0
   }));
