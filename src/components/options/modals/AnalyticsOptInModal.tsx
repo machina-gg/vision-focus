@@ -18,8 +18,7 @@ export function AnalyticsOptInModal({
   const { settings } = useSettings();
 
   const isOpen =
-    settings?.analyticsOptIn === undefined ||
-    settings?.analyticsOptIn === null;
+    settings?.analyticsOptIn === undefined || settings?.analyticsOptIn === null;
 
   if (!isOpen) return null;
 
