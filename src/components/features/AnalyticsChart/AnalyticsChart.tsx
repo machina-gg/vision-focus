@@ -1,22 +1,12 @@
 import React, { useState, useMemo } from 'react';
-
-import {
-  BarChart,
-  Bar,
-  Cell,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 import { BarChart3, TrendingUp, Layers } from 'lucide-react';
 
 import type { AnalyticsData, UnblockHistory } from '~/types/storage';
 import { getMessage } from '~/lib/i18n';
 import { formatTime } from '~/lib/time';
+import { DailyChart } from './DailyChart';
+import { BySiteChart } from './BySiteChart';
+import { CumulativeChart } from './CumulativeChart';
 
 export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
@@ -24,30 +14,6 @@ export interface AnalyticsChartProps {
   analytics: AnalyticsData;
   unblockHistory: UnblockHistory;
   disabled?: boolean;
-}
-
-// Color palette for different sites (soft pastel tones)
-const SITE_COLORS = [
-  '#fdba74', // orange-300
-  '#fcd34d', // amber-300
-  '#bef264', // lime-300
-  '#6ee7b7', // emerald-300
-  '#67e8f9', // cyan-300
-  '#a5b4fc', // indigo-300
-  '#d8b4fe', // purple-300
-  '#f9a8d4' // pink-300
-];
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function formatMinutes(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = Math.round(minutes % 60);
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
 }
 
 export function AnalyticsChart({
@@ -82,7 +48,7 @@ export function AnalyticsChart({
       if (currentTotal > 0) {
         return [
           {
-            date: formatDate(new Date().toISOString().split('T')[0]),
+            date: new Date().toISOString().split('T')[0],
             time: Math.round(currentTotal / 60)
           }
         ];
@@ -90,10 +56,7 @@ export function AnalyticsChart({
       return [];
     }
 
-    return entries.map((e) => ({
-      ...e,
-      date: formatDate(e.date)
-    }));
+    return entries;
   }, [analytics.dailyStats, unblockHistory.sites]);
 
   // B. Site-by-site breakdown (stacked)
@@ -140,7 +103,7 @@ export function AnalyticsChart({
       if (currentTotal > 0) {
         return [
           {
-            date: formatDate(new Date().toISOString().split('T')[0]),
+            date: new Date().toISOString().split('T')[0],
             cumulative: Math.round(currentTotal / 60)
           }
         ];
@@ -152,7 +115,7 @@ export function AnalyticsChart({
     const data = dailyEntries.map(([date, stat]) => {
       cumulative += stat.wasteTime;
       return {
-        date: formatDate(date),
+        date,
         cumulative: Math.round(cumulative / 60) // Minutes
       };
     });
@@ -168,158 +131,14 @@ export function AnalyticsChart({
     );
   }, [unblockHistory.sites]);
 
-  // Dynamic Y-axis unit switching for daily chart
-  const maxDailyValue = Math.max(...dailyData.map((d) => d.time), 0);
-  const useDailyHours = maxDailyValue >= 120;
-  const displayDailyData = useDailyHours
-    ? dailyData.map((d) => ({ ...d, time: d.time / 60 }))
-    : dailyData;
-  const dailyTickFormatter = (v: number) => (useDailyHours ? `${v}h` : `${v}m`);
-
-  // Dynamic Y-axis unit switching for cumulative chart
-  const maxCumulativeValue = Math.max(
-    ...cumulativeData.map((d) => d.cumulative),
-    0
-  );
-  const useCumulativeHours = maxCumulativeValue >= 120;
-  const displayCumulativeData = useCumulativeHours
-    ? cumulativeData.map((d) => ({ ...d, cumulative: d.cumulative / 60 }))
-    : cumulativeData;
-  const cumulativeTickFormatter = (v: number) =>
-    useCumulativeHours ? `${v}h` : `${v}m`;
-
   const renderChart = () => {
     switch (chartType) {
       case 'daily':
-        if (dailyData.length === 0) {
-          return (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              {getMessage('noData')}
-            </div>
-          );
-        }
-        return (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={displayDailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-              <YAxis
-                stroke="#6b7280"
-                fontSize={12}
-                tickFormatter={dailyTickFormatter}
-              />
-              <Tooltip
-                formatter={(value: number) => [
-                  formatMinutes(useDailyHours ? value * 60 : value),
-                  getMessage('chartDailyLabel')
-                ]}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px'
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="time"
-                stroke="#fdba74"
-                strokeWidth={2}
-                dot={{ fill: '#fdba74', strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: '#fb923c' }}
-                name={getMessage('chartDailyLabel')}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        );
-
+        return <DailyChart data={dailyData} />;
       case 'bySite':
-        if (bySiteData.length === 0) {
-          return (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              {getMessage('noData')}
-            </div>
-          );
-        }
-        return (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={bySiteData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                type="number"
-                stroke="#6b7280"
-                fontSize={12}
-                tickFormatter={(v) => `${v}m`}
-              />
-              <YAxis
-                type="category"
-                dataKey="domain"
-                stroke="#6b7280"
-                fontSize={11}
-                width={100}
-              />
-              <Tooltip
-                formatter={(value: number, _name: string, props) => {
-                  const payload = props?.payload as
-                    | { fullDomain?: string }
-                    | undefined;
-                  return [formatMinutes(value), payload?.fullDomain || ''];
-                }}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px'
-                }}
-              />
-              <Bar dataKey="time" radius={[0, 4, 4, 0]}>
-                {bySiteData.map((_, index) => (
-                  <Cell
-                    key={index}
-                    fill={SITE_COLORS[index % SITE_COLORS.length]}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        );
-
+        return <BySiteChart data={bySiteData} />;
       case 'cumulative':
-        if (cumulativeData.length === 0) {
-          return (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              {getMessage('noData')}
-            </div>
-          );
-        }
-        return (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={displayCumulativeData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-              <YAxis
-                stroke="#6b7280"
-                fontSize={12}
-                tickFormatter={cumulativeTickFormatter}
-              />
-              <Tooltip
-                formatter={(value: number) => [
-                  formatMinutes(useCumulativeHours ? value * 60 : value),
-                  getMessage('chartCumulativeLabel')
-                ]}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px'
-                }}
-              />
-              <Bar
-                dataKey="cumulative"
-                fill="#fdba74"
-                radius={[4, 4, 0, 0]}
-                name={getMessage('chartCumulativeLabel')}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        );
+        return <CumulativeChart data={cumulativeData} />;
     }
   };
 
