@@ -1,6 +1,9 @@
 /**
  * Zod schemas for validating message handler request bodies.
  * Replaces unsafe `as` type assertions with runtime validation.
+ *
+ * Types are automatically inferred from schemas using `z.infer<typeof Schema>`.
+ * This ensures type safety and eliminates duplication between schemas and types.
  */
 
 import * as z from 'zod';

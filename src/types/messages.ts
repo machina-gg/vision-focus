@@ -1,6 +1,17 @@
 /**
  * Centralized type definitions for background message handlers
+ * Types are now inferred from Zod schemas in messageSchemas.ts to avoid duplication
  */
+
+// Re-export types inferred from Zod schemas
+export {
+  type GetRemainingTimeBody,
+  type TrackerHeartbeatBody,
+  type UpdateTimeLimitBody
+} from './messageSchemas';
+
+// Legacy types (not yet migrated to Zod schemas)
+// TODO: Create Zod schemas for these and remove manual type definitions
 
 // Add Block
 export interface AddBlockRequest {
@@ -58,12 +69,8 @@ export interface ToggleBlockResponse {
   error?: string;
 }
 
-// Tracker Heartbeat
-export interface TrackerHeartbeatRequest {
-  url: string;
-  status: 'active' | 'inactive' | 'heartbeat';
-  timestamp: number;
-}
+// Tracker Heartbeat (use TrackerHeartbeatBody from messageSchemas.ts)
+export type TrackerHeartbeatRequest = import('./messageSchemas').TrackerHeartbeatBody;
 
 export interface TrackerHeartbeatResponse {
   success: boolean;

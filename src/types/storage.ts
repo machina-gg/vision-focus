@@ -30,26 +30,41 @@ export {
 // Re-export from report.ts for backwards compatibility
 export { type WeeklyReport, type MonthlyReport } from './report';
 
+// Re-export from analytics.ts for backwards compatibility
+export {
+  type DailyStat,
+  type SiteTime,
+  type SiteBlockCount,
+  type SiteUnblockCount,
+  type TimeLimitType,
+  type TimeLimit,
+  type TimeLimitUsage,
+  type AnalyticsData,
+  type TrackedSite,
+  type UnblockedSite,
+  type UnblockHistory,
+  type AnalyticsOptIn,
+  DEFAULT_ANALYTICS,
+  DEFAULT_UNBLOCK_HISTORY
+} from './analytics';
+
+// Re-export from vision.ts for backwards compatibility
+export {
+  type DashboardDisplaySettings,
+  type DashboardPreset,
+  type VisionSettings,
+  DEFAULT_DISPLAY_SETTINGS,
+  DEFAULT_VISION,
+  getCurrentDisplaySettings
+} from './vision';
+
 // Import types needed for this file
-import type { FontSettings } from './font';
-import { DEFAULT_FONT_SETTINGS } from './font';
-
-// Time limit configuration for a site
-export type TimeLimitType = 'daily' | 'hourly';
-
-export interface TimeLimit {
-  type: TimeLimitType;
-  limitSeconds: number; // Limit in seconds (e.g., 1800 = 30 minutes)
-}
-
-// Time limit usage tracking for a domain
-export interface TimeLimitUsage {
-  domain: string;
-  dailyUsedSeconds: number;
-  hourlyUsedSeconds: number;
-  lastDailyReset: string; // YYYY-MM-DD
-  lastHourlyReset: string; // YYYY-MM-DD-HH
-}
+import type { TimeLimit } from './analytics';
+import type { VisionSettings } from './vision';
+import type { AnalyticsData } from './analytics';
+import type { UnblockHistory } from './analytics';
+import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from './analytics';
+import { DEFAULT_VISION } from './vision';
 
 // Block list item
 export interface BlockItem {
@@ -70,66 +85,6 @@ export interface Schedule {
   days: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
   enabled: boolean;
   presetId?: string; // Dashboard preset to apply when schedule is active
-}
-
-// Daily statistics
-export interface DailyStat {
-  date: string; // YYYY-MM-DD
-  wasteTime: number; // seconds
-  investTime: number; // seconds
-  blockCount: number;
-  unblockCount: number; // Number of times sites were unblocked (toggle OFF)
-}
-
-// Site time tracking
-export interface SiteTime {
-  domain: string;
-  time: number; // seconds
-  category: 'waste' | 'invest' | 'neutral';
-  lastUpdated: string;
-}
-
-// Site block count tracking (independent of blockList)
-export interface SiteBlockCount {
-  domain: string;
-  count: number; // cumulative block count
-  lastBlocked: string; // ISO8601 timestamp
-}
-
-// Site unblock count tracking (parallel to SiteBlockCount)
-export interface SiteUnblockCount {
-  domain: string;
-  count: number; // cumulative unblock count
-  lastUnblocked: string; // ISO8601 timestamp
-}
-
-// Dashboard display settings (shared between default and presets)
-export interface DashboardDisplaySettings {
-  goalText: string;
-  goalSubText: string;
-  textColor: string;
-  backgroundType: 'image' | 'color';
-  backgroundImage: string;
-  backgroundColor: string;
-  customBackgroundData: string | null;
-  fontSettings: FontSettings;
-}
-
-// Dashboard preset - saves all dashboard settings as a set
-export interface DashboardPreset extends DashboardDisplaySettings {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-// Vision/Dashboard settings
-export interface VisionSettings {
-  // Default display settings (used when no preset is active)
-  defaultSettings: DashboardDisplaySettings;
-  // User-created presets
-  presets: DashboardPreset[];
-  // Currently active preset ID (null = use defaultSettings)
-  activePresetId: string | null;
 }
 
 // App settings
@@ -162,12 +117,6 @@ export interface PasswordSettings {
   passwordHash: string | null; // SHA-256 hash of the password (null if not set)
 }
 
-// Analytics opt-in settings (GA4)
-export interface AnalyticsOptIn {
-  enabled: boolean; // Whether anonymous usage stats are allowed
-  decidedAt: string; // ISO8601 timestamp when user made the decision
-}
-
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
@@ -176,35 +125,7 @@ export interface AppSettings {
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
-  analyticsOptIn?: AnalyticsOptIn | null; // null = not yet decided (show modal)
-}
-
-// Analytics data
-export interface AnalyticsData {
-  dailyStats: Record<string, DailyStat>; // key: YYYY-MM-DD
-  siteTime: Record<string, SiteTime>; // key: domain
-  siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
-  siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
-  siteUnblockCounts: Record<string, SiteUnblockCount>; // key: domain (tracks unblock toggle-off actions)
-  timeLimitUsage: Record<string, TimeLimitUsage>; // key: domain
-}
-
-// Tracked site - tracks sites from when they are blocked
-export interface TrackedSite {
-  domain: string;
-  status: 'blocked' | 'unblocked'; // Current status
-  blockedAt: string; // ISO8601 timestamp when added to blocklist
-  unblockedAt: string | null; // ISO8601 timestamp when removed from blocklist (null if still blocked)
-  timeAfterUnblock: number; // Cumulative time spent (seconds) after unblocking
-  lastActivity: string | null; // ISO8601 timestamp of last activity
-}
-
-// Legacy alias for backwards compatibility
-export type UnblockedSite = TrackedSite;
-
-// History of unblocked sites
-export interface UnblockHistory {
-  sites: Record<string, UnblockedSite>; // key: domain
+  analyticsOptIn?: import('./analytics').AnalyticsOptIn | null; // null = not yet decided (show modal)
 }
 
 // Complete storage schema
@@ -248,58 +169,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
   youtube: DEFAULT_YOUTUBE_SETTINGS,
   password: DEFAULT_PASSWORD_SETTINGS
-};
-
-export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
-  goalText: '',
-  goalSubText: '',
-  textColor: '#ffffff',
-  backgroundType: 'image',
-  backgroundImage: 'default-1',
-  backgroundColor: '#1a1a2e',
-  customBackgroundData: null,
-  fontSettings: DEFAULT_FONT_SETTINGS
-};
-
-export const DEFAULT_VISION: VisionSettings = {
-  defaultSettings: DEFAULT_DISPLAY_SETTINGS,
-  presets: [],
-  activePresetId: null
-};
-
-// Helper to get current display settings based on activePresetId
-export function getCurrentDisplaySettings(
-  vision: VisionSettings
-): DashboardDisplaySettings {
-  if (vision.activePresetId) {
-    const preset = vision.presets.find((p) => p.id === vision.activePresetId);
-    if (preset) {
-      return {
-        goalText: preset.goalText,
-        goalSubText: preset.goalSubText,
-        textColor: preset.textColor,
-        backgroundType: preset.backgroundType,
-        backgroundImage: preset.backgroundImage,
-        backgroundColor: preset.backgroundColor,
-        customBackgroundData: preset.customBackgroundData,
-        fontSettings: preset.fontSettings
-      };
-    }
-  }
-  return vision.defaultSettings;
-}
-
-export const DEFAULT_ANALYTICS: AnalyticsData = {
-  dailyStats: {},
-  siteTime: {},
-  siteCategories: {},
-  siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
-};
-
-export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {
-  sites: {}
 };
 
 export const DEFAULT_STORAGE: StorageSchema = {
