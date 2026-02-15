@@ -1,8 +1,6 @@
 import { test, expect } from './fixtures/extension';
 import { openPopup, openNewTab, openOptions } from './helpers/pages';
 import {
-  setStorageData,
-  clearStorage,
   clearStorageFromExtension,
   setStorageDataFromExtension
 } from './helpers/storage';
