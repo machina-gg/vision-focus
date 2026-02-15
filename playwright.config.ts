@@ -18,8 +18,11 @@ export default defineConfig({
   // テスト失敗時のリトライ回数
   retries: 0,
 
-  // 並列実行設定（Chrome拡張は並列実行に注意が必要なため1に設定）
-  workers: 1,
+  // 並列実行設定（Chrome拡張は headless: false 必須のためメモリに注意）
+  workers: 3,
+
+  // 全テストを並列実行
+  fullyParallel: true,
 
   // レポート設定
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
