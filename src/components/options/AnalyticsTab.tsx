@@ -3,11 +3,8 @@ import { Plus } from 'lucide-react';
 
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import type {
-  UnblockHistory,
-  AnalyticsData,
-  AppSettings
-} from '~/types/storage';
+import { useSettings } from '~/contexts/SettingsContext';
+import type { UnblockHistory, AnalyticsData } from '~/types/storage';
 
 import {
   AnalyticsExportBar,
@@ -19,7 +16,6 @@ import {
 interface AnalyticsTabProps {
   unblockHistory: UnblockHistory;
   analyticsData: AnalyticsData;
-  settings: AppSettings | null;
   isPremium: boolean;
   onReblock: (domain: string) => void;
   onReset: () => void;
@@ -31,7 +27,6 @@ interface AnalyticsTabProps {
 export function AnalyticsTab({
   unblockHistory,
   analyticsData,
-  settings,
   isPremium,
   onReblock,
   onReset,
@@ -39,6 +34,7 @@ export function AnalyticsTab({
   onRefresh,
   onAddSite
 }: AnalyticsTabProps) {
+  const { settings } = useSettings();
   const [newSiteDomain, setNewSiteDomain] = useState('');
 
   const handleAddSite = () => {

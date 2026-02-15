@@ -12,8 +12,8 @@ import {
   YouTubeSection,
   DomainListItem
 } from '~/components/options/blocklist';
+import { useSettings } from '~/contexts/SettingsContext';
 import type {
-  AppSettings,
   BlockItem,
   SiteBlockCount,
   TimeLimit,
@@ -23,7 +23,6 @@ import type {
 } from '~/types/storage';
 
 interface BlocklistTabProps {
-  settings: AppSettings | undefined;
   newDomain: string;
   setNewDomain: (value: string) => void;
   blockError: string;
@@ -39,7 +38,6 @@ interface BlocklistTabProps {
 }
 
 export function BlocklistTab({
-  settings,
   newDomain,
   setNewDomain,
   blockError,
@@ -53,6 +51,7 @@ export function BlocklistTab({
   youtube,
   onYouTubeChange
 }: BlocklistTabProps) {
+  const { settings } = useSettings();
   // Password protection state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);

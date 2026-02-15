@@ -10,8 +10,7 @@ import {
   PremiumTab,
   HelpTab
 } from '~/components/options';
-import type { AppSettings } from '~/types/storage';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 
 import './styles/globals.css';
 
@@ -24,16 +23,15 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id'];
 
-function OptionsDemo() {
+function OptionsDemoContent() {
   const [activeTab, setActiveTab] = useState<TabId>('blocklist');
-  const [settings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const { settings } = useSettings();
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'blocklist':
         return (
           <BlocklistTab
-            settings={settings}
             newDomain=""
             setNewDomain={() => {}}
             blockError=""
@@ -49,8 +47,6 @@ function OptionsDemo() {
       case 'schedules':
         return (
           <SchedulesTab
-            settings={settings}
-            vision={undefined}
             onAddSchedule={() => alert('Add schedule')}
             onEditSchedule={() => {}}
             onDeleteSchedule={() => {}}
@@ -68,7 +64,6 @@ function OptionsDemo() {
       case 'help':
         return (
           <HelpTab
-            settings={settings}
             onSettingsChange={() => {}}
             onPasswordUpdate={async () => {}}
             onAnalyticsOptInChange={async () => {}}
@@ -109,6 +104,14 @@ function OptionsDemo() {
   );
 }
 
+function OptionsDemo() {
+  return (
+    <SettingsProvider>
+      <OptionsDemoContent />
+    </SettingsProvider>
+  );
+}
+
 const meta = {
   title: 'Pages/Options',
   component: OptionsDemo,
@@ -125,39 +128,38 @@ export const Default: Story = {};
 
 const SchedulesViewWrapper = () => {
   const [activeTab, setActiveTab] = useState<TabId>('schedules');
-  const [settings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              VisionFocus Settings
-            </h1>
-          </div>
-          <Tabs
-            tabs={tabs.map((tab) => ({
-              id: tab.id,
-              label: tab.label,
-              icon: <tab.icon className="w-4 h-4" />
-            }))}
-            activeTab={activeTab}
-            onChange={(id) => setActiveTab(id as TabId)}
-          />
-          <div className="p-6">
-            <SchedulesTab
-              settings={settings}
-              vision={undefined}
-              onAddSchedule={() => alert('Add schedule')}
-              onEditSchedule={() => {}}
-              onDeleteSchedule={() => {}}
-              onToggleSchedule={() => {}}
+    <SettingsProvider>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h1 className="text-2xl font-bold text-gray-900">
+                VisionFocus Settings
+              </h1>
+            </div>
+            <Tabs
+              tabs={tabs.map((tab) => ({
+                id: tab.id,
+                label: tab.label,
+                icon: <tab.icon className="w-4 h-4" />
+              }))}
+              activeTab={activeTab}
+              onChange={(id) => setActiveTab(id as TabId)}
             />
+            <div className="p-6">
+              <SchedulesTab
+                onAddSchedule={() => alert('Add schedule')}
+                onEditSchedule={() => {}}
+                onDeleteSchedule={() => {}}
+                onToggleSchedule={() => {}}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </SettingsProvider>
   );
 };
 

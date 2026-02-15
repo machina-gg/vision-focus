@@ -3,15 +3,14 @@ import { Plus, Trash2, Info } from 'lucide-react';
 
 import { Button, Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import type { AppSettings, Schedule, VisionSettings } from '~/types/storage';
+import { useSettings } from '~/contexts/SettingsContext';
+import type { Schedule } from '~/types/storage';
 
 import { WeeklyCalendar } from './WeeklyCalendar';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 interface SchedulesTabProps {
-  settings: AppSettings | undefined;
-  vision: VisionSettings | undefined;
   onAddSchedule: () => void;
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (id: string) => void;
@@ -19,13 +18,12 @@ interface SchedulesTabProps {
 }
 
 export function SchedulesTab({
-  settings,
-  vision,
   onAddSchedule,
   onEditSchedule,
   onDeleteSchedule,
   onToggleSchedule
 }: SchedulesTabProps) {
+  const { settings, vision } = useSettings();
   return (
     <div className="space-y-6">
       {/* Weekly Calendar */}
