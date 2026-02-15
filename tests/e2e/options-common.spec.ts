@@ -1,6 +1,10 @@
 import { test, expect } from './fixtures/extension';
-import { openOptions, setupTestStorage,
-  clearStorage, setStorageData } from './helpers';
+import {
+  openOptions,
+  setupTestStorage,
+  clearStorage,
+  setStorageData
+} from './helpers';
 
 /**
  * E2Eテスト: Options 画面（共通機能）
