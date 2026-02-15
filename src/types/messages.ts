@@ -70,7 +70,8 @@ export interface ToggleBlockResponse {
 }
 
 // Tracker Heartbeat (use TrackerHeartbeatBody from messageSchemas.ts)
-export type TrackerHeartbeatRequest = import('./messageSchemas').TrackerHeartbeatBody;
+export type TrackerHeartbeatRequest =
+  import('./messageSchemas').TrackerHeartbeatBody;
 
 export interface TrackerHeartbeatResponse {
   success: boolean;
