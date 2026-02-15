@@ -1,6 +1,6 @@
 // Report type definitions
 
-import type { DailyStat } from './storage';
+import type { DailyStat } from './analytics';
 
 // Weekly report (Premium)
 export interface WeeklyReport {
