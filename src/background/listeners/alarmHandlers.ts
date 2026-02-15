@@ -1,7 +1,4 @@
-import {
-  getAnalytics,
-  setAnalytics
-} from '~/lib/storage';
+import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { sendDailyActive } from '~/lib/analytics';
 import { getFeatureLimits } from '~/lib/license';
 import {
