@@ -47,5 +47,5 @@ export const SITE_COLORS = [
   '#67e8f9', // cyan-300
   '#a5b4fc', // indigo-300
   '#d8b4fe', // purple-300
-  '#f9a8d4'  // pink-300
+  '#f9a8d4' // pink-300
 ];
