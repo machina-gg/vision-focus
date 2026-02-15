@@ -30,7 +30,9 @@ interface HelpSettingsBackupProps {
  * Settings Backup セクションコンポーネント
  * 設定のエクスポート・インポート機能を提供
  */
-export function HelpSettingsBackup({ onSettingsChange }: HelpSettingsBackupProps) {
+export function HelpSettingsBackup({
+  onSettingsChange
+}: HelpSettingsBackupProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');

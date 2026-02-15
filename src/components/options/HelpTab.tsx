@@ -34,7 +34,6 @@ export function HelpTab({
   onAnalyticsOptInChange,
   onLanguageChange
 }: HelpTabProps) {
-
   return (
     <div className="space-y-6">
       {/* Getting Started */}
