@@ -4,7 +4,9 @@ import {
   setStorageData,
   getStorageData,
   clearStorage,
-  clearStorageFromExtension
+  clearStorageFromExtension,
+  setStorageDataFromExtension,
+  getStorageDataFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 
@@ -23,10 +25,8 @@ test.describe('Data - データ永続化', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 設定を保存
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'ja',
       paused: true,
       blockList: [
@@ -41,24 +41,24 @@ test.describe('Data - データ永続化', () => {
     });
 
     // 保存された設定を取得
-    const savedSettings = (await getStorageData(page, 'settings')) as any;
+    const savedSettings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
 
     expect(savedSettings.language).toBe('ja');
     expect(savedSettings.paused).toBe(true);
     expect(savedSettings.blockList.length).toBe(1);
     expect(savedSettings.blockList[0].domain).toBe(TEST_DOMAINS.example);
-
-    await page.close();
   });
 
   test('DATA-002: ブラウザ再起動後も設定が保持される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 設定を保存
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -72,28 +72,25 @@ test.describe('Data - データ永続化', () => {
       ]
     });
 
-    await page.close();
-
-    // 新しいページを開いて設定を取得（ブラウザ再起動をシミュレート）
-    const page2 = await context.newPage();
-    const savedSettings = (await getStorageData(page2, 'settings')) as any;
+    // 設定を取得（ブラウザ再起動をシミュレート）
+    const savedSettings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
 
     expect(savedSettings.language).toBe('en');
     expect(savedSettings.paused).toBe(false);
     expect(savedSettings.blockList.length).toBe(1);
     expect(savedSettings.blockList[0].domain).toBe(TEST_DOMAINS.reddit);
-
-    await page2.close();
   });
 
   test('DATA-003: 拡張機能を無効化→有効化しても設定が保持される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 設定を保存
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'ja',
       paused: false,
       blockList: [
@@ -108,33 +105,35 @@ test.describe('Data - データ永続化', () => {
     });
 
     // 保存された設定を確認
-    const savedSettings = (await getStorageData(page, 'settings')) as any;
+    const savedSettings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
 
     expect(savedSettings.blockList.length).toBe(1);
     expect(savedSettings.blockList[0].domain).toBe(TEST_DOMAINS.twitter);
 
     // 実際の無効化/有効化は Playwright では困難なため、
     // chrome.storage.local が永続的であることを確認
-    await page.close();
 
-    // 新しいページで設定が保持されていることを確認
-    const page2 = await context.newPage();
-    const persistedSettings = (await getStorageData(page2, 'settings')) as any;
+    // 設定が保持されていることを確認
+    const persistedSettings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
 
     expect(persistedSettings.blockList.length).toBe(1);
     expect(persistedSettings.blockList[0].domain).toBe(TEST_DOMAINS.twitter);
-
-    await page2.close();
   });
 
   test('DATA-004: プリセット（Vision）が正しく保存される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // Vision プリセットを保存
-    await setStorageData(page, 'vision', {
+    await setStorageDataFromExtension(context, extensionId, 'vision', {
       defaultSettings: {
         goalText: 'Focus on what matters',
         subText: 'Stay productive'
@@ -163,23 +162,23 @@ test.describe('Data - データ永続化', () => {
     });
 
     // 保存された Vision を取得
-    const savedVision = (await getStorageData(page, 'vision')) as any;
+    const savedVision = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'vision'
+    )) as any;
 
     expect(savedVision.presets.length).toBe(2);
     expect(savedVision.activePresetId).toBe('custom1');
     expect(savedVision.presets[1].name).toBe('Custom Preset');
-
-    await page.close();
   });
 
   test('DATA-005: スケジュールが正しく保存される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // スケジュール設定を保存
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       schedules: [
@@ -205,25 +204,25 @@ test.describe('Data - データ永続化', () => {
     });
 
     // 保存されたスケジュールを取得
-    const savedSettings = (await getStorageData(page, 'settings')) as any;
+    const savedSettings = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'settings'
+    )) as any;
 
     expect(savedSettings.schedules.length).toBe(2);
     expect(savedSettings.schedules[0].name).toBe('Work Hours');
     expect(savedSettings.schedules[1].days).toEqual([0, 6]);
-
-    await page.close();
   });
 
   test('DATA-006: Analytics データが正しく保存される', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     const today = new Date().toISOString().slice(0, 10);
 
     // Analytics データを保存
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {
         [today]: {
           date: today,
@@ -250,13 +249,15 @@ test.describe('Data - データ永続化', () => {
     });
 
     // 保存された Analytics を取得
-    const savedAnalytics = (await getStorageData(page, 'analytics')) as any;
+    const savedAnalytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
 
     expect(savedAnalytics.dailyStats[today]).toBeDefined();
     expect(savedAnalytics.dailyStats[today].blockCount).toBe(15);
     expect(savedAnalytics.siteStats[TEST_DOMAINS.example].blockCount).toBe(10);
     expect(Object.keys(savedAnalytics.siteStats).length).toBe(2);
-
-    await page.close();
   });
 });

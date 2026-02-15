@@ -3,7 +3,8 @@ import { openPopup, openNewTab, openOptions } from './helpers/pages';
 import {
   setStorageData,
   clearStorage,
-  clearStorageFromExtension
+  clearStorageFromExtension,
+  setStorageDataFromExtension
 } from './helpers/storage';
 
 /**
@@ -21,15 +22,11 @@ test.describe('i18n - 多言語対応', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 英語に設定
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false
     });
-
-    await page.close();
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -48,15 +45,11 @@ test.describe('i18n - 多言語対応', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 日本語に設定
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'ja',
       paused: false
     });
-
-    await page.close();
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -75,15 +68,11 @@ test.describe('i18n - 多言語対応', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 最初は英語
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false
     });
-
-    await page.close();
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -116,15 +105,11 @@ test.describe('i18n - 多言語対応', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 日本語に設定
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'ja',
       paused: false
     });
-
-    await page.close();
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -158,15 +143,11 @@ test.describe('i18n - 多言語対応', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
-
     // 最初は英語
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false
     });
-
-    await page.close();
 
     // Options を開く
     const optionsPage = await openOptions(context, extensionId);

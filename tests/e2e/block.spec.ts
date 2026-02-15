@@ -4,7 +4,8 @@ import {
   setStorageData,
   clearStorage,
   clearStorageFromExtension,
-  setStorageDataFromExtension
+  setStorageDataFromExtension,
+  getStorageDataFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
@@ -59,8 +60,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ワイルドカードでブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -73,7 +73,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -95,8 +94,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // 最初はブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -109,18 +107,15 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // ブロックリストから削除
-    const page2 = await context.newPage();
-    await setStorageData(page2, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: []
     });
-    await page2.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -143,8 +138,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -157,13 +151,11 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Pauseを有効化
-    const page2 = await context.newPage();
-    await setStorageData(page2, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: true,
       blockList: [
@@ -176,7 +168,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page2.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -198,8 +189,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // Pauseを有効化した状態で開始
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: true,
       blockList: [
@@ -212,13 +202,11 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Pauseを解除
-    const page2 = await context.newPage();
-    await setStorageData(page2, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -231,7 +219,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page2.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -252,8 +239,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // enabled: false でブロックアイテムを追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -266,7 +252,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -288,8 +273,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // 最初は無効化
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -302,13 +286,11 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // 有効化
-    const page2 = await context.newPage();
-    await setStorageData(page2, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -321,7 +303,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page2.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -342,8 +323,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -356,12 +336,13 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // declarativeNetRequest ルールを確認
     const rulesPage = await context.newPage();
+    await rulesPage.goto(`chrome-extension://${extensionId}/options.html`);
+    await rulesPage.waitForLoadState('domcontentloaded');
     const rules = await rulesPage.evaluate(async () => {
       return chrome.declarativeNetRequest.getDynamicRules();
     });
@@ -379,8 +360,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -393,7 +373,6 @@ test.describe('Block - ブロック機能', () => {
         }
       ]
     });
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -407,10 +386,11 @@ test.describe('Block - ブロック機能', () => {
 
     // lastBlockedDomain が記録されたことを確認
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const lastBlocked = await blockedPage.evaluate(async () => {
-      const result = await chrome.storage.local.get('lastBlockedDomain');
-      return result.lastBlockedDomain;
-    });
+    const lastBlocked = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'lastBlockedDomain'
+    )) as any;
 
     expect(lastBlocked).toBe(TEST_DOMAINS.example);
 
@@ -422,8 +402,7 @@ test.describe('Block - ブロック機能', () => {
     extensionId
   }) => {
     // ブロックリストに追加
-    const page = await context.newPage();
-    await setStorageData(page, 'settings', {
+    await setStorageDataFromExtension(context, extensionId, 'settings', {
       language: 'en',
       paused: false,
       blockList: [
@@ -438,12 +417,10 @@ test.describe('Block - ブロック機能', () => {
     });
 
     // Analytics データ初期化
-    await setStorageData(page, 'analytics', {
+    await setStorageDataFromExtension(context, extensionId, 'analytics', {
       dailyStats: {},
       siteStats: {}
     });
-
-    await page.close();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -465,10 +442,11 @@ test.describe('Block - ブロック機能', () => {
 
     // ブロック回数を確認
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const analytics = await blockedPage2.evaluate(async () => {
-      const result = await chrome.storage.local.get('analytics');
-      return result.analytics;
-    });
+    const analytics = (await getStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics'
+    )) as any;
 
     const today = new Date().toISOString().slice(0, 10);
     expect(analytics.dailyStats[today].blockCount).toBeGreaterThanOrEqual(2);
