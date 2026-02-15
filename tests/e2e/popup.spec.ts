@@ -3,6 +3,7 @@ import {
   openPopup,
   openOptions,
   setupTestStorage,
+  clearStorage,
   setStorageData,
   SELECTORS,
   TEST_DATA
@@ -18,6 +19,7 @@ test.describe('Popup 画面', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     // 各テストの前にストレージをセットアップ
     const page = await openPopup(context, extensionId);
+    await clearStorage(page);
     await setupTestStorage(page, {
       withGoal: true,
       withAnalyticsOptIn: true

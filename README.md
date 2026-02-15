@@ -92,6 +92,17 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 | `pnpm test`     | Vitest で単体テスト                 |
 | `pnpm test:e2e` | Playwright で E2E テスト            |
 
+**E2E テストの前提条件:**
+
+```bash
+# 初回のみ: Playwright Chromium ブラウザをインストール
+pnpm exec playwright install chromium
+
+# ビルドしてからテスト実行
+pnpm build
+pnpm test:e2e
+```
+
 ## Documentation
 
 | ファイル                        | 内容                 | 作成タイミング          |

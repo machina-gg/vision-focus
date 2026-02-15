@@ -1,6 +1,10 @@
 import { test, expect } from './fixtures/extension';
 import { openPopup, openNewTab, openOptions } from './helpers/pages';
-import { setStorageData, clearStorage } from './helpers/storage';
+import {
+  setStorageData,
+  clearStorage,
+  clearStorageFromExtension
+} from './helpers/storage';
 
 /**
  * E2E Tests: 多言語対応
@@ -9,10 +13,8 @@ import { setStorageData, clearStorage } from './helpers/storage';
  */
 
 test.describe('i18n - 多言語対応', () => {
-  test.beforeEach(async ({ context }) => {
-    const page = await context.newPage();
-    await clearStorage(page);
-    await page.close();
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
   });
 
   test('I18N-001: ブラウザ言語が英語の場合、英語UIが表示される', async ({

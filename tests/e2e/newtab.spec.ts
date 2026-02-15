@@ -2,6 +2,7 @@ import { test, expect } from './fixtures/extension';
 import {
   openNewTab,
   setupTestStorage,
+  clearStorage,
   setStorageData,
   SELECTORS,
   TEST_DATA
@@ -17,6 +18,7 @@ test.describe('NewTab 画面', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     // 各テストの前にストレージをセットアップ
     const page = await openNewTab(context, extensionId);
+    await clearStorage(page);
     await setupTestStorage(page, {
       withGoal: true,
       withAnalyticsOptIn: true

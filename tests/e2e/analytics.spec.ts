@@ -3,6 +3,7 @@ import { openOptions, openExternalSite } from './helpers/pages';
 import {
   setStorageData,
   clearStorage,
+  clearStorageFromExtension,
   getStorageData
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
@@ -14,10 +15,8 @@ import { TEST_DOMAINS } from './helpers/constants';
  */
 
 test.describe('Analytics - アナリティクス機能', () => {
-  test.beforeEach(async ({ context }) => {
-    const page = await context.newPage();
-    await clearStorage(page);
-    await page.close();
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
   });
 
   test('AN-001: サイト別ブロック回数が記録される', async ({

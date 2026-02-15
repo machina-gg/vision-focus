@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/extension';
-import { openOptions, setupTestStorage, setStorageData } from './helpers';
+import {
+  openOptions,
+  setupTestStorage,
+  clearStorage,
+  setStorageData
+} from './helpers';
 
 /**
  * E2Eテスト: Options 画面（共通機能）
@@ -11,6 +16,7 @@ test.describe('Options 画面（共通機能）', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     // 各テストの前にストレージをセットアップ
     const page = await openOptions(context, extensionId);
+    await clearStorage(page);
     await setupTestStorage(page, {
       withGoal: true,
       withAnalyticsOptIn: true

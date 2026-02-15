@@ -1,6 +1,10 @@
 import { test, expect } from './fixtures/extension';
 import { openExternalSite, openPopup } from './helpers/pages';
-import { setStorageData, clearStorage } from './helpers/storage';
+import {
+  setStorageData,
+  clearStorage,
+  clearStorageFromExtension
+} from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 
 /**
@@ -10,10 +14,8 @@ import { TEST_DOMAINS } from './helpers/constants';
  */
 
 test.describe('Interaction - 機能間相互作用', () => {
-  test.beforeEach(async ({ context }) => {
-    const page = await context.newPage();
-    await clearStorage(page);
-    await page.close();
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
   });
 
   test('INT-001: Pause + Time Limit 同時有効時、Pause が優先される', async ({

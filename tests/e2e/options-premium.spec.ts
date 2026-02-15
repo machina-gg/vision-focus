@@ -2,6 +2,7 @@ import { test, expect } from './fixtures/extension';
 import {
   openOptions,
   setupTestStorage,
+  clearStorage,
   setStorageData,
   SELECTORS
 } from './helpers';
@@ -16,6 +17,7 @@ test.describe('Options - Premium Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     // 各テストの前にストレージをセットアップ
     const page = await openOptions(context, extensionId);
+    await clearStorage(page);
     await setupTestStorage(page, {
       withGoal: true,
       withAnalyticsOptIn: true
