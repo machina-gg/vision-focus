@@ -42,14 +42,8 @@
     }
   },
   "wastedTime": {
-    "message": "$TIME$ wasted on this site",
-    "description": "Wasted time display on blocked page",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "2 hr 15 min"
-      }
-    }
+    "message": "Wasted Time",
+    "description": "Wasted time label"
   },
   "topBlockedSites": {
     "message": "Top Blocked Sites",
@@ -324,8 +318,8 @@
     "description": "Goal sub-message label"
   },
   "goalSubTextPlaceholder": {
-    "message": "e.g., One step at a time",
-    "description": "Goal sub-message placeholder"
+    "message": "Add a motivational message...",
+    "description": "Goal sub-text placeholder"
   },
   "textColor": {
     "message": "Text Color",
@@ -534,10 +528,6 @@
   "goalTextPlaceholder": {
     "message": "What's your main focus today?",
     "description": "Goal text placeholder"
-  },
-  "goalSubTextPlaceholder": {
-    "message": "Add a motivational message...",
-    "description": "Goal sub-text placeholder"
   },
   "previewText": {
     "message": "Preview",
@@ -1221,10 +1211,6 @@
     "message": "Add sites to track their blocking status and usage time.",
     "description": "No tracked sites description"
   },
-  "wastedTime": {
-    "message": "Wasted Time",
-    "description": "Wasted time label"
-  },
   "wastedTimeSite": {
     "message": "Wasted Time by Site",
     "description": "Wasted time by site section title"
@@ -1857,10 +1843,6 @@
     "message": "Image downloaded successfully.",
     "description": "Download success message"
   },
-  "topBlockedSite": {
-    "message": "Most Blocked",
-    "description": "Top blocked site label"
-  },
   "passwordProtection": {
     "message": "Password Protection",
     "description": "Password protection section title"
@@ -2108,5 +2090,13 @@
   "languageSelectDescription": {
     "message": "Select the language for the dashboard",
     "description": "Language selection description"
+  },
+  "youtubeTimeLimitReached": {
+    "message": "YouTube time limit reached. Take a break!",
+    "description": "Message shown when YouTube time limit is exceeded"
+  },
+  "youtubeHomeFeedHidden": {
+    "message": "Home feed is hidden",
+    "description": "Message shown when YouTube home feed is hidden"
   }
 }

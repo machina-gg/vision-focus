@@ -8,6 +8,7 @@ import {
   AnalyticsDataSchema,
   YouTubeSettingsSchema
 } from '~/types/messageSchemas';
+import { getMessage } from '~/lib/i18n';
 
 // Run only on YouTube
 export const config: PlasmoCSConfig = {
@@ -97,13 +98,14 @@ function generateCSS(settings: YouTubeSettings): string {
 
   // If time limit is exceeded, hide all content
   if (timeLimitExceeded) {
+    const timeLimitMessage = getMessage('youtubeTimeLimitReached');
     rules.push(`
       /* Time limit exceeded - hide all YouTube content */
       ytd-app #content {
         display: none !important;
       }
       ytd-app::after {
-        content: 'YouTube time limit reached. Take a break!';
+        content: '${timeLimitMessage}';
         display: flex;
         align-items: center;
         justify-content: center;
@@ -184,6 +186,7 @@ function generateCSS(settings: YouTubeSettings): string {
   }
 
   if (settings.hideHomeFeed) {
+    const homeFeedHiddenMessage = getMessage('youtubeHomeFeedHidden');
     rules.push(`
       /* Hide home feed - show only search bar */
       ${SELECTORS.homeFeed},
@@ -193,7 +196,7 @@ function generateCSS(settings: YouTubeSettings): string {
       }
       /* Show a message instead */
       ytd-browse[page-subtype="home"]::after {
-        content: 'ホームフィードが隠れています';
+        content: '${homeFeedHiddenMessage}';
         display: block;
         text-align: center;
         padding: 100px 20px;

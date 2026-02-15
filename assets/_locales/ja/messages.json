@@ -42,14 +42,8 @@
     }
   },
   "wastedTime": {
-    "message": "このサイトで $TIME$ 浪費",
-    "description": "ブロック中画面での浪費時間表示",
-    "placeholders": {
-      "time": {
-        "content": "$1",
-        "example": "2時間15分"
-      }
-    }
+    "message": "浪費時間",
+    "description": "浪費時間ラベル"
   },
   "topBlockedSites": {
     "message": "よくブロックしたサイト",
@@ -324,8 +318,8 @@
     "description": "目標サブメッセージラベル"
   },
   "goalSubTextPlaceholder": {
-    "message": "例: 一歩ずつ前へ",
-    "description": "目標サブメッセージプレースホルダー"
+    "message": "モチベーションメッセージを追加...",
+    "description": "目標サブテキストプレースホルダー"
   },
   "textColor": {
     "message": "文字色",
@@ -534,10 +528,6 @@
   "goalTextPlaceholder": {
     "message": "今日の主な目標は？",
     "description": "目標テキストプレースホルダー"
-  },
-  "goalSubTextPlaceholder": {
-    "message": "モチベーションメッセージを追加...",
-    "description": "目標サブテキストプレースホルダー"
   },
   "previewText": {
     "message": "プレビュー",
@@ -1221,10 +1211,6 @@
     "message": "サイトを追加して、ブロック状況や利用時間を追跡しましょう。",
     "description": "追跡中サイトなし説明"
   },
-  "wastedTime": {
-    "message": "浪費時間",
-    "description": "浪費時間ラベル"
-  },
   "wastedTimeSite": {
     "message": "サイト別浪費時間",
     "description": "サイト別浪費時間セクションタイトル"
@@ -1458,8 +1444,8 @@
     "description": "今日のブロック回数ラベル"
   },
   "topBlockedSite": {
-    "message": "よくブロック",
-    "description": "一番ブロックしているサイトラベル"
+    "message": "最もブロック",
+    "description": "最もブロックしたサイトラベル"
   },
   "blockingDays": {
     "message": "継続日数",
@@ -1857,10 +1843,6 @@
     "message": "画像をダウンロードしました。",
     "description": "ダウンロード成功メッセージ"
   },
-  "topBlockedSite": {
-    "message": "最もブロック",
-    "description": "最もブロックしたサイトラベル"
-  },
   "passwordProtection": {
     "message": "パスワード保護",
     "description": "パスワード保護セクションタイトル"
@@ -2108,5 +2090,13 @@
   "languageSelectDescription": {
     "message": "ダッシュボードの表示言語を選択してください",
     "description": "言語選択の説明"
+  },
+  "youtubeTimeLimitReached": {
+    "message": "YouTube の利用時間制限に達しました。休憩しましょう！",
+    "description": "YouTube の利用時間制限を超えた時に表示されるメッセージ"
+  },
+  "youtubeHomeFeedHidden": {
+    "message": "ホームフィードが隠れています",
+    "description": "YouTube のホームフィードが非表示の時に表示されるメッセージ"
   }
 }
