@@ -18,7 +18,8 @@ import {
   useCurrentDomain,
   usePasswordVerification,
   usePopupActions,
-  usePremiumStatus
+  usePremiumStatus,
+  useResolvedPreset
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
@@ -33,6 +34,11 @@ function PopupAppContent() {
   const { settings, setSettings, vision } = useSettings();
   const stats = useBackgroundStats(POPUP_STATS_POLLING_MS);
   const { isPremium } = usePremiumStatus();
+  const { displaySettings } = useResolvedPreset({
+    vision,
+    settings,
+    isPremium
+  });
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
 
   const {
@@ -109,8 +115,7 @@ function PopupAppContent() {
 
         <GoalCard
           goalText={
-            vision?.defaultSettings?.goalText ||
-            DEFAULT_VISION.defaultSettings.goalText
+            displaySettings.goalText || DEFAULT_VISION.defaultSettings.goalText
           }
           onClick={handleGoalClick}
         />
