@@ -27,6 +27,7 @@ import {
   useSchedules,
   usePremiumStatus
 } from '~/hooks';
+import { getExtensionURL } from '~/lib/chromeApi';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
@@ -181,7 +182,7 @@ function OptionsAppContent() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
             <img
-              src="/assets/images/logo.png"
+              src={getExtensionURL('assets/images/logo.png')}
               alt="VisionFocus Logo"
               className="h-8 w-8 object-contain"
             />
