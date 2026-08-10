@@ -82,15 +82,27 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 
 環境構築後（`/project:setup` 実行後）に使用可能：
 
-| コマンド        | 説明                                |
-| --------------- | ----------------------------------- |
-| `pnpm dev`      | 開発サーバー起動（HMR対応）         |
-| `pnpm build`    | 本番ビルド（build/chrome-mv3-prod） |
-| `pnpm package`  | Chrome Web Store用zipファイル作成   |
-| `pnpm lint`     | ESLint 実行                         |
-| `pnpm format`   | Prettier でフォーマット             |
-| `pnpm test`     | Vitest で単体テスト                 |
-| `pnpm test:e2e` | Playwright で E2E テスト            |
+| コマンド             | 説明                                |
+| -------------------- | ----------------------------------- |
+| `pnpm dev`           | 開発サーバー起動（HMR対応）         |
+| `pnpm build`         | 本番ビルド（build/chrome-mv3-prod） |
+| `pnpm package`       | Chrome Web Store用zipファイル作成   |
+| `pnpm lint`          | ESLint 実行                         |
+| `pnpm format`        | Prettier でフォーマット             |
+| `pnpm test`          | Vitest で単体テスト                 |
+| `pnpm test:coverage` | カバレッジ計測（閾値チェック付き）  |
+| `pnpm test:e2e`      | Playwright で E2E テスト            |
+
+**カバレッジ:**
+
+```bash
+pnpm test:coverage
+```
+
+- 集計対象は `src/**`（story・テストコード・型定義のみのファイルは除外）
+- 閾値を下回ると失敗する。CI の `coverage` ジョブでも同じチェックが走る
+- 詳細な HTML レポートは `coverage/index.html` に出力される
+- 閾値は退行防止のための下限値。テスト追加に合わせて `vitest.config.ts` で段階的に引き上げる
 
 **E2E テストの前提条件:**
 
