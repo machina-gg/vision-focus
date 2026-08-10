@@ -23,17 +23,19 @@ export default defineConfig({
         'src/types/index.ts',
         'src/types/messages.ts',
         'src/types/report.ts',
-        'src/types/storageSchemas.ts'
+        'src/types/storageSchemas.ts',
+        // re-export のみのファイル（ロジックを持たず、実体は src/lib 側でテスト済み）
+        'src/background/time-limit.ts'
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       // 現状値を下回らないラインを下限とする（退行防止が目的）。
       // src/background と src/components が未テストのため低い水準から始め、
       // テスト追加に合わせて段階的に引き上げる
       thresholds: {
-        statements: 28,
+        statements: 29,
         branches: 80,
-        functions: 55,
-        lines: 28
+        functions: 56,
+        lines: 29
       }
     }
   },
