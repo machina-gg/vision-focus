@@ -25,8 +25,7 @@ export {
   type DashboardPreset,
   type VisionSettings,
   DEFAULT_DISPLAY_SETTINGS,
-  DEFAULT_VISION,
-  getCurrentDisplaySettings
+  DEFAULT_VISION
 } from './vision';
 
 // Font types
