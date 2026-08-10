@@ -17,6 +17,9 @@ coverage/
 playwright-report/
 test-results/
 
+# Storybook（pnpm build-storybook で再生成できる成果物）
+storybook-static/
+
 # Plasmo
 .plasmo/
 
