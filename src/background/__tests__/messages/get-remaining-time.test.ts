@@ -7,7 +7,7 @@ vi.mock('../../time-limit', () => ({
 }));
 
 import { getTimeLimitInfoForUrl } from '../../time-limit';
-import handler from '../get-remaining-time';
+import handler from '../../messages/get-remaining-time';
 
 interface Response {
   success: boolean;

@@ -64,7 +64,7 @@ interface Response {
  */
 async function loadHandler() {
   vi.resetModules();
-  const mod = await import('../tracker-heartbeat');
+  const mod = await import('../../messages/tracker-heartbeat');
   return mod.default;
 }
 

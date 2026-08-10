@@ -30,7 +30,7 @@ import {
 } from '~/lib/storage';
 import { canAddToBlocklist } from '~/lib/license';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import handler from '../add-block';
+import handler from '../../messages/add-block';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_ANALYTICS,

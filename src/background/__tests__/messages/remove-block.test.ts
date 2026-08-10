@@ -20,7 +20,7 @@ import {
   setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules } from '../../blocker';
-import handler from '../remove-block';
+import handler from '../../messages/remove-block';
 import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 const blockItem = {

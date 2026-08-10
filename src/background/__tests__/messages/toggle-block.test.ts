@@ -30,7 +30,7 @@ import {
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
-import handler from '../toggle-block';
+import handler from '../../messages/toggle-block';
 import { DEFAULT_SETTINGS, DEFAULT_ANALYTICS } from '~/types/storage';
 
 interface Response {

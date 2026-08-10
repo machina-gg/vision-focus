@@ -16,7 +16,7 @@ vi.mock('~/background/blocker', () => ({
 
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '~/background/blocker';
-import handler from '../toggle-pause';
+import handler from '../../messages/toggle-pause';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
 describe('toggle-pause ハンドラ', () => {
