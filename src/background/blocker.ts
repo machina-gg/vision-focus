@@ -1,7 +1,5 @@
-import { generateId } from '~/lib/domain';
 import { getSettings } from '~/lib/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
-import type { BlockItem } from '~/types/storage';
 import {
   getBlockState,
   getActiveBlockedDomains,
@@ -78,52 +76,6 @@ export async function shouldBlockUrl(
     blocked: state.blocked,
     reason: state.reason
   };
-}
-
-// Legacy function for backward compatibility
-export async function isUrlBlocked(url: string): Promise<boolean> {
-  const result = await shouldBlockUrl(url);
-  return result.blocked;
-}
-
-// Add domain to block list and update rules
-export async function addBlockedDomain(
-  domain: string,
-  isWildcard: boolean
-): Promise<boolean> {
-  const settings = await getSettings();
-
-  // Check free tier limit
-  if (settings.blockList.length >= 5) {
-    // TODO: Check premium status
-    return false;
-  }
-
-  const newItem: BlockItem = {
-    id: generateId(),
-    domain: isWildcard ? `*.${domain.replace('*.', '')}` : domain,
-    isWildcard,
-    createdAt: new Date().toISOString(),
-    enabled: true
-  };
-
-  settings.blockList.push(newItem);
-
-  const { setSettings } = await import('~/lib/storage');
-  await setSettings(settings);
-  await updateBlockRules();
-
-  return true;
-}
-
-// Remove domain from block list
-export async function removeBlockedDomain(id: string): Promise<void> {
-  const settings = await getSettings();
-  settings.blockList = settings.blockList.filter((item) => item.id !== id);
-
-  const { setSettings } = await import('~/lib/storage');
-  await setSettings(settings);
-  await updateBlockRules();
 }
 
 // Check all open tabs and redirect any that match blocked domains

@@ -50,25 +50,3 @@ export const DEFAULT_VISION: VisionSettings = {
   presets: [],
   activePresetId: null
 };
-
-// Helper to get current display settings based on activePresetId
-export function getCurrentDisplaySettings(
-  vision: VisionSettings
-): DashboardDisplaySettings {
-  if (vision.activePresetId) {
-    const preset = vision.presets.find((p) => p.id === vision.activePresetId);
-    if (preset) {
-      return {
-        goalText: preset.goalText,
-        goalSubText: preset.goalSubText,
-        textColor: preset.textColor,
-        backgroundType: preset.backgroundType,
-        backgroundImage: preset.backgroundImage,
-        backgroundColor: preset.backgroundColor,
-        customBackgroundData: preset.customBackgroundData,
-        fontSettings: preset.fontSettings
-      };
-    }
-  }
-  return vision.defaultSettings;
-}
