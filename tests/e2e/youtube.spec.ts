@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/extension';
-import { openExternalSite } from './helpers/pages';
+import { openExternalSite, openStoragePage } from './helpers/pages';
 import {
   setStorageData,
   clearStorage,
@@ -23,7 +23,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // YouTube Shorts を非表示に設定
     await setStorageData(page, 'settings', {
@@ -63,7 +63,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -103,7 +103,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -141,7 +141,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // YouTube を完全ブロック
     await setStorageData(page, 'settings', {
@@ -177,7 +177,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // YouTube Time Limit を設定
     await setStorageData(page, 'settings', {
@@ -206,7 +206,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // YouTube Time Limit を設定
     await setStorageData(page, 'settings', {
@@ -267,7 +267,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 最初は Shorts 非表示なし
     await setStorageData(page, 'settings', {
@@ -298,22 +298,22 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     expect(shortsHidden).toBeFalsy();
 
-    // 設定を変更
-    await youtubePage.evaluate(async () => {
-      await chrome.storage.local.set({
-        settings: {
-          language: 'en',
-          paused: false,
-          youtube: {
-            blockAccess: false,
-            hideShorts: true, // 有効化
-            hideRecommendations: false,
-            hideComments: false,
-            timeLimit: null
-          }
-        }
-      });
+    // 設定を変更する。
+    // page.evaluate はページのメインワールドで実行されるため、コンテンツ
+    // スクリプトと違い chrome.storage を参照できない。拡張機能ページ経由で更新する
+    const updatePage = await openStoragePage(context, extensionId);
+    await setStorageData(updatePage, 'settings', {
+      language: 'en',
+      paused: false,
+      youtube: {
+        blockAccess: false,
+        hideShorts: true, // 有効化
+        hideRecommendations: false,
+        hideComments: false,
+        timeLimit: null
+      }
     });
+    await updatePage.close();
 
     // storage.watch が反応するまで待機
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -332,7 +332,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -365,7 +365,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await page.close();
 
-    const page2 = await context.newPage();
+    const page2 = await openStoragePage(context, extensionId);
     const analytics = (await getStorageData(page2, 'analytics')) as any;
 
     // YouTube のトラッキングデータが記録されていることを確認
@@ -379,7 +379,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -445,7 +445,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // blockAccess と Time Limit を両方設定
     await setStorageData(page, 'settings', {

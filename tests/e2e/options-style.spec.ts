@@ -450,38 +450,27 @@ test.describe('Options - Style Tab', () => {
     await page.close();
   });
 
-  test('OPT-ST16: Free ダウングレード時、2件目以降のプリセットがロックされる', async ({
+  test('OPT-ST16: Free ダウングレード時、上限を超えるプリセットがロックされる', async ({
     context,
     extensionId
   }) => {
-    // 複数プリセットを作成
+    // 無料版の上限（FEATURE_LIMITS.free.maxPresets = 3）を 1 件超える 4 件を用意する
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
       defaultSettings: {
         goalText: 'Focus on what matters',
         subText: 'Stay productive'
       },
-      presets: [
-        {
-          id: 'default',
-          name: 'Default',
-          goalText: 'Focus on what matters',
-          subText: 'Stay productive',
-          textColor: '#ffffff',
-          backgroundColor: '#1a1a2e',
-          backgroundType: 'color'
-        },
-        {
-          id: 'preset2',
-          name: 'Preset 2',
-          goalText: 'Goal 2',
-          subText: 'Sub 2',
-          textColor: '#000000',
-          backgroundColor: '#ffffff',
-          backgroundType: 'color'
-        }
-      ],
-      activePresetId: 'default'
+      presets: [1, 2, 3, 4].map((n) => ({
+        id: `preset${n}`,
+        name: `Preset ${n}`,
+        goalText: `Goal ${n}`,
+        subText: `Sub ${n}`,
+        textColor: '#ffffff',
+        backgroundColor: '#1a1a2e',
+        backgroundType: 'color'
+      })),
+      activePresetId: 'preset1'
     });
     // Freeユーザー（Premiumなし）
     await setStorageData(setupPage, 'premium', {
@@ -491,18 +480,23 @@ test.describe('Options - Style Tab', () => {
 
     const page = await openOptions(context, extensionId, 'styles');
 
-    // 2件目のプリセットがロックされている（Lock アイコンが表示）
-    const preset2Button = page
+    // 上限内（1〜3件目）はロックされない
+    for (const n of [1, 2, 3]) {
+      const unlocked = page
+        .locator(SELECTORS.styles.presetButton)
+        .filter({ hasText: `Preset ${n}` });
+      await expect(unlocked).toBeVisible();
+      await expect(unlocked.locator('svg.lucide-lock')).toHaveCount(0);
+      await expect(unlocked).toBeEnabled();
+    }
+
+    // 上限を超える 4 件目はロックされる
+    const locked = page
       .locator(SELECTORS.styles.presetButton)
-      .filter({ hasText: 'Preset 2' });
-    await expect(preset2Button).toBeVisible();
-
-    // ロックアイコンが表示される
-    const lockIcon = preset2Button.locator('svg.lucide-lock');
-    await expect(lockIcon).toBeVisible();
-
-    // ボタンが無効化されている
-    await expect(preset2Button).toBeDisabled();
+      .filter({ hasText: 'Preset 4' });
+    await expect(locked).toBeVisible();
+    await expect(locked.locator('svg.lucide-lock')).toBeVisible();
+    await expect(locked).toBeDisabled();
 
     await page.close();
   });

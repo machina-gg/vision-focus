@@ -41,6 +41,30 @@ export async function openNewTab(
 }
 
 /**
+ * chrome.storage を操作するためのページを開く
+ *
+ * chrome.storage.local は拡張機能のページ（chrome-extension:// スキーム）でしか
+ * 参照できない。context.newPage() で開いた about:blank に対して
+ * setStorageData / getStorageData を呼ぶと chrome が undefined になり、
+ * テストの準備段階で TypeError になる。
+ *
+ * ストレージ操作用のページが必要な場合は必ずこのヘルパーを使う。
+ *
+ * @param context - BrowserContext
+ * @param extensionId - 拡張機能ID
+ * @returns 拡張機能コンテキストのページ
+ */
+export async function openStoragePage(
+  context: BrowserContext,
+  extensionId: string
+): Promise<Page> {
+  const page = await context.newPage();
+  await page.goto(EXTENSION_URLS.options(extensionId));
+  await page.waitForLoadState('domcontentloaded');
+  return page;
+}
+
+/**
  * Options ページを開く
  *
  * @param context - BrowserContext
