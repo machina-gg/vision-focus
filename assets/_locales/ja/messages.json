@@ -289,6 +289,14 @@
     "message": "只今の目標",
     "description": "目標カードラベル"
   },
+  "noGoalSet": {
+    "message": "目標が未設定です。クリックして設定しましょう",
+    "description": "目標未設定時に目標カードへ表示する案内"
+  },
+  "goalPreviewPlaceholder": {
+    "message": "ここに目標が表示されます",
+    "description": "スタイル設定プレビューで目標未入力時に表示する文言"
+  },
   "saved": {
     "message": "保存しました",
     "description": "保存成功フィードバック"

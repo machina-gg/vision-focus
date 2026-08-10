@@ -289,6 +289,14 @@
     "message": "Current Goal",
     "description": "Goal card label"
   },
+  "noGoalSet": {
+    "message": "No goal set yet - click to set one",
+    "description": "Prompt shown on the goal card when no goal is set"
+  },
+  "goalPreviewPlaceholder": {
+    "message": "Your goal will appear here",
+    "description": "Placeholder shown in the style settings preview when no goal is set"
+  },
   "saved": {
     "message": "Saved!",
     "description": "Save success feedback"

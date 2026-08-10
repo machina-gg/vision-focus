@@ -100,7 +100,7 @@ export function StylesTab({ isPremium, featureLimits }: StylesTabProps) {
                     }}
                   >
                     {draftDisplaySettings.goalText ||
-                      'Your goal will appear here'}
+                      getMessage('goalPreviewPlaceholder')}
                   </p>
                   {draftDisplaySettings.goalSubText && (
                     <p
