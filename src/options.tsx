@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+// ロゴはバンドルに含めるため data-base64 スキームで import する。
+// getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
+import logoBase64 from 'data-base64:assets/images/logo.png';
+
 import {
   Ban,
   Calendar,
@@ -27,7 +31,6 @@ import {
   useSchedules,
   usePremiumStatus
 } from '~/hooks';
-import { getExtensionURL } from '~/lib/chromeApi';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
@@ -182,7 +185,7 @@ function OptionsAppContent() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
             <img
-              src={getExtensionURL('assets/images/logo.png')}
+              src={logoBase64}
               alt="VisionFocus Logo"
               className="h-8 w-8 object-contain"
             />
