@@ -26,7 +26,6 @@ import { storage } from '~/lib/storage';
 import { formatTimeLocalized } from '~/lib/time';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { AnalyticsOptIn } from '~/types/storage';
-import { DEFAULT_VISION } from '~/types/storage';
 
 import './styles/globals.css';
 
@@ -114,9 +113,7 @@ function PopupAppContent() {
         <QuickBlockButton currentDomain={currentDomain} onBlock={handleBlock} />
 
         <GoalCard
-          goalText={
-            displaySettings.goalText || DEFAULT_VISION.defaultSettings.goalText
-          }
+          goalText={displaySettings.goalText}
           onClick={handleGoalClick}
         />
 

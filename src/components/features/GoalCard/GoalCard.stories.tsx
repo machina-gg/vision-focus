@@ -29,6 +29,13 @@ export const Default: Story = {
   }
 };
 
+// 目標未設定時は設定を促す案内が薄い文字で表示される
+export const NoGoal: Story = {
+  args: {
+    goalText: ''
+  }
+};
+
 export const LongText: Story = {
   args: {
     goalText:

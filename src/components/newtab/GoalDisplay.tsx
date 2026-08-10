@@ -56,11 +56,14 @@ export function GoalDisplay({
 
   return (
     <div className="group relative">
+      {/* 目標未設定時は空見出しにせず、設定を促す案内を薄く表示する */}
       <h1
-        className="drop-shadow-lg leading-tight transition-opacity duration-300"
+        className={`drop-shadow-lg leading-tight transition-opacity duration-300 ${
+          goalText.trim() ? '' : 'opacity-60 italic'
+        }`}
         style={{ color: textColor, ...fontStyle }}
       >
-        {goalText}
+        {goalText.trim() ? goalText : getMessage('noGoalSet')}
       </h1>
       {goalSubText && (
         <p
