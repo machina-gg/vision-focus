@@ -30,10 +30,10 @@ export default defineConfig({
       // src/background と src/components が未テストのため低い水準から始め、
       // テスト追加に合わせて段階的に引き上げる
       thresholds: {
-        statements: 24,
-        branches: 77,
-        functions: 52,
-        lines: 24
+        statements: 28,
+        branches: 80,
+        functions: 55,
+        lines: 28
       }
     }
   },
