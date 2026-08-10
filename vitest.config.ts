@@ -29,13 +29,13 @@ export default defineConfig({
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       // 現状値を下回らないラインを下限とする（退行防止が目的）。
-      // src/background と src/components が未テストのため低い水準から始め、
+      // src/components が未テストのため低い水準から始め、
       // テスト追加に合わせて段階的に引き上げる
       thresholds: {
-        statements: 29,
-        branches: 80,
-        functions: 56,
-        lines: 29
+        statements: 30,
+        branches: 82,
+        functions: 57,
+        lines: 30
       }
     }
   },
