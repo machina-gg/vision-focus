@@ -21,7 +21,6 @@ export interface AddBlockRequest {
 export interface AddBlockResponse {
   success: boolean;
   error?: string;
-  limitReached?: boolean;
 }
 
 // Remove Block

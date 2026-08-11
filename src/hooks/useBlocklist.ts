@@ -3,7 +3,6 @@ import { sendToBackground } from '@plasmohq/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { canAddToBlocklist } from '~/lib/license';
 import { storage } from '~/lib/storage';
 import type {
   AppSettings,
@@ -41,14 +40,6 @@ export function useBlocklist({
 
   const handleAddDomain = useCallback(async () => {
     if (!settings || !newDomain.trim()) return;
-
-    const limitCheck = await canAddToBlocklist(settings.blockList.length);
-    if (!limitCheck.allowed) {
-      setBlockError(
-        limitCheck.reason || `Limit reached: ${limitCheck.limit} sites`
-      );
-      return;
-    }
 
     const parsed = parseDomainInput(newDomain);
     if (!parsed) {

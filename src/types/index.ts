@@ -47,9 +47,6 @@ export {
   DEFAULT_FONT_SETTINGS
 } from './font';
 
-// Premium types
-export { type FeatureLimits, FEATURE_LIMITS } from './premium';
-
 // Report types
 export { type WeeklyReport, type MonthlyReport } from './report';
 

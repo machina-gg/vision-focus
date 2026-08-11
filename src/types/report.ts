@@ -2,7 +2,7 @@
 
 import type { DailyStat } from './analytics';
 
-// Weekly report (Premium)
+// Weekly report
 export interface WeeklyReport {
   weekStart: string; // YYYY-MM-DD
   weekEnd: string; // YYYY-MM-DD
@@ -18,7 +18,7 @@ export interface WeeklyReport {
   trend: 'improving' | 'declining' | 'stable';
 }
 
-// Monthly report (Premium)
+// Monthly report
 export interface MonthlyReport {
   month: string; // YYYY-MM
   totalWasteTime: number; // seconds

@@ -163,7 +163,7 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
   unblockedSite.lastActivity = now;
   await setUnblockHistory(history);
 
-  // Also update analytics for graph display (Premium feature)
+  // グラフ表示用に analytics も更新する
   const analytics = await getAnalytics();
   const todayKey = getTodayKey();
 

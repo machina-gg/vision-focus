@@ -9,4 +9,3 @@ export * from './QuickBlockButton';
 export * from './ReportCard';
 export * from './StatsCard';
 export * from './TimeLimitBadge';
-export * from './UpgradePrompt';

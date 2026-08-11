@@ -162,7 +162,7 @@ export const LongGoal: Story = {
   render: () => <LongGoalWrapper />
 };
 
-const PremiumUserWrapper = () => {
+const FullFeaturedWrapper = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   return (
@@ -209,6 +209,6 @@ const PremiumUserWrapper = () => {
   );
 };
 
-export const PremiumUser: Story = {
-  render: () => <PremiumUserWrapper />
+export const FullFeatured: Story = {
+  render: () => <FullFeaturedWrapper />
 };

@@ -4,20 +4,15 @@ import { Check, Plus, Save, Target, Trash2 } from 'lucide-react';
 import { Button, Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { VisionSettings, DashboardDisplaySettings } from '~/types/storage';
-import type { FeatureLimits } from '~/types/premium';
+import { MAX_PRESETS } from '~/constants/limits';
 import type { UsePresetsReturn } from '~/hooks/usePresets';
 
 interface PresetSelectorProps {
   presets: UsePresetsReturn;
   vision: VisionSettings | undefined;
-  featureLimits: FeatureLimits;
 }
 
-export function PresetSelector({
-  presets,
-  vision,
-  featureLimits
-}: PresetSelectorProps) {
+export function PresetSelector({ presets, vision }: PresetSelectorProps) {
   const {
     draftPresets,
     selectedPresetId,
@@ -56,17 +51,13 @@ export function PresetSelector({
               draftPresets={draftPresets}
               vision={vision}
               selectedPresetId={selectedPresetId}
-              featureLimits={featureLimits}
               onSelectPreset={handleSelectPreset}
               onCreateClick={() => setShowSavePresetModal(true)}
             />
 
-            {draftPresets.length >= featureLimits.maxPresets && (
+            {draftPresets.length >= MAX_PRESETS && (
               <p className="text-xs text-gray-500 mt-2">
-                {getMessage(
-                  'maxPresetsReached',
-                  String(featureLimits.maxPresets)
-                )}
+                {getMessage('maxPresetsReached', String(MAX_PRESETS))}
               </p>
             )}
           </>
@@ -122,7 +113,6 @@ interface PresetButtonsProps {
   draftPresets: UsePresetsReturn['draftPresets'];
   vision: VisionSettings | undefined;
   selectedPresetId: string | null;
-  featureLimits: FeatureLimits;
   onSelectPreset: (presetId: string) => void;
   onCreateClick: () => void;
 }
@@ -131,7 +121,6 @@ function PresetButtons({
   draftPresets,
   vision,
   selectedPresetId,
-  featureLimits,
   onSelectPreset,
   onCreateClick
 }: PresetButtonsProps) {
@@ -164,7 +153,7 @@ function PresetButtons({
       })}
 
       {/* New preset button */}
-      {draftPresets.length < featureLimits.maxPresets && (
+      {draftPresets.length < MAX_PRESETS && (
         <button
           data-testid="style-new-preset-button"
           onClick={onCreateClick}

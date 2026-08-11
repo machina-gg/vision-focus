@@ -152,35 +152,3 @@ const SchedulesViewWrapper = () => {
 export const SchedulesView: Story = {
   render: () => <SchedulesViewWrapper />
 };
-
-const PremiumViewWrapper = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('blocklist');
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              VisionFocus Settings
-            </h1>
-          </div>
-          <Tabs
-            tabs={tabs.map((tab) => ({
-              id: tab.id,
-              label: tab.label,
-              icon: <tab.icon className="w-4 h-4" />
-            }))}
-            activeTab={activeTab}
-            onChange={(id) => setActiveTab(id as TabId)}
-          />
-          <div className="p-6"></div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const PremiumView: Story = {
-  render: () => <PremiumViewWrapper />
-};
