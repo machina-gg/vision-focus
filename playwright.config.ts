@@ -39,6 +39,12 @@ export default defineConfig({
 
   // スクリーンショット・動画設定
   use: {
+    // 既定はヘッドレス。
+    // 拡張機能は新ヘッドレス（channel: 'chromium'）でロードできるため、
+    // 画面を出す必要がない。ローカル実行でフォーカスを奪われず、
+    // 実行時間も短くなる（実測 1.7分 → 1.4分）。
+    // 描画を確認したいときは --headed を付ける
+    headless: true,
     // テスト失敗時のスクリーンショット
     screenshot: 'only-on-failure',
     // テスト失敗時の動画

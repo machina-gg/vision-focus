@@ -46,10 +46,16 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
   ],
 
   // BrowserContextのカスタマイズ
-  context: async ({ testServer }, use) => {
+  context: async ({ testServer, headless }, use) => {
     // Chrome拡張機能をロードした状態で BrowserContext を起動
     const context = await chromium.launchPersistentContext('', {
-      headless: false, // Chrome拡張は headless 非対応
+      // 新ヘッドレス（channel: 'chromium'）は拡張機能をサポートする。
+      // 旧来の headless: true は chrome-headless-shell を使うため
+      // 拡張機能をロードできない（そのため長らく headless: false だった）。
+      // 画面が出ないのでローカル実行中にフォーカスを奪われず、実行も速い。
+      // 描画を見て調べたいときは `pnpm test:e2e:headed` を使う
+      channel: 'chromium',
+      headless,
       ignoreHTTPSErrors: true,
       args: [
         `--disable-extensions-except=${EXTENSION_PATH}`,
