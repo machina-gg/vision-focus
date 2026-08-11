@@ -58,9 +58,27 @@ function createSelfSignedCert(): { key: string; cert: string } {
   return { key, cert };
 }
 
+/**
+ * HTML に埋め込む値をエスケープする
+ *
+ * ホスト名とパスはリクエスト由来の値なので、そのまま埋めると
+ * リフレクト型 XSS になる。ローカル専用のテストサーバであっても、
+ * 壊れた入力でページが崩れると原因の切り分けが難しくなるため必ず通す。
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /** ホスト名からテスト用のページを組み立てる */
-function renderPage(host: string, pathname: string): string {
-  const isYouTube = /(^|\.)youtube\.com$/.test(host);
+function renderPage(rawHost: string, rawPathname: string): string {
+  const host = escapeHtml(rawHost);
+  const pathname = escapeHtml(rawPathname);
+  const isYouTube = /(^|\.)youtube\.com$/.test(rawHost);
 
   // YouTube のコンテンツスクリプトは実 DOM を前提に CSS を注入するため、
   // 隠す対象の要素だけを最小限に再現する
