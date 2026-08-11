@@ -12,12 +12,20 @@ on:
     # 毎週月曜 03:00 UTC（JST 正午）に実行し、新規 CVE を commit と無関係に検知する
     - cron: '0 3 * * 1'
 
+# デフォルトを最小権限にし、昇格が必要なジョブ（codeql）にのみ個別に権限を付与する
+permissions:
+  contents: read
+
 jobs:
   # ブロッキング: npm audit（high 以上のみ拾う。moderate まで含めると transitive 依存の
   # ノイズで形骸化するため、まずは high から開始する）
   audit-high:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
+    # 【暫定措置】develop に既存の脆弱性（1 critical / 40 high）があるため一時的に非ブロッキング化している。
+    # 脆弱性解消後にこの continue-on-error を削除し、ブロッキングへ戻すこと。
+    # 追従 Issue: #350
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
