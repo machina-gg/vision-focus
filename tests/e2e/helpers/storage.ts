@@ -234,6 +234,45 @@ export function makeSettings(
 }
 
 /**
+ * AnalyticsData の完全な形を作る
+ *
+ * 保存キーは 'analytics'（'analyticsData' ではない）。また各集計は
+ * ドメインをキーとするレコードで、配列ではない。
+ *
+ * @param overrides - 上書きする値
+ */
+export function makeAnalytics(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    dailyStats: {},
+    siteTime: {},
+    siteCategories: {},
+    siteBlockCounts: {},
+    siteUnblockCounts: {},
+    timeLimitUsage: {},
+    ...overrides
+  };
+}
+
+/**
+ * サイト別ブロック回数のレコードを作る
+ *
+ * @param entries - [ドメイン, 回数] の配列
+ */
+export function makeSiteBlockCounts(
+  entries: [string, number][]
+): Record<string, { domain: string; count: number; lastBlocked: string }> {
+  const now = new Date().toISOString();
+  return Object.fromEntries(
+    entries.map(([domain, count]) => [
+      domain,
+      { domain, count, lastBlocked: now }
+    ])
+  );
+}
+
+/**
  * テスト用の初期設定をセットする
  *
  * @param page - Playwright Page オブジェクト

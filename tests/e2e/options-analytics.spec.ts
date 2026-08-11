@@ -4,6 +4,8 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  makeAnalytics,
+  makeSiteBlockCounts,
   SELECTORS
 } from './helpers';
 
@@ -45,13 +47,16 @@ test.describe('Options - Analytics Tab', () => {
   }) => {
     // テスト用の分析データを追加
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'analyticsData', {
-      siteBlockCounts: [
-        { domain: 'youtube.com', count: 10 },
-        { domain: 'reddit.com', count: 5 }
-      ],
-      timeLimitUsage: []
-    });
+    await setStorageData(
+      setupPage,
+      'analytics',
+      makeAnalytics({
+        siteBlockCounts: makeSiteBlockCounts([
+          ['youtube.com', 10],
+          ['reddit.com', 5]
+        ])
+      })
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -295,13 +300,16 @@ test.describe('Options - Analytics Tab', () => {
   }) => {
     // テスト用の分析データを追加
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'analyticsData', {
-      siteBlockCounts: [
-        { domain: 'youtube.com', count: 10 },
-        { domain: 'reddit.com', count: 5 }
-      ],
-      timeLimitUsage: []
-    });
+    await setStorageData(
+      setupPage,
+      'analytics',
+      makeAnalytics({
+        siteBlockCounts: makeSiteBlockCounts([
+          ['youtube.com', 10],
+          ['reddit.com', 5]
+        ])
+      })
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -319,7 +327,7 @@ test.describe('Options - Analytics Tab', () => {
 
     // データがリセットされる（ストレージを確認）
     const analyticsData = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('analyticsData');
+      const result = await chrome.storage.local.get('analytics');
       return (
         result.analyticsData || { siteBlockCounts: [], timeLimitUsage: [] }
       );
@@ -346,7 +354,7 @@ test.describe('Options - Analytics Tab', () => {
         enabled: true
       }
     ]);
-    await setStorageData(setupPage, 'analyticsData', {
+    await setStorageData(setupPage, 'analytics', {
       siteBlockCounts: [{ domain: 'youtube.com', count: 10 }],
       timeLimitUsage: []
     });

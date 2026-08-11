@@ -88,7 +88,10 @@ export function AnalyticsSummary({
       {/* 追跡中のサイト一覧（浪費時間統合） */}
       {hasTrackedSites && (
         <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <h3
+            className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"
+            data-testid="analytics-tracked-sites-heading"
+          >
             <List className="w-4 h-4 text-gray-600" />
             {getMessage('trackedSitesList')} ({allTrackedSites.length})
           </h3>
@@ -209,6 +212,7 @@ function TrackedSiteItem({
           <div className="flex items-center gap-2">
             {isPremium && (
               <Button
+                data-testid="analytics-reblock-button"
                 variant="secondary"
                 size="sm"
                 onClick={() => onReblock(site.domain)}
@@ -219,6 +223,7 @@ function TrackedSiteItem({
               </Button>
             )}
             <Button
+              data-testid="analytics-stop-tracking-button"
               variant="ghost"
               size="sm"
               onClick={() => onStopTracking(site.domain)}

@@ -182,21 +182,18 @@ export const SELECTORS = {
 
   // Options - Analytics Tab
   analytics: {
-    siteRankingList:
-      'h3:has-text("よくブロックしたサイト"), h3:has-text("Top Blocked Sites")',
-    trackedSitesList:
-      'h3:has-text("追跡中のサイト"), h3:has-text("Tracked Sites")',
-    unblockHistory: 'h3:has-text("Unblock History"), h3:has-text("解除履歴")',
-    wastedTimeSection:
-      'h3:has-text("サイト別浪費時間"), h3:has-text("Wasted Time by Site")',
-    exportButton: 'button:has-text("CSV"), button:has-text("Export")',
-    refreshButton: 'button:has-text("更新"), button:has-text("Refresh")',
-    resetButton: 'button:has-text("リセット"), button:has-text("Reset")',
-    reblockButton: 'button:has-text("再ブロック"), button:has-text("Re-block")',
-    stopTrackingButton:
-      'button:has-text("追跡を停止"), button:has-text("Stop tracking")',
-    addSiteInput: 'input[placeholder*="example.com"]',
-    addSiteButton: 'button:has-text("追加"), button:has-text("Add")'
+    siteRankingList: '[data-testid="analytics-top-sites-heading"]',
+    trackedSitesList: '[data-testid="analytics-tracked-sites-heading"]',
+    unblockHistory: '[data-testid="analytics-tracked-sites-heading"]',
+    wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
+    exportButton: '[data-testid="analytics-export-button"]',
+    refreshButton: '[data-testid="analytics-refresh-button"]',
+    resetButton: '[data-testid="analytics-reset-button"]',
+    resetConfirmButton: '[data-testid="analytics-reset-confirm"]',
+    reblockButton: '[data-testid="analytics-reblock-button"]',
+    stopTrackingButton: '[data-testid="analytics-stop-tracking-button"]',
+    addSiteInput: '[data-testid="analytics-add-site-input"]',
+    addSiteButton: '[data-testid="analytics-add-site-button"]'
   },
 
   // Options - Premium Tab

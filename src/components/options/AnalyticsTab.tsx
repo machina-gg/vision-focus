@@ -59,11 +59,15 @@ export function AnalyticsTab({
 
       {/* Add Site */}
       <Card>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
+        <h3
+          className="text-sm font-medium text-gray-700 mb-3"
+          data-testid="analytics-add-site-heading"
+        >
           {getMessage('addSiteToTrack')}
         </h3>
         <div className="flex gap-2">
           <Input
+            data-testid="analytics-add-site-input"
             value={newSiteDomain}
             onChange={(value) => setNewSiteDomain(value)}
             placeholder={getMessage('trackSitePlaceholder')}
@@ -71,6 +75,7 @@ export function AnalyticsTab({
             className="flex-1"
           />
           <Button
+            data-testid="analytics-add-site-button"
             variant="primary"
             onClick={handleAddSite}
             disabled={!newSiteDomain.trim()}
