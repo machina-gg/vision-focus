@@ -212,10 +212,9 @@ export const SELECTORS = {
     passwordFormSubmit: '[data-testid="password-form-submit"]',
     passwordFormCancel: '[data-testid="password-form-cancel"]',
     analyticsOptInToggle: '[data-testid="analytics-optin-toggle"]',
-    exportSettingsButton:
-      'button:has-text("エクスポート"), button:has-text("Export")',
-    importSettingsButton:
-      'button:has-text("選択"), button:has-text("Select File")',
+    exportSettingsButton: '[data-testid="settings-export-button"]',
+    importSettingsButton: '[data-testid="settings-import-button"]',
+    importSettingsInput: '[data-testid="settings-import-input"]',
     importResultMessage: '[data-testid="import-result-message"]',
     faqItem: '[data-testid="help-faq-item"]'
   }

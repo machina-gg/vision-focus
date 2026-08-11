@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures/extension';
 import { openPopup, openNewTab, openOptions } from './helpers/pages';
-import { clearStorageFromExtension, setupTestStorage } from './helpers/storage';
+import { clearStorageFromExtension } from './helpers/storage';
+import { setupTestStorageViaSW } from './helpers/sw';
 import { SELECTORS } from './helpers/constants';
 
 /**
@@ -19,9 +20,8 @@ test.describe('i18n - 多言語対応', () => {
     extensionId
   }) => {
     // 英語に設定
-    const setupPage = await openPopup(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'en' });
-    await setupPage.close();
+    // 言語設定は描画に直結するため、アプリに上書きされない SW 経由で置く
+    await setupTestStorageViaSW(context, { language: 'en' });
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -40,9 +40,8 @@ test.describe('i18n - 多言語対応', () => {
     extensionId
   }) => {
     // 日本語に設定
-    const setupPage = await openPopup(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'ja' });
-    await setupPage.close();
+    // 言語設定は描画に直結するため、アプリに上書きされない SW 経由で置く
+    await setupTestStorageViaSW(context, { language: 'ja' });
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -60,9 +59,8 @@ test.describe('i18n - 多言語対応', () => {
     extensionId
   }) => {
     // 最初は英語
-    const setupPage = await openPopup(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'en' });
-    await setupPage.close();
+    // 言語設定は描画に直結するため、アプリに上書きされない SW 経由で置く
+    await setupTestStorageViaSW(context, { language: 'en' });
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -87,9 +85,8 @@ test.describe('i18n - 多言語対応', () => {
     extensionId
   }) => {
     // 日本語に設定
-    const setupPage = await openPopup(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'ja' });
-    await setupPage.close();
+    // 言語設定は描画に直結するため、アプリに上書きされない SW 経由で置く
+    await setupTestStorageViaSW(context, { language: 'ja' });
 
     // Popup を開く
     const popupPage = await openPopup(context, extensionId);
@@ -121,9 +118,8 @@ test.describe('i18n - 多言語対応', () => {
     extensionId
   }) => {
     // 最初は英語
-    const setupPage = await openOptions(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'en' });
-    await setupPage.close();
+    // 言語設定は描画に直結するため、アプリに上書きされない SW 経由で置く
+    await setupTestStorageViaSW(context, { language: 'en' });
 
     // Options を開く
     const optionsPage = await openOptions(context, extensionId);
@@ -131,10 +127,10 @@ test.describe('i18n - 多言語対応', () => {
       'VisionFocus Dashboard'
     );
 
-    // 言語を日本語に変更する（ヘルパー経由で完全な設定を書き込む）
-    const updatePage = await openOptions(context, extensionId);
-    await setupTestStorage(updatePage, { language: 'ja' });
-    await updatePage.close();
+    // 言語を日本語に変更する。
+    // options ページを開いたまま clear すると、アプリが state を書き戻して
+    // 英語に戻してしまうため、clear せず上書きする
+    await setupTestStorageViaSW(context, { language: 'ja', clear: false });
 
     // リロードで反映されることを確認
     await optionsPage.reload();

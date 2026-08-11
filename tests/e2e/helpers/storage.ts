@@ -374,17 +374,25 @@ export function makeSiteBlockCounts(
  * @param page - Playwright Page オブジェクト
  * @param options - テストオプション
  */
-export async function setupTestStorage(
-  page: Page,
-  options: {
-    withGoal?: boolean;
-    withBlockList?: boolean;
-    withPassword?: boolean;
-    withAnalyticsOptIn?: boolean;
-    withSchedule?: boolean;
-    language?: 'en' | 'ja';
-  } = {}
-): Promise<void> {
+export interface TestStorageOptions {
+  withGoal?: boolean;
+  withBlockList?: boolean;
+  withPassword?: boolean;
+  withAnalyticsOptIn?: boolean;
+  withSchedule?: boolean;
+  language?: 'en' | 'ja';
+}
+
+/**
+ * テスト用の storage データを組み立てる（書き込みは行わない）
+ *
+ * AppSettings の必須フィールドを欠くと、実装側で settings.blockList.length の
+ * ような参照が例外になる（アプリはストレージに保存済みの値をそのまま使う）。
+ * 実装のスキーマと同じ形を必ず満たすこと。
+ */
+export function makeTestStorage(
+  options: TestStorageOptions = {}
+): Record<string, unknown> {
   const {
     withGoal = true,
     withBlockList = false,
@@ -394,11 +402,7 @@ export async function setupTestStorage(
     language = 'en'
   } = options;
 
-  // デフォルト設定。
-  // AppSettings の必須フィールドを欠くと、実装側で settings.blockList.length の
-  // ような参照が例外になる（アプリはストレージに保存済みの値をそのまま使う）。
-  // 実装のスキーマと同じ形を必ず満たすこと
-  const defaultSettings = {
+  const settings: Record<string, unknown> = {
     blockList: [],
     schedules: [],
     language,
@@ -427,7 +431,7 @@ export async function setupTestStorage(
   // パスワード保護は enabled と passwordHash の両方が必要
   // （src/hooks/usePopupActions.ts の isPasswordProtected）
   if (withPassword) {
-    defaultSettings['password'] = {
+    settings.password = {
       enabled: true,
       passwordHash: TEST_DATA.password.validHash
     };
@@ -436,7 +440,7 @@ export async function setupTestStorage(
   // 週間カレンダーはスケジュールが 1 件以上ないと描画されない
   // （WeeklyCalendar は schedules.length === 0 で null を返す）
   if (withSchedule) {
-    defaultSettings['schedules'] = [
+    settings.schedules = [
       {
         id: 'schedule-1',
         name: 'Work Hours',
@@ -449,10 +453,10 @@ export async function setupTestStorage(
     ];
   }
 
-  // ブロックリストは settings.blockList に保持される（トップレベルの
-  // blockList キーではない）
+  // ブロックリストは settings.blockList に保持される
+  // （トップレベルの blockList キーではない）
   if (withBlockList) {
-    defaultSettings['blockList'] = [
+    settings.blockList = [
       {
         id: '1',
         domain: 'example.com',
@@ -463,7 +467,7 @@ export async function setupTestStorage(
     ];
   }
 
-  await setStorageData(page, 'settings', defaultSettings);
+  const data: Record<string, unknown> = { settings };
 
   // Vision 設定（目標テキスト）。
   // DashboardDisplaySettings / DashboardPreset の全フィールドを満たすこと。
@@ -479,7 +483,7 @@ export async function setupTestStorage(
       customBackgroundData: null,
       fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
     };
-    const defaultVision = {
+    data.vision = {
       defaultSettings: displaySettings,
       presets: [
         {
@@ -491,6 +495,26 @@ export async function setupTestStorage(
       ],
       activePresetId: 'default'
     };
-    await setStorageData(page, 'vision', defaultVision);
+  }
+
+  return data;
+}
+
+/**
+ * テスト用の storage データをページ経由で書き込む
+ *
+ * 注意: 拡張機能のページを開いた状態で書くため、アプリの hydration が
+ * state を書き戻して上書きすることがある。言語設定のように「アプリが
+ * 読み込んで描画に使う」値を確実に置きたい場合は、SW 経由の
+ * `setupTestStorageViaSW` を使う。
+ */
+export async function setupTestStorage(
+  page: Page,
+  options: TestStorageOptions = {}
+): Promise<void> {
+  const data = makeTestStorage(options);
+
+  for (const [key, value] of Object.entries(data)) {
+    await setStorageData(page, key, value);
   }
 }

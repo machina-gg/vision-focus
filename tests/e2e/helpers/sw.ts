@@ -1,5 +1,7 @@
 import type { BrowserContext, Worker } from '@playwright/test';
 
+import { makeTestStorage, type TestStorageOptions } from './storage';
+
 /**
  * Service Worker（background）経由の操作ヘルパー
  *
@@ -27,20 +29,32 @@ export async function getServiceWorker(
  */
 export async function setupStorageViaSW(
   context: BrowserContext,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  options: { clear?: boolean } = {}
 ): Promise<void> {
   const sw = await getServiceWorker(context);
+  const { clear = true } = options;
 
-  await sw.evaluate(async (payload: string) => {
-    const entries = JSON.parse(payload) as Record<string, unknown>;
-    await chrome.storage.local.clear();
+  await sw.evaluate(
+    async (payload: string) => {
+      const { entries, clear } = JSON.parse(payload) as {
+        entries: Record<string, unknown>;
+        clear: boolean;
+      };
 
-    const stringified: Record<string, string> = {};
-    for (const [key, value] of Object.entries(entries)) {
-      stringified[key] = JSON.stringify(value);
-    }
-    await chrome.storage.local.set(stringified);
-  }, JSON.stringify(data));
+      // 拡張機能のページが開いている状態で clear すると、アプリが自分の
+      // state を書き戻して上書きすることがある。開いたまま書き換える
+      // 場合は clear: false を指定する
+      if (clear) await chrome.storage.local.clear();
+
+      const stringified: Record<string, string> = {};
+      for (const [key, value] of Object.entries(entries)) {
+        stringified[key] = JSON.stringify(value);
+      }
+      await chrome.storage.local.set(stringified);
+    },
+    JSON.stringify({ entries: data, clear })
+  );
 }
 
 /** 現在の動的ブロックルールの urlFilter 一覧を取得する */
@@ -138,4 +152,18 @@ export async function getStorageViaSW<T = unknown>(
     if (raw === undefined) return null;
     return typeof raw === 'string' ? JSON.parse(raw) : raw;
   }, key);
+}
+
+/**
+ * テスト用の storage データを SW 経由で書き込む
+ *
+ * アプリに上書きされないため、言語設定のように「アプリが読み込んで描画に
+ * 使う」値を確実に置きたいときはこちらを使う。
+ */
+export async function setupTestStorageViaSW(
+  context: BrowserContext,
+  options: TestStorageOptions & { clear?: boolean } = {}
+): Promise<void> {
+  const { clear, ...storageOptions } = options;
+  await setupStorageViaSW(context, makeTestStorage(storageOptions), { clear });
 }

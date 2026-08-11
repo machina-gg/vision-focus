@@ -183,6 +183,7 @@ export function HelpSettingsBackup({
               </p>
             </div>
             <Button
+              data-testid="settings-export-button"
               onClick={handleExport}
               disabled={exportStatus === 'loading'}
               size="sm"
@@ -225,6 +226,7 @@ export function HelpSettingsBackup({
             </div>
             <div>
               <input
+                data-testid="settings-import-input"
                 ref={fileInputRef}
                 type="file"
                 accept=".json"
@@ -232,6 +234,7 @@ export function HelpSettingsBackup({
                 className="hidden"
               />
               <Button
+                data-testid="settings-import-button"
                 onClick={handleImportClick}
                 disabled={importStatus === 'loading'}
                 size="sm"
