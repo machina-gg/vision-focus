@@ -18,25 +18,23 @@
 
 ### 機能コンポーネント
 
-| コンポーネント名    | 種別    | 説明                            |
-| ------------------- | ------- | ------------------------------- |
-| Header              | layout  | ヘッダー（ロゴ + ナビ）         |
-| GoalCard            | feature | 目標表示カード                  |
-| StatsCard           | feature | 統計表示カード                  |
-| BlockListItem       | feature | ブロックリスト項目              |
-| SiteTimeChart       | feature | サイト利用時間グラフ            |
-| ChallengeModal      | feature | 解除チャレンジモーダル          |
-| LockdownButton      | feature | ロックダウンモードボタン        |
-| QuickBlockButton    | feature | クイックブロックボタン          |
-| ScheduleEditor      | feature | スケジュール編集                |
-| PremiumBanner       | feature | 有料版アップグレードバナー      |
-| ImageUploader       | feature | 背景画像アップロード（Premium） |
-| FontPicker          | feature | フォント選択（20種類以上）      |
-| AnalyticsChart      | feature | 分析グラフ（recharts）          |
-| ReportCard          | feature | 週次/月次レポート表示           |
-| DownloadButton      | feature | 壁紙ダウンロード（Premium）     |
-| SiteCategoryManager | feature | サイトカテゴリ管理UI            |
-| UpgradePrompt       | feature | プレミアムアップグレード促進    |
+| コンポーネント名    | 種別    | 説明                       |
+| ------------------- | ------- | -------------------------- |
+| Header              | layout  | ヘッダー（ロゴ + ナビ）    |
+| GoalCard            | feature | 目標表示カード             |
+| StatsCard           | feature | 統計表示カード             |
+| BlockListItem       | feature | ブロックリスト項目         |
+| SiteTimeChart       | feature | サイト利用時間グラフ       |
+| ChallengeModal      | feature | 解除チャレンジモーダル     |
+| LockdownButton      | feature | ロックダウンモードボタン   |
+| QuickBlockButton    | feature | クイックブロックボタン     |
+| ScheduleEditor      | feature | スケジュール編集           |
+| ImageUploader       | feature | 背景画像アップロード       |
+| FontPicker          | feature | フォント選択（20種類以上） |
+| AnalyticsChart      | feature | 分析グラフ（recharts）     |
+| ReportCard          | feature | 週次/月次レポート表示      |
+| DownloadButton      | feature | 壁紙ダウンロード           |
+| SiteCategoryManager | feature | サイトカテゴリ管理UI       |
 
 ### 新規タブ用コンポーネント
 
@@ -54,7 +52,6 @@
 | SchedulesTab     | options | スケジュール管理             |
 | WeeklyCalendar   | options | 週間カレンダー表示           |
 | AnalyticsTab     | options | 分析タブ                     |
-| PremiumTab       | options | プレミアムタブ               |
 | HelpTab          | options | ヘルプタブ                   |
 | ScheduleModal    | modal   | スケジュール編集モーダル     |
 | NewPresetModal   | modal   | 新規スタイル作成モーダル     |
@@ -112,11 +109,9 @@ graph TD
         TB --> BLT[BlockListTab]
         TB --> SCT[ScheduleTab]
         TB --> AT[AnalyticsTab]
-        TB --> PT[PremiumTab]
 
         BLT --> BLI[BlockListItem]
         AT --> STC[SiteTimeChart]
-        PT --> PB[PremiumBanner]
     end
 
     subgraph "共通UI"
@@ -380,26 +375,6 @@ graph TD
 
 ---
 
-### PremiumBanner
-
-有料版へのアップグレードを促すバナー。
-
-**Props**
-
-| Prop      | 型           | デフォルト | 説明                         |
-| --------- | ------------ | ---------- | ---------------------------- |
-| feature   | `string`     | -          | 制限されている機能名         |
-| onUpgrade | `() => void` | -          | アップグレードボタンハンドラ |
-
-**使用例**
-
-```tsx
-<PremiumBanner
-  feature="30日以上の分析履歴"
-  onUpgrade={() => chrome.tabs.create({ url: 'options.html#premium' })}
-/>
-```
-
 ## 4. カスタムフック
 
 ### useStorage（@plasmohq/storage/hook）
@@ -551,18 +526,6 @@ function useAnalytics(period: 'today' | 'week' | 'month'): {
 
 ---
 
-### usePremium
-
-プレミアム状態管理フック。
-
-```typescript
-function usePremium(): {
-  isPremium: boolean;
-  expiresAt: Date | null;
-  checkLicense: () => Promise<void>;
-};
-```
-
 ## 5. 型定義
 
 ### BlockItem
@@ -600,7 +563,7 @@ interface DashboardDisplaySettings {
   backgroundType: 'image' | 'color';
   backgroundImage: string; // 背景画像ID
   backgroundColor: string; // 背景色
-  customBackgroundData: string | null; // Base64アップロード画像（Premium）
+  customBackgroundData: string | null; // Base64アップロード画像
   fontSettings: FontSettings; // フォント設定
 }
 ```
@@ -647,16 +610,10 @@ interface FeatureLimits {
 }
 
 const FEATURE_LIMITS = {
-  free: {
-    maxBlockList: Infinity, // Unlimited for all users
-    historyDays: 7,
-    maxPresets: 1
-  },
-  premium: {
-    maxBlockList: Infinity,
-    historyDays: Infinity,
-    maxPresets: 5
-  }
+  maxBlockList: Infinity,
+  historyDays: Infinity,
+  // UI の都合による上限（課金の線引きではない）
+  maxPresets: 10
 };
 ```
 
