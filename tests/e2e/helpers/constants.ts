@@ -217,23 +217,23 @@ export const SELECTORS = {
 
   // Options - Help Tab
   help: {
-    gettingStarted: 'h2:has-text("Getting Started"), h2:has-text("はじめに")',
-    faq: 'h2:has-text("FAQ"), h2:has-text("よくある質問")',
-    troubleshooting:
-      'h2:has-text("Troubleshooting"), h2:has-text("トラブルシューティング")',
-    passwordSection: 'h2:has-text("Password"), h2:has-text("パスワード")',
-    setPasswordButton:
-      'button:has-text("パスワードを設定"), button:has-text("Set Password")',
-    changePasswordButton:
-      'button:has-text("パスワードを変更"), button:has-text("Change Password")',
-    removePasswordButton:
-      'button:has-text("パスワードを削除"), button:has-text("Remove Password")',
-    analyticsOptInToggle: '[role="switch"]',
+    gettingStarted: '[data-testid="help-getting-started"]',
+    faq: '[data-testid="help-faq"]',
+    troubleshooting: '[data-testid="help-troubleshooting"]',
+    passwordSection: '[data-testid="help-password-section"]',
+    // パスワード保護はボタンではなくトグルで有効化する
+    passwordEnableToggle: '[data-testid="password-enable-toggle"]',
+    passwordField: '[data-testid="password-field"]',
+    passwordChangeButton: '[data-testid="password-change-button"]',
+    passwordFormSubmit: '[data-testid="password-form-submit"]',
+    passwordFormCancel: '[data-testid="password-form-cancel"]',
+    analyticsOptInToggle: '[data-testid="analytics-optin-toggle"]',
     exportSettingsButton:
-      'button:has-text("エクスポート"), button:has-text("Export Settings")',
+      'button:has-text("エクスポート"), button:has-text("Export")',
     importSettingsButton:
       'button:has-text("選択"), button:has-text("Select File")',
-    faqItem: 'details'
+    importResultMessage: '[data-testid="import-result-message"]',
+    faqItem: '[data-testid="help-faq-item"]'
   }
 };
 

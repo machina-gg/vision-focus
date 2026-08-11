@@ -24,10 +24,16 @@ export function FormActions({
 }: FormActionsProps) {
   return (
     <div className="flex gap-3">
-      <Button variant="secondary" onClick={onCancel} className="flex-1">
+      <Button
+        variant="secondary"
+        onClick={onCancel}
+        className="flex-1"
+        data-testid="password-form-cancel"
+      >
         {getMessage('cancel')}
       </Button>
       <Button
+        data-testid="password-form-submit"
         variant={submitVariant}
         onClick={onSubmit}
         disabled={submitDisabled}

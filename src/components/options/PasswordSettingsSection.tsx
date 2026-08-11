@@ -148,7 +148,10 @@ export function PasswordSettingsSection({
           <Lock className="w-5 h-5 text-warning-600" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            className="text-lg font-semibold text-gray-900"
+            data-testid="help-password-section"
+          >
             {getMessage('passwordProtection')}
           </h2>
           <p className="text-sm text-gray-500">
@@ -156,7 +159,11 @@ export function PasswordSettingsSection({
           </p>
         </div>
         {mode === 'view' && (
-          <Toggle checked={isEnabled} onChange={handleToggle} />
+          <Toggle
+            checked={isEnabled}
+            onChange={handleToggle}
+            data-testid="password-enable-toggle"
+          />
         )}
       </div>
 
@@ -178,6 +185,7 @@ export function PasswordSettingsSection({
           </span>
           {isEnabled && (
             <button
+              data-testid="password-change-button"
               onClick={() => setMode('change')}
               className="ml-auto text-sm text-info-600 hover:text-info-800"
             >

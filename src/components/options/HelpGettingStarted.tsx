@@ -23,7 +23,10 @@ export function HelpGettingStarted() {
           <BookOpen className="w-5 h-5 text-info-600" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            className="text-lg font-semibold text-gray-900"
+            data-testid="help-getting-started"
+          >
             {getMessage('helpGettingStarted')}
           </h2>
           <p className="text-sm text-gray-500">

@@ -16,7 +16,10 @@ export function HelpFAQ() {
           <MessageCircle className="w-5 h-5 text-success-600" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            className="text-lg font-semibold text-gray-900"
+            data-testid="help-faq"
+          >
             {getMessage('helpFaq')}
           </h2>
           <p className="text-sm text-gray-500">
@@ -64,7 +67,7 @@ export function HelpFAQ() {
             a: getMessage('helpFaqBlockLimitAnswer')
           }
         ].map((item) => (
-          <details key={item.q} className="group">
+          <details key={item.q} className="group" data-testid="help-faq-item">
             <summary className="cursor-pointer flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors">
               <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-90" />
               {item.q}

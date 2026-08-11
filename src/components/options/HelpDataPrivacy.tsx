@@ -45,6 +45,7 @@ export function HelpDataPrivacy({
             </p>
           </div>
           <Toggle
+            data-testid="analytics-optin-toggle"
             checked={settings?.analyticsOptIn?.enabled === true}
             onChange={(checked) =>
               onAnalyticsOptInChange({
