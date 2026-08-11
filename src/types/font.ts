@@ -29,12 +29,7 @@ export type FontFamily =
   | 'mplusrounded';
 
 export type FontCategory =
-  | 'system'
-  | 'modern'
-  | 'elegant'
-  | 'impact'
-  | 'handwriting'
-  | 'japanese';
+  'system' | 'modern' | 'elegant' | 'impact' | 'handwriting' | 'japanese';
 
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';

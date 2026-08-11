@@ -176,8 +176,7 @@ export function usePresets({
   useEffect(() => {
     const initialize = async () => {
       const storedVision = (await storage.get('vision')) as
-        | VisionSettings
-        | undefined;
+        VisionSettings | undefined;
       const visionData = storedVision || DEFAULT_VISION;
       const presets = visionData.presets || [];
 

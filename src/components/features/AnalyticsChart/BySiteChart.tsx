@@ -55,8 +55,7 @@ export function BySiteChart({ data }: BySiteChartProps) {
         <Tooltip
           formatter={(value: number, _name: string, props) => {
             const payload = props?.payload as
-              | { fullDomain?: string }
-              | undefined;
+              { fullDomain?: string } | undefined;
             return [formatMinutes(value), payload?.fullDomain || ''];
           }}
           contentStyle={{
