@@ -3,7 +3,8 @@ import {
   openOptions,
   setupTestStorage,
   clearStorage,
-  setStorageData
+  getStorageData,
+  SELECTORS
 } from './helpers';
 
 /**
@@ -31,16 +32,13 @@ test.describe('Options 画面（共通機能）', () => {
     const page = await openOptions(context, extensionId);
 
     // ヘッダーが表示される
-    const header = page.locator('header');
-    await expect(header).toBeVisible();
+    await expect(page.locator(SELECTORS.options.header)).toBeVisible();
 
     // タイトルが表示される
-    const title = page.locator('h1').filter({ hasText: /Settings|設定/i });
-    await expect(title).toBeVisible();
+    await expect(page.locator(SELECTORS.options.title)).toBeVisible();
 
     // タブナビゲーションが表示される
-    const tabsNav = page.locator('nav[aria-label="Tabs"]');
-    await expect(tabsNav).toBeVisible();
+    await expect(page.locator(SELECTORS.options.tabsNav)).toBeVisible();
 
     await page.close();
   });
@@ -52,25 +50,21 @@ test.describe('Options 画面（共通機能）', () => {
     const page = await openOptions(context, extensionId);
 
     // Styles タブをクリック
-    const stylesTab = page
-      .locator('button')
-      .filter({ hasText: /Styles|スタイル/i });
+    const stylesTab = page.locator(SELECTORS.options.stylesTab);
     await stylesTab.click();
 
-    // Styles タブがアクティブになる
-    await expect(stylesTab).toHaveClass(/border-primary-500/);
+    // Styles タブがアクティブになる（見た目のクラスではなく aria-selected で判定）
+    await expect(stylesTab).toHaveAttribute('aria-selected', 'true');
 
     // Analytics タブをクリック
-    const analyticsTab = page
-      .locator('button')
-      .filter({ hasText: /Analytics|分析/i });
+    const analyticsTab = page.locator(SELECTORS.options.analyticsTab);
     await analyticsTab.click();
 
     // Analytics タブがアクティブになる
-    await expect(analyticsTab).toHaveClass(/border-primary-500/);
+    await expect(analyticsTab).toHaveAttribute('aria-selected', 'true');
 
     // Styles タブは非アクティブになる
-    await expect(stylesTab).toHaveClass(/border-transparent/);
+    await expect(stylesTab).toHaveAttribute('aria-selected', 'false');
 
     await page.close();
   });
@@ -83,10 +77,8 @@ test.describe('Options 画面（共通機能）', () => {
     const page = await openOptions(context, extensionId, 'analytics');
 
     // Analytics タブがアクティブになる
-    const analyticsTab = page
-      .locator('button')
-      .filter({ hasText: /Analytics|分析/i });
-    await expect(analyticsTab).toHaveClass(/border-primary-500/);
+    const analyticsTab = page.locator(SELECTORS.options.analyticsTab);
+    await expect(analyticsTab).toHaveAttribute('aria-selected', 'true');
 
     // URL ハッシュが正しく設定されている
     expect(page.url()).toContain('#analytics');
@@ -98,30 +90,26 @@ test.describe('Options 画面（共通機能）', () => {
     context,
     extensionId
   }) => {
-    // analyticsOptIn が未設定のストレージをセットアップ
+    // analyticsOptIn が未設定のストレージをセットアップ。
+    // AppSettings の必須フィールドを欠くと実装側の参照が壊れるため、
+    // ヘルパー経由で完全な形を作る
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'settings', {
-      language: 'en',
-      paused: false,
-      analyticsOptIn: null // 未設定
+    await clearStorage(setupPage);
+    await setupTestStorage(setupPage, {
+      withGoal: true,
+      withAnalyticsOptIn: false // 未設定
     });
     await setupPage.close();
 
     const page = await openOptions(context, extensionId);
 
     // Analytics Opt-In モーダルが表示される
-    const modal = page
-      .locator('.fixed.inset-0')
-      .filter({ has: page.locator('text=/Analytics|分析/i') });
+    const modal = page.locator(SELECTORS.modal.analyticsOptIn);
     await expect(modal).toBeVisible();
 
     // Allow ボタンと Deny ボタンが表示される
-    const allowButton = page
-      .locator('button')
-      .filter({ hasText: /Allow|許可/i });
-    const denyButton = page
-      .locator('button')
-      .filter({ hasText: /Deny|拒否|No/i });
+    const allowButton = page.locator(SELECTORS.modal.analyticsOptInAllow);
+    const denyButton = page.locator(SELECTORS.modal.analyticsOptInDeny);
     await expect(allowButton).toBeVisible();
     await expect(denyButton).toBeVisible();
 
@@ -132,13 +120,12 @@ test.describe('Options 画面（共通機能）', () => {
     await expect(modal).not.toBeVisible();
 
     // ストレージに保存されたことを確認
-    const settings = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('settings');
-      return result.settings;
-    });
+    const settings = await getStorageData<{
+      analyticsOptIn?: { enabled: boolean };
+    }>(page, 'settings');
 
-    expect(settings.analyticsOptIn).toBeDefined();
-    expect(settings.analyticsOptIn.enabled).toBe(true);
+    expect(settings?.analyticsOptIn).toBeDefined();
+    expect(settings?.analyticsOptIn?.enabled).toBe(true);
 
     await page.close();
   });

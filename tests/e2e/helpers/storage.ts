@@ -171,6 +171,7 @@ export async function setupTestStorage(
     withPassword?: boolean;
     withPremium?: boolean;
     withAnalyticsOptIn?: boolean;
+    language?: 'en' | 'ja';
   } = {}
 ): Promise<void> {
   const {
@@ -178,7 +179,8 @@ export async function setupTestStorage(
     withBlockList = false,
     withPassword = false,
     withPremium = false,
-    withAnalyticsOptIn = true
+    withAnalyticsOptIn = true,
+    language = 'en'
   } = options;
 
   // デフォルト設定。
@@ -188,7 +190,7 @@ export async function setupTestStorage(
   const defaultSettings = {
     blockList: [],
     schedules: [],
-    language: 'en',
+    language,
     paused: false,
     notifications: {
       timeLimitEnabled: true,

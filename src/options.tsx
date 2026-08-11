@@ -181,7 +181,10 @@ function OptionsAppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header
+        className="bg-white border-b border-gray-200"
+        data-testid="options-header"
+      >
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
             <img
@@ -189,7 +192,10 @@ function OptionsAppContent() {
               alt="VisionFocus Logo"
               className="h-8 w-8 object-contain"
             />
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1
+              className="text-2xl font-bold text-gray-900"
+              data-testid="options-title"
+            >
               {getMessage('settingsTitle')}
             </h1>
           </div>
