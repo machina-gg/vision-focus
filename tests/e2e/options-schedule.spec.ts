@@ -441,39 +441,38 @@ test.describe('Options - Schedule Tab', () => {
     await page.close();
   });
 
-  test('OPT-S12: ロックされたプリセットはスケジュールで選択不可', async ({
+  test('OPT-S12: 全てのスタイルがスケジュールで選択できる', async ({
     context,
     extensionId
   }) => {
-    // Freeユーザーで複数プリセットを作成
+    // ロックの概念は存在しないため、作成した全スタイルが選択肢に並ぶ
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
       defaultSettings: makeDisplaySettings({ goalText: 'Focus' }),
       presets: [
         makePreset('default', 'Default', { goalText: 'Default Goal' }),
-        makePreset('to-delete', 'To Delete', { goalText: 'To Delete Goal' })
+        makePreset('second', 'Second', { goalText: 'Second Goal' }),
+        makePreset('third', 'Third', { goalText: 'Third Goal' })
       ],
       activePresetId: 'default'
     });
-    await setStorageData(setupPage, 'premium', { isPremium: false });
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュール追加ボタンをクリック
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
-
-    // プリセット選択セレクト
     const presetSelect = modal.locator(SELECTORS.schedules.presetSelect);
-    const options = await presetSelect.locator('option').allTextContents();
+    const options = presetSelect.locator('option');
 
-    // ロックされたプリセットは選択肢に含まれない、または無効化されている
-    // 実装によってはロックされたプリセットが選択肢に表示されないか、disabled属性がつく
-    expect(options.length).toBeGreaterThan(0);
+    // 3 件すべてが選択肢に並び、無効化されていない
+    for (const name of ['Default', 'Second', 'Third']) {
+      const option = options.filter({ hasText: name });
+      await expect(option).toHaveCount(1);
+      await expect(option).not.toBeDisabled();
+    }
 
-    // モーダルを閉じる
     await page.locator(SELECTORS.schedules.cancelScheduleButton).click();
 
     await page.close();

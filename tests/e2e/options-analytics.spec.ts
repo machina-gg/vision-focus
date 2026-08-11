@@ -60,11 +60,9 @@ test.describe('Options - Analytics Tab', () => {
     extensionId
   }) => {
     // テスト用の分析データを追加。
-    // リセットボタンは Premium 限定セクション内にあるため Premium を有効にする
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setStorageData(
@@ -168,11 +166,7 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  // Premium 限定セクション内の機能を扱うため、現状の E2E では成立しない。
-  // ExtPay はオフラインで常に false を返し、premiumCache を仕込んでも
-  // アプリ起動時に上書きされるため Premium 状態を再現できない。
-  // #337（プレミアム限定の撤去）の完了後に有効化する。
-  test.fixme('OPT-A05: 解除サイトを再ブロックできる', async ({
+  test('OPT-A05: 解除サイトを再ブロックできる', async ({
     context,
     extensionId
   }) => {
@@ -204,13 +198,13 @@ test.describe('Options - Analytics Tab', () => {
       .first();
     await reblockButton.click();
 
-    // サイトがブロックリストに追加される（ストレージを確認）
-    const blockList = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('blockList');
-      return result.blockList || [];
-    });
+    // サイトがブロックリストに追加される
+    // ブロックリストは独立したキーではなく settings 配下にある
+    const settings = (await getStorageData(page, 'settings')) as {
+      blockList?: unknown[];
+    } | null;
 
-    expect(blockList).toEqual(
+    expect(settings?.blockList ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           domain: 'twitter.com',
@@ -222,11 +216,7 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  // Premium 限定セクション内の機能を扱うため、現状の E2E では成立しない。
-  // ExtPay はオフラインで常に false を返し、premiumCache を仕込んでも
-  // アプリ起動時に上書きされるため Premium 状態を再現できない。
-  // #337（プレミアム限定の撤去）の完了後に有効化する。
-  test.fixme('OPT-A06: トラッキング停止ができる', async ({
+  test('OPT-A06: トラッキング停止ができる', async ({
     context,
     extensionId
   }) => {
@@ -310,11 +300,10 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // リフレッシュ / リセット / エクスポートは Premium 限定セクション内にある
+    // リフレッシュ / リセット / エクスポートは分析セクション内にある
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setStorageData(
@@ -350,11 +339,7 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  // Premium 限定セクション内の機能を扱うため、現状の E2E では成立しない。
-  // ExtPay はオフラインで常に false を返し、premiumCache を仕込んでも
-  // アプリ起動時に上書きされるため Premium 状態を再現できない。
-  // #337（プレミアム限定の撤去）の完了後に有効化する。
-  test.fixme('OPT-A09: Analytics データをリセットできる', async ({
+  test('OPT-A09: Analytics データをリセットできる', async ({
     context,
     extensionId
   }) => {
@@ -399,20 +384,15 @@ test.describe('Options - Analytics Tab', () => {
     await page.close();
   });
 
-  // Premium 限定セクション内の機能を扱うため、現状の E2E では成立しない。
-  // ExtPay はオフラインで常に false を返し、premiumCache を仕込んでも
-  // アプリ起動時に上書きされるため Premium 状態を再現できない。
-  // #337（プレミアム限定の撤去）の完了後に有効化する。
-  test.fixme('OPT-A10: CSV エクスポートができる（ブロックリスト・統計データ）', async ({
+  test('OPT-A10: CSV エクスポートができる（ブロックリスト・統計データ）', async ({
     context,
     extensionId
   }) => {
     // テスト用のデータを追加。
-    // ブロックリストは settings 配下、エクスポートは Premium 限定セクション内
+    // ブロックリストは settings 配下、エクスポートは分析セクション内
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setStorageData(
@@ -455,31 +435,26 @@ test.describe('Options - Analytics Tab', () => {
     const exportButton = page.locator(SELECTORS.analytics.exportButton);
     await expect(exportButton).toBeVisible();
 
-    // エクスポートボタンをクリック（ダウンロードが発生）
-    // ダウンロードイベントをリスン
-    const downloadPromise = page.waitForEvent('download');
+    // エクスポートはドロップダウンを開いてから項目を選ぶ
     await exportButton.click();
 
-    // ダウンロードが開始される
+    // クリックより前に待ち受けを開始しないとイベントを取りこぼす
+    const downloadPromise = page.waitForEvent('download');
+    await page.click(SELECTORS.analytics.exportBlocklist);
+
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain('.csv');
 
     await page.close();
   });
 
-  // Premium 限定セクション内の機能を扱うため、現状の E2E では成立しない。
-  // ExtPay はオフラインで常に false を返し、premiumCache を仕込んでも
-  // アプリ起動時に上書きされるため Premium 状態を再現できない。
-  // #337（プレミアム限定の撤去）の完了後に有効化する。
-  test.fixme('OPT-A11: Premium ユーザーは Unblock History の CSV エクスポート可能', async ({
+  test('OPT-A11: Unblock History の CSV エクスポートができる', async ({
     context,
     extensionId
   }) => {
-    // Premium設定
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setStorageData(setupPage, 'unblockHistory', {
@@ -498,24 +473,18 @@ test.describe('Options - Analytics Tab', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // Unblock History エクスポートボタンが表示される（Premiumユーザーのみ）
-    const exportButton = page
-      .locator('button:has-text("CSV"), button:has-text("Export")')
-      .filter({ has: page.locator('text=/Unblock|解除/i') });
+    // エクスポートはドロップダウンを開いてから項目を選ぶ
+    await page.click(SELECTORS.analytics.exportButton);
 
-    // Premiumユーザーの場合、エクスポートボタンが有効
-    const isVisible = await exportButton.isVisible().catch(() => false);
-    expect(isVisible).toBeTruthy();
+    const exportUnblocked = page.locator(SELECTORS.analytics.exportUnblocked);
+    await expect(exportUnblocked).toBeEnabled();
 
-    if (isVisible) {
-      // エクスポートボタンをクリック
-      const downloadPromise = page.waitForEvent('download');
-      await exportButton.click();
+    // クリックより前に待ち受けを開始しないとイベントを取りこぼす
+    const downloadPromise = page.waitForEvent('download');
+    await exportUnblocked.click();
 
-      // ダウンロードが開始される
-      const download = await downloadPromise;
-      expect(download.suggestedFilename()).toContain('.csv');
-    }
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.csv');
 
     await page.close();
   });

@@ -284,7 +284,6 @@ export async function setupTestStorage(
     withGoal?: boolean;
     withBlockList?: boolean;
     withPassword?: boolean;
-    withPremium?: boolean;
     withAnalyticsOptIn?: boolean;
     withSchedule?: boolean;
     language?: 'en' | 'ja';
@@ -294,7 +293,6 @@ export async function setupTestStorage(
     withGoal = true,
     withBlockList = false,
     withPassword = false,
-    withPremium = false,
     withAnalyticsOptIn = true,
     withSchedule = false,
     language = 'en'
@@ -398,16 +396,5 @@ export async function setupTestStorage(
       activePresetId: 'default'
     };
     await setStorageData(page, 'vision', defaultVision);
-  }
-
-  // Premium 設定
-  // 実装は ExtensionPay で判定するが、premiumCache が有効期間内なら
-  // それを優先して読む（src/lib/license.ts）。テストからはこのキャッシュを
-  // 書くことで Premium 状態を再現する
-  if (withPremium) {
-    await setStorageData(page, 'premiumCache', {
-      status: { isPremium: true, source: 'extpay' },
-      timestamp: Date.now()
-    });
   }
 }

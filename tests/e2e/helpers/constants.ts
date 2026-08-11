@@ -62,8 +62,8 @@ export const SELECTORS = {
     info: '[data-testid="time-limit-info"]'
   },
 
-  // Premium
-  premium: {
+  // 分析画面への導線
+  analyticsEntry: {
     analyticsLink: '[data-testid="view-analytics-link"]'
   },
 
@@ -114,7 +114,6 @@ export const SELECTORS = {
     stylesTab: '[data-testid="tab-styles"]',
     schedulesTab: '[data-testid="tab-schedules"]',
     analyticsTab: '[data-testid="tab-analytics"]',
-    premiumTab: '[data-testid="tab-license"]',
     helpTab: '[data-testid="tab-help"]',
     domainInput: '[data-testid="blocklist-domain-input"]',
     addButton: '[data-testid="blocklist-add-button"]',
@@ -187,6 +186,10 @@ export const SELECTORS = {
     unblockHistory: '[data-testid="analytics-tracked-sites-heading"]',
     wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
     exportButton: '[data-testid="analytics-export-button"]',
+    exportBlocklist: '[data-testid="analytics-export-blocklist"]',
+    exportBlockCounts: '[data-testid="analytics-export-block-counts"]',
+    exportDailyStats: '[data-testid="analytics-export-daily-stats"]',
+    exportUnblocked: '[data-testid="analytics-export-unblocked"]',
     refreshButton: '[data-testid="analytics-refresh-button"]',
     resetButton: '[data-testid="analytics-reset-button"]',
     resetConfirmButton: '[data-testid="analytics-reset-confirm"]',
@@ -194,22 +197,6 @@ export const SELECTORS = {
     stopTrackingButton: '[data-testid="analytics-stop-tracking-button"]',
     addSiteInput: '[data-testid="analytics-add-site-input"]',
     addSiteButton: '[data-testid="analytics-add-site-button"]'
-  },
-
-  // Options - Premium Tab
-  premiumTab: {
-    upgradeButton:
-      'button:has-text("Premium にアップグレード"), button:has-text("Upgrade to Premium")',
-    manageSubscriptionButton:
-      'button:has-text("サブスク管理"), button:has-text("Manage Subscription")',
-    featureComparisonTable: 'table',
-    currentPlanBadge: 'span:has-text("Premium")',
-    currentUsage: 'h3:has-text("Current Usage"), h3:has-text("現在の使用状況")',
-    licenseKeyInput:
-      'input[placeholder*="ライセンスキー"], input[placeholder*="License key"]',
-    activateButton:
-      'button:has-text("アクティベート"), button:has-text("Activate")',
-    deactivateButton: 'button:has-text("解除"), button:has-text("Deactivate")'
   },
 
   // Options - Help Tab

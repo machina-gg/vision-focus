@@ -46,22 +46,20 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
     await page.close();
   });
 
-  test('NEW-011: Premium ユーザーは壁紙ダウンロードボタンが表示される', async ({
+  test('NEW-011: 壁紙ダウンロードボタンが表示される', async ({
     context,
     extensionId
   }) => {
-    // Premium 設定済みのストレージをセットアップ
     const setupPage = await openNewTab(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);
 
-    // ダウンロードボタンが表示される（Premium ユーザーのみ）
+    // ダウンロードボタンが表示される
     const downloadButton = page
       .locator(SELECTORS.newtab.downloadButton)
       .filter({ hasText: /Download|ダウンロード|^$/ });

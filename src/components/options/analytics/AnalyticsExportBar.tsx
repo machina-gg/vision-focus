@@ -233,6 +233,7 @@ export function AnalyticsExportBar({
                   />
                   <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
                     <button
+                      data-testid="analytics-export-blocklist"
                       onClick={handleExportBlockList}
                       disabled={!hasBlockList}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -240,6 +241,7 @@ export function AnalyticsExportBar({
                       {getMessage('exportBlockList')}
                     </button>
                     <button
+                      data-testid="analytics-export-block-counts"
                       onClick={handleExportBlockCounts}
                       disabled={!hasBlockCounts}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -247,6 +249,7 @@ export function AnalyticsExportBar({
                       {getMessage('exportBlockCounts')}
                     </button>
                     <button
+                      data-testid="analytics-export-daily-stats"
                       onClick={handleExportDailyStats}
                       disabled={!hasDailyStats}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -254,6 +257,7 @@ export function AnalyticsExportBar({
                       {getMessage('exportDailyStats')}
                     </button>
                     <button
+                      data-testid="analytics-export-unblocked"
                       onClick={handleExportUnblockedSites}
                       disabled={!hasUnblockedData}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
