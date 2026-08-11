@@ -202,6 +202,38 @@ export function makePreset(
 }
 
 /**
+ * AppSettings の完全な形を作る
+ *
+ * 必須フィールドを欠くとアプリ側の参照が壊れる。また analyticsOptIn を
+ * 落とすと Opt-In モーダルが開いてしまい、他の要素のクリックを遮る。
+ * テストで settings を直接書く場合は必ずこれを使う。
+ *
+ * @param overrides - 上書きする値
+ */
+export function makeSettings(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    blockList: [],
+    schedules: [],
+    language: 'en',
+    paused: false,
+    notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
+    youtube: {
+      enabled: false,
+      blockAccess: false,
+      hideShorts: false,
+      hideRecommendations: false,
+      hideComments: false,
+      timeLimit: null
+    },
+    password: { enabled: false, passwordHash: null },
+    analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
+    ...overrides
+  };
+}
+
+/**
  * テスト用の初期設定をセットする
  *
  * @param page - Playwright Page オブジェクト
@@ -215,6 +247,7 @@ export async function setupTestStorage(
     withPassword?: boolean;
     withPremium?: boolean;
     withAnalyticsOptIn?: boolean;
+    withSchedule?: boolean;
     language?: 'en' | 'ja';
   } = {}
 ): Promise<void> {
@@ -224,6 +257,7 @@ export async function setupTestStorage(
     withPassword = false,
     withPremium = false,
     withAnalyticsOptIn = true,
+    withSchedule = false,
     language = 'en'
   } = options;
 
@@ -264,6 +298,22 @@ export async function setupTestStorage(
       enabled: true,
       passwordHash: TEST_DATA.password.validHash
     };
+  }
+
+  // 週間カレンダーはスケジュールが 1 件以上ないと描画されない
+  // （WeeklyCalendar は schedules.length === 0 で null を返す）
+  if (withSchedule) {
+    defaultSettings['schedules'] = [
+      {
+        id: 'schedule-1',
+        name: 'Work Hours',
+        startTime: '09:00',
+        endTime: '18:00',
+        days: [1, 2, 3, 4, 5],
+        enabled: true,
+        presetId: null
+      }
+    ];
   }
 
   // ブロックリストは settings.blockList に保持される（トップレベルの

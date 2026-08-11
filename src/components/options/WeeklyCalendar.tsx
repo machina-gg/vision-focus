@@ -146,7 +146,10 @@ export function WeeklyCalendar({
       </h2>
 
       {/* Calendar Grid */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div
+        className="border border-gray-200 rounded-lg overflow-hidden"
+        data-testid="weekly-calendar"
+      >
         {/* Header Row - Days */}
         <div className="grid grid-cols-8 bg-gray-50 border-b border-gray-200">
           <div className="p-2 text-center text-xs font-medium text-gray-500 border-r border-gray-200">
@@ -157,6 +160,7 @@ export function WeeklyCalendar({
             return (
               <div
                 key={day}
+                data-testid="weekly-calendar-day-header"
                 className={`p-2 text-center text-xs font-medium border-r border-gray-200 last:border-r-0 ${
                   isToday
                     ? 'text-danger-600 bg-danger-50 font-semibold'

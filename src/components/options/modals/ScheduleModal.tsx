@@ -54,6 +54,7 @@ export function ScheduleModal({
             {getMessage('scheduleName')}
           </label>
           <Input
+            data-testid="schedule-name-input"
             value={scheduleForm.name}
             onChange={(value) => onFormChange({ ...scheduleForm, name: value })}
             placeholder=""
@@ -66,6 +67,7 @@ export function ScheduleModal({
               {getMessage('startTime')}
             </label>
             <input
+              data-testid="schedule-start-time"
               type="time"
               value={scheduleForm.startTime}
               onChange={(e) =>
@@ -79,6 +81,7 @@ export function ScheduleModal({
               {getMessage('endTime')}
             </label>
             <input
+              data-testid="schedule-end-time"
               type="time"
               value={
                 scheduleForm.endTime === '24:00'
@@ -101,6 +104,8 @@ export function ScheduleModal({
             {DAY_KEYS.map((day, idx) => (
               <button
                 key={day}
+                data-testid="schedule-day-button"
+                aria-pressed={scheduleForm.days.includes(idx)}
                 onClick={() => toggleDay(idx)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   scheduleForm.days.includes(idx)
@@ -120,6 +125,7 @@ export function ScheduleModal({
             {getMessage('schedulePreset')}
           </label>
           <select
+            data-testid="schedule-preset-select"
             value={scheduleForm.presetId}
             onChange={(e) =>
               onFormChange({ ...scheduleForm, presetId: e.target.value })
@@ -153,10 +159,18 @@ export function ScheduleModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="secondary" onClick={onClose}>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            data-testid="schedule-cancel-button"
+          >
             {getMessage('cancel')}
           </Button>
-          <Button onClick={onSave} disabled={!scheduleForm.name.trim()}>
+          <Button
+            onClick={onSave}
+            disabled={!scheduleForm.name.trim()}
+            data-testid="schedule-save-button"
+          >
             {editingSchedule
               ? getMessage('saveChanges')
               : getMessage('addSchedule')}
