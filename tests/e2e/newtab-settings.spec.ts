@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/extension';
-import { openNewTab, setupTestStorage, clearStorage } from './helpers';
+import {
+  openNewTab,
+  setupTestStorage,
+  clearStorage,
+  SELECTORS
+} from './helpers';
 
 /**
  * E2Eテスト: NewTab 画面 - 設定とプレミアム機能
@@ -26,14 +31,12 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
     const page = await openNewTab(context, extensionId);
 
     // 設定アイコン（右下）をクリック
-    const settingsButton = page
-      .locator('button')
-      .filter({ has: page.locator('svg') })
-      .last();
-    await settingsButton.click();
+    const settingsButton = page.locator(SELECTORS.newtab.settingsButton).last();
 
-    // 新しいタブでオプション画面が開くのを待つ
-    const newPage = await context.waitForEvent('page');
+    // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
+    const newPagePromise = context.waitForEvent('page');
+    await settingsButton.click();
+    const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
     // オプション画面のURLを確認
@@ -60,8 +63,7 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
 
     // ダウンロードボタンが表示される（Premium ユーザーのみ）
     const downloadButton = page
-      .locator('button')
-      .filter({ has: page.locator('svg[class*="download" i], svg') })
+      .locator(SELECTORS.newtab.downloadButton)
       .filter({ hasText: /Download|ダウンロード|^$/ });
 
     // ボタンの存在を確認（テキストがない場合もあるのでアイコンで判定）

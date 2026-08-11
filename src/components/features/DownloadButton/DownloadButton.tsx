@@ -80,6 +80,7 @@ export function DownloadButton({
     <div className={`relative ${className}`}>
       {/* Main Button */}
       <button
+        data-testid="newtab-download-button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || isDownloading}
         className={`

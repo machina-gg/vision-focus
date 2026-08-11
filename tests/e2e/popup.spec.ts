@@ -5,6 +5,7 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  setSessionStorageData,
   getStorageData,
   SELECTORS,
   TEST_DATA
@@ -428,7 +429,7 @@ test.describe('Popup 画面', () => {
     });
 
     // 最後にブロックされたドメインとして youtube.com をセット
-    await setStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
+    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
     await setupPage.close();
 
     // YouTube タブを開いてからポップアップを開く（実際のシナリオを再現）

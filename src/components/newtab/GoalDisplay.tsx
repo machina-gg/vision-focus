@@ -37,6 +37,7 @@ export function GoalDisplay({
     return (
       <div className="space-y-4">
         <Input
+          data-testid="newtab-goal-input"
           value={editText}
           onChange={onEditTextChange}
           onKeyDown={onKeyDown}
@@ -45,10 +46,16 @@ export function GoalDisplay({
           autoFocus
         />
         <div className="flex justify-center gap-2">
-          <Button variant="secondary" onClick={onCancel}>
+          <Button
+            variant="secondary"
+            onClick={onCancel}
+            data-testid="newtab-goal-cancel"
+          >
             {getMessage('cancel')}
           </Button>
-          <Button onClick={onSave}>{getMessage('save')}</Button>
+          <Button onClick={onSave} data-testid="newtab-goal-save">
+            {getMessage('save')}
+          </Button>
         </div>
       </div>
     );
@@ -58,6 +65,7 @@ export function GoalDisplay({
     <div className="group relative">
       {/* 目標未設定時は空見出しにせず、設定を促す案内を薄く表示する */}
       <h1
+        data-testid="newtab-goal-text"
         className={`drop-shadow-lg leading-tight transition-opacity duration-300 ${
           goalText.trim() ? '' : 'opacity-60 italic'
         }`}
@@ -77,6 +85,7 @@ export function GoalDisplay({
       {/* Edit button - only show when no preset is active */}
       {canEdit && (
         <button
+          data-testid="newtab-goal-edit-button"
           onClick={onStartEdit}
           className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
         >

@@ -3,7 +3,8 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  setStorageData
+  setStorageData,
+  SELECTORS
 } from './helpers';
 
 /**
@@ -31,18 +32,14 @@ test.describe('NewTab 画面 - 基本表示', () => {
     const page = await openNewTab(context, extensionId);
 
     // ダッシュボードコンテナが表示される
-    const container = page.locator('.newtab-container');
+    const container = page.locator(SELECTORS.newtab.container);
     await expect(container).toBeVisible();
 
     // 目標テキストが表示される
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.goalText)).toBeVisible();
 
     // 設定ボタンが表示される（右下）
-    const settingsButton = page
-      .locator('button')
-      .filter({ hasText: /Settings|設定/i })
-      .last();
-    await expect(settingsButton).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.settingsButton)).toBeVisible();
 
     await page.close();
   });
@@ -62,11 +59,11 @@ test.describe('NewTab 画面 - 基本表示', () => {
     const page = await openNewTab(context, extensionId);
 
     // コンテナに背景スタイルが適用されている
-    const container = page.locator('.newtab-container');
+    const container = page.locator(SELECTORS.newtab.container);
     await expect(container).toBeVisible();
 
     // オーバーレイが表示される（プリセット設定時に表示される半透明オーバーレイ）
-    const overlay = page.locator('.absolute.inset-0.bg-black\\/30');
+    const overlay = page.locator(SELECTORS.newtab.overlay);
     await expect(overlay).toBeVisible();
 
     await page.close();
@@ -79,9 +76,7 @@ test.describe('NewTab 画面 - 基本表示', () => {
     const page = await openNewTab(context, extensionId);
 
     // 目標テキストが表示される
-    const goalText = page
-      .locator('h1')
-      .filter({ hasText: /Focus on what matters/i });
+    const goalText = page.locator(SELECTORS.newtab.goalText);
     await expect(goalText).toBeVisible();
     await expect(goalText).toContainText('Focus on what matters');
 
@@ -101,7 +96,13 @@ test.describe('NewTab 画面 - 基本表示', () => {
     await setStorageData(setupPage, 'vision', {
       defaultSettings: {
         goalText: 'Focus on what matters',
-        subText: 'Stay productive'
+        goalSubText: 'Stay productive',
+        textColor: '#ffffff',
+        backgroundType: 'color',
+        backgroundImage: 'default-1',
+        backgroundColor: '#1a1a2e',
+        customBackgroundData: null,
+        fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
       },
       presets: [], // プリセットなし
       activePresetId: null
@@ -111,15 +112,10 @@ test.describe('NewTab 画面 - 基本表示', () => {
     const page = await openNewTab(context, extensionId);
 
     // VisionFocus タイトルが表示される
-    await expect(
-      page.locator('h1').filter({ hasText: 'VisionFocus' })
-    ).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.appTitle)).toBeVisible();
 
     // セットアップCTAが表示される
-    const setupButton = page
-      .locator('button')
-      .filter({ hasText: /Create|作成/i });
-    await expect(setupButton).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.setupCta)).toBeVisible();
 
     await page.close();
   });

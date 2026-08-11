@@ -3,7 +3,9 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  setStorageData
+  setStorageData,
+  setSessionStorageData,
+  SELECTORS
 } from './helpers';
 
 /**
@@ -30,7 +32,8 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
   }) => {
     // ブロックされたドメイン情報をセットアップ
     const setupPage = await openNewTab(context, extensionId);
-    await setStorageData(setupPage, 'lastBlockedDomain', 'example.com');
+    // lastBlockedDomain は session エリアに保存される
+    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
     await setStorageData(setupPage, 'analytics', {
       siteBlockCounts: {
         'example.com': {
@@ -47,7 +50,7 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
 
     // ブロック情報バナーが表示される
     const blockBanner = page
-      .locator('.animate-fade-in, div')
+      .locator(SELECTORS.newtab.blockInfo)
       .filter({ hasText: 'example.com' });
     await expect(blockBanner.first()).toBeVisible();
 
@@ -72,10 +75,15 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
 
     const page = await openNewTab(context, extensionId);
 
-    // ブロックサイトリストセクションが表示される
-    // BlockedSitesList コンポーネントが表示されることを確認
-    const blockedSitesList = page.locator('text=/example.com/i');
+    // ブロックサイトリストのセクションが表示される
+    const toggle = page.locator(SELECTORS.newtab.blockedSitesToggle);
+    await expect(toggle).toBeVisible();
+
+    // リストは折りたたまれているため、展開してから中身を確認する
+    await toggle.click();
+    const blockedSitesList = page.locator(SELECTORS.newtab.blockedSiteDomain);
     await expect(blockedSitesList.first()).toBeVisible();
+    await expect(blockedSitesList.first()).toContainText('example.com');
 
     await page.close();
   });
@@ -86,7 +94,7 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
   }) => {
     // Time Limit 超過でブロックされたドメイン情報をセットアップ
     const setupPage = await openNewTab(context, extensionId);
-    await setStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
+    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
     await setStorageData(setupPage, 'analytics', {
       siteBlockCounts: {
         'youtube.com': {
@@ -106,7 +114,7 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Time Limit 専用メッセージが表示される
-    const timeLimitMessage = page.locator('text=/time limit|時間制限/i');
+    const timeLimitMessage = page.locator(SELECTORS.newtab.blockInfoMessage);
     await expect(timeLimitMessage.first()).toBeVisible();
 
     await page.close();
