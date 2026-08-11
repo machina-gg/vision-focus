@@ -19,11 +19,14 @@ export async function setStorageData(
   key: string,
   value: unknown
 ): Promise<void> {
+  // アプリは @plasmohq/storage 経由で読み書きしており、値は JSON 文字列として
+  // 保存される。生のオブジェクトを書き込むとアプリ側から読み取れず、
+  // テストが用意したデータが一切反映されないため、同じ形式で保存する
   await page.evaluate(
     async ({ key, value }) => {
       await chrome.storage.local.set({ [key]: value });
     },
-    { key, value }
+    { key, value: JSON.stringify(value) }
   );
 }
 
@@ -40,7 +43,19 @@ export async function getStorageData<T = unknown>(
 ): Promise<T | null> {
   return page.evaluate(async (key) => {
     const result = await chrome.storage.local.get(key);
-    return result[key] || null;
+    const raw = result[key];
+    if (raw === undefined || raw === null) return null;
+
+    // @plasmohq/storage は値を JSON 文字列で保存する。
+    // 旧データやテストが直接書いたオブジェクトも読めるよう両方に対応する
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
   }, key);
 }
 
@@ -141,19 +156,57 @@ export async function setupTestStorage(
     withAnalyticsOptIn = true
   } = options;
 
-  // デフォルト設定
+  // デフォルト設定。
+  // AppSettings の必須フィールドを欠くと、実装側で settings.blockList.length の
+  // ような参照が例外になる（アプリはストレージに保存済みの値をそのまま使う）。
+  // 実装のスキーマと同じ形を必ず満たすこと
   const defaultSettings = {
+    blockList: [],
+    schedules: [],
     language: 'en',
     paused: false,
+    notifications: {
+      timeLimitEnabled: true,
+      timeLimitMinutes: 5
+    },
+    youtube: {
+      enabled: false,
+      blockAccess: false,
+      hideShorts: false,
+      hideRecommendations: false,
+      hideComments: false,
+      timeLimit: null
+    },
+    password: {
+      enabled: false,
+      passwordHash: null
+    },
     analyticsOptIn: withAnalyticsOptIn
       ? { enabled: true, decidedAt: new Date().toISOString() }
       : null
   };
 
+  // パスワード保護は enabled と passwordHash の両方が必要
+  // （src/hooks/usePopupActions.ts の isPasswordProtected）
   if (withPassword) {
     defaultSettings['password'] = {
+      enabled: true,
       passwordHash: TEST_DATA.password.validHash
     };
+  }
+
+  // ブロックリストは settings.blockList に保持される（トップレベルの
+  // blockList キーではない）
+  if (withBlockList) {
+    defaultSettings['blockList'] = [
+      {
+        id: '1',
+        domain: 'example.com',
+        isWildcard: false,
+        createdAt: new Date().toISOString(),
+        enabled: true
+      }
+    ];
   }
 
   await setStorageData(page, 'settings', defaultSettings);
@@ -181,25 +234,14 @@ export async function setupTestStorage(
     await setStorageData(page, 'vision', defaultVision);
   }
 
-  // ブロックリスト
-  if (withBlockList) {
-    const blockList = [
-      {
-        id: '1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: new Date().toISOString(),
-        enabled: true
-      }
-    ];
-    await setStorageData(page, 'blockList', blockList);
-  }
-
   // Premium 設定
+  // 実装は ExtensionPay で判定するが、premiumCache が有効期間内なら
+  // それを優先して読む（src/lib/license.ts）。テストからはこのキャッシュを
+  // 書くことで Premium 状態を再現する
   if (withPremium) {
-    await setStorageData(page, 'premium', {
-      isPremium: true,
-      activatedAt: new Date().toISOString()
+    await setStorageData(page, 'premiumCache', {
+      status: { isPremium: true, source: 'extpay' },
+      timestamp: Date.now()
     });
   }
 }

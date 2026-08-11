@@ -37,10 +37,18 @@ export function Header({
   const currentLang = language ?? getCurrentLanguage();
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+    <header
+      className="flex items-center justify-between px-4 py-3 border-b border-gray-100"
+      data-testid="app-header"
+    >
       {/* Logo + Name + Version */}
       <div className="flex items-center gap-2">
-        <img src={iconBase64} alt="VisionFocus" className="w-7 h-7" />
+        <img
+          src={iconBase64}
+          alt="VisionFocus"
+          className="w-7 h-7"
+          data-testid="app-logo"
+        />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-800 text-sm leading-tight">
             VisionFocus
@@ -57,6 +65,7 @@ export function Header({
         {onLanguageChange && (
           <div className="relative">
             <select
+              data-testid="language-selector"
               value={currentLang}
               onChange={(e) =>
                 onLanguageChange(e.target.value as SupportedLanguage)
@@ -83,6 +92,7 @@ export function Header({
               checked={!paused}
               onChange={(checked) => onPausedChange(!checked)}
               size="sm"
+              data-testid="pause-toggle"
             />
           </div>
         )}
@@ -90,6 +100,7 @@ export function Header({
         {/* Settings */}
         {showSettings && (
           <button
+            data-testid="settings-button"
             onClick={onSettingsClick}
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
             title={getMessage('settings')}
@@ -101,6 +112,7 @@ export function Header({
         {/* Help */}
         {onHelpClick && (
           <button
+            data-testid="help-button"
             onClick={onHelpClick}
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
             title={getMessage('help')}

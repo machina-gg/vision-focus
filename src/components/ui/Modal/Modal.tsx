@@ -38,6 +38,8 @@ export function Modal({
 
       {/* Modal */}
       <div
+        role="dialog"
+        aria-modal="true"
         className={`
           relative w-full mx-4
           bg-white rounded-2xl shadow-xl

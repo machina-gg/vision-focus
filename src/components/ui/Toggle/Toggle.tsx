@@ -6,6 +6,8 @@ export interface ToggleProps {
   label?: string;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  /** E2E テスト用の識別子（内部の button 要素に付与される） */
+  'data-testid'?: string;
 }
 
 const sizeClasses = {
@@ -31,7 +33,8 @@ export function Toggle({
   onChange,
   label,
   disabled = false,
-  size = 'md'
+  size = 'md',
+  'data-testid': testId
 }: ToggleProps) {
   const classes = sizeClasses[size];
 
@@ -40,6 +43,7 @@ export function Toggle({
       <button
         type="button"
         role="switch"
+        data-testid={testId}
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}

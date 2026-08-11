@@ -41,11 +41,15 @@ export function QuickBlockButton({
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold text-gray-700">
+      <h2
+        className="text-sm font-semibold text-gray-700"
+        data-testid="quick-block-heading"
+      >
         {getMessage('blockWebsites')}
       </h2>
       <div className="flex gap-2">
         <Input
+          data-testid="quick-block-input"
           value={inputValue}
           onChange={setInputValue}
           onKeyDown={handleKeyDown}
@@ -55,6 +59,7 @@ export function QuickBlockButton({
           disabled={disabled}
         />
         <Button
+          data-testid="quick-block-button"
           onClick={handleBlock}
           disabled={disabled || !inputValue.trim()}
           className="shrink-0 px-4 py-2.5"

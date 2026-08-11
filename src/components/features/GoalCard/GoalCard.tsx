@@ -46,6 +46,7 @@ export function GoalCard({
       padding="md"
       onClick={!isEditing ? onClick : undefined}
       className="relative group"
+      data-testid="goal-card"
     >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 p-2 bg-primary-100 rounded-lg">
@@ -68,6 +69,7 @@ export function GoalCard({
           ) : (
             // 目標未設定時は空欄にせず、設定を促す案内を薄い文字で表示する
             <p
+              data-testid="goal-card-text"
               className={`text-base line-clamp-2 ${
                 hasGoal ? 'font-medium text-gray-800' : 'text-gray-400 italic'
               }`}

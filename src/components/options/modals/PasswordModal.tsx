@@ -115,13 +115,19 @@ export function PasswordModal({
         </div>
 
         <div className="flex gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="flex-1"
+            data-testid="password-modal-cancel"
+          >
             {getMessage('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isVerifying || !password}
             className="flex-1"
+            data-testid="password-modal-confirm"
           >
             {isVerifying ? getMessage('verifying') : getMessage('confirm')}
           </Button>
