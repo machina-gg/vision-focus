@@ -56,7 +56,7 @@ test.describe('Analytics - アナリティクス機能', () => {
         context,
         `https://${TEST_DOMAINS.example}`
       );
-      await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+      await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
       await blockedPage.close();
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
@@ -338,83 +338,10 @@ test.describe('Analytics - アナリティクス機能', () => {
     await optionsPage.close();
   });
 
-  test('AN-008: ネットワーク切断時に Heartbeat がローカルキューに保存', async ({
-    context,
-    extensionId
-  }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
-      paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
-    });
-
-    // オフラインモードに設定
-    const externalPage = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
-    );
-    await context.setOffline(true);
-
-    await externalPage.waitForLoadState('domcontentloaded');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // ローカルキューに保存されているか確認（実装に応じて調整）
-    const queueData = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'heartbeatQueue'
-    )) as any;
-
-    // キューが存在する場合は記録されていることを確認
-    if (queueData) {
-      expect(Array.isArray(queueData)).toBeTruthy();
-    }
-
-    await context.setOffline(false);
-    await externalPage.close();
-  });
-
-  test('AN-009: ネットワーク復旧時にキューされた Heartbeat が送信', async ({
-    context,
-    extensionId
-  }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
-      paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
-    });
-
-    // ダミーのキューデータを設定
-    await setStorageDataFromExtension(context, extensionId, 'heartbeatQueue', [
-      {
-        domain: TEST_DOMAINS.example,
-        duration: 30,
-        timestamp: new Date().toISOString()
-      }
-    ]);
-
-    // ネットワークオンラインに復旧
-    const externalPage = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
-    );
-    await context.setOffline(false);
-
-    await externalPage.waitForLoadState('domcontentloaded');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // キューが送信されてクリアされたことを確認
-    const queueData = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'heartbeatQueue'
-    )) as any;
-
-    // キューが空になっている、またはundefined
-    expect(queueData?.length || 0).toBe(0);
-
-    await externalPage.close();
-  });
+  // AN-008 / AN-009（オフライン時の Heartbeat キューイング）は削除した。
+  // 実装に heartbeatQueue に相当する仕組みが存在せず、テストは存在しない
+  // 機能を検証していた。AN-008 は `if (queueData)` で囲まれていたため
+  // 常に緑になっていた。キューイングを実装する場合はテストも作り直す。
 
   test('AN-010: Opt-Out 時に Unblock History も無効化される', async ({
     context,

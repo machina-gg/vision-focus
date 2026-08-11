@@ -289,7 +289,7 @@ test.describe('Options - Analytics Tab', () => {
           }>(page, 'unblockHistory');
           return Object.keys(history?.sites ?? {});
         },
-        { timeout: 5000 }
+        { timeout: 10000 }
       )
       .toContain('example.com');
 

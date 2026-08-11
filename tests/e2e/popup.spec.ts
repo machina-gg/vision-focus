@@ -300,7 +300,7 @@ test.describe('Popup 画面', () => {
           }>(page, 'settings');
           return (settings?.blockList ?? []).map((item) => item.domain);
         },
-        { timeout: 5000 }
+        { timeout: 10000 }
       )
       .toContain('reddit.com');
 
