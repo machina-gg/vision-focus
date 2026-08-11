@@ -69,7 +69,9 @@ export const SELECTORS = {
 
   // Modals（Modal コンポーネントは role="dialog" を持つ）
   modal: {
-    analyticsOptIn: '[role="dialog"]',
+    analyticsOptIn: '[data-testid="analytics-optin-modal"]',
+    analyticsOptInAllow: '[data-testid="analytics-optin-allow"]',
+    analyticsOptInDeny: '[data-testid="analytics-optin-deny"]',
     passwordModal: '[role="dialog"]',
     unblockConfirm: '[role="dialog"]',
     passwordConfirmButton: '[data-testid="password-modal-confirm"]',
@@ -101,17 +103,17 @@ export const SELECTORS = {
 
   // Options（共通）
   options: {
-    header: 'header',
-    title: 'h1',
+    header: '[data-testid="options-header"]',
+    title: '[data-testid="options-title"]',
     tabsNav: 'nav[aria-label="Tabs"]',
     tabs: '[role="tablist"]',
-    blocklistTab: 'button',
-    stylesTab: 'button:has-text("スタイル"), button:has-text("Styles")',
-    schedulesTab:
-      'button:has-text("スケジュール"), button:has-text("Schedules")',
-    analyticsTab: 'button:has-text("分析"), button:has-text("Analytics")',
-    premiumTab: 'button:has-text("Premium")',
-    helpTab: 'button:has-text("ヘルプ"), button:has-text("Help")',
+    // タブは TABS 定数（src/constants/tabs.ts）の id で識別する
+    blocklistTab: '[data-testid="tab-blocklist"]',
+    stylesTab: '[data-testid="tab-styles"]',
+    schedulesTab: '[data-testid="tab-schedules"]',
+    analyticsTab: '[data-testid="tab-analytics"]',
+    premiumTab: '[data-testid="tab-license"]',
+    helpTab: '[data-testid="tab-help"]',
     domainInput: 'input[type="text"]',
     addButton: 'button',
     deleteButton:

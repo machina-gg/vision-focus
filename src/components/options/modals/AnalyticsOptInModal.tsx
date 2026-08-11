@@ -23,10 +23,17 @@ export function AnalyticsOptInModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      data-testid="analytics-optin-modal"
+    >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      <div className="relative w-full mx-4 max-w-sm bg-white rounded-2xl shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full mx-4 max-w-sm bg-white rounded-2xl shadow-xl"
+      >
         <div className="px-6 py-6 text-center">
           <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <BarChart3 className="w-6 h-6 text-primary-600" />
@@ -38,10 +45,20 @@ export function AnalyticsOptInModal({
             {getMessage('analyticsOptInDescription')}
           </p>
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={onDeny} className="flex-1">
+            <Button
+              variant="secondary"
+              onClick={onDeny}
+              className="flex-1"
+              data-testid="analytics-optin-deny"
+            >
               {getMessage('analyticsOptInDeny')}
             </Button>
-            <Button variant="primary" onClick={onAllow} className="flex-1">
+            <Button
+              variant="primary"
+              onClick={onAllow}
+              className="flex-1"
+              data-testid="analytics-optin-allow"
+            >
               {getMessage('analyticsOptInAllow')}
             </Button>
           </div>
