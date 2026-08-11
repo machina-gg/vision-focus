@@ -23,7 +23,10 @@ export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
     <Card>
       <div className="flex items-center gap-2 mb-4">
         <Shield className="w-5 h-5 text-danger-500" />
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3
+          className="text-lg font-semibold text-gray-900"
+          data-testid="analytics-top-sites-heading"
+        >
           {getMessage('topBlockedSites')}
         </h3>
       </div>

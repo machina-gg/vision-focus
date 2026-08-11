@@ -28,6 +28,7 @@ export function PasswordField({
       </label>
       <div className="relative">
         <Input
+          data-testid="password-field"
           type={show ? 'text' : 'password'}
           value={value}
           onChange={onChange}

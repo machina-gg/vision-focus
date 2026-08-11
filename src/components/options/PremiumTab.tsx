@@ -69,7 +69,10 @@ export function PremiumTab({
         <>
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2
+                className="text-lg font-semibold text-gray-900"
+                data-testid="premium-current-plan"
+              >
                 {getMessage('currentPlan')}
               </h2>
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-premium-400 to-premium-500 text-white rounded-full text-sm font-bold shadow-sm">

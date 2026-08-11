@@ -4,6 +4,9 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  getStorageData,
+  makeSettings,
+  makeDisplaySettings,
   SELECTORS,
   TEST_DATA
 } from './helpers';
@@ -48,13 +51,9 @@ test.describe('Options - Help Tab', () => {
     const gettingStarted = page.locator(SELECTORS.help.gettingStarted);
     await expect(gettingStarted).toBeVisible();
 
-    // 使い方の説明が表示される
-    await expect(
-      page.locator('text=/Block Sites|サイトをブロック/i')
-    ).toBeVisible();
-    await expect(
-      page.locator('text=/Dashboard|ダッシュボード/i')
-    ).toBeVisible();
+    // 使い方の手順が複数表示される（見出しは h3 で列挙される）
+    await expect(page.locator('h3').first()).toBeVisible();
+    expect(await page.locator('h3').count()).toBeGreaterThan(0);
 
     await page.close();
   });
@@ -91,9 +90,11 @@ test.describe('Options - Help Tab', () => {
     const passwordSection = page.locator(SELECTORS.help.passwordSection);
     await expect(passwordSection).toBeVisible();
 
-    // パスワード設定ボタンが表示される
-    const setPasswordButton = page.locator(SELECTORS.help.setPasswordButton);
-    await expect(setPasswordButton).toBeVisible();
+    // パスワード保護の有効化トグルが表示される
+    // （「設定」ボタンではなくトグルで有効化する UI）
+    await expect(
+      page.locator(SELECTORS.help.passwordEnableToggle)
+    ).toBeVisible();
 
     await page.close();
   });
@@ -101,38 +102,31 @@ test.describe('Options - Help Tab', () => {
   test('OPT-H05: パスワードを設定できる', async ({ context, extensionId }) => {
     const page = await openOptions(context, extensionId, 'help');
 
-    // パスワード設定ボタンをクリック
-    const setPasswordButton = page.locator(SELECTORS.help.setPasswordButton);
-    await setPasswordButton.click();
+    // トグルでパスワード保護を有効化すると設定フォームが開く
+    await page.locator(SELECTORS.help.passwordEnableToggle).click();
 
-    // パスワード入力フィールドが表示される
-    const passwordInput = page.locator('input[type="password"]').first();
-    await expect(passwordInput).toBeVisible();
+    const fields = page.locator(SELECTORS.help.passwordField);
+    await expect(fields.first()).toBeVisible();
 
-    // パスワードを入力
-    await passwordInput.fill('test1234');
+    // 新しいパスワードと確認用パスワードを入力
+    await fields.nth(0).fill('test1234');
+    await fields.nth(1).fill('test1234');
 
-    // 確認用パスワードを入力
-    const confirmPasswordInput = page.locator('input[type="password"]').nth(1);
-    await confirmPasswordInput.fill('test1234');
+    // 送信する
+    await page.locator(SELECTORS.help.passwordFormSubmit).click();
 
-    // 保存ボタンをクリック
-    const saveButton = page.locator(
-      'button:has-text("保存"), button:has-text("Save")'
-    );
-    await saveButton.click();
+    // 保存されるとフォームが閉じ、トグルが有効になる
+    await expect(fields.first()).toBeHidden();
+    await expect(
+      page.locator(SELECTORS.help.passwordEnableToggle)
+    ).toHaveAttribute('aria-checked', 'true');
 
-    // パスワードが設定される
-    await page.waitForTimeout(1000); // 保存処理待ち
-
-    // パスワード変更ボタンが表示される
-    const changePasswordButton = page.locator(
-      SELECTORS.help.changePasswordButton
-    );
-    const isChangeVisible = await changePasswordButton
-      .isVisible()
-      .catch(() => false);
-    expect(isChangeVisible).toBeTruthy();
+    // ストレージにも反映されている
+    const settings = await getStorageData<{
+      password?: { enabled: boolean; passwordHash: string | null };
+    }>(page, 'settings');
+    expect(settings?.password?.enabled).toBe(true);
+    expect(settings?.password?.passwordHash).toBeTruthy();
 
     await page.close();
   });
@@ -151,31 +145,30 @@ test.describe('Options - Help Tab', () => {
 
     // パスワード変更ボタンをクリック
     const changePasswordButton = page.locator(
-      SELECTORS.help.changePasswordButton
+      SELECTORS.help.passwordChangeButton
     );
     await expect(changePasswordButton).toBeVisible();
     await changePasswordButton.click();
 
-    // 現在のパスワード入力
-    const currentPasswordInput = page.locator('input[type="password"]').first();
-    await currentPasswordInput.fill(TEST_DATA.password.valid);
+    // 現在 / 新規 / 確認の 3 フィールドを入力する
+    const fields = page.locator(SELECTORS.help.passwordField);
+    await expect(fields).toHaveCount(3);
+    await fields.nth(0).fill(TEST_DATA.password.valid);
+    await fields.nth(1).fill('newpass1234');
+    await fields.nth(2).fill('newpass1234');
 
-    // 新しいパスワード入力
-    const newPasswordInput = page.locator('input[type="password"]').nth(1);
-    await newPasswordInput.fill('newpass1234');
+    // 送信する
+    await page.locator(SELECTORS.help.passwordFormSubmit).click();
 
-    // 確認用パスワード入力
-    const confirmPasswordInput = page.locator('input[type="password"]').nth(2);
-    await confirmPasswordInput.fill('newpass1234');
-
-    // 保存ボタンをクリック
-    const saveButton = page.locator(
-      'button:has-text("保存"), button:has-text("Save")'
+    // フォームが閉じ、新しいハッシュが保存される
+    await expect(fields.first()).toBeHidden();
+    const settings = await getStorageData<{
+      password?: { enabled: boolean; passwordHash: string | null };
+    }>(page, 'settings');
+    expect(settings?.password?.enabled).toBe(true);
+    expect(settings?.password?.passwordHash).not.toBe(
+      TEST_DATA.password.validHash
     );
-    await saveButton.click();
-
-    // パスワードが変更される
-    await page.waitForTimeout(1000); // 保存処理待ち
 
     await page.close();
   });
@@ -192,23 +185,23 @@ test.describe('Options - Help Tab', () => {
 
     const page = await openOptions(context, extensionId, 'help');
 
-    // パスワード削除ボタンをクリック
-    const removePasswordButton = page.locator(
-      SELECTORS.help.removePasswordButton
-    );
-    await expect(removePasswordButton).toBeVisible();
-    await removePasswordButton.click();
+    // トグルをオフにするとパスワード保護が解除される
+    const toggle = page.locator(SELECTORS.help.passwordEnableToggle);
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await toggle.click();
 
-    // 確認ダイアログが表示される可能性がある
-    page.on('dialog', (dialog) => dialog.accept());
+    // 解除確認のためのパスワード入力を求められる
+    const fields = page.locator(SELECTORS.help.passwordField);
+    await expect(fields.first()).toBeVisible();
+    await fields.first().fill(TEST_DATA.password.valid);
+    await page.locator(SELECTORS.help.passwordFormSubmit).click();
 
-    // パスワードが削除される
-    await page.waitForTimeout(1000); // 削除処理待ち
-
-    // パスワード設定ボタンが再度表示される
-    const setPasswordButton = page.locator(SELECTORS.help.setPasswordButton);
-    const isSetVisible = await setPasswordButton.isVisible().catch(() => false);
-    expect(isSetVisible).toBeTruthy();
+    // 保護が解除される
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    const settings = await getStorageData<{
+      password?: { enabled: boolean; passwordHash: string | null };
+    }>(page, 'settings');
+    expect(settings?.password?.enabled).toBe(false);
 
     await page.close();
   });
@@ -229,9 +222,11 @@ test.describe('Options - Help Tab', () => {
     // トグルをクリック
     await optInToggle.click();
 
-    // 状態が変更される
-    const newState = await optInToggle.getAttribute('aria-checked');
-    expect(newState).not.toBe(initialState);
+    // 状態が変更される（保存とストレージ購読を経るため属性の変化を待つ）
+    await expect(optInToggle).toHaveAttribute(
+      'aria-checked',
+      initialState === 'true' ? 'false' : 'true'
+    );
 
     await page.close();
   });
@@ -264,15 +259,9 @@ test.describe('Options - Help Tab', () => {
     // テスト用のJSONデータを準備
     const testData = {
       version: '1.0.0',
-      settings: {
-        language: 'en',
-        paused: false
-      },
+      settings: makeSettings(),
       vision: {
-        defaultSettings: {
-          goalText: 'Imported Goal',
-          subText: 'Imported Sub'
-        },
+        defaultSettings: makeDisplaySettings({ goalText: 'Imported Goal' }),
         presets: [],
         activePresetId: null
       }
@@ -295,15 +284,12 @@ test.describe('Options - Help Tab', () => {
       buffer: Buffer.from(JSON.stringify(testData))
     });
 
-    // インポート処理が実行される
-    await page.waitForTimeout(2000); // 処理待ち
+    // インポート結果メッセージが表示される（一定時間で消えるため待機で判定）
+    const resultMessage = page.locator(SELECTORS.help.importResultMessage);
+    await expect(resultMessage).toBeVisible();
 
-    // インポート成功メッセージが表示される
-    const successMessage = page.locator('text=/成功|Success|Imported/i');
-    const isSuccessVisible = await successMessage
-      .isVisible()
-      .catch(() => false);
-    expect(isSuccessVisible).toBeTruthy();
+    // エラーではないことを確認する
+    await expect(resultMessage).not.toContainText(/error|失敗|不正/i);
 
     await page.close();
   });

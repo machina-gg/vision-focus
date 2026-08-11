@@ -266,7 +266,7 @@ export function HelpSettingsBackup({
               ) : (
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               )}
-              <span>{importMessage}</span>
+              <span data-testid="import-result-message">{importMessage}</span>
             </div>
           )}
           {importWarnings.length > 0 && (
