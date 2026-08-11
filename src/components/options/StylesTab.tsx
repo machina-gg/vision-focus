@@ -57,6 +57,7 @@ export function StylesTab({ isPremium, featureLimits }: StylesTabProps) {
               </h2>
               <div
                 className="relative aspect-video rounded-lg overflow-hidden"
+                data-testid="style-preview"
                 style={
                   draftDisplaySettings.backgroundType === 'color'
                     ? {

@@ -137,6 +137,7 @@ export function ImageUploader({
     <div className="space-y-2">
       <input
         ref={fileInputRef}
+        data-testid="style-bg-upload"
         type="file"
         accept="image/jpeg,image/png,image/webp"
         onChange={handleFileSelect}
@@ -145,6 +146,7 @@ export function ImageUploader({
       />
 
       <div
+        data-testid="style-bg-upload-dropzone"
         onClick={handleClick}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}

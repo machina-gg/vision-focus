@@ -158,6 +158,50 @@ export async function getStorageDataFromExtension<T = unknown>(
 }
 
 /**
+ * DashboardDisplaySettings の完全な形を作る
+ *
+ * 必須フィールドを欠くとアプリ側の参照が壊れるため、テストで vision を
+ * 直接組み立てる場合は必ずこれを使う。
+ *
+ * @param overrides - 上書きする値
+ */
+export function makeDisplaySettings(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    goalText: 'Focus on what matters',
+    goalSubText: 'Stay productive',
+    textColor: '#ffffff',
+    backgroundType: 'color',
+    backgroundImage: 'default-1',
+    backgroundColor: '#1a1a2e',
+    customBackgroundData: null,
+    fontSettings: { family: 'system', size: 'lg', weight: 'bold' },
+    ...overrides
+  };
+}
+
+/**
+ * DashboardPreset の完全な形を作る
+ *
+ * @param id - プリセットID
+ * @param name - プリセット名
+ * @param overrides - 表示設定の上書き
+ */
+export function makePreset(
+  id: string,
+  name: string,
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    ...makeDisplaySettings(overrides),
+    id,
+    name,
+    createdAt: new Date().toISOString()
+  };
+}
+
+/**
  * テスト用の初期設定をセットする
  *
  * @param page - Playwright Page オブジェクト

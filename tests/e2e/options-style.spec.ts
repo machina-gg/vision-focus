@@ -4,6 +4,8 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  makeDisplaySettings,
+  makePreset,
   SELECTORS
 } from './helpers';
 
@@ -95,14 +97,10 @@ test.describe('Options - Style Tab', () => {
     await expect(modal).toBeVisible();
 
     // プリセット名を入力
-    const nameInput = modal.locator('input[type="text"]');
-    await nameInput.fill('Test Preset');
+    await page.locator(SELECTORS.styles.newPresetNameInput).fill('Test Preset');
 
     // 作成ボタンをクリック
-    const confirmButton = modal.locator(
-      'button:has-text("作成"), button:has-text("Create")'
-    );
-    await confirmButton.click();
+    await page.locator(SELECTORS.styles.newPresetConfirm).click();
 
     // モーダルが閉じる
     await expect(modal).not.toBeVisible();
@@ -120,29 +118,15 @@ test.describe('Options - Style Tab', () => {
     // テスト用プリセットを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
-      defaultSettings: {
-        goalText: 'Focus on what matters',
-        subText: 'Stay productive'
-      },
+      defaultSettings: makeDisplaySettings(),
       presets: [
-        {
-          id: 'default',
-          name: 'Default',
-          goalText: 'Focus on what matters',
-          subText: 'Stay productive',
-          textColor: '#ffffff',
-          backgroundColor: '#1a1a2e',
-          backgroundType: 'color'
-        },
-        {
-          id: 'test-preset',
-          name: 'Test Preset',
+        makePreset('default', 'Default'),
+        makePreset('test-preset', 'Test Preset', {
           goalText: 'Test Goal',
-          subText: 'Test Sub',
+          goalSubText: 'Test Sub',
           textColor: '#000000',
-          backgroundColor: '#ffffff',
-          backgroundType: 'color'
-        }
+          backgroundColor: '#ffffff'
+        })
       ],
       activePresetId: 'default'
     });
@@ -289,9 +273,14 @@ test.describe('Options - Style Tab', () => {
       .filter({ hasText: 'Default' });
     await presetButton.click();
 
-    // カスタム背景アップロードフィールドが表示される
-    const uploadInput = page.locator(SELECTORS.styles.customBackgroundUpload);
-    await expect(uploadInput).toBeVisible();
+    // カスタム背景アップロードのドロップゾーンが表示される
+    // （ファイル入力自体は hidden なので可視要素で確認する）
+    await expect(
+      page.locator(SELECTORS.styles.customBackgroundDropzone)
+    ).toBeVisible();
+    await expect(
+      page.locator(SELECTORS.styles.customBackgroundUpload)
+    ).toBeAttached();
 
     await page.close();
   });
@@ -342,14 +331,19 @@ test.describe('Options - Style Tab', () => {
       .filter({ hasText: 'Default' });
     await presetButton.click();
 
-    // フォント選択セレクトでGoogle Fontsが選択可能
-    const fontSelect = page.locator(SELECTORS.styles.fontFamilySelect).first();
-    await expect(fontSelect).toBeVisible();
+    // フォントはカテゴリ選択 + ファミリ選択のボタン群で構成される
+    const categoryButtons = page.locator(SELECTORS.styles.fontCategoryButton);
+    await expect(categoryButtons.first()).toBeVisible();
 
-    // Google Fontsのオプションが含まれている（Premiumユーザーのみ）
-    const options = await fontSelect.locator('option').allTextContents();
-    // System fonts以外にGoogle Fontsが含まれることを確認
-    expect(options.length).toBeGreaterThan(3);
+    // System 以外のカテゴリ（Google Fonts 系）が選択できる
+    const categoryCount = await categoryButtons.count();
+    expect(categoryCount).toBeGreaterThan(1);
+
+    // 2 番目のカテゴリを選ぶとファミリ候補が表示される
+    await categoryButtons.nth(1).click();
+    const familyButtons = page.locator(SELECTORS.styles.fontFamilySelect);
+    await expect(familyButtons.first()).toBeVisible();
+    expect(await familyButtons.count()).toBeGreaterThan(1);
 
     await page.close();
   });
@@ -457,19 +451,13 @@ test.describe('Options - Style Tab', () => {
     // 無料版の上限（FEATURE_LIMITS.free.maxPresets = 3）を 1 件超える 4 件を用意する
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
-      defaultSettings: {
-        goalText: 'Focus on what matters',
-        subText: 'Stay productive'
-      },
-      presets: [1, 2, 3, 4].map((n) => ({
-        id: `preset${n}`,
-        name: `Preset ${n}`,
-        goalText: `Goal ${n}`,
-        subText: `Sub ${n}`,
-        textColor: '#ffffff',
-        backgroundColor: '#1a1a2e',
-        backgroundType: 'color'
-      })),
+      defaultSettings: makeDisplaySettings(),
+      presets: [1, 2, 3, 4].map((n) =>
+        makePreset(`preset${n}`, `Preset ${n}`, {
+          goalText: `Goal ${n}`,
+          goalSubText: `Sub ${n}`
+        })
+      ),
       activePresetId: 'preset1'
     });
     // Freeユーザー（Premiumなし）

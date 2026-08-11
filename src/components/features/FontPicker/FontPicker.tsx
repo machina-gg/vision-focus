@@ -141,6 +141,7 @@ export function FontPicker({
             return (
               <button
                 key={categoryKey}
+                data-testid="font-category-button"
                 onClick={() => handleCategoryChange(categoryKey)}
                 className={`
                   px-3 py-1.5 text-sm rounded-lg border transition-colors
@@ -167,6 +168,7 @@ export function FontPicker({
           {FONT_CATEGORIES[selectedCategory].fonts.map((font) => (
             <button
               key={font.family}
+              data-testid="font-family-button"
               onClick={() => handleChange({ family: font.family })}
               className={`
                 px-3 py-2 text-sm rounded-lg border transition-colors text-left
@@ -193,6 +195,7 @@ export function FontPicker({
           {FONT_SIZES.map((size) => (
             <button
               key={size.value}
+              data-testid="font-size-button"
               onClick={() => handleChange({ size: size.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
@@ -218,6 +221,7 @@ export function FontPicker({
           {FONT_WEIGHTS.map((weight) => (
             <button
               key={weight.value}
+              data-testid="font-weight-button"
               onClick={() => handleChange({ weight: weight.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
