@@ -31,40 +31,38 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 | **トリガー** | `daily-cleanup` アラーム発火時（1日1回）        |
 | **送信元**   | `src/background/index.ts` → `sendDailyActive()` |
 
-| パラメータ  | 型     | 説明                                 |
-| ----------- | ------ | ------------------------------------ |
-| `version`   | string | 拡張機能のバージョン（例: `1.2.0`）  |
-| `language`  | string | ユーザーの言語設定（例: `ja`, `en`） |
-| `user_type` | string | `free` または `premium`              |
+| パラメータ | 型     | 説明                                 |
+| ---------- | ------ | ------------------------------------ |
+| `version`  | string | 拡張機能のバージョン（例: `1.2.0`）  |
+| `language` | string | ユーザーの言語設定（例: `ja`, `en`） |
 
 ---
 
 ### 2. `use_feature` — 機能使用トラッキング
 
-| 項目         | 内容                                   |
-| ------------ | -------------------------------------- |
-| **用途**     | 各機能の使用率を把握する               |
-| **トリガー** | ユーザーが特定の機能を使用したとき     |
-| **送信元**   | `trackFeatureUse(feature, isPremium?)` |
+| 項目         | 内容                               |
+| ------------ | ---------------------------------- |
+| **用途**     | 各機能の使用率を把握する           |
+| **トリガー** | ユーザーが特定の機能を使用したとき |
+| **送信元**   | `trackFeatureUse(feature)`         |
 
-| パラメータ   | 型      | 説明                                 |
-| ------------ | ------- | ------------------------------------ |
-| `feature`    | string  | 機能名（下表参照）                   |
-| `is_premium` | boolean | Premium限定機能の場合 `true`（任意） |
+| パラメータ | 型     | 説明               |
+| ---------- | ------ | ------------------ |
+| `feature`  | string | 機能名（下表参照） |
 
 #### `feature` パラメータの値一覧
 
-| feature値            | 説明                             | Premium | 送信元ファイル                                              |
-| -------------------- | -------------------------------- | ------- | ----------------------------------------------------------- |
-| `block_add`          | ブロックリストにドメインを追加   | -       | `src/hooks/useBlocklist.ts`                                 |
-| `block_remove`       | ブロックリストからドメインを削除 | -       | `src/hooks/useBlocklist.ts`                                 |
-| `schedule_create`    | スケジュールを新規作成           | -       | `src/hooks/useSchedules.ts`                                 |
-| `schedule_toggle`    | スケジュールの有効/無効を切替    | -       | `src/hooks/useSchedules.ts`                                 |
-| `preset_switch`      | プリセットを切替                 | -       | `src/hooks/usePresets.ts`                                   |
-| `preset_create`      | プリセットを新規作成             | -       | `src/hooks/usePresets.ts`                                   |
-| `csv_export`         | 分析データをCSVエクスポート      | Yes     | `src/components/options/analytics/AnalyticsExportBar.tsx`   |
-| `image_upload`       | 背景画像をアップロード           | Yes     | `src/components/features/ImageUploader/ImageUploader.tsx`   |
-| `wallpaper_download` | 壁紙をダウンロード               | Yes     | `src/components/features/DownloadButton/DownloadButton.tsx` |
+| feature値            | 説明                             | 送信元ファイル                                              |
+| -------------------- | -------------------------------- | ----------------------------------------------------------- |
+| `block_add`          | ブロックリストにドメインを追加   | `src/hooks/useBlocklist.ts`                                 |
+| `block_remove`       | ブロックリストからドメインを削除 | `src/hooks/useBlocklist.ts`                                 |
+| `schedule_create`    | スケジュールを新規作成           | `src/hooks/useSchedules.ts`                                 |
+| `schedule_toggle`    | スケジュールの有効/無効を切替    | `src/hooks/useSchedules.ts`                                 |
+| `preset_switch`      | プリセットを切替                 | `src/hooks/usePresets.ts`                                   |
+| `preset_create`      | プリセットを新規作成             | `src/hooks/usePresets.ts`                                   |
+| `csv_export`         | 分析データをCSVエクスポート      | `src/components/options/analytics/AnalyticsExportBar.tsx`   |
+| `image_upload`       | 背景画像をアップロード           | `src/components/features/ImageUploader/ImageUploader.tsx`   |
+| `wallpaper_download` | 壁紙をダウンロード               | `src/components/features/DownloadButton/DownloadButton.tsx` |
 
 ---
 
@@ -111,15 +109,13 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 
 ### カスタム分析（Explorations）
 
-| 分析項目               | 使用イベント                 | 説明                       |
-| ---------------------- | ---------------------------- | -------------------------- |
-| DAU / WAU / MAU        | `daily_active`               | アクティブユーザー数の推移 |
-| バージョン別ユーザー数 | `daily_active` → `version`   | 各バージョンの普及率       |
-| 言語別ユーザー数       | `daily_active` → `language`  | 多言語対応の優先度判断     |
-| Free/Premium 比率      | `daily_active` → `user_type` | コンバージョン率の把握     |
-| 機能別使用率           | `use_feature` → `feature`    | 各機能の利用頻度           |
-| Premium機能使用率      | `use_feature` → `is_premium` | Premium機能の価値検証      |
-| エラー発生率           | `error` → `type`             | 品質監視・改善の優先度     |
+| 分析項目               | 使用イベント                | 説明                       |
+| ---------------------- | --------------------------- | -------------------------- |
+| DAU / WAU / MAU        | `daily_active`              | アクティブユーザー数の推移 |
+| バージョン別ユーザー数 | `daily_active` → `version`  | 各バージョンの普及率       |
+| 言語別ユーザー数       | `daily_active` → `language` | 多言語対応の優先度判断     |
+| 機能別使用率           | `use_feature` → `feature`   | 各機能の利用頻度           |
+| エラー発生率           | `error` → `type`            | 品質監視・改善の優先度     |
 
 ---
 

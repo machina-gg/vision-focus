@@ -35,19 +35,19 @@ Primary を blue-500 → teal-500 に変更。宝石のエメラルドを思わ�
 | Warning        | #F59E0B | amber-500  | 注意喚起、時間制限の警告     |
 | Danger/Waste   | #F43F5E | rose-500   | 浪費した時間、エラー、削除   |
 | Block          | #F97316 | orange-500 | ブロック機能、サイトブロック |
-| Premium        | #8B5CF6 | violet-500 | プレミアム機能、特別感       |
+| Premium        | #8B5CF6 | violet-500 | 支援・推薦などの特別な訴求   |
 | Info           | #0EA5E9 | sky-500    | 情報表示、統計値             |
 
 #### 旧パレットからの変更理由
 
-| 変更点         | 旧                         | 新         | 理由                                       |
-| -------------- | -------------------------- | ---------- | ------------------------------------------ |
-| Primary        | blue-500                   | teal-500   | エメラルドグリーン系。クールで知的な印象   |
-| Success/Invest | green-500                  | cyan-500   | Primary(teal)との分離を確保                |
-| Danger         | red-500                    | rose-500   | red よりも柔らかくミニマルなトーンに合う   |
-| Block          | amber-500 (Warning と共用) | orange-500 | Warning と Block を明確に分離              |
-| Premium        | amber-500 (Warning と共用) | violet-500 | 紫の高級感で特別感を演出。amber 衝突を解消 |
-| Info           | blue-500 (Primary と共用)  | sky-500    | Primary(teal) と明確に分離                 |
+| 変更点         | 旧                         | 新         | 理由                                     |
+| -------------- | -------------------------- | ---------- | ---------------------------------------- |
+| Primary        | blue-500                   | teal-500   | エメラルドグリーン系。クールで知的な印象 |
+| Success/Invest | green-500                  | cyan-500   | Primary(teal)との分離を確保              |
+| Danger         | red-500                    | rose-500   | red よりも柔らかくミニマルなトーンに合う |
+| Block          | amber-500 (Warning と共用) | orange-500 | Warning と Block を明確に分離            |
+| Premium        | amber-500 (Warning と共用) | violet-500 | 紫で特別感を演出。amber 衝突を解消       |
+| Info           | blue-500 (Primary と共用)  | sky-500    | Primary(teal) と明確に分離               |
 
 ### ニュートラルカラー
 
@@ -238,9 +238,9 @@ Tailwind の 4px 単位スケールを使用。以下のサイズを**推奨値*
 - コンテナ: `bg-white rounded-2xl shadow-xl`
 - ヘッダー: `px-6 py-4 border-b border-gray-200`
 
-### プレミアム機能の表現
+### 支援・推薦の表現
 
-- Crown アイコン + **premium-500**（violet 系）
+- **premium-500**（violet 系）を投げ銭・書籍推薦の訴求に使う
 - バナー: `bg-premium-50 border-premium-200`
 - グラデーション: `from-premium-500 to-premium-400`
 - ロック状態: 薄いオーバーレイ + ロックアイコン

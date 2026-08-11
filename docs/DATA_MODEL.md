@@ -71,16 +71,16 @@ erDiagram
 
 ### DashboardDisplaySettings（表示設定）
 
-| フィールド           | 型                 | 説明                           |
-| -------------------- | ------------------ | ------------------------------ |
-| goalText             | string             | 目標テキスト                   |
-| goalSubText          | string             | サブテキスト                   |
-| textColor            | string             | テキスト色                     |
-| backgroundType       | "image" \| "color" | 背景タイプ                     |
-| backgroundImage      | string             | 背景画像ID                     |
-| backgroundColor      | string             | 背景色                         |
-| customBackgroundData | string?            | カスタム背景（Base64）※Premium |
-| fontSettings         | FontSettings       | フォント設定                   |
+| フィールド           | 型                 | 説明                   |
+| -------------------- | ------------------ | ---------------------- |
+| goalText             | string             | 目標テキスト           |
+| goalSubText          | string             | サブテキスト           |
+| textColor            | string             | テキスト色             |
+| backgroundType       | "image" \| "color" | 背景タイプ             |
+| backgroundImage      | string             | 背景画像ID             |
+| backgroundColor      | string             | 背景色                 |
+| customBackgroundData | string?            | カスタム背景（Base64） |
+| fontSettings         | FontSettings       | フォント設定           |
 
 ### DashboardPreset（プリセット）
 
@@ -127,13 +127,17 @@ DashboardDisplaySettings を継承し、以下を追加：
 | totalTime  | number | 合計時間（秒） |
 | lastVisit  | string | 最終訪問日時   |
 
-## 機能制限
+## 機能上限
 
-無料版/有料版の制限値。詳細は [PRD.md](./PRD.md) のマネタイズセクションを参照。
+課金による機能制限は行わない（詳細は [PRD.md](./PRD.md) のマネタイズセクションを参照）。
 
-| 項目           | 無料版 | 有料版 |
-| -------------- | ------ | ------ |
-| ブロックリスト | 無制限 | 無制限 |
-| 分析履歴       | 7日間  | 全期間 |
-| プリセット数   | 3件    | 10件   |
-| カスタム背景   | ×      | ○      |
+UI の都合による上限のみ存在する。
+
+| 項目           | 上限   | 理由                                   |
+| -------------- | ------ | -------------------------------------- |
+| ブロックリスト | 無制限 | -                                      |
+| 分析履歴       | 365日  | ストレージ肥大の防止                   |
+| スタイル       | 10件   | 選択ボタンを横並びで表示する UI の都合 |
+| カスタム背景   | 無制限 | -                                      |
+
+定義箇所: `src/constants/limits.ts`（`MAX_PRESETS`）、`src/constants/intervals.ts`（`MAX_HISTORY_DAYS_FALLBACK`）

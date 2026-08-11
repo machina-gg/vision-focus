@@ -144,7 +144,7 @@
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-010: クイックブロックボタンに現在のドメインが表示される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-011: クイックブロッククリックでサイトがブロックリストに追加される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-012: 言語切り替えでUIが即座に変更される
-- 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-013: PremiumユーザーはAnalyticsリンクが表示される
+- 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-013: Analytics リンクが表示される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される
 
 ### 手動確認項目
@@ -185,7 +185,7 @@
 - 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-008: プリセット未設定時、シンプルなブロックページUIが表示
 - 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-009: ブロックされたサイトから遷移時、ブロック情報が表示される
 - 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-010: ブロックサイトリストが表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-011: Premium ユーザーは壁紙ダウンロードボタンが表示される
+- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-011: 壁紙ダウンロードボタンが表示される
 - 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-012: Time Limit 超過からの遷移時、専用メッセージが表示される
 - 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-013: ブロック日数（Blocking Days）が正しく表示される
 
@@ -208,7 +208,7 @@
   - 期待: ブロック情報バナーが3-5秒後に自動で消える（または閉じるボタンがある）
 
 - [ ] 壁紙ダウンロードの画質
-  - 手順: Premium ユーザーで壁紙をダウンロード
+  - 手順: 壁紙をダウンロード
   - 期待: ダウンロードされた画像が元の解像度を保持している
 
 ---
@@ -343,57 +343,35 @@
 
 ---
 
-## 9. プレミアム機能（E2E なし）
+## 9. 追加機能（E2E なし）
+
+かつて有料版限定だった機能。全ユーザーが利用できる。
 
 ### 手動確認項目（全て）
 
-- [ ] ライセンスキー入力でプレミアム有効化
-  - 手順: Options > Premium > ライセンスキー入力 → Activate
-  - 期待: プレミアム機能が解放され、「Premium」バッジが表示される
-
-- [ ] プレミアム機能の解放確認
-  - 手順: プレミアム有効化後、Styles タブを開く
+- [ ] Google Fonts 選択・カスタム背景アップロードが使える
+  - 手順: Options > Styles タブを開く
   - 期待: Google Fonts 選択・カスタム背景アップロードが使用可能
 
-- [ ] プリセット上限が5件になる
-  - 手順: プレミアム有効化 → プリセットを5件作成
-  - 期待: 5件まで作成可能、6件目は作成不可
+- [ ] スタイルを上限（10件）まで作成できる
+  - 手順: スタイルを10件作成し、さらに追加を試みる
+  - 期待: 10件まで作成可能、11件目は作成不可（UI の都合による上限）
 
 - [ ] カスタム背景画像のアップロード
-  - 手順: Premium ユーザーで Styles タブ > Custom Background > Upload
+  - 手順: Styles タブ > Custom Background > Upload
   - 期待: ファイル選択ダイアログが開き、画像をアップロード可能
 
 - [ ] 壁紙ダウンロード機能
-  - 手順: Premium ユーザーで newtab.html を開く → Download ボタン
+  - 手順: newtab.html を開く → Download ボタン
   - 期待: 現在の背景画像が PNG/JPG でダウンロードされる
 
 - [ ] Analytics 全期間表示
-  - 手順: Premium ユーザーで Analytics タブを開く
+  - 手順: Analytics タブを開く
   - 期待: 「All Time」フィルタが選択可能
 
 - [ ] Unblock History CSV エクスポート
-  - 手順: Premium ユーザーで Analytics タブ > Unblock History > Export CSV
+  - 手順: Analytics タブ > Unblock History > Export CSV
   - 期待: CSV ファイルがダウンロードされる
-
-- [ ] 開発者モード（24時間体験）
-  - 手順: Options > Premium > Developer Mode
-  - 期待: 24時間限定でプレミアム機能が有効化、通知が表示される
-
-- [ ] プレミアムダウングレード時の動作
-  - 手順: ライセンスを解除 → プリセット・カスタム背景を確認
-  - 期待: 4件目以降のプリセットがロック、カスタム背景が削除される
-
-- [ ] Free ダウングレード時のスケジュール無効化
-  - 手順: プレミアム解除 → 3件目以降のプリセットを使用していたスケジュールを確認
-  - 期待: スケジュールが無効化される
-
-- [ ] プレミアム機能比較表の表示
-  - 手順: Options > Premium タブを開く
-  - 期待: Free vs Premium の機能比較表が表示される
-
-- [ ] Upgrade ボタンで決済ページへ遷移
-  - 手順: Options > Premium > Upgrade
-  - 期待: 決済ページ（Stripe など）が新しいタブで開く
 
 ---
 
@@ -494,9 +472,9 @@
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST07: テキスト色を選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST08: 背景タイプ（画像/単色）を選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST09: デフォルト背景画像を選択できる
-- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST10: Premium ユーザーはカスタム画像をアップロードできる
+- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST10: カスタム画像をアップロードできる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST11: フォント設定（ファミリー・サイズ・ウェイト）を変更可能
-- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: Premium ユーザーは Google Fonts を選択できる
+- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: Google Fonts を選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST13: 背景画像変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST14: フォント変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST15: 色変更時にリアルタイムプレビューされる
@@ -570,7 +548,7 @@
 
 - [ ] パスワードが平文で保存されていない
 - [ ] ブロックリストが外部から読み取れない
-- [ ] Analytics データが暗号化されている（Premium 機能）
+- [ ] Analytics データが外部に送信されていない
 
 ---
 
