@@ -186,6 +186,32 @@ jobs:
       - name: Build
         run: pnpm build
 
+  # 並列実行: Storybook ビルド
+  # Plasmo 独自の import スキームなど、本体ビルドでは通るのに Storybook では
+  # 壊れる差分を検知するために独立して実行する（#356）
+  build-storybook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
   # 全ジョブ完了確認（ブランチ保護ルール用）
   check:
     runs-on: ubuntu-latest
@@ -197,7 +223,8 @@ jobs:
         test-unit-hooks,
         test-unit-background,
         coverage,
-        build
+        build,
+        build-storybook
       ]
     steps:
       - name: All checks passed
