@@ -22,10 +22,6 @@ jobs:
   audit-high:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    # 【暫定措置】develop に既存の脆弱性（1 critical / 40 high）があるため一時的に非ブロッキング化している。
-    # 脆弱性解消後にこの continue-on-error を削除し、ブロッキングへ戻すこと。
-    # 追従 Issue: #350
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,11 +41,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: npm audit (high 以上で fail)
-        # 【暫定措置】job 単位の continue-on-error だけではジョブ自身の conclusion が
-        # failure のままになり、必須ステータスチェックとして残っているとブロックされ得るため、
-        # step 単位でも continue-on-error を付与し、ジョブの conclusion を success 扱いにする。
         run: pnpm audit --audit-level high
-        continue-on-error: true
 
   # ブロッキング: gitleaks によるシークレット混入検出
   secret-scan:

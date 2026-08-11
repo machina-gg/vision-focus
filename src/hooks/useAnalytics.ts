@@ -98,8 +98,7 @@ export function useAnalytics({
         // Refresh data after re-blocking
         await reloadAnalyticsData();
         const settingsResult = (await storage.get('settings')) as
-          | AppSettings
-          | undefined;
+          AppSettings | undefined;
         if (settingsResult) {
           setSettings(settingsResult);
         }
@@ -115,8 +114,7 @@ export function useAnalytics({
     try {
       // Reset time for all sites but keep the list
       const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
+        UnblockHistory | undefined;
       if (currentHistory) {
         const resetHistory: UnblockHistory = {
           sites: Object.fromEntries(
@@ -150,8 +148,7 @@ export function useAnalytics({
   const handleStopTracking = useCallback(async (domain: string) => {
     try {
       const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
+        UnblockHistory | undefined;
       if (currentHistory && currentHistory.sites[domain]) {
         const { [domain]: _, ...remainingSites } = currentHistory.sites;
         const updatedHistory: UnblockHistory = { sites: remainingSites };
@@ -160,8 +157,7 @@ export function useAnalytics({
 
         // Also remove from analytics siteTime
         const currentAnalytics = (await storage.get('analytics')) as
-          | AnalyticsData
-          | undefined;
+          AnalyticsData | undefined;
         if (currentAnalytics && currentAnalytics.siteTime[domain]) {
           const { [domain]: __, ...remainingSiteTime } =
             currentAnalytics.siteTime;
@@ -197,8 +193,7 @@ export function useAnalytics({
       }
 
       const currentHistory = (await storage.get('unblockHistory')) as
-        | UnblockHistory
-        | undefined;
+        UnblockHistory | undefined;
       const history = currentHistory || { sites: {} };
 
       // Don't add if already tracking

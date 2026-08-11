@@ -2,12 +2,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 
 type BadgeVariant =
-  | 'default'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | 'premium';
+  'default' | 'success' | 'warning' | 'danger' | 'info' | 'premium';
 
 export interface BadgeProps {
   variant?: BadgeVariant;
