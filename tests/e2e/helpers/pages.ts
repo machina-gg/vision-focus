@@ -127,3 +127,34 @@ export async function openExternalSite(
   await page.waitForLoadState('domcontentloaded');
   return page;
 }
+
+/**
+ * ブロックルール（declarativeNetRequest の動的ルール）が反映されるまで待つ
+ *
+ * ルールの更新は storage の変更を受けた background が非同期に行うため、
+ * 固定時間の sleep では足りないことがある。実際のルールを見て待つ。
+ *
+ * @param page - 拡張機能のページ（chrome API が使えるもの）
+ * @param domains - ルールに含まれているべきドメイン
+ */
+export async function waitForBlockRules(
+  page: Page,
+  domains: string[],
+  timeout = 10_000
+): Promise<void> {
+  const deadline = Date.now() + timeout;
+
+  while (Date.now() < deadline) {
+    const filters = await page.evaluate(async () => {
+      const rules = await chrome.declarativeNetRequest.getDynamicRules();
+      return rules.map((rule) => rule.condition.urlFilter ?? '');
+    });
+
+    if (domains.every((d) => filters.some((f) => f.includes(d)))) return;
+    await page.waitForTimeout(100);
+  }
+
+  throw new Error(
+    `ブロックルールが反映されない: ${domains.join(', ')} を待っていた`
+  );
+}

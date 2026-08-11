@@ -1,8 +1,13 @@
 import { test, expect } from './fixtures/extension';
-import { openExternalSite, openPopup } from './helpers/pages';
+import {
+  openExternalSite,
+  openPopup,
+  waitForBlockRules
+} from './helpers/pages';
 import {
   clearStorageFromExtension,
   setStorageDataFromExtension,
+  setSettingsFromExtension,
   getStorageDataFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
@@ -23,7 +28,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     extensionId
   }) => {
     // Pause 有効 + Time Limit 超過
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: true, // Pause 有効
       blockList: [
@@ -34,8 +39,8 @@ test.describe('Interaction - 機能間相互作用', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 1,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 1
           }
         }
       ]
@@ -75,7 +80,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentDay = now.getDay();
 
     // Pause 有効 + Schedule でブロック有効化時間帯
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: true, // Pause 有効
       blockList: [
@@ -124,7 +129,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentDay = now.getDay();
 
     // Time Limit 未超過 + Schedule でブロック有効化時間帯
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       blockList: [
@@ -135,8 +140,8 @@ test.describe('Interaction - 機能間相互作用', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60
           }
         }
       ],
@@ -186,7 +191,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentDay = now.getDay();
 
     // Pause 有効 + Time Limit 超過 + Schedule 有効
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: true, // Pause が最優先
       blockList: [
@@ -197,8 +202,8 @@ test.describe('Interaction - 機能間相互作用', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 1,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 1
           }
         }
       ],
@@ -245,7 +250,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     extensionId
   }) => {
     // Opt-Out 状態
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
@@ -286,7 +291,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     extensionId
   }) => {
     // パスワード保護を有効化
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       password: {
@@ -319,7 +324,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     extensionId
   }) => {
     // パスワード保護を有効化
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       password: {

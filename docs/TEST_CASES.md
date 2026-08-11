@@ -260,6 +260,14 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | PR-006 | Analytics 全期間表示が使える             | P2     | E2E        |
 | PR-007 | Unblock History CSV エクスポートが使える | P2     | E2E        |
 
+### E2E の外部サイトについて
+
+ブロック機能のテストは実際のサイトへ遷移して確認する必要があるが、外部への実アクセスは行わない。Chromium の `--host-resolver-rules` で全ホストをローカルの HTTPS サーバ（`tests/e2e/fixtures/testServer.ts`）へ向け、`example.com` や `youtube.com` をローカルで再現する。
+
+- 拡張機能側は `declarativeNetRequest` の `||domain` でスキーム非依存に判定するため、実サイトと同じ経路を通る
+- HTTPS で待ち受けるのは、`youtube.com` が HSTS プリロード済みで http:// が内部昇格されるため。証明書は実行時に自己署名で生成する（リポジトリには含めない）
+- fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` / `makeTimeLimitUsage()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
+
 ### 開発支援（投げ銭）
 
 | ID      | シナリオ                                                 | 優先度 | ステータス |
