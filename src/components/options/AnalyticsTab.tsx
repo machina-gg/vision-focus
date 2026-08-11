@@ -16,7 +16,6 @@ import {
 interface AnalyticsTabProps {
   unblockHistory: UnblockHistory;
   analyticsData: AnalyticsData;
-  isPremium: boolean;
   onReblock: (domain: string) => void;
   onReset: () => void;
   onStopTracking: (domain: string) => void;
@@ -27,7 +26,6 @@ interface AnalyticsTabProps {
 export function AnalyticsTab({
   unblockHistory,
   analyticsData,
-  isPremium,
   onReblock,
   onReset,
   onStopTracking,
@@ -50,7 +48,6 @@ export function AnalyticsTab({
         settings={settings}
         analyticsData={analyticsData}
         unblockHistory={unblockHistory}
-        isPremium={isPremium}
         onRefresh={onRefresh}
         onReset={onReset}
       />
@@ -89,15 +86,11 @@ export function AnalyticsTab({
 
       <AnalyticsSummary
         unblockHistory={unblockHistory}
-        isPremium={isPremium}
         onReblock={onReblock}
         onStopTracking={onStopTracking}
       />
 
-      <AnalyticsDateFilter
-        analyticsData={analyticsData}
-        isPremium={isPremium}
-      />
+      <AnalyticsDateFilter analyticsData={analyticsData} />
     </div>
   );
 }

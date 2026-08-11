@@ -8,8 +8,7 @@ import type {
  * Extracts only the display-related properties from a preset
  */
 export function presetToDisplaySettings(
-  preset: DashboardPreset,
-  isPremium = true
+  preset: DashboardPreset
 ): DashboardDisplaySettings {
   return {
     goalText: preset.goalText,
@@ -18,8 +17,7 @@ export function presetToDisplaySettings(
     backgroundType: preset.backgroundType,
     backgroundImage: preset.backgroundImage,
     backgroundColor: preset.backgroundColor,
-    // Custom background requires premium
-    customBackgroundData: isPremium ? preset.customBackgroundData : null,
+    customBackgroundData: preset.customBackgroundData,
     fontSettings: preset.fontSettings
   };
 }

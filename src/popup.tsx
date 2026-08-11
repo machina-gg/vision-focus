@@ -18,7 +18,6 @@ import {
   useCurrentDomain,
   usePasswordVerification,
   usePopupActions,
-  usePremiumStatus,
   useResolvedPreset
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
@@ -32,12 +31,7 @@ import './styles/globals.css';
 function PopupAppContent() {
   const { settings, setSettings, vision } = useSettings();
   const stats = useBackgroundStats(POPUP_STATS_POLLING_MS);
-  const { isPremium } = usePremiumStatus();
-  const { displaySettings } = useResolvedPreset({
-    vision,
-    settings,
-    isPremium
-  });
+  const { displaySettings } = useResolvedPreset({ vision, settings });
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
 
   const {
@@ -207,16 +201,14 @@ function PopupAppContent() {
             </div>
           </div>
 
-          {isPremium && (
-            <button
-              data-testid="view-analytics-link"
-              onClick={handleAnalyticsClick}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm text-info-600 hover:text-info-700 hover:bg-info-50 rounded-lg transition-colors"
-            >
-              <TrendingUp className="w-4 h-4" />
-              {getMessage('viewAnalytics')}
-            </button>
-          )}
+          <button
+            data-testid="view-analytics-link"
+            onClick={handleAnalyticsClick}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm text-info-600 hover:text-info-700 hover:bg-info-50 rounded-lg transition-colors"
+          >
+            <TrendingUp className="w-4 h-4" />
+            {getMessage('viewAnalytics')}
+          </button>
         </div>
       </div>
 

@@ -100,15 +100,8 @@ export async function trackEvent(
 }
 
 /** Track a feature usage event */
-export async function trackFeatureUse(
-  feature: string,
-  isPremium = false
-): Promise<void> {
-  const params: EventParams = { feature };
-  if (isPremium) {
-    params.is_premium = true;
-  }
-  await trackEvent('use_feature', params);
+export async function trackFeatureUse(feature: string): Promise<void> {
+  await trackEvent('use_feature', { feature });
 }
 
 /** Track an error event */
@@ -129,11 +122,7 @@ export async function sendDailyActive(): Promise<void> {
   const settings = await getSettings();
   const version = chrome.runtime.getManifest().version;
   const language = settings.language ?? getCurrentLanguage();
-  const isPremium = false; // Determined at call site if needed
 
-  await trackEvent('daily_active', {
-    version,
-    language,
-    user_type: isPremium ? 'premium' : 'free'
-  });
+  // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
+  await trackEvent('daily_active', { version, language });
 }

@@ -1,99 +1,54 @@
-import { isExtPayPremium } from './extpay';
-import { storage } from './storage';
-import {
-  FEATURE_LIMITS,
-  type FeatureLimits,
-  type PremiumFeature
-} from '~/types/premium';
-
-/** Cache duration: 1 hour */
-const CACHE_DURATION = 60 * 60 * 1000;
-
-interface PremiumCache {
-  status: {
-    isPremium: boolean;
-    source: 'extpay' | null;
-  };
-  timestamp: number;
-}
+import { FEATURE_LIMITS, type FeatureLimits } from '~/types/premium';
 
 /**
- * Check if user has premium access (via ExtensionPay)
- * Results are cached for 1 hour to reduce API calls
+ * 機能の利用可否を扱うモジュール
+ *
+ * マネタイズ方針を投げ銭とアフィリエイト推薦へ変更したため、
+ * 全機能を全ユーザーに開放している。ExtensionPay による課金判定は行わない。
+ *
+ * 呼び出し側の分岐を段階的に整理するまでの互換のため、関数の
+ * インターフェースは維持している。
+ */
+
+/**
+ * 課金状態を返す（常に解放）
  */
 export async function checkPremiumStatus(): Promise<{
   isPremium: boolean;
   source: 'extpay' | null;
 }> {
-  // Check cache first
-  const cached = (await storage.get('premiumCache')) as
-    | PremiumCache
-    | undefined;
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.status;
-  }
-
-  // Check ExtensionPay subscription status
-  try {
-    const isPaid = await isExtPayPremium();
-    const status = {
-      isPremium: isPaid,
-      source: (isPaid ? 'extpay' : null) as 'extpay' | null
-    };
-
-    // Save to cache
-    await storage.set('premiumCache', {
-      status,
-      timestamp: Date.now()
-    });
-
-    return status;
-  } catch {
-    // On error, use previous cache if available (even if expired)
-    if (cached) {
-      return cached.status;
-    }
-    return {
-      isPremium: false,
-      source: null
-    };
-  }
+  return { isPremium: true, source: null };
 }
 
 /**
- * Check if user can access a specific premium feature
+ * 機能の利用可否を返す（常に利用可能）
  */
-export async function canAccessFeature(
-  _feature: PremiumFeature
-): Promise<boolean> {
-  const { isPremium } = await checkPremiumStatus();
-  return isPremium;
+export async function canAccessFeature(): Promise<boolean> {
+  return true;
 }
 
 /**
- * Get current feature limits based on premium status
+ * 機能上限を返す
  */
 export async function getFeatureLimits(): Promise<FeatureLimits> {
-  const { isPremium } = await checkPremiumStatus();
-  return isPremium ? FEATURE_LIMITS.premium : FEATURE_LIMITS.free;
+  return FEATURE_LIMITS;
 }
 
 /**
- * Check if user can add more items to blocklist
+ * ブロックリストに追加できるかを返す
+ *
+ * 上限は Infinity のため常に追加できるが、将来的に上限を設ける場合に
+ * 備えて判定の形は維持している。
  */
 export async function canAddToBlocklist(
   currentCount: number
 ): Promise<{ allowed: boolean; limit: number; reason?: string }> {
-  const limits = await getFeatureLimits();
-  const { isPremium } = await checkPremiumStatus();
+  const limits = FEATURE_LIMITS;
 
   if (currentCount >= limits.maxBlockList) {
     return {
       allowed: false,
-      limit: limits.maxBlockList,
-      reason: isPremium
-        ? undefined
-        : `Free tier limit reached (${limits.maxBlockList} sites). Upgrade to Premium for unlimited sites.`
+      limit: limits.maxBlockList
     };
   }
 

@@ -1,16 +1,8 @@
-// Premium feature types and limits
-
-// Premium feature identifiers
-export type PremiumFeature =
-  | 'unlimited_blocklist'
-  | 'custom_background'
-  | 'dashboard_presets'
-  | 'unsplash'
-  | 'unlimited_history'
-  | 'weekly_report'
-  | 'monthly_report'
-  | 'github_integration'
-  | 'unblock_analytics'; // View unblocked site usage time and re-block
+// 機能上限の定義
+//
+// かつては無料版 / 有料版で上限を分けていたが、マネタイズ方針を
+// 投げ銭とアフィリエイト推薦へ変更したため、全機能を全ユーザーに開放している。
+// 上限は「実装上の妥当な上限」としてのみ残している。
 
 // Feature limits type
 export interface FeatureLimits {
@@ -19,22 +11,10 @@ export interface FeatureLimits {
   maxPresets: number;
 }
 
-// Feature limits
-export const FEATURE_LIMITS: {
-  free: FeatureLimits;
-  premium: FeatureLimits;
-} = {
-  free: {
-    maxBlockList: Infinity, // Unlimited for all users
-    historyDays: 7,
-    maxPresets: 3
-  },
-  premium: {
-    maxBlockList: Infinity,
-    historyDays: Infinity,
-    maxPresets: 10
-  }
+// Feature limits（全ユーザー共通）
+export const FEATURE_LIMITS: FeatureLimits = {
+  maxBlockList: Infinity,
+  historyDays: Infinity,
+  // スタイルは UI の見やすさの都合で上限を設けている
+  maxPresets: 10
 };
-
-// Legacy export for backwards compatibility
-export const FREE_TIER_LIMITS = FEATURE_LIMITS.free;

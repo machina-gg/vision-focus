@@ -4,14 +4,7 @@ import React, { useEffect, useState } from 'react';
 // getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
 import logoBase64 from 'data-base64:assets/images/logo.png';
 
-import {
-  Ban,
-  Calendar,
-  Crown,
-  HelpCircle,
-  Palette,
-  TrendingUp
-} from 'lucide-react';
+import { Ban, Calendar, HelpCircle, Palette, TrendingUp } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
 import {
@@ -19,7 +12,6 @@ import {
   BlocklistTab,
   SchedulesTab,
   AnalyticsTab,
-  PremiumTab,
   HelpTab,
   ScheduleModal
 } from '~/components/options';
@@ -27,7 +19,6 @@ import { AnalyticsOptInModal } from '~/components/options/modals';
 import {
   useAnalytics,
   useBlocklist,
-  useLicense,
   useSchedules,
   usePremiumStatus
 } from '~/hooks';
@@ -63,12 +54,11 @@ function OptionsAppContent() {
   }, [activeTab]);
 
   // Premium status (from hook)
-  const { isPremium, featureLimits } = usePremiumStatus();
+  const { featureLimits } = usePremiumStatus();
 
   // Custom hooks
   const analytics = useAnalytics({ setSettings });
   const blocklist = useBlocklist({ settings, setSettings });
-  const license = useLicense();
   const schedules = useSchedules({ settings, setSettings });
 
   // YouTube settings handler with block count and unblockHistory tracking
@@ -167,11 +157,6 @@ function OptionsAppContent() {
       icon: <TrendingUp className="w-4 h-4" />
     },
     {
-      id: TABS.LICENSE,
-      label: getMessage('premium'),
-      icon: <Crown className="w-4 h-4" />
-    },
-    {
       id: TABS.HELP,
       label: getMessage('help'),
       icon: <HelpCircle className="w-4 h-4" />
@@ -217,7 +202,7 @@ function OptionsAppContent() {
 
         {/* Styles Tab */}
         {activeTab === TABS.STYLES && (
-          <StylesTab isPremium={isPremium} featureLimits={featureLimits} />
+          <StylesTab featureLimits={featureLimits} />
         )}
 
         {/* Block List Tab */}
@@ -253,21 +238,11 @@ function OptionsAppContent() {
           <AnalyticsTab
             unblockHistory={analytics.unblockHistory}
             analyticsData={analytics.analyticsData}
-            isPremium={isPremium}
             onReblock={analytics.handleReblock}
             onReset={analytics.handleResetAnalytics}
             onStopTracking={analytics.handleStopTracking}
             onRefresh={analytics.handleRefreshAnalytics}
             onAddSite={analytics.handleAddSiteToTrack}
-          />
-        )}
-
-        {/* Premium Tab */}
-        {activeTab === TABS.LICENSE && (
-          <PremiumTab
-            isPremium={isPremium}
-            onUpgrade={license.handleUpgrade}
-            onManageSubscription={license.handleManageSubscription}
           />
         )}
 
@@ -300,8 +275,6 @@ function OptionsAppContent() {
         onFormChange={schedules.setScheduleForm}
         onSave={schedules.handleSaveSchedule}
         vision={vision}
-        isPremium={isPremium}
-        featureLimits={featureLimits}
       />
       {/* Analytics Opt-In Modal (shown once on first visit if not yet decided) */}
       <AnalyticsOptInModal

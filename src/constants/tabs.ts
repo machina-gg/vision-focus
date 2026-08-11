@@ -6,7 +6,6 @@ export const TABS = {
   STYLES: 'styles',
   SCHEDULES: 'schedules',
   ANALYTICS: 'analytics',
-  LICENSE: 'license',
   HELP: 'help'
 } as const;
 
@@ -23,7 +22,6 @@ export const TAB_ORDER: TabName[] = [
   TABS.STYLES,
   TABS.SCHEDULES,
   TABS.ANALYTICS,
-  TABS.LICENSE,
   TABS.HELP
 ];
 

@@ -48,12 +48,7 @@ export {
 } from './font';
 
 // Premium types
-export {
-  type PremiumFeature,
-  type FeatureLimits,
-  FEATURE_LIMITS,
-  FREE_TIER_LIMITS
-} from './premium';
+export { type FeatureLimits, FEATURE_LIMITS } from './premium';
 
 // Report types
 export { type WeeklyReport, type MonthlyReport } from './report';

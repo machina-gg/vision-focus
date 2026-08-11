@@ -136,8 +136,7 @@ export function exportUnblockedSites(unblockHistory: UnblockHistory): void {
 export function exportAllData(
   blockList: BlockItem[],
   analyticsData: AnalyticsData,
-  unblockHistory: UnblockHistory,
-  isPremium: boolean
+  unblockHistory: UnblockHistory
 ): void {
   // Export each type of data
   if (blockList.length > 0) {
@@ -152,8 +151,7 @@ export function exportAllData(
     exportDailyStats(analyticsData.dailyStats);
   }
 
-  // Premium-only: unblocked site time tracking
-  if (isPremium && Object.keys(unblockHistory.sites || {}).length > 0) {
+  if (Object.keys(unblockHistory.sites || {}).length > 0) {
     exportUnblockedSites(unblockHistory);
   }
 }

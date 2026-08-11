@@ -6,14 +6,12 @@ import { getMessage } from '~/lib/i18n';
 interface MiniStatsProps {
   blockCount: number;
   blockingDays: number | null; // null if site is not in blocklist
-  isPremium?: boolean;
   onAnalyticsClick?: () => void;
 }
 
 export function MiniStats({
   blockCount,
   blockingDays,
-  isPremium = false,
   onAnalyticsClick
 }: MiniStatsProps) {
   return (
@@ -54,8 +52,8 @@ export function MiniStats({
         )}
       </div>
 
-      {/* Analytics Link (Premium only) */}
-      {isPremium && onAnalyticsClick && (
+      {/* Analytics Link */}
+      {onAnalyticsClick && (
         <button
           onClick={onAnalyticsClick}
           className="flex items-center gap-2 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"

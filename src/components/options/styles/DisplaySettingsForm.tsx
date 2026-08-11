@@ -2,11 +2,7 @@ import React from 'react';
 import { Target } from 'lucide-react';
 
 import { Card, Input } from '~/components/ui';
-import {
-  UpgradePrompt,
-  ImageUploader,
-  FontPicker
-} from '~/components/features';
+import { ImageUploader, FontPicker } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { BACKGROUND_OPTIONS, getBackgroundUrl } from '~/constants/backgrounds';
 import type { DashboardPreset } from '~/types/storage';
@@ -15,13 +11,9 @@ import type { UsePresetsReturn } from '~/hooks/usePresets';
 
 interface DisplaySettingsFormProps {
   presets: UsePresetsReturn;
-  isPremium: boolean;
 }
 
-export function DisplaySettingsForm({
-  presets,
-  isPremium
-}: DisplaySettingsFormProps) {
+export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
   const {
     draftDisplaySettings,
     selectedPresetId,
@@ -217,26 +209,17 @@ export function DisplaySettingsForm({
           </div>
         )}
 
-        {/* Custom Background Upload (Premium) */}
+        {/* Custom Background Upload */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-gray-900">
               {getMessage('customBackground')}
             </h3>
-            {!isPremium && (
-              <span className="text-xs text-premium-600 bg-premium-50 px-2 py-1 rounded-full">
-                {getMessage('premium')}
-              </span>
-            )}
           </div>
-          {isPremium ? (
-            <ImageUploader
-              value={draftDisplaySettings.customBackgroundData || null}
-              onChange={handleCustomBackgroundChange}
-            />
-          ) : (
-            <UpgradePrompt variant="inline" limitType="customBackground" />
-          )}
+          <ImageUploader
+            value={draftDisplaySettings.customBackgroundData || null}
+            onChange={handleCustomBackgroundChange}
+          />
         </div>
       </Card>
 

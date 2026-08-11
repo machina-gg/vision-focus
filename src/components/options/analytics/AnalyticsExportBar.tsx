@@ -40,7 +40,6 @@ interface AnalyticsExportBarProps {
   settings: AppSettings | null;
   analyticsData: AnalyticsData;
   unblockHistory: UnblockHistory;
-  isPremium: boolean;
   onRefresh: () => Promise<void>;
   onReset: () => void;
 }
@@ -49,7 +48,6 @@ export function AnalyticsExportBar({
   settings,
   analyticsData,
   unblockHistory,
-  isPremium,
   onRefresh,
   onReset
 }: AnalyticsExportBarProps) {
@@ -79,7 +77,7 @@ export function AnalyticsExportBar({
   const handleExportBlockList = () => {
     if (settings?.blockList) {
       exportBlockList(settings.blockList);
-      trackFeatureUse('csv_export', true);
+      trackFeatureUse('csv_export');
     }
     setShowExportMenu(false);
   };
@@ -87,7 +85,7 @@ export function AnalyticsExportBar({
   const handleExportBlockCounts = () => {
     if (analyticsData.siteBlockCounts) {
       exportBlockCounts(analyticsData.siteBlockCounts);
-      trackFeatureUse('csv_export', true);
+      trackFeatureUse('csv_export');
     }
     setShowExportMenu(false);
   };
@@ -95,16 +93,14 @@ export function AnalyticsExportBar({
   const handleExportDailyStats = () => {
     if (analyticsData.dailyStats) {
       exportDailyStats(analyticsData.dailyStats);
-      trackFeatureUse('csv_export', true);
+      trackFeatureUse('csv_export');
     }
     setShowExportMenu(false);
   };
 
   const handleExportUnblockedSites = () => {
-    if (isPremium) {
-      exportUnblockedSites(unblockHistory);
-      trackFeatureUse('csv_export', true);
-    }
+    exportUnblockedSites(unblockHistory);
+    trackFeatureUse('csv_export');
     setShowExportMenu(false);
   };
 
@@ -257,15 +253,13 @@ export function AnalyticsExportBar({
                     >
                       {getMessage('exportDailyStats')}
                     </button>
-                    {isPremium && (
-                      <button
-                        onClick={handleExportUnblockedSites}
-                        disabled={!hasUnblockedData}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {getMessage('exportUnblockedSites')}
-                      </button>
-                    )}
+                    <button
+                      onClick={handleExportUnblockedSites}
+                      disabled={!hasUnblockedData}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {getMessage('exportUnblockedSites')}
+                    </button>
                   </div>
                 </>
               )}
@@ -288,66 +282,64 @@ export function AnalyticsExportBar({
         </div>
       </Card>
 
-      {/* Analytics Chart (Premium only) */}
-      {isPremium && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {getMessage('usageChart')}
-            </h3>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleShareToX}
-                className="flex items-center gap-1.5"
-                title={getMessage('shareToX')}
-              >
-                <Share2 className="w-4 h-4" />
-                {getMessage('shareToX')}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleDownloadImage}
-                className="flex items-center gap-1.5"
-                title={getMessage('downloadImage')}
-              >
-                <Image className="w-4 h-4" />
-                {getMessage('downloadImage')}
-              </Button>
-              <Button
-                data-testid="analytics-reset-button"
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowResetModal(true)}
-                className="flex items-center gap-1.5 text-gray-500 hover:text-danger-500"
-              >
-                <Trash2 className="w-4 h-4" />
-                {getMessage('reset')}
-              </Button>
-            </div>
-          </div>
-          {/* Share message */}
-          {shareMessage && (
-            <div
-              className={`mb-4 p-3 rounded-lg text-sm ${
-                shareMessage.type === 'success'
-                  ? 'bg-success-50 text-success-700'
-                  : 'bg-danger-50 text-danger-700'
-              }`}
+      {/* Analytics Chart */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {getMessage('usageChart')}
+          </h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleShareToX}
+              className="flex items-center gap-1.5"
+              title={getMessage('shareToX')}
             >
-              {shareMessage.text}
-            </div>
-          )}
-          <div ref={chartRef}>
-            <AnalyticsChart
-              analytics={analyticsData}
-              unblockHistory={unblockHistory}
-            />
+              <Share2 className="w-4 h-4" />
+              {getMessage('shareToX')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDownloadImage}
+              className="flex items-center gap-1.5"
+              title={getMessage('downloadImage')}
+            >
+              <Image className="w-4 h-4" />
+              {getMessage('downloadImage')}
+            </Button>
+            <Button
+              data-testid="analytics-reset-button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowResetModal(true)}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-danger-500"
+            >
+              <Trash2 className="w-4 h-4" />
+              {getMessage('reset')}
+            </Button>
           </div>
-        </Card>
-      )}
+        </div>
+        {/* Share message */}
+        {shareMessage && (
+          <div
+            className={`mb-4 p-3 rounded-lg text-sm ${
+              shareMessage.type === 'success'
+                ? 'bg-success-50 text-success-700'
+                : 'bg-danger-50 text-danger-700'
+            }`}
+          >
+            {shareMessage.text}
+          </div>
+        )}
+        <div ref={chartRef}>
+          <AnalyticsChart
+            analytics={analyticsData}
+            unblockHistory={unblockHistory}
+          />
+        </div>
+      </Card>
 
       {/* Reset Confirmation Modal */}
       <Modal

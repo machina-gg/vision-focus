@@ -38,7 +38,7 @@ export function ImageUploader({
       try {
         const dataUrl = await compressImage(file, maxSizeMB);
         onChange(dataUrl);
-        trackFeatureUse('image_upload', true);
+        trackFeatureUse('image_upload');
       } catch (err) {
         trackError('image_upload_failed');
         setError(

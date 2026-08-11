@@ -64,8 +64,7 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision: undefined,
-          settings: undefined,
-          isPremium: false
+          settings: undefined
         })
       );
       expect(result.current.displaySettings).toEqual(DEFAULT_DISPLAY_SETTINGS);
@@ -77,8 +76,7 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision: presetVision,
-          settings: DEFAULT_SETTINGS,
-          isPremium: true
+          settings: DEFAULT_SETTINGS
         })
       );
       expect(result.current.displaySettings.goalText).toBe('Focus on work');
@@ -92,8 +90,7 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision,
-          settings: DEFAULT_SETTINGS,
-          isPremium: true
+          settings: DEFAULT_SETTINGS
         })
       );
       expect(result.current.displaySettings).toEqual(DEFAULT_DISPLAY_SETTINGS);
@@ -137,26 +134,26 @@ describe('useResolvedPreset', () => {
         ]
       };
       const { result } = renderHook(() =>
-        useResolvedPreset({ vision, settings, isPremium: true })
+        useResolvedPreset({ vision, settings })
       );
       expect(result.current.displaySettings.goalText).toBe('Schedule Goal');
     });
   });
 
-  describe('非プレミアムの制限', () => {
-    it('非プレミアムでもフリーティアの範囲内のプリセットは使える', () => {
+  describe('カスタム背景', () => {
+    it('プリセットが選択されていればその目標を使う', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision: presetVision,
-          settings: DEFAULT_SETTINGS,
-          isPremium: false
+          settings: DEFAULT_SETTINGS
         })
       );
       // 最初のプリセットはフリーティアで使える
       expect(result.current.displaySettings.goalText).toBe('Focus on work');
     });
 
-    it('非プレミアムではカスタム背景がnullになる', () => {
+    // 全機能を全ユーザーに開放したため、カスタム背景は常に適用される
+    it('カスタム背景をそのまま適用する', () => {
       const vision: VisionSettings = {
         ...DEFAULT_VISION,
         defaultSettings: {
@@ -167,11 +164,12 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision,
-          settings: DEFAULT_SETTINGS,
-          isPremium: false
+          settings: DEFAULT_SETTINGS
         })
       );
-      expect(result.current.displaySettings.customBackgroundData).toBeNull();
+      expect(result.current.displaySettings.customBackgroundData).toBe(
+        'data:image/png;base64,custom'
+      );
     });
 
     it('プレミアムではカスタム背景を保持する', () => {
@@ -185,8 +183,7 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision,
-          settings: DEFAULT_SETTINGS,
-          isPremium: true
+          settings: DEFAULT_SETTINGS
         })
       );
       expect(result.current.displaySettings.customBackgroundData).toBe(
@@ -200,8 +197,7 @@ describe('useResolvedPreset', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision: DEFAULT_VISION,
-          settings: DEFAULT_SETTINGS,
-          isPremium: false
+          settings: DEFAULT_SETTINGS
         })
       );
       expect(result.current.timeTick).toBe(0);

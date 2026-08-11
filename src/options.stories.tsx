@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { Ban, Calendar, Crown, HelpCircle } from 'lucide-react';
+import { Ban, Calendar, HelpCircle } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
-import {
-  BlocklistTab,
-  SchedulesTab,
-  PremiumTab,
-  HelpTab
-} from '~/components/options';
+import { BlocklistTab, SchedulesTab, HelpTab } from '~/components/options';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 
 import './styles/globals.css';
@@ -17,7 +12,6 @@ import './styles/globals.css';
 const tabs = [
   { id: 'blocklist', label: 'Blocklist', icon: Ban },
   { id: 'schedules', label: 'Schedules', icon: Calendar },
-  { id: 'premium', label: 'Premium', icon: Crown },
   { id: 'help', label: 'Help', icon: HelpCircle }
 ] as const;
 
@@ -51,14 +45,6 @@ function OptionsDemoContent() {
             onEditSchedule={() => {}}
             onDeleteSchedule={() => {}}
             onToggleSchedule={() => {}}
-          />
-        );
-      case 'premium':
-        return (
-          <PremiumTab
-            isPremium={false}
-            onUpgrade={() => alert('Upgrade clicked')}
-            onManageSubscription={() => alert('Manage subscription')}
           />
         );
       case 'help':
@@ -168,7 +154,7 @@ export const SchedulesView: Story = {
 };
 
 const PremiumViewWrapper = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('premium');
+  const [activeTab, setActiveTab] = useState<TabId>('blocklist');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,13 +174,7 @@ const PremiumViewWrapper = () => {
             activeTab={activeTab}
             onChange={(id) => setActiveTab(id as TabId)}
           />
-          <div className="p-6">
-            <PremiumTab
-              isPremium={false}
-              onUpgrade={() => alert('Upgrade clicked')}
-              onManageSubscription={() => alert('Manage subscription')}
-            />
-          </div>
+          <div className="p-6"></div>
         </div>
       </div>
     </div>

@@ -35,16 +35,12 @@ describe('presetToDisplaySettings', () => {
   });
 
   it('プレミアムユーザーはカスタム背景を保持する', () => {
-    const result = presetToDisplaySettings(mockPreset, true);
+    const result = presetToDisplaySettings(mockPreset);
     expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
   });
 
-  it('非プレミアムユーザーはカスタム背景がnullになる', () => {
-    const result = presetToDisplaySettings(mockPreset, false);
-    expect(result.customBackgroundData).toBeNull();
-  });
-
-  it('デフォルト引数（isPremium=true）', () => {
+  // 全機能を全ユーザーに開放したため、カスタム背景は常にそのまま引き継がれる
+  it('カスタム背景をそのまま引き継ぐ', () => {
     const result = presetToDisplaySettings(mockPreset);
     expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
   });
