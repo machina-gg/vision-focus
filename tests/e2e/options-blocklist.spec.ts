@@ -4,7 +4,10 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
-  TEST_DATA
+  TEST_DATA,
+  SELECTORS,
+  getStorageData,
+  holdUnblockConfirm
 } from './helpers';
 
 /**
@@ -33,18 +36,15 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const page = await openOptions(context, extensionId);
 
     // ブロックリストタブをクリック
-    const blocklistTab = page
-      .locator('button')
-      .filter({ hasText: /Block.*List|ブロックリスト/i });
+    const blocklistTab = page.locator(SELECTORS.options.blocklistTab);
     await expect(blocklistTab).toBeVisible();
     await blocklistTab.click();
 
     // ブロックリストタブがアクティブになる
-    await expect(blocklistTab).toHaveClass(/border-primary-500/);
+    await expect(blocklistTab).toHaveAttribute('aria-selected', 'true');
 
     // ドメイン追加フォームが表示される
-    const addDomainInput = page.locator('input[type="text"]').first();
-    await expect(addDomainInput).toBeVisible();
+    await expect(page.locator(SELECTORS.options.domainInput)).toBeVisible();
 
     await page.close();
   });
@@ -56,25 +56,22 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const page = await openOptions(context, extensionId, 'blocklist');
 
     // ドメイン入力フィールドに reddit.com を入力
-    const input = page.locator('input[type="text"]').first();
+    const input = page.locator(SELECTORS.options.domainInput);
     await input.fill('reddit.com');
 
     // 追加ボタンをクリック
-    const addButton = page
-      .locator('button')
-      .filter({ hasText: /Add|追加|Block|ブロック/i })
-      .first();
-    await addButton.click();
+    await page.locator(SELECTORS.options.addButton).click();
 
     // ブロックリストに追加されたことを確認
-    const domainItem = page.locator('text=/reddit.com/i');
-    await expect(domainItem.first()).toBeVisible();
+    const domainItem = page.locator(SELECTORS.options.itemDomain);
+    await expect(domainItem.first()).toContainText('reddit.com');
 
     // ストレージに保存されたことを確認
-    const blockList = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('settings');
-      return result.settings?.blockList || [];
-    });
+    const settings = await getStorageData<{ blockList?: unknown[] }>(
+      page,
+      'settings'
+    );
+    const blockList = settings?.blockList ?? [];
 
     expect(blockList).toEqual(
       expect.arrayContaining([
@@ -95,25 +92,22 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const page = await openOptions(context, extensionId, 'blocklist');
 
     // ワイルドカード付きドメインを入力
-    const input = page.locator('input[type="text"]').first();
+    const input = page.locator(SELECTORS.options.domainInput);
     await input.fill('*.reddit.com');
 
     // 追加ボタンをクリック
-    const addButton = page
-      .locator('button')
-      .filter({ hasText: /Add|追加|Block|ブロック/i })
-      .first();
-    await addButton.click();
+    await page.locator(SELECTORS.options.addButton).click();
 
-    // ブロックリストに追加されたことを確認
-    const domainItem = page.locator('text=/\\*\\.reddit\\.com/i');
-    await expect(domainItem.first()).toBeVisible();
+    // ブロックリストに追加されたことを確認（*. は別要素で描画される）
+    const domainItem = page.locator(SELECTORS.options.itemDomain);
+    await expect(domainItem.first()).toContainText('reddit.com');
 
     // ストレージに保存されたことを確認
-    const blockList = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('settings');
-      return result.settings?.blockList || [];
-    });
+    const settings = await getStorageData<{ blockList?: unknown[] }>(
+      page,
+      'settings'
+    );
+    const blockList = settings?.blockList ?? [];
 
     expect(blockList).toEqual(
       expect.arrayContaining([
@@ -144,28 +138,18 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const page = await openOptions(context, extensionId, 'blocklist');
 
     // example.com が表示されることを確認
-    const domainItem = page.locator('text=/example.com/i').first();
-    await expect(domainItem).toBeVisible();
+    const domainItem = page.locator(SELECTORS.options.itemDomain).first();
+    await expect(domainItem).toContainText('example.com');
 
-    // 削除ボタンを探してクリック
-    const deleteButton = page
-      .locator(
-        'button[title*="削除"], button[title*="Delete"], button[title*="Remove"]'
-      )
-      .first();
-    await deleteButton.click();
+    // 削除ボタンをクリック
+    await page.locator(SELECTORS.options.deleteButton).first().click();
 
-    // Unblock 確認モーダルが表示される（パスワード未設定の場合）
-    const confirmModal = page.locator('text=/Are you sure|確認/i');
-    if (await confirmModal.isVisible()) {
-      const confirmButton = page
-        .locator('button')
-        .filter({ hasText: /Confirm|確定|Yes|はい/i });
-      await confirmButton.click();
-    }
+    // Unblock 確認モーダルで確定する（5 秒の長押しが必要）
+    await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
+    await holdUnblockConfirm(page);
 
-    // example.com が削除されたことを確認
-    await expect(page.locator('text=/example.com/i').first()).not.toBeVisible();
+    // 項目が削除されたことを確認
+    await expect(page.locator(SELECTORS.options.listItem)).toHaveCount(0);
 
     await page.close();
   });
@@ -185,8 +169,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // トグルスイッチを探す
-    const toggle = page.locator('[role="switch"]').first();
+    // ブロックリスト項目のトグルを取得する
+    const toggle = page.locator(SELECTORS.options.itemToggle).first();
     await expect(toggle).toBeVisible();
 
     // 初期状態は有効（aria-checked="true"）
@@ -195,14 +179,9 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // トグルをクリックして無効化
     await toggle.click();
 
-    // Unblock 確認モーダルが表示される（パスワード未設定の場合）
-    const confirmModal = page.locator('text=/Are you sure|確認/i');
-    if (await confirmModal.isVisible()) {
-      const confirmButton = page
-        .locator('button')
-        .filter({ hasText: /Confirm|確定|Yes|はい/i });
-      await confirmButton.click();
-    }
+    // Unblock 確認モーダルで確定する（5 秒の長押しが必要）
+    await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
+    await holdUnblockConfirm(page);
 
     // トグルが無効になる
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -308,18 +287,14 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const page = await openOptions(context, extensionId, 'blocklist');
 
     // トグルスイッチをクリックして無効化を試みる
-    const toggle = page.locator('[role="switch"]').first();
+    const toggle = page.locator(SELECTORS.options.itemToggle).first();
     await toggle.click();
 
     // Unblock 確認モーダルが表示される
-    const confirmModal = page.locator('text=/Are you sure|本当に|確認/i');
-    await expect(confirmModal.first()).toBeVisible();
+    await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
 
-    // Confirm ボタンをクリック
-    const confirmButton = page
-      .locator('button')
-      .filter({ hasText: /Confirm|確定|Yes|はい/i });
-    await confirmButton.click();
+    // 長押しで確定する（5 秒の長押しが必要な実装）
+    await holdUnblockConfirm(page);
 
     // トグルが無効になる
     await expect(toggle).toHaveAttribute('aria-checked', 'false');

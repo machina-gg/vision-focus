@@ -175,12 +175,13 @@ export function BlocklistTab({
         </h2>
         <div className="flex gap-2">
           <Input
+            data-testid="blocklist-domain-input"
             value={newDomain}
             onChange={setNewDomain}
             placeholder={getMessage('domainPlaceholder')}
             containerClassName="flex-1 min-w-0"
           />
-          <Button onClick={onAddDomain}>
+          <Button data-testid="blocklist-add-button" onClick={onAddDomain}>
             <Plus className="w-4 h-4 mr-1" />
             {getMessage('add')}
           </Button>
