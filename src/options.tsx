@@ -48,8 +48,6 @@ function OptionsAppContent() {
     window.location.hash = activeTab;
   }, [activeTab]);
 
-  // Premium status (from hook)
-
   // Custom hooks
   const analytics = useAnalytics({ setSettings });
   const blocklist = useBlocklist({ settings, setSettings });

@@ -19,8 +19,6 @@ export {
   DEFAULT_FONT_SETTINGS
 } from './font';
 
-// Re-export from premium.ts for backwards compatibility
-
 // Re-export from report.ts for backwards compatibility
 export { type WeeklyReport, type MonthlyReport } from './report';
 

@@ -47,8 +47,6 @@ export {
   DEFAULT_FONT_SETTINGS
 } from './font';
 
-// Premium types
-
 // Report types
 export { type WeeklyReport, type MonthlyReport } from './report';
 
