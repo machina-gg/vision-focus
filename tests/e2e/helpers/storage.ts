@@ -31,6 +31,31 @@ export async function setStorageData(
 }
 
 /**
+ * chrome.storage.session にデータをセットする
+ *
+ * lastBlockedDomain のように session エリアに保存される値は、local に書いても
+ * アプリから読めない（src/lib/storage.ts の SESSION_KEYS）。
+ * session は @plasmohq/storage を経由せず素の値を保存するため、
+ * JSON 文字列化はしない。
+ *
+ * @param page - Playwright Page オブジェクト（拡張機能コンテキストのページ）
+ * @param key - ストレージキー
+ * @param value - セットする値
+ */
+export async function setSessionStorageData(
+  page: Page,
+  key: string,
+  value: unknown
+): Promise<void> {
+  await page.evaluate(
+    async ({ key, value }) => {
+      await chrome.storage.session.set({ [key]: value });
+    },
+    { key, value }
+  );
+}
+
+/**
  * chrome.storage.local からデータを取得する
  *
  * @param page - Playwright Page オブジェクト
@@ -211,22 +236,28 @@ export async function setupTestStorage(
 
   await setStorageData(page, 'settings', defaultSettings);
 
-  // Vision 設定（目標テキスト）
+  // Vision 設定（目標テキスト）。
+  // DashboardDisplaySettings / DashboardPreset の全フィールドを満たすこと。
+  // 特にサブテキストのキーは goalSubText（subText ではない）
   if (withGoal) {
+    const displaySettings = {
+      goalText: 'Focus on what matters',
+      goalSubText: 'Stay productive',
+      textColor: '#ffffff',
+      backgroundType: 'color' as const,
+      backgroundImage: 'default-1',
+      backgroundColor: '#1a1a2e',
+      customBackgroundData: null,
+      fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
+    };
     const defaultVision = {
-      defaultSettings: {
-        goalText: 'Focus on what matters',
-        subText: 'Stay productive'
-      },
+      defaultSettings: displaySettings,
       presets: [
         {
+          ...displaySettings,
           id: 'default',
           name: 'Default',
-          goalText: 'Focus on what matters',
-          subText: 'Stay productive',
-          textColor: '#ffffff',
-          backgroundColor: '#1a1a2e',
-          backgroundType: 'color'
+          createdAt: new Date().toISOString()
         }
       ],
       activePresetId: 'default'

@@ -190,6 +190,7 @@ function NewtabApp() {
       <div
         className="newtab-container relative flex flex-col items-center justify-center"
         style={{ backgroundColor: '#1a1a2e' }}
+        data-testid="newtab-container"
       />
     );
   }
@@ -201,6 +202,7 @@ function NewtabApp() {
         ref={containerRef}
         className="newtab-container relative flex flex-col items-center justify-center"
         style={{ backgroundColor: '#1a1a2e' }}
+        data-testid="newtab-container"
       >
         {/* Content */}
         <div className="relative z-10 w-full max-w-md px-8 text-center">
@@ -245,7 +247,10 @@ function NewtabApp() {
             </div>
           ) : (
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1
+                className="text-2xl font-bold text-white mb-2"
+                data-testid="newtab-app-title"
+              >
                 VisionFocus
               </h1>
               <p className="text-gray-400">{getMessage('rememberGoal')}</p>
@@ -272,6 +277,7 @@ function NewtabApp() {
               {getMessage('noPresetsDescription')}
             </p>
             <button
+              data-testid="newtab-setup-cta"
               onClick={handleSettingsClick}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-info-600 hover:bg-info-700 text-white font-medium rounded-lg transition-colors"
             >
@@ -303,15 +309,19 @@ function NewtabApp() {
       ref={containerRef}
       className="newtab-container relative flex flex-col items-center justify-center"
       style={containerStyle}
+      data-testid="newtab-container"
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/30" />
+      <div
+        className="absolute inset-0 bg-black/30"
+        data-testid="newtab-overlay"
+      />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-2xl px-8 text-center">
         {/* Blocked Site Info */}
         {blockedInfo && (
-          <div className="mb-8 animate-fade-in">
+          <div className="mb-8 animate-fade-in" data-testid="newtab-block-info">
             <div
               className={`inline-flex items-center gap-3 ${
                 blockReason === 'time_limit_exceeded'
@@ -325,7 +335,10 @@ function NewtabApp() {
                 <ShieldX className="w-6 h-6 text-danger-400" />
               )}
               <div className="text-left">
-                <p className="text-white font-medium">
+                <p
+                  className="text-white font-medium"
+                  data-testid="newtab-block-info-message"
+                >
                   {blockReason === 'time_limit_exceeded'
                     ? getMessage('timeLimitReached')
                     : getMessage('siteBlockedMessage', blockedInfo.domain)}
@@ -404,6 +417,7 @@ function NewtabApp() {
 
         {/* Settings Button */}
         <button
+          data-testid="newtab-settings-button"
           onClick={handleSettingsClick}
           className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
         >

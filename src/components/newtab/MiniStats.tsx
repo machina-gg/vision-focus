@@ -27,7 +27,12 @@ export function MiniStats({
               {getMessage('todayBlocks')}
             </span>
           </div>
-          <p className="text-xl font-bold text-block-600">{blockCount}</p>
+          <p
+            className="text-xl font-bold text-block-600"
+            data-testid="newtab-block-count"
+          >
+            {blockCount}
+          </p>
         </div>
 
         {/* Blocking Days */}
@@ -39,7 +44,10 @@ export function MiniStats({
                 {getMessage('blockingDays')}
               </span>
             </div>
-            <p className="text-xl font-bold text-info-600">
+            <p
+              className="text-xl font-bold text-info-600"
+              data-testid="newtab-blocking-days"
+            >
               {getMessage('blockedForDays', blockingDays.toString())}
             </p>
           </div>

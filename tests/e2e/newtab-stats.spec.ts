@@ -3,7 +3,9 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  setStorageData
+  setStorageData,
+  setSessionStorageData,
+  SELECTORS
 } from './helpers';
 
 /**
@@ -37,7 +39,7 @@ test.describe('NewTab 画面 - 統計カード', () => {
     await expect(blockCountCard).toBeVisible();
 
     // デフォルト値は0
-    const blockCount = page.locator('p.text-xl.font-bold.text-block-600');
+    const blockCount = page.locator(SELECTORS.newtab.miniStats.blockCount);
     await expect(blockCount.first()).toBeVisible();
     await expect(blockCount.first()).toContainText('0');
 
@@ -68,7 +70,7 @@ test.describe('NewTab 画面 - 統計カード', () => {
       ]
     });
 
-    await setStorageData(setupPage, 'lastBlockedDomain', 'example.com');
+    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);
@@ -78,7 +80,7 @@ test.describe('NewTab 画面 - 統計カード', () => {
     await expect(blockingDaysCard.first()).toBeVisible();
 
     // 日数が表示される（10日以上）
-    const daysCount = page.locator('p.text-xl.font-bold.text-info-600');
+    const daysCount = page.locator(SELECTORS.newtab.miniStats.blockingDays);
     await expect(daysCount.first()).toBeVisible();
 
     await page.close();

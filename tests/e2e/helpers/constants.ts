@@ -78,17 +78,25 @@ export const SELECTORS = {
 
   // NewTab
   newtab: {
-    container: '.newtab-container',
-    goalText: 'h1',
-    subText: 'p',
-    blockInfo: '.animate-fade-in',
-    overlay: '.absolute.inset-0.bg-black\\/30',
+    container: '[data-testid="newtab-container"]',
+    overlay: '[data-testid="newtab-overlay"]',
+    goalText: '[data-testid="newtab-goal-text"]',
+    goalInput: '[data-testid="newtab-goal-input"]',
+    goalEditButton: '[data-testid="newtab-goal-edit-button"]',
+    goalSaveButton: '[data-testid="newtab-goal-save"]',
+    goalCancelButton: '[data-testid="newtab-goal-cancel"]',
+    blockInfo: '[data-testid="newtab-block-info"]',
+    blockInfoMessage: '[data-testid="newtab-block-info-message"]',
+    blockedSitesToggle: '[data-testid="newtab-blocked-sites-toggle"]',
+    blockedSiteDomain: '[data-testid="newtab-blocked-site-domain"]',
     miniStats: {
-      blockCount: 'p.text-xl.font-bold.text-block-600',
-      blockingDays: 'p.text-xl.font-bold.text-info-600'
+      blockCount: '[data-testid="newtab-block-count"]',
+      blockingDays: '[data-testid="newtab-blocking-days"]'
     },
-    downloadButton: 'button',
-    settingsButton: 'button'
+    appTitle: '[data-testid="newtab-app-title"]',
+    setupCta: '[data-testid="newtab-setup-cta"]',
+    downloadButton: '[data-testid="newtab-download-button"]',
+    settingsButton: '[data-testid="newtab-settings-button"]'
   },
 
   // Options（共通）

@@ -32,6 +32,7 @@ export function BlockedSitesList({
   return (
     <div className="w-full max-w-md mx-auto mt-8">
       <button
+        data-testid="newtab-blocked-sites-toggle"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between px-5 py-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl border border-white/10 transition-all duration-200"
       >
@@ -63,7 +64,10 @@ export function BlockedSitesList({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-2 h-2 rounded-full bg-danger-400 flex-shrink-0 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
-                    <span className="text-sm text-white/80 truncate font-medium">
+                    <span
+                      className="text-sm text-white/80 truncate font-medium"
+                      data-testid="newtab-blocked-site-domain"
+                    >
                       {item.domain}
                     </span>
                   </div>
