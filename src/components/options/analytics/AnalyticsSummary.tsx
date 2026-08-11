@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { Clock, Lock, RefreshCw, EyeOff, List } from 'lucide-react';
+import { Clock, RefreshCw, EyeOff, List } from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
-import { UpgradePrompt } from '~/components/features';
 import { MS_PER_DAY } from '~/constants/intervals';
 import { formatTime } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
@@ -31,14 +30,12 @@ function formatRelativeTime(isoDate: string): string {
 
 interface AnalyticsSummaryProps {
   unblockHistory: UnblockHistory;
-  isPremium: boolean;
   onReblock: (domain: string) => void;
   onStopTracking: (domain: string) => void;
 }
 
 export function AnalyticsSummary({
   unblockHistory,
-  isPremium,
   onReblock,
   onStopTracking
 }: AnalyticsSummaryProps) {
@@ -103,15 +100,14 @@ export function AnalyticsSummary({
               <TrackedSiteItem
                 key={site.domain}
                 site={site}
-                isPremium={isPremium}
                 onReblock={onReblock}
                 onStopTracking={onStopTracking}
               />
             ))}
           </div>
 
-          {/* 合計浪費時間 (Premium only、解除済みサイトが2つ以上の場合) */}
-          {isPremium && unblockedSites.length > 1 && (
+          {/* 合計浪費時間（解除済みサイトが2つ以上の場合） */}
+          {unblockedSites.length > 1 && (
             <div className="pt-4 mt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">
@@ -125,20 +121,6 @@ export function AnalyticsSummary({
           )}
         </Card>
       )}
-
-      {/* Upgrade Prompt for Free Users */}
-      {unblockedSites.length > 0 && !isPremium && (
-        <Card>
-          <UpgradePrompt
-            variant="inline"
-            features={[
-              getMessage('upgradeFeatureViewTime'),
-              getMessage('upgradeFeatureReblock'),
-              getMessage('upgradeFeatureChart')
-            ]}
-          />
-        </Card>
-      )}
     </>
   );
 }
@@ -146,14 +128,12 @@ export function AnalyticsSummary({
 // 追跡中サイトのアイテム表示（ステータス + 浪費時間統合表示）
 interface TrackedSiteItemProps {
   site: TrackedSite;
-  isPremium: boolean;
   onReblock: (domain: string) => void;
   onStopTracking: (domain: string) => void;
 }
 
 function TrackedSiteItem({
   site,
-  isPremium,
   onReblock,
   onStopTracking
 }: TrackedSiteItemProps) {
@@ -193,16 +173,9 @@ function TrackedSiteItem({
           {!isBlocked && (
             <div className="mt-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-block-500" />
-              {isPremium ? (
-                <span className="text-sm font-bold text-block-600">
-                  {formatTime(site.timeAfterUnblock)}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400 flex items-center gap-1">
-                  <span className="tracking-widest">******</span>
-                  <Lock className="w-3 h-3" />
-                </span>
-              )}
+              <span className="text-sm font-bold text-block-600">
+                {formatTime(site.timeAfterUnblock)}
+              </span>
             </div>
           )}
         </div>
@@ -210,18 +183,16 @@ function TrackedSiteItem({
         {/* アクションボタン（解除済みサイトのみ） */}
         {!isBlocked && (
           <div className="flex items-center gap-2">
-            {isPremium && (
-              <Button
-                data-testid="analytics-reblock-button"
-                variant="secondary"
-                size="sm"
-                onClick={() => onReblock(site.domain)}
-                className="flex items-center gap-1.5"
-              >
-                <RefreshCw className="w-4 h-4" />
-                {getMessage('reblock')}
-              </Button>
-            )}
+            <Button
+              data-testid="analytics-reblock-button"
+              variant="secondary"
+              size="sm"
+              onClick={() => onReblock(site.domain)}
+              className="flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-4 h-4" />
+              {getMessage('reblock')}
+            </Button>
             <Button
               data-testid="analytics-stop-tracking-button"
               variant="ghost"

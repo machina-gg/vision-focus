@@ -1,10 +1,8 @@
 import React from 'react';
-import { Lock } from 'lucide-react';
 
 import { Button, Input, Modal } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { Schedule, VisionSettings } from '~/types/storage';
-import type { FeatureLimits } from '~/types/premium';
 import type { ScheduleFormData } from '~/hooks/useSchedules';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -17,8 +15,6 @@ interface ScheduleModalProps {
   onFormChange: (form: ScheduleFormData) => void;
   onSave: () => void;
   vision: VisionSettings | undefined;
-  isPremium: boolean;
-  featureLimits: FeatureLimits;
 }
 
 export function ScheduleModal({
@@ -28,9 +24,7 @@ export function ScheduleModal({
   scheduleForm,
   onFormChange,
   onSave,
-  vision,
-  isPremium,
-  featureLimits
+  vision
 }: ScheduleModalProps) {
   const toggleDay = (day: number) => {
     const newDays = scheduleForm.days.includes(day)
@@ -133,29 +127,15 @@ export function ScheduleModal({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
           >
             <option value="">{getMessage('noPresetSelected')}</option>
-            {vision?.presets?.map((preset, index) => {
-              const isLocked = !isPremium && index >= featureLimits.maxPresets;
-              return (
-                <option key={preset.id} value={preset.id} disabled={isLocked}>
-                  {isLocked ? `🔒 ${preset.name}` : preset.name}
-                </option>
-              );
-            })}
+            {vision?.presets?.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
           </select>
           <p className="text-xs text-gray-500 mt-1">
             {getMessage('schedulePresetDescription')}
           </p>
-          {/* Warning if selected preset is locked */}
-          {!isPremium &&
-            scheduleForm.presetId &&
-            vision?.presets &&
-            vision.presets.findIndex((p) => p.id === scheduleForm.presetId) >=
-              featureLimits.maxPresets && (
-              <div className="flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg mt-2">
-                <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{getMessage('scheduleLockedPresetWarning')}</span>
-              </div>
-            )}
         </div>
 
         <div className="flex justify-end gap-2 pt-4">

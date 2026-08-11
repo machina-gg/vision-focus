@@ -343,7 +343,7 @@ describe('export utilities', () => {
       };
       const unblockHistory: UnblockHistory = { sites: {} };
 
-      exportAllData(blockList, analyticsData, unblockHistory, false);
+      exportAllData(blockList, analyticsData, unblockHistory);
 
       // Should call exportBlockList, exportBlockCounts, exportDailyStats
       // but NOT exportUnblockedSites (isPremium = false)
@@ -379,7 +379,7 @@ describe('export utilities', () => {
         }
       };
 
-      exportAllData(blockList, analyticsData, unblockHistory, true);
+      exportAllData(blockList, analyticsData, unblockHistory);
 
       // Should call all export functions including exportUnblockedSites
       expect(mockClick).toHaveBeenCalled();
@@ -398,7 +398,7 @@ describe('export utilities', () => {
       const unblockHistory: UnblockHistory = { sites: {} };
 
       expect(() =>
-        exportAllData(blockList, analyticsData, unblockHistory, false)
+        exportAllData(blockList, analyticsData, unblockHistory)
       ).not.toThrow();
       // No clicks should happen since all data is empty
       expect(mockClick).not.toHaveBeenCalled();
@@ -416,7 +416,7 @@ describe('export utilities', () => {
       };
       const unblockHistory: UnblockHistory = { sites: {} };
 
-      exportAllData(blockList, analyticsData, unblockHistory, false);
+      exportAllData(blockList, analyticsData, unblockHistory);
 
       // Should still export dailyStats
       expect(mockClick).toHaveBeenCalled();

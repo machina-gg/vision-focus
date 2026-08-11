@@ -16,11 +16,10 @@ import type { FeatureLimits } from '~/types/premium';
 import { DEFAULT_VISION } from '~/types/storage';
 
 interface StylesTabProps {
-  isPremium: boolean;
   featureLimits: FeatureLimits;
 }
 
-export function StylesTab({ isPremium, featureLimits }: StylesTabProps) {
+export function StylesTab({ featureLimits }: StylesTabProps) {
   const [vision, setVision] = useStorage<VisionSettings>(
     { key: 'vision', instance: storage },
     DEFAULT_VISION
@@ -40,11 +39,10 @@ export function StylesTab({ isPremium, featureLimits }: StylesTabProps) {
         <PresetSelector
           presets={presets}
           vision={vision}
-          isPremium={isPremium}
           featureLimits={featureLimits}
         />
 
-        <DisplaySettingsForm presets={presets} isPremium={isPremium} />
+        <DisplaySettingsForm presets={presets} />
       </div>
 
       {/* Right Column - Preview (sticky) - Only shown when editing */}

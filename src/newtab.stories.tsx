@@ -88,7 +88,7 @@ function NewtabDemo() {
         />
 
         {/* Mini Stats */}
-        <MiniStats blockCount={12} blockingDays={7} isPremium={false} />
+        <MiniStats blockCount={12} blockingDays={7} />
 
         {/* Blocked Sites List */}
         <BlockedSitesList
@@ -152,7 +152,7 @@ const LongGoalWrapper = () => {
           onCancel={() => {}}
           onKeyDown={() => {}}
         />
-        <MiniStats blockCount={0} blockingDays={1} isPremium={false} />
+        <MiniStats blockCount={0} blockingDays={1} />
       </div>
     </div>
   );
@@ -197,7 +197,6 @@ const PremiumUserWrapper = () => {
         <MiniStats
           blockCount={48}
           blockingDays={30}
-          isPremium={true}
           onAnalyticsClick={() => alert('Open analytics')}
         />
         <BlockedSitesList

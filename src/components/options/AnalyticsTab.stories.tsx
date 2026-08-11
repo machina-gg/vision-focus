@@ -138,7 +138,6 @@ export const FreeTier: Story = {
   args: {
     unblockHistory: mockUnblockHistory,
     analyticsData: mockAnalytics,
-    isPremium: false,
     onReblock: (domain) => alert(`Reblock: ${domain}`),
     onReset: () => alert('Reset analytics'),
     onStopTracking: (domain) => alert(`Stop tracking: ${domain}`),
@@ -151,7 +150,6 @@ export const Premium: Story = {
   args: {
     unblockHistory: mockUnblockHistory,
     analyticsData: mockAnalytics,
-    isPremium: true,
     onReblock: (domain) => alert(`Reblock: ${domain}`),
     onReset: () => alert('Reset analytics'),
     onStopTracking: (domain) => alert(`Stop tracking: ${domain}`),
@@ -171,7 +169,6 @@ export const Empty: Story = {
       siteUnblockCounts: {},
       timeLimitUsage: {}
     },
-    isPremium: false,
     onReblock: () => {},
     onReset: () => {},
     onStopTracking: () => {},

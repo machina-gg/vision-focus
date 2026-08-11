@@ -24,16 +24,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const FreeTier: Story = {
+export const Default: Story = {
   args: {
-    isPremium: false,
-    featureLimits: FEATURE_LIMITS.free
-  }
-};
-
-export const Premium: Story = {
-  args: {
-    isPremium: true,
-    featureLimits: FEATURE_LIMITS.premium
+    featureLimits: FEATURE_LIMITS
   }
 };

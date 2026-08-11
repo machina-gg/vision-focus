@@ -43,7 +43,7 @@ export function DownloadButton({
         resolution,
         quality: 0.95
       });
-      trackFeatureUse('wallpaper_download', true);
+      trackFeatureUse('wallpaper_download');
       setDownloadStatus('success');
       setTimeout(() => setDownloadStatus('idle'), STATUS_RESET_DELAY_MS);
     } catch {

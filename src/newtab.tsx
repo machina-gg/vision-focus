@@ -16,7 +16,6 @@ import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
   useBackgroundPreload,
   useBackgroundStats,
-  usePremiumStatus,
   useResolvedPreset
 } from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
@@ -64,7 +63,6 @@ function NewtabApp() {
     DEFAULT_ANALYTICS
   );
   const stats = useBackgroundStats(NEWTAB_STATS_POLLING_MS);
-  const { isPremium, isLoading: isPremiumLoading } = usePremiumStatus();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,11 +77,7 @@ function NewtabApp() {
   // Block reason (from URL parameter)
   const [blockReason, setBlockReason] = useState<string | null>(null);
 
-  const { displaySettings } = useResolvedPreset({
-    vision,
-    settings,
-    isPremium
-  });
+  const { displaySettings } = useResolvedPreset({ vision, settings });
 
   const { isStorageLoaded, isBackgroundReady, containerStyle, fontStyle } =
     useBackgroundPreload({ displaySettings });
@@ -183,7 +177,7 @@ function NewtabApp() {
 
   const hasPresets = (vision?.presets?.length ?? 0) > 0;
 
-  const isReady = isStorageLoaded && (isBackgroundReady || !isPremiumLoading);
+  const isReady = isStorageLoaded && isBackgroundReady;
 
   if (!isReady) {
     return (
@@ -261,7 +255,6 @@ function NewtabApp() {
           <MiniStats
             blockCount={stats.blockCount}
             blockingDays={blockingDays}
-            isPremium={isPremium}
             onAnalyticsClick={handleAnalyticsClick}
           />
 
@@ -392,7 +385,6 @@ function NewtabApp() {
         <MiniStats
           blockCount={stats.blockCount}
           blockingDays={blockingDays}
-          isPremium={isPremium}
           onAnalyticsClick={handleAnalyticsClick}
         />
 
@@ -408,8 +400,8 @@ function NewtabApp() {
         className="absolute bottom-6 right-6 flex items-center gap-3"
         data-html2canvas-ignore="true"
       >
-        {/* Download Wallpaper Button (Premium) */}
-        {isPremium && containerRef.current && (
+        {/* Download Wallpaper Button */}
+        {containerRef.current && (
           <DownloadButton
             targetRef={containerRef as React.RefObject<HTMLElement>}
           />

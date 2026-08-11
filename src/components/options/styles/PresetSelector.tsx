@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Lock, Plus, Save, Target, Trash2 } from 'lucide-react';
+import { Check, Plus, Save, Target, Trash2 } from 'lucide-react';
 
 import { Button, Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
@@ -10,14 +10,12 @@ import type { UsePresetsReturn } from '~/hooks/usePresets';
 interface PresetSelectorProps {
   presets: UsePresetsReturn;
   vision: VisionSettings | undefined;
-  isPremium: boolean;
   featureLimits: FeatureLimits;
 }
 
 export function PresetSelector({
   presets,
   vision,
-  isPremium,
   featureLimits
 }: PresetSelectorProps) {
   const {
@@ -47,11 +45,6 @@ export function PresetSelector({
           >
             {getMessage('dashboardPresets')}
           </h2>
-          {!isPremium && (
-            <span className="text-xs text-premium-600 bg-premium-50 px-2 py-1 rounded-full">
-              {getMessage('premium')}
-            </span>
-          )}
         </div>
 
         {/* Empty state or Preset tabs */}
@@ -63,31 +56,19 @@ export function PresetSelector({
               draftPresets={draftPresets}
               vision={vision}
               selectedPresetId={selectedPresetId}
-              isPremium={isPremium}
               featureLimits={featureLimits}
               onSelectPreset={handleSelectPreset}
               onCreateClick={() => setShowSavePresetModal(true)}
             />
 
-            {!isPremium && draftPresets.length >= featureLimits.maxPresets && (
-              <p className="text-xs text-premium-600 mt-2">
+            {draftPresets.length >= featureLimits.maxPresets && (
+              <p className="text-xs text-gray-500 mt-2">
                 {getMessage(
                   'maxPresetsReached',
                   String(featureLimits.maxPresets)
                 )}
               </p>
             )}
-
-            {/* Warning if active preset is locked */}
-            {!isPremium &&
-              vision?.activePresetId &&
-              draftPresets.findIndex((p) => p.id === vision.activePresetId) >=
-                featureLimits.maxPresets && (
-                <div className="flex items-center gap-2 text-xs text-premium-600 bg-premium-50 px-3 py-2 rounded-lg mt-2">
-                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{getMessage('lockedPresetWarning')}</span>
-                </div>
-              )}
           </>
         )}
       </Card>
@@ -141,7 +122,6 @@ interface PresetButtonsProps {
   draftPresets: UsePresetsReturn['draftPresets'];
   vision: VisionSettings | undefined;
   selectedPresetId: string | null;
-  isPremium: boolean;
   featureLimits: FeatureLimits;
   onSelectPreset: (presetId: string) => void;
   onCreateClick: () => void;
@@ -151,34 +131,27 @@ function PresetButtons({
   draftPresets,
   vision,
   selectedPresetId,
-  isPremium,
   featureLimits,
   onSelectPreset,
   onCreateClick
 }: PresetButtonsProps) {
   return (
     <div className="flex flex-wrap gap-2">
-      {draftPresets.map((preset, index) => {
+      {draftPresets.map((preset) => {
         const isActive = vision?.activePresetId === preset.id;
         const isSelected = selectedPresetId === preset.id;
-        const isLocked = !isPremium && index >= featureLimits.maxPresets;
         return (
           <button
             key={preset.id}
             data-testid="style-preset-button"
-            onClick={() => !isLocked && onSelectPreset(preset.id)}
-            disabled={isLocked}
-            title={isLocked ? getMessage('upgradeToUsePreset') : undefined}
+            onClick={() => onSelectPreset(preset.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              isLocked
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : isSelected
-                  ? 'bg-info-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              isSelected
+                ? 'bg-info-500 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
-            {!isLocked && isActive && (
+            {isActive && (
               <Check
                 className={`w-3.5 h-3.5 ${
                   isSelected ? 'text-white' : 'text-success-600'

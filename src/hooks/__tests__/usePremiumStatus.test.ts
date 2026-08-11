@@ -1,63 +1,34 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 
 import { usePremiumStatus } from '~/hooks/usePremiumStatus';
-
-// license モジュールをモック
-vi.mock('~/lib/license', () => ({
-  checkPremiumStatus: vi.fn(),
-  getFeatureLimits: vi.fn()
-}));
-
-import { checkPremiumStatus, getFeatureLimits } from '~/lib/license';
 import { FEATURE_LIMITS } from '~/types/premium';
 
-const mockCheckPremiumStatus = vi.mocked(checkPremiumStatus);
-const mockGetFeatureLimits = vi.mocked(getFeatureLimits);
-
-beforeEach(() => {
-  vi.clearAllMocks();
-});
-
+/**
+ * マネタイズ方針の変更により全機能を全ユーザーに開放したため、
+ * このフックは非同期の問い合わせを行わず常に解放状態を返す。
+ */
 describe('usePremiumStatus', () => {
-  it('初期状態ではisLoading=true', () => {
-    mockCheckPremiumStatus.mockResolvedValue({
-      isPremium: false,
-      source: 'extpay' as const
-    });
-    mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.free);
+  it('常に解放状態を返す', () => {
     const { result } = renderHook(() => usePremiumStatus());
-    expect(result.current.isLoading).toBe(true);
-  });
 
-  it('無料ユーザーの場合', async () => {
-    mockCheckPremiumStatus.mockResolvedValue({
-      isPremium: false,
-      source: 'extpay' as const
-    });
-    mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.free);
-    const { result } = renderHook(() => usePremiumStatus());
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    expect(result.current.isPremium).toBe(false);
-    expect(result.current.featureLimits).toEqual(FEATURE_LIMITS.free);
-  });
-
-  it('プレミアムユーザーの場合', async () => {
-    mockCheckPremiumStatus.mockResolvedValue({
-      isPremium: true,
-      source: 'extpay' as const
-    });
-    mockGetFeatureLimits.mockResolvedValue(FEATURE_LIMITS.premium);
-    const { result } = renderHook(() => usePremiumStatus());
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
     expect(result.current.isPremium).toBe(true);
-    expect(result.current.featureLimits).toEqual(FEATURE_LIMITS.premium);
+    expect(result.current.featureLimits).toEqual(FEATURE_LIMITS);
   });
 
-  // 注意: try/finally（catchなし）のため、checkPremiumStatus がエラーの場合は
-  // unhandled rejection が発生する。これはプロダクションコードの設計に依存。
+  it('読み込み待ちが発生しない', () => {
+    const { result } = renderHook(() => usePremiumStatus());
+
+    // 課金状態の問い合わせを行わないため、初回レンダリングから確定している
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('再レンダリングしても同じ値を返す', () => {
+    const { result, rerender } = renderHook(() => usePremiumStatus());
+    const first = result.current;
+
+    rerender();
+
+    expect(result.current).toEqual(first);
+  });
 });

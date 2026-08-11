@@ -20,12 +20,7 @@ export {
 } from './font';
 
 // Re-export from premium.ts for backwards compatibility
-export {
-  type PremiumFeature,
-  type FeatureLimits,
-  FEATURE_LIMITS,
-  FREE_TIER_LIMITS
-} from './premium';
+export { type FeatureLimits, FEATURE_LIMITS } from './premium';
 
 // Re-export from report.ts for backwards compatibility
 export { type WeeklyReport, type MonthlyReport } from './report';

@@ -3,7 +3,6 @@ export * from './BlocklistTab';
 export * from './SchedulesTab';
 export * from './WeeklyCalendar';
 export * from './AnalyticsTab';
-export * from './PremiumTab';
 export * from './HelpTab';
 export * from './PasswordSettingsSection';
 export * from './modals';
