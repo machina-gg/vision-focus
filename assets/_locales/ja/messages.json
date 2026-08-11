@@ -2106,5 +2106,29 @@
   "youtubeHomeFeedHidden": {
     "message": "ホームフィードが隠れています",
     "description": "YouTube のホームフィードが非表示の時に表示されるメッセージ"
+  },
+  "supportTitle": {
+    "message": "開発を支援する",
+    "description": "支援セクションのタイトル"
+  },
+  "supportDescription": {
+    "message": "VisionFocus は全機能を無料で提供しています",
+    "description": "支援セクションの説明"
+  },
+  "supportBody": {
+    "message": "このツールが役に立っていたら、開発の支援をご検討ください。いただいた支援は開発を続けるために使わせていただきます。",
+    "description": "支援セクションの本文"
+  },
+  "supportButtonLabel": {
+    "message": "コーヒーをおごる",
+    "description": "Buy Me a Coffee ボタンのラベル"
+  },
+  "supportPromptBody": {
+    "message": "このレポートが役に立っていたら、開発の支援をご検討ください",
+    "description": "レポート下の支援誘導の本文"
+  },
+  "supportPromptDismiss": {
+    "message": "閉じる",
+    "description": "支援誘導を閉じるボタン"
   }
 }

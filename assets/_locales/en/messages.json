@@ -2106,5 +2106,29 @@
   "youtubeHomeFeedHidden": {
     "message": "Home feed is hidden",
     "description": "Message shown when YouTube home feed is hidden"
+  },
+  "supportTitle": {
+    "message": "Support development",
+    "description": "Title of the support section"
+  },
+  "supportDescription": {
+    "message": "VisionFocus offers every feature for free",
+    "description": "Description of the support section"
+  },
+  "supportBody": {
+    "message": "If this tool helps you, consider supporting its development. Your support keeps VisionFocus going.",
+    "description": "Body of the support section"
+  },
+  "supportButtonLabel": {
+    "message": "Buy me a coffee",
+    "description": "Label of the Buy Me a Coffee button"
+  },
+  "supportPromptBody": {
+    "message": "If this report helps you, consider supporting development",
+    "description": "Body of the support prompt below reports"
+  },
+  "supportPromptDismiss": {
+    "message": "Dismiss",
+    "description": "Dismiss button of the support prompt"
   }
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { ExternalLink, Mail, Globe } from 'lucide-react';
 
 import { Card } from '~/components/ui';
+import { SupportSection } from '~/components/features';
 import { PasswordSettingsSection } from '~/components/options/PasswordSettingsSection';
 import { HelpGettingStarted } from '~/components/options/HelpGettingStarted';
 import { HelpFAQ } from '~/components/options/HelpFAQ';
@@ -110,6 +111,9 @@ export function HelpTab({
 
       {/* Settings Backup */}
       <HelpSettingsBackup onSettingsChange={onSettingsChange} />
+
+      {/* Support Development */}
+      <SupportSection />
 
       {/* Support */}
       <Card>
