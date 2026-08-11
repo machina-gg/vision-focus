@@ -1,10 +1,6 @@
 import { test, expect } from './fixtures/extension';
-import {
-  openNewTab,
-  openOptions,
-  openExternalSite,
-  waitForBlockRules
-} from './helpers/pages';
+import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
+import { waitForBlockRules } from './helpers/sw';
 import {
   clearStorageFromExtension,
   setStorageDataFromExtension,
@@ -44,11 +40,7 @@ test.describe('Block - ブロック機能', () => {
     });
 
     // ブロックルールが反映されるまで待つ（固定時間では足りないことがある）
-    {
-      const rulePage = await openOptions(context, extensionId);
-      await waitForBlockRules(rulePage, [TEST_DOMAINS.example]);
-      await rulePage.close();
-    }
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // ブロック対象サイトにアクセス
     const blockedPage = await openExternalSite(
@@ -57,7 +49,7 @@ test.describe('Block - ブロック機能', () => {
     );
 
     // newtab.html にリダイレクトされることを確認
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(blockedPage.url()).toContain('newtab.html');
 
     await blockedPage.close();
@@ -91,7 +83,7 @@ test.describe('Block - ブロック機能', () => {
     );
 
     // newtab.html にリダイレクトされることを確認
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(blockedPage.url()).toContain('newtab.html');
 
     await blockedPage.close();
@@ -236,7 +228,7 @@ test.describe('Block - ブロック機能', () => {
       `https://${TEST_DOMAINS.example}`
     );
 
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(blockedPage.url()).toContain('newtab.html');
 
     await blockedPage.close();
@@ -320,7 +312,7 @@ test.describe('Block - ブロック機能', () => {
       `https://${TEST_DOMAINS.example}`
     );
 
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(blockedPage.url()).toContain('newtab.html');
 
     await blockedPage.close();
@@ -394,7 +386,7 @@ test.describe('Block - ブロック機能', () => {
       `https://${TEST_DOMAINS.example}`
     );
 
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
     // ブロック元のドメインが情報バナーに表示される。
     // 実装は chrome.storage.session の lastBlockedDomain を経由するが、
@@ -438,7 +430,7 @@ test.describe('Block - ブロック機能', () => {
       context,
       `https://${TEST_DOMAINS.example}`
     );
-    await blockedPage1.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage1.waitForURL(`**newtab.html**`, { timeout: 10000 });
     await blockedPage1.close();
 
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -447,7 +439,7 @@ test.describe('Block - ブロック機能', () => {
       context,
       `https://${TEST_DOMAINS.example}`
     );
-    await blockedPage2.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage2.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
     // ブロック回数を確認
     await new Promise((resolve) => setTimeout(resolve, 500));

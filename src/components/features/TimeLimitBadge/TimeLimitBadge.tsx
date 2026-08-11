@@ -27,7 +27,11 @@ export function TimeLimitBadge({
 
   if (isExceeded) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-danger-100 text-danger-700 text-xs rounded-full">
+      <span
+        data-testid="time-limit-badge"
+        data-state="exceeded"
+        className="inline-flex items-center gap-1 px-2 py-0.5 bg-danger-100 text-danger-700 text-xs rounded-full"
+      >
         <AlertTriangle className="w-3 h-3" />
         {getMessage('timeLimitReached')}
       </span>
@@ -45,6 +49,8 @@ export function TimeLimitBadge({
   if (compact) {
     return (
       <span
+        data-testid="time-limit-badge"
+        data-state="remaining"
         className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
       >
         <Clock className="w-3 h-3" />
@@ -55,6 +61,8 @@ export function TimeLimitBadge({
 
   return (
     <span
+      data-testid="time-limit-badge"
+      data-state="remaining"
       className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
     >
       {isLow ? (

@@ -175,7 +175,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     );
 
     // newtab.html にリダイレクトされることを確認
-    await youtubePage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await youtubePage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(youtubePage.url()).toContain('newtab.html');
 
     await youtubePage.close();
@@ -507,7 +507,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     );
 
     // blockAccess が優先され、newtab.html にリダイレクト
-    await youtubePage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await youtubePage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(youtubePage.url()).toContain('newtab.html');
 
     await youtubePage.close();

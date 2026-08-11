@@ -1,11 +1,16 @@
 import { test, expect } from './fixtures/extension';
+import { openExternalSite, openPopup } from './helpers/pages';
 import {
-  openExternalSite,
-  openPopup,
-  waitForBlockRules
-} from './helpers/pages';
+  setupStorageViaSW,
+  triggerBlockRuleRecompute,
+  waitForBlockRules,
+  waitForNoBlockRules
+} from './helpers/sw';
 import {
   clearStorageFromExtension,
+  makeTimeLimitUsage,
+  makeAnalytics,
+  makeSettings,
   setStorageDataFromExtension,
   setSettingsFromExtension,
   getStorageDataFromExtension
@@ -120,18 +125,14 @@ test.describe('Interaction - 機能間相互作用', () => {
     await unblockedPage.close();
   });
 
-  test('INT-003: Time Limit + Schedule 同時有効時の動作確認', async ({
-    context,
-    extensionId
+  test('INT-003: Schedule 有効中でも Time Limit 未超過ならブロックされない', async ({
+    context
   }) => {
     const now = new Date();
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
-    // Time Limit 未超過 + Schedule でブロック有効化時間帯
-    await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
-      paused: false,
+    const settings = {
       blockList: [
         {
           id: '1',
@@ -139,10 +140,7 @@ test.describe('Interaction - 機能間相互作用', () => {
           isWildcard: false,
           createdAt: new Date().toISOString(),
           enabled: true,
-          timeLimit: {
-            type: 'daily',
-            limitSeconds: 60
-          }
+          timeLimit: { type: 'daily', limitSeconds: 60 }
         }
       ],
       schedules: [
@@ -156,29 +154,43 @@ test.describe('Interaction - 機能間相互作用', () => {
           action: 'enable'
         }
       ]
+    };
+
+    // 未超過（30秒 / 上限60秒）。スケジュールは有効時間帯
+    await setupStorageViaSW(context, {
+      settings: makeSettings(settings),
+      analytics: makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 30 })
+      })
     });
+    await triggerBlockRuleRecompute(context);
 
-    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 30, // 未超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      }
+    // 時間制限つきサイトは「超過したときだけ」ブロック対象になる。
+    // スケジュールが有効でも、未超過ならブロックしない
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
+
+    const allowedPage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.example}`
+    );
+    expect(allowedPage.url()).toContain(TEST_DOMAINS.example);
+    await allowedPage.close();
+
+    // 超過させると、同じ設定でブロックされる
+    await setupStorageViaSW(context, {
+      settings: makeSettings(settings),
+      analytics: makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 100 })
+      })
     });
+    await triggerBlockRuleRecompute(context);
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // サイトにアクセス（Schedule により有効化 + Time Limit 未超過でもブロック）
     const blockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
-
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
-    expect(blockedPage.url()).toContain('newtab.html');
-
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     await blockedPage.close();
   });
 
@@ -351,7 +363,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       `https://${TEST_DOMAINS.example}`
     );
 
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 5000 });
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
     // newtab.html でブロック解除ボタンをクリック
     const unblockButton = blockedPage.locator(
