@@ -24,16 +24,18 @@ export function DomainListItem({
   onUpdateTimeLimit
 }: DomainListItemProps) {
   return (
-    <div className="py-3">
+    <div className="py-3" data-testid="blocklist-item">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Toggle
             checked={item.enabled}
             onChange={(checked) => onToggle(item.id, checked)}
             size="sm"
+            data-testid="blocklist-item-toggle"
           />
           <div>
             <p
+              data-testid="blocklist-item-domain"
               className={`font-medium ${item.enabled ? 'text-gray-900' : 'text-gray-400'}`}
             >
               {item.isWildcard && (
@@ -56,7 +58,12 @@ export function DomainListItem({
             </span>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemove(item.id)}
+          data-testid="blocklist-item-remove"
+        >
           <Trash2 className="w-4 h-4 text-danger-500" />
         </Button>
       </div>

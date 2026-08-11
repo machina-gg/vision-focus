@@ -116,6 +116,7 @@ export function UnblockConfirmModal({
         <div className="space-y-2">
           <button
             type="button"
+            data-testid="unblock-confirm-hold-button"
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerLeave}
@@ -145,7 +146,12 @@ export function UnblockConfirmModal({
         </div>
 
         <div className="pt-2">
-          <Button variant="secondary" onClick={onClose} className="w-full">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="w-full"
+            data-testid="unblock-confirm-cancel"
+          >
             {getMessage('cancel')}
           </Button>
         </div>

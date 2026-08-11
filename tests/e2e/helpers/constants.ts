@@ -74,6 +74,8 @@ export const SELECTORS = {
     analyticsOptInDeny: '[data-testid="analytics-optin-deny"]',
     passwordModal: '[role="dialog"]',
     unblockConfirm: '[role="dialog"]',
+    unblockConfirmHoldButton: '[data-testid="unblock-confirm-hold-button"]',
+    unblockConfirmCancel: '[data-testid="unblock-confirm-cancel"]',
     passwordConfirmButton: '[data-testid="password-modal-confirm"]',
     passwordCancelButton: '[data-testid="password-modal-cancel"]'
   },
@@ -114,10 +116,12 @@ export const SELECTORS = {
     analyticsTab: '[data-testid="tab-analytics"]',
     premiumTab: '[data-testid="tab-license"]',
     helpTab: '[data-testid="tab-help"]',
-    domainInput: 'input[type="text"]',
-    addButton: 'button',
-    deleteButton:
-      'button[title*="削除"], button[title*="Delete"], button[title*="Remove"]',
+    domainInput: '[data-testid="blocklist-domain-input"]',
+    addButton: '[data-testid="blocklist-add-button"]',
+    listItem: '[data-testid="blocklist-item"]',
+    itemDomain: '[data-testid="blocklist-item-domain"]',
+    itemToggle: '[data-testid="blocklist-item-toggle"]',
+    deleteButton: '[data-testid="blocklist-item-remove"]',
     toggle: '[role="switch"]',
     youtubeSection: 'text=/YouTube/i',
     notificationSection: 'text=/Notification|通知/i'
