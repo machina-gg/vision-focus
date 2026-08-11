@@ -58,8 +58,13 @@ export async function findEnabledBlockItemForDomain(
  * Check if any schedule is currently active
  * No schedules = always active (return true)
  */
-export function isAnyScheduleActive(schedules: Schedule[]): boolean {
-  if (schedules.length === 0) return true;
+export function isAnyScheduleActive(
+  schedules: Schedule[] | undefined
+): boolean {
+  // 旧バージョンの設定や部分的なインポートで schedules が欠けている場合がある。
+  // ここで例外を投げるとブロックルールの再計算が丸ごと止まり、
+  // ブロックが一切効かなくなるため、未設定は「常時有効」として扱う
+  if (!schedules || schedules.length === 0) return true;
   return schedules.some(
     (schedule) =>
       schedule.enabled &&

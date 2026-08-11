@@ -7,6 +7,9 @@ import {
 } from './helpers/pages';
 import {
   setStorageData,
+  makeAnalytics,
+  makeTimeLimitUsage,
+  setSettings,
   clearStorage,
   clearStorageFromExtension,
   getStorageData
@@ -31,7 +34,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // Daily Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -42,8 +45,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60, // 60秒
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60 // 60秒
           }
         }
       ]
@@ -51,7 +54,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
 
     // 設定が保存されたことを確認
     const settings = (await getStorageData(page, 'settings')) as any;
-    expect(settings.blockList[0].timeLimit.daily).toBe(60);
+    expect(settings.blockList[0].timeLimit.limitSeconds).toBe(60);
 
     await page.close();
   });
@@ -63,7 +66,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // Hourly Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -83,7 +86,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
 
     // 設定が保存されたことを確認
     const settings = (await getStorageData(page, 'settings')) as any;
-    expect(settings.blockList[0].timeLimit.hourly).toBe(30);
+    expect(settings.blockList[0].timeLimit.limitSeconds).toBe(30);
 
     await page.close();
   });
@@ -95,7 +98,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // Time Limit を1秒に設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -106,29 +109,29 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 1, // 1秒
-            hourly: null
+            type: 'daily',
+            limitSeconds: 1 // 1秒
           }
         }
       ]
     });
 
     // 既に使用済みとして記録
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 2, // 1秒を超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage 配下に持つ
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          daily: 2 // 1秒を超過
+        })
+      })
+    );
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // サイトにアクセス
     const blockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -154,7 +157,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -165,28 +168,28 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60
           }
         }
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 70, // 超過していた
-          resetAt: yesterday.toISOString() // 過去のリセット時刻
-        },
-        hourly: null
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage 配下に持つ
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          daily: 70 // 超過していた
+        })
+      })
+    );
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // サイトにアクセス（リセットされているのでアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -210,7 +213,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const oneHourAgo = new Date();
     oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -228,21 +231,20 @@ test.describe('TimeLimit - Time Limit 機能', () => {
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: null,
-        hourly: {
-          used: 40, // 超過していた
-          resetAt: oneHourAgo.toISOString() // 過去のリセット時刻
-        }
-      }
-    });
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          hourly: 40 // 超過していた
+        })
+      })
+    );
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // サイトにアクセス（リセットされているのでアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -262,7 +264,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -273,23 +275,24 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60
           }
         }
       ]
     });
 
     // 30秒使用済み
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 30,
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage 配下に持つ
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          daily: 30
+        })
+      })
+    );
 
     await page.close();
 
@@ -312,7 +315,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -354,7 +357,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // Pause 有効 + Time Limit 超過状態
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: true, // Pause 有効
       blockList: [
@@ -365,28 +368,28 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 1,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 1
           }
         }
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 10, // 超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage 配下に持つ
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          daily: 10 // 超過
+        })
+      })
+    );
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // サイトにアクセス（Pauseが優先されてアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -412,7 +415,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
       resetTime.setDate(resetTime.getDate() + 1);
     }
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -423,22 +426,23 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60
           }
         }
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 50,
-          resetAt: resetTime.toISOString()
-        },
-        hourly: null
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage 配下に持つ
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          daily: 50
+        })
+      })
+    );
 
     // Date をモックして00:00を再現
     await page.evaluate(() => {
@@ -478,7 +482,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const resetTime = new Date();
     resetTime.setMinutes(59, 0, 0);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -496,15 +500,15 @@ test.describe('TimeLimit - Time Limit 機能', () => {
       ]
     });
 
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: null,
-        hourly: {
-          used: 25,
-          resetAt: resetTime.toISOString()
-        }
-      }
-    });
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
+          hourly: 25
+        })
+      })
+    );
 
     // Date をモックして10:00を再現
     await page.evaluate(() => {
@@ -539,7 +543,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // 2つのサイトに異なる Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       blockList: [
@@ -550,8 +554,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 60,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 60
           }
         },
         {
@@ -561,36 +565,29 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           createdAt: new Date().toISOString(),
           enabled: true,
           timeLimit: {
-            daily: 30,
-            hourly: null
+            type: 'daily',
+            limitSeconds: 30
           }
         }
       ]
     });
 
     // example.com は超過、reddit.com は未超過
-    await setStorageData(page, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 70, // 超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      },
-      [TEST_DOMAINS.reddit]: {
-        daily: {
-          used: 10, // 未超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
-      }
-    });
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: {
+          ...makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 70 }),
+          ...makeTimeLimitUsage(TEST_DOMAINS.reddit, { daily: 10 })
+        }
+      })
+    );
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // example.com はブロック
     const blockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`

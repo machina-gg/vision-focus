@@ -61,6 +61,12 @@ function createSettings(overrides: Partial<AppSettings> = {}): AppSettings {
 }
 
 describe('isAnyScheduleActive', () => {
+  it('schedules が未設定でも例外を投げず true を返す', () => {
+    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、
+    // ここで落ちないことを保証する
+    expect(isAnyScheduleActive(undefined)).toBe(true);
+  });
+
   it('スケジュールが空の場合はtrueを返す', () => {
     expect(isAnyScheduleActive([])).toBe(true);
   });

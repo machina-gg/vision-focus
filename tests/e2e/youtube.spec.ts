@@ -2,6 +2,8 @@ import { test, expect } from './fixtures/extension';
 import { openExternalSite, openStoragePage } from './helpers/pages';
 import {
   setStorageData,
+  setSettings,
+  makeYouTubeSettings,
   clearStorage,
   clearStorageFromExtension,
   getStorageData
@@ -26,16 +28,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube Shorts を非表示に設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: true,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: null
-      }
+      })
     });
 
     await page.close();
@@ -49,12 +51,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await youtubePage.waitForLoadState('domcontentloaded');
 
     // Shorts が非表示になる CSS が適用されているか確認
-    const shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('[title*="Shorts"]');
-    });
-
-    expect(shortsHidden).toBeTruthy();
+    // コンテンツスクリプトは storage を読んでから style を注入するため、
+    // 注入が終わるまで待つ
+    await expect
+      .poll(() =>
+        youtubePage.evaluate(() => {
+          const style = document.getElementById('vision-focus-youtube-blocker');
+          return style?.textContent?.includes('a[title="Shorts"]');
+        })
+      )
+      .toBeTruthy();
 
     await youtubePage.close();
   });
@@ -65,16 +71,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: true,
         hideComments: false,
         timeLimit: null
-      }
+      })
     });
 
     await page.close();
@@ -89,9 +95,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // Recommendations が非表示になる CSS が適用されているか確認
     const recsHidden = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes(
-        'ytd-watch-next-secondary-results-renderer'
-      );
+      return style?.textContent?.includes('#secondary-inner #related');
     });
 
     expect(recsHidden).toBeTruthy();
@@ -105,16 +109,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: true,
         timeLimit: null
-      }
+      })
     });
 
     await page.close();
@@ -127,12 +131,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await youtubePage.waitForLoadState('domcontentloaded');
 
     // Comments が非表示になる CSS が適用されているか確認
-    const commentsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('ytd-comments');
-    });
-
-    expect(commentsHidden).toBeTruthy();
+    // コンテンツスクリプトは storage を読んでから style を注入するため、
+    // 注入が終わるまで待つ
+    await expect
+      .poll(() =>
+        youtubePage.evaluate(() => {
+          const style = document.getElementById('vision-focus-youtube-blocker');
+          return style?.textContent?.includes('ytd-comments');
+        })
+      )
+      .toBeTruthy();
 
     await youtubePage.close();
   });
@@ -144,16 +152,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube を完全ブロック
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: true,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: null
-      }
+      })
     });
 
     await page.close();
@@ -180,24 +188,24 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
-          daily: 120,
-          hourly: null
+          type: 'daily',
+          limitSeconds: 120
         }
-      }
+      })
     });
 
     // 設定が保存されたことを確認
     const settings = (await getStorageData(page, 'settings')) as any;
-    expect(settings.youtube.timeLimit.daily).toBe(120);
+    expect(settings.youtube.timeLimit.limitSeconds).toBe(120);
 
     await page.close();
   });
@@ -209,19 +217,19 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube Time Limit を設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
-          daily: 1, // 1秒
-          hourly: null
+          type: 'daily',
+          limitSeconds: 1 // 1秒
         }
-      }
+      })
     });
 
     // 既に超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
@@ -253,12 +261,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await youtubePage.waitForLoadState('domcontentloaded');
 
     // 全コンテンツが非表示になる CSS が適用されているか確認
-    const contentHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('display: none !important');
-    });
-
-    expect(contentHidden).toBeTruthy();
+    // コンテンツスクリプトは storage を読んでから style を注入するため、
+    // 注入が終わるまで待つ
+    await expect
+      .poll(() =>
+        youtubePage.evaluate(() => {
+          const style = document.getElementById('vision-focus-youtube-blocker');
+          return style?.textContent?.includes('display: none !important');
+        })
+      )
+      .toBeTruthy();
 
     await youtubePage.close();
   });
@@ -270,16 +282,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // 最初は Shorts 非表示なし
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: null
-      }
+      })
     });
 
     await page.close();
@@ -294,7 +306,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // Shorts が表示されていることを確認
     let shortsHidden = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('[title*="Shorts"]');
+      return style?.textContent?.includes('a[title="Shorts"]');
     });
     expect(shortsHidden).toBeFalsy();
 
@@ -302,16 +314,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // page.evaluate はページのメインワールドで実行されるため、コンテンツ
     // スクリプトと違い chrome.storage を参照できない。拡張機能ページ経由で更新する
     const updatePage = await openStoragePage(context, extensionId);
-    await setStorageData(updatePage, 'settings', {
+    await setSettings(updatePage, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: true, // 有効化
         hideRecommendations: false,
         hideComments: false,
         timeLimit: null
-      }
+      })
     });
     await updatePage.close();
 
@@ -321,7 +333,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // Shorts が非表示になることを確認
     shortsHidden = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('[title*="Shorts"]');
+      return style?.textContent?.includes('a[title="Shorts"]');
     });
     expect(shortsHidden).toBeTruthy();
 
@@ -334,20 +346,20 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
-          daily: 60,
-          hourly: null
+          type: 'daily',
+          limitSeconds: 60
         }
-      }
+      })
     });
 
     // YouTube を訪問
@@ -381,19 +393,19 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: false,
         hideShorts: true, // Shorts 非表示
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
-          daily: 60,
-          hourly: null
+          type: 'daily',
+          limitSeconds: 60
         }
-      }
+      })
     });
 
     // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
@@ -427,14 +439,16 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // Shorts 非表示の CSS が適用されていることを確認
     const shortsHidden = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('[title*="Shorts"]');
+      return style?.textContent?.includes('a[title="Shorts"]');
     });
     expect(shortsHidden).toBeTruthy();
 
-    // Time Limit 超過の CSS は適用されていないことを確認
+    // Time Limit 超過の CSS は適用されていないことを確認。
+    // style 要素自体は Shorts 非表示のために存在するため、
+    // 超過時だけ入る全体非表示ルールの有無で判定する
     const limitExceeded = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style !== null;
+      return style?.textContent?.includes('ytd-app #content');
     });
     expect(limitExceeded).toBeFalsy();
 
@@ -448,19 +462,19 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // blockAccess と Time Limit を両方設定
-    await setStorageData(page, 'settings', {
+    await setSettings(page, {
       language: 'en',
       paused: false,
-      youtube: {
+      youtube: makeYouTubeSettings({
         blockAccess: true, // 完全ブロック
         hideShorts: false,
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
-          daily: 60,
-          hourly: null
+          type: 'daily',
+          limitSeconds: 60
         }
-      }
+      })
     });
 
     // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）

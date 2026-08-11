@@ -1,11 +1,17 @@
 import { test, expect } from './fixtures/extension';
-import { openOptions, openExternalSite } from './helpers/pages';
+import {
+  openOptions,
+  openExternalSite,
+  holdUnblockConfirm
+} from './helpers/pages';
 import {
   clearStorageFromExtension,
   setStorageDataFromExtension,
-  getStorageDataFromExtension
+  setSettingsFromExtension,
+  getStorageDataFromExtension,
+  getStorageData
 } from './helpers/storage';
-import { TEST_DOMAINS } from './helpers/constants';
+import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
 /**
  * E2E Tests: アナリティクス機能
@@ -22,7 +28,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
@@ -62,9 +68,10 @@ test.describe('Analytics - アナリティクス機能', () => {
       'analytics'
     )) as any;
 
-    expect(analytics.siteStats[TEST_DOMAINS.example]).toBeDefined();
+    // サイト別の回数は siteBlockCounts[domain].count に入る
+    expect(analytics.siteBlockCounts[TEST_DOMAINS.example]).toBeDefined();
     expect(
-      analytics.siteStats[TEST_DOMAINS.example].blockCount
+      analytics.siteBlockCounts[TEST_DOMAINS.example].count
     ).toBeGreaterThanOrEqual(3);
   });
 
@@ -72,7 +79,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
@@ -87,31 +94,35 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
+    // 解除履歴はドメインをキーにした sites に入る
     await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
-      entries: []
+      sites: {}
     });
 
-    // Options ページでブロックを一時解除
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
-    await optionsPage.waitForLoadState('domcontentloaded');
 
-    // ブロック解除ボタンをクリック（実装に応じてセレクタを調整）
-    const unblockButton = optionsPage
-      .locator('button:has-text("Unblock"), button:has-text("解除")')
-      .first();
-    if (await unblockButton.isVisible()) {
-      await unblockButton.click();
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
+    // ブロックリストから削除する = ブロック解除。5 秒の長押しで確定する
+    await optionsPage.locator(SELECTORS.options.deleteButton).first().click();
+    await expect(
+      optionsPage.locator(SELECTORS.modal.unblockConfirm)
+    ).toBeVisible();
+    await holdUnblockConfirm(optionsPage);
+    await expect(optionsPage.locator(SELECTORS.options.listItem)).toHaveCount(
+      0
+    );
 
-    // Unblock History を確認
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const unblockHistory = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'unblockHistory'
-    )) as any;
-    expect(unblockHistory.entries.length).toBeGreaterThan(0);
+    // 解除したドメインが履歴に記録される
+    await expect
+      .poll(async () => {
+        const history = (await getStorageData(
+          optionsPage,
+          'unblockHistory'
+        )) as {
+          sites?: Record<string, unknown>;
+        } | null;
+        return Object.keys(history?.sites ?? {});
+      })
+      .toContain(TEST_DOMAINS.example);
 
     await optionsPage.close();
   });
@@ -120,7 +131,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -163,7 +174,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -204,7 +215,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     // Opt-In が未決定の状態
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: null
@@ -241,7 +252,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     // Opt-Out 状態
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
@@ -276,7 +287,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -331,7 +342,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -367,7 +378,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -410,7 +421,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     // Opt-Out 状態
-    await setStorageDataFromExtension(context, extensionId, 'settings', {
+    await setSettingsFromExtension(context, extensionId, {
       language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },

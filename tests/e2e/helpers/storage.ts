@@ -56,6 +56,22 @@ export async function setSessionStorageData(
 }
 
 /**
+ * chrome.storage.session からデータを取得する
+ *
+ * lastBlockedDomain のように、拡張機能が session 領域に置く値は
+ * local を読んでも取れない（@plasmohq/storage も経由しないため生の値）。
+ */
+export async function getSessionStorageData<T = unknown>(
+  page: Page,
+  key: string
+): Promise<T | null> {
+  return await page.evaluate(async (key) => {
+    const result = await chrome.storage.session.get(key);
+    return (result[key] ?? null) as T;
+  }, key);
+}
+
+/**
  * chrome.storage.local からデータを取得する
  *
  * @param page - Playwright Page オブジェクト
@@ -210,6 +226,86 @@ export function makePreset(
  *
  * @param overrides - 上書きする値
  */
+/**
+ * settings を「欠けたフィールドのない完全な形」で書き込む
+ *
+ * 部分的な settings を直接書くと、実装側が `settings.schedules` などを
+ * 前提にしている箇所で処理が止まる。ブロックルールの再計算が丸ごと
+ * 失敗しても E2E からは「なぜかブロックされない」としか見えないため、
+ * settings の書き込みは必ずこのヘルパー経由にする。
+ */
+export async function setSettings(
+  page: Page,
+  overrides: Record<string, unknown> = {}
+): Promise<void> {
+  await setStorageData(page, 'settings', makeSettings(overrides));
+}
+
+/** 拡張機能のページを開いて settings を書き込む（完全な形で書く） */
+export async function setSettingsFromExtension(
+  context: BrowserContext,
+  extensionId: string,
+  overrides: Record<string, unknown> = {}
+): Promise<void> {
+  await setStorageDataFromExtension(
+    context,
+    extensionId,
+    'settings',
+    makeSettings(overrides)
+  );
+}
+
+/**
+ * YouTube 設定を「欠けたフィールドのない完全な形」で作る
+ *
+ * 実装は保存された youtube 設定をスキーマ検証しており、フィールドが欠けていると
+ * 検証に失敗して既定値（enabled: false）にフォールバックする。その結果
+ * コンテンツスクリプトが CSS を一切注入せず、テストからは「設定したのに
+ * 効かない」としか見えない。
+ */
+export function makeYouTubeSettings(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    enabled: true,
+    blockAccess: false,
+    hideShorts: false,
+    hideRecommendations: false,
+    hideComments: false,
+    hideSidebar: false,
+    hideHomeFeed: false,
+    timeLimit: null,
+    ...overrides
+  };
+}
+
+/**
+ * Time Limit の使用実績を作る
+ *
+ * 実装は `analytics.timeLimitUsage[domain]` に
+ * `{ domain, dailyUsedSeconds, hourlyUsedSeconds, lastDailyReset, lastHourlyReset }`
+ * の形で持つ。トップレベルの `timeLimitUsage` キーや
+ * `{ daily: { used, resetAt } }` という形は実装に存在しない。
+ */
+export function makeTimeLimitUsage(
+  domain: string,
+  used: { daily?: number; hourly?: number } = {},
+  now: Date = new Date()
+): Record<string, unknown> {
+  const todayKey = now.toISOString().slice(0, 10);
+  const hourKey = `${todayKey}-${String(now.getHours()).padStart(2, '0')}`;
+
+  return {
+    [domain]: {
+      domain,
+      dailyUsedSeconds: used.daily ?? 0,
+      hourlyUsedSeconds: used.hourly ?? 0,
+      lastDailyReset: todayKey,
+      lastHourlyReset: hourKey
+    }
+  };
+}
+
 export function makeSettings(
   overrides: Record<string, unknown> = {}
 ): Record<string, unknown> {
