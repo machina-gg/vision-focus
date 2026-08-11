@@ -349,15 +349,13 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  test('POP-013: PremiumユーザーはAnalyticsリンクが表示される', async ({
+  test('POP-013: Analytics リンクが表示される', async ({
     context,
     extensionId
   }) => {
-    // Premium 設定済みのストレージをセットアップ
     const setupPage = await openPopup(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setupPage.close();
@@ -365,7 +363,7 @@ test.describe('Popup 画面', () => {
     const page = await openPopup(context, extensionId);
 
     // Analytics リンクが表示される
-    const analyticsLink = page.locator(SELECTORS.premium.analyticsLink);
+    const analyticsLink = page.locator(SELECTORS.analyticsEntry.analyticsLink);
     await expect(analyticsLink).toBeVisible();
 
     // クリックでオプション画面の Analytics タブが開く。

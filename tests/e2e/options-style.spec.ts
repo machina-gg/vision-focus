@@ -252,15 +252,13 @@ test.describe('Options - Style Tab', () => {
     await page.close();
   });
 
-  test('OPT-ST10: Premium ユーザーはカスタム画像をアップロードできる', async ({
+  test('OPT-ST10: カスタム画像をアップロードできる', async ({
     context,
     extensionId
   }) => {
-    // Premium設定
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setupPage.close();
@@ -310,15 +308,13 @@ test.describe('Options - Style Tab', () => {
     await page.close();
   });
 
-  test('OPT-ST12: Premium ユーザーは Google Fonts を選択できる', async ({
+  test('OPT-ST12: Google Fonts を選択できる', async ({
     context,
     extensionId
   }) => {
-    // Premium設定
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
-      withPremium: true,
       withAnalyticsOptIn: true
     });
     await setupPage.close();
@@ -440,51 +436,6 @@ test.describe('Options - Style Tab', () => {
     );
     // rgb(255, 0, 0) または #ff0000 形式
     expect(color).toMatch(/rgb\(255,\s*0,\s*0\)|#ff0000/i);
-
-    await page.close();
-  });
-
-  test('OPT-ST16: Free ダウングレード時、上限を超えるプリセットがロックされる', async ({
-    context,
-    extensionId
-  }) => {
-    // 無料版の上限（FEATURE_LIMITS.free.maxPresets = 3）を 1 件超える 4 件を用意する
-    const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'vision', {
-      defaultSettings: makeDisplaySettings(),
-      presets: [1, 2, 3, 4].map((n) =>
-        makePreset(`preset${n}`, `Preset ${n}`, {
-          goalText: `Goal ${n}`,
-          goalSubText: `Sub ${n}`
-        })
-      ),
-      activePresetId: 'preset1'
-    });
-    // Freeユーザー（Premiumなし）
-    await setStorageData(setupPage, 'premium', {
-      isPremium: false
-    });
-    await setupPage.close();
-
-    const page = await openOptions(context, extensionId, 'styles');
-
-    // 上限内（1〜3件目）はロックされない
-    for (const n of [1, 2, 3]) {
-      const unlocked = page
-        .locator(SELECTORS.styles.presetButton)
-        .filter({ hasText: `Preset ${n}` });
-      await expect(unlocked).toBeVisible();
-      await expect(unlocked.locator('svg.lucide-lock')).toHaveCount(0);
-      await expect(unlocked).toBeEnabled();
-    }
-
-    // 上限を超える 4 件目はロックされる
-    const locked = page
-      .locator(SELECTORS.styles.presetButton)
-      .filter({ hasText: 'Preset 4' });
-    await expect(locked).toBeVisible();
-    await expect(locked.locator('svg.lucide-lock')).toBeVisible();
-    await expect(locked).toBeDisabled();
 
     await page.close();
   });
