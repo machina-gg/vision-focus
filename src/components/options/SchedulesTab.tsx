@@ -38,7 +38,7 @@ export function SchedulesTab({
           <h2 className="text-lg font-semibold text-gray-900">
             {getMessage('blockingSchedules')}
           </h2>
-          <Button onClick={onAddSchedule}>
+          <Button onClick={onAddSchedule} data-testid="schedule-add-button">
             <Plus className="w-4 h-4 mr-1" />
             {getMessage('addSchedule')}
           </Button>
@@ -65,12 +65,14 @@ export function SchedulesTab({
             {settings?.schedules.map((schedule) => (
               <div
                 key={schedule.id}
+                data-testid="schedule-item"
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900">{schedule.name}</p>
                     <Toggle
+                      data-testid="schedule-item-toggle"
                       checked={schedule.enabled}
                       onChange={(enabled) =>
                         onToggleSchedule(schedule.id, enabled)
@@ -95,7 +97,10 @@ export function SchedulesTab({
                     ))}
                   </div>
                   {schedule.presetId && (
-                    <p className="text-xs text-primary-600 mt-1">
+                    <p
+                      className="text-xs text-primary-600 mt-1"
+                      data-testid="schedule-item-preset"
+                    >
                       {getMessage('presetLabel')}:{' '}
                       {vision?.presets?.find((p) => p.id === schedule.presetId)
                         ?.name || getMessage('unknownPreset')}
@@ -107,6 +112,7 @@ export function SchedulesTab({
                     variant="ghost"
                     size="sm"
                     onClick={() => onEditSchedule(schedule)}
+                    data-testid="schedule-item-edit"
                   >
                     {getMessage('edit')}
                   </Button>
@@ -114,6 +120,7 @@ export function SchedulesTab({
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteSchedule(schedule.id)}
+                    data-testid="schedule-item-delete"
                   >
                     <Trash2 className="w-4 h-4 text-danger-500" />
                   </Button>

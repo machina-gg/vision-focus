@@ -160,21 +160,23 @@ export const SELECTORS = {
 
   // Options - Schedules Tab
   schedules: {
-    weeklyCalendar: '.grid.grid-cols-7',
-    addScheduleButton:
-      'button:has-text("スケジュールを追加"), button:has-text("Add Schedule")',
-    scheduleItem: '.flex.items-center.justify-between.p-4',
-    scheduleToggle: '[role="switch"]',
-    editButton: 'button:has-text("編集"), button:has-text("Edit")',
-    deleteButton: 'button:has(svg.lucide-trash-2)',
+    weeklyCalendar: '[data-testid="weekly-calendar"]',
+    weeklyCalendarDayHeader: '[data-testid="weekly-calendar-day-header"]',
+    addScheduleButton: '[data-testid="schedule-add-button"]',
+    scheduleItem: '[data-testid="schedule-item"]',
+    scheduleItemPreset: '[data-testid="schedule-item-preset"]',
+    scheduleToggle: '[data-testid="schedule-item-toggle"]',
+    editButton: '[data-testid="schedule-item-edit"]',
+    deleteButton: '[data-testid="schedule-item-delete"]',
     scheduleModal: '[role="dialog"]',
-    scheduleNameInput:
-      'input[placeholder*="スケジュール名"], input[placeholder*="Schedule name"]',
-    startTimeInput: 'input[type="time"]:first-of-type',
-    endTimeInput: 'input[type="time"]:last-of-type',
-    dayCheckbox: 'input[type="checkbox"]',
-    presetSelect: 'select',
-    saveScheduleButton: 'button:has-text("保存"), button:has-text("Save")',
+    scheduleNameInput: '[data-testid="schedule-name-input"]',
+    startTimeInput: '[data-testid="schedule-start-time"]',
+    endTimeInput: '[data-testid="schedule-end-time"]',
+    // 曜日は checkbox ではなくトグルボタン
+    dayCheckbox: '[data-testid="schedule-day-button"]',
+    presetSelect: '[data-testid="schedule-preset-select"]',
+    saveScheduleButton: '[data-testid="schedule-save-button"]',
+    cancelScheduleButton: '[data-testid="schedule-cancel-button"]',
     noSchedules: 'text=/スケジュールがありません|No schedules/i'
   },
 
