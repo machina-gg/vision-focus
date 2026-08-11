@@ -41,7 +41,10 @@ export function PresetSelector({
       {/* Preset Selector */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            className="text-lg font-semibold text-gray-900"
+            data-testid="styles-section-heading"
+          >
             {getMessage('dashboardPresets')}
           </h2>
           {!isPremium && (
@@ -122,7 +125,11 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
       <p className="text-xs text-gray-500 mb-4">
         {getMessage('noPresetsDescription')}
       </p>
-      <Button onClick={onCreateClick} size="sm">
+      <Button
+        onClick={onCreateClick}
+        size="sm"
+        data-testid="style-create-first-button"
+      >
         <Plus className="w-4 h-4" />
         {getMessage('createFirstPreset')}
       </Button>
@@ -158,6 +165,7 @@ function PresetButtons({
         return (
           <button
             key={preset.id}
+            data-testid="style-preset-button"
             onClick={() => !isLocked && onSelectPreset(preset.id)}
             disabled={isLocked}
             title={isLocked ? getMessage('upgradeToUsePreset') : undefined}
@@ -185,6 +193,7 @@ function PresetButtons({
       {/* New preset button */}
       {draftPresets.length < featureLimits.maxPresets && (
         <button
+          data-testid="style-new-preset-button"
           onClick={onCreateClick}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
         >
@@ -239,6 +248,7 @@ function EditingIndicator({
           variant="ghost"
           size="sm"
           onClick={() => onDeletePreset(selectedPreset.id)}
+          data-testid="style-delete-button"
         >
           <Trash2 className="w-4 h-4 text-danger-500" />
         </Button>
@@ -248,7 +258,12 @@ function EditingIndicator({
             {getMessage('activePreset')}
           </span>
         ) : (
-          <Button variant="secondary" onClick={onApplyPreset} size="sm">
+          <Button
+            variant="secondary"
+            onClick={onApplyPreset}
+            size="sm"
+            data-testid="style-apply-button"
+          >
             <Check className="w-4 h-4" />
             {getMessage('applyPreset')}
           </Button>
@@ -261,6 +276,7 @@ function EditingIndicator({
             !isDirty
           }
           size="sm"
+          data-testid="style-save-button"
         >
           <Save className="w-4 h-4" />
           {visionSaved ? getMessage('saved') : getMessage('save')}

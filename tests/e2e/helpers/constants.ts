@@ -129,29 +129,33 @@ export const SELECTORS = {
 
   // Options - Styles Tab
   styles: {
-    presetSelector: 'h2:has-text("Preset"), h2:has-text("プリセット")',
-    createPresetButton:
-      'button:has-text("新規プリセット"), button:has-text("New Preset")',
-    createFirstPresetButton:
-      'button:has-text("最初のプリセット"), button:has-text("Create First Preset")',
-    presetButton: '.flex.flex-wrap.gap-2 > button',
-    presetNameInput:
-      'input[placeholder*="プリセット名"], input[placeholder*="Preset name"]',
-    goalTextInput:
-      'input[placeholder*="目標"], input[placeholder*="your goal"]',
-    goalSubTextArea: 'textarea[maxLength="100"]',
-    textColorPicker: 'input[type="color"]',
-    backgroundTypeImage: 'button:has-text("画像"), button:has-text("Image")',
-    backgroundTypeColor: 'button:has-text("単色"), button:has-text("Color")',
-    backgroundImageOption: '.grid.grid-cols-3 > button',
-    backgroundColorPicker: 'input[type="color"]',
-    customBackgroundUpload: 'input[type="file"]',
-    fontFamilySelect: 'select',
-    saveButton: 'button:has-text("保存"), button:has-text("Save")',
-    applyButton: 'button:has-text("適用"), button:has-text("Apply")',
-    deleteButton:
-      'button:has-text("削除"), button:has-text("Delete"), button:has(svg.lucide-trash-2)',
-    preview: '.relative.aspect-video'
+    presetSelector: '[data-testid="styles-section-heading"]',
+    createPresetButton: '[data-testid="style-new-preset-button"]',
+    createFirstPresetButton: '[data-testid="style-create-first-button"]',
+    presetButton: '[data-testid="style-preset-button"]',
+    presetNameInput: '[data-testid="style-preset-name-input"]',
+    goalTextInput: '[data-testid="style-goal-input"]',
+    goalSubTextArea: '[data-testid="style-goal-subtext"]',
+    textColorPicker: '[data-testid="style-text-color-picker"]',
+    backgroundTypeImage: '[data-testid="style-bg-type-image"]',
+    backgroundTypeColor: '[data-testid="style-bg-type-color"]',
+    backgroundImageOption: '[data-testid="style-bg-option"]',
+    backgroundColorPicker: '[data-testid="style-text-color-picker"]',
+    // ファイル入力は hidden。可視要素はドロップゾーン
+    customBackgroundUpload: '[data-testid="style-bg-upload"]',
+    customBackgroundDropzone: '[data-testid="style-bg-upload-dropzone"]',
+    // フォントは select ではなくボタン群で選択する
+    fontCategoryButton: '[data-testid="font-category-button"]',
+    fontFamilySelect: '[data-testid="font-family-button"]',
+    fontSizeButton: '[data-testid="font-size-button"]',
+    fontWeightButton: '[data-testid="font-weight-button"]',
+    saveButton: '[data-testid="style-save-button"]',
+    applyButton: '[data-testid="style-apply-button"]',
+    deleteButton: '[data-testid="style-delete-button"]',
+    preview: '[data-testid="style-preview"]',
+    newPresetNameInput: '[data-testid="new-preset-name-input"]',
+    newPresetConfirm: '[data-testid="new-preset-confirm"]',
+    newPresetCancel: '[data-testid="new-preset-cancel"]'
   },
 
   // Options - Schedules Tab

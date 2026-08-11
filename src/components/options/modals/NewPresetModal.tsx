@@ -33,15 +33,24 @@ export function NewPresetModal({
     >
       <div className="space-y-4">
         <Input
+          data-testid="new-preset-name-input"
           value={presetName}
           onChange={onPresetNameChange}
           placeholder={getMessage('presetNamePlaceholder')}
         />
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            data-testid="new-preset-cancel"
+          >
             {getMessage('cancel')}
           </Button>
-          <Button onClick={onCreate} disabled={!presetName.trim()}>
+          <Button
+            onClick={onCreate}
+            disabled={!presetName.trim()}
+            data-testid="new-preset-confirm"
+          >
             <Plus className="w-4 h-4" />
             {getMessage('add')}
           </Button>

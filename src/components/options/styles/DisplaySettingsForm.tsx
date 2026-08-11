@@ -64,6 +64,7 @@ export function DisplaySettingsForm({
                 {getMessage('presetName')}
               </label>
               <Input
+                data-testid="style-preset-name-input"
                 value={editingPresetName}
                 onChange={handlePresetNameChange}
                 placeholder={getMessage('presetNamePlaceholder')}
@@ -77,6 +78,7 @@ export function DisplaySettingsForm({
               {getMessage('yourGoal')}
             </label>
             <Input
+              data-testid="style-goal-input"
               value={draftDisplaySettings.goalText}
               onChange={handleGoalTextChange}
               placeholder={getMessage('goalPlaceholder')}
@@ -89,6 +91,7 @@ export function DisplaySettingsForm({
               {getMessage('goalSubText')}
             </label>
             <textarea
+              data-testid="style-goal-subtext"
               value={draftDisplaySettings.goalSubText}
               onChange={(e) => handleGoalSubTextChange(e.target.value)}
               placeholder={getMessage('goalSubTextPlaceholder')}
@@ -108,6 +111,7 @@ export function DisplaySettingsForm({
             </label>
             <div className="flex items-center gap-4">
               <input
+                data-testid="style-text-color-picker"
                 type="color"
                 value={draftDisplaySettings.textColor}
                 onChange={(e) => handleTextColorChange(e.target.value)}
@@ -138,6 +142,7 @@ export function DisplaySettingsForm({
           </label>
           <div className="flex gap-2">
             <button
+              data-testid="style-bg-type-image"
               onClick={() => handleBackgroundTypeChange('image')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 (draftDisplaySettings.backgroundType || 'image') === 'image'
@@ -148,6 +153,7 @@ export function DisplaySettingsForm({
               {getMessage('backgroundTypeImage')}
             </button>
             <button
+              data-testid="style-bg-type-color"
               onClick={() => handleBackgroundTypeChange('color')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 draftDisplaySettings.backgroundType === 'color'
@@ -166,6 +172,7 @@ export function DisplaySettingsForm({
             {BACKGROUND_OPTIONS.map((bg) => (
               <button
                 key={bg.id}
+                data-testid="style-bg-option"
                 onClick={() => handleBackgroundChange(bg.id)}
                 className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-colors ${
                   draftDisplaySettings.backgroundImage === bg.id
