@@ -1,7 +1,11 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
 import { Card } from '~/components/ui';
-import { WeeklyReportCard, MonthlyReportCard } from '~/components/features';
+import {
+  WeeklyReportCard,
+  MonthlyReportCard,
+  SupportPrompt
+} from '~/components/features';
 import { generateWeeklyReport, generateMonthlyReport } from '~/lib/report';
 import { getMessage } from '~/lib/i18n';
 import type { AnalyticsData } from '~/types/storage';
@@ -64,6 +68,9 @@ export function AnalyticsDateFilter({
           isCurrentMonth={monthlyOffset === 0}
         />
       </div>
+
+      {/* 価値を実感した直後に控えめに支援を案内する（30日に1回まで） */}
+      <SupportPrompt />
     </Card>
   );
 }

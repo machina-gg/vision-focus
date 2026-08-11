@@ -8,3 +8,4 @@ export * from './usePopupActions';
 export * from './usePresets';
 export * from './useResolvedPreset';
 export * from './useSchedules';
+export * from './useSupportPrompt';

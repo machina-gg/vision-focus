@@ -52,17 +52,18 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 
 #### `feature` パラメータの値一覧
 
-| feature値            | 説明                             | 送信元ファイル                                              |
-| -------------------- | -------------------------------- | ----------------------------------------------------------- |
-| `block_add`          | ブロックリストにドメインを追加   | `src/hooks/useBlocklist.ts`                                 |
-| `block_remove`       | ブロックリストからドメインを削除 | `src/hooks/useBlocklist.ts`                                 |
-| `schedule_create`    | スケジュールを新規作成           | `src/hooks/useSchedules.ts`                                 |
-| `schedule_toggle`    | スケジュールの有効/無効を切替    | `src/hooks/useSchedules.ts`                                 |
-| `preset_switch`      | プリセットを切替                 | `src/hooks/usePresets.ts`                                   |
-| `preset_create`      | プリセットを新規作成             | `src/hooks/usePresets.ts`                                   |
-| `csv_export`         | 分析データをCSVエクスポート      | `src/components/options/analytics/AnalyticsExportBar.tsx`   |
-| `image_upload`       | 背景画像をアップロード           | `src/components/features/ImageUploader/ImageUploader.tsx`   |
-| `wallpaper_download` | 壁紙をダウンロード               | `src/components/features/DownloadButton/DownloadButton.tsx` |
+| feature値            | 説明                                  | 送信元ファイル                                              |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------- |
+| `block_add`          | ブロックリストにドメインを追加        | `src/hooks/useBlocklist.ts`                                 |
+| `block_remove`       | ブロックリストからドメインを削除      | `src/hooks/useBlocklist.ts`                                 |
+| `schedule_create`    | スケジュールを新規作成                | `src/hooks/useSchedules.ts`                                 |
+| `schedule_toggle`    | スケジュールの有効/無効を切替         | `src/hooks/useSchedules.ts`                                 |
+| `preset_switch`      | プリセットを切替                      | `src/hooks/usePresets.ts`                                   |
+| `preset_create`      | プリセットを新規作成                  | `src/hooks/usePresets.ts`                                   |
+| `csv_export`         | 分析データをCSVエクスポート           | `src/components/options/analytics/AnalyticsExportBar.tsx`   |
+| `image_upload`       | 背景画像をアップロード                | `src/components/features/ImageUploader/ImageUploader.tsx`   |
+| `wallpaper_download` | 壁紙をダウンロード                    | `src/components/features/DownloadButton/DownloadButton.tsx` |
+| `support_open`       | 支援ページ（Buy Me a Coffee）を開いた | `src/components/features/Support/`                          |
 
 ---
 

@@ -8,4 +8,5 @@ export * from './PasswordModal';
 export * from './QuickBlockButton';
 export * from './ReportCard';
 export * from './StatsCard';
+export * from './Support';
 export * from './TimeLimitBadge';
