@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures/extension';
-import { openOptions } from './helpers/pages';
+import { openOptions, openStoragePage } from './helpers/pages';
+import { SELECTORS } from './helpers/constants';
 import {
   setStorageData,
   getStorageData,
@@ -22,7 +23,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -60,7 +61,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -92,7 +93,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -124,7 +125,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -157,7 +158,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -237,7 +238,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -268,7 +269,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -302,7 +303,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -337,7 +338,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -373,11 +374,11 @@ test.describe('Premium - Premium 機能', () => {
     await optionsPage.close();
   });
 
-  test('PR-010: Free ダウングレード時、2件目以降のプリセットがロック', async ({
+  test('PR-010: Free ダウングレード時、上限を超えるプリセットがロック', async ({
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 最初は Premium
     await setStorageData(page, 'premium', {
@@ -385,48 +386,28 @@ test.describe('Premium - Premium 機能', () => {
       activatedAt: new Date().toISOString()
     });
 
-    // 3件のプリセットを設定
+    // 無料版の上限（FEATURE_LIMITS.free.maxPresets = 3）を 1 件超える 4 件を設定
     await setStorageData(page, 'vision', {
       defaultSettings: {
         goalText: 'Focus',
         subText: 'Stay productive'
       },
-      presets: [
-        {
-          id: '1',
-          name: 'Preset 1',
-          goalText: 'Goal 1',
-          subText: 'Sub 1',
-          textColor: '#fff',
-          backgroundColor: '#000',
-          backgroundType: 'color'
-        },
-        {
-          id: '2',
-          name: 'Preset 2',
-          goalText: 'Goal 2',
-          subText: 'Sub 2',
-          textColor: '#fff',
-          backgroundColor: '#111',
-          backgroundType: 'color'
-        },
-        {
-          id: '3',
-          name: 'Preset 3',
-          goalText: 'Goal 3',
-          subText: 'Sub 3',
-          textColor: '#fff',
-          backgroundColor: '#222',
-          backgroundType: 'color'
-        }
-      ],
+      presets: [1, 2, 3, 4].map((n) => ({
+        id: String(n),
+        name: `Preset ${n}`,
+        goalText: `Goal ${n}`,
+        subText: `Sub ${n}`,
+        textColor: '#fff',
+        backgroundColor: '#000',
+        backgroundType: 'color'
+      })),
       activePresetId: '1'
     });
 
     await page.close();
 
     // Premium を解除
-    const page2 = await context.newPage();
+    const page2 = await openStoragePage(context, extensionId);
     await setStorageData(page2, 'premium', {
       isPremium: false,
       activatedAt: null
@@ -437,11 +418,15 @@ test.describe('Premium - Premium 機能', () => {
     // Options の Styles タブを開く
     const optionsPage = await openOptions(context, extensionId, 'styles');
 
-    // 2件目以降のプリセットがロックされていることを確認
-    const lockedPreset = optionsPage.locator('text=/Locked|ロック/i');
-    if (await lockedPreset.isVisible()) {
-      expect(await lockedPreset.isVisible()).toBeTruthy();
-    }
+    // 上限を超える 4 件目がロックされていることを確認する。
+    // 以前は isVisible() を if で囲んでいたため、ロックが無くても pass する
+    // 空振りテストになっていた
+    const locked = optionsPage
+      .locator(SELECTORS.styles.presetButton)
+      .filter({ hasText: 'Preset 4' });
+    await expect(locked).toBeVisible();
+    await expect(locked.locator('svg.lucide-lock')).toBeVisible();
+    await expect(locked).toBeDisabled();
 
     await optionsPage.close();
   });
@@ -450,7 +435,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -481,7 +466,7 @@ test.describe('Premium - Premium 機能', () => {
     await page.close();
 
     // Premium を解除
-    const page2 = await context.newPage();
+    const page2 = await openStoragePage(context, extensionId);
     await setStorageData(page2, 'premium', {
       isPremium: false,
       activatedAt: null
@@ -504,7 +489,7 @@ test.describe('Premium - Premium 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Premium を有効化
     await setStorageData(page, 'premium', {
@@ -571,7 +556,7 @@ test.describe('Premium - Premium 機能', () => {
     await page.close();
 
     // Premium を解除
-    const page2 = await context.newPage();
+    const page2 = await openStoragePage(context, extensionId);
     await setStorageData(page2, 'premium', {
       isPremium: false,
       activatedAt: null

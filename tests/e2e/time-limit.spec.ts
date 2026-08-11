@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/extension';
-import { openExternalSite, openPopup, openOptions } from './helpers/pages';
+import {
+  openExternalSite,
+  openOptions,
+  openPopup,
+  openStoragePage
+} from './helpers/pages';
 import {
   setStorageData,
   clearStorage,
@@ -23,7 +28,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Daily Time Limit を設定
     await setStorageData(page, 'settings', {
@@ -55,7 +60,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Hourly Time Limit を設定
     await setStorageData(page, 'settings', {
@@ -87,7 +92,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Time Limit を1秒に設定
     await setStorageData(page, 'settings', {
@@ -143,7 +148,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 昨日の使用データを設定（resetAt が過去）
     const yesterday = new Date();
@@ -199,7 +204,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 1時間前の使用データを設定
     const oneHourAgo = new Date();
@@ -254,7 +259,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Time Limit を設定
     await setStorageData(page, 'settings', {
@@ -305,7 +310,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     await setStorageData(page, 'settings', {
       language: 'en',
@@ -346,7 +351,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // Pause 有効 + Time Limit 超過状態
     await setStorageData(page, 'settings', {
@@ -398,7 +403,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 23:59の resetAt を設定（現在時刻より1分後）
     const resetTime = new Date();
@@ -467,7 +472,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 09:59の resetAt を設定
     const resetTime = new Date();
@@ -531,7 +536,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context,
     extensionId
   }) => {
-    const page = await context.newPage();
+    const page = await openStoragePage(context, extensionId);
 
     // 2つのサイトに異なる Time Limit を設定
     await setStorageData(page, 'settings', {
