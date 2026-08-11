@@ -3,7 +3,6 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { StylesTab } from './StylesTab';
-import { FEATURE_LIMITS } from '~/types/premium';
 
 const meta = {
   title: 'Options/StylesTab',
@@ -24,8 +23,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    featureLimits: FEATURE_LIMITS
-  }
-};
+export const Default: Story = {};

@@ -9,10 +9,6 @@ vi.mock('~/lib/analytics', () => ({
   sendDailyActive: vi.fn()
 }));
 
-vi.mock('~/lib/license', () => ({
-  getFeatureLimits: vi.fn()
-}));
-
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn()
 }));
@@ -27,7 +23,6 @@ vi.mock('../../notifications', () => ({
 
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { sendDailyActive } from '~/lib/analytics';
-import { getFeatureLimits } from '~/lib/license';
 import { updateBlockRules } from '../../blocker';
 import { resetExpiredUsage } from '../../time-limit';
 import { clearExpiredNotifications } from '../../notifications';
@@ -95,11 +90,6 @@ beforeEach(() => {
     ...DEFAULT_ANALYTICS,
     dailyStats: {}
   });
-  vi.mocked(getFeatureLimits).mockResolvedValue({
-    maxBlockList: Infinity,
-    historyDays: 7,
-    maxPresets: 3
-  });
 });
 
 afterEach(() => {
@@ -130,7 +120,10 @@ describe('setupAlarmHandlers', () => {
         dailyStats: {
           [dateKeyDaysAgo(0)]: stat(dateKeyDaysAgo(0)),
           [dateKeyDaysAgo(3)]: stat(dateKeyDaysAgo(3)),
-          [dateKeyDaysAgo(30)]: stat(dateKeyDaysAgo(30))
+          [dateKeyDaysAgo(30)]: stat(dateKeyDaysAgo(30)),
+          [dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)]: stat(
+            dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
+          )
         }
       });
       setupAlarmHandlers();
@@ -138,9 +131,14 @@ describe('setupAlarmHandlers', () => {
       await harness.fire('daily-cleanup');
 
       const saved = vi.mocked(setAnalytics).mock.calls[0][0];
+      // 保持期間は MAX_HISTORY_DAYS_FALLBACK 日。30 日前は保持される
       expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(0));
       expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(3));
-      expect(Object.keys(saved.dailyStats)).not.toContain(dateKeyDaysAgo(30));
+      expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(30));
+      // 保持期間を超えたものは削除される
+      expect(Object.keys(saved.dailyStats)).not.toContain(
+        dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
+      );
     });
 
     it('削除対象が無ければ保存しない（無駄な書き込みを避ける）', async () => {
@@ -155,34 +153,6 @@ describe('setupAlarmHandlers', () => {
       await harness.fire('daily-cleanup');
 
       expect(setAnalytics).not.toHaveBeenCalled();
-    });
-
-    it('履歴無制限（有料版）でも上限日数までは保持する', async () => {
-      vi.mocked(getFeatureLimits).mockResolvedValue({
-        maxBlockList: Infinity,
-        historyDays: Infinity,
-        maxPresets: 10
-      });
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        dailyStats: {
-          [dateKeyDaysAgo(30)]: stat(dateKeyDaysAgo(30)),
-          [dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)]: stat(
-            dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
-          )
-        }
-      });
-      setupAlarmHandlers();
-
-      await harness.fire('daily-cleanup');
-
-      const saved = vi.mocked(setAnalytics).mock.calls[0][0];
-      // 無料版の 7 日より長く保持される
-      expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(30));
-      // ただしフォールバック上限を超えたものは削除される
-      expect(Object.keys(saved.dailyStats)).not.toContain(
-        dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
-      );
     });
 
     it('日次アクティブを送信する', async () => {

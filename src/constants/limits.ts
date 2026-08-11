@@ -94,3 +94,9 @@ export function roundToNearestPreset(
       : nearest;
   }, presets[0]);
 }
+
+/** ダッシュボードのスタイル（プリセット）の上限
+ *
+ * 課金の線引きではなく、選択ボタンを横並びで表示する UI の都合による上限。
+ */
+export const MAX_PRESETS = 10;

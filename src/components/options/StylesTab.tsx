@@ -12,14 +12,9 @@ import { storage } from '~/lib/storage';
 import { NewPresetModal } from '~/components/options/modals';
 import { PresetSelector, DisplaySettingsForm } from './styles';
 import type { VisionSettings } from '~/types/storage';
-import type { FeatureLimits } from '~/types/premium';
 import { DEFAULT_VISION } from '~/types/storage';
 
-interface StylesTabProps {
-  featureLimits: FeatureLimits;
-}
-
-export function StylesTab({ featureLimits }: StylesTabProps) {
+export function StylesTab() {
   const [vision, setVision] = useStorage<VisionSettings>(
     { key: 'vision', instance: storage },
     DEFAULT_VISION
@@ -36,11 +31,7 @@ export function StylesTab({ featureLimits }: StylesTabProps) {
     >
       {/* Left Column - Settings */}
       <div className={`${isEditing ? 'lg:col-span-3' : ''} space-y-6`}>
-        <PresetSelector
-          presets={presets}
-          vision={vision}
-          featureLimits={featureLimits}
-        />
+        <PresetSelector presets={presets} vision={vision} />
 
         <DisplaySettingsForm presets={presets} />
       </div>

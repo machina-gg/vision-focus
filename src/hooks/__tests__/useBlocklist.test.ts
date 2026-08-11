@@ -18,10 +18,6 @@ vi.mock('~/lib/domain', () => ({
   parseDomainInput: vi.fn()
 }));
 
-vi.mock('~/lib/license', () => ({
-  canAddToBlocklist: vi.fn()
-}));
-
 vi.mock('~/lib/storage', () => ({
   storage: {
     get: vi.fn(),
@@ -32,7 +28,6 @@ vi.mock('~/lib/storage', () => ({
 import { sendToBackground } from '@plasmohq/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { canAddToBlocklist } from '~/lib/license';
 import { storage } from '~/lib/storage';
 
 describe('useBlocklist', () => {
@@ -94,8 +89,6 @@ describe('useBlocklist', () => {
       await act(async () => {
         await result.current.handleAddDomain();
       });
-
-      expect(canAddToBlocklist).not.toHaveBeenCalled();
     });
 
     it('newDomainが空の場合、何もしない', async () => {
@@ -106,37 +99,9 @@ describe('useBlocklist', () => {
       await act(async () => {
         await result.current.handleAddDomain();
       });
-
-      expect(canAddToBlocklist).not.toHaveBeenCalled();
-    });
-
-    it('ライセンス制限に達した場合、エラーメッセージを設定', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: false,
-        limit: 5,
-        reason: 'Limit reached: 5 sites'
-      });
-
-      const { result } = renderHook(() =>
-        useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      act(() => {
-        result.current.setNewDomain('twitter.com');
-      });
-
-      await act(async () => {
-        await result.current.handleAddDomain();
-      });
-
-      expect(result.current.blockError).toBe('Limit reached: 5 sites');
     });
 
     it('無効なドメイン形式の場合、エラーメッセージを設定', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: true,
-        limit: 10
-      });
       vi.mocked(parseDomainInput).mockReturnValue(null);
 
       const { result } = renderHook(() =>
@@ -155,10 +120,6 @@ describe('useBlocklist', () => {
     });
 
     it('既にブロックリストに存在するドメインの場合、エラーメッセージを設定', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: true,
-        limit: 10
-      });
       vi.mocked(parseDomainInput).mockReturnValue({
         domain: 'youtube.com',
         isWildcard: false
@@ -193,11 +154,6 @@ describe('useBlocklist', () => {
           }
         ]
       };
-
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: true,
-        limit: 10
-      });
       vi.mocked(parseDomainInput).mockReturnValue({
         domain: 'twitter.com',
         isWildcard: false
@@ -228,10 +184,6 @@ describe('useBlocklist', () => {
     });
 
     it('背景スクリプトがエラーを返した場合、エラーメッセージを設定', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: true,
-        limit: 10
-      });
       vi.mocked(parseDomainInput).mockReturnValue({
         domain: 'twitter.com',
         isWildcard: false
@@ -257,10 +209,6 @@ describe('useBlocklist', () => {
     });
 
     it('背景スクリプトが例外を投げた場合、エラーメッセージを設定', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: true,
-        limit: 10
-      });
       vi.mocked(parseDomainInput).mockReturnValue({
         domain: 'twitter.com',
         isWildcard: false

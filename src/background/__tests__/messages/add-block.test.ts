@@ -11,10 +11,6 @@ vi.mock('~/lib/storage', () => ({
   setAnalytics: vi.fn()
 }));
 
-vi.mock('~/lib/license', () => ({
-  canAddToBlocklist: vi.fn()
-}));
-
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
@@ -28,7 +24,6 @@ import {
   getAnalytics,
   setAnalytics
 } from '~/lib/storage';
-import { canAddToBlocklist } from '~/lib/license';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import handler from '../../messages/add-block';
 import {
@@ -40,7 +35,6 @@ import {
 interface Response {
   success: boolean;
   error?: string;
-  limitReached?: boolean;
 }
 
 describe('add-block ハンドラ', () => {
@@ -58,10 +52,6 @@ describe('add-block ハンドラ', () => {
       ...DEFAULT_ANALYTICS,
       siteTime: {},
       siteCategories: {}
-    });
-    vi.mocked(canAddToBlocklist).mockResolvedValue({
-      allowed: true,
-      limit: 100
     });
   });
 
@@ -128,67 +118,6 @@ describe('add-block ハンドラ', () => {
       });
 
       expect(result?.error).toBe('Domain already in block list');
-    });
-  });
-
-  describe('プラン上限', () => {
-    it('上限に達している場合は limitReached を返す', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: false,
-        limit: 5,
-        reason: 'Free tier limit reached (5 sites).'
-      });
-
-      const result = await invoke<Response>(handler, {
-        domain: 'example.com'
-      });
-
-      expect(result).toEqual({
-        success: false,
-        error: 'Free tier limit reached (5 sites).',
-        limitReached: true
-      });
-      expect(setSettings).not.toHaveBeenCalled();
-    });
-
-    it('reason が無い場合は上限値からエラー文を組み立てる', async () => {
-      vi.mocked(canAddToBlocklist).mockResolvedValue({
-        allowed: false,
-        limit: 5
-      });
-
-      const result = await invoke<Response>(handler, {
-        domain: 'example.com'
-      });
-
-      expect(result?.error).toBe('Limit reached (5 sites)');
-      expect(result?.limitReached).toBe(true);
-    });
-
-    it('上限判定には現在の登録件数を渡す', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [
-          {
-            id: 'a',
-            domain: 'a.com',
-            isWildcard: false,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            enabled: true
-          },
-          {
-            id: 'b',
-            domain: 'b.com',
-            isWildcard: false,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            enabled: true
-          }
-        ]
-      });
-
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(canAddToBlocklist).toHaveBeenCalledWith(2);
     });
   });
 

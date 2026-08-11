@@ -1,6 +1,5 @@
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { sendDailyActive } from '~/lib/analytics';
-import { getFeatureLimits } from '~/lib/license';
 import {
   ALARM_DAILY_CLEANUP_MINUTES,
   ALARM_CHECK_SCHEDULE_MINUTES,
@@ -12,17 +11,12 @@ import { resetExpiredUsage } from '../time-limit';
 import { clearExpiredNotifications } from '../notifications';
 
 /**
- * tier 制限に基づいて古い analytics データをクリーンアップする
+ * 保持期間を超えた analytics データをクリーンアップする
  */
 async function cleanupOldAnalytics(): Promise<void> {
   const analytics = await getAnalytics();
-  const limits = await getFeatureLimits();
 
-  // Determine max days based on tier
-  const maxDays =
-    limits.historyDays === Infinity
-      ? MAX_HISTORY_DAYS_FALLBACK
-      : limits.historyDays;
+  const maxDays = MAX_HISTORY_DAYS_FALLBACK;
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - maxDays);
   const cutoffKey = cutoffDate.toISOString().slice(0, 10);

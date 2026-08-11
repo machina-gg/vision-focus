@@ -9,7 +9,6 @@ import {
   getAnalytics,
   setAnalytics
 } from '~/lib/storage';
-import { canAddToBlocklist } from '~/lib/license';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import type { AddBlockRequest, AddBlockResponse } from '~/types/messages';
 
@@ -27,17 +26,6 @@ const handler: PlasmoMessaging.MessageHandler<
   }
 
   const settings = await getSettings();
-
-  // Check tier limit using license service
-  const limitCheck = await canAddToBlocklist(settings.blockList.length);
-  if (!limitCheck.allowed) {
-    res.send({
-      success: false,
-      error: limitCheck.reason || `Limit reached (${limitCheck.limit} sites)`,
-      limitReached: true
-    });
-    return;
-  }
 
   const { domain: parsedDomain, isWildcard } = parseDomainInput(domain);
 

@@ -16,12 +16,7 @@ import {
   ScheduleModal
 } from '~/components/options';
 import { AnalyticsOptInModal } from '~/components/options/modals';
-import {
-  useAnalytics,
-  useBlocklist,
-  useSchedules,
-  usePremiumStatus
-} from '~/hooks';
+import { useAnalytics, useBlocklist, useSchedules } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
@@ -54,7 +49,6 @@ function OptionsAppContent() {
   }, [activeTab]);
 
   // Premium status (from hook)
-  const { featureLimits } = usePremiumStatus();
 
   // Custom hooks
   const analytics = useAnalytics({ setSettings });
@@ -201,9 +195,7 @@ function OptionsAppContent() {
         />
 
         {/* Styles Tab */}
-        {activeTab === TABS.STYLES && (
-          <StylesTab featureLimits={featureLimits} />
-        )}
+        {activeTab === TABS.STYLES && <StylesTab />}
 
         {/* Block List Tab */}
         {activeTab === TABS.BLOCKLIST && (

@@ -5,16 +5,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
  * hoisted な共有スパイを使い、動的 import で読み込んで検証する。
  */
 const mocks = vi.hoisted(() => ({
-  startExtPayBackgroundListener: vi.fn(),
   setupSettingsWatcher: vi.fn(),
   setupLifecycleHandlers: vi.fn(),
   setupAlarmHandlers: vi.fn(),
   setupNavigationTracking: vi.fn(),
   createAlarms: vi.fn()
-}));
-
-vi.mock('~/lib/extpay', () => ({
-  startExtPayBackgroundListener: mocks.startExtPayBackgroundListener
 }));
 
 vi.mock('../listeners/settingsWatcher', () => ({
@@ -43,9 +38,6 @@ describe('background エントリポイント', () => {
     vi.resetModules();
 
     await import('../index');
-
-    // ExtensionPay は Manifest V3 の制約でトップレベル初期化が必須
-    expect(mocks.startExtPayBackgroundListener).toHaveBeenCalledOnce();
     expect(mocks.setupSettingsWatcher).toHaveBeenCalledOnce();
     expect(mocks.setupLifecycleHandlers).toHaveBeenCalledOnce();
     expect(mocks.setupAlarmHandlers).toHaveBeenCalledOnce();
