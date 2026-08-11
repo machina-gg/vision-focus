@@ -5,6 +5,7 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  getStorageData,
   SELECTORS,
   TEST_DATA
 } from './helpers';
@@ -113,10 +114,11 @@ test.describe('Popup 画面', () => {
 
     // 設定アイコンをクリック
     const settingsButton = page.locator(SELECTORS.header.settingsButton);
-    await settingsButton.click();
 
-    // 新しいタブでオプション画面が開くのを待つ
-    const newPage = await context.waitForEvent('page');
+    // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
+    const newPagePromise = context.waitForEvent('page');
+    await settingsButton.click();
+    const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
     // オプション画面のURLを確認
@@ -134,10 +136,11 @@ test.describe('Popup 画面', () => {
 
     // 目標カードをクリック
     const goalCard = page.locator(SELECTORS.goalCard.container);
-    await goalCard.click();
 
-    // 新しいタブでnewtab.htmlが開くのを待つ
-    const newPage = await context.waitForEvent('page');
+    // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
+    const newPagePromise = context.waitForEvent('page');
+    await goalCard.click();
+    const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
     // New Tab 画面のURLを確認
@@ -157,11 +160,10 @@ test.describe('Popup 画面', () => {
     const helpButton = page.locator(SELECTORS.header.helpButton);
     await expect(helpButton).toBeVisible();
 
-    // ヘルプアイコンをクリック
+    // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
+    const newPagePromise = context.waitForEvent('page');
     await helpButton.click();
-
-    // 新しいタブでオプション画面（ヘルプタブ）が開くのを待つ
-    const newPage = await context.waitForEvent('page');
+    const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
     // オプション画面のヘルプタブが開いていることを確認
@@ -236,9 +238,7 @@ test.describe('Popup 画面', () => {
     await passwordInput.fill(TEST_DATA.password.valid);
 
     // 確定ボタンをクリック
-    const confirmButton = passwordModal.locator(
-      'button:has-text("確定"), button:has-text("Confirm")'
-    );
+    const confirmButton = page.locator(SELECTORS.modal.passwordConfirmButton);
     await confirmButton.click();
 
     // モーダルが閉じる
@@ -250,7 +250,13 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  test('POP-010: クイックブロックボタンに現在のドメインが表示される', async ({
+  // このテストは現在のハーネスでは成立しない。
+  // 実装は chrome.tabs.query({ active: true }) で現在のタブを判定するが、
+  // E2E では popup.html を「タブとして」開くため、popup 自身が
+  // アクティブタブになり、外部サイトのドメインを取得できない。
+  // 実際の拡張機能ではポップアップはタブではないため、この状況は起きない。
+  // ハーネス側でポップアップを非タブとして開けるようになったら有効化する。
+  test.fixme('POP-010: クイックブロックボタンに現在のドメインが表示される', async ({
     context,
     extensionId
   }) => {
@@ -283,14 +289,24 @@ test.describe('Popup 画面', () => {
     const blockButton = page.locator(SELECTORS.quickBlock.button);
     await blockButton.click();
 
-    // ストレージに保存されたことを確認
-    const blockList = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('blockList');
-      return result.blockList || [];
-    });
+    // ストレージに保存されたことを確認（ブロックリストは settings 配下）。
+    // background へのメッセージ送信は非同期なので反映を待つ
+    await expect
+      .poll(
+        async () => {
+          const settings = await getStorageData<{
+            blockList?: { domain: string }[];
+          }>(page, 'settings');
+          return (settings?.blockList ?? []).map((item) => item.domain);
+        },
+        { timeout: 5000 }
+      )
+      .toContain('reddit.com');
 
-    // reddit.com がブロックリストに含まれる
-    expect(blockList).toEqual(
+    const settings = await getStorageData<{
+      blockList?: { domain: string; enabled: boolean }[];
+    }>(page, 'settings');
+    expect(settings?.blockList).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           domain: 'reddit.com',
@@ -319,14 +335,14 @@ test.describe('Popup 画面', () => {
     await languageSelector.selectOption('ja');
 
     // UIが日本語に変更される（目標カードのラベルを確認）
-    const goalLabel = page.locator('text=/今日の目標/i');
+    const goalLabel = page.locator('text=/只今の目標/i');
     await expect(goalLabel).toBeVisible();
 
     // 英語に戻す
     await languageSelector.selectOption('en');
 
     // UIが英語に変更される
-    const goalLabelEn = page.locator("text=/Today's Goal/i");
+    const goalLabelEn = page.locator('text=/Current Goal/i');
     await expect(goalLabelEn).toBeVisible();
 
     await page.close();
@@ -351,10 +367,11 @@ test.describe('Popup 画面', () => {
     const analyticsLink = page.locator(SELECTORS.premium.analyticsLink);
     await expect(analyticsLink).toBeVisible();
 
-    // クリックでオプション画面の Analytics タブが開く
+    // クリックでオプション画面の Analytics タブが開く。
+    // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
+    const newPagePromise = context.waitForEvent('page');
     await analyticsLink.click();
-
-    const newPage = await context.waitForEvent('page');
+    const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
     expect(newPage.url()).toContain('options.html');
@@ -364,36 +381,51 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  test('POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される', async ({
+  // POP-010 と同じ理由（アクティブタブ依存）で現在のハーネスでは成立しない。
+  // 残り時間バッジは現在のタブのドメインに対して表示されるため。
+  test.fixme('POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される', async ({
     context,
     extensionId
   }) => {
     // Time Limit 設定済みのブロックリストをセットアップ
     const setupPage = await openPopup(context, extensionId);
-    await setStorageData(setupPage, 'blockList', [
-      {
-        id: '1',
-        domain: 'youtube.com',
-        isWildcard: false,
-        createdAt: new Date().toISOString(),
-        enabled: true,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 1800 // 30分
+    await setStorageData(setupPage, 'settings', {
+      language: 'en',
+      paused: false,
+      blockList: [
+        {
+          id: '1',
+          domain: 'youtube.com',
+          isWildcard: false,
+          createdAt: new Date().toISOString(),
+          enabled: true,
+          timeLimit: {
+            type: 'daily',
+            limitSeconds: 1800 // 30分
+          }
+        }
+      ]
+    });
+
+    // Time Limit 使用状況をセットアップ（残り10分）。
+    // 使用状況は analytics.timeLimitUsage にドメインをキーとする
+    // レコードとして保持される
+    await setStorageData(setupPage, 'analytics', {
+      dailyStats: {},
+      siteTime: {},
+      siteCategories: {},
+      siteBlockCounts: {},
+      siteUnblockCounts: {},
+      timeLimitUsage: {
+        'youtube.com': {
+          domain: 'youtube.com',
+          dailyUsedSeconds: 1200, // 20分使用済み
+          hourlyUsedSeconds: 0,
+          lastDailyReset: new Date().toISOString().split('T')[0],
+          lastHourlyReset: ''
         }
       }
-    ]);
-
-    // Time Limit 使用状況をセットアップ（残り10分）
-    await setStorageData(setupPage, 'timeLimitUsage', [
-      {
-        domain: 'youtube.com',
-        dailyUsedSeconds: 1200, // 20分使用済み
-        hourlyUsedSeconds: 0,
-        lastDailyReset: new Date().toISOString().split('T')[0],
-        lastHourlyReset: ''
-      }
-    ]);
+    });
 
     // 最後にブロックされたドメインとして youtube.com をセット
     await setStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');

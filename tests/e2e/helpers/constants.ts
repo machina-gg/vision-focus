@@ -26,46 +26,54 @@ export const TEST_DOMAINS = {
 export const SELECTORS = {
   // Header
   header: {
-    logo: 'img[alt="VisionFocus"]',
-    settingsButton: 'button[title*="設定"], button[title*="Settings"]',
-    helpButton: 'button[title*="ヘルプ"], button[title*="Help"]',
-    pauseToggle: '[role="switch"]',
-    languageSelector: 'select'
+    logo: '[data-testid="app-logo"]',
+    container: '[data-testid="app-header"]',
+    settingsButton: '[data-testid="settings-button"]',
+    helpButton: '[data-testid="help-button"]',
+    pauseToggle: '[data-testid="pause-toggle"]',
+    languageSelector: '[data-testid="language-selector"]'
   },
 
   // GoalCard
   goalCard: {
-    container: '[class*="group"]',
-    heading: "text=/今日の目標|Today's Goal/i",
-    goalText: 'p.text-base.font-medium.text-gray-800'
+    container: '[data-testid="goal-card"]',
+    goalText: '[data-testid="goal-card-text"]'
   },
 
   // QuickBlockButton
   quickBlock: {
-    heading: 'text=/ウェブサイトをブロック|Block Websites/i',
-    input: 'input[type="text"]',
-    button: 'button:has-text("ブロック"), button:has-text("Block")'
+    heading: '[data-testid="quick-block-heading"]',
+    input: '[data-testid="quick-block-input"]',
+    button: '[data-testid="quick-block-button"]'
   },
 
   // Today's Summary
   summary: {
-    heading: "text=/今日のサマリー|Today's Summary/i",
-    blockCount: 'p.text-2xl.font-bold.text-block-600',
-    topBlockedSiteDomain: 'p.text-sm.font-bold.text-info-600',
-    noBlockedSites: 'p.text-sm.text-gray-400'
+    heading: '[data-testid="summary-heading"]',
+    blockCount: '[data-testid="summary-block-count"]',
+    topBlockedSiteDomain: '[data-testid="summary-top-blocked-site"]',
+    noBlockedSites: '[data-testid="summary-no-blocked-sites"]',
+    wastedTime: '[data-testid="summary-wasted-time"]',
+    unblockCount: '[data-testid="summary-unblock-count"]'
+  },
+
+  // Time limit（ポップアップ上部の残り時間表示）
+  timeLimit: {
+    info: '[data-testid="time-limit-info"]'
   },
 
   // Premium
   premium: {
-    analyticsLink:
-      'button:has-text("分析を見る"), button:has-text("View Analytics")'
+    analyticsLink: '[data-testid="view-analytics-link"]'
   },
 
-  // Modals
+  // Modals（Modal コンポーネントは role="dialog" を持つ）
   modal: {
-    analyticsOptIn: '[role="dialog"], .modal',
-    passwordModal: '[role="dialog"], .modal',
-    unblockConfirm: '[role="dialog"], .modal'
+    analyticsOptIn: '[role="dialog"]',
+    passwordModal: '[role="dialog"]',
+    unblockConfirm: '[role="dialog"]',
+    passwordConfirmButton: '[data-testid="password-modal-confirm"]',
+    passwordCancelButton: '[data-testid="password-modal-cancel"]'
   },
 
   // NewTab
@@ -217,8 +225,10 @@ export const TEST_DATA = {
   },
   password: {
     valid: 'test1234',
+    // SHA-256("test1234")。以前は SHA-256("password") の値が
+    // 誤って設定されており、パスワード認証のテストが常に失敗していた
     validHash:
-      '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014', // SHA-256("test1234")
+      '937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244',
     invalid: 'wrong'
   }
 };
