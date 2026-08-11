@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+# worktree で作業する際に張るシンボリックリンクも無視する
+# （末尾スラッシュ付きのパターンはリンクに一致しない）
+node_modules
 
 # Next.js
 .next/

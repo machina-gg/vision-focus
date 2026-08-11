@@ -82,16 +82,17 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 
 環境構築後（`/project:setup` 実行後）に使用可能：
 
-| コマンド             | 説明                                |
-| -------------------- | ----------------------------------- |
-| `pnpm dev`           | 開発サーバー起動（HMR対応）         |
-| `pnpm build`         | 本番ビルド（build/chrome-mv3-prod） |
-| `pnpm package`       | Chrome Web Store用zipファイル作成   |
-| `pnpm lint`          | ESLint 実行                         |
-| `pnpm format`        | Prettier でフォーマット             |
-| `pnpm test`          | Vitest で単体テスト                 |
-| `pnpm test:coverage` | カバレッジ計測（閾値チェック付き）  |
-| `pnpm test:e2e`      | Playwright で E2E テスト            |
+| コマンド               | 説明                                       |
+| ---------------------- | ------------------------------------------ |
+| `pnpm dev`             | 開発サーバー起動（HMR対応）                |
+| `pnpm build`           | 本番ビルド（build/chrome-mv3-prod）        |
+| `pnpm package`         | Chrome Web Store用zipファイル作成          |
+| `pnpm lint`            | ESLint 実行                                |
+| `pnpm format`          | Prettier でフォーマット                    |
+| `pnpm test`            | Vitest で単体テスト                        |
+| `pnpm test:coverage`   | カバレッジ計測（閾値チェック付き）         |
+| `pnpm test:e2e`        | Playwright で E2E テスト（ヘッドレス）     |
+| `pnpm test:e2e:headed` | E2E をブラウザ表示付きで実行（デバッグ用） |
 
 **カバレッジ:**
 
@@ -114,6 +115,11 @@ pnpm exec playwright install chromium
 pnpm build
 pnpm test:e2e
 ```
+
+- **ヘッドレスで動く**。拡張機能は新ヘッドレス（`channel: 'chromium'`）でロードできるため、実行中に画面が出てフォーカスを奪われることはない
+- 描画を見て調べたいときは `pnpm test:e2e:headed`
+- 外部サイトへはアクセスしない。`example.com` / `youtube.com` はローカルの HTTPS サーバで再現している（`tests/e2e/fixtures/testServer.ts`）
+- ナイトリー（03:00 JST）で自動実行される。PR ごとには実行しない
 
 ## Documentation
 
