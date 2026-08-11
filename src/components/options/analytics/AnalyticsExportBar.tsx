@@ -220,6 +220,7 @@ export function AnalyticsExportBar({
               <Button
                 variant="secondary"
                 size="sm"
+                data-testid="analytics-export-button"
                 onClick={() => setShowExportMenu(!showExportMenu)}
                 disabled={!hasAnyData}
                 className="flex items-center gap-1.5"
@@ -273,6 +274,7 @@ export function AnalyticsExportBar({
             <Button
               variant="ghost"
               size="sm"
+              data-testid="analytics-refresh-button"
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="text-gray-500 hover:text-gray-700"
@@ -315,6 +317,7 @@ export function AnalyticsExportBar({
                 {getMessage('downloadImage')}
               </Button>
               <Button
+                data-testid="analytics-reset-button"
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowResetModal(true)}
@@ -363,7 +366,11 @@ export function AnalyticsExportBar({
             >
               {getMessage('cancel')}
             </Button>
-            <Button variant="danger" onClick={handleReset}>
+            <Button
+              variant="danger"
+              onClick={handleReset}
+              data-testid="analytics-reset-confirm"
+            >
               {getMessage('reset')}
             </Button>
           </div>
