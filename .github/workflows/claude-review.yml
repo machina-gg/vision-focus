@@ -4,6 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# 呼び出し先（claude-review-shared.yml）が要求する権限を明示的に付与する。
+# 再利用ワークフローでは呼び出し元がこれを宣言しないと起動前に拒否される。
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   review:
     uses: machina-gg/trillion-game/.github/workflows/claude-review-shared.yml@develop
