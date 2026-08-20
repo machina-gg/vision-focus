@@ -1,0 +1,24 @@
+# Dependabot 設定
+#
+# このリポジトリは pnpm 管理で、CI は pnpm-lock.yaml から `pnpm install --frozen-lockfile` する。
+# Dependabot の "npm" エコシステムは pnpm-lock.yaml も対象にするため、ここでは "npm" を指定する。
+# （未使用の package-lock.json は Issue #373 で削除済み。再びコミットしないこと）
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '03:00'
+      timezone: 'Asia/Tokyo'
+    # PR 洪水を避けるため本番/開発でグループ化する
+    groups:
+      production-dependencies:
+        dependency-type: 'production'
+      development-dependencies:
+        dependency-type: 'development'
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
