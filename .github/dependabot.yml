@@ -3,6 +3,7 @@
 # このリポジトリは pnpm 管理で、CI は pnpm-lock.yaml から `pnpm install --frozen-lockfile` する。
 # Dependabot の "npm" エコシステムは pnpm-lock.yaml も対象にするため、ここでは "npm" を指定する。
 # （未使用の package-lock.json は Issue #373 で削除済み。再びコミットしないこと）
+# major（破壊的変更）は Dependabot に上げさせず、Issue を立てて計画的に上げる（#360 の形）。
 version: 2
 updates:
   - package-ecosystem: 'npm'
@@ -13,11 +14,22 @@ updates:
       time: '03:00'
       timezone: 'Asia/Tokyo'
     # PR 洪水を避けるため本番/開発でグループ化する
+    # グループに入れるのは minor / patch だけ（major は下の ignore で PR 自体を作らせない）
     groups:
       production-dependencies:
         dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
       development-dependencies:
         dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-major'
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore'
