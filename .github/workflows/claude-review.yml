@@ -10,6 +10,9 @@ name: Claude Code Review
 
 on:
   pull_request:
+    # develop 宛の PR だけを対象にする。develop → main（リリース PR）ではテストだけを通し、
+    # LLM レビューと Approve は行わず人間がマージする。
+    branches: [develop]
     # labeled / unlabeled / edited は入れない（ラベル操作や本文編集で Claude を再走させない）。
     types: [opened, synchronize, reopened, ready_for_review]
 
