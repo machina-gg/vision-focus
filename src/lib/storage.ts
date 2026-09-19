@@ -1,4 +1,6 @@
-import { Storage } from '@plasmohq/storage';
+import { storage as extensionStorage } from '@wxt-dev/storage';
+
+import { isStoredObject, objectOrFallback } from './storedValue';
 
 import {
   DEFAULT_ANALYTICS,
@@ -12,28 +14,75 @@ import {
   type VisionSettings
 } from '~/types/storage';
 
-// Create storage instance
-const storage = new Storage({
-  area: 'local'
-});
+/**
+ * local 領域に置くキー。
+ *
+ * `local:` は @wxt-dev/storage が保存領域を選ぶための接頭辞であり、
+ * chrome.storage.local 上の実キーは接頭辞を除いた `settings` などになる。
+ * 値は生のオブジェクトのまま保存される（JSON 文字列ではない）。
+ */
+type LocalStorageKey =
+  'settings' | 'vision' | 'analytics' | 'unblockHistory' | 'supportPrompt';
 
-// Storage keys
-const KEYS = {
-  settings: 'settings',
-  vision: 'vision',
-  analytics: 'analytics',
-  unblockHistory: 'unblockHistory'
-} as const;
+/**
+ * ストレージ項目の定義。
+ *
+ * `fallback` は値が未保存のときに `getValue()` / `watch()` が返す既定値で、
+ * 呼び出し側でのデフォルト補完は不要になる。
+ * `watch` を張る側（background / content script）はこの項目を直接使う。
+ */
+export const settingsItem = extensionStorage.defineItem<AppSettings>(
+  'local:settings',
+  { fallback: DEFAULT_SETTINGS }
+);
+
+export const visionItem = extensionStorage.defineItem<VisionSettings>(
+  'local:vision',
+  { fallback: DEFAULT_VISION }
+);
+
+export const analyticsItem = extensionStorage.defineItem<AnalyticsData>(
+  'local:analytics',
+  { fallback: DEFAULT_ANALYTICS }
+);
+
+export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
+  'local:unblockHistory',
+  { fallback: DEFAULT_UNBLOCK_HISTORY }
+);
+
+/**
+ * キー指定で local 領域を読み書きする互換オブジェクト。
+ *
+ * 項目定義（上記の `*Item`）を使わない既存の呼び出し側（src/hooks 配下など）を
+ * 残したまま保存ライブラリを入れ替えるための層。呼び出し側の移行は別 PR で行う
+ * （machina-gg/vision-focus#399）。
+ */
+export const storage = {
+  /**
+   * 未保存なら undefined を返す（`!== undefined` で判定する呼び出し側があるため null にしない）。
+   * 旧形式（文字列）が残っていた場合も未保存として扱い、呼び出し側の既定値に任せる
+   */
+  async get<T>(key: LocalStorageKey): Promise<T | undefined> {
+    const value = await extensionStorage.getItem<T>(`local:${key}`);
+    return isStoredObject(value) ? value : undefined;
+  },
+  async set<T>(key: LocalStorageKey, value: T): Promise<void> {
+    await extensionStorage.setItem<T>(`local:${key}`, value);
+  },
+  async remove(key: LocalStorageKey): Promise<void> {
+    await extensionStorage.removeItem(`local:${key}`);
+  }
+};
 
 // Get settings
 export async function getSettings(): Promise<AppSettings> {
-  const data = await storage.get<AppSettings>(KEYS.settings);
-  return data ?? DEFAULT_SETTINGS;
+  return objectOrFallback(await settingsItem.getValue(), DEFAULT_SETTINGS);
 }
 
 // Set settings
 export async function setSettings(settings: AppSettings): Promise<void> {
-  await storage.set(KEYS.settings, settings);
+  await settingsItem.setValue(settings);
 }
 
 // Update settings partially
@@ -48,37 +97,37 @@ export async function updateSettings(
 
 // Get vision settings
 export async function getVision(): Promise<VisionSettings> {
-  const data = await storage.get<VisionSettings>(KEYS.vision);
-  return data ?? DEFAULT_VISION;
+  return objectOrFallback(await visionItem.getValue(), DEFAULT_VISION);
 }
 
 // Set vision settings
 export async function setVision(vision: VisionSettings): Promise<void> {
-  await storage.set(KEYS.vision, vision);
+  await visionItem.setValue(vision);
 }
 
 // Get analytics data
 export async function getAnalytics(): Promise<AnalyticsData> {
-  const data = await storage.get<AnalyticsData>(KEYS.analytics);
-  return data ?? DEFAULT_ANALYTICS;
+  return objectOrFallback(await analyticsItem.getValue(), DEFAULT_ANALYTICS);
 }
 
 // Set analytics data
 export async function setAnalytics(analytics: AnalyticsData): Promise<void> {
-  await storage.set(KEYS.analytics, analytics);
+  await analyticsItem.setValue(analytics);
 }
 
 // Get unblock history
 export async function getUnblockHistory(): Promise<UnblockHistory> {
-  const data = await storage.get<UnblockHistory>(KEYS.unblockHistory);
-  return data ?? DEFAULT_UNBLOCK_HISTORY;
+  return objectOrFallback(
+    await unblockHistoryItem.getValue(),
+    DEFAULT_UNBLOCK_HISTORY
+  );
 }
 
 // Set unblock history
 export async function setUnblockHistory(
   history: UnblockHistory
 ): Promise<void> {
-  await storage.set(KEYS.unblockHistory, history);
+  await unblockHistoryItem.setValue(history);
 }
 
 // Get all storage data
@@ -96,10 +145,10 @@ export async function getAllStorage(): Promise<StorageSchema> {
 // Clear all storage (for debugging)
 export async function clearAllStorage(): Promise<void> {
   await Promise.all([
-    storage.remove(KEYS.settings),
-    storage.remove(KEYS.vision),
-    storage.remove(KEYS.analytics),
-    storage.remove(KEYS.unblockHistory)
+    settingsItem.removeValue(),
+    visionItem.removeValue(),
+    analyticsItem.removeValue(),
+    unblockHistoryItem.removeValue()
   ]);
 }
 
@@ -176,6 +225,3 @@ export async function getSiteWastedTime(domain: string): Promise<number> {
 
   return 0;
 }
-
-// Export storage instance for direct use with hooks
-export { storage };

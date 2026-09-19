@@ -1,7 +1,6 @@
-import { storage } from '~/lib/storage';
+import { settingsItem } from '~/lib/storage';
 import { STORAGE_SETTLE_DELAY_MS } from '~/constants/intervals';
 import { updateBlockRules } from '../blocker';
-import type { AppSettings } from '~/types/storage';
 
 /**
  * settings storage の変更を監視し、ブロックルールを再生成する。
@@ -12,17 +11,16 @@ import type { AppSettings } from '~/types/storage';
  * を呼ぶため（#392）
  */
 export function setupSettingsWatcher(): void {
-  storage.watch({
-    settings: async (change) => {
-      // Small delay to ensure storage is fully updated
-      await new Promise((resolve) =>
-        setTimeout(resolve, STORAGE_SETTLE_DELAY_MS)
-      );
+  // background の監視は拡張機能が動いている間ずっと必要なため、
+  // 戻り値の unwatch は使わない
+  settingsItem.watch(async (newSettings) => {
+    // Small delay to ensure storage is fully updated
+    await new Promise((resolve) =>
+      setTimeout(resolve, STORAGE_SETTLE_DELAY_MS)
+    );
 
-      const newSettings = change.newValue as AppSettings;
-      if (!newSettings) return;
+    if (!newSettings) return;
 
-      await updateBlockRules();
-    }
+    await updateBlockRules();
   });
 }

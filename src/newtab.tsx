@@ -6,7 +6,6 @@ import React, {
   useMemo
 } from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
 import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
@@ -16,52 +15,27 @@ import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
   useBackgroundPreload,
   useBackgroundStats,
-  useResolvedPreset
+  useResolvedPreset,
+  useStorageItem
 } from '~/hooks';
 import { getMessage, setCurrentLanguage } from '~/lib/i18n';
 import { formatTimeLocalized } from '~/lib/time';
 import {
-  getLastBlockedDomain,
+  analyticsItem,
   clearLastBlockedDomain,
+  getLastBlockedDomain,
   getSiteBlockCount,
-  getSiteWastedTime
+  getSiteWastedTime,
+  settingsItem,
+  visionItem
 } from '~/lib/storage';
-import { storage } from '~/lib/storage';
-import type {
-  VisionSettings,
-  AppSettings,
-  AnalyticsData
-} from '~/types/storage';
-import {
-  DEFAULT_VISION,
-  DEFAULT_SETTINGS,
-  DEFAULT_ANALYTICS
-} from '~/types/storage';
 
 import './styles/globals.css';
 
 function NewtabApp() {
-  const [vision, setVision] = useStorage<VisionSettings>(
-    {
-      key: 'vision',
-      instance: storage
-    },
-    DEFAULT_VISION
-  );
-  const [settings] = useStorage<AppSettings>(
-    {
-      key: 'settings',
-      instance: storage
-    },
-    DEFAULT_SETTINGS
-  );
-  const [analytics] = useStorage<AnalyticsData>(
-    {
-      key: 'analytics',
-      instance: storage
-    },
-    DEFAULT_ANALYTICS
-  );
+  const [vision, setVision] = useStorageItem(visionItem);
+  const [settings] = useStorageItem(settingsItem);
+  const [analytics] = useStorageItem(analyticsItem);
   const stats = useBackgroundStats(NEWTAB_STATS_POLLING_MS);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
@@ -152,8 +126,8 @@ function NewtabApp() {
           goalText: editText.trim()
         }
       };
-      await storage.set('vision', updated);
-      setVision(updated);
+      // setVision がストレージへの保存も行う
+      await setVision(updated);
     }
     setIsEditing(false);
   }, [vision, editText, setVision]);

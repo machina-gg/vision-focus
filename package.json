@@ -24,6 +24,7 @@
     "@plasmohq/messaging": "^0.7.2",
     "@plasmohq/storage": "^1.15.0",
     "@webext-core/messaging": "^4.0.0",
+    "@wxt-dev/storage": "^1.2.9",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.468.0",
     "plasmo": "^0.90.5",
