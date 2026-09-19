@@ -1799,14 +1799,6 @@
     "message": "Hide the comment section below videos and live chat",
     "description": "Hide comments description"
   },
-  "youtubeHideSidebar": {
-    "message": "Hide Sidebar",
-    "description": "Hide sidebar option"
-  },
-  "youtubeHideSidebarDescription": {
-    "message": "Hide related videos sidebar when watching videos",
-    "description": "Hide sidebar description"
-  },
   "youtubeHideHomeFeed": {
     "message": "Hide Home Feed",
     "description": "Hide home feed option"

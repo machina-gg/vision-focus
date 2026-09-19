@@ -272,7 +272,6 @@ export function makeYouTubeSettings(
     hideShorts: false,
     hideRecommendations: false,
     hideComments: false,
-    hideSidebar: false,
     hideHomeFeed: false,
     timeLimit: null,
     ...overrides

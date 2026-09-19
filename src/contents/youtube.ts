@@ -43,8 +43,7 @@ const SELECTORS = {
   comments: 'ytd-comments#comments',
   liveChat: 'ytd-live-chat-frame#chat',
 
-  // Sidebar (related videos on watch page)
-  sidebar: '#secondary #related',
+  // 動画再生ページのサイドバー領域（hideRecommendations のルールから使う）
   secondaryInner: '#secondary-inner'
 } as const;
 
@@ -136,10 +135,6 @@ function generateCSS(settings: YouTubeSettings): string {
   }
 
   if (settings.hideRecommendations) {
-    // Note: This selector intentionally overlaps with hideSidebar setting.
-    // hideRecommendations targets end screen + sidebar related videos + autoplay.
-    // hideSidebar only targets sidebar related videos (no end screen/autoplay).
-    // This allows users to hide end screen without hiding sidebar if desired.
     rules.push(`
       /* Hide end screen recommendations */
       ${SELECTORS.endScreen} {
@@ -167,20 +162,6 @@ function generateCSS(settings: YouTubeSettings): string {
       ${SELECTORS.comments},
       ${SELECTORS.liveChat} {
         display: none !important;
-      }
-    `);
-  }
-
-  if (settings.hideSidebar) {
-    rules.push(`
-      /* Hide sidebar/related videos on watch page */
-      ytd-watch-flexy ${SELECTORS.relatedVideos},
-      ytd-watch-flexy ${SELECTORS.secondaryInner} #related {
-        display: none !important;
-      }
-      /* Expand video player when sidebar is hidden */
-      ytd-watch-flexy[flexy][is-two-columns_] #primary {
-        max-width: 100% !important;
       }
     `);
   }

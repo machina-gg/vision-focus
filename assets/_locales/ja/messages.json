@@ -1799,14 +1799,6 @@
     "message": "動画下のコメント欄とライブチャットを非表示にします",
     "description": "コメント非表示の説明"
   },
-  "youtubeHideSidebar": {
-    "message": "サイドバーを非表示",
-    "description": "サイドバー非表示オプション"
-  },
-  "youtubeHideSidebarDescription": {
-    "message": "動画再生時の関連動画サイドバーを非表示にします",
-    "description": "サイドバー非表示の説明"
-  },
   "youtubeHideHomeFeed": {
     "message": "ホームフィードを非表示",
     "description": "ホームフィード非表示オプション"

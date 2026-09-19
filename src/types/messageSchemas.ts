@@ -75,13 +75,14 @@ export const AnalyticsDataSchema = z.object({
 });
 
 // Schema for YouTubeSettings validation (used in youtube.ts content script)
+// 非 strict な z.object なので、廃止したキーが保存済みデータに残っていても
+// parse は落ちずに無視される。そのため設定削除時の移行処理は持たない（#393）
 export const YouTubeSettingsSchema = z.object({
   enabled: z.boolean(),
   blockAccess: z.boolean().optional().default(false),
   hideShorts: z.boolean(),
   hideRecommendations: z.boolean(),
   hideComments: z.boolean(),
-  hideSidebar: z.boolean(),
   hideHomeFeed: z.boolean(),
   timeLimit: TimeLimitSchema.nullable().optional()
 });

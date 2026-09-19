@@ -5,7 +5,6 @@ import {
   PlaySquare,
   ThumbsUp,
   MessageSquare,
-  LayoutPanelLeft,
   Home,
   Info,
   Clock,
@@ -178,12 +177,6 @@ export function YouTubeSection({
       icon: <MessageSquare className="w-4 h-4" />,
       title: getMessage('youtubeHideComments'),
       description: getMessage('youtubeHideCommentsDescription')
-    },
-    {
-      key: 'hideSidebar' as const,
-      icon: <LayoutPanelLeft className="w-4 h-4" />,
-      title: getMessage('youtubeHideSidebar'),
-      description: getMessage('youtubeHideSidebarDescription')
     },
     {
       key: 'hideHomeFeed' as const,
