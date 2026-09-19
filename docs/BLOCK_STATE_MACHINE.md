@@ -28,19 +28,12 @@ flowchart TD
     F -->|Yes| E
 
     E -->|No| Blocked["🚫 ブロック<br/>reason: always_blocked"]
-    E -->|Yes| G{"時間制限タイプ？"}
-
-    G -->|Daily| H{"日次リセット必要？<br/>needsDailyReset()"}
-    G -->|Hourly| I{"時間リセット必要？<br/>needsHourlyReset()"}
+    E -->|Yes| H{"日次リセット必要？<br/>needsDailyReset()"}
 
     H -->|Yes| J["使用時間をリセット<br/>dailyUsedSeconds = 0"]
     H -->|No| K{"使用時間 >= 制限？"}
 
-    I -->|Yes| L["使用時間をリセット<br/>hourlyUsedSeconds = 0"]
-    I -->|No| K
-
     J --> K
-    L --> K
 
     K -->|Yes| TimeLimitExceeded["🚫 ブロック<br/>reason: time_limit_exceeded"]
     K -->|No| Unblocked
@@ -116,12 +109,6 @@ stateDiagram-v2
 
 - 条件: `lastDailyReset !== 今日の日付`
 - 処理: `dailyUsedSeconds = 0`, `lastDailyReset = 今日`
-- トリガー: `recordTimeLimitUsage()` または `resetExpiredUsage()`
-
-### 時間リセット（Hourly）
-
-- 条件: `lastHourlyReset !== 現在の時間キー`
-- 処理: `hourlyUsedSeconds = 0`, `lastHourlyReset = 現在の時間キー`
 - トリガー: `recordTimeLimitUsage()` または `resetExpiredUsage()`
 
 ## 通知フロー

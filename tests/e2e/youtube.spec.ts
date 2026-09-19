@@ -244,9 +244,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 10, // 超過（limitSeconds: 1）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          lastDailyReset: todayKey
         }
       }
     });
@@ -420,9 +418,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          lastDailyReset: todayKey
         }
       }
     });
@@ -489,9 +485,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          lastDailyReset: todayKey
         }
       }
     });

@@ -14,20 +14,20 @@
 
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
-import {
-  getTodayKey,
-  getCurrentHourKey,
-  needsDailyReset,
-  needsHourlyReset
-} from '~/lib/time';
-import type { TimeLimitUsage, AnalyticsData, TimeLimit } from '~/types/storage';
+import { getTodayKey, needsDailyReset } from '~/lib/time';
+import type {
+  TimeLimitUsage,
+  AnalyticsData,
+  TimeLimit,
+  TimeLimitType
+} from '~/types/storage';
 import { findEnabledBlockItemForDomain } from '~/lib/blockService';
 
 // Time limit info for UI display
 export interface TimeLimitInfo {
   hasTimeLimit: boolean;
   remainingSeconds: number | null;
-  limitType: 'daily' | 'hourly' | null;
+  limitType: TimeLimitType | null;
   limitSeconds: number | null;
   usedSeconds: number | null;
   isExceeded: boolean;
@@ -50,9 +50,7 @@ export function getOrCreateUsage(
   return {
     domain,
     dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
+    lastDailyReset: getTodayKey()
   };
 }
 
@@ -62,11 +60,9 @@ export function getOrCreateUsage(
  */
 export function getEffectiveUsage(usage: TimeLimitUsage): {
   dailyUsedSeconds: number;
-  hourlyUsedSeconds: number;
   wasReset: boolean;
 } {
   let dailyUsedSeconds = usage.dailyUsedSeconds;
-  let hourlyUsedSeconds = usage.hourlyUsedSeconds;
   let wasReset = false;
 
   if (needsDailyReset(usage.lastDailyReset)) {
@@ -74,12 +70,7 @@ export function getEffectiveUsage(usage: TimeLimitUsage): {
     wasReset = true;
   }
 
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    hourlyUsedSeconds = 0;
-    wasReset = true;
-  }
-
-  return { dailyUsedSeconds, hourlyUsedSeconds, wasReset };
+  return { dailyUsedSeconds, wasReset };
 }
 
 /**
@@ -94,9 +85,8 @@ export function checkTimeLimitExceeded(
   const usage = getOrCreateUsage(domain, analytics);
   const effective = getEffectiveUsage(usage);
 
-  const { type, limitSeconds } = timeLimitConfig;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
+  const { limitSeconds } = timeLimitConfig;
+  const usedSeconds = effective.dailyUsedSeconds;
 
   // 制限時間を超えた場合のみブロック（制限時間ちょうどはブロックしない）
   return usedSeconds > limitSeconds;
@@ -114,9 +104,8 @@ export function calculateRemainingTime(
   const usage = getOrCreateUsage(domain, analytics);
   const effective = getEffectiveUsage(usage);
 
-  const { type, limitSeconds } = timeLimitConfig;
-  const usedSeconds =
-    type === 'daily' ? effective.dailyUsedSeconds : effective.hourlyUsedSeconds;
+  const { limitSeconds } = timeLimitConfig;
+  const usedSeconds = effective.dailyUsedSeconds;
 
   return Math.max(0, limitSeconds - usedSeconds);
 }
@@ -180,13 +169,10 @@ export async function recordTimeLimitUsage(
   const usage = analytics.timeLimitUsage[domain] || {
     domain,
     dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
+    lastDailyReset: getTodayKey()
   };
 
   const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
 
   // Check and apply daily reset
   if (needsDailyReset(usage.lastDailyReset)) {
@@ -194,15 +180,8 @@ export async function recordTimeLimitUsage(
     usage.lastDailyReset = todayKey;
   }
 
-  // Check and apply hourly reset
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    usage.hourlyUsedSeconds = 0;
-    usage.lastHourlyReset = hourKey;
-  }
-
   // Add the time
   usage.dailyUsedSeconds += seconds;
-  usage.hourlyUsedSeconds += seconds;
 
   // Save
   analytics.timeLimitUsage[domain] = usage;
@@ -215,7 +194,6 @@ export async function recordTimeLimitUsage(
 export async function resetExpiredUsage(): Promise<void> {
   const analytics = await getAnalytics();
   const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
   let updated = false;
 
   for (const domain of Object.keys(analytics.timeLimitUsage)) {
@@ -224,12 +202,6 @@ export async function resetExpiredUsage(): Promise<void> {
     if (needsDailyReset(usage.lastDailyReset)) {
       usage.dailyUsedSeconds = 0;
       usage.lastDailyReset = todayKey;
-      updated = true;
-    }
-
-    if (needsHourlyReset(usage.lastHourlyReset)) {
-      usage.hourlyUsedSeconds = 0;
-      usage.lastHourlyReset = hourKey;
       updated = true;
     }
   }
@@ -265,14 +237,9 @@ export async function getTimeLimitInfo(
   const remaining = await getRemainingTime(domain, blockItem);
   const analytics = await getAnalytics();
   const usage = analytics.timeLimitUsage[domain];
-  const effective = usage
-    ? getEffectiveUsage(usage)
-    : { dailyUsedSeconds: 0, hourlyUsedSeconds: 0 };
+  const effective = usage ? getEffectiveUsage(usage) : { dailyUsedSeconds: 0 };
 
-  const usedSeconds =
-    blockItem.timeLimit.type === 'daily'
-      ? effective.dailyUsedSeconds
-      : effective.hourlyUsedSeconds;
+  const usedSeconds = effective.dailyUsedSeconds;
 
   return {
     hasTimeLimit: true,

@@ -82,7 +82,7 @@ const displaySettingsSchema = z.object({
 });
 
 const timeLimitSchema = z.object({
-  type: z.enum(['daily', 'hourly']),
+  type: z.literal('daily'),
   limitSeconds: z.number()
 });
 

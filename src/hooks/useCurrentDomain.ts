@@ -5,11 +5,12 @@ import { sendToBackground } from '@plasmohq/messaging';
 import { DOMAIN_POLLING_MS } from '~/constants/intervals';
 import { getActiveTab } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
+import type { TimeLimitType } from '~/types/storage';
 
 export interface TimeLimitInfo {
   hasTimeLimit: boolean;
   remainingSeconds: number | null;
-  limitType: 'daily' | 'hourly' | null;
+  limitType: TimeLimitType | null;
   limitSeconds: number | null;
 }
 

@@ -19,7 +19,7 @@ import {
 /**
  * E2E Tests: Time Limit 機能
  *
- * Daily/Hourly Time Limit、リセット、超過時のリダイレクトをテスト
+ * Daily Time Limit、リセット、超過時のリダイレクトをテスト
  */
 
 test.describe('TimeLimit - Time Limit 機能', () => {
@@ -52,33 +52,6 @@ test.describe('TimeLimit - Time Limit 機能', () => {
 
     expect(settings?.blockList[0].timeLimit.type).toBe('daily');
     expect(settings?.blockList[0].timeLimit.limitSeconds).toBe(60);
-  });
-
-  test('TL-002: Hourly Time Limit を設定できる', async ({ context }) => {
-    // options を開いて書くと UI が時間制限値をプリセットに丸めるため
-    // （roundToNearestPreset）、書いた値と読める値が一致しない。
-    // SW 経由なら書いた通りに保存される
-    await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'hourly', limitSeconds: 30 }
-          }
-        ]
-      })
-    });
-
-    const settings = await getStorageViaSW<{
-      blockList: Array<{ timeLimit: { type: string; limitSeconds: number } }>;
-    }>(context, 'settings');
-
-    expect(settings?.blockList[0].timeLimit.type).toBe('hourly');
-    expect(settings?.blockList[0].timeLimit.limitSeconds).toBe(30);
   });
 
   test('TL-003: Time Limit 超過時に newtab.html へリダイレクトされる', async ({
@@ -129,8 +102,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
   // TL-004 / TL-005（超過後の日付・時刻変更によるリセット）は削除した。
   // リセットの実処理（time-limit-reset アラーム → resetExpiredUsage）を
   // 通さず、ルールの再計算もしていなかったため「ブロックされない」が
-  // 常に成立していた。同じ観点は TL-009 / TL-010 で実際の経路を通して
-  // 検証している。
+  // 常に成立していた。同じ観点は TL-009 で実際の経路を通して検証している。
 
   test.fixme('TL-006: 残り時間がポップアップで表示される', async ({
     context
@@ -283,51 +255,6 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     );
     expect(page.url()).toContain(TEST_DOMAINS.example);
     await page.close();
-  });
-
-  test('TL-010: Hourly の使用実績は時刻が変わるとリセットされる', async ({
-    context
-  }) => {
-    const previousHour = new Date();
-    previousHour.setHours(previousHour.getHours() - 1);
-
-    // 前の時間帯の使用実績で超過している状態を作る
-    await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'hourly', limitSeconds: 30 }
-          }
-        ]
-      }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(
-          TEST_DOMAINS.example,
-          { hourly: 50 },
-          previousHour
-        )
-      })
-    });
-
-    await triggerTimeLimitReset(context);
-
-    await expect
-      .poll(async () => {
-        const analytics = await getStorageViaSW<{
-          timeLimitUsage?: Record<string, { hourlyUsedSeconds: number }>;
-        }>(context, 'analytics');
-        return analytics?.timeLimitUsage?.[TEST_DOMAINS.example]
-          ?.hourlyUsedSeconds;
-      })
-      .toBe(0);
-
-    await triggerBlockRuleRecompute(context);
-    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
   });
 
   test('TL-011: 複数サイトで異なる Time Limit が同時に動作する', async ({

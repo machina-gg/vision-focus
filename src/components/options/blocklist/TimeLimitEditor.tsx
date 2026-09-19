@@ -5,16 +5,11 @@ import { Select, Button } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import type {
-  BlockItem,
-  TimeLimit,
-  TimeLimitType,
-  TimeLimitUsage
-} from '~/types/storage';
+import type { BlockItem, TimeLimit, TimeLimitUsage } from '~/types/storage';
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
-type LimitTypeOption = 'always' | 'daily' | 'hourly';
+type LimitTypeOption = 'always' | 'daily';
 
 interface TimeLimitEditorProps {
   item: BlockItem;
@@ -45,17 +40,11 @@ export function TimeLimitEditor({
     if (!item.timeLimit) return;
 
     const existingMinutes = Math.floor(item.timeLimit.limitSeconds / 60);
-    const presets =
-      item.timeLimit.type === 'daily'
-        ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
-        : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+    const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
     // 既存の値がプリセットに含まれていない場合、マイグレーションを実行
     if (!presets.includes(existingMinutes as never)) {
-      const nearestPreset = roundToNearestPreset(
-        existingMinutes,
-        item.timeLimit.type
-      );
+      const nearestPreset = roundToNearestPreset(existingMinutes);
       setMinutes(nearestPreset);
       onUpdate({
         type: item.timeLimit.type,
@@ -83,21 +72,17 @@ export function TimeLimitEditor({
   // 現在の保存済み分数
   const currentMinutes = item.timeLimit
     ? Math.floor(item.timeLimit.limitSeconds / 60)
-    : currentType === 'daily'
-      ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-      : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+    : TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
 
   // 既存の制限時間を取得し、プリセット値に丸める
   const getInitialMinutes = () => {
     if (!item.timeLimit) {
-      return currentType === 'daily'
-        ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-        : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+      return TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
     }
 
     const existingMinutes = Math.floor(item.timeLimit.limitSeconds / 60);
     // 既存の値がプリセット外の場合、最も近いプリセット値に丸める
-    return roundToNearestPreset(existingMinutes, item.timeLimit.type);
+    return roundToNearestPreset(existingMinutes);
   };
 
   // ローカルステートで編集中の値を管理
@@ -121,12 +106,8 @@ export function TimeLimitEditor({
 
     // タイプ変更時にデフォルトのプリセット値を設定
     if (newType !== 'always') {
-      const defaultMinutes =
-        newType === 'daily'
-          ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-          : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
-      const presetMinutes = roundToNearestPreset(defaultMinutes, newType);
-      setMinutes(presetMinutes);
+      const defaultMinutes = TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
+      setMinutes(roundToNearestPreset(defaultMinutes));
     }
   }, []);
 
@@ -142,7 +123,7 @@ export function TimeLimitEditor({
       await onUpdate(null);
     } else {
       await onUpdate({
-        type: selectedType as TimeLimitType,
+        type: selectedType,
         limitSeconds: minutes * 60
       });
     }
@@ -151,16 +132,12 @@ export function TimeLimitEditor({
 
   const typeOptions = [
     { value: 'always', label: getMessage('alwaysBlocked') },
-    { value: 'daily', label: getMessage('dailyLimit') },
-    { value: 'hourly', label: getMessage('hourlyLimit') }
+    { value: 'daily', label: getMessage('dailyLimit') }
   ];
 
-  // プリセット選択肢を生成（タイプに応じて daily または hourly のプリセットを使用）
+  // プリセット選択肢を生成
   const getPresetOptions = () => {
-    const presets =
-      selectedType === 'daily'
-        ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
-        : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+    const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
     return presets.map((preset) => ({
       value: preset.toString(),
@@ -171,10 +148,7 @@ export function TimeLimitEditor({
   // Calculate remaining time for display
   const remainingSeconds =
     item.timeLimit && usage
-      ? item.timeLimit.limitSeconds -
-        (item.timeLimit.type === 'daily'
-          ? usage.dailyUsedSeconds
-          : usage.hourlyUsedSeconds)
+      ? item.timeLimit.limitSeconds - usage.dailyUsedSeconds
       : null;
 
   return (
@@ -187,9 +161,7 @@ export function TimeLimitEditor({
         {item.timeLimit ? (
           <span>
             {getMessage('limitMinutes', minutes.toString())}
-            {item.timeLimit.type === 'daily'
-              ? getMessage('perDay')
-              : getMessage('perHour')}
+            {getMessage('perDay')}
           </span>
         ) : (
           <span>{getMessage('alwaysBlocked')}</span>
@@ -225,9 +197,7 @@ export function TimeLimitEditor({
                 options={getPresetOptions()}
               />
               <p className="text-xs text-gray-400 mt-1">
-                {selectedType === 'daily'
-                  ? getMessage('resetDaily')
-                  : getMessage('resetHourly')}
+                {getMessage('resetDaily')}
               </p>
             </div>
           )}
@@ -258,7 +228,6 @@ export function TimeLimitEditor({
           <TimeLimitBadge
             remainingSeconds={Math.max(0, remainingSeconds)}
             limitSeconds={item.timeLimit.limitSeconds}
-            limitType={item.timeLimit.type}
             compact
           />
         </div>

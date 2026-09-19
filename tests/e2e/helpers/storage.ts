@@ -282,25 +282,22 @@ export function makeYouTubeSettings(
  * Time Limit の使用実績を作る
  *
  * 実装は `analytics.timeLimitUsage[domain]` に
- * `{ domain, dailyUsedSeconds, hourlyUsedSeconds, lastDailyReset, lastHourlyReset }`
+ * `{ domain, dailyUsedSeconds, lastDailyReset }`
  * の形で持つ。トップレベルの `timeLimitUsage` キーや
  * `{ daily: { used, resetAt } }` という形は実装に存在しない。
  */
 export function makeTimeLimitUsage(
   domain: string,
-  used: { daily?: number; hourly?: number } = {},
+  used: { daily?: number } = {},
   now: Date = new Date()
 ): Record<string, unknown> {
   const todayKey = now.toISOString().slice(0, 10);
-  const hourKey = `${todayKey}-${String(now.getHours()).padStart(2, '0')}`;
 
   return {
     [domain]: {
       domain,
       dailyUsedSeconds: used.daily ?? 0,
-      hourlyUsedSeconds: used.hourly ?? 0,
-      lastDailyReset: todayKey,
-      lastHourlyReset: hourKey
+      lastDailyReset: todayKey
     }
   };
 }

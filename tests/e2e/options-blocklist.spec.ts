@@ -215,7 +215,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       await timeLimitButton.click();
 
       // Time Limit 設定 UI が表示される
-      const timeLimitUI = page.locator('text=/Daily|Hourly|毎日|毎時/i');
+      const timeLimitUI = page.locator('text=/Daily|毎日/i');
       await expect(timeLimitUI.first()).toBeVisible();
     }
 

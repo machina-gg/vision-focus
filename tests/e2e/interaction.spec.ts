@@ -56,8 +56,7 @@ test.describe('Interaction - 機能間相互作用', () => {
         daily: {
           used: 10, // 超過
           resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
+        }
       }
     });
 
@@ -237,8 +236,7 @@ test.describe('Interaction - 機能間相互作用', () => {
         daily: {
           used: 10, // 超過
           resetAt: new Date(Date.now() + 86400000).toISOString()
-        },
-        hourly: null
+        }
       }
     });
 

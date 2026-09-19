@@ -11,12 +11,7 @@
  */
 
 import { getSettings, getAnalytics, setAnalytics } from '~/lib/storage';
-import {
-  getTodayKey,
-  getCurrentHourKey,
-  needsDailyReset,
-  needsHourlyReset
-} from '~/lib/time';
+import { getTodayKey, needsDailyReset } from '~/lib/time';
 import type { YouTubeSettings } from '~/types/storage';
 import {
   checkTimeLimitExceeded,
@@ -46,26 +41,17 @@ export async function recordYouTubeTimeLimitUsage(
   const usage = analytics.timeLimitUsage[YOUTUBE_DOMAIN] || {
     domain: YOUTUBE_DOMAIN,
     dailyUsedSeconds: 0,
-    hourlyUsedSeconds: 0,
-    lastDailyReset: getTodayKey(),
-    lastHourlyReset: getCurrentHourKey()
+    lastDailyReset: getTodayKey()
   };
 
   const todayKey = getTodayKey();
-  const hourKey = getCurrentHourKey();
 
   if (needsDailyReset(usage.lastDailyReset)) {
     usage.dailyUsedSeconds = 0;
     usage.lastDailyReset = todayKey;
   }
 
-  if (needsHourlyReset(usage.lastHourlyReset)) {
-    usage.hourlyUsedSeconds = 0;
-    usage.lastHourlyReset = hourKey;
-  }
-
   usage.dailyUsedSeconds += seconds;
-  usage.hourlyUsedSeconds += seconds;
 
   analytics.timeLimitUsage[YOUTUBE_DOMAIN] = usage;
   await setAnalytics(analytics);

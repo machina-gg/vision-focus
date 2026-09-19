@@ -1300,7 +1300,7 @@
     "description": "Help time limits title"
   },
   "helpTimeLimitsDescription": {
-    "message": "Instead of fully blocking a site, set daily or hourly time limits. Once your allotted time is used up, the site will be blocked for the rest of the period.",
+    "message": "Instead of fully blocking a site, set a daily time limit. Once your allotted time is used up, the site will be blocked for the rest of the day.",
     "description": "Help time limits description"
   },
   "helpAnalytics": {
@@ -1348,7 +1348,7 @@
     "description": "Help FAQ time limit question"
   },
   "helpFaqTimeLimitAnswer": {
-    "message": "Time limits let you allow a site for a set amount of time per day or per hour. Once you reach the limit, the site is blocked until the period resets. You can configure this in the block list by selecting 'Daily Limit' or 'Hourly Limit' instead of 'Always Blocked'.",
+    "message": "Time limits let you allow a site for a set amount of time per day. Once you reach the limit, the site is blocked until the next day. You can configure this in the block list by selecting 'Daily Limit' instead of 'Always Blocked'.",
     "description": "Help FAQ time limit answer"
   },
   "helpFaqPassword": {
@@ -1569,10 +1569,6 @@
     "message": "Daily Limit",
     "description": "Option for daily time limit"
   },
-  "hourlyLimit": {
-    "message": "Hourly Limit",
-    "description": "Option for hourly time limit"
-  },
   "timeLimitRemaining": {
     "message": "$TIME$ remaining",
     "description": "Remaining time display",
@@ -1600,10 +1596,6 @@
   "perDay": {
     "message": "/day",
     "description": "Per day suffix"
-  },
-  "perHour": {
-    "message": "/hour",
-    "description": "Per hour suffix"
   },
   "limitMinutes": {
     "message": "$COUNT$ min",
@@ -1640,10 +1632,6 @@
   "resetDaily": {
     "message": "Resets daily",
     "description": "Daily reset note"
-  },
-  "resetHourly": {
-    "message": "Resets hourly",
-    "description": "Hourly reset note"
   },
   "timeLimitSettings": {
     "message": "Time Limit Settings",

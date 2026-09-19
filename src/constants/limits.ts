@@ -62,30 +62,19 @@ export const TIME_LIMIT_CONFIG = {
   MAX_LIMIT_SECONDS: 24 * 60 * 60,
   /** Default daily limit in seconds (30 minutes) */
   DEFAULT_DAILY_LIMIT: 30 * 60,
-  /** Default hourly limit in seconds (10 minutes) */
-  DEFAULT_HOURLY_LIMIT: 10 * 60,
   /** Warning threshold (show warning when remaining is below this percentage) */
   WARNING_THRESHOLD: 0.2,
   /** Preset daily limit options in minutes */
-  DAILY_PRESET_MINUTES: [5, 15, 30, 60] as const,
-  /** Preset hourly limit options in minutes */
-  HOURLY_PRESET_MINUTES: [5, 10, 15, 30] as const
+  DAILY_PRESET_MINUTES: [5, 15, 30, 60] as const
 } as const;
 
 /**
  * 既存の制限時間を最も近いプリセット値に丸める
  * @param minutes - 現在の制限時間（分）
- * @param type - 制限タイプ（daily または hourly）
  * @returns 最も近いプリセット値（分）
  */
-export function roundToNearestPreset(
-  minutes: number,
-  type: 'daily' | 'hourly'
-): number {
-  const presets =
-    type === 'daily'
-      ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
-      : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+export function roundToNearestPreset(minutes: number): number {
+  const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
   // 最も近いプリセット値を見つける
   return presets.reduce((nearest, preset) => {
