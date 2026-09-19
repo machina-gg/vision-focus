@@ -18,6 +18,7 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 - **クライアントID**: `crypto.randomUUID()` で生成した匿名ID（`chrome.storage.local` に保存）
 - **セッション管理**: 30分の非アクティブでセッションリセット
 - **実装ファイル**: `src/lib/analytics.ts`
+- **設定**: `WXT_GA_MEASUREMENT_ID` / `WXT_GA_API_SECRET` を `.env` に定義する（`import.meta.env` 経由で参照。詳細は [README](../README.md) の「環境変数」）
 
 ---
 
@@ -25,11 +26,11 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 
 ### 1. `daily_active` — デイリーアクティブユーザー
 
-| 項目         | 内容                                            |
-| ------------ | ----------------------------------------------- |
-| **用途**     | DAU / WAU / MAU の算出                          |
-| **トリガー** | `daily-cleanup` アラーム発火時（1日1回）        |
-| **送信元**   | `src/background/index.ts` → `sendDailyActive()` |
+| 項目         | 内容                                                              |
+| ------------ | ----------------------------------------------------------------- |
+| **用途**     | DAU / WAU / MAU の算出                                            |
+| **トリガー** | `daily-cleanup` アラーム発火時（1日1回）                          |
+| **送信元**   | `src/background/listeners/alarmHandlers.ts` → `sendDailyActive()` |
 
 | パラメータ | 型     | 説明                                 |
 | ---------- | ------ | ------------------------------------ |
