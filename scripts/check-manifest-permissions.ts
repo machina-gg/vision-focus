@@ -190,5 +190,12 @@ if (
   process.argv[1] &&
   process.argv[1].endsWith('check-manifest-permissions.ts')
 ) {
-  await main();
+  // top-level await は使わない。package.json に "type": "module" が無く、
+  // CI の `pnpm exec tsx` が本ファイルを CJS として変換するため
+  // 「Top-level await is currently not supported」で常に落ちる（#417）
+  main().catch((error: unknown) => {
+    // 想定外の例外（設定ファイルの読み込み失敗など）も CI を止める
+    console.error(error);
+    process.exit(1);
+  });
 }
