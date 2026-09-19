@@ -85,3 +85,13 @@ export const YouTubeSettingsSchema = z.object({
   hideHomeFeed: z.boolean(),
   timeLimit: TimeLimitSchema.nullable().optional()
 });
+
+// Schema for update-youtube-settings message handler
+// YouTube 設定は background 経由で保存する（保存と同時に既存タブのブロックを行うため）
+export const UpdateYouTubeSettingsBodySchema = z.object({
+  youtube: YouTubeSettingsSchema
+});
+
+export type UpdateYouTubeSettingsBody = z.infer<
+  typeof UpdateYouTubeSettingsBodySchema
+>;

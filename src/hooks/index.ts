@@ -9,3 +9,4 @@ export * from './usePresets';
 export * from './useResolvedPreset';
 export * from './useSchedules';
 export * from './useSupportPrompt';
+export * from './useYouTubeSettings';

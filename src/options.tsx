@@ -16,22 +16,18 @@ import {
   ScheduleModal
 } from '~/components/options';
 import { AnalyticsOptInModal } from '~/components/options/modals';
-import { useAnalytics, useBlocklist, useSchedules } from '~/hooks';
+import {
+  useAnalytics,
+  useBlocklist,
+  useSchedules,
+  useYouTubeSettings
+} from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { storage } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
-import type {
-  AnalyticsOptIn,
-  YouTubeSettings,
-  PasswordSettings,
-  UnblockHistory
-} from '~/types/storage';
-import {
-  DEFAULT_YOUTUBE_SETTINGS,
-  DEFAULT_UNBLOCK_HISTORY
-} from '~/types/storage';
-import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
+import type { AnalyticsOptIn, PasswordSettings } from '~/types/storage';
+import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 import './styles/globals.css';
 
@@ -52,55 +48,7 @@ function OptionsAppContent() {
   const analytics = useAnalytics({ setSettings });
   const blocklist = useBlocklist({ settings, setSettings });
   const schedules = useSchedules({ settings, setSettings });
-
-  // YouTube settings handler with block count and unblockHistory tracking
-  const handleYouTubeChange = async (youtube: YouTubeSettings) => {
-    if (!settings) return;
-    const prevEnabled = settings.youtube?.enabled ?? false;
-    const newEnabled = youtube.enabled;
-
-    const updated = { ...settings, youtube };
-    await storage.set('settings', updated);
-    setSettings(updated);
-
-    // Track YouTube enable/disable transitions
-    if (!prevEnabled && newEnabled) {
-      // YouTube blocking enabled - create TrackedSite entry
-      await incrementYouTubeBlockCount();
-      const history =
-        ((await storage.get('unblockHistory')) as UnblockHistory) ??
-        DEFAULT_UNBLOCK_HISTORY;
-      history.sites['youtube.com'] = {
-        domain: 'youtube.com',
-        status: 'blocked',
-        blockedAt: new Date().toISOString(),
-        unblockedAt: null,
-        timeAfterUnblock: 0,
-        lastActivity: null
-      };
-      await storage.set('unblockHistory', history);
-    } else if (prevEnabled && !newEnabled) {
-      // YouTube blocking disabled - mark as unblocked in history
-      const history =
-        ((await storage.get('unblockHistory')) as UnblockHistory) ??
-        DEFAULT_UNBLOCK_HISTORY;
-      const existing = history.sites['youtube.com'];
-      if (existing) {
-        existing.status = 'unblocked';
-        existing.unblockedAt = new Date().toISOString();
-      } else {
-        history.sites['youtube.com'] = {
-          domain: 'youtube.com',
-          status: 'unblocked',
-          blockedAt: new Date().toISOString(),
-          unblockedAt: new Date().toISOString(),
-          timeAfterUnblock: 0,
-          lastActivity: null
-        };
-      }
-      await storage.set('unblockHistory', history);
-    }
-  };
+  const { handleYouTubeChange } = useYouTubeSettings({ settings, setSettings });
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
