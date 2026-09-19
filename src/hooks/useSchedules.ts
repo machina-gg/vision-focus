@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
@@ -160,7 +160,7 @@ async function resumeBlocking(
   setSettings: (settings: AppSettings) => void
 ): Promise<void> {
   try {
-    await sendToBackground({ name: 'toggle-pause', body: { paused: false } });
+    await sendMessage('toggle-pause', { paused: false });
     const latest = await storage.get<AppSettings>('settings');
     if (latest) {
       setSettings(latest);

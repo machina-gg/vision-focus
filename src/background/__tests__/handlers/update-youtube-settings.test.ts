@@ -14,7 +14,7 @@ vi.mock('../../blocker', () => ({
 
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import handler from '../../messages/update-youtube-settings';
+import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
 import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 import type { YouTubeSettings } from '~/types/storage';
 

@@ -2,15 +2,15 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // 依存モジュールをモック
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
   getActiveTab: vi.fn()
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { getActiveTab } from '~/lib/chromeApi';
 import { useCurrentDomain } from '~/hooks/useCurrentDomain';
 import { DOMAIN_POLLING_MS } from '~/constants/intervals';
@@ -19,7 +19,9 @@ const timeLimitInfo = {
   hasTimeLimit: true,
   remainingSeconds: 300,
   limitType: 'daily' as const,
-  limitSeconds: 1800
+  limitSeconds: 1800,
+  usedSeconds: 1500,
+  isExceeded: false
 };
 
 beforeEach(() => {
@@ -27,7 +29,7 @@ beforeEach(() => {
   vi.mocked(getActiveTab).mockResolvedValue({
     url: 'https://example.com/page'
   } as chrome.tabs.Tab);
-  vi.mocked(sendToBackground).mockResolvedValue({
+  vi.mocked(sendMessage).mockResolvedValue({
     success: true,
     data: timeLimitInfo
   });
@@ -52,9 +54,8 @@ describe('useCurrentDomain', () => {
     await waitFor(() => {
       expect(result.current.timeLimitInfo).toEqual(timeLimitInfo);
     });
-    expect(sendToBackground).toHaveBeenCalledWith({
-      name: 'get-remaining-time',
-      body: { url: 'https://example.com/page' }
+    expect(sendMessage).toHaveBeenCalledWith('get-remaining-time', {
+      url: 'https://example.com/page'
     });
   });
 
@@ -82,7 +83,7 @@ describe('useCurrentDomain', () => {
         expect(getActiveTab).toHaveBeenCalled();
       });
       expect(result.current.currentDomain).toBeUndefined();
-      expect(sendToBackground).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('タブに URL が無ければ問い合わせを行わない', async () => {
@@ -93,7 +94,7 @@ describe('useCurrentDomain', () => {
       await waitFor(() => {
         expect(getActiveTab).toHaveBeenCalled();
       });
-      expect(sendToBackground).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('URL として解釈できない文字列では undefined にする', async () => {
@@ -104,7 +105,7 @@ describe('useCurrentDomain', () => {
       const { result } = renderHook(() => useCurrentDomain());
 
       await waitFor(() => {
-        expect(sendToBackground).toHaveBeenCalled();
+        expect(sendMessage).toHaveBeenCalled();
       });
       expect(result.current.currentDomain).toBeUndefined();
     });
@@ -125,18 +126,18 @@ describe('useCurrentDomain', () => {
     });
 
     it('background がエラーを返しても例外を投げず undefined を保つ', async () => {
-      vi.mocked(sendToBackground).mockRejectedValue(new Error('no receiver'));
+      vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
 
       const { result } = renderHook(() => useCurrentDomain());
 
       await waitFor(() => {
-        expect(sendToBackground).toHaveBeenCalled();
+        expect(sendMessage).toHaveBeenCalled();
       });
       expect(result.current.timeLimitInfo).toBeNull();
     });
 
     it('レスポンスが success: false なら時間制限情報を更新しない', async () => {
-      vi.mocked(sendToBackground).mockResolvedValue({
+      vi.mocked(sendMessage).mockResolvedValue({
         success: false,
         error: 'Invalid URL'
       });
@@ -144,7 +145,7 @@ describe('useCurrentDomain', () => {
       const { result } = renderHook(() => useCurrentDomain());
 
       await waitFor(() => {
-        expect(sendToBackground).toHaveBeenCalled();
+        expect(sendMessage).toHaveBeenCalled();
       });
       expect(result.current.timeLimitInfo).toBeNull();
     });

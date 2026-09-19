@@ -6,8 +6,8 @@ import type { AppSettings } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
 // 依存モジュールをモック
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
@@ -19,7 +19,7 @@ vi.mock('~/lib/i18n', () => ({
   setCurrentLanguage: vi.fn()
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { openOptionsPage, openExtensionPage } from '~/lib/chromeApi';
 import { setCurrentLanguage } from '~/lib/i18n';
 
@@ -91,20 +91,19 @@ describe('usePopupActions', () => {
 
   describe('handleBlock', () => {
     it('成功時にclearDomainを呼ぶ', async () => {
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       const { result } = renderHook(() => usePopupActions(defaultProps));
       await act(async () => {
         await result.current.handleBlock('youtube.com');
       });
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'add-block',
-        body: { domain: 'youtube.com' }
+      expect(sendMessage).toHaveBeenCalledWith('add-block', {
+        domain: 'youtube.com'
       });
       expect(mockClearDomain).toHaveBeenCalled();
     });
 
     it('失敗時はclearDomainを呼ばない', async () => {
-      vi.mocked(sendToBackground).mockResolvedValue({
+      vi.mocked(sendMessage).mockResolvedValue({
         success: false,
         error: 'Error'
       });
@@ -121,14 +120,13 @@ describe('usePopupActions', () => {
 
   describe('handlePausedChange', () => {
     it('toggle-pauseメッセージを送信する', async () => {
-      vi.mocked(sendToBackground).mockResolvedValue(undefined);
+      vi.mocked(sendMessage).mockResolvedValue({ success: true, paused: true });
       const { result } = renderHook(() => usePopupActions(defaultProps));
       await act(async () => {
         await result.current.handlePausedChange(true);
       });
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'toggle-pause',
-        body: { paused: true }
+      expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
+        paused: true
       });
     });
   });

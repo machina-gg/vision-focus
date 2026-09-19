@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { useBackgroundStats } from '~/hooks/useBackgroundStats';
 import { DEFAULT_STATS_POLLING_MS } from '~/constants/intervals';
 
@@ -19,7 +19,7 @@ const stats = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(sendToBackground).mockResolvedValue(stats);
+  vi.mocked(sendMessage).mockResolvedValue(stats);
 });
 
 afterEach(() => {
@@ -29,7 +29,7 @@ afterEach(() => {
 describe('useBackgroundStats', () => {
   it('初期値はすべて 0 / null', () => {
     // 解決を遅延させて初期状態を観測する
-    vi.mocked(sendToBackground).mockReturnValue(new Promise(() => {}));
+    vi.mocked(sendMessage).mockReturnValue(new Promise<never>(() => {}));
 
     const { result } = renderHook(() => useBackgroundStats());
 
@@ -48,16 +48,16 @@ describe('useBackgroundStats', () => {
     await waitFor(() => {
       expect(result.current).toEqual(stats);
     });
-    expect(sendToBackground).toHaveBeenCalledWith({ name: 'get-stats' });
+    expect(sendMessage).toHaveBeenCalledWith('get-stats');
   });
 
   it('取得に失敗しても例外を投げず初期値を保つ', async () => {
-    vi.mocked(sendToBackground).mockRejectedValue(new Error('no receiver'));
+    vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
 
     const { result } = renderHook(() => useBackgroundStats());
 
     await waitFor(() => {
-      expect(sendToBackground).toHaveBeenCalled();
+      expect(sendMessage).toHaveBeenCalled();
     });
     expect(result.current.blockCount).toBe(0);
   });
@@ -69,10 +69,10 @@ describe('useBackgroundStats', () => {
       renderHook(() => useBackgroundStats());
 
       await vi.advanceTimersByTimeAsync(0);
-      expect(sendToBackground).toHaveBeenCalledTimes(1);
+      expect(sendMessage).toHaveBeenCalledTimes(1);
 
       await vi.advanceTimersByTimeAsync(DEFAULT_STATS_POLLING_MS);
-      expect(sendToBackground).toHaveBeenCalledTimes(2);
+      expect(sendMessage).toHaveBeenCalledTimes(2);
     });
 
     it('指定した間隔で再取得する', async () => {
@@ -81,10 +81,10 @@ describe('useBackgroundStats', () => {
       renderHook(() => useBackgroundStats(1000));
 
       await vi.advanceTimersByTimeAsync(0);
-      expect(sendToBackground).toHaveBeenCalledTimes(1);
+      expect(sendMessage).toHaveBeenCalledTimes(1);
 
       await vi.advanceTimersByTimeAsync(3000);
-      expect(sendToBackground).toHaveBeenCalledTimes(4);
+      expect(sendMessage).toHaveBeenCalledTimes(4);
     });
 
     it('アンマウント後は再取得しない', async () => {
@@ -94,11 +94,11 @@ describe('useBackgroundStats', () => {
 
       await vi.advanceTimersByTimeAsync(0);
       unmount();
-      vi.mocked(sendToBackground).mockClear();
+      vi.mocked(sendMessage).mockClear();
 
       await vi.advanceTimersByTimeAsync(5000);
 
-      expect(sendToBackground).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('間隔を変更するとタイマーを張り替える', async () => {
@@ -110,20 +110,20 @@ describe('useBackgroundStats', () => {
       );
 
       await vi.advanceTimersByTimeAsync(0);
-      expect(sendToBackground).toHaveBeenCalledTimes(1);
+      expect(sendMessage).toHaveBeenCalledTimes(1);
 
       // 間隔変更で effect が再実行され、即時取得が 1 回走る
       rerender({ interval: 5000 });
       await vi.advanceTimersByTimeAsync(0);
-      expect(sendToBackground).toHaveBeenCalledTimes(2);
+      expect(sendMessage).toHaveBeenCalledTimes(2);
 
       // 旧間隔（1000ms）では発火しない
-      vi.mocked(sendToBackground).mockClear();
+      vi.mocked(sendMessage).mockClear();
       await vi.advanceTimersByTimeAsync(1000);
-      expect(sendToBackground).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
 
       await vi.advanceTimersByTimeAsync(4000);
-      expect(sendToBackground).toHaveBeenCalledTimes(1);
+      expect(sendMessage).toHaveBeenCalledTimes(1);
     });
   });
 });

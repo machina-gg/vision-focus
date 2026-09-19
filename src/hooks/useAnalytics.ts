@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { parseDomainInput, isValidDomain } from '~/lib/domain';
 import { storage } from '~/lib/storage';
@@ -91,10 +91,7 @@ export function useAnalytics({
   const handleReblock = useCallback(
     async (domain: string) => {
       try {
-        await sendToBackground({
-          name: 'add-block',
-          body: { domain }
-        });
+        await sendMessage('add-block', { domain });
         // Refresh data after re-blocking
         await reloadAnalyticsData();
         const settingsResult = (await storage.get('settings')) as

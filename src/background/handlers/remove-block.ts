@@ -1,5 +1,4 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import {
   getSettings,
   setSettings,
@@ -7,20 +6,15 @@ import {
   setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules } from '../blocker';
-import type { RemoveBlockRequest, RemoveBlockResponse } from '~/types/messages';
 
-export type { RemoveBlockRequest, RemoveBlockResponse };
-
-const handler: PlasmoMessaging.MessageHandler<
-  RemoveBlockRequest,
-  RemoveBlockResponse
-> = async (req, res) => {
-  const { id } = req.body;
+export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
+  data
+}) => {
+  const { id } = data;
 
   // Validate input
   if (!id || typeof id !== 'string' || id.length === 0 || id.length > 100) {
-    res.send({ success: false });
-    return;
+    return { success: false };
   }
 
   const settings = await getSettings();
@@ -61,7 +55,5 @@ const handler: PlasmoMessaging.MessageHandler<
     await setUnblockHistory(history);
   }
 
-  res.send({ success: true });
+  return { success: true };
 };
-
-export default handler;

@@ -9,7 +9,12 @@ const mocks = vi.hoisted(() => ({
   setupLifecycleHandlers: vi.fn(),
   setupAlarmHandlers: vi.fn(),
   setupNavigationTracking: vi.fn(),
-  createAlarms: vi.fn()
+  createAlarms: vi.fn(),
+  registerMessageHandlers: vi.fn()
+}));
+
+vi.mock('../handlers', () => ({
+  registerMessageHandlers: mocks.registerMessageHandlers
 }));
 
 vi.mock('../listeners/settingsWatcher', () => ({
@@ -42,6 +47,7 @@ describe('background エントリポイント', () => {
     expect(mocks.setupLifecycleHandlers).toHaveBeenCalledOnce();
     expect(mocks.setupAlarmHandlers).toHaveBeenCalledOnce();
     expect(mocks.setupNavigationTracking).toHaveBeenCalledOnce();
+    expect(mocks.registerMessageHandlers).toHaveBeenCalledOnce();
     expect(mocks.createAlarms).toHaveBeenCalledOnce();
   });
 });

@@ -1,15 +1,8 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { getTodayStats } from '../tracker';
 import { getAllSiteBlockCounts } from '~/lib/storage';
-import type { GetStatsRequest, GetStatsResponse } from '~/types/messages';
 
-export type { GetStatsRequest, GetStatsResponse };
-
-const handler: PlasmoMessaging.MessageHandler<
-  GetStatsRequest,
-  GetStatsResponse
-> = async (_req, res) => {
+export const getStatsHandler: MessageHandler<'get-stats'> = async () => {
   const [stats, allBlockCounts] = await Promise.all([
     getTodayStats(),
     getAllSiteBlockCounts()
@@ -21,13 +14,11 @@ const handler: PlasmoMessaging.MessageHandler<
       ? { domain: allBlockCounts[0].domain, count: allBlockCounts[0].count }
       : null;
 
-  res.send({
+  return {
     wasteTime: stats.wasteTime,
     investTime: stats.investTime,
     blockCount: stats.blockCount,
     unblockCount: stats.unblockCount,
     topBlockedSite
-  });
+  };
 };
-
-export default handler;

@@ -1,5 +1,4 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { parseDomainInput, isValidDomain, generateId } from '~/lib/domain';
 import {
   getSettings,
@@ -10,19 +9,14 @@ import {
   setAnalytics
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
-import type { AddBlockRequest, AddBlockResponse } from '~/types/messages';
 
-export type { AddBlockRequest, AddBlockResponse };
-
-const handler: PlasmoMessaging.MessageHandler<
-  AddBlockRequest,
-  AddBlockResponse
-> = async (req, res) => {
-  const { domain } = req.body;
+export const addBlockHandler: MessageHandler<'add-block'> = async ({
+  data
+}) => {
+  const { domain } = data;
 
   if (!domain) {
-    res.send({ success: false, error: 'Domain is required' });
-    return;
+    return { success: false, error: 'Domain is required' };
   }
 
   const settings = await getSettings();
@@ -31,8 +25,7 @@ const handler: PlasmoMessaging.MessageHandler<
 
   // Validate domain format
   if (!isValidDomain(parsedDomain)) {
-    res.send({ success: false, error: 'Invalid domain format' });
-    return;
+    return { success: false, error: 'Invalid domain format' };
   }
 
   // Check if already in list
@@ -40,8 +33,7 @@ const handler: PlasmoMessaging.MessageHandler<
     (item) => item.domain.toLowerCase() === parsedDomain.toLowerCase()
   );
   if (exists) {
-    res.send({ success: false, error: 'Domain already in block list' });
-    return;
+    return { success: false, error: 'Domain already in block list' };
   }
 
   const now = new Date().toISOString();
@@ -97,7 +89,5 @@ const handler: PlasmoMessaging.MessageHandler<
   analytics.siteCategories[parsedDomain] = 'waste';
   await setAnalytics(analytics);
 
-  res.send({ success: true });
+  return { success: true };
 };
-
-export default handler;

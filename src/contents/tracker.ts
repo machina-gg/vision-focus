@@ -1,5 +1,6 @@
 import type { PlasmoCSConfig } from 'plasmo';
-import { sendToBackground } from '@plasmohq/messaging';
+
+import { sendMessage } from '~/lib/messaging';
 
 // Run on all pages
 export const config: PlasmoCSConfig = {
@@ -34,13 +35,10 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
   }
 
   try {
-    await sendToBackground({
-      name: 'tracker-heartbeat',
-      body: {
-        url: window.location.href,
-        status,
-        timestamp: Date.now()
-      }
+    await sendMessage('tracker-heartbeat', {
+      url: window.location.href,
+      status,
+      timestamp: Date.now()
     });
   } catch {
     // Extension context likely invalidated, stop tracking

@@ -1,22 +1,11 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { updateBlockRules, blockExistingTabs } from '~/background/blocker';
 import { getSettings, setSettings } from '~/lib/storage';
 
-export type RequestBody = {
-  paused: boolean;
-};
-
-export type ResponseBody = {
-  success: boolean;
-  paused: boolean;
-};
-
-const handler: PlasmoMessaging.MessageHandler<
-  RequestBody,
-  ResponseBody
-> = async (req, res) => {
-  const { paused } = req.body;
+export const togglePauseHandler: MessageHandler<'toggle-pause'> = async ({
+  data
+}) => {
+  const { paused } = data;
 
   const settings = await getSettings();
   settings.paused = paused;
@@ -30,10 +19,8 @@ const handler: PlasmoMessaging.MessageHandler<
     await blockExistingTabs();
   }
 
-  res.send({
+  return {
     success: true,
     paused
-  });
+  };
 };
-
-export default handler;

@@ -1,25 +1,23 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { GetRemainingTimeBodySchema } from '~/types/messageSchemas';
 import { getTimeLimitInfoForUrl } from '../time-limit';
 
 // Message handler for getting remaining time for a URL
-const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const parsed = GetRemainingTimeBodySchema.safeParse(req.body);
+export const getRemainingTimeHandler: MessageHandler<
+  'get-remaining-time'
+> = async ({ data }) => {
+  const parsed = GetRemainingTimeBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    res.send({ success: false, error: 'Invalid URL' });
-    return;
+    return { success: false, error: 'Invalid URL' };
   }
 
   const { url } = parsed.data;
 
   const info = await getTimeLimitInfoForUrl(url);
 
-  res.send({
+  return {
     success: true,
     data: info
-  });
+  };
 };
-
-export default handler;

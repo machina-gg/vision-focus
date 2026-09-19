@@ -9,8 +9,8 @@ import {
   DEFAULT_UNBLOCK_HISTORY
 } from '~/types/storage';
 
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/storage', () => ({
@@ -25,7 +25,7 @@ vi.mock('~/lib/youtubeBlockService', () => ({
   incrementYouTubeBlockCount: vi.fn()
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { storage } from '~/lib/storage';
 import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
 
@@ -55,7 +55,7 @@ describe('useYouTubeSettings', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+    vi.mocked(sendMessage).mockResolvedValue({ success: true });
     givenStorage(settings(youtube()));
   });
 
@@ -69,9 +69,8 @@ describe('useYouTubeSettings', () => {
       await result.current.handleYouTubeChange(next);
     });
 
-    expect(sendToBackground).toHaveBeenCalledWith({
-      name: 'update-youtube-settings',
-      body: { youtube: next }
+    expect(sendMessage).toHaveBeenCalledWith('update-youtube-settings', {
+      youtube: next
     });
     expect(storage.set).not.toHaveBeenCalledWith('settings', expect.anything());
   });
@@ -99,11 +98,11 @@ describe('useYouTubeSettings', () => {
       await result.current.handleYouTubeChange(youtube({ enabled: true }));
     });
 
-    expect(sendToBackground).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
   });
 
   it('保存に失敗したら画面の設定を更新しない', async () => {
-    vi.mocked(sendToBackground).mockResolvedValue({
+    vi.mocked(sendMessage).mockResolvedValue({
       success: false,
       error: 'Failed to update YouTube settings'
     });
@@ -119,7 +118,7 @@ describe('useYouTubeSettings', () => {
   });
 
   it('送信が例外を投げても外に伝播しない', async () => {
-    vi.mocked(sendToBackground).mockRejectedValue(new Error('no receiver'));
+    vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
     const { result } = renderHook(() =>
       useYouTubeSettings({ settings: settings(youtube()), setSettings })
     );
