@@ -30,9 +30,9 @@ import {
   visionItem
 } from '~/lib/storage';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
-function NewtabApp() {
+export function NewtabApp() {
   const [vision, setVision] = useStorageItem(visionItem);
   const [settings] = useStorageItem(settingsItem);
   const [analytics] = useStorageItem(analyticsItem);
@@ -393,5 +393,3 @@ function NewtabApp() {
     </div>
   );
 }
-
-export default NewtabApp;

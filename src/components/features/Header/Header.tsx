@@ -2,7 +2,9 @@ import React from 'react';
 
 import { Settings, HelpCircle, ChevronDown } from 'lucide-react';
 
-import iconBase64 from 'data-base64:assets/icon.png';
+// アイコンはバンドルに含めるため ?inline（データ URL）で import する。
+// html2canvas によるキャプチャ対象に入るため、外部 URL ではなくデータ URL の方が安全
+import iconBase64 from '~/assets/icon.png?inline';
 
 import { Toggle } from '~/components/ui';
 import {

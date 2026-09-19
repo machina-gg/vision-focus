@@ -7,7 +7,7 @@ import { Tabs } from '~/components/ui';
 import { BlocklistTab, SchedulesTab, HelpTab } from '~/components/options';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
 const tabs = [
   { id: 'blocklist', label: 'Blocklist', icon: Ban },

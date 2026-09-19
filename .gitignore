@@ -23,8 +23,11 @@ test-results/
 # Storybook（pnpm build-storybook で再生成できる成果物）
 storybook-static/
 
-# Plasmo
-.plasmo/
+# WXT
+.output/
+.wxt/
+# Security ワークフローが base ブランチから書き出す比較用の設定
+base.wxt.config.ts
 
 # Environment
 .env

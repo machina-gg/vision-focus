@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 /**
- * background のエントリポイントは import 時に副作用として初期化を行うため、
- * hoisted な共有スパイを使い、動的 import で読み込んで検証する。
+ * initBackground は各リスナーの登録関数を呼ぶだけなので、
+ * 依存をすべてモックして「1 回ずつ呼ばれること」を検証する。
  */
 const mocks = vi.hoisted(() => ({
   setupSettingsWatcher: vi.fn(),
@@ -38,11 +38,12 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('background エントリポイント', () => {
+describe('initBackground', () => {
   it('全てのリスナー登録と初期化を行う', async () => {
-    vi.resetModules();
+    const { initBackground } = await import('../init');
 
-    await import('../index');
+    initBackground();
+
     expect(mocks.setupSettingsWatcher).toHaveBeenCalledOnce();
     expect(mocks.setupLifecycleHandlers).toHaveBeenCalledOnce();
     expect(mocks.setupAlarmHandlers).toHaveBeenCalledOnce();

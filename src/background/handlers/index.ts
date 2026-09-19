@@ -2,8 +2,6 @@
  * background のメッセージハンドラの登録。
  *
  * ハンドラは素の関数として各ファイルに置き、name との対応をここ 1 箇所に集約する。
- * ⚠ `src/background/messages/` に置くと Plasmo が独自ルーターを生成するため、
- * ディレクトリ名は `handlers` にしてある
  */
 
 import { onMessage } from '~/lib/messaging';

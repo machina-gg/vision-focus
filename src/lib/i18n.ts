@@ -6,8 +6,11 @@
 import type { SupportedLanguage } from '~/types/storage';
 
 // Import messages directly
-import enMessages from '../../assets/_locales/en/messages.json';
-import jaMessages from '../../assets/_locales/ja/messages.json';
+// ⚠ public/ 配下は出力にそのままコピーされる（manifest の default_locale が参照する）。
+// 同じ JSON をここから直接 import して自前の getMessage で解決している。
+// chrome.i18n への全面移行は別途対応する
+import enMessages from '../../public/_locales/en/messages.json';
+import jaMessages from '../../public/_locales/ja/messages.json';
 
 type MessageFile = Record<
   string,

@@ -6,7 +6,7 @@ import { GoalDisplay, MiniStats, BlockedSitesList } from '~/components/newtab';
 import { DownloadButton } from '~/components/features';
 import type { BlockItem, SiteBlockCount } from '~/types/storage';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
 const mockBlockList: BlockItem[] = [
   {

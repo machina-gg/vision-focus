@@ -1,12 +1,18 @@
 {
-  "extends": "plasmo/templates/tsconfig.base",
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
+    // .wxt/tsconfig.json は WXT が `wxt prepare` で生成する（postinstall で走る）。
+    // パスエイリアス（~ / @）と拡張機能用の型参照はそちらが持つ。
+    //
+    // 以下は WXT の既定より緩める上書き。移行前と同じ検査水準を保つためのもので、
+    // 移行そのものと型検査の強化を同じ PR に混ぜないための措置（#404）。
+    // 段階的な引き上げは別途行う
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
+    "noFallthroughCasesInSwitch": false,
+    "jsx": "preserve",
     "types": ["vitest/globals", "chrome"]
   },
-  "include": [".plasmo/index.d.ts", "./**/*.ts", "./**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["**/node_modules", ".output", "build", "storybook-static"]
 }

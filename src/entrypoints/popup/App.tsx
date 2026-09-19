@@ -26,7 +26,7 @@ import { formatTimeLocalized } from '~/lib/time';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { AnalyticsOptIn } from '~/types/storage';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
 function PopupAppContent() {
   const { settings, setSettings, vision } = useSettings();
@@ -244,12 +244,10 @@ function PopupAppContent() {
   );
 }
 
-function PopupApp() {
+export function PopupApp() {
   return (
     <SettingsProvider>
       <PopupAppContent />
     </SettingsProvider>
   );
 }
-
-export default PopupApp;

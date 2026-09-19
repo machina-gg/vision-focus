@@ -9,11 +9,11 @@ import { startTestServer, type TestServer } from './testServer';
  * 拡張機能をロードした状態でテストを実行するための設定
  */
 
-// 拡張機能のビルドディレクトリパス（CI では pnpm build で chrome-mv3-prod を生成）
+// 拡張機能のビルドディレクトリパス（CI では pnpm build で chrome-mv3 を生成）
 import fs from 'fs';
 
-const PROD_PATH = path.join(__dirname, '../../../build/chrome-mv3-prod');
-const DEV_PATH = path.join(__dirname, '../../../build/chrome-mv3-dev');
+const PROD_PATH = path.join(__dirname, '../../../.output/chrome-mv3');
+const DEV_PATH = path.join(__dirname, '../../../.output/chrome-mv3-dev');
 const EXTENSION_PATH = fs.existsSync(PROD_PATH) ? PROD_PATH : DEV_PATH;
 
 // カスタムフィクスチャの型定義

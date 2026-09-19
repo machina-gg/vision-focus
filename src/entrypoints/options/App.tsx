@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-// ロゴはバンドルに含めるため data-base64 スキームで import する。
+// ロゴはバンドルに含めるため ?inline（データ URL）で import する。
 // getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
-import logoBase64 from 'data-base64:assets/images/logo.png';
+import logoBase64 from '~/assets/images/logo.png?inline';
 
 import { Ban, Calendar, HelpCircle, Palette, TrendingUp } from 'lucide-react';
 
@@ -29,7 +29,7 @@ import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { AnalyticsOptIn, PasswordSettings } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
 function OptionsAppContent() {
   const { settings, setSettings, vision, setVision } = useSettings();
@@ -235,12 +235,10 @@ function OptionsAppContent() {
   );
 }
 
-function OptionsApp() {
+export function OptionsApp() {
   return (
     <SettingsProvider>
       <OptionsAppContent />
     </SettingsProvider>
   );
 }
-
-export default OptionsApp;

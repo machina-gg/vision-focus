@@ -1,7 +1,5 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 
-import { plasmoSchemePlugin } from './plasmoSchemePlugin';
-
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
@@ -17,13 +15,11 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     return {
       ...config,
-      // Plasmo 独自の import スキーム（data-base64: 等）を解決する。
-      // これがないと Header / options のストーリーがビルドできない
-      plugins: [...(config.plugins ?? []), plasmoSchemePlugin(process.cwd())],
       resolve: {
         ...config.resolve,
         alias: {
           ...config.resolve?.alias,
+          // WXT が付ける ~ エイリアス（srcDir を指す）を Storybook でも再現する
           '~': `${process.cwd()}/src`
         }
       }
