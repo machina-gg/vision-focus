@@ -18,6 +18,7 @@ const __dirname = dirname(__filename);
 const BACKGROUNDS_DIR = join(
   __dirname,
   '..',
+  'public',
   'assets',
   'images',
   'backgrounds'

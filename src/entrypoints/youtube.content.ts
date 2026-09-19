@@ -1,4 +1,4 @@
-import type { PlasmoCSConfig } from 'plasmo';
+import { defineContentScript } from '#imports';
 
 import { analyticsItem, settingsItem } from '~/lib/storage';
 
@@ -9,12 +9,6 @@ import {
   YouTubeSettingsSchema
 } from '~/types/messageSchemas';
 import { getMessage } from '~/lib/i18n';
-
-// Run only on YouTube
-export const config: PlasmoCSConfig = {
-  matches: ['*://*.youtube.com/*'],
-  run_at: 'document_start'
-};
 
 // CSS selectors for YouTube elements
 const SELECTORS = {
@@ -350,5 +344,10 @@ async function init(): Promise<void> {
   });
 }
 
-// Start
-init();
+export default defineContentScript({
+  matches: ['*://*.youtube.com/*'],
+  runAt: 'document_start',
+  main() {
+    init();
+  }
+});

@@ -9,8 +9,9 @@ import { getSettings } from '~/lib/storage';
 import { getCurrentLanguage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
-const GA_MEASUREMENT_ID = process.env.PLASMO_PUBLIC_GA_MEASUREMENT_ID ?? '';
-const GA_API_SECRET = process.env.PLASMO_PUBLIC_GA_API_SECRET ?? '';
+// WXT は WXT_ / VITE_ 接頭辞の環境変数だけをビルド時に埋め込む（.env.example 参照）
+const GA_MEASUREMENT_ID = import.meta.env.WXT_GA_MEASUREMENT_ID ?? '';
+const GA_API_SECRET = import.meta.env.WXT_GA_API_SECRET ?? '';
 const MP_ENDPOINT = `https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`;
 const CLIENT_ID_KEY = 'ga_client_id';
 const SESSION_ID_KEY = 'ga_session_id';

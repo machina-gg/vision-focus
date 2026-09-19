@@ -10,7 +10,7 @@ import {
   StatsCard
 } from '~/components/features';
 
-import './styles/globals.css';
+import '~/styles/globals.css';
 
 function PopupDemo() {
   const goalText = 'Surpass my rivals and achieve overwhelming results';

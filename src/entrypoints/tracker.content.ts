@@ -1,12 +1,6 @@
-import type { PlasmoCSConfig } from 'plasmo';
+import { defineContentScript } from '#imports';
 
 import { sendMessage } from '~/lib/messaging';
-
-// Run on all pages
-export const config: PlasmoCSConfig = {
-  matches: ['<all_urls>'],
-  run_at: 'document_idle'
-};
 
 // Tracking state
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
@@ -125,5 +119,10 @@ function init() {
   window.addEventListener('pagehide', handleUnload);
 }
 
-// Start tracking
-init();
+export default defineContentScript({
+  matches: ['<all_urls>'],
+  runAt: 'document_idle',
+  main() {
+    init();
+  }
+});
