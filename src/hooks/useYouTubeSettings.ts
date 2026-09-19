@@ -63,7 +63,8 @@ export function useYouTubeSettings({
           await markYouTubeUnblocked();
         }
       } catch {
-        // Silently handle error - settings will refresh on next settings change
+        // 送信や読み直しに失敗しても画面は保存済みの値のまま残す
+        // （次の settings の変更で表示は同期される）
       }
     },
     [settings, setSettings]

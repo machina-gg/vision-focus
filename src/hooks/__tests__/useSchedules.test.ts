@@ -12,14 +12,20 @@ vi.mock('~/lib/analytics', () => ({
 
 vi.mock('~/lib/storage', () => ({
   storage: {
+    get: vi.fn(),
     set: vi.fn()
   }
+}));
+
+vi.mock('@plasmohq/messaging', () => ({
+  sendToBackground: vi.fn()
 }));
 
 vi.mock('~/lib/time', () => ({
   normalizeEndTime: vi.fn((time: string) => (time === '00:00' ? '24:00' : time))
 }));
 
+import { sendToBackground } from '@plasmohq/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
 
@@ -443,32 +449,99 @@ describe('useSchedules', () => {
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
     });
 
-    it('スケジュールを有効化すると、pausedもfalseになる', async () => {
+    describe('一時停止中にスケジュールを有効化したとき', () => {
       const pausedSettings: AppSettings = {
         ...mockSettings,
         paused: true,
         schedules: [{ ...mockSchedule, enabled: false }]
       };
 
+      const resumedSettings: AppSettings = {
+        ...pausedSettings,
+        paused: false,
+        schedules: [{ ...mockSchedule, enabled: true }]
+      };
+
+      beforeEach(() => {
+        vi.mocked(sendToBackground).mockResolvedValue({
+          success: true,
+          paused: false
+        });
+        vi.mocked(storage.get).mockResolvedValue(resumedSettings);
+      });
+
+      it('一時停止の解除は toggle-pause ハンドラ経由で行う（paused を直接書かない）', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await result.current.handleToggleSchedule('schedule-1', true);
+        });
+
+        // 画面から書くのはスケジュールだけで、paused は変更しない
+        expect(storage.set).toHaveBeenCalledWith('settings', {
+          ...pausedSettings,
+          schedules: [{ ...mockSchedule, enabled: true }]
+        });
+        expect(sendToBackground).toHaveBeenCalledWith({
+          name: 'toggle-pause',
+          body: { paused: false }
+        });
+      });
+
+      it('解除後の設定を読み直して表示へ反映する', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await result.current.handleToggleSchedule('schedule-1', true);
+        });
+
+        expect(mockSetSettings).toHaveBeenCalledWith(resumedSettings);
+      });
+
+      it('送信に失敗してもスケジュールの変更は残る（例外を外に投げない）', async () => {
+        vi.mocked(sendToBackground).mockRejectedValue(new Error('no receiver'));
+
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await expect(
+            result.current.handleToggleSchedule('schedule-1', true)
+          ).resolves.toBeUndefined();
+        });
+
+        expect(storage.set).toHaveBeenCalledWith('settings', {
+          ...pausedSettings,
+          schedules: [{ ...mockSchedule, enabled: true }]
+        });
+        expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
+      });
+    });
+
+    it('一時停止していなければ toggle-pause を送らない', async () => {
       const { result } = renderHook(() =>
-        useSchedules({
-          settings: pausedSettings,
-          setSettings: mockSetSettings
-        })
+        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
       );
 
       await act(async () => {
         await result.current.handleToggleSchedule('schedule-1', true);
       });
 
-      const expectedSettings = {
-        ...pausedSettings,
-        paused: false, // enabled=true の場合は paused が false になる
-        schedules: [{ ...mockSchedule, enabled: true }]
-      };
-
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      expect(sendToBackground).not.toHaveBeenCalled();
     });
 
     it('存在しないIDの場合、何も変更しない', async () => {
