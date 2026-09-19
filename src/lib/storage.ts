@@ -1,5 +1,7 @@
 import { storage as extensionStorage } from '@wxt-dev/storage';
 
+import { isStoredObject, objectOrFallback } from './storedValue';
+
 import {
   DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
@@ -57,10 +59,13 @@ export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
  * （machina-gg/vision-focus#399）。
  */
 export const storage = {
-  /** 未保存なら undefined を返す（`!== undefined` で判定する呼び出し側があるため null にしない） */
+  /**
+   * 未保存なら undefined を返す（`!== undefined` で判定する呼び出し側があるため null にしない）。
+   * 旧形式（文字列）が残っていた場合も未保存として扱い、呼び出し側の既定値に任せる
+   */
   async get<T>(key: LocalStorageKey): Promise<T | undefined> {
     const value = await extensionStorage.getItem<T>(`local:${key}`);
-    return value ?? undefined;
+    return isStoredObject(value) ? value : undefined;
   },
   async set<T>(key: LocalStorageKey, value: T): Promise<void> {
     await extensionStorage.setItem<T>(`local:${key}`, value);
@@ -72,7 +77,7 @@ export const storage = {
 
 // Get settings
 export async function getSettings(): Promise<AppSettings> {
-  return await settingsItem.getValue();
+  return objectOrFallback(await settingsItem.getValue(), DEFAULT_SETTINGS);
 }
 
 // Set settings
@@ -92,7 +97,7 @@ export async function updateSettings(
 
 // Get vision settings
 export async function getVision(): Promise<VisionSettings> {
-  return await visionItem.getValue();
+  return objectOrFallback(await visionItem.getValue(), DEFAULT_VISION);
 }
 
 // Set vision settings
@@ -102,7 +107,7 @@ export async function setVision(vision: VisionSettings): Promise<void> {
 
 // Get analytics data
 export async function getAnalytics(): Promise<AnalyticsData> {
-  return await analyticsItem.getValue();
+  return objectOrFallback(await analyticsItem.getValue(), DEFAULT_ANALYTICS);
 }
 
 // Set analytics data
@@ -112,7 +117,10 @@ export async function setAnalytics(analytics: AnalyticsData): Promise<void> {
 
 // Get unblock history
 export async function getUnblockHistory(): Promise<UnblockHistory> {
-  return await unblockHistoryItem.getValue();
+  return objectOrFallback(
+    await unblockHistoryItem.getValue(),
+    DEFAULT_UNBLOCK_HISTORY
+  );
 }
 
 // Set unblock history

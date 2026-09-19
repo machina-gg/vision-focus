@@ -92,6 +92,27 @@ describe('保存形式', () => {
     expect(fakeChrome.localData).toEqual({ settings });
     expect(fakeChrome.localData['local:settings']).toBeUndefined();
   });
+
+  it('旧形式（JSON 文字列）が残っていても初期値を返す', async () => {
+    // 実キーは変わらないため、旧実装が書いた JSON 文字列が同じキーに残りうる。
+    // そのまま返すと settings.blockList などの参照が壊れる
+    fakeChrome.localData.settings = JSON.stringify({
+      ...DEFAULT_SETTINGS,
+      paused: true
+    });
+    fakeChrome.localData.vision = JSON.stringify(DEFAULT_VISION);
+    fakeChrome.localData.analytics = JSON.stringify(DEFAULT_ANALYTICS);
+    fakeChrome.localData.unblockHistory = JSON.stringify(
+      DEFAULT_UNBLOCK_HISTORY
+    );
+
+    expect(await getSettings()).toEqual(DEFAULT_SETTINGS);
+    expect(await getVision()).toEqual(DEFAULT_VISION);
+    expect(await getAnalytics()).toEqual(DEFAULT_ANALYTICS);
+    expect(await getUnblockHistory()).toEqual(DEFAULT_UNBLOCK_HISTORY);
+    // 互換オブジェクト経由でも未設定として扱う（呼び出し側の既定値に任せる）
+    expect(await storage.get('settings')).toBeUndefined();
+  });
 });
 
 describe('getSettings', () => {

@@ -57,6 +57,25 @@ describe('useStorageItem', () => {
     expect(result.current[0]).toEqual(FALLBACK);
   });
 
+  it('使えない形の値（旧形式の文字列）は fallback に倒す', async () => {
+    const { item, emit } = createFakeItem();
+    // 旧実装が書いた JSON 文字列が残っている状態を模す
+    vi.mocked(item.getValue).mockResolvedValue(
+      JSON.stringify({ goal: 'stale' }) as unknown as TestValue
+    );
+
+    const { result } = renderHook(() => useStorageItem(item));
+
+    await waitFor(() => expect(item.getValue).toHaveBeenCalled());
+    expect(result.current[0]).toEqual(FALLBACK);
+
+    act(() => {
+      emit(JSON.stringify({ goal: 'stale' }) as unknown as TestValue);
+    });
+
+    expect(result.current[0]).toEqual(FALLBACK);
+  });
+
   it('マウント時に保存済みの値を読み込む', async () => {
     const { item } = createFakeItem({ goal: 'stored' });
     const { result } = renderHook(() => useStorageItem(item));

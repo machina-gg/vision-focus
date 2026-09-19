@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { WxtStorageItem } from '@wxt-dev/storage';
 
+import { objectOrFallback } from '~/lib/storedValue';
+
 /**
  * 値の更新関数。
  *
@@ -37,13 +39,16 @@ export function useStorageItem<T, M extends Record<string, unknown>>(
   useEffect(() => {
     isMounted.current = true;
 
+    // 読み出し・監視のどちらも、使えない形の値（旧形式の文字列など）は
+    // 既定値に倒してから state に載せる
     const unwatch = item.watch((newValue) => {
-      if (isMounted.current) setValue(newValue);
+      if (isMounted.current)
+        setValue(objectOrFallback(newValue, item.fallback));
     });
 
     void (async () => {
       const stored = await item.getValue();
-      if (isMounted.current) setValue(stored);
+      if (isMounted.current) setValue(objectOrFallback(stored, item.fallback));
     })();
 
     return () => {
