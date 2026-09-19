@@ -23,7 +23,7 @@ import {
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { storage } from '~/lib/storage';
+import { getSettings, getVision, settingsItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { AnalyticsOptIn, PasswordSettings } from '~/types/storage';
@@ -54,7 +54,7 @@ function OptionsAppContent() {
   const handlePasswordUpdate = async (password: PasswordSettings) => {
     if (!settings) return;
     const updated = { ...settings, password };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
   };
 
@@ -62,7 +62,7 @@ function OptionsAppContent() {
   const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
     if (!settings) return;
     const updated = { ...settings, analyticsOptIn: optIn };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
   };
 
@@ -70,7 +70,7 @@ function OptionsAppContent() {
   const handleLanguageChange = async (language: 'en' | 'ja' | null) => {
     if (!settings) return;
     const updated = { ...settings, language };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
   };
 
@@ -193,11 +193,11 @@ function OptionsAppContent() {
             onSettingsChange={async () => {
               // Reload settings and vision after import
               const [newSettings, newVision] = await Promise.all([
-                storage.get('settings') as Promise<typeof settings>,
-                storage.get('vision') as Promise<typeof vision>
+                getSettings(),
+                getVision()
               ]);
-              if (newSettings) setSettings(newSettings);
-              if (newVision) setVision(newVision);
+              setSettings(newSettings);
+              setVision(newVision);
               await analytics.reloadAnalyticsData();
             }}
             onPasswordUpdate={handlePasswordUpdate}

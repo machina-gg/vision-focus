@@ -19,16 +19,16 @@ vi.mock('~/lib/domain', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn()
+  getSettings: vi.fn(),
+  settingsItem: {
+    setValue: vi.fn()
   }
 }));
 
 import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 
 describe('useBlocklist', () => {
   const mockSetSettings = vi.fn();
@@ -159,7 +159,7 @@ describe('useBlocklist', () => {
         isWildcard: false
       });
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
-      vi.mocked(storage.get).mockResolvedValue(updatedSettings);
+      vi.mocked(getSettings).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -238,7 +238,7 @@ describe('useBlocklist', () => {
       };
 
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
-      vi.mocked(storage.get).mockResolvedValue(updatedSettings);
+      vi.mocked(getSettings).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -279,7 +279,7 @@ describe('useBlocklist', () => {
       };
 
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
-      vi.mocked(storage.get).mockResolvedValue(updatedSettings);
+      vi.mocked(getSettings).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -310,7 +310,7 @@ describe('useBlocklist', () => {
       };
 
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
-      vi.mocked(storage.get).mockResolvedValue(updatedSettings);
+      vi.mocked(getSettings).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -334,7 +334,7 @@ describe('useBlocklist', () => {
       };
 
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
-      vi.mocked(storage.get).mockResolvedValue(updatedSettings);
+      vi.mocked(getSettings).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -365,11 +365,11 @@ describe('useBlocklist', () => {
         });
       });
 
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
     it('通知設定を更新', async () => {
-      vi.mocked(storage.set).mockResolvedValue(undefined);
+      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -389,12 +389,14 @@ describe('useBlocklist', () => {
         notifications: newNotifications
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
     });
 
     it('例外が発生してもエラーをスローしない', async () => {
-      vi.mocked(storage.set).mockRejectedValue(new Error('Storage error'));
+      vi.mocked(settingsItem.setValue).mockRejectedValue(
+        new Error('Storage error')
+      );
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })

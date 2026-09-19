@@ -118,6 +118,15 @@ export interface AppSettings {
   analyticsOptIn?: import('./analytics').AnalyticsOptIn | null; // null = not yet decided (show modal)
 }
 
+// 支援誘導（レポート下のバナー）の表示状態
+// 追跡は行わない。保存するのは「閉じた時刻」と「支援ページを開いたか」だけ
+export interface SupportPromptState {
+  /** 最後に閉じた時刻（epoch ms）。未操作なら null */
+  dismissedAt: number | null;
+  /** 支援ページを開いたことがあるか。true なら以降は表示しない */
+  opened: boolean;
+}
+
 // Complete storage schema
 export interface StorageSchema {
   settings: AppSettings;
@@ -147,6 +156,12 @@ export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
 export const DEFAULT_PASSWORD_SETTINGS: PasswordSettings = {
   enabled: false,
   passwordHash: null
+};
+
+// 支援誘導の初期状態（未操作）
+export const DEFAULT_SUPPORT_PROMPT_STATE: SupportPromptState = {
+  dismissedAt: null,
+  opened: false
 };
 
 // Default values

@@ -6,14 +6,17 @@ chrome.storage.local に保存するデータ構造の設計。
 
 読み書きは `@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を通す。値は**生のオブジェクトのまま**保存される（JSON 文字列ではない）。
 
-| 項目定義のキー         | chrome.storage.local のキー | 型             | 説明                                       |
-| ---------------------- | --------------------------- | -------------- | ------------------------------------------ |
-| `local:settings`       | `settings`                  | AppSettings    | アプリ設定（ブロックリスト、スケジュール） |
-| `local:vision`         | `vision`                    | VisionSettings | ダッシュボード設定（プリセット含む）       |
-| `local:analytics`      | `analytics`                 | AnalyticsData  | 分析データ（滞在時間、統計）               |
-| `local:unblockHistory` | `unblockHistory`            | UnblockHistory | 一時解除の履歴                             |
+| 項目定義のキー         | chrome.storage.local のキー | 型                 | 説明                                                   |
+| ---------------------- | --------------------------- | ------------------ | ------------------------------------------------------ |
+| `local:settings`       | `settings`                  | AppSettings        | アプリ設定（ブロックリスト、スケジュール）             |
+| `local:vision`         | `vision`                    | VisionSettings     | ダッシュボード設定（プリセット含む）                   |
+| `local:analytics`      | `analytics`                 | AnalyticsData      | 分析データ（滞在時間、統計）                           |
+| `local:unblockHistory` | `unblockHistory`            | UnblockHistory     | 一時解除の履歴                                         |
+| `local:supportPrompt`  | `supportPrompt`             | SupportPromptState | 支援誘導の表示状態（閉じた時刻・支援ページを開いたか） |
 
 `local:` は保存領域（local / session / sync / managed）を選ぶための接頭辞で、chrome.storage.local 上の実キーには含まれない。
+
+読み出しは公開関数（`getSettings` / `getVision` / `getAnalytics` / `getUnblockHistory`）を通す。項目定義の `fallback` は保存値が null / undefined のときしか効かず、旧実装が書いた JSON 文字列が同じ実キーに残っていると素通りするため、公開関数側でオブジェクトかどうかを検査して既定値に倒している。書き込みは項目定義の `setValue()` を使う。未保存と既定値を区別したい場合だけ `hasStoredVision()` のような専用の関数を通す。
 
 セッション限りの値（`lastBlockedDomain`）は項目定義を通さず `chrome.storage.session` を直接使う。
 
@@ -133,6 +136,13 @@ DashboardDisplaySettings を継承し、以下を追加：
 | domain     | string | ドメイン名     |
 | totalTime  | number | 合計時間（秒） |
 | lastVisit  | string | 最終訪問日時   |
+
+### SupportPromptState（支援誘導の表示状態）
+
+| フィールド  | 型             | 説明                                            |
+| ----------- | -------------- | ----------------------------------------------- |
+| dismissedAt | number \| null | 最後に閉じた時刻（epoch ms）。未操作なら null   |
+| opened      | boolean        | 支援ページを開いたことがあるか。true なら非表示 |
 
 ## 機能上限
 
