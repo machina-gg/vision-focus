@@ -164,10 +164,12 @@ function OptionsAppContent() {
       >
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
+            {/* ロゴは横長（およそ 4.4:1）なので高さだけ固定し、幅は縦横比に任せる。
+                正方形枠に収めると幅方向に大きく縮んで判読できなくなる */}
             <img
               src={logoBase64}
               alt="VisionFocus Logo"
-              className="h-8 w-8 object-contain"
+              className="h-10 w-auto object-contain"
             />
             <h1
               className="text-2xl font-bold text-gray-900"
