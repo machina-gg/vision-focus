@@ -57,16 +57,13 @@ function setupChrome(withNotifications = true) {
   return { create };
 }
 
-const blockItem = (
-  limitSeconds = 1800,
-  type: 'daily' | 'hourly' = 'daily'
-) => ({
+const blockItem = (limitSeconds = 1800) => ({
   id: 'item-1',
   domain: 'example.com',
   isWildcard: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   enabled: true,
-  timeLimit: { type, limitSeconds }
+  timeLimit: { type: 'daily' as const, limitSeconds }
 });
 
 const settings = (overrides: Partial<AppSettings> = {}): AppSettings => ({
@@ -285,22 +282,6 @@ describe('通知済み状態の管理', () => {
 
     // 翌日になれば通知済み判定がリセットされる
     vi.setSystemTime(new Date('2026-08-12T10:00:00.000Z'));
-    await checkTimeLimitNotification('example.com');
-
-    expect(harness.create).toHaveBeenCalledTimes(2);
-  });
-
-  it('時間単位の制限では時が変わると再度通知される（hourly）', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-11T10:00:00.000Z'));
-    vi.mocked(findEnabledBlockItemForDomain).mockResolvedValue(
-      blockItem(1800, 'hourly')
-    );
-
-    await checkTimeLimitNotification('example.com');
-    expect(harness.create).toHaveBeenCalledOnce();
-
-    vi.setSystemTime(new Date('2026-08-11T11:00:00.000Z'));
     await checkTimeLimitNotification('example.com');
 
     expect(harness.create).toHaveBeenCalledTimes(2);

@@ -6,43 +6,32 @@ import { getMessage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
 // In-memory state to track which domains have been notified
-// Key: domain, Value: reset key (YYYY-MM-DD for daily, YYYY-MM-DD-HH for hourly)
+// Key: domain, Value: reset key (YYYY-MM-DD)
 const notifiedDomains = new Map<string, string>();
 
-// Get the reset key for a domain based on its time limit type
-function getResetKey(type: 'daily' | 'hourly'): string {
-  const now = new Date();
-  const dateKey = now.toISOString().split('T')[0];
-
-  if (type === 'hourly') {
-    const hour = now.getHours().toString().padStart(2, '0');
-    return `${dateKey}-${hour}`;
-  }
-
-  return dateKey;
+// Get the reset key for the current period (time limits reset daily)
+function getResetKey(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 // Check if a domain has already been notified in the current period
-function hasBeenNotified(domain: string, type: 'daily' | 'hourly'): boolean {
-  const resetKey = getResetKey(type);
+function hasBeenNotified(domain: string): boolean {
   const notifiedKey = notifiedDomains.get(domain);
-  return notifiedKey === resetKey;
+  return notifiedKey === getResetKey();
 }
 
 // Mark a domain as notified for the current period
-function markAsNotified(domain: string, type: 'daily' | 'hourly'): void {
-  const resetKey = getResetKey(type);
-  notifiedDomains.set(domain, resetKey);
+function markAsNotified(domain: string): void {
+  notifiedDomains.set(domain, getResetKey());
 }
 
 // Clear notification state for domains that have reset
 export function clearExpiredNotifications(): void {
-  const dailyKey = getResetKey('daily');
-  const hourlyKey = getResetKey('hourly');
+  const dailyKey = getResetKey();
 
   for (const [domain, resetKey] of notifiedDomains.entries()) {
-    // If the stored key doesn't match current daily or hourly key, remove it
-    if (resetKey !== dailyKey && resetKey !== hourlyKey) {
+    // If the stored key doesn't match the current daily key, remove it
+    if (resetKey !== dailyKey) {
       notifiedDomains.delete(domain);
     }
   }
@@ -57,8 +46,7 @@ function isNotificationsApiAvailable(): boolean {
 async function showTimeLimitNotification(
   domain: string,
   remainingMinutes: number,
-  totalMinutes: number,
-  type: 'daily' | 'hourly'
+  totalMinutes: number
 ): Promise<void> {
   // Guard: skip if chrome.notifications API is unavailable
   if (!isNotificationsApiAvailable()) {
@@ -70,8 +58,8 @@ async function showTimeLimitNotification(
     return;
   }
 
-  const typeLabel =
-    type === 'daily' ? getMessage('perDay') : getMessage('perHour');
+  // 時間制限は 1 日単位のみ
+  const typeLabel = getMessage('perDay');
 
   await chrome.notifications.create(`time-limit-${domain}-${Date.now()}`, {
     type: 'basic',
@@ -107,10 +95,10 @@ export async function checkTimeLimitNotification(
     return;
   }
 
-  const { type, limitSeconds } = blockItem.timeLimit;
+  const { limitSeconds } = blockItem.timeLimit;
 
   // Check if already notified in this period
-  if (hasBeenNotified(domain, type)) {
+  if (hasBeenNotified(domain)) {
     return;
   }
 
@@ -128,13 +116,8 @@ export async function checkTimeLimitNotification(
   // Check if we should notify
   if (remainingMinutes <= notifyAtMinutes) {
     const totalMinutes = Math.round(limitSeconds / 60);
-    await showTimeLimitNotification(
-      domain,
-      remainingMinutes,
-      totalMinutes,
-      type
-    );
-    markAsNotified(domain, type);
+    await showTimeLimitNotification(domain, remainingMinutes, totalMinutes);
+    markAsNotified(domain);
   }
 }
 
@@ -151,9 +134,9 @@ export async function checkYouTubeTimeLimitNotification(): Promise<void> {
     return;
   }
 
-  const { type, limitSeconds } = youtube.timeLimit;
+  const { limitSeconds } = youtube.timeLimit;
 
-  if (hasBeenNotified('youtube.com', type)) {
+  if (hasBeenNotified('youtube.com')) {
     return;
   }
 
@@ -171,10 +154,9 @@ export async function checkYouTubeTimeLimitNotification(): Promise<void> {
     await showTimeLimitNotification(
       'youtube.com',
       remainingMinutes,
-      totalMinutes,
-      type
+      totalMinutes
     );
-    markAsNotified('youtube.com', type);
+    markAsNotified('youtube.com');
   }
 }
 

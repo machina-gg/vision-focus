@@ -106,9 +106,7 @@ const mockAnalytics: AnalyticsData = {
     'youtube.com': {
       domain: 'youtube.com',
       dailyUsedSeconds: 1200,
-      hourlyUsedSeconds: 300,
-      lastDailyReset: '2026-02-15',
-      lastHourlyReset: '2026-02-15-12'
+      lastDailyReset: '2026-02-15'
     }
   }
 };

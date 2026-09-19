@@ -10,9 +10,7 @@ vi.mock('~/lib/storage', () => ({
 // time モジュールをモック
 vi.mock('~/lib/time', () => ({
   getTodayKey: vi.fn(() => '2024-06-12'),
-  getCurrentHourKey: vi.fn(() => '2024-06-12-12'),
   needsDailyReset: vi.fn(() => false),
-  needsHourlyReset: vi.fn(() => false),
   isWithinSchedule: vi.fn(() => true)
 }));
 
@@ -92,9 +90,6 @@ describe('recordYouTubeTimeLimitUsage', () => {
     expect(savedAnalytics.timeLimitUsage[YOUTUBE_DOMAIN].dailyUsedSeconds).toBe(
       60
     );
-    expect(
-      savedAnalytics.timeLimitUsage[YOUTUBE_DOMAIN].hourlyUsedSeconds
-    ).toBe(60);
   });
 
   it('既存の使用量に追加する', async () => {
@@ -112,9 +107,7 @@ describe('recordYouTubeTimeLimitUsage', () => {
         [YOUTUBE_DOMAIN]: {
           domain: YOUTUBE_DOMAIN,
           dailyUsedSeconds: 100,
-          hourlyUsedSeconds: 50,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     });
@@ -126,9 +119,6 @@ describe('recordYouTubeTimeLimitUsage', () => {
     expect(savedAnalytics.timeLimitUsage[YOUTUBE_DOMAIN].dailyUsedSeconds).toBe(
       130
     );
-    expect(
-      savedAnalytics.timeLimitUsage[YOUTUBE_DOMAIN].hourlyUsedSeconds
-    ).toBe(80);
   });
 });
 

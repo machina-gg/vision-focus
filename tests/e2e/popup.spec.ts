@@ -419,9 +419,7 @@ test.describe('Popup 画面', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 1200, // 20分使用済み
-          hourlyUsedSeconds: 0,
-          lastDailyReset: new Date().toISOString().split('T')[0],
-          lastHourlyReset: ''
+          lastDailyReset: new Date().toISOString().split('T')[0]
         }
       }
     });

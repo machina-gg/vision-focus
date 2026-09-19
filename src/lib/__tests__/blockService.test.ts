@@ -13,9 +13,7 @@ vi.mock('~/lib/storage', () => ({
 vi.mock('~/lib/time', () => ({
   isWithinSchedule: vi.fn(),
   getTodayKey: vi.fn(() => '2024-06-12'),
-  getCurrentHourKey: vi.fn(() => '2024-06-12-12'),
-  needsDailyReset: vi.fn(() => false),
-  needsHourlyReset: vi.fn(() => false)
+  needsDailyReset: vi.fn(() => false)
 }));
 
 // timeLimitService をモック

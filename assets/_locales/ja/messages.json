@@ -1300,7 +1300,7 @@
     "description": "ヘルプ時間制限タイトル"
   },
   "helpTimeLimitsDescription": {
-    "message": "サイトを完全にブロックする代わりに、1日または1時間ごとの使用時間を制限できます。制限時間を使い切ると、その期間中はサイトがブロックされます。",
+    "message": "サイトを完全にブロックする代わりに、1日の使用時間を制限できます。制限時間を使い切ると、その日はサイトがブロックされます。",
     "description": "ヘルプ時間制限説明"
   },
   "helpAnalytics": {
@@ -1348,7 +1348,7 @@
     "description": "ヘルプFAQ時間制限質問"
   },
   "helpFaqTimeLimitAnswer": {
-    "message": "時間制限を使うと、1日または1時間あたりの使用時間を設定できます。制限時間に達すると、リセットされるまでサイトがブロックされます。ブロックリストで「常時ブロック」の代わりに「1日の制限」または「1時間の制限」を選択して設定できます。",
+    "message": "時間制限を使うと、1日あたりの使用時間を設定できます。制限時間に達すると、翌日リセットされるまでサイトがブロックされます。ブロックリストで「常時ブロック」の代わりに「1日の制限」を選択して設定できます。",
     "description": "ヘルプFAQ時間制限回答"
   },
   "helpFaqPassword": {
@@ -1569,10 +1569,6 @@
     "message": "1日の制限",
     "description": "1日の時間制限オプション"
   },
-  "hourlyLimit": {
-    "message": "1時間の制限",
-    "description": "1時間の時間制限オプション"
-  },
   "timeLimitRemaining": {
     "message": "残り $TIME$",
     "description": "残り時間表示",
@@ -1600,10 +1596,6 @@
   "perDay": {
     "message": "/日",
     "description": "1日あたりの接尾辞"
-  },
-  "perHour": {
-    "message": "/時間",
-    "description": "1時間あたりの接尾辞"
   },
   "limitMinutes": {
     "message": "$COUNT$分",
@@ -1640,10 +1632,6 @@
   "resetDaily": {
     "message": "毎日リセット",
     "description": "日次リセット注記"
-  },
-  "resetHourly": {
-    "message": "毎時リセット",
-    "description": "時間リセット注記"
   },
   "timeLimitSettings": {
     "message": "時間制限の設定",

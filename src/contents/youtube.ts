@@ -63,21 +63,14 @@ function checkTimeLimitExceeded(
     return false;
   }
 
-  const { type, limitSeconds } = settings.timeLimit;
+  const { limitSeconds } = settings.timeLimit;
 
-  // Check if daily/hourly reset is needed
+  // Check if daily reset is needed
   const now = new Date();
   const todayKey = now.toISOString().split('T')[0];
-  const hourKey = `${todayKey}-${now.getHours().toString().padStart(2, '0')}`;
 
-  let usedSeconds: number;
-  if (type === 'daily') {
-    usedSeconds =
-      usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
-  } else {
-    usedSeconds =
-      usage.lastHourlyReset === hourKey ? usage.hourlyUsedSeconds : 0;
-  }
+  const usedSeconds =
+    usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
 
   return usedSeconds >= limitSeconds;
 }

@@ -11,9 +11,7 @@ import {
   isValidTimeString,
   parseTimeToMinutes,
   normalizeEndTime,
-  getCurrentHourKey,
   needsDailyReset,
-  needsHourlyReset,
   isWithinSchedule
 } from '~/lib/time';
 import * as i18n from '~/lib/i18n';
@@ -290,19 +288,6 @@ describe('normalizeEndTime', () => {
   });
 });
 
-describe('getCurrentHourKey', () => {
-  it('returns key in YYYY-MM-DD-HH format', () => {
-    const key = getCurrentHourKey();
-    expect(key).toMatch(/^\d{4}-\d{2}-\d{2}-\d{2}$/);
-  });
-
-  it('pads single-digit hours', () => {
-    const key = getCurrentHourKey();
-    const hour = key.split('-')[3];
-    expect(hour).toHaveLength(2);
-  });
-});
-
 describe('needsDailyReset', () => {
   it('returns true when dates differ', () => {
     const yesterday = new Date();
@@ -314,17 +299,6 @@ describe('needsDailyReset', () => {
   it('returns false when dates match', () => {
     const today = getTodayKey();
     expect(needsDailyReset(today)).toBe(false);
-  });
-});
-
-describe('needsHourlyReset', () => {
-  it('returns false for current hour', () => {
-    const currentHour = getCurrentHourKey();
-    expect(needsHourlyReset(currentHour)).toBe(false);
-  });
-
-  it('returns true for different hour', () => {
-    expect(needsHourlyReset('2024-01-01-12')).toBe(true);
   });
 });
 

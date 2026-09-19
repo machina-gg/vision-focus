@@ -70,9 +70,7 @@ export function BlocklistTab({
   // Get block style label for a block item
   const getBlockStyleLabel = useCallback((item: BlockItem): string => {
     if (item.timeLimit) {
-      return item.timeLimit.type === 'daily'
-        ? getMessage('dailyLimit')
-        : getMessage('hourlyLimit');
+      return getMessage('dailyLimit');
     }
     return getMessage('alwaysBlocked');
   }, []);

@@ -127,8 +127,7 @@ export async function waitForNoBlockRules(
  * 期限切れの Time Limit 使用実績のリセットを促す
  *
  * 実装は 1 分間隔の `time-limit-reset` アラームで `resetExpiredUsage()` を
- * 呼び、`lastDailyReset` / `lastHourlyReset` が現在の日付・時刻と違う
- * ドメインの使用秒数を 0 に戻す。
+ * 呼び、`lastDailyReset` が現在の日付と違うドメインの使用秒数を 0 に戻す。
  */
 export async function triggerTimeLimitReset(
   context: BrowserContext

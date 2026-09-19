@@ -96,18 +96,6 @@ describe('update-time-limit ハンドラ', () => {
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  it('時間単位の時間制限を設定する', async () => {
-    const timeLimit = { type: 'hourly' as const, limitSeconds: 600 };
-
-    await invoke(handler, { id: 'item-1', timeLimit });
-
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        blockList: [expect.objectContaining({ timeLimit })]
-      })
-    );
-  });
-
   it('timeLimit: null で制限を解除できる', async () => {
     vi.mocked(getSettings).mockResolvedValue({
       ...DEFAULT_SETTINGS,

@@ -93,15 +93,12 @@
 ### E2E カバー済み
 
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-001: Daily Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-002: Hourly Time Limit を設定できる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-003: Time Limit 超過時に newtab.html へリダイレクト（reason付き）
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily の使用実績は日付が変わるとリセットされる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-010: Hourly の使用実績は時刻が変わるとリセットされる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-006: 残り時間がポップアップで表示される
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-007: Time Limit 使用状況が Analytics タブで確認できる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-008: Pause 有効中に Time Limit 超過した場合もリダイレクトされない
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily リセット境界値テスト（23:59→00:00）
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-010: Hourly リセット境界値テスト（09:59→10:00）
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-011: 複数サイトで異なる Time Limit が同時に動作する
 
 ### 手動確認項目

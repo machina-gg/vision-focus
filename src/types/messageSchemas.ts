@@ -26,7 +26,7 @@ export type TrackerHeartbeatBody = z.infer<typeof TrackerHeartbeatBodySchema>;
 
 // Schema for update-time-limit message handler
 const TimeLimitSchema = z.object({
-  type: z.enum(['daily', 'hourly']),
+  type: z.literal('daily'),
   limitSeconds: z.number().positive()
 });
 
@@ -41,9 +41,7 @@ export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 const TimeLimitUsageSchema = z.object({
   domain: z.string(),
   dailyUsedSeconds: z.number(),
-  hourlyUsedSeconds: z.number(),
-  lastDailyReset: z.string(),
-  lastHourlyReset: z.string()
+  lastDailyReset: z.string()
 });
 
 const DailyStatSchema = z.object({

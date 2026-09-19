@@ -100,7 +100,6 @@ function PopupAppContent() {
                 <TimeLimitBadge
                   remainingSeconds={timeLimitInfo.remainingSeconds}
                   limitSeconds={timeLimitInfo.limitSeconds}
-                  limitType={timeLimitInfo.limitType}
                   compact
                 />
               </div>
