@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { storage } from '~/lib/storage';
+import { getVision, visionItem } from '~/lib/storage';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
@@ -12,7 +12,7 @@ import type {
 } from '~/types/storage';
 import type { FontSettings } from '~/types/font';
 import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
-import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
+import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
 interface UsePresetsOptions {
   vision: VisionSettings | undefined;
@@ -175,9 +175,7 @@ export function usePresets({
 
   useEffect(() => {
     const initialize = async () => {
-      const storedVision = (await storage.get('vision')) as
-        VisionSettings | undefined;
-      const visionData = storedVision || DEFAULT_VISION;
+      const visionData = await getVision();
       const presets = visionData.presets || [];
 
       if (presets.length > 0) {
@@ -285,7 +283,7 @@ export function usePresets({
         activePresetId:
           vision?.activePresetId === id ? null : vision?.activePresetId || null
       };
-      await storage.set('vision', toSave);
+      await visionItem.setValue(toSave);
       setVision(toSave);
     },
     [state.draftPresets, state.selectedPresetId, vision, setVision]
@@ -322,7 +320,7 @@ export function usePresets({
       presets: updatedPresets,
       activePresetId: vision?.activePresetId || null
     };
-    await storage.set('vision', toSave);
+    await visionItem.setValue(toSave);
     setVision(toSave);
     showSavedFeedback();
   }, [state, vision, setVision, showSavedFeedback]);
@@ -333,7 +331,7 @@ export function usePresets({
       ...vision,
       activePresetId: state.selectedPresetId
     };
-    await storage.set('vision', toSave);
+    await visionItem.setValue(toSave);
     setVision(toSave);
     showSavedFeedback();
     trackFeatureUse('preset_switch');
@@ -361,7 +359,7 @@ export function usePresets({
       presets: updatedPresets,
       activePresetId: vision?.activePresetId || null
     };
-    await storage.set('vision', toSave);
+    await visionItem.setValue(toSave);
     setVision(toSave);
     trackFeatureUse('preset_create');
   }, [state.presetName, state.draftPresets, vision, setVision]);

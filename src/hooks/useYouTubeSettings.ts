@@ -1,17 +1,20 @@
 import { useCallback } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
-import { storage } from '~/lib/storage';
+import {
+  getSettings,
+  getUnblockHistory,
+  unblockHistoryItem
+} from '~/lib/storage';
 import {
   YOUTUBE_DOMAIN,
   incrementYouTubeBlockCount
 } from '~/lib/youtubeBlockService';
 import type {
   AppSettings,
-  UnblockHistory,
+  TrackedSite,
   YouTubeSettings
 } from '~/types/storage';
-import { DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 interface UseYouTubeSettingsOptions {
   settings: AppSettings | undefined;
@@ -49,10 +52,7 @@ export function useYouTubeSettings({
         // 保存に失敗したときは表示を更新しない（画面は保存済みの値のまま残る）
         if (!response?.success) return;
 
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
 
         // YouTube ブロックの有効・無効の切り替えを追跡履歴に記録する
         if (!prevEnabled && newEnabled) {
@@ -72,45 +72,45 @@ export function useYouTubeSettings({
   return { handleYouTubeChange };
 }
 
-/** 追跡履歴を取得する（未保存なら既定値を返す） */
-async function getUnblockHistory(): Promise<UnblockHistory> {
-  const history = await storage.get<UnblockHistory>('unblockHistory');
-  return history ?? DEFAULT_UNBLOCK_HISTORY;
+/**
+ * 追跡履歴の 1 サイト分を差し替えて保存する。
+ *
+ * 未保存のときに読み出せる履歴は共有の既定値なので、
+ * 破壊的に書き換えず新しい履歴を組んでから保存する
+ */
+async function saveTrackedSite(site: TrackedSite): Promise<void> {
+  const current = await getUnblockHistory();
+  await unblockHistoryItem.setValue({
+    sites: { ...current.sites, [site.domain]: site }
+  });
 }
 
 /** YouTube をブロック中として追跡履歴に記録する */
 async function markYouTubeBlocked(): Promise<void> {
-  const history = await getUnblockHistory();
-  history.sites[YOUTUBE_DOMAIN] = {
+  await saveTrackedSite({
     domain: YOUTUBE_DOMAIN,
     status: 'blocked',
     blockedAt: new Date().toISOString(),
     unblockedAt: null,
     timeAfterUnblock: 0,
     lastActivity: null
-  };
-  await storage.set('unblockHistory', history);
+  });
 }
 
 /** YouTube のブロック解除を追跡履歴に記録する */
 async function markYouTubeUnblocked(): Promise<void> {
-  const history = await getUnblockHistory();
   const now = new Date().toISOString();
-  const existing = history.sites[YOUTUBE_DOMAIN];
+  const existing = (await getUnblockHistory()).sites[YOUTUBE_DOMAIN];
 
-  if (existing) {
-    existing.status = 'unblocked';
-    existing.unblockedAt = now;
-  } else {
-    history.sites[YOUTUBE_DOMAIN] = {
+  await saveTrackedSite({
+    ...(existing ?? {
       domain: YOUTUBE_DOMAIN,
-      status: 'unblocked',
       blockedAt: now,
-      unblockedAt: now,
       timeAfterUnblock: 0,
       lastActivity: null
-    };
-  }
-
-  await storage.set('unblockHistory', history);
+    }),
+    domain: YOUTUBE_DOMAIN,
+    status: 'unblocked',
+    unblockedAt: now
+  });
 }

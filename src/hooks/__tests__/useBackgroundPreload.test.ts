@@ -2,9 +2,7 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    get: vi.fn()
-  }
+  hasStoredVision: vi.fn()
 }));
 
 vi.mock('~/constants', async (importOriginal) => {
@@ -19,7 +17,7 @@ vi.mock('~/constants', async (importOriginal) => {
   };
 });
 
-import { storage } from '~/lib/storage';
+import { hasStoredVision } from '~/lib/storage';
 import { getBackgroundUrl, loadGoogleFont } from '~/constants';
 import { useBackgroundPreload } from '~/hooks/useBackgroundPreload';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
@@ -58,7 +56,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   MockImage.instances = [];
   vi.stubGlobal('Image', MockImage);
-  vi.mocked(storage.get).mockResolvedValue(undefined);
+  vi.mocked(hasStoredVision).mockResolvedValue(false);
 });
 
 afterEach(() => {
@@ -190,11 +188,7 @@ describe('useBackgroundPreload', () => {
 
   describe('ストレージ読み込み判定', () => {
     it('vision が保存済みなら読み込み完了とする', async () => {
-      vi.mocked(storage.get).mockResolvedValue({
-        defaultSettings: DEFAULT_DISPLAY_SETTINGS,
-        presets: [],
-        activePresetId: null
-      });
+      vi.mocked(hasStoredVision).mockResolvedValue(true);
 
       const { result } = renderHook(() =>
         useBackgroundPreload({ displaySettings: settings() })
@@ -203,7 +197,7 @@ describe('useBackgroundPreload', () => {
       await waitFor(() => {
         expect(result.current.isStorageLoaded).toBe(true);
       });
-      expect(storage.get).toHaveBeenCalledWith('vision');
+      expect(hasStoredVision).toHaveBeenCalled();
     });
 
     it('vision が未保存でもタイムアウト後に読み込み完了とする（初回利用者向け）', async () => {

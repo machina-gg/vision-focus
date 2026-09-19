@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useAnalytics } from '~/hooks/useAnalytics';
 import type { AnalyticsData, UnblockHistory } from '~/types/storage';
-import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
+import {
+  DEFAULT_ANALYTICS,
+  DEFAULT_SETTINGS,
+  DEFAULT_UNBLOCK_HISTORY
+} from '~/types/storage';
 
 // 依存モジュールをモック
 vi.mock('~/lib/messaging', () => ({
@@ -19,24 +23,41 @@ vi.mock('~/lib/domain', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn()
+  getAnalytics: vi.fn(),
+  getSettings: vi.fn(),
+  getUnblockHistory: vi.fn(),
+  analyticsItem: {
+    setValue: vi.fn()
+  },
+  unblockHistoryItem: {
+    setValue: vi.fn()
   }
 }));
 
 import { sendMessage } from '~/lib/messaging';
 import { isValidDomain } from '~/lib/domain';
-import { storage } from '~/lib/storage';
+import {
+  analyticsItem,
+  getAnalytics,
+  getSettings,
+  getUnblockHistory,
+  unblockHistoryItem
+} from '~/lib/storage';
 
-const mockStorageGet = vi.mocked(storage.get);
-const mockStorageSet = vi.mocked(storage.set);
+const mockGetAnalytics = vi.mocked(getAnalytics);
+const mockGetUnblockHistory = vi.mocked(getUnblockHistory);
+const mockSetAnalytics = vi.mocked(analyticsItem.setValue);
+const mockSetUnblockHistory = vi.mocked(unblockHistoryItem.setValue);
 const mockSendMessage = vi.mocked(sendMessage);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockStorageGet.mockResolvedValue(undefined);
-  mockStorageSet.mockResolvedValue(undefined);
+  // 未保存のときの読み出しは項目定義の fallback（既定値）になる
+  mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
+  mockGetUnblockHistory.mockResolvedValue(DEFAULT_UNBLOCK_HISTORY);
+  vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
+  mockSetAnalytics.mockResolvedValue(undefined);
+  mockSetUnblockHistory.mockResolvedValue(undefined);
 });
 
 describe('useAnalytics', () => {
@@ -73,9 +94,7 @@ describe('useAnalytics', () => {
           }
         }
       };
-      mockStorageGet
-        .mockResolvedValueOnce(mockAnalytics)
-        .mockResolvedValueOnce(DEFAULT_UNBLOCK_HISTORY);
+      mockGetAnalytics.mockResolvedValue(mockAnalytics);
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -93,8 +112,6 @@ describe('useAnalytics', () => {
 
   describe('handleResetAnalytics', () => {
     it('アナリティクスをリセットする', async () => {
-      mockStorageGet.mockResolvedValue(undefined);
-
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
       );
@@ -104,7 +121,7 @@ describe('useAnalytics', () => {
       });
 
       // analytics を空に設定
-      expect(mockStorageSet).toHaveBeenCalledWith('analytics', {
+      expect(mockSetAnalytics).toHaveBeenCalledWith({
         dailyStats: {},
         siteTime: {},
         siteCategories: {},
@@ -127,7 +144,7 @@ describe('useAnalytics', () => {
           }
         }
       };
-      mockStorageGet.mockResolvedValue(mockHistory);
+      mockGetUnblockHistory.mockResolvedValue(mockHistory);
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -138,14 +155,9 @@ describe('useAnalytics', () => {
       });
 
       // unblockHistoryの時間がリセットされたか確認
-      const setCall = mockStorageSet.mock.calls.find(
-        (call) => call[0] === 'unblockHistory'
-      );
-      if (setCall) {
-        const savedHistory = setCall[1] as UnblockHistory;
-        expect(savedHistory.sites['youtube.com'].timeAfterUnblock).toBe(0);
-        expect(savedHistory.sites['youtube.com'].lastActivity).toBeNull();
-      }
+      const savedHistory = mockSetUnblockHistory.mock.calls[0][0];
+      expect(savedHistory.sites['youtube.com'].timeAfterUnblock).toBe(0);
+      expect(savedHistory.sites['youtube.com'].lastActivity).toBeNull();
     });
   });
 
@@ -163,7 +175,7 @@ describe('useAnalytics', () => {
           }
         }
       };
-      mockStorageGet.mockResolvedValue(mockHistory);
+      mockGetUnblockHistory.mockResolvedValue(mockHistory);
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -173,19 +185,13 @@ describe('useAnalytics', () => {
         await result.current.handleStopTracking('youtube.com');
       });
 
-      const unblockCall = mockStorageSet.mock.calls.find(
-        (call) => call[0] === 'unblockHistory'
-      );
-      if (unblockCall) {
-        const savedHistory = unblockCall[1] as UnblockHistory;
-        expect(savedHistory.sites['youtube.com']).toBeUndefined();
-      }
+      const savedHistory = mockSetUnblockHistory.mock.calls[0][0];
+      expect(savedHistory.sites['youtube.com']).toBeUndefined();
     });
   });
 
   describe('handleRefreshAnalytics', () => {
     it('データを再読み込みする', async () => {
-      mockStorageGet.mockResolvedValue(undefined);
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
       );
@@ -194,14 +200,15 @@ describe('useAnalytics', () => {
         await result.current.handleRefreshAnalytics();
       });
 
-      // storage.getが呼ばれたことを確認
-      expect(mockStorageGet).toHaveBeenCalled();
+      // 保存済みデータの読み出しが呼ばれたことを確認
+      expect(mockGetAnalytics).toHaveBeenCalled();
+      expect(mockGetUnblockHistory).toHaveBeenCalled();
     });
   });
 
   describe('handleAddSiteToTrack', () => {
     it('新しいサイトをトラッキングに追加する', async () => {
-      mockStorageGet.mockResolvedValue({ sites: {} });
+      mockGetUnblockHistory.mockResolvedValue({ sites: {} });
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -211,18 +218,28 @@ describe('useAnalytics', () => {
         await result.current.handleAddSiteToTrack('youtube.com');
       });
 
-      const setCall = mockStorageSet.mock.calls.find(
-        (call) => call[0] === 'unblockHistory'
+      const saved = mockSetUnblockHistory.mock.calls[0][0];
+      expect(saved.sites['youtube.com']).toBeTruthy();
+      expect(saved.sites['youtube.com'].status).toBe('unblocked');
+    });
+
+    it('未保存のときに読み出した既定値を書き換えない', async () => {
+      // 共有の既定値を破壊すると、以降すべての呼び出し側に影響する
+      mockGetUnblockHistory.mockResolvedValue(DEFAULT_UNBLOCK_HISTORY);
+
+      const { result } = renderHook(() =>
+        useAnalytics({ setSettings: mockSetSettings })
       );
-      if (setCall) {
-        const saved = setCall[1] as UnblockHistory;
-        expect(saved.sites['youtube.com']).toBeTruthy();
-        expect(saved.sites['youtube.com'].status).toBe('unblocked');
-      }
+
+      await act(async () => {
+        await result.current.handleAddSiteToTrack('youtube.com');
+      });
+
+      expect(DEFAULT_UNBLOCK_HISTORY.sites['youtube.com']).toBeUndefined();
     });
 
     it('既にトラッキング中のサイトは追加しない', async () => {
-      mockStorageGet.mockResolvedValue({
+      mockGetUnblockHistory.mockResolvedValue({
         sites: {
           'youtube.com': {
             domain: 'youtube.com',
@@ -243,16 +260,13 @@ describe('useAnalytics', () => {
         await result.current.handleAddSiteToTrack('youtube.com');
       });
 
-      // storage.setは呼ばれない（handleAddSiteToTrack内で）
-      const addCalls = mockStorageSet.mock.calls.filter(
-        (call) => call[0] === 'unblockHistory'
-      );
-      expect(addCalls).toHaveLength(0);
+      // 履歴への書き込みは起きない（handleAddSiteToTrack内で）
+      expect(mockSetUnblockHistory).not.toHaveBeenCalled();
     });
 
     it('無効なドメインの場合は追加しない', async () => {
       vi.mocked(isValidDomain).mockReturnValue(false);
-      mockStorageGet.mockResolvedValue({ sites: {} });
+      mockGetUnblockHistory.mockResolvedValue({ sites: {} });
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -262,17 +276,13 @@ describe('useAnalytics', () => {
         await result.current.handleAddSiteToTrack('invalid');
       });
 
-      const addCalls = mockStorageSet.mock.calls.filter(
-        (call) => call[0] === 'unblockHistory'
-      );
-      expect(addCalls).toHaveLength(0);
+      expect(mockSetUnblockHistory).not.toHaveBeenCalled();
     });
   });
 
   describe('handleReblock', () => {
     it('add-blockメッセージを送信する', async () => {
       mockSendMessage.mockResolvedValue({ success: true });
-      mockStorageGet.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })

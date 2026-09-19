@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 import { normalizeEndTime } from '~/lib/time';
 import type { AppSettings, Schedule } from '~/types/storage';
 
@@ -70,7 +70,7 @@ export function useSchedules({
       : [...settings.schedules, newSchedule];
 
     const updated = { ...settings, schedules: updatedSchedules };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
 
     if (!editingSchedule) {
@@ -89,7 +89,7 @@ export function useSchedules({
         ...settings,
         schedules: settings.schedules.filter((s) => s.id !== id)
       };
-      await storage.set('settings', updated);
+      await settingsItem.setValue(updated);
       setSettings(updated);
     },
     [settings, setSettings]
@@ -104,7 +104,7 @@ export function useSchedules({
           s.id === id ? { ...s, enabled } : s
         )
       };
-      await storage.set('settings', updated);
+      await settingsItem.setValue(updated);
       setSettings(updated);
 
       // スケジュールを有効化したときは一時停止も解除する。
@@ -161,10 +161,7 @@ async function resumeBlocking(
 ): Promise<void> {
   try {
     await sendMessage('toggle-pause', { paused: false });
-    const latest = await storage.get<AppSettings>('settings');
-    if (latest) {
-      setSettings(latest);
-    }
+    setSettings(await getSettings());
   } catch {
     // 送信に失敗しても、スケジュールの変更自体は保存済みのため表示は保つ
   }
