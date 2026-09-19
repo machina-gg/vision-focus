@@ -21,5 +21,6 @@ declare module '@plasmohq/messaging' {
     'toggle-pause': object;
     'tracker-heartbeat': object;
     'update-time-limit': object;
+    'update-youtube-settings': object;
   }
 }

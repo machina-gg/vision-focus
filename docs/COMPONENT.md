@@ -526,6 +526,27 @@ function useAnalytics(period: 'today' | 'week' | 'month'): {
 
 ---
 
+### useYouTubeSettings
+
+YouTube 設定の保存フック。
+
+```typescript
+function useYouTubeSettings(props: {
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
+}): {
+  handleYouTubeChange: (youtube: YouTubeSettings) => Promise<void>;
+};
+```
+
+**機能**
+
+- 保存は background の `update-youtube-settings` ハンドラが行い、画面側は保存後の設定を読み直して反映する
+- ハンドラ側でブロックルールの更新と既存タブのブロックまで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
+- YouTube ブロックの有効・無効の切り替えを追跡履歴に記録する
+
+---
+
 ## 5. 型定義
 
 ### BlockItem
