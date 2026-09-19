@@ -97,7 +97,6 @@ export interface YouTubeSettings {
   hideShorts: boolean; // Hide Shorts shelf and tab
   hideRecommendations: boolean; // Hide recommended videos on home and watch pages
   hideComments: boolean; // Hide comment section
-  hideSidebar: boolean; // Hide related videos sidebar on watch page
   hideHomeFeed: boolean; // Hide home feed (show only search)
   timeLimit?: TimeLimit | null; // Optional time limit for YouTube usage
 }
@@ -140,7 +139,6 @@ export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
   hideShorts: false,
   hideRecommendations: false,
   hideComments: false,
-  hideSidebar: false,
   hideHomeFeed: false,
   timeLimit: null
 };

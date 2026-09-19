@@ -496,7 +496,6 @@ describe('getActiveBlockedDomains', () => {
           hideShorts: false,
           hideRecommendations: false,
           hideComments: false,
-          hideSidebar: false,
           hideHomeFeed: false,
           timeLimit: null
         }
@@ -537,7 +536,6 @@ describe('getActiveBlockedDomains', () => {
           hideShorts: false,
           hideRecommendations: false,
           hideComments: false,
-          hideSidebar: false,
           hideHomeFeed: false,
           timeLimit: null
         },
@@ -568,7 +566,6 @@ describe('getActiveBlockedDomains', () => {
           hideShorts: false,
           hideRecommendations: false,
           hideComments: false,
-          hideSidebar: false,
           hideHomeFeed: false,
           timeLimit: null
         }
