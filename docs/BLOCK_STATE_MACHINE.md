@@ -131,10 +131,10 @@ flowchart LR
 
 ## 関連ファイル
 
-| ファイル                          | 責務                             |
-| --------------------------------- | -------------------------------- |
-| `src/background/blocker.ts`       | メインのブロック判定、ルール更新 |
-| `src/background/time-limit.ts`    | 時間制限の判定と記録             |
-| `src/background/notifications.ts` | 通知判定と送信                   |
-| `src/background/index.ts`         | アラームによるリセット処理       |
-| `src/lib/blockService.ts`         | ブロック状態の一元管理（新規）   |
+| ファイル                                    | 責務                             |
+| ------------------------------------------- | -------------------------------- |
+| `src/background/blocker.ts`                 | メインのブロック判定、ルール更新 |
+| `src/background/time-limit.ts`              | 時間制限の判定と記録             |
+| `src/background/notifications.ts`           | 通知判定と送信                   |
+| `src/background/listeners/alarmHandlers.ts` | アラームによるリセット処理       |
+| `src/lib/blockService.ts`                   | ブロック状態の一元管理（新規）   |

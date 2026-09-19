@@ -17,7 +17,7 @@
 - インラインスタイル（Tailwind を使う）
 - default export（フレームワークのエントリファイル以外）
   - Next.js の場合: `app/` 配下のページコンポーネント
-  - Plasmo の場合: `newtab.tsx`, `popup.tsx`, `options.tsx`, `background/index.ts`, `contents/*.ts`
+  - WXT の場合: `src/entrypoints/` 配下のエントリ（`background.ts`, `*.content.ts`, 各画面の `main.tsx`）
 - PRD.md の無断変更（確認必須）
 - テストなしでの複雑なロジック実装
 - Git コマンドの `&&` 連結（権限パターンがマッチしなくなるため、個別に実行すること）
@@ -157,7 +157,7 @@
 
 | フレームワーク | パッケージ管理 | 用途     |
 | -------------- | -------------- | -------- |
-| Plasmo 0.90.x  | pnpm           | Chrome拡張 |
+| WXT            | pnpm           | Chrome拡張 |
 
 ### プロジェクトに応じて追加
 
@@ -173,25 +173,30 @@
 
 ## 9. ディレクトリ構成
 
-### Plasmo（Chrome拡張）プロジェクト
+### WXT（Chrome拡張）プロジェクト
 
 ```
 ├── src/
-│   ├── newtab.tsx          # 新しいタブページ
-│   ├── popup.tsx           # ポップアップ
-│   ├── options.tsx         # オプションページ
-│   ├── background/         # バックグラウンドスクリプト
-│   ├── contents/           # コンテンツスクリプト
+│   ├── entrypoints/        # WXT のエントリ（探索起点は wxt.config.ts の srcDir: 'src'）
+│   │   ├── newtab/         # 新しいタブページ（index.html + main.tsx + App.tsx）
+│   │   ├── popup/          # ポップアップ
+│   │   ├── options/        # オプションページ
+│   │   ├── background.ts   # Service Worker（defineBackground）
+│   │   └── *.content.ts    # コンテンツスクリプト（defineContentScript）
+│   ├── background/         # Service Worker の実装（init / handlers / listeners）
 │   ├── components/         # UIコンポーネント
 │   ├── hooks/              # カスタムフック
 │   ├── lib/                # ユーティリティ関数
 │   ├── types/              # 型定義
 │   ├── constants/          # 定数
-│   └── styles/             # グローバルCSS
-├── assets/                 # 静的アセット（アイコン、背景画像、i18n）
+│   ├── stories/            # Storybook のストーリー
+│   ├── styles/             # グローバルCSS
+│   └── assets/             # バンドルに含める画像（`?inline` で import）
+├── public/                 # 出力へそのままコピーされる静的ファイル（_locales / icon / 背景画像）
 ├── scripts/                # ビルド・ユーティリティスクリプト
 ├── .storybook/             # Storybook 設定
-└── docs/                   # ドキュメント
+├── docs/                   # ドキュメント
+└── wxt.config.ts           # WXT のビルド設定（manifest を含む）
 ```
 
 ### コロケーションルール
@@ -210,4 +215,4 @@
 
 ### 環境構築手順（/project:setup 時に参照）
 
-- [Plasmo セットアップ](./.claude/vibe-coding-utils/docs/chrome-extension/SETUP_PLASMO.md)
+- [WXT 公式ドキュメント](https://wxt.dev/)（ビルド設定は `wxt.config.ts`）
