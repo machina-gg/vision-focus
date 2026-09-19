@@ -261,20 +261,19 @@ Tailwind の 4px 単位スケールを使用。以下のサイズを**推奨値*
 
 ### 背景画像
 
-`assets/images/backgrounds/` を参照。
+`public/assets/images/backgrounds/` を参照。
 
 - デフォルト背景（default-1〜5）
 - 曜日別背景（monday〜sunday）
 
 ### ブランド
 
-`assets/` を参照。
-
-- icon.png（128x128）- Plasmoが自動リサイズ
+- `src/assets/icon.png`（128x128）- アプリ内で表示する分。`?inline` でバンドルに含める
+- `public/icon/{16,32,48,64,128}.png` - 拡張機能アイコン。WXT は自動リサイズしないため事前に生成して置く
 
 ### Chrome Web Store用
 
-`assets/store/` を参照（実装後に作成）。
+`assets/images/store/` を参照（ビルド対象外）。
 
 ## 10. 必要な画像一覧
 
@@ -288,28 +287,29 @@ VisionFocus は Chrome 拡張であり、LP やウェブサイトではないた
 
 ### ブランド
 
-| ファイル名 | パス             | サイズ  | 背景 | 備考                        |
-| ---------- | ---------------- | ------- | ---- | --------------------------- |
-| icon.png   | /assets/icon.png | 128x128 | 透過 | 既存。Plasmo が自動リサイズ |
+| ファイル名   | パス                | サイズ          | 背景 | 備考                                       |
+| ------------ | ------------------- | --------------- | ---- | ------------------------------------------ |
+| icon.png     | src/assets/icon.png | 128x128         | 透過 | 既存。アプリ内表示用                       |
+| {サイズ}.png | public/icon/        | 16/32/48/64/128 | 透過 | 既存。拡張機能アイコン（事前生成して配置） |
 
 ### ダッシュボード背景画像
 
 既存の背景画像を使用。追加画像は不要。
 
-| カテゴリ   | ファイル            | パス                        | サイズ    | 備考 |
-| ---------- | ------------------- | --------------------------- | --------- | ---- |
-| デフォルト | default-1〜5.webp   | /assets/images/backgrounds/ | 1920x1080 | 既存 |
-| 曜日別     | monday〜sunday.webp | /assets/images/backgrounds/ | 1920x1080 | 既存 |
+| カテゴリ   | ファイル            | パス                              | サイズ    | 備考 |
+| ---------- | ------------------- | --------------------------------- | --------- | ---- |
+| デフォルト | default-1〜5.webp   | public/assets/images/backgrounds/ | 1920x1080 | 既存 |
+| 曜日別     | monday〜sunday.webp | public/assets/images/backgrounds/ | 1920x1080 | 既存 |
 
 ### Chrome Web Store 用（本実装で追加）
 
-| ファイル名             | パス           | サイズ   | 背景 | プロンプト                             |
-| ---------------------- | -------------- | -------- | ---- | -------------------------------------- |
-| screenshot-popup.png   | /assets/store/ | 1280x800 | あり | ポップアップ画面のスクリーンショット   |
-| screenshot-newtab.png  | /assets/store/ | 1280x800 | あり | ダッシュボード画面のスクリーンショット |
-| screenshot-options.png | /assets/store/ | 1280x800 | あり | 設定画面のスクリーンショット           |
-| promo-small.png        | /assets/store/ | 440x280  | あり | ストア用プロモーション画像（小）       |
-| promo-marquee.png      | /assets/store/ | 1400x560 | あり | ストア用マーキー画像                   |
+| ファイル名             | パス                 | サイズ   | 背景 | プロンプト                             |
+| ---------------------- | -------------------- | -------- | ---- | -------------------------------------- |
+| screenshot-popup.png   | assets/images/store/ | 1280x800 | あり | ポップアップ画面のスクリーンショット   |
+| screenshot-newtab.png  | assets/images/store/ | 1280x800 | あり | ダッシュボード画面のスクリーンショット |
+| screenshot-options.png | assets/images/store/ | 1280x800 | あり | 設定画面のスクリーンショット           |
+| promo-small.png        | assets/images/store/ | 440x280  | あり | ストア用プロモーション画像（小）       |
+| promo-marquee.png      | assets/images/store/ | 1400x560 | あり | ストア用マーキー画像                   |
 
 ### 画像生成時の注意
 

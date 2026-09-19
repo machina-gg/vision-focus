@@ -7,22 +7,22 @@
 | カテゴリ           | 技術              | 備考                         |
 | ------------------ | ----------------- | ---------------------------- |
 | 拡張機能仕様       | Manifest V3       | Chrome拡張の最新仕様         |
-| フレームワーク     | Plasmo            | Chrome拡張開発フレームワーク |
+| フレームワーク     | WXT               | Chrome拡張開発フレームワーク |
 | 言語               | TypeScript 5.x    | 型安全性                     |
-| UIライブラリ       | React 18          | Plasmoのデフォルト           |
+| UIライブラリ       | React 18          | `@wxt-dev/module-react`      |
 | スタイリング       | Tailwind CSS 4.x  | ユーティリティファースト     |
 | バリデーション     | Zod               | ランタイム型検証             |
 | Linter / Formatter | ESLint / Prettier | コード品質                   |
-| パッケージ管理     | pnpm              | Plasmo推奨                   |
+| パッケージ管理     | pnpm              | -                            |
 | Node.js            | 24.x              | -                            |
 | 単体テスト         | Vitest            | -                            |
 | E2Eテスト          | Playwright        | -                            |
 
-### Plasmoの利点
+### WXTの利点
 
-- **ファイルベースルーティング**: popup.tsx, newtab.tsx 等を配置するだけで自動認識
+- **ファイルベースのエントリ**: `src/entrypoints/` に置くだけで自動認識
 - **HMR（Hot Module Replacement）**: 開発中のリアルタイム反映
-- **manifest.json 自動生成**: package.json の設定から自動生成
+- **manifest.json 自動生成**: エントリと `wxt.config.ts` の `manifest` から生成
 
 ### Chrome拡張固有
 
@@ -45,38 +45,50 @@
 
 ## 2. ディレクトリ構成
 
-Plasmoのファイルベース規約に従った構成。詳細は実際のソースコードを参照。
+WXTのファイルベース規約に従った構成。エントリの探索起点は `wxt.config.ts` の `srcDir: 'src'`。詳細は実際のソースコードを参照。
 
 ```
 vision-focus/
 ├── src/
-│   ├── popup.tsx             # ポップアップUI
-│   ├── newtab.tsx            # 新規タブ/ダッシュボード
-│   ├── options.tsx           # オプション画面
-│   ├── background/           # Service Worker
-│   ├── contents/             # Content Scripts
+│   ├── entrypoints/          # WXT のエントリ
+│   │   ├── popup/            # ポップアップUI（index.html + main.tsx + App.tsx）
+│   │   ├── newtab/           # 新規タブ/ダッシュボード
+│   │   ├── options/          # オプション画面
+│   │   ├── background.ts     # Service Worker
+│   │   ├── tracker.content.ts   # Content Script（滞在時間計測）
+│   │   └── youtube.content.ts   # Content Script（YouTube制御）
+│   ├── background/           # Service Worker の実装（init / handlers / listeners）
 │   ├── components/           # 共通コンポーネント
 │   ├── hooks/                # カスタムフック
 │   ├── lib/                  # ユーティリティ
 │   ├── constants/            # 定数定義
-│   └── types/                # 型定義
-├── assets/                   # 静的アセット
+│   ├── types/                # 型定義
+│   ├── stories/              # Storybook のストーリー
+│   ├── styles/               # グローバルCSS
+│   └── assets/               # バンドルに含める画像（`?inline` で import）
+├── public/                   # 出力へそのままコピーされる静的ファイル
 │   ├── _locales/             # 多言語リソース
-│   └── images/               # 画像
+│   ├── icon/                 # 拡張機能アイコン（16/32/48/64/128）
+│   └── assets/images/        # 背景画像
+├── assets/images/store/      # Chrome Web Store 掲載用画像（ビルド対象外）
 ├── docs/                     # ドキュメント
+├── wxt.config.ts             # WXT のビルド設定
 └── package.json
 ```
 
-### Plasmoファイル規約
+### WXTのエントリ規約
 
-| ファイル/ディレクトリ | 役割                   |
-| --------------------- | ---------------------- |
-| `popup.tsx`           | ポップアップ画面       |
-| `newtab.tsx`          | 新規タブオーバーライド |
-| `options.tsx`         | オプション画面         |
-| `background/index.ts` | Service Worker         |
-| `contents/*.ts`       | Content Scripts        |
-| `assets/`             | 静的アセット           |
+| ファイル/ディレクトリ            | 役割                                               |
+| -------------------------------- | -------------------------------------------------- |
+| `entrypoints/popup/index.html`   | ポップアップ画面（`popup.html` として出力）        |
+| `entrypoints/newtab/index.html`  | 新規タブオーバーライド（`newtab.html` として出力） |
+| `entrypoints/options/index.html` | オプション画面（`options.html` として出力）        |
+| `entrypoints/background.ts`      | Service Worker（`defineBackground`）               |
+| `entrypoints/*.content.ts`       | Content Scripts（`defineContentScript`）           |
+| `public/`                        | 出力へそのままコピーされる静的ファイル             |
+| `src/assets/`                    | バンドルに含める静的ファイル                       |
+
+ビルド成果物は `.output/chrome-mv3`（`pnpm build`）と `.output/chrome-mv3-dev`（`pnpm dev`）。
 
 ## 3. 状態管理
 
@@ -126,6 +138,16 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 - ユーザーの設定・分析データはローカルに保持
 - chrome.storage.local はChrome拡張の標準的なデータ保存先
 - 同期が必要な場合は chrome.storage.sync（8KB制限）も使用可能
+
+### 実装
+
+`@wxt-dev/storage` の `defineItem` で項目を定義する。local 領域のキーの一覧は
+`src/lib/storage.ts` だけが持ち、未保存時に返す既定値（`fallback`）も同じ場所で与える。
+
+- キーの接頭辞 `local:` は保存領域の指定で、`chrome.storage.local` 上の実キーは接頭辞を除いた名前になる
+- 値は JSON 文字列ではなく生のオブジェクトのまま保存される
+- 読み書きは同ファイルの公開関数（`getSettings()` / `updateSettings()` など）を通す。
+  変更の監視（`watch`）を張る background / Content Script は項目定義を直接使う
 
 ### 補足
 
@@ -221,7 +243,7 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 
 - chrome.i18n API を使用
 - ブラウザ言語設定による自動切替
-- メッセージファイル: `assets/_locales/{lang}/messages.json`
+- メッセージファイル: `public/_locales/{lang}/messages.json`
 
 ## 10. マネタイズ
 
