@@ -6,8 +6,8 @@ import type { AppSettings, BlockItem, TimeLimit } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
 // Mock dependencies
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/analytics', () => ({
@@ -25,7 +25,7 @@ vi.mock('~/lib/storage', () => ({
   }
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
 import { storage } from '~/lib/storage';
@@ -158,7 +158,7 @@ describe('useBlocklist', () => {
         domain: 'twitter.com',
         isWildcard: false
       });
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       vi.mocked(storage.get).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
@@ -173,9 +173,8 @@ describe('useBlocklist', () => {
         await result.current.handleAddDomain();
       });
 
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'add-block',
-        body: { domain: 'twitter.com' }
+      expect(sendMessage).toHaveBeenCalledWith('add-block', {
+        domain: 'twitter.com'
       });
       expect(trackFeatureUse).toHaveBeenCalledWith('block_add');
       expect(result.current.newDomain).toBe('');
@@ -188,7 +187,7 @@ describe('useBlocklist', () => {
         domain: 'twitter.com',
         isWildcard: false
       });
-      vi.mocked(sendToBackground).mockResolvedValue({
+      vi.mocked(sendMessage).mockResolvedValue({
         success: false,
         error: 'Backend error'
       });
@@ -213,7 +212,7 @@ describe('useBlocklist', () => {
         domain: 'twitter.com',
         isWildcard: false
       });
-      vi.mocked(sendToBackground).mockRejectedValue(new Error('Network error'));
+      vi.mocked(sendMessage).mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -238,7 +237,7 @@ describe('useBlocklist', () => {
         blockList: []
       };
 
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       vi.mocked(storage.get).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
@@ -249,16 +248,15 @@ describe('useBlocklist', () => {
         await result.current.handleRemoveDomain('test-id');
       });
 
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'remove-block',
-        body: { id: 'test-id' }
+      expect(sendMessage).toHaveBeenCalledWith('remove-block', {
+        id: 'test-id'
       });
       expect(trackFeatureUse).toHaveBeenCalledWith('block_remove');
       expect(mockSetSettings).toHaveBeenCalledWith(updatedSettings);
     });
 
     it('例外が発生してもエラーをスローしない', async () => {
-      vi.mocked(sendToBackground).mockRejectedValue(new Error('Network error'));
+      vi.mocked(sendMessage).mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() =>
         useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
@@ -280,7 +278,7 @@ describe('useBlocklist', () => {
         blockList: [{ ...mockBlockItem, enabled: false }]
       };
 
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       vi.mocked(storage.get).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
@@ -291,9 +289,9 @@ describe('useBlocklist', () => {
         await result.current.handleToggleDomain('test-id', false);
       });
 
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'toggle-block',
-        body: { id: 'test-id', enabled: false }
+      expect(sendMessage).toHaveBeenCalledWith('toggle-block', {
+        id: 'test-id',
+        enabled: false
       });
       expect(mockSetSettings).toHaveBeenCalledWith(updatedSettings);
     });
@@ -311,7 +309,7 @@ describe('useBlocklist', () => {
         blockList: [{ ...mockBlockItem, timeLimit }]
       };
 
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       vi.mocked(storage.get).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
@@ -322,9 +320,9 @@ describe('useBlocklist', () => {
         await result.current.handleUpdateTimeLimit('test-id', timeLimit);
       });
 
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'update-time-limit',
-        body: { id: 'test-id', timeLimit }
+      expect(sendMessage).toHaveBeenCalledWith('update-time-limit', {
+        id: 'test-id',
+        timeLimit
       });
       expect(mockSetSettings).toHaveBeenCalledWith(updatedSettings);
     });
@@ -335,7 +333,7 @@ describe('useBlocklist', () => {
         blockList: [{ ...mockBlockItem, timeLimit: null }]
       };
 
-      vi.mocked(sendToBackground).mockResolvedValue({ success: true });
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
       vi.mocked(storage.get).mockResolvedValue(updatedSettings);
 
       const { result } = renderHook(() =>
@@ -346,9 +344,9 @@ describe('useBlocklist', () => {
         await result.current.handleUpdateTimeLimit('test-id', null);
       });
 
-      expect(sendToBackground).toHaveBeenCalledWith({
-        name: 'update-time-limit',
-        body: { id: 'test-id', timeLimit: null }
+      expect(sendMessage).toHaveBeenCalledWith('update-time-limit', {
+        id: 'test-id',
+        timeLimit: null
       });
       expect(mockSetSettings).toHaveBeenCalledWith(updatedSettings);
     });

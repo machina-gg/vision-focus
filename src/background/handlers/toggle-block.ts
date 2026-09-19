@@ -1,5 +1,4 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import {
   getSettings,
   setSettings,
@@ -9,26 +8,20 @@ import {
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { getTodayKey } from '~/lib/time';
 import { trackEvent } from '~/lib/analytics';
-import type { ToggleBlockRequest, ToggleBlockResponse } from '~/types/messages';
 import type { DailyStat, SiteUnblockCount } from '~/types/storage';
 
-export type { ToggleBlockRequest, ToggleBlockResponse };
-
-const handler: PlasmoMessaging.MessageHandler<
-  ToggleBlockRequest,
-  ToggleBlockResponse
-> = async (req, res) => {
-  const { id, enabled } = req.body;
+export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
+  data
+}) => {
+  const { id, enabled } = data;
 
   // Validate input
   if (!id || typeof id !== 'string' || id.length === 0 || id.length > 100) {
-    res.send({ success: false, error: 'Invalid id' });
-    return;
+    return { success: false, error: 'Invalid id' };
   }
 
   if (typeof enabled !== 'boolean') {
-    res.send({ success: false, error: 'Invalid enabled value' });
-    return;
+    return { success: false, error: 'Invalid enabled value' };
   }
 
   const settings = await getSettings();
@@ -37,8 +30,7 @@ const handler: PlasmoMessaging.MessageHandler<
   const itemIndex = settings.blockList.findIndex((item) => item.id === id);
 
   if (itemIndex === -1) {
-    res.send({ success: false, error: 'Item not found' });
-    return;
+    return { success: false, error: 'Item not found' };
   }
 
   const item = settings.blockList[itemIndex];
@@ -58,7 +50,7 @@ const handler: PlasmoMessaging.MessageHandler<
     await incrementUnblockCount(domain);
   }
 
-  res.send({ success: true });
+  return { success: true };
 };
 
 // Increment unblock count for a domain
@@ -105,5 +97,3 @@ function hashDomain(domain: string): string {
   }
   return Math.abs(hash).toString(36);
 }
-
-export default handler;

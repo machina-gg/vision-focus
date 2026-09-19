@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { storage } from '~/lib/storage';
 import {
@@ -42,9 +42,8 @@ export function useYouTubeSettings({
       const newEnabled = youtube.enabled;
 
       try {
-        const response = await sendToBackground({
-          name: 'update-youtube-settings',
-          body: { youtube }
+        const response = await sendMessage('update-youtube-settings', {
+          youtube
         });
 
         // 保存に失敗したときは表示を更新しない（画面は保存済みの値のまま残る）

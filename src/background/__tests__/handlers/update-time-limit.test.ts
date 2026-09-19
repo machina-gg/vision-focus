@@ -13,7 +13,7 @@ vi.mock('../../blocker', () => ({
 
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules } from '../../blocker';
-import handler from '../../messages/update-time-limit';
+import { updateTimeLimitHandler as handler } from '../../handlers/update-time-limit';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
 interface Response {

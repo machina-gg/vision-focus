@@ -12,7 +12,7 @@ vi.mock('~/lib/storage', () => ({
 
 import { getTodayStats } from '../../tracker';
 import { getAllSiteBlockCounts } from '~/lib/storage';
-import handler from '../../messages/get-stats';
+import { getStatsHandler as handler } from '../../handlers/get-stats';
 
 interface Response {
   wasteTime: number;

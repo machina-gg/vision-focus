@@ -17,15 +17,15 @@ vi.mock('~/lib/storage', () => ({
   }
 }));
 
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/time', () => ({
   normalizeEndTime: vi.fn((time: string) => (time === '00:00' ? '24:00' : time))
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { storage } from '~/lib/storage';
 
@@ -463,7 +463,7 @@ describe('useSchedules', () => {
       };
 
       beforeEach(() => {
-        vi.mocked(sendToBackground).mockResolvedValue({
+        vi.mocked(sendMessage).mockResolvedValue({
           success: true,
           paused: false
         });
@@ -487,9 +487,8 @@ describe('useSchedules', () => {
           ...pausedSettings,
           schedules: [{ ...mockSchedule, enabled: true }]
         });
-        expect(sendToBackground).toHaveBeenCalledWith({
-          name: 'toggle-pause',
-          body: { paused: false }
+        expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
+          paused: false
         });
       });
 
@@ -509,7 +508,7 @@ describe('useSchedules', () => {
       });
 
       it('送信に失敗してもスケジュールの変更は残る（例外を外に投げない）', async () => {
-        vi.mocked(sendToBackground).mockRejectedValue(new Error('no receiver'));
+        vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
 
         const { result } = renderHook(() =>
           useSchedules({
@@ -541,7 +540,7 @@ describe('useSchedules', () => {
         await result.current.handleToggleSchedule('schedule-1', true);
       });
 
-      expect(sendToBackground).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('存在しないIDの場合、何も変更しない', async () => {

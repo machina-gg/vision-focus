@@ -6,8 +6,8 @@ import type { AnalyticsData, UnblockHistory } from '~/types/storage';
 import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 // 依存モジュールをモック
-vi.mock('@plasmohq/messaging', () => ({
-  sendToBackground: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/domain', () => ({
@@ -25,13 +25,13 @@ vi.mock('~/lib/storage', () => ({
   }
 }));
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 import { isValidDomain } from '~/lib/domain';
 import { storage } from '~/lib/storage';
 
 const mockStorageGet = vi.mocked(storage.get);
 const mockStorageSet = vi.mocked(storage.set);
-const mockSendToBackground = vi.mocked(sendToBackground);
+const mockSendMessage = vi.mocked(sendMessage);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -271,7 +271,7 @@ describe('useAnalytics', () => {
 
   describe('handleReblock', () => {
     it('add-blockメッセージを送信する', async () => {
-      mockSendToBackground.mockResolvedValue({ success: true });
+      mockSendMessage.mockResolvedValue({ success: true });
       mockStorageGet.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
@@ -282,9 +282,8 @@ describe('useAnalytics', () => {
         await result.current.handleReblock('youtube.com');
       });
 
-      expect(mockSendToBackground).toHaveBeenCalledWith({
-        name: 'add-block',
-        body: { domain: 'youtube.com' }
+      expect(mockSendMessage).toHaveBeenCalledWith('add-block', {
+        domain: 'youtube.com'
       });
     });
   });
