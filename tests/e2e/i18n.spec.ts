@@ -105,7 +105,7 @@ test.describe('i18n - 多言語対応', () => {
     // Options を開く
     const optionsPage = await openOptions(context, extensionId);
     await expect(optionsPage.locator(SELECTORS.options.title)).toHaveText(
-      'VisionFocus ダッシュボード'
+      'ダッシュボード'
     );
     await expect(
       optionsPage.locator(SELECTORS.options.blocklistTab)
@@ -124,7 +124,7 @@ test.describe('i18n - 多言語対応', () => {
     // Options を開く
     const optionsPage = await openOptions(context, extensionId);
     await expect(optionsPage.locator(SELECTORS.options.title)).toHaveText(
-      'VisionFocus Dashboard'
+      'Dashboard'
     );
 
     // 言語を日本語に変更する。
@@ -135,7 +135,7 @@ test.describe('i18n - 多言語対応', () => {
     // リロードで反映されることを確認
     await optionsPage.reload();
     await expect(optionsPage.locator(SELECTORS.options.title)).toHaveText(
-      'VisionFocus ダッシュボード'
+      'ダッシュボード'
     );
 
     await optionsPage.close();
