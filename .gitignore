@@ -26,6 +26,8 @@ storybook-static/
 # WXT
 .output/
 .wxt/
+# Security ワークフローが base ブランチから書き出す比較用の設定
+base.wxt.config.ts
 
 # Environment
 .env

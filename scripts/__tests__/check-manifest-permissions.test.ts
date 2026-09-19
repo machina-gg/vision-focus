@@ -3,19 +3,20 @@ import {
   diffPermissions,
   extractPermissions,
   formatDiffReport,
-  hasAddedPermissions
+  hasAddedPermissions,
+  isStaticManifest
 } from '../check-manifest-permissions';
 
 describe('extractPermissions', () => {
-  it('package.json から manifest の権限を抽出できる', () => {
-    const pkg = {
+  it('wxt.config.ts の default export から manifest の権限を抽出できる', () => {
+    const config = {
       manifest: {
         permissions: ['storage', 'tabs'],
         host_permissions: ['<all_urls>']
       }
     };
 
-    expect(extractPermissions(pkg)).toEqual({
+    expect(extractPermissions(config)).toEqual({
       permissions: ['storage', 'tabs'],
       hostPermissions: ['<all_urls>']
     });
@@ -98,5 +99,23 @@ describe('formatDiffReport', () => {
 
     expect(report).toContain('tabs');
     expect(report).toContain('<all_urls>');
+  });
+});
+
+describe('isStaticManifest', () => {
+  it('manifest がオブジェクトなら静的と判定する', () => {
+    expect(isStaticManifest({ manifest: { permissions: ['storage'] } })).toBe(
+      true
+    );
+  });
+
+  it('manifest が無い場合も静的と判定する', () => {
+    expect(isStaticManifest({})).toBe(true);
+  });
+
+  it('manifest が関数の場合は静的でないと判定する', () => {
+    expect(isStaticManifest({ manifest: () => ({ permissions: [] }) })).toBe(
+      false
+    );
   });
 });

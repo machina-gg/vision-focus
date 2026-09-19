@@ -23,7 +23,7 @@ VisionFocusは、非AIによる爆速な動作と月額$1.99という競合最�
 | カテゴリ           | 技術              |
 | ------------------ | ----------------- |
 | 拡張機能仕様       | Manifest V3       |
-| フレームワーク     | Plasmo            |
+| フレームワーク     | WXT               |
 | 言語               | TypeScript        |
 | UIライブラリ       | React             |
 | スタイリング       | Tailwind CSS      |
@@ -85,7 +85,7 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 | コマンド               | 説明                                       |
 | ---------------------- | ------------------------------------------ |
 | `pnpm dev`             | 開発サーバー起動（HMR対応）                |
-| `pnpm build`           | 本番ビルド（build/chrome-mv3-prod）        |
+| `pnpm build`           | 本番ビルド（.output/chrome-mv3）           |
 | `pnpm package`         | Chrome Web Store用zipファイル作成          |
 | `pnpm lint`            | ESLint 実行                                |
 | `pnpm format`          | Prettier でフォーマット                    |
@@ -195,13 +195,13 @@ pnpm test:e2e
 
 このプロジェクトを開発するには以下が必要です：
 
-| 項目         | 必須 | 説明                                 |
-| ------------ | ---- | ------------------------------------ |
-| Node.js 24.x | ✅   | JavaScript ランタイム                |
-| pnpm         | ✅   | パッケージマネージャー（Plasmo推奨） |
-| Claude Code  | ✅   | AI コーディングアシスタント          |
-| GitHub MCP   | ✅   | Issue 管理に必要                     |
-| Chrome       | ✅   | 開発・テスト用ブラウザ               |
+| 項目         | 必須 | 説明                        |
+| ------------ | ---- | --------------------------- |
+| Node.js 24.x | ✅   | JavaScript ランタイム       |
+| pnpm         | ✅   | パッケージマネージャー      |
+| Claude Code  | ✅   | AI コーディングアシスタント |
+| GitHub MCP   | ✅   | Issue 管理に必要            |
+| Chrome       | ✅   | 開発・テスト用ブラウザ      |
 
 ### セットアップ手順
 
@@ -232,7 +232,7 @@ pnpm test:e2e
 2. Chrome で `chrome://extensions` を開く
 3. 「デベロッパーモード」を有効化
 4. 「パッケージ化されていない拡張機能を読み込む」をクリック
-5. `build/chrome-mv3-dev` フォルダを選択
+5. `.output/chrome-mv3-dev` フォルダを選択
 
 ## License
 
