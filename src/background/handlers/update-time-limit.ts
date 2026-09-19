@@ -1,16 +1,16 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules } from '../blocker';
 import { UpdateTimeLimitBodySchema } from '~/types/messageSchemas';
 
 // Message handler for updating time limit for a blocked site
-const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const parsed = UpdateTimeLimitBodySchema.safeParse(req.body);
+export const updateTimeLimitHandler: MessageHandler<
+  'update-time-limit'
+> = async ({ data }) => {
+  const parsed = UpdateTimeLimitBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    res.send({ success: false, error: 'Invalid request body' });
-    return;
+    return { success: false, error: 'Invalid request body' };
   }
 
   const { id, timeLimit } = parsed.data;
@@ -20,8 +20,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const itemIndex = settings.blockList.findIndex((item) => item.id === id);
 
     if (itemIndex === -1) {
-      res.send({ success: false, error: 'Block item not found' });
-      return;
+      return { success: false, error: 'Block item not found' };
     }
 
     // Update the time limit
@@ -32,10 +31,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     // Update block rules (sites with time limits are handled differently)
     await updateBlockRules();
 
-    res.send({ success: true });
+    return { success: true };
   } catch {
-    res.send({ success: false, error: 'Failed to update time limit' });
+    return { success: false, error: 'Failed to update time limit' };
   }
 };
-
-export default handler;

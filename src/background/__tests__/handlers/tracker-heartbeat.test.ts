@@ -64,8 +64,8 @@ interface Response {
  */
 async function loadHandler() {
   vi.resetModules();
-  const mod = await import('../../messages/tracker-heartbeat');
-  return mod.default;
+  const mod = await import('../../handlers/tracker-heartbeat');
+  return mod.trackerHeartbeatHandler;
 }
 
 const RECORDED_SECONDS = Math.floor(

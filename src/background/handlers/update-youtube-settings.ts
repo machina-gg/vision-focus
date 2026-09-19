@@ -1,5 +1,4 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
@@ -11,12 +10,13 @@ import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
  * ブロックを background 側で完結させる。アクセスブロックが無効から有効に
  * 変わった場合だけ、開いている YouTube のタブをブロックする
  */
-const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const parsed = UpdateYouTubeSettingsBodySchema.safeParse(req.body);
+export const updateYouTubeSettingsHandler: MessageHandler<
+  'update-youtube-settings'
+> = async ({ data }) => {
+  const parsed = UpdateYouTubeSettingsBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    res.send({ success: false, error: 'Invalid request body' });
-    return;
+    return { success: false, error: 'Invalid request body' };
   }
 
   const { youtube } = parsed.data;
@@ -40,10 +40,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       await blockExistingTabs();
     }
 
-    res.send({ success: true });
+    return { success: true };
   } catch {
-    res.send({ success: false, error: 'Failed to update YouTube settings' });
+    return { success: false, error: 'Failed to update YouTube settings' };
   }
 };
-
-export default handler;

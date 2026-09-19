@@ -1,5 +1,4 @@
-import type { PlasmoMessaging } from '@plasmohq/messaging';
-
+import type { MessageHandler } from '~/lib/messaging';
 import { extractDomain, matchesDomain } from '~/lib/domain';
 import {
   getAnalytics,
@@ -192,12 +191,13 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
 }
 
 // Message handler
-const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const parsed = TrackerHeartbeatBodySchema.safeParse(req.body);
+export const trackerHeartbeatHandler: MessageHandler<
+  'tracker-heartbeat'
+> = async ({ data }) => {
+  const parsed = TrackerHeartbeatBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    res.send({ success: false, error: 'Invalid request body' });
-    return;
+    return { success: false, error: 'Invalid request body' };
   }
 
   const { url, status, timestamp } = parsed.data;
@@ -205,8 +205,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   // Extract domain from URL
   const domain = extractDomain(url);
   if (!domain) {
-    res.send({ success: false, error: 'Invalid URL' });
-    return;
+    return { success: false, error: 'Invalid URL' };
   }
 
   // Create a unique key for this page
@@ -252,7 +251,5 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     }
   }
 
-  res.send({ success: true });
+  return { success: true };
 };
-
-export default handler;

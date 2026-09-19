@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { DOMAIN_POLLING_MS } from '~/constants/intervals';
 import { getActiveTab } from '~/lib/chromeApi';
@@ -43,9 +43,8 @@ export function useCurrentDomain(): UseCurrentDomainReturn {
 
           // Get time limit info for this URL
           if (tab.url) {
-            const response = await sendToBackground({
-              name: 'get-remaining-time',
-              body: { url: tab.url }
+            const response = await sendMessage('get-remaining-time', {
+              url: tab.url
             });
             if (response.success && response.data) {
               setTimeLimitInfo(response.data);

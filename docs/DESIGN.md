@@ -23,7 +23,6 @@
 - **ファイルベースルーティング**: popup.tsx, newtab.tsx 等を配置するだけで自動認識
 - **HMR（Hot Module Replacement）**: 開発中のリアルタイム反映
 - **manifest.json 自動生成**: package.json の設定から自動生成
-- **@plasmohq/messaging**: コンテキスト間通信のシンプルなAPI
 
 ### Chrome拡張固有
 
@@ -35,7 +34,7 @@
 | サイトブロック | chrome.declarativeNetRequest | Manifest V3準拠のブロック       |
 | 新規タブ       | chrome.newtab override       | ダッシュボード表示              |
 | アラーム       | chrome.alarms API            | 定期処理（データ集計等）        |
-| メッセージング | @plasmohq/messaging          | Background↔UI間通信             |
+| メッセージング | @webext-core/messaging       | Background↔UI間通信             |
 
 ### 分析・出力用ライブラリ
 
@@ -98,12 +97,16 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 ### コンテキスト間通信
 
-@plasmohq/messaging を使用。
+@webext-core/messaging を使用。メッセージ名ごとの引数と戻り値は
+`src/lib/messaging.ts` の `ProtocolMap` で定義し、送信側（`sendMessage`）と
+受信側（`onMessage`）の双方を型で縛る。background 側のハンドラは
+`src/background/handlers/` に置き、name との対応は同ディレクトリの
+`index.ts` が `onMessage` で登録する。
 
 ```
-┌─────────────┐    @plasmohq/messaging          ┌─────────────┐
+┌─────────────┐   @webext-core/messaging        ┌─────────────┐
 │   Popup     │ <─────────────────────────────> │  Background │
-└─────────────┘         sendToBackground        └─────────────┘
+└─────────────┘           sendMessage           └─────────────┘
        ↑                                               ↑
        │          @wxt-dev/storage (自動同期)           │
        ↓                                               ↓

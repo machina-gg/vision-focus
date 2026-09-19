@@ -1,7 +1,12 @@
 /**
  * Centralized type definitions for background message handlers
  * Types are now inferred from Zod schemas in messageSchemas.ts to avoid duplication
+ *
+ * ここで定義した Request / Response を `src/lib/messaging.ts` の ProtocolMap が
+ * name ごとに束ねる。送信側の引数と戻り値はその ProtocolMap で縛られる
  */
+
+import type { TimeLimitInfo } from '~/lib/timeLimitService';
 
 // Re-export types inferred from Zod schemas
 export {
@@ -32,9 +37,7 @@ export interface RemoveBlockResponse {
   success: boolean;
 }
 
-// Get Stats
-export type GetStatsRequest = Record<string, never>;
-
+// Get Stats（引数を取らないため Request 型は持たない）
 export interface GetStatsResponse {
   wasteTime: number;
   investTime: number;
@@ -44,6 +47,16 @@ export interface GetStatsResponse {
     domain: string;
     count: number;
   } | null;
+}
+
+// Get Remaining Time (use GetRemainingTimeBody from messageSchemas.ts)
+export type GetRemainingTimeRequest =
+  import('./messageSchemas').GetRemainingTimeBody;
+
+export interface GetRemainingTimeResponse {
+  success: boolean;
+  data?: TimeLimitInfo | null;
+  error?: string;
 }
 
 // Set Site Category
@@ -68,11 +81,39 @@ export interface ToggleBlockResponse {
   error?: string;
 }
 
+// Toggle Pause
+export interface TogglePauseRequest {
+  paused: boolean;
+}
+
+export interface TogglePauseResponse {
+  success: boolean;
+  paused: boolean;
+}
+
 // Tracker Heartbeat (use TrackerHeartbeatBody from messageSchemas.ts)
 export type TrackerHeartbeatRequest =
   import('./messageSchemas').TrackerHeartbeatBody;
 
 export interface TrackerHeartbeatResponse {
+  success: boolean;
+  error?: string;
+}
+
+// Update Time Limit (use UpdateTimeLimitBody from messageSchemas.ts)
+export type UpdateTimeLimitRequest =
+  import('./messageSchemas').UpdateTimeLimitBody;
+
+export interface UpdateTimeLimitResponse {
+  success: boolean;
+  error?: string;
+}
+
+// Update YouTube Settings (use UpdateYouTubeSettingsBody from messageSchemas.ts)
+export type UpdateYouTubeSettingsRequest =
+  import('./messageSchemas').UpdateYouTubeSettingsBody;
+
+export interface UpdateYouTubeSettingsResponse {
   success: boolean;
   error?: string;
 }

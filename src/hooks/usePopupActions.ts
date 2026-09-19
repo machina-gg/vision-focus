@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import { setCurrentLanguage } from '~/lib/i18n';
@@ -82,10 +82,7 @@ export function usePopupActions({
   const handleBlock = useCallback(
     async (domain: string) => {
       try {
-        const response = await sendToBackground({
-          name: 'add-block',
-          body: { domain }
-        });
+        const response = await sendMessage('add-block', { domain });
         if (response.success) {
           clearDomain();
         } else {
@@ -100,10 +97,7 @@ export function usePopupActions({
 
   const handlePausedChange = useCallback(async (paused: boolean) => {
     try {
-      await sendToBackground({
-        name: 'toggle-pause',
-        body: { paused }
-      });
+      await sendMessage('toggle-pause', { paused });
     } catch {
       // Silently handle error
     }

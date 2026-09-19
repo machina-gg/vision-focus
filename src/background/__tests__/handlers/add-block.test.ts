@@ -25,7 +25,7 @@ import {
   setAnalytics
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import handler from '../../messages/add-block';
+import { addBlockHandler as handler } from '../../handlers/add-block';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_ANALYTICS,
