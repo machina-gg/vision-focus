@@ -1,25 +1,28 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn()
+  supportPromptItem: {
+    getValue: vi.fn(),
+    setValue: vi.fn()
   }
 }));
 
-import { storage } from '~/lib/storage';
+import { supportPromptItem } from '~/lib/storage';
 import { SUPPORT_PROMPT_SNOOZE_MS, BUY_ME_A_COFFEE_URL } from '~/constants';
 import {
-  DEFAULT_SUPPORT_PROMPT_STATE,
   dismissSupportPrompt,
   getSupportPromptState,
   markSupportPromptOpened,
   openSupportPage,
   shouldShowSupportPrompt
 } from '~/lib/supportPrompt';
+import {
+  DEFAULT_SUPPORT_PROMPT_STATE,
+  type SupportPromptState
+} from '~/types/storage';
 
-const mockGet = vi.mocked(storage.get);
-const mockSet = vi.mocked(storage.set);
+const mockGet = vi.mocked(supportPromptItem.getValue);
+const mockSet = vi.mocked(supportPromptItem.setValue);
 const mockTabsCreate = vi.fn();
 
 beforeEach(() => {
@@ -30,8 +33,20 @@ beforeEach(() => {
 });
 
 describe('getSupportPromptState', () => {
-  it('保存されていない場合は初期状態を返す', async () => {
-    mockGet.mockResolvedValue(undefined);
+  it('保存されていない場合は初期状態を返す（項目定義の fallback）', async () => {
+    mockGet.mockResolvedValue(DEFAULT_SUPPORT_PROMPT_STATE);
+
+    await expect(getSupportPromptState()).resolves.toEqual(
+      DEFAULT_SUPPORT_PROMPT_STATE
+    );
+  });
+
+  it('旧形式（文字列）が残っていても初期状態を返す', async () => {
+    // 実キーは変わらないため、旧実装が書いた JSON 文字列が同じキーに残りうる。
+    // fallback は null / undefined のときしか効かないのでガードで倒す
+    mockGet.mockResolvedValue(
+      '{"dismissedAt":1000,"opened":true}' as unknown as SupportPromptState
+    );
 
     await expect(getSupportPromptState()).resolves.toEqual(
       DEFAULT_SUPPORT_PROMPT_STATE
@@ -101,7 +116,7 @@ describe('dismissSupportPrompt', () => {
 
     await dismissSupportPrompt(12_345);
 
-    expect(mockSet).toHaveBeenCalledWith('supportPrompt', {
+    expect(mockSet).toHaveBeenCalledWith({
       dismissedAt: 12_345,
       opened: false
     });
@@ -112,7 +127,7 @@ describe('dismissSupportPrompt', () => {
 
     await dismissSupportPrompt(12_345);
 
-    expect(mockSet).toHaveBeenCalledWith('supportPrompt', {
+    expect(mockSet).toHaveBeenCalledWith({
       dismissedAt: 12_345,
       opened: true
     });
@@ -125,7 +140,7 @@ describe('markSupportPromptOpened', () => {
 
     await markSupportPromptOpened();
 
-    expect(mockSet).toHaveBeenCalledWith('supportPrompt', {
+    expect(mockSet).toHaveBeenCalledWith({
       dismissedAt: 500,
       opened: true
     });

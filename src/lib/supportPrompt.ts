@@ -6,29 +6,23 @@
  */
 
 import { SUPPORT_PROMPT_SNOOZE_MS, BUY_ME_A_COFFEE_URL } from '~/constants';
-import { storage } from './storage';
-
-const KEY = 'supportPrompt';
-
-export interface SupportPromptState {
-  /** 最後に閉じた時刻（epoch ms）。未操作なら null */
-  dismissedAt: number | null;
-  /** 支援ページを開いたことがあるか。true なら以降は表示しない */
-  opened: boolean;
-}
-
-export const DEFAULT_SUPPORT_PROMPT_STATE: SupportPromptState = {
-  dismissedAt: null,
-  opened: false
-};
+import {
+  DEFAULT_SUPPORT_PROMPT_STATE,
+  type SupportPromptState
+} from '~/types/storage';
+import { supportPromptItem } from './storage';
+import { objectOrFallback } from './storedValue';
 
 export async function getSupportPromptState(): Promise<SupportPromptState> {
-  const data = await storage.get<SupportPromptState>(KEY);
-  return data ?? DEFAULT_SUPPORT_PROMPT_STATE;
+  // 旧形式で残った値は項目定義の fallback では弾けないためガードを通す
+  return objectOrFallback(
+    await supportPromptItem.getValue(),
+    DEFAULT_SUPPORT_PROMPT_STATE
+  );
 }
 
 async function setSupportPromptState(state: SupportPromptState): Promise<void> {
-  await storage.set(KEY, state);
+  await supportPromptItem.setValue(state);
 }
 
 /**

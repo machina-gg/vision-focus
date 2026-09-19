@@ -14,9 +14,13 @@ vi.mock('~/lib/messaging', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn()
+  getSettings: vi.fn(),
+  getUnblockHistory: vi.fn(),
+  settingsItem: {
+    setValue: vi.fn()
+  },
+  unblockHistoryItem: {
+    setValue: vi.fn()
   }
 }));
 
@@ -26,7 +30,12 @@ vi.mock('~/lib/youtubeBlockService', () => ({
 }));
 
 import { sendMessage } from '~/lib/messaging';
-import { storage } from '~/lib/storage';
+import {
+  getSettings,
+  getUnblockHistory,
+  settingsItem,
+  unblockHistoryItem
+} from '~/lib/storage';
 import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
 
 const youtube = (
@@ -44,13 +53,10 @@ const settings = (current: YouTubeSettings): AppSettings => ({
 describe('useYouTubeSettings', () => {
   const setSettings = vi.fn();
 
-  /** storage.get のキーごとの戻り値を用意する */
+  /** 保存済みの設定と追跡履歴を用意する */
   function givenStorage(stored: AppSettings) {
-    vi.mocked(storage.get).mockImplementation(async (key: string) => {
-      if (key === 'settings') return stored;
-      if (key === 'unblockHistory') return DEFAULT_UNBLOCK_HISTORY;
-      return undefined;
-    });
+    vi.mocked(getSettings).mockResolvedValue(stored);
+    vi.mocked(getUnblockHistory).mockResolvedValue(DEFAULT_UNBLOCK_HISTORY);
   }
 
   beforeEach(() => {
@@ -72,7 +78,7 @@ describe('useYouTubeSettings', () => {
     expect(sendMessage).toHaveBeenCalledWith('update-youtube-settings', {
       youtube: next
     });
-    expect(storage.set).not.toHaveBeenCalledWith('settings', expect.anything());
+    expect(settingsItem.setValue).not.toHaveBeenCalled();
   });
 
   it('保存後にストレージから読み直して画面の設定を更新する', async () => {
@@ -146,8 +152,7 @@ describe('useYouTubeSettings', () => {
       });
 
       expect(incrementYouTubeBlockCount).toHaveBeenCalledOnce();
-      expect(storage.set).toHaveBeenCalledWith(
-        'unblockHistory',
+      expect(unblockHistoryItem.setValue).toHaveBeenCalledWith(
         expect.objectContaining({
           sites: expect.objectContaining({
             'youtube.com': expect.objectContaining({ status: 'blocked' })
@@ -169,8 +174,7 @@ describe('useYouTubeSettings', () => {
       });
 
       expect(incrementYouTubeBlockCount).not.toHaveBeenCalled();
-      expect(storage.set).toHaveBeenCalledWith(
-        'unblockHistory',
+      expect(unblockHistoryItem.setValue).toHaveBeenCalledWith(
         expect.objectContaining({
           sites: expect.objectContaining({
             'youtube.com': expect.objectContaining({ status: 'unblocked' })
@@ -194,7 +198,7 @@ describe('useYouTubeSettings', () => {
       });
 
       expect(incrementYouTubeBlockCount).not.toHaveBeenCalled();
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(unblockHistoryItem.setValue).not.toHaveBeenCalled();
     });
   });
 });
