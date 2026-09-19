@@ -1,9 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-type WatchCallback = (change: {
-  newValue: unknown;
-  oldValue?: unknown;
-}) => Promise<void>;
+import type { AppSettings } from '~/types/storage';
+
+type WatchCallback = (
+  newValue: AppSettings | undefined,
+  oldValue?: AppSettings
+) => Promise<void>;
 
 /**
  * resetModules でモジュールを読み直すとモック関数の実体も作り直されるため、
@@ -15,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  storage: { watch: mocks.watch }
+  settingsItem: { watch: mocks.watch }
 }));
 
 vi.mock('../../blocker', () => ({
@@ -23,7 +25,6 @@ vi.mock('../../blocker', () => ({
 }));
 
 import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
-import type { AppSettings } from '~/types/storage';
 
 async function load() {
   vi.resetModules();
@@ -32,11 +33,9 @@ async function load() {
 
   setupSettingsWatcher();
 
-  const config = mocks.watch.mock.calls[0][0] as Record<string, WatchCallback>;
-
   return {
     watch: mocks.watch,
-    watcher: config.settings,
+    watcher: mocks.watch.mock.calls[0][0] as WatchCallback,
     updateBlockRules: mocks.updateBlockRules
   };
 }
@@ -63,15 +62,13 @@ describe('setupSettingsWatcher', () => {
   it('settings の変更を監視する', async () => {
     const { watch } = await load();
 
-    expect(watch).toHaveBeenCalledWith(
-      expect.objectContaining({ settings: expect.any(Function) })
-    );
+    expect(watch).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('変更時にブロックルールを更新する', async () => {
     const { watcher, updateBlockRules } = await load();
 
-    await watcher({ newValue: settings() });
+    await watcher(settings());
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
@@ -79,7 +76,7 @@ describe('setupSettingsWatcher', () => {
   it('newValue が無い場合は何もしない', async () => {
     const { watcher, updateBlockRules } = await load();
 
-    await watcher({ newValue: undefined });
+    await watcher(undefined);
 
     expect(updateBlockRules).not.toHaveBeenCalled();
   });
@@ -87,12 +84,8 @@ describe('setupSettingsWatcher', () => {
   it('変更のたびにブロックルールを更新する（前回状態を持たない）', async () => {
     const { watcher, updateBlockRules } = await load();
 
-    await watcher({
-      newValue: settings({ blockList: [blockItem('a', true)] })
-    });
-    await watcher({
-      newValue: settings({ blockList: [blockItem('a', false)] })
-    });
+    await watcher(settings({ blockList: [blockItem('a', true)] }));
+    await watcher(settings({ blockList: [blockItem('a', false)] }));
 
     expect(updateBlockRules).toHaveBeenCalledTimes(2);
   });
@@ -102,8 +95,8 @@ describe('setupSettingsWatcher', () => {
     // watcher がこれを呼べばここで参照エラーになる（#392）
     const { watcher, updateBlockRules } = await load();
 
-    await watcher({
-      newValue: settings({
+    await watcher(
+      settings({
         paused: false,
         blockList: [blockItem('a', true)],
         youtube: {
@@ -112,7 +105,7 @@ describe('setupSettingsWatcher', () => {
           blockAccess: true
         }
       })
-    });
+    );
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });

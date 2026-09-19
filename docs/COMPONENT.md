@@ -377,20 +377,15 @@ graph TD
 
 ## 4. カスタムフック
 
-### useStorage（@plasmohq/storage/hook）
+### useStorageItem
 
-Plasmo提供のストレージ同期フック。chrome.storage の値をReactで自動同期。
+ストレージ同期フック。`@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を受け取り、chrome.storage の値を React で自動同期する。初期値は項目定義の `fallback`。
 
 ```typescript
-import { useStorage } from '@plasmohq/storage/hook';
+import { useStorageItem } from '~/hooks';
+import { settingsItem } from '~/lib/storage';
 
-const [settings, setSettings] = useStorage<AppSettings>(
-  {
-    key: 'settings',
-    instance: storage
-  },
-  DEFAULT_SETTINGS
-);
+const [settings, setSettings] = useStorageItem(settingsItem);
 ```
 
 ---

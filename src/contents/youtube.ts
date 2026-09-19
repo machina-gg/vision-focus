@@ -1,6 +1,6 @@
 import type { PlasmoCSConfig } from 'plasmo';
 
-import { Storage } from '@plasmohq/storage';
+import { analyticsItem, settingsItem } from '~/lib/storage';
 
 import type { YouTubeSettings, TimeLimitUsage } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
@@ -15,9 +15,6 @@ export const config: PlasmoCSConfig = {
   matches: ['*://*.youtube.com/*'],
   run_at: 'document_start'
 };
-
-// Storage instance
-const storage = new Storage({ area: 'local' });
 
 // CSS selectors for YouTube elements
 const SELECTORS = {
@@ -270,7 +267,7 @@ function setupObserver(): void {
 // Load analytics to check time limit
 async function loadTimeLimitState(): Promise<void> {
   try {
-    const raw = await storage.get('analytics');
+    const raw = await analyticsItem.getValue();
     const parsed = AnalyticsDataSchema.safeParse(raw);
     if (!parsed.success) {
       timeLimitExceeded = false;
@@ -286,15 +283,10 @@ async function loadTimeLimitState(): Promise<void> {
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
-    const stored = await storage.get<Record<string, unknown> | null>(
-      'settings'
-    );
-    if (stored && 'youtube' in stored) {
-      const raw = stored.youtube;
-      const parsed = YouTubeSettingsSchema.safeParse(raw);
-      if (parsed.success) {
-        currentSettings = parsed.data;
-      }
+    const stored = await settingsItem.getValue();
+    const parsed = YouTubeSettingsSchema.safeParse(stored?.youtube);
+    if (parsed.success) {
+      currentSettings = parsed.data;
     }
   } catch {
     // Use default settings on error
@@ -308,35 +300,41 @@ async function loadSettings(): Promise<void> {
 
 // Watch for settings and analytics changes
 function watchSettings(): void {
-  storage.watch({
-    settings: (change) => {
-      if (change.newValue && typeof change.newValue === 'object') {
-        const raw = (change.newValue as Record<string, unknown>).youtube;
-        const parsed = YouTubeSettingsSchema.safeParse(raw);
-        if (parsed.success) {
-          currentSettings = parsed.data;
-          // Re-check time limit when settings change (async IIFE to avoid .then)
-          void (async () => {
-            await loadTimeLimitState();
-            applyStyles(currentSettings);
-            handleDynamicContent();
-          })();
-        }
-      }
-    },
-    analytics: (change) => {
-      if (change.newValue && typeof change.newValue === 'object') {
-        const parsed = AnalyticsDataSchema.safeParse(change.newValue);
-        if (!parsed.success) return;
-        const usage = parsed.data.timeLimitUsage['youtube.com'];
-        const wasExceeded = timeLimitExceeded;
-        timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
+  const unwatchSettings = settingsItem.watch((newSettings) => {
+    const parsed = YouTubeSettingsSchema.safeParse(newSettings?.youtube);
+    if (!parsed.success) return;
 
-        if (wasExceeded !== timeLimitExceeded) {
-          applyStyles(currentSettings);
-        }
-      }
+    currentSettings = parsed.data;
+    // Re-check time limit when settings change (async IIFE to avoid .then)
+    void (async () => {
+      await loadTimeLimitState();
+      applyStyles(currentSettings);
+      handleDynamicContent();
+    })();
+  });
+
+  const unwatchAnalytics = analyticsItem.watch((newAnalytics) => {
+    const parsed = AnalyticsDataSchema.safeParse(newAnalytics);
+    if (!parsed.success) return;
+
+    const usage = parsed.data.timeLimitUsage['youtube.com'];
+    const wasExceeded = timeLimitExceeded;
+    timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
+
+    if (wasExceeded !== timeLimitExceeded) {
+      applyStyles(currentSettings);
     }
+  });
+
+  // ページが破棄されるときに監視を解除する。
+  // event.persisted が true のときは bfcache に入るだけで後から復帰しうるため、
+  // 解除すると復帰後に設定変更へ追従できなくなる
+  window.addEventListener('pagehide', (event) => {
+    if (event.persisted) return;
+
+    unwatchSettings();
+    unwatchAnalytics();
+    observer?.disconnect();
   });
 }
 

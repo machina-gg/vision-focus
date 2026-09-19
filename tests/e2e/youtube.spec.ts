@@ -325,7 +325,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     await updatePage.close();
 
-    // storage.watch が反応するまで待機
+    // settings の watch が反応するまで待機
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Shorts が非表示になることを確認

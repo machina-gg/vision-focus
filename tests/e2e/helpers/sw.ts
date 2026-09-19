@@ -25,7 +25,9 @@ export async function getServiceWorker(
 /**
  * storage を初期化して複数キーをまとめて書く
  *
- * @plasmohq/storage は値を JSON 文字列として保存するため、同じ形式で書く。
+ * @wxt-dev/storage は値を生のオブジェクトのまま保存するため、同じ形式で書く
+ * （キーは `local:` を除いた `settings` などで、接頭辞は保存領域の指定に
+ * しか使われない）。
  */
 export async function setupStorageViaSW(
   context: BrowserContext,
@@ -47,11 +49,7 @@ export async function setupStorageViaSW(
       // 場合は clear: false を指定する
       if (clear) await chrome.storage.local.clear();
 
-      const stringified: Record<string, string> = {};
-      for (const [key, value] of Object.entries(entries)) {
-        stringified[key] = JSON.stringify(value);
-      }
-      await chrome.storage.local.set(stringified);
+      await chrome.storage.local.set(entries);
     },
     JSON.stringify({ entries: data, clear })
   );
@@ -147,9 +145,8 @@ export async function getStorageViaSW<T = unknown>(
 
   return await sw.evaluate(async (key) => {
     const result = await chrome.storage.local.get(key);
-    const raw = result[key];
-    if (raw === undefined) return null;
-    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+    // @wxt-dev/storage は値を生のまま保存するので、読み出しも変換しない
+    return (result[key] ?? null) as T;
   }, key);
 }
 

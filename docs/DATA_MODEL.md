@@ -4,11 +4,18 @@ chrome.storage.local に保存するデータ構造の設計。
 
 ## ストレージキー一覧
 
-| キー        | 型             | 説明                                       |
-| ----------- | -------------- | ------------------------------------------ |
-| `settings`  | AppSettings    | アプリ設定（ブロックリスト、スケジュール） |
-| `vision`    | VisionSettings | ダッシュボード設定（プリセット含む）       |
-| `analytics` | AnalyticsData  | 分析データ（滞在時間、統計）               |
+読み書きは `@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を通す。値は**生のオブジェクトのまま**保存される（JSON 文字列ではない）。
+
+| 項目定義のキー         | chrome.storage.local のキー | 型             | 説明                                       |
+| ---------------------- | --------------------------- | -------------- | ------------------------------------------ |
+| `local:settings`       | `settings`                  | AppSettings    | アプリ設定（ブロックリスト、スケジュール） |
+| `local:vision`         | `vision`                    | VisionSettings | ダッシュボード設定（プリセット含む）       |
+| `local:analytics`      | `analytics`                 | AnalyticsData  | 分析データ（滞在時間、統計）               |
+| `local:unblockHistory` | `unblockHistory`            | UnblockHistory | 一時解除の履歴                             |
+
+`local:` は保存領域（local / session / sync / managed）を選ぶための接頭辞で、chrome.storage.local 上の実キーには含まれない。
+
+セッション限りの値（`lastBlockedDomain`）は項目定義を通さず `chrome.storage.session` を直接使う。
 
 ## エンティティ関連図
 

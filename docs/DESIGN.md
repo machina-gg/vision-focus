@@ -23,14 +23,13 @@
 - **ファイルベースルーティング**: popup.tsx, newtab.tsx 等を配置するだけで自動認識
 - **HMR（Hot Module Replacement）**: 開発中のリアルタイム反映
 - **manifest.json 自動生成**: package.json の設定から自動生成
-- **@plasmohq/storage**: chrome.storage の型安全なラッパー
 - **@plasmohq/messaging**: コンテキスト間通信のシンプルなAPI
 
 ### Chrome拡張固有
 
 | カテゴリ       | 技術                         | 用途                            |
 | -------------- | ---------------------------- | ------------------------------- |
-| データ保存     | @plasmohq/storage            | chrome.storage の型安全ラッパー |
+| データ保存     | @wxt-dev/storage             | chrome.storage の型安全ラッパー |
 | 多言語対応     | chrome.i18n API              | 英語/日本語の自動切替           |
 | タブ監視       | chrome.tabs API              | 滞在時間計測                    |
 | サイトブロック | chrome.declarativeNetRequest | Manifest V3準拠のブロック       |
@@ -88,10 +87,10 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 ### 状態管理戦略
 
-| コンテキスト                | 状態管理                         | 説明                                     |
-| --------------------------- | -------------------------------- | ---------------------------------------- |
-| Background (Service Worker) | @plasmohq/storage                | データの読み書き、他コンテキストへの通知 |
-| Popup / Newtab / Options    | React useState + useStorage hook | UIローカル状態 + ストレージ同期          |
+| コンテキスト                | 状態管理                             | 説明                                     |
+| --------------------------- | ------------------------------------ | ---------------------------------------- |
+| Background (Service Worker) | @wxt-dev/storage                     | データの読み書き、他コンテキストへの通知 |
+| Popup / Newtab / Options    | React useState + useStorageItem hook | UIローカル状態 + ストレージ同期          |
 
 ### データモデル
 
@@ -106,7 +105,7 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 │   Popup     │ <─────────────────────────────> │  Background │
 └─────────────┘         sendToBackground        └─────────────┘
        ↑                                               ↑
-       │          @plasmohq/storage (自動同期)          │
+       │          @wxt-dev/storage (自動同期)           │
        ↓                                               ↓
 ┌─────────────┐                                 ┌─────────────┐
 │   Newtab    │                                 │   Options   │

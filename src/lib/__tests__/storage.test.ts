@@ -1,14 +1,54 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// @plasmohq/storage をモック
-vi.mock('@plasmohq/storage', () => {
-  const mockStorage = {
-    get: vi.fn(),
+/**
+ * chrome.storage のモック
+ *
+ * @wxt-dev/storage は読み込み時に `globalThis.chrome` を掴むため、モジュールの
+ * import より前に用意する必要がある（vi.hoisted はモジュール評価より先に走る）。
+ * local 領域は実際に値を保持する簡易実装にして、保存形式（キーと値）まで検証する。
+ */
+const fakeChrome = vi.hoisted(() => {
+  const localData: Record<string, unknown> = {};
+
+  const localArea = {
+    get: async (keys?: string | string[]) => {
+      if (typeof keys === 'string') return { [keys]: localData[keys] };
+      if (Array.isArray(keys)) {
+        return Object.fromEntries(keys.map((key) => [key, localData[key]]));
+      }
+      return { ...localData };
+    },
+    set: async (items: Record<string, unknown>) => {
+      Object.assign(localData, items);
+    },
+    remove: async (key: string) => {
+      delete localData[key];
+    },
+    onChanged: {
+      addListener: vi.fn(),
+      removeListener: vi.fn()
+    }
+  };
+
+  const session = {
     set: vi.fn(),
+    get: vi.fn(),
     remove: vi.fn()
   };
+
+  // chrome オブジェクト自体は差し替えない（差し替えると @wxt-dev/storage が
+  // 掴んだ参照と食い違う）。テストごとに中身だけ初期化する
+  (globalThis as Record<string, unknown>).chrome = {
+    runtime: { id: 'test-extension' },
+    storage: { local: localArea, session }
+  };
+
   return {
-    Storage: vi.fn(() => mockStorage)
+    localData,
+    session,
+    reset: () => {
+      for (const key of Object.keys(localData)) delete localData[key];
+    }
   };
 });
 
@@ -39,35 +79,29 @@ import {
   DEFAULT_UNBLOCK_HISTORY
 } from '~/types/storage';
 
-// chrome.storage.session のモック
-const mockSessionSet = vi.fn();
-const mockSessionGet = vi.fn();
-const mockSessionRemove = vi.fn();
-
-// グローバルの chrome オブジェクトをモック
 beforeEach(() => {
   vi.clearAllMocks();
-  (globalThis as Record<string, unknown>).chrome = {
-    storage: {
-      session: {
-        set: mockSessionSet,
-        get: mockSessionGet,
-        remove: mockSessionRemove
-      }
-    }
-  };
+  fakeChrome.reset();
+});
+
+describe('保存形式', () => {
+  it('chrome.storage.local に生のオブジェクトを保存する（キーに local: は付かない）', async () => {
+    const settings = { ...DEFAULT_SETTINGS, paused: true };
+    await setSettings(settings);
+
+    expect(fakeChrome.localData).toEqual({ settings });
+    expect(fakeChrome.localData['local:settings']).toBeUndefined();
+  });
 });
 
 describe('getSettings', () => {
   it('データがある場合はそれを返す', async () => {
-    const mockData = { ...DEFAULT_SETTINGS, paused: true };
-    vi.mocked(storage.get).mockResolvedValue(mockData);
+    fakeChrome.localData.settings = { ...DEFAULT_SETTINGS, paused: true };
     const result = await getSettings();
     expect(result.paused).toBe(true);
   });
 
   it('データがない場合はデフォルトを返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue(undefined);
     const result = await getSettings();
     expect(result).toEqual(DEFAULT_SETTINGS);
   });
@@ -75,32 +109,32 @@ describe('getSettings', () => {
 
 describe('setSettings', () => {
   it('設定をストレージに保存する', async () => {
-    vi.mocked(storage.set).mockResolvedValue(undefined);
     await setSettings(DEFAULT_SETTINGS);
-    expect(storage.set).toHaveBeenCalledWith('settings', DEFAULT_SETTINGS);
+    expect(fakeChrome.localData.settings).toEqual(DEFAULT_SETTINGS);
   });
 });
 
 describe('updateSettings', () => {
   it('部分的に設定を更新する', async () => {
-    vi.mocked(storage.get).mockResolvedValue(DEFAULT_SETTINGS);
-    vi.mocked(storage.set).mockResolvedValue(undefined);
+    fakeChrome.localData.settings = DEFAULT_SETTINGS;
     const result = await updateSettings({ paused: true });
+
     expect(result.paused).toBe(true);
-    expect(storage.set).toHaveBeenCalledTimes(1);
+    expect(fakeChrome.localData.settings).toEqual({
+      ...DEFAULT_SETTINGS,
+      paused: true
+    });
   });
 });
 
 describe('getVision', () => {
   it('データがある場合はそれを返す', async () => {
-    const mockData = { ...DEFAULT_VISION, activePresetId: 'test' };
-    vi.mocked(storage.get).mockResolvedValue(mockData);
+    fakeChrome.localData.vision = { ...DEFAULT_VISION, activePresetId: 'test' };
     const result = await getVision();
     expect(result.activePresetId).toBe('test');
   });
 
   it('データがない場合はデフォルトを返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue(undefined);
     const result = await getVision();
     expect(result).toEqual(DEFAULT_VISION);
   });
@@ -108,15 +142,14 @@ describe('getVision', () => {
 
 describe('setVision', () => {
   it('ビジョン設定を保存する', async () => {
-    vi.mocked(storage.set).mockResolvedValue(undefined);
     await setVision(DEFAULT_VISION);
-    expect(storage.set).toHaveBeenCalledWith('vision', DEFAULT_VISION);
+    expect(fakeChrome.localData.vision).toEqual(DEFAULT_VISION);
   });
 });
 
 describe('getAnalytics', () => {
   it('データがある場合はそれを返す', async () => {
-    const mockData = {
+    fakeChrome.localData.analytics = {
       ...DEFAULT_ANALYTICS,
       dailyStats: {
         '2024-06-12': {
@@ -128,13 +161,11 @@ describe('getAnalytics', () => {
         }
       }
     };
-    vi.mocked(storage.get).mockResolvedValue(mockData);
     const result = await getAnalytics();
     expect(result.dailyStats['2024-06-12'].wasteTime).toBe(100);
   });
 
   it('データがない場合はデフォルトを返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue(undefined);
     const result = await getAnalytics();
     expect(result).toEqual(DEFAULT_ANALYTICS);
   });
@@ -142,15 +173,13 @@ describe('getAnalytics', () => {
 
 describe('setAnalytics', () => {
   it('アナリティクスデータを保存する', async () => {
-    vi.mocked(storage.set).mockResolvedValue(undefined);
     await setAnalytics(DEFAULT_ANALYTICS);
-    expect(storage.set).toHaveBeenCalledWith('analytics', DEFAULT_ANALYTICS);
+    expect(fakeChrome.localData.analytics).toEqual(DEFAULT_ANALYTICS);
   });
 });
 
 describe('getUnblockHistory', () => {
   it('データがない場合はデフォルトを返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue(undefined);
     const result = await getUnblockHistory();
     expect(result).toEqual(DEFAULT_UNBLOCK_HISTORY);
   });
@@ -158,10 +187,8 @@ describe('getUnblockHistory', () => {
 
 describe('setUnblockHistory', () => {
   it('アンブロック履歴を保存する', async () => {
-    vi.mocked(storage.set).mockResolvedValue(undefined);
     await setUnblockHistory(DEFAULT_UNBLOCK_HISTORY);
-    expect(storage.set).toHaveBeenCalledWith(
-      'unblockHistory',
+    expect(fakeChrome.localData.unblockHistory).toEqual(
       DEFAULT_UNBLOCK_HISTORY
     );
   });
@@ -169,11 +196,6 @@ describe('setUnblockHistory', () => {
 
 describe('getAllStorage', () => {
   it('全ストレージデータを返す', async () => {
-    vi.mocked(storage.get)
-      .mockResolvedValueOnce(DEFAULT_SETTINGS)
-      .mockResolvedValueOnce(DEFAULT_VISION)
-      .mockResolvedValueOnce(DEFAULT_ANALYTICS)
-      .mockResolvedValueOnce(DEFAULT_UNBLOCK_HISTORY);
     const result = await getAllStorage();
     expect(result.settings).toEqual(DEFAULT_SETTINGS);
     expect(result.vision).toEqual(DEFAULT_VISION);
@@ -184,29 +206,25 @@ describe('getAllStorage', () => {
 
 describe('clearAllStorage', () => {
   it('全ストレージキーを削除する', async () => {
-    vi.mocked(storage.remove).mockResolvedValue(undefined);
+    fakeChrome.localData.settings = DEFAULT_SETTINGS;
+    fakeChrome.localData.vision = DEFAULT_VISION;
+    fakeChrome.localData.analytics = DEFAULT_ANALYTICS;
+    fakeChrome.localData.unblockHistory = DEFAULT_UNBLOCK_HISTORY;
+
     await clearAllStorage();
-    expect(storage.remove).toHaveBeenCalledTimes(4);
+
+    expect(fakeChrome.localData).toEqual({});
   });
 });
 
 describe('incrementSiteBlockCount', () => {
   it('新規ドメインのカウントを1にする', async () => {
-    vi.mocked(storage.get).mockResolvedValue(DEFAULT_ANALYTICS);
-    vi.mocked(storage.set).mockResolvedValue(undefined);
     await incrementSiteBlockCount('youtube.com');
-    const savedData = vi.mocked(storage.set).mock.calls[0][1];
-    expect(
-      (
-        savedData as Record<string, unknown> & {
-          siteBlockCounts: Record<string, { count: number }>;
-        }
-      ).siteBlockCounts['youtube.com'].count
-    ).toBe(1);
+    expect(await getSiteBlockCount('youtube.com')).toBe(1);
   });
 
   it('既存ドメインのカウントをインクリメントする', async () => {
-    vi.mocked(storage.get).mockResolvedValue({
+    fakeChrome.localData.analytics = {
       ...DEFAULT_ANALYTICS,
       siteBlockCounts: {
         'youtube.com': {
@@ -215,46 +233,24 @@ describe('incrementSiteBlockCount', () => {
           lastBlocked: '2024-06-12T00:00:00Z'
         }
       }
-    });
-    vi.mocked(storage.set).mockResolvedValue(undefined);
+    };
+
     await incrementSiteBlockCount('youtube.com');
-    const savedData = vi.mocked(storage.set).mock.calls[0][1];
-    expect(
-      (
-        savedData as Record<string, unknown> & {
-          siteBlockCounts: Record<string, { count: number }>;
-        }
-      ).siteBlockCounts['youtube.com'].count
-    ).toBe(6);
+
+    expect(await getSiteBlockCount('youtube.com')).toBe(6);
   });
 });
 
 describe('getSiteBlockCount', () => {
-  it('存在するドメインのカウントを返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue({
-      ...DEFAULT_ANALYTICS,
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 10,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    });
-    const count = await getSiteBlockCount('youtube.com');
-    expect(count).toBe(10);
-  });
-
   it('存在しないドメインは0を返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue(DEFAULT_ANALYTICS);
-    const count = await getSiteBlockCount('youtube.com');
-    expect(count).toBe(0);
+    fakeChrome.localData.analytics = DEFAULT_ANALYTICS;
+    expect(await getSiteBlockCount('youtube.com')).toBe(0);
   });
 });
 
 describe('getAllSiteBlockCounts', () => {
   it('カウント降順でソートして返す', async () => {
-    vi.mocked(storage.get).mockResolvedValue({
+    fakeChrome.localData.analytics = {
       ...DEFAULT_ANALYTICS,
       siteBlockCounts: {
         'youtube.com': {
@@ -268,18 +264,40 @@ describe('getAllSiteBlockCounts', () => {
           lastBlocked: '2024-06-12T00:00:00Z'
         }
       }
-    });
+    };
+
     const counts = await getAllSiteBlockCounts();
+
     expect(counts[0].domain).toBe('twitter.com');
     expect(counts[1].domain).toBe('youtube.com');
   });
 });
 
+describe('storage（キー指定の互換オブジェクト）', () => {
+  it('未保存のキーは undefined を返す', async () => {
+    expect(await storage.get('vision')).toBeUndefined();
+  });
+
+  it('生のオブジェクトで保存し、同じ値を読み出せる', async () => {
+    await storage.set('vision', DEFAULT_VISION);
+
+    expect(fakeChrome.localData.vision).toEqual(DEFAULT_VISION);
+    expect(await storage.get('vision')).toEqual(DEFAULT_VISION);
+  });
+
+  it('remove で削除できる', async () => {
+    await storage.set('vision', DEFAULT_VISION);
+    await storage.remove('vision');
+
+    expect(await storage.get('vision')).toBeUndefined();
+  });
+});
+
 describe('setLastBlockedDomain', () => {
   it('セッションストレージにドメインを保存する', async () => {
-    mockSessionSet.mockResolvedValue(undefined);
+    fakeChrome.session.set.mockResolvedValue(undefined);
     await setLastBlockedDomain('youtube.com');
-    expect(mockSessionSet).toHaveBeenCalledWith({
+    expect(fakeChrome.session.set).toHaveBeenCalledWith({
       lastBlockedDomain: 'youtube.com'
     });
   });
@@ -287,13 +305,15 @@ describe('setLastBlockedDomain', () => {
 
 describe('getLastBlockedDomain', () => {
   it('保存されたドメインを返す', async () => {
-    mockSessionGet.mockResolvedValue({ lastBlockedDomain: 'youtube.com' });
+    fakeChrome.session.get.mockResolvedValue({
+      lastBlockedDomain: 'youtube.com'
+    });
     const result = await getLastBlockedDomain();
     expect(result).toBe('youtube.com');
   });
 
   it('保存されていない場合はnullを返す', async () => {
-    mockSessionGet.mockResolvedValue({});
+    fakeChrome.session.get.mockResolvedValue({});
     const result = await getLastBlockedDomain();
     expect(result).toBeNull();
   });
@@ -301,8 +321,8 @@ describe('getLastBlockedDomain', () => {
 
 describe('clearLastBlockedDomain', () => {
   it('セッションストレージからドメインを削除する', async () => {
-    mockSessionRemove.mockResolvedValue(undefined);
+    fakeChrome.session.remove.mockResolvedValue(undefined);
     await clearLastBlockedDomain();
-    expect(mockSessionRemove).toHaveBeenCalledWith('lastBlockedDomain');
+    expect(fakeChrome.session.remove).toHaveBeenCalledWith('lastBlockedDomain');
   });
 });
