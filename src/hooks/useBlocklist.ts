@@ -3,7 +3,7 @@ import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 import type {
   AppSettings,
   TimeLimit,
@@ -61,10 +61,7 @@ export function useBlocklist({
         trackFeatureUse('block_add');
         setNewDomain('');
         setBlockError('');
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } else {
         setBlockError(response.error || 'Failed to add domain');
       }
@@ -78,10 +75,7 @@ export function useBlocklist({
       try {
         await sendMessage('remove-block', { id });
         trackFeatureUse('block_remove');
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -93,10 +87,7 @@ export function useBlocklist({
     async (id: string, enabled: boolean) => {
       try {
         await sendMessage('toggle-block', { id, enabled });
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -108,10 +99,7 @@ export function useBlocklist({
     async (id: string, timeLimit: TimeLimit | null) => {
       try {
         await sendMessage('update-time-limit', { id, timeLimit });
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -128,7 +116,7 @@ export function useBlocklist({
           ...settings,
           notifications
         };
-        await storage.set('settings', updatedSettings);
+        await settingsItem.setValue(updatedSettings);
         setSettings(updatedSettings);
       } catch {
         // Silently handle error

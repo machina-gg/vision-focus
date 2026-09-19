@@ -5,27 +5,23 @@ import { isStoredObject, objectOrFallback } from './storedValue';
 import {
   DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
+  DEFAULT_SUPPORT_PROMPT_STATE,
   DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_VISION,
   type AnalyticsData,
   type AppSettings,
   type StorageSchema,
+  type SupportPromptState,
   type UnblockHistory,
   type VisionSettings
 } from '~/types/storage';
 
 /**
- * local 領域に置くキー。
+ * ストレージ項目の定義。local 領域のキーはこの一覧だけが持つ。
  *
  * `local:` は @wxt-dev/storage が保存領域を選ぶための接頭辞であり、
  * chrome.storage.local 上の実キーは接頭辞を除いた `settings` などになる。
  * 値は生のオブジェクトのまま保存される（JSON 文字列ではない）。
- */
-type LocalStorageKey =
-  'settings' | 'vision' | 'analytics' | 'unblockHistory' | 'supportPrompt';
-
-/**
- * ストレージ項目の定義。
  *
  * `fallback` は値が未保存のときに `getValue()` / `watch()` が返す既定値で、
  * 呼び出し側でのデフォルト補完は不要になる。
@@ -51,29 +47,10 @@ export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
   { fallback: DEFAULT_UNBLOCK_HISTORY }
 );
 
-/**
- * キー指定で local 領域を読み書きする互換オブジェクト。
- *
- * 項目定義（上記の `*Item`）を使わない既存の呼び出し側（src/hooks 配下など）を
- * 残したまま保存ライブラリを入れ替えるための層。呼び出し側の移行は別 PR で行う
- * （machina-gg/vision-focus#399）。
- */
-export const storage = {
-  /**
-   * 未保存なら undefined を返す（`!== undefined` で判定する呼び出し側があるため null にしない）。
-   * 旧形式（文字列）が残っていた場合も未保存として扱い、呼び出し側の既定値に任せる
-   */
-  async get<T>(key: LocalStorageKey): Promise<T | undefined> {
-    const value = await extensionStorage.getItem<T>(`local:${key}`);
-    return isStoredObject(value) ? value : undefined;
-  },
-  async set<T>(key: LocalStorageKey, value: T): Promise<void> {
-    await extensionStorage.setItem<T>(`local:${key}`, value);
-  },
-  async remove(key: LocalStorageKey): Promise<void> {
-    await extensionStorage.removeItem(`local:${key}`);
-  }
-};
+export const supportPromptItem =
+  extensionStorage.defineItem<SupportPromptState>('local:supportPrompt', {
+    fallback: DEFAULT_SUPPORT_PROMPT_STATE
+  });
 
 // Get settings
 export async function getSettings(): Promise<AppSettings> {
@@ -103,6 +80,19 @@ export async function getVision(): Promise<VisionSettings> {
 // Set vision settings
 export async function setVision(vision: VisionSettings): Promise<void> {
   await visionItem.setValue(vision);
+}
+
+/**
+ * vision が保存済みかどうか。
+ *
+ * 項目定義の `getValue()` は未保存でも `fallback` を返すため、
+ * 「未保存」と「既定値が保存されている」を区別したい呼び出し側はこちらを使う
+ * （旧形式で残った値も未保存として扱う）。
+ */
+export async function hasStoredVision(): Promise<boolean> {
+  return isStoredObject(
+    await extensionStorage.getItem<VisionSettings>(visionItem.key)
+  );
 }
 
 // Get analytics data

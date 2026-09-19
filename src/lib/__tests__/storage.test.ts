@@ -70,13 +70,16 @@ import {
   setLastBlockedDomain,
   getLastBlockedDomain,
   clearLastBlockedDomain,
-  storage
+  hasStoredVision,
+  visionItem,
+  supportPromptItem
 } from '~/lib/storage';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
   DEFAULT_ANALYTICS,
-  DEFAULT_UNBLOCK_HISTORY
+  DEFAULT_UNBLOCK_HISTORY,
+  DEFAULT_SUPPORT_PROMPT_STATE
 } from '~/types/storage';
 
 beforeEach(() => {
@@ -110,8 +113,8 @@ describe('保存形式', () => {
     expect(await getVision()).toEqual(DEFAULT_VISION);
     expect(await getAnalytics()).toEqual(DEFAULT_ANALYTICS);
     expect(await getUnblockHistory()).toEqual(DEFAULT_UNBLOCK_HISTORY);
-    // 互換オブジェクト経由でも未設定として扱う（呼び出し側の既定値に任せる）
-    expect(await storage.get('settings')).toBeUndefined();
+    // 未保存判定でも旧形式は「保存されていない」として扱う
+    expect(await hasStoredVision()).toBe(false);
   });
 });
 
@@ -294,23 +297,39 @@ describe('getAllSiteBlockCounts', () => {
   });
 });
 
-describe('storage（キー指定の互換オブジェクト）', () => {
-  it('未保存のキーは undefined を返す', async () => {
-    expect(await storage.get('vision')).toBeUndefined();
+describe('hasStoredVision', () => {
+  it('未保存なら false を返す', async () => {
+    expect(await hasStoredVision()).toBe(false);
+  });
+
+  it('保存済みなら true を返す', async () => {
+    await setVision(DEFAULT_VISION);
+
+    expect(await hasStoredVision()).toBe(true);
+  });
+
+  it('削除すると false に戻る', async () => {
+    await setVision(DEFAULT_VISION);
+    await visionItem.removeValue();
+
+    expect(await hasStoredVision()).toBe(false);
+  });
+});
+
+describe('supportPromptItem', () => {
+  it('未保存なら既定値を返す（実キーに local: は付かない）', async () => {
+    expect(await supportPromptItem.getValue()).toEqual(
+      DEFAULT_SUPPORT_PROMPT_STATE
+    );
+    expect(fakeChrome.localData['local:supportPrompt']).toBeUndefined();
   });
 
   it('生のオブジェクトで保存し、同じ値を読み出せる', async () => {
-    await storage.set('vision', DEFAULT_VISION);
+    const state = { dismissedAt: 12_345, opened: true };
+    await supportPromptItem.setValue(state);
 
-    expect(fakeChrome.localData.vision).toEqual(DEFAULT_VISION);
-    expect(await storage.get('vision')).toEqual(DEFAULT_VISION);
-  });
-
-  it('remove で削除できる', async () => {
-    await storage.set('vision', DEFAULT_VISION);
-    await storage.remove('vision');
-
-    expect(await storage.get('vision')).toBeUndefined();
+    expect(fakeChrome.localData.supportPrompt).toEqual(state);
+    expect(await supportPromptItem.getValue()).toEqual(state);
   });
 });
 

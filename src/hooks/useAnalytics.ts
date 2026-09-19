@@ -3,7 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
 import { parseDomainInput, isValidDomain } from '~/lib/domain';
-import { storage } from '~/lib/storage';
+import {
+  analyticsItem,
+  getAnalytics,
+  getSettings,
+  getUnblockHistory,
+  unblockHistoryItem
+} from '~/lib/storage';
 import type {
   AppSettings,
   AnalyticsData,
@@ -45,15 +51,11 @@ export function useAnalytics({
   // Helper function to reload analytics data
   const reloadAnalyticsData = useCallback(async () => {
     const [analyticsResult, unblockResult] = await Promise.all([
-      storage.get('analytics') as Promise<AnalyticsData | undefined>,
-      storage.get('unblockHistory') as Promise<UnblockHistory | undefined>
+      getAnalytics(),
+      getUnblockHistory()
     ]);
-    if (analyticsResult) {
-      setAnalyticsData(analyticsResult);
-    }
-    if (unblockResult) {
-      setUnblockHistory(unblockResult);
-    }
+    setAnalyticsData(analyticsResult);
+    setUnblockHistory(unblockResult);
   }, []);
 
   // Load analytics and unblock history on mount
@@ -94,11 +96,7 @@ export function useAnalytics({
         await sendMessage('add-block', { domain });
         // Refresh data after re-blocking
         await reloadAnalyticsData();
-        const settingsResult = (await storage.get('settings')) as
-          AppSettings | undefined;
-        if (settingsResult) {
-          setSettings(settingsResult);
-        }
+        setSettings(await getSettings());
       } catch {
         // Silently handle error
       }
@@ -110,20 +108,17 @@ export function useAnalytics({
   const handleResetAnalytics = useCallback(async () => {
     try {
       // Reset time for all sites but keep the list
-      const currentHistory = (await storage.get('unblockHistory')) as
-        UnblockHistory | undefined;
-      if (currentHistory) {
-        const resetHistory: UnblockHistory = {
-          sites: Object.fromEntries(
-            Object.entries(currentHistory.sites).map(([domain, site]) => [
-              domain,
-              { ...site, timeAfterUnblock: 0, lastActivity: null }
-            ])
-          )
-        };
-        await storage.set('unblockHistory', resetHistory);
-        setUnblockHistory(resetHistory);
-      }
+      const currentHistory = await getUnblockHistory();
+      const resetHistory: UnblockHistory = {
+        sites: Object.fromEntries(
+          Object.entries(currentHistory.sites).map(([domain, site]) => [
+            domain,
+            { ...site, timeAfterUnblock: 0, lastActivity: null }
+          ])
+        )
+      };
+      await unblockHistoryItem.setValue(resetHistory);
+      setUnblockHistory(resetHistory);
 
       // Clear analytics data
       const emptyAnalytics: AnalyticsData = {
@@ -134,7 +129,7 @@ export function useAnalytics({
         siteUnblockCounts: {},
         timeLimitUsage: {}
       };
-      await storage.set('analytics', emptyAnalytics);
+      await analyticsItem.setValue(emptyAnalytics);
       setAnalyticsData(emptyAnalytics);
     } catch {
       // Silently handle error
@@ -144,25 +139,23 @@ export function useAnalytics({
   // Stop tracking a site (remove from unblock history)
   const handleStopTracking = useCallback(async (domain: string) => {
     try {
-      const currentHistory = (await storage.get('unblockHistory')) as
-        UnblockHistory | undefined;
-      if (currentHistory && currentHistory.sites[domain]) {
+      const currentHistory = await getUnblockHistory();
+      if (currentHistory.sites[domain]) {
         const { [domain]: _, ...remainingSites } = currentHistory.sites;
         const updatedHistory: UnblockHistory = { sites: remainingSites };
-        await storage.set('unblockHistory', updatedHistory);
+        await unblockHistoryItem.setValue(updatedHistory);
         setUnblockHistory(updatedHistory);
 
         // Also remove from analytics siteTime
-        const currentAnalytics = (await storage.get('analytics')) as
-          AnalyticsData | undefined;
-        if (currentAnalytics && currentAnalytics.siteTime[domain]) {
+        const currentAnalytics = await getAnalytics();
+        if (currentAnalytics.siteTime[domain]) {
           const { [domain]: __, ...remainingSiteTime } =
             currentAnalytics.siteTime;
           const updatedAnalytics: AnalyticsData = {
             ...currentAnalytics,
             siteTime: remainingSiteTime
           };
-          await storage.set('analytics', updatedAnalytics);
+          await analyticsItem.setValue(updatedAnalytics);
           setAnalyticsData(updatedAnalytics);
         }
       }
@@ -189,24 +182,28 @@ export function useAnalytics({
         return; // Invalid domain format
       }
 
-      const currentHistory = (await storage.get('unblockHistory')) as
-        UnblockHistory | undefined;
-      const history = currentHistory || { sites: {} };
+      const current = await getUnblockHistory();
 
       // Don't add if already tracking
-      if (history.sites[parsedDomain]) {
+      if (current.sites[parsedDomain]) {
         return;
       }
 
-      history.sites[parsedDomain] = {
-        domain: parsedDomain,
-        status: 'unblocked',
-        blockedAt: new Date().toISOString(),
-        unblockedAt: new Date().toISOString(),
-        timeAfterUnblock: 0,
-        lastActivity: null
+      // 未保存のときの戻り値は共有の既定値なので、破壊的に書き換えず新しい履歴を組む
+      const history: UnblockHistory = {
+        sites: {
+          ...current.sites,
+          [parsedDomain]: {
+            domain: parsedDomain,
+            status: 'unblocked',
+            blockedAt: new Date().toISOString(),
+            unblockedAt: new Date().toISOString(),
+            timeAfterUnblock: 0,
+            lastActivity: null
+          }
+        }
       };
-      await storage.set('unblockHistory', history);
+      await unblockHistoryItem.setValue(history);
       setUnblockHistory(history);
     } catch {
       // Silently handle error

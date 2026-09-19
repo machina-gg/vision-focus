@@ -21,7 +21,7 @@ import {
   useResolvedPreset
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { storage } from '~/lib/storage';
+import { settingsItem } from '~/lib/storage';
 import { formatTimeLocalized } from '~/lib/time';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { AnalyticsOptIn } from '~/types/storage';
@@ -57,7 +57,7 @@ function PopupAppContent() {
   const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
     if (!settings) return;
     const updated = { ...settings, analyticsOptIn: optIn };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
   };
 
