@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from './fixtures/extension';
 import {
   openOptions,
@@ -11,11 +13,33 @@ import {
   SELECTORS
 } from './helpers';
 
+import type { AnalyticsData } from '~/types/storage';
+
 /**
  * E2Eテスト: Options - Analytics Tab
  *
  * OPT-A01 ~ OPT-A11 のテストケースを実装
  */
+
+/**
+ * 保存済みの analytics から siteBlockCounts のキー一覧を読む
+ *
+ * 保存キーは 'analytics' で、その直下が AnalyticsData（`analyticsData` という
+ * ラッパーは存在しない）。siteBlockCounts はドメインをキーとするオブジェクトなので
+ * 件数は `Object.keys` で数える。
+ *
+ * ⚠ 読めなかったときに空の値へフォールバックしない。フォールバックすると
+ * キー名を間違えたままでも「0 件」を返し、リセットの検査が素通りする（#411）。
+ * 読めなかったことが分かる null を返し、呼び出し側のアサーションで落とす。
+ */
+async function readSiteBlockCountKeys(page: Page): Promise<string[] | null> {
+  const analytics = await getStorageData<AnalyticsData>(page, 'analytics');
+  const siteBlockCounts = analytics?.siteBlockCounts;
+  if (!siteBlockCounts || typeof siteBlockCounts !== 'object') {
+    return null;
+  }
+  return Object.keys(siteBlockCounts);
+}
 
 test.describe('Options - Analytics Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
@@ -359,27 +383,31 @@ test.describe('Options - Analytics Tab', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
+    // リセット前に集計が入っていることを確かめる。
+    // 空の状態から空を見ても「リセットされた」ことにはならない（#411）
+    expect(await readSiteBlockCountKeys(page)).toEqual(
+      expect.arrayContaining(['youtube.com', 'reddit.com'])
+    );
+
     // リセットボタンが表示される
     const resetButton = page.locator(SELECTORS.analytics.resetButton);
     await expect(resetButton).toBeVisible();
 
-    // リセットボタンをクリック
+    // リセットボタンをクリックすると確認モーダルが開く
     await resetButton.click();
 
-    // 確認ダイアログが表示される可能性がある
-    // ダイアログが表示される場合は確認ボタンをクリック
-    page.on('dialog', (dialog) => dialog.accept());
+    // 確認モーダルの実行ボタンを押すまでリセットは走らない
+    // （window.confirm ではなくアプリ内のモーダル。
+    //   src/components/options/analytics/AnalyticsExportBar.tsx）
+    const resetConfirmButton = page.locator(
+      SELECTORS.analytics.resetConfirmButton
+    );
+    await expect(resetConfirmButton).toBeVisible();
+    await resetConfirmButton.click();
 
-    // データがリセットされる（ストレージを確認）
-    const analyticsData = await page.evaluate(async () => {
-      const result = await chrome.storage.local.get('analytics');
-      return (
-        result.analyticsData || { siteBlockCounts: [], timeLimitUsage: [] }
-      );
-    });
-
-    // データが空になる
-    expect(analyticsData.siteBlockCounts.length).toBe(0);
+    // 保存済みの集計が空になる。
+    // 書き込みは非同期なので、反映されるまで待つ
+    await expect.poll(() => readSiteBlockCountKeys(page)).toEqual([]);
 
     await page.close();
   });
