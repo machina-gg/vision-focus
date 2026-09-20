@@ -66,14 +66,6 @@ function OptionsAppContent() {
     setSettings(updated);
   };
 
-  // Language change handler
-  const handleLanguageChange = async (language: 'en' | 'ja' | null) => {
-    if (!settings) return;
-    const updated = { ...settings, language };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
-  };
-
   // Tabs configuration (using TABS constant for type safety)
   const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
     {
@@ -201,7 +193,6 @@ function OptionsAppContent() {
               await analytics.reloadAnalyticsData();
             }}
             onPasswordUpdate={handlePasswordUpdate}
-            onLanguageChange={handleLanguageChange}
           />
         )}
       </main>

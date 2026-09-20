@@ -319,36 +319,6 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  test('POP-012: 言語切り替えでUIが即座に変更される', async ({
-    context,
-    extensionId
-  }) => {
-    const page = await openPopup(context, extensionId);
-
-    // 言語セレクターが表示される
-    const languageSelector = page.locator(SELECTORS.header.languageSelector);
-    await expect(languageSelector).toBeVisible();
-
-    // 初期言語は English
-    await expect(languageSelector).toHaveValue('en');
-
-    // 日本語に切り替え
-    await languageSelector.selectOption('ja');
-
-    // UIが日本語に変更される（目標カードのラベルを確認）
-    const goalLabel = page.locator('text=/只今の目標/i');
-    await expect(goalLabel).toBeVisible();
-
-    // 英語に戻す
-    await languageSelector.selectOption('en');
-
-    // UIが英語に変更される
-    const goalLabelEn = page.locator('text=/Current Goal/i');
-    await expect(goalLabelEn).toBeVisible();
-
-    await page.close();
-  });
-
   test('POP-013: Analytics リンクが表示される', async ({
     context,
     extensionId
@@ -389,7 +359,6 @@ test.describe('Popup 画面', () => {
     // Time Limit 設定済みのブロックリストをセットアップ
     const setupPage = await openPopup(context, extensionId);
     await setStorageData(setupPage, 'settings', {
-      language: 'en',
       paused: false,
       blockList: [
         {

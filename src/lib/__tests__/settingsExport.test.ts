@@ -30,7 +30,6 @@ function createValidExportData(
       presets: [],
       defaultDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
       activePresetId: null,
-      language: null,
       notifications: DEFAULT_NOTIFICATION_SETTINGS,
       ...overrides
     }
@@ -200,6 +199,22 @@ describe('validateImportedData', () => {
     expect(result.warnings).toContain('importWarningActivePresetNotFound');
   });
 
+  it('language を含む旧形式のファイルも取り込め、language は捨てられる', () => {
+    // 言語切替を廃止する前（machina-gg/vision-focus#401）に書き出した
+    // ファイルには language が残っている。未知のキーとして無視されるだけで、
+    // 取り込み自体は成功する
+    const data = createValidExportData();
+    const withLanguage = {
+      ...data,
+      data: { ...data.data, language: 'ja' }
+    };
+
+    const result = validateImportedData(JSON.stringify(withLanguage));
+
+    expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty('language');
+  });
+
   it('警告がない場合はundefined', () => {
     const data = createValidExportData();
     const result = validateImportedData(JSON.stringify(data));
@@ -315,19 +330,6 @@ describe('applyImportedSettings', () => {
     );
     expect(vision.presets).toHaveLength(1);
     expect(vision.presets[0].name).toBe('New Preset');
-  });
-
-  it('言語設定がインポートされる', () => {
-    const importData = createValidExportData({
-      language: 'ja'
-    }).data;
-
-    const { settings } = applyImportedSettings(
-      importData,
-      DEFAULT_SETTINGS,
-      DEFAULT_VISION
-    );
-    expect(settings.language).toBe('ja');
   });
 
   it('通知設定がインポートされる', () => {

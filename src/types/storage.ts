@@ -78,8 +78,9 @@ export interface Schedule {
   presetId?: string; // Dashboard preset to apply when schedule is active
 }
 
-// App settings
-// Supported languages
+// 対応している UI 言語。
+// 保存はしない（表示言語はブラウザの設定で決まる）。日付・数値の整形に渡す値として
+// `src/lib/i18n.ts` の getUILanguage が返す
 export type SupportedLanguage = 'en' | 'ja';
 
 // Notification settings
@@ -111,7 +112,6 @@ export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
   paused: boolean; // Global pause for all blocking
-  language: SupportedLanguage | null; // null = use browser language
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
@@ -169,7 +169,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   blockList: [],
   schedules: [],
   paused: false,
-  language: null, // Use browser language by default
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
   youtube: DEFAULT_YOUTUBE_SETTINGS,
   password: DEFAULT_PASSWORD_SETTINGS

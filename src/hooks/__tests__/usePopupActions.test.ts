@@ -15,24 +15,17 @@ vi.mock('~/lib/chromeApi', () => ({
   openExtensionPage: vi.fn()
 }));
 
-vi.mock('~/lib/i18n', () => ({
-  setCurrentLanguage: vi.fn()
-}));
-
 import { sendMessage } from '~/lib/messaging';
 import { openOptionsPage, openExtensionPage } from '~/lib/chromeApi';
-import { setCurrentLanguage } from '~/lib/i18n';
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe('usePopupActions', () => {
-  const mockSetSettings = vi.fn();
   const mockClearDomain = vi.fn();
   const defaultProps = {
     settings: DEFAULT_SETTINGS as AppSettings,
-    setSettings: mockSetSettings,
     clearDomain: mockClearDomain
   };
 
@@ -73,19 +66,6 @@ describe('usePopupActions', () => {
         result.current.handleGoalClick();
       });
       expect(openExtensionPage).toHaveBeenCalledWith('newtab.html');
-    });
-  });
-
-  describe('handleLanguageChange', () => {
-    it('言語を変更しsetCurrentLanguageを呼ぶ', async () => {
-      const { result } = renderHook(() => usePopupActions(defaultProps));
-      await act(async () => {
-        await result.current.handleLanguageChange('ja');
-      });
-      expect(setCurrentLanguage).toHaveBeenCalledWith('ja');
-      expect(mockSetSettings).toHaveBeenCalledWith(
-        expect.objectContaining({ language: 'ja' })
-      );
     });
   });
 
@@ -161,13 +141,6 @@ describe('usePopupActions', () => {
         })
       );
       expect(result.current.isPasswordProtected).toBe(false);
-    });
-  });
-
-  describe('renderKey', () => {
-    it('初期値は0', () => {
-      const { result } = renderHook(() => usePopupActions(defaultProps));
-      expect(result.current.renderKey).toBe(0);
     });
   });
 });

@@ -26,7 +26,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストにexample.comを追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -61,7 +60,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ワイルドカードでブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -95,7 +93,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // 最初はブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -112,7 +109,6 @@ test.describe('Block - ブロック機能', () => {
 
     // ブロックリストから削除
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: []
     });
@@ -139,7 +135,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -156,7 +151,6 @@ test.describe('Block - ブロック機能', () => {
 
     // Pauseを有効化
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: true,
       blockList: [
         {
@@ -190,7 +184,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // Pauseを有効化した状態で開始
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: true,
       blockList: [
         {
@@ -207,7 +200,6 @@ test.describe('Block - ブロック機能', () => {
 
     // Pauseを解除
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -240,7 +232,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // enabled: false でブロックアイテムを追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -274,7 +265,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // 最初は無効化
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -291,7 +281,6 @@ test.describe('Block - ブロック機能', () => {
 
     // 有効化
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -324,7 +313,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -365,7 +353,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -404,7 +391,6 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       blockList: [
         {

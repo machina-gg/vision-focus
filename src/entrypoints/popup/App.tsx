@@ -39,11 +39,10 @@ function PopupAppContent() {
     handleHelpClick,
     handleAnalyticsClick,
     handleGoalClick,
-    handleLanguageChange,
     handleBlock,
     handlePausedChange,
     isPasswordProtected
-  } = usePopupActions({ settings, setSettings, clearDomain });
+  } = usePopupActions({ settings, clearDomain });
 
   // Password verification for pause toggle
   const passwordVerification = usePasswordVerification({
@@ -79,8 +78,6 @@ function PopupAppContent() {
         onHelpClick={handleHelpClick}
         paused={settings?.paused ?? false}
         onPausedChange={handlePausedChangeWithPassword}
-        language={settings?.language}
-        onLanguageChange={handleLanguageChange}
       />
 
       <div className="p-4 space-y-4">

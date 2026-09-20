@@ -30,8 +30,7 @@ export const SELECTORS = {
     container: '[data-testid="app-header"]',
     settingsButton: '[data-testid="settings-button"]',
     helpButton: '[data-testid="help-button"]',
-    pauseToggle: '[data-testid="pause-toggle"]',
-    languageSelector: '[data-testid="language-selector"]'
+    pauseToggle: '[data-testid="pause-toggle"]'
   },
 
   // GoalCard

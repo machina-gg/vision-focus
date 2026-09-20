@@ -24,7 +24,6 @@ test.describe('Data - データ永続化', () => {
   }) => {
     // 設定を保存
     await setStorageDataFromExtension(context, extensionId, 'settings', {
-      language: 'ja',
       paused: true,
       blockList: [
         {
@@ -44,7 +43,6 @@ test.describe('Data - データ永続化', () => {
       'settings'
     )) as any;
 
-    expect(savedSettings.language).toBe('ja');
     expect(savedSettings.paused).toBe(true);
     expect(savedSettings.blockList.length).toBe(1);
     expect(savedSettings.blockList[0].domain).toBe(TEST_DOMAINS.example);
@@ -56,7 +54,6 @@ test.describe('Data - データ永続化', () => {
   }) => {
     // 設定を保存
     await setStorageDataFromExtension(context, extensionId, 'settings', {
-      language: 'en',
       paused: false,
       blockList: [
         {
@@ -76,7 +73,6 @@ test.describe('Data - データ永続化', () => {
       'settings'
     )) as any;
 
-    expect(savedSettings.language).toBe('en');
     expect(savedSettings.paused).toBe(false);
     expect(savedSettings.blockList.length).toBe(1);
     expect(savedSettings.blockList[0].domain).toBe(TEST_DOMAINS.reddit);
@@ -88,7 +84,6 @@ test.describe('Data - データ永続化', () => {
   }) => {
     // 設定を保存
     await setStorageDataFromExtension(context, extensionId, 'settings', {
-      language: 'ja',
       paused: false,
       blockList: [
         {
@@ -176,7 +171,6 @@ test.describe('Data - データ永続化', () => {
   }) => {
     // スケジュール設定を保存
     await setStorageDataFromExtension(context, extensionId, 'settings', {
-      language: 'en',
       paused: false,
       schedules: [
         {

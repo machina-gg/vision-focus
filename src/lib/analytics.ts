@@ -6,7 +6,7 @@
  */
 
 import { getSettings } from '~/lib/storage';
-import { getCurrentLanguage } from '~/lib/i18n';
+import { getUILanguage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
 // WXT は WXT_ / VITE_ 接頭辞の環境変数だけをビルド時に埋め込む（.env.example 参照）
@@ -120,9 +120,8 @@ export async function sendDailyActive(): Promise<void> {
     return;
   }
 
-  const settings = await getSettings();
   const version = chrome.runtime.getManifest().version;
-  const language = settings.language ?? getCurrentLanguage();
+  const language = getUILanguage();
 
   // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
   await trackEvent('daily_active', { version, language });

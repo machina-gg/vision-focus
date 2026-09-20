@@ -1,150 +1,46 @@
 /**
- * i18n helper for Chrome extension
- * Supports manual language switching while defaulting to browser language
+ * chrome.i18n の薄い包み。
+ *
+ * 辞書は `public/_locales/{en,ja}/messages.json` に置き、Chrome が
+ * manifest の `default_locale` とブラウザの言語設定から自動で選ぶ。
+ * 拡張機能側に言語切替は持たない（machina-gg/vision-focus#401）。
+ *
+ * ⚠ 辞書 JSON をここから import しないこと。import すると同じ辞書が
+ * JavaScript バンドルにも入り、出力に二重で載る。
  */
 
 import type { SupportedLanguage } from '~/types/storage';
 
-// Import messages directly
-// ⚠ public/ 配下は出力にそのままコピーされる（manifest の default_locale が参照する）。
-// 同じ JSON をここから直接 import して自前の getMessage で解決している。
-// chrome.i18n への全面移行は別途対応する
-import enMessages from '../../public/_locales/en/messages.json';
-import jaMessages from '../../public/_locales/ja/messages.json';
-
-type MessageFile = Record<
-  string,
-  { message: string; placeholders?: Record<string, { content: string }> }
->;
-
-const messages: Record<SupportedLanguage, MessageFile> = {
-  en: enMessages as MessageFile,
-  ja: jaMessages as MessageFile
-};
-
-// Current language (null = use browser language)
-let currentLanguage: SupportedLanguage | null = null;
-
 /**
- * Get the browser's UI language
+ * ブラウザの UI 言語を、対応言語に絞り込んで返す
+ *
+ * 日付・数値の整形（`toLocaleString` 等）に渡すための値で、
+ * 文言そのものの解決には使わない（それは `getMessage` の役目）。
  */
-export function getBrowserLanguage(): SupportedLanguage {
+export function getUILanguage(): SupportedLanguage {
   try {
-    const lang = chrome.i18n.getUILanguage();
-    return lang.startsWith('ja') ? 'ja' : 'en';
+    // 拡張機能以外の実行環境（Storybook 等）では chrome が無い
+    return chrome.i18n.getUILanguage().startsWith('ja') ? 'ja' : 'en';
   } catch {
     return 'en';
   }
 }
 
 /**
- * Get the effective current language
- */
-export function getCurrentLanguage(): SupportedLanguage {
-  return currentLanguage ?? getBrowserLanguage();
-}
-
-/**
- * Set the current language
- * @param lang - The language to set, or null to use browser language
- */
-export function setCurrentLanguage(lang: SupportedLanguage | null): void {
-  currentLanguage = lang;
-}
-
-/**
- * Get a localized message
- * @param messageName - The message name from messages.json
- * @param substitutions - Optional substitutions for placeholders
- * @returns The localized message or the message name if not found
+ * 翻訳済みの文言を返す
+ *
+ * @param messageName - messages.json のキー
+ * @param substitutions - プレースホルダ（`$1`〜`$9`）に入れる値
+ * @returns 翻訳文。辞書に無い場合はキーをそのまま返す（欠落に気づけるようにするため）
  */
 export function getMessage(
   messageName: string,
   substitutions?: string | string[]
 ): string {
-  const lang = getCurrentLanguage();
-  const messageObj = messages[lang]?.[messageName];
-
-  if (!messageObj) {
-    // Fallback to English
-    const enMessageObj = messages.en?.[messageName];
-    if (!enMessageObj) {
-      return messageName;
-    }
-    return applySubstitutions(enMessageObj.message, substitutions);
+  try {
+    // 辞書に無いキーでは chrome.i18n が空文字を返す
+    return chrome.i18n.getMessage(messageName, substitutions) || messageName;
+  } catch {
+    return messageName;
   }
-
-  return applySubstitutions(messageObj.message, substitutions);
-}
-
-/**
- * Apply substitutions to a message
- */
-function applySubstitutions(
-  message: string,
-  substitutions?: string | string[]
-): string {
-  if (!substitutions) return message;
-
-  const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
-  let result = message;
-
-  subs.forEach((sub, index) => {
-    result = result.replace(`$${index + 1}`, sub);
-    // Also handle named placeholders like $DOMAIN$
-    result = result.replace(/\$[A-Z_]+\$/g, sub);
-  });
-
-  return result;
-}
-
-/**
- * Get the current UI language (for compatibility)
- * @returns The current language code (e.g., 'en', 'ja')
- */
-export function getUILanguage(): SupportedLanguage {
-  return getCurrentLanguage();
-}
-
-/**
- * Check if the current language is Japanese
- */
-export function isJapanese(): boolean {
-  return getCurrentLanguage() === 'ja';
-}
-
-/**
- * Format a number for display
- * @param num - The number to format
- * @returns The formatted number string
- */
-export function formatNumber(num: number): string {
-  return num.toLocaleString(getCurrentLanguage());
-}
-
-/**
- * Format a date for display
- * @param date - The date to format
- * @param options - Intl.DateTimeFormatOptions
- * @returns The formatted date string
- */
-export function formatDate(
-  date: Date | string,
-  options?: Intl.DateTimeFormatOptions
-): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString(getCurrentLanguage(), options);
-}
-
-/**
- * Get all supported languages with their display names
- */
-export function getSupportedLanguages(): {
-  code: SupportedLanguage;
-  name: string;
-}[] {
-  return [
-    { code: 'en', name: 'English' },
-    { code: 'ja', name: '日本語' }
-  ];
 }

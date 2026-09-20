@@ -47,42 +47,42 @@ describe('formatTimeLocalized', () => {
   });
 
   it('formats seconds in English', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('en');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
     expect(formatTimeLocalized(30)).toBe('30 sec');
   });
 
   it('formats seconds in Japanese', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('ja');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
     expect(formatTimeLocalized(30)).toBe('30秒');
   });
 
   it('formats minutes only in English', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('en');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
     expect(formatTimeLocalized(120)).toBe('2 min');
   });
 
   it('formats minutes only in Japanese', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('ja');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
     expect(formatTimeLocalized(120)).toBe('2分');
   });
 
   it('formats hours and minutes in English', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('en');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
     expect(formatTimeLocalized(3660)).toBe('1 hr 1 min');
   });
 
   it('formats hours and minutes in Japanese', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('ja');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
     expect(formatTimeLocalized(3660)).toBe('1時間1分');
   });
 
   it('formats hours only in English', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('en');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
     expect(formatTimeLocalized(3600)).toBe('1 hr');
   });
 
   it('formats hours only in Japanese', () => {
-    vi.spyOn(i18n, 'getCurrentLanguage').mockReturnValue('ja');
+    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
     expect(formatTimeLocalized(3600)).toBe('1時間');
   });
 });

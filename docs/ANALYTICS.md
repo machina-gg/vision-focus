@@ -35,7 +35,7 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 | パラメータ | 型     | 説明                                 |
 | ---------- | ------ | ------------------------------------ |
 | `version`  | string | 拡張機能のバージョン（例: `1.2.0`）  |
-| `language` | string | ユーザーの言語設定（例: `ja`, `en`） |
+| `language` | string | ブラウザの UI 言語（例: `ja`, `en`） |
 
 ---
 

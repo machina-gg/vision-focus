@@ -56,7 +56,6 @@ test.describe('NewTab 画面 - 統計カード', () => {
     createdDate.setDate(createdDate.getDate() - 10); // 10日前
 
     await setStorageData(setupPage, 'settings', {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       blockList: [

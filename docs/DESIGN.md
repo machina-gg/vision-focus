@@ -242,8 +242,10 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 ### 実装方式
 
 - chrome.i18n API を使用
-- ブラウザ言語設定による自動切替
+- ブラウザ言語設定による自動切替（拡張機能側に言語切替 UI は持たない）
 - メッセージファイル: `public/_locales/{lang}/messages.json`
+- manifest の `name` / `description` は `__MSG_*__` で辞書から引く（`default_locale` は `en`）
+- 辞書 JSON は JavaScript から import しない（出力に辞書が二重で入るため）
 
 ## 10. マネタイズ
 

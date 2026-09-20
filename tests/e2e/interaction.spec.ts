@@ -34,7 +34,6 @@ test.describe('Interaction - 機能間相互作用', () => {
   }) => {
     // Pause 有効 + Time Limit 超過
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: true, // Pause 有効
       blockList: [
         {
@@ -85,7 +84,6 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     // Pause 有効 + Schedule でブロック有効化時間帯
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: true, // Pause 有効
       blockList: [
         {
@@ -203,7 +201,6 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     // Pause 有効 + Time Limit 超過 + Schedule 有効
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: true, // Pause が最優先
       blockList: [
         {
@@ -261,7 +258,6 @@ test.describe('Interaction - 機能間相互作用', () => {
   }) => {
     // Opt-Out 状態
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
@@ -302,7 +298,6 @@ test.describe('Interaction - 機能間相互作用', () => {
   }) => {
     // パスワード保護を有効化
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       password: {
         enabled: true,
@@ -335,7 +330,6 @@ test.describe('Interaction - 機能間相互作用', () => {
   }) => {
     // パスワード保護を有効化
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       password: {
         enabled: true,
