@@ -125,6 +125,9 @@ YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem(
 - 計測・超過判定・残り時間・通知は `enabled && blockAccess && timeLimit` のときだけ動く
   （`youtubeBlockService` の `isYouTubeTimeLimitActive()`）。アクセスブロックが無効なら
   計測も通知も行わず、コンテンツスクリプトが画面を隠すこともない（#407）
+- 非表示の設定（Shorts / おすすめ / コメント / ホームフィード）はこの状態遷移とは独立で、
+  `enabled` なら `blockAccess` の値に関わらず適用される。制限を併用していると上限までは
+  YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`。#422）
 
 ## リセットタイミング
 

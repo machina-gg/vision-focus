@@ -388,10 +388,11 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
+    // アクセスブロックと制限を併用しても、上限に達するまでは非表示が効く（#422）
     await setSettings(page, {
       paused: false,
       youtube: makeYouTubeSettings({
-        blockAccess: false,
+        blockAccess: true,
         hideShorts: true, // Shorts 非表示
         hideRecommendations: false,
         hideComments: false,
@@ -435,14 +436,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     expect(shortsHidden).toBeTruthy();
 
-    // Time Limit 超過の CSS は適用されていないことを確認。
-    // style 要素自体は Shorts 非表示のために存在するため、
-    // 超過時だけ入る全体非表示ルールの有無で判定する
-    const limitExceeded = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('ytd-app #content');
-    });
-    expect(limitExceeded).toBeFalsy();
+    // 上限に達していないのでブロックページへは飛ばない（#392）
+    expect(youtubePage.url()).toContain(TEST_DOMAINS.youtube);
 
     await youtubePage.close();
   });
