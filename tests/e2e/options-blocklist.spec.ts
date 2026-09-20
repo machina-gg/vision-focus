@@ -338,9 +338,13 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // ブロック回数が表示される
-    const blockCount = page.locator('text=/12/i').first();
-    await expect(blockCount).toBeVisible();
+    // ブロック回数はドメインごとの行にバッジとして出る。
+    // ページ全体から「12」を探すと、日付など無関係な表示でも通る
+    const item = page
+      .locator(SELECTORS.options.listItem)
+      .filter({ hasText: 'example.com' });
+    await expect(item).toHaveCount(1);
+    await expect(item).toContainText(UI_TEXT.blockCount.short(12));
 
     await page.close();
   });

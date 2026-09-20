@@ -63,7 +63,10 @@ test.describe('Interaction - 機能間相互作用', () => {
       })
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
+    // Pause 中はルールが 1 件も作られないことを確かめる
+    await triggerBlockRuleRecompute(context);
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     // サイトにアクセス（Pause が優先されてアクセス可能）
     const unblockedPage = await openExternalSite(
@@ -110,7 +113,10 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
+    // Pause 中はルールが 1 件も作られないことを確かめる
+    await triggerBlockRuleRecompute(context);
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     // サイトにアクセス（Pause が優先されてアクセス可能）
     const unblockedPage = await openExternalSite(
@@ -240,7 +246,10 @@ test.describe('Interaction - 機能間相互作用', () => {
       })
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
+    // Pause 中はルールが 1 件も作られないことを確かめる
+    await triggerBlockRuleRecompute(context);
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     // サイトにアクセス（Pause が最優先でアクセス可能）
     const unblockedPage = await openExternalSite(

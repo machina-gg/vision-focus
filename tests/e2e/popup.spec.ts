@@ -98,8 +98,9 @@ test.describe('Popup 画面', () => {
     // ブロック回数が表示される
     const blockCount = page.locator(SELECTORS.summary.blockCount);
     await expect(blockCount).toBeVisible();
-    // デフォルトは 0
-    await expect(blockCount).toContainText('0');
+    // デフォルトは 0。
+    // toContainText だと 10 / 20 / 100 でも通るため、表示そのものと突き合わせる
+    await expect(blockCount).toHaveText('0');
 
     // トップブロックサイトセクションが表示される
     // データがない場合は "No blocked sites yet" メッセージ

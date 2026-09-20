@@ -8,7 +8,8 @@ import {
   makeSettings,
   makeDisplaySettings,
   SELECTORS,
-  TEST_DATA
+  TEST_DATA,
+  UI_TEXT
 } from './helpers';
 
 /**
@@ -51,9 +52,14 @@ test.describe('Options - Help Tab', () => {
     const gettingStarted = page.locator(SELECTORS.help.gettingStarted);
     await expect(gettingStarted).toBeVisible();
 
-    // 使い方の手順が複数表示される（見出しは h3 で列挙される）
-    await expect(page.locator('h3').first()).toBeVisible();
-    expect(await page.locator('h3').count()).toBeGreaterThan(0);
+    // 使い方の手順が並ぶ。
+    // h3 の数を数えるだけだと、別セクションの見出しがあれば中身が
+    // 空でも通るため、手順の見出しを 1 つずつ確かめる
+    for (const step of UI_TEXT.help.gettingStartedSteps) {
+      await expect(
+        page.getByRole('heading', { level: 3, name: step, exact: true })
+      ).toBeVisible();
+    }
 
     await page.close();
   });
@@ -66,9 +72,9 @@ test.describe('Options - Help Tab', () => {
     await expect(faq).toBeVisible();
 
     // FAQ項目が表示される
+    // （count() は自動リトライしないため、描画の待機は expect に任せる）
     const faqItems = page.locator(SELECTORS.help.faqItem);
-    const count = await faqItems.count();
-    expect(count).toBeGreaterThan(0);
+    await expect(faqItems.first()).toBeVisible();
 
     // FAQ項目をクリックして展開できる
     await faqItems.first().click();

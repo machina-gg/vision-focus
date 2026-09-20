@@ -22,7 +22,7 @@
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-006: 無効化したブロックアイテムはブロックされない
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-007: 有効化したブロックアイテムがブロックされる
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-008: declarativeNetRequest でリダイレクトが実行される
-- 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-009: ブロック時に lastBlockedDomain が記録される
+- 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-009: ブロック時にリダイレクト先でブロック元ドメインが表示される
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-010: ブロック回数がカウントされる
 
 ### 手動確認項目
@@ -57,10 +57,8 @@
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-002: YouTube Recommendations（関連動画）を非表示にできる
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-003: YouTube Comments を非表示にできる
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-004: YouTube 完全ブロック（blockAccess）が動作する
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-005: YouTube Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
+- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: アクセスブロックが無効なら Time Limit 超過でも画面を隠さない
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-007: YouTube 設定変更が即座に反映される
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-008: YouTube 有効化/無効化がトラッキング履歴に記録される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-010: blockAccess と Time Limit の併用（超過後にブロック）
 
@@ -100,13 +98,11 @@
 
 ### E2E カバー済み
 
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-001: Daily Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-003: Time Limit 超過時に newtab.html へリダイレクト（reason付き）
+- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-003: Time Limit 超過時に newtab.html へリダイレクトされる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily の使用実績は日付が変わるとリセットされる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-006: 残り時間がポップアップで表示される
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-007: Time Limit 使用状況が Analytics タブで確認できる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-008: Pause 有効中に Time Limit 超過した場合もリダイレクトされない
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily リセット境界値テスト（23:59→00:00）
+- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-007: Time Limit の残り時間がブロックリストに表示される
+- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-008: Pause 有効中は Time Limit 超過してもブロックされない
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-011: 複数サイトで異なる Time Limit が同時に動作する
 
 ### 手動確認項目
@@ -179,19 +175,19 @@
 
 ### E2E カバー済み
 
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-001: 新規タブを開くとダッシュボードが表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-002: プリセット設定済み時、背景画像が表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-003: 目標テキストが中央に表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-004: ミニ統計カード（ブロック回数）が表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-005: 設定アイコンクリックでオプション画面が開く
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-006: 目標テキストをダブルクリックで編集モードになる
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-007: 編集した目標がEnterキーで保存される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-008: プリセット未設定時、シンプルなブロックページUIが表示
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-009: ブロックされたサイトから遷移時、ブロック情報が表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-010: ブロックサイトリストが表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-011: 壁紙ダウンロードボタンが表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-012: Time Limit 超過からの遷移時、専用メッセージが表示される
-- 📎 E2E 参照: `tests/e2e/newtab.spec.ts` — NEW-013: ブロック日数（Blocking Days）が正しく表示される
+- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-001: 新規タブを開くとダッシュボードが表示される
+- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-002: プリセット設定済み時、背景画像が表示される
+- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-003: 目標テキストが中央に表示される
+- 📎 E2E 参照: `tests/e2e/newtab-stats.spec.ts` — NEW-004: ミニ統計カード（ブロック回数）が表示される
+- 📎 E2E 参照: `tests/e2e/newtab-settings.spec.ts` — NEW-005: 設定アイコンクリックでオプション画面が開く
+- 📎 E2E 参照: `tests/e2e/newtab-goal-edit.spec.ts` — NEW-006: 目標テキストをダブルクリックで編集モードになる
+- 📎 E2E 参照: `tests/e2e/newtab-goal-edit.spec.ts` — NEW-007: 編集した目標がEnterキーで保存される
+- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-008: プリセット未設定時、シンプルなブロックページUIが表示
+- 📎 E2E 参照: `tests/e2e/newtab-block-info.spec.ts` — NEW-009: ブロックされたサイトから遷移時、ブロック情報が表示される
+- 📎 E2E 参照: `tests/e2e/newtab-block-info.spec.ts` — NEW-010: ブロックサイトリストが表示される
+- 📎 E2E 参照: `tests/e2e/newtab-settings.spec.ts` — NEW-011: 壁紙ダウンロードボタンが表示される
+- 📎 E2E 参照: `tests/e2e/newtab-block-info.spec.ts` — NEW-012: Time Limit 超過からの遷移時、専用メッセージが表示される
+- 📎 E2E 参照: `tests/e2e/newtab-stats.spec.ts` — NEW-013: ブロック日数（Blocking Days）が正しく表示される
 
 ### 手動確認項目
 
@@ -479,7 +475,6 @@
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST13: 背景画像変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST14: フォント変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST15: 色変更時にリアルタイムプレビューされる
-- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST16: Free ダウングレード時、4件目以降のプリセットがロックされる
 
 ### 手動確認項目
 

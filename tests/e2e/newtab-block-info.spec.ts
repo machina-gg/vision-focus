@@ -7,7 +7,8 @@ import {
   makeSiteBlockCounts,
   setStorageData,
   setSessionStorageData,
-  SELECTORS
+  SELECTORS,
+  UI_TEXT
 } from './helpers';
 
 /**
@@ -54,8 +55,9 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
       .filter({ hasText: 'example.com' });
     await expect(blockBanner.first()).toBeVisible();
 
-    // ブロック回数が表示される
-    await expect(page.locator('text=/5/i').first()).toBeVisible();
+    // ブロック回数はバナーの中に文言ごと出る。
+    // ページ全体から数字を探すと、統計カードなど別の場所の「5」でも通る
+    await expect(blockBanner.first()).toContainText(UI_TEXT.blockCount.long(5));
 
     await page.close();
   });

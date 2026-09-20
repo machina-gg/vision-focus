@@ -6,6 +6,7 @@ import {
   setStorageData,
   makeDisplaySettings,
   makePreset,
+  getStorageData,
   SELECTORS,
   UI_TEXT
 } from './helpers';
@@ -13,7 +14,7 @@ import {
 /**
  * E2Eテスト: Options - Style Tab
  *
- * OPT-ST01 ~ OPT-ST16 のテストケースを実装
+ * OPT-ST01 ~ OPT-ST15 のテストケースを実装
  */
 
 test.describe('Options - Style Tab', () => {
@@ -61,22 +62,46 @@ test.describe('Options - Style Tab', () => {
     context,
     extensionId
   }) => {
+    // 適用されていないプリセットを 1 件用意する。
+    // 既定のプリセットは最初から適用済みで、適用ボタンが出ない
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(setupPage, 'vision', {
+      defaultSettings: makeDisplaySettings(),
+      presets: [
+        makePreset('default', 'Default'),
+        makePreset('second', 'Second', { goalText: 'Second Goal' })
+      ],
+      activePresetId: 'default'
+    });
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'styles');
 
-    // デフォルトプリセットを選択
-    const presetButton = page
+    // 未適用のプリセットを選択する
+    await page
       .locator(SELECTORS.styles.presetButton)
-      .filter({ hasText: 'Default' });
-    await presetButton.click();
+      .filter({ hasText: 'Second' })
+      .click();
 
-    // 適用ボタンまたは既に適用済みの表示が出る
+    // 選択中のプリセットが未適用なので適用ボタンが出る
     const applyButton = page.locator(SELECTORS.styles.applyButton);
-    const activeLabel = page.locator('text=/Active|適用中/i');
+    await expect(applyButton).toBeVisible();
+    await expect(applyButton).toHaveText(UI_TEXT.styles.applyPreset);
 
-    // どちらかが表示されることを確認
-    const applyVisible = await applyButton.isVisible().catch(() => false);
-    const activeVisible = await activeLabel.isVisible().catch(() => false);
-    expect(applyVisible || activeVisible).toBeTruthy();
+    await applyButton.click();
+
+    // 有効なプリセットが切り替わる。
+    // activePresetId を書き換えるのは適用の経路だけ（usePresets の
+    // handleApplyPreset）なので、ここを待てば適用されたことになる
+    await expect
+      .poll(async () => (await getStorageData(page, 'vision'))?.activePresetId)
+      .toBe('second');
+
+    // 適用後は適用ボタンが消え、適用済みの表示に変わる
+    await expect(applyButton).toHaveCount(0);
+    await expect(
+      page.getByText(UI_TEXT.styles.activePreset, { exact: true })
+    ).toBeVisible();
 
     await page.close();
   });
@@ -333,14 +358,14 @@ test.describe('Options - Style Tab', () => {
     await expect(categoryButtons.first()).toBeVisible();
 
     // System 以外のカテゴリ（Google Fonts 系）が選択できる
-    const categoryCount = await categoryButtons.count();
-    expect(categoryCount).toBeGreaterThan(1);
+    // （count() は自動リトライしないため poll で待つ）
+    await expect.poll(() => categoryButtons.count()).toBeGreaterThan(1);
 
     // 2 番目のカテゴリを選ぶとファミリ候補が表示される
     await categoryButtons.nth(1).click();
     const familyButtons = page.locator(SELECTORS.styles.fontFamilySelect);
     await expect(familyButtons.first()).toBeVisible();
-    expect(await familyButtons.count()).toBeGreaterThan(1);
+    await expect.poll(() => familyButtons.count()).toBeGreaterThan(1);
 
     await page.close();
   });

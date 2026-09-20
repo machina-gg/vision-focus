@@ -1,12 +1,16 @@
 import { test, expect } from './fixtures/extension';
 import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
-import { waitForBlockRules } from './helpers/sw';
+import {
+  getBlockRuleFilters,
+  getStorageViaSW,
+  waitForBlockRules,
+  waitForNoBlockRules
+} from './helpers/sw';
 import {
   clearStorageFromExtension,
   makeAnalytics,
   setStorageDataFromExtension,
-  setSettingsFromExtension,
-  getStorageDataFromExtension
+  setSettingsFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
@@ -73,7 +77,8 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // ワイルドカードは `||example.com` のルールになる（先頭の *. は落ちる）
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // サブドメインにアクセス
     const blockedPage = await openExternalSite(
@@ -106,7 +111,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // ブロックリストから削除
     await setSettingsFromExtension(context, extensionId, {
@@ -114,7 +119,8 @@ test.describe('Block - ブロック機能', () => {
       blockList: []
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 削除がルールに反映される（載っていたものが外れる）まで待つ
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     // サイトにアクセスできることを確認
     const unblockedPage = await openExternalSite(
@@ -148,7 +154,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // Pauseを有効化
     await setSettingsFromExtension(context, extensionId, {
@@ -164,7 +170,8 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Pause 中はルールが 1 件も残らない
+    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     // サイトにアクセスできることを確認
     const unblockedPage = await openExternalSite(
@@ -197,7 +204,8 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // ⚠ Pause 中はルールが 1 件も作られないため、ここで待っても観測できる
+    //    変化は無い。解除後にルールが載ることが唯一の関門になる
 
     // Pauseを解除
     await setSettingsFromExtension(context, extensionId, {
@@ -213,7 +221,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // ブロックされることを確認
     const blockedPage = await openExternalSite(
@@ -231,7 +239,9 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    // enabled: false でブロックアイテムを追加
+    // enabled: false でブロックアイテムを追加する。
+    // ⚠ 有効なアイテムを 1 件添える。無効なものだけだとルールが 0 件になり、
+    //    「無効だから載らない」と「まだ再計算されていない」を区別できない
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       blockList: [
@@ -241,11 +251,22 @@ test.describe('Block - ブロック機能', () => {
           isWildcard: false,
           createdAt: new Date().toISOString(),
           enabled: false // 無効化
+        },
+        {
+          id: '2',
+          domain: TEST_DOMAINS.reddit,
+          isWildcard: false,
+          createdAt: new Date().toISOString(),
+          enabled: true // 再計算が走ったことの目印
         }
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 有効なアイテムが載った時点で、無効なアイテムも判定済みになっている
+    await waitForBlockRules(context, [TEST_DOMAINS.reddit]);
+
+    const filters = await getBlockRuleFilters(context);
+    expect(filters.some((f) => f.includes(TEST_DOMAINS.example))).toBe(false);
 
     // サイトにアクセスできることを確認
     const unblockedPage = await openExternalSite(
@@ -278,7 +299,8 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // ⚠ 無効なうちはルールが 1 件も作られないため、ここで待っても観測できる
+    //    変化は無い。有効化後にルールが載ることが唯一の関門になる
 
     // 有効化
     await setSettingsFromExtension(context, extensionId, {
@@ -294,7 +316,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // ブロックされることを確認
     const blockedPage = await openExternalSite(
@@ -326,7 +348,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // declarativeNetRequest ルールを確認
     const rulesPage = await context.newPage();
@@ -366,7 +388,7 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // ブロック対象サイトにアクセス
     const blockedPage = await openExternalSite(
@@ -412,17 +434,26 @@ test.describe('Block - ブロック機能', () => {
       makeAnalytics()
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
-    // ブロック対象サイトに2回アクセス
+    // 記録は background が非同期に書くため、読み出しは SW 経由で待つ。
+    // この値を増やすのはブロックされたナビゲーションだけ
+    // （src/background/listeners/navigationTracking.ts）
+    const siteBlockCount = async () => {
+      const analytics = await getStorageViaSW(context, 'analytics');
+      return analytics?.siteBlockCounts[TEST_DOMAINS.example]?.count ?? 0;
+    };
+
+    // ブロック対象サイトに2回アクセス。
+    // ⚠ 1 回目の記録を待ってから 2 回目に進む。記録は読み出してから書き戻す
+    //    ため、重なると片方の加算が消える
     const blockedPage1 = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
     await blockedPage1.waitForURL(`**newtab.html**`, { timeout: 10000 });
+    await expect.poll(siteBlockCount).toBeGreaterThanOrEqual(1);
     await blockedPage1.close();
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const blockedPage2 = await openExternalSite(
       context,
@@ -430,20 +461,18 @@ test.describe('Block - ブロック機能', () => {
     );
     await blockedPage2.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
-    // ブロック回数を確認
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const analytics = await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics'
-    );
-
-    const today = new Date().toISOString().slice(0, 10);
-    expect(analytics?.dailyStats[today].blockCount).toBeGreaterThanOrEqual(2);
     // サイト別の回数は siteBlockCounts[domain].count に入る
-    expect(
-      analytics?.siteBlockCounts[TEST_DOMAINS.example].count
-    ).toBeGreaterThanOrEqual(2);
+    await expect.poll(siteBlockCount).toBeGreaterThanOrEqual(2);
+
+    // 日次の集計にも同じ回数が入る。
+    // サイト別の回数より後に書かれるため、これも待つ
+    const today = new Date().toISOString().slice(0, 10);
+    await expect
+      .poll(async () => {
+        const analytics = await getStorageViaSW(context, 'analytics');
+        return analytics?.dailyStats[today]?.blockCount ?? 0;
+      })
+      .toBeGreaterThanOrEqual(2);
 
     await blockedPage2.close();
   });

@@ -27,31 +27,6 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     await clearStorageFromExtension(context, extensionId);
   });
 
-  test('TL-001: Daily Time Limit を設定できる', async ({ context }) => {
-    // options を開いて書くと UI が時間制限値をプリセットに丸めるため
-    // （roundToNearestPreset）、書いた値と読める値が一致しない。
-    // SW 経由なら書いた通りに保存される
-    await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          }
-        ]
-      })
-    });
-
-    const settings = await getStorageViaSW(context, 'settings');
-
-    expect(settings?.blockList[0].timeLimit.type).toBe('daily');
-    expect(settings?.blockList[0].timeLimit.limitSeconds).toBe(60);
-  });
-
   test('TL-003: Time Limit 超過時に newtab.html へリダイレクトされる', async ({
     context
   }) => {

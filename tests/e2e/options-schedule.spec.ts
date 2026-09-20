@@ -151,11 +151,10 @@ test.describe('Options - Schedule Tab', () => {
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
 
-    // 曜日チェックボックスが7つ表示される
-    // 曜日は checkbox ではなくトグルボタンなので click で切り替える
+    // 曜日ボタンが 7 つ並ぶ（ScheduleModal の DAY_KEYS が日〜土の 7 件）。
+    // count() は自動リトライしないため toHaveCount で待つ
     const dayCheckboxes = modal.locator(SELECTORS.schedules.dayCheckbox);
-    const count = await dayCheckboxes.count();
-    expect(count).toBeGreaterThanOrEqual(7);
+    await expect(dayCheckboxes).toHaveCount(7);
 
     // 曜日ボタンは初期状態で一部が選択済みのため、クリックで状態が
     // 反転することを検証する
@@ -478,7 +477,15 @@ test.describe('Options - Schedule Tab', () => {
     await page.close();
   });
 
-  test('OPT-S13: 重複スケジュール（同時刻・同曜日）が設定された場合にエラー表示', async ({
+  // 実装に重複の検証が無いため保留（#441 で判明）。
+  // useSchedules の handleSaveSchedule は既存のスケジュールと突き合わせずに
+  // 保存し、モーダルを閉じる。重複を伝える文言も messages.json に無い
+  // （ヘルプは「重複しないようにする」ことをユーザーの責任として書いている）。
+  // 従来は「エラーが出る or モーダルが開いたまま」の OR 判定で、保存直後の
+  // 一瞬だけモーダルが残っていることに依存して通っていた（報告された flaky の
+  // 構造的な説明）。重複を弾くのか許すのかは仕様の判断が要るため、
+  // 決まるまで実行しない。
+  test.fixme('OPT-S13: 重複スケジュール（同時刻・同曜日）が設定された場合にエラー表示', async ({
     context,
     extensionId
   }) => {
@@ -529,15 +536,10 @@ test.describe('Options - Schedule Tab', () => {
     const saveButton = modal.locator(SELECTORS.schedules.saveScheduleButton);
     await saveButton.click();
 
-    // エラーメッセージが表示される（実装によって異なる）
-    // エラーメッセージの有無を確認
-    const errorMessage = modal.locator('text=/重複|Overlap|Conflict/i');
-    // エラーが表示されるか、モーダルが閉じない
-    const isErrorVisible = await errorMessage.isVisible().catch(() => false);
-    const isModalStillVisible = await modal.isVisible();
-
-    // エラーメッセージが表示されるか、モーダルが閉じないことを確認
-    expect(isErrorVisible || isModalStillVisible).toBeTruthy();
+    // 重複を伝えるエラーが表示され、モーダルは閉じない。
+    // ⚠ 実装されたら、ここの文言は messages.json の実際のキーに差し替える
+    await expect(modal.locator('text=/重複|Overlap|Conflict/i')).toBeVisible();
+    await expect(modal).toBeVisible();
 
     await page.close();
   });
