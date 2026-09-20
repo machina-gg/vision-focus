@@ -20,6 +20,8 @@ import type {
   GetRemainingTimeRequest,
   GetRemainingTimeResponse,
   GetStatsResponse,
+  ImportSettingsRequest,
+  ImportSettingsResponse,
   RemoveBlockRequest,
   RemoveBlockResponse,
   ToggleBlockRequest,
@@ -44,6 +46,7 @@ export interface ProtocolMap {
   'add-block'(data: AddBlockRequest): AddBlockResponse;
   'get-remaining-time'(data: GetRemainingTimeRequest): GetRemainingTimeResponse;
   'get-stats'(): GetStatsResponse;
+  'import-settings'(data: ImportSettingsRequest): ImportSettingsResponse;
   'remove-block'(data: RemoveBlockRequest): RemoveBlockResponse;
   'toggle-block'(data: ToggleBlockRequest): ToggleBlockResponse;
   'toggle-pause'(data: TogglePauseRequest): TogglePauseResponse;

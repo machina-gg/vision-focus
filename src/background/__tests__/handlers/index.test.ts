@@ -12,6 +12,7 @@ import { registerMessageHandlers } from '../../handlers';
 import { addBlockHandler } from '../../handlers/add-block';
 import { getRemainingTimeHandler } from '../../handlers/get-remaining-time';
 import { getStatsHandler } from '../../handlers/get-stats';
+import { importSettingsHandler } from '../../handlers/import-settings';
 import { removeBlockHandler } from '../../handlers/remove-block';
 import { toggleBlockHandler } from '../../handlers/toggle-block';
 import { togglePauseHandler } from '../../handlers/toggle-pause';
@@ -27,6 +28,7 @@ const expected = [
   ['add-block', addBlockHandler],
   ['get-remaining-time', getRemainingTimeHandler],
   ['get-stats', getStatsHandler],
+  ['import-settings', importSettingsHandler],
   ['remove-block', removeBlockHandler],
   ['toggle-block', toggleBlockHandler],
   ['toggle-pause', togglePauseHandler],

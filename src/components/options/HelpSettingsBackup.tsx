@@ -13,6 +13,7 @@ import {
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
+import { sendMessage } from '~/lib/messaging';
 import {
   exportSettings,
   downloadSettings,
@@ -20,7 +21,7 @@ import {
   validateImportedData,
   applyImportedSettings
 } from '~/lib/settingsExport';
-import { getSettings, getVision, setSettings, setVision } from '~/lib/storage';
+import { getSettings, getVision, setVision } from '~/lib/storage';
 
 interface HelpSettingsBackupProps {
   onSettingsChange?: () => void;
@@ -77,6 +78,18 @@ export function HelpSettingsBackup({
     fileInputRef.current?.click();
   };
 
+  /** インポートの失敗を表示し、一定時間後に表示を戻す */
+  const showImportError = (messageKey: string) => {
+    setImportStatus('error');
+    setImportMessage(getMessage(messageKey));
+    setTimeout(() => {
+      setImportStatus('idle');
+      setImportMessage(null);
+      // 保存前に表示した警告も一緒に片付ける（失敗した内容の警告が残らないように）
+      setImportWarnings([]);
+    }, SHARE_MESSAGE_DELAY_MS);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -90,14 +103,7 @@ export function HelpSettingsBackup({
       const result = validateImportedData(content);
 
       if (!result.success) {
-        setImportStatus('error');
-        setImportMessage(
-          getMessage(result.error || 'importErrorInvalidFormat')
-        );
-        setTimeout(() => {
-          setImportStatus('idle');
-          setImportMessage(null);
-        }, SHARE_MESSAGE_DELAY_MS);
+        showImportError(result.error || 'importErrorInvalidFormat');
         return;
       }
 
@@ -118,7 +124,20 @@ export function HelpSettingsBackup({
       const { settings: newSettings, vision: newVision } =
         applyImportedSettings(result.data, currentSettings, currentVision);
 
-      await Promise.all([setSettings(newSettings), setVision(newVision)]);
+      // 設定の保存は background に任せる。保存とブロックルールの更新、開いている
+      // タブのブロックまでを一続きで処理させるため（#396）
+      const response = await sendMessage('import-settings', {
+        settings: newSettings
+      });
+
+      // 保存に失敗したときは成功表示を出さない（スタイルも書き換えない）
+      if (!response?.success) {
+        showImportError('importErrorSaveFailed');
+        return;
+      }
+
+      // スタイルはブロック判定に関わらないため、画面側から保存する
+      await setVision(newVision);
 
       setImportStatus('success');
       setImportMessage(getMessage('importSuccessWithMerge'));
@@ -133,17 +152,12 @@ export function HelpSettingsBackup({
         setImportWarnings([]);
       }, SHARE_MESSAGE_DELAY_MS);
     } catch {
-      setImportStatus('error');
-      setImportMessage(getMessage('importErrorInvalidFormat'));
-      setTimeout(() => {
-        setImportStatus('idle');
-        setImportMessage(null);
-      }, SHARE_MESSAGE_DELAY_MS);
-    }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      showImportError('importErrorInvalidFormat');
+    } finally {
+      // 失敗したときも同じファイルを選び直せるように、必ず入力を空へ戻す
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 

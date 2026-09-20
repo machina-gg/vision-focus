@@ -94,3 +94,50 @@ export const UpdateYouTubeSettingsBodySchema = z.object({
 export type UpdateYouTubeSettingsBody = z.infer<
   typeof UpdateYouTubeSettingsBodySchema
 >;
+
+// Schemas for import-settings message handler
+// 設定のインポートは background 経由で保存する（保存と同時に既存タブのブロックを行うため）
+
+// 保存済みデータには enabled を持たない項目が残りうるため、欠けていれば有効として扱う
+// （設定ファイル側の検証（settingsExport.ts）と同じ既定値）
+const BlockItemSchema = z.object({
+  id: z.string(),
+  domain: z.string(),
+  isWildcard: z.boolean(),
+  createdAt: z.string(),
+  enabled: z.boolean().optional().default(true),
+  timeLimit: TimeLimitSchema.nullable().optional()
+});
+
+const ScheduleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  days: z.array(z.number()),
+  enabled: z.boolean(),
+  presetId: z.string().optional()
+});
+
+const NotificationSettingsSchema = z.object({
+  timeLimitEnabled: z.boolean(),
+  // ⚠ z.union([z.literal(1), ...]) と書くと推論結果でキーが省略可能になるため、
+  //    値の列挙は z.literal に配列で渡す
+  timeLimitMinutes: z.literal([1, 3, 5, 10])
+});
+
+// 画面側が applyImportedSettings で組み立てた「適用後の設定」を受け取る。
+// ⚠ 未知のキーを残す z.looseObject を使う（AppSettings に項目が増えたとき、
+//    検証の取りこぼしで保存から抜け落ちないようにするため）。
+// 検証するのはブロック判定に使う項目で、古い保存データで欠けていても受け付ける
+export const ImportSettingsBodySchema = z.object({
+  settings: z.looseObject({
+    blockList: z.array(BlockItemSchema),
+    schedules: z.array(ScheduleSchema),
+    paused: z.boolean().optional(),
+    notifications: NotificationSettingsSchema.optional(),
+    youtube: YouTubeSettingsSchema.optional()
+  })
+});
+
+export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
