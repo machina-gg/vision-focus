@@ -174,3 +174,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: () => <BlocklistTabWrapper />
 };
+
+// #370: 長い URL を入力した状態で、入力欄の末尾が確認できること・
+// 「追加」ボタンが潰れたり折り返したりしないことを確認するための story
+export const LongUrlInput: Story = {
+  args: {
+    newDomain:
+      'https://example.com/very/long/path/that/keeps/going/on/and/on?query=1234567890&another=abcdefghijklmnopqrstuvwxyz'
+  }
+};
