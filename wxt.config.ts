@@ -5,11 +5,12 @@ import { defineConfig } from 'wxt';
  *
  * manifest の内容は「WXT が生成できないものだけ」をここに書く。
  * icons / action.default_popup / background / options_ui / chrome_url_overrides /
- * content_scripts / name(※) / version / description は WXT がエントリと
- * package.json から生成するため、ここには書かない。
+ * content_scripts / version は WXT がエントリと package.json から生成するため、
+ * ここには書かない。
  *
- * ※ name だけは例外。WXT の既定は package.json の `name`（= vision-focus）だが、
- *    ストア表示名は VisionFocus なので明示する。
+ * ※ name / description だけは例外。ストア表示名と説明文は Chrome の
+ *    `_locales`（public/_locales/{en,ja}/messages.json）から引くため、
+ *    `__MSG_*__` を明示する（machina-gg/vision-focus#401）。
  */
 export default defineConfig({
   // エントリの探索起点。`~` / `@` エイリアスも srcDir を指すため、
@@ -22,7 +23,8 @@ export default defineConfig({
   imports: false,
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    name: 'VisionFocus',
+    name: '__MSG_extensionName__',
+    description: '__MSG_extensionDescription__',
     default_locale: 'en',
     host_permissions: ['<all_urls>'],
     permissions: [

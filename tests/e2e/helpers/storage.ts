@@ -297,7 +297,6 @@ export function makeSettings(
   return {
     blockList: [],
     schedules: [],
-    language: 'en',
     paused: false,
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
     youtube: {
@@ -365,7 +364,6 @@ export interface TestStorageOptions {
   withPassword?: boolean;
   withAnalyticsOptIn?: boolean;
   withSchedule?: boolean;
-  language?: 'en' | 'ja';
 }
 
 /**
@@ -383,14 +381,12 @@ export function makeTestStorage(
     withBlockList = false,
     withPassword = false,
     withAnalyticsOptIn = true,
-    withSchedule = false,
-    language = 'en'
+    withSchedule = false
   } = options;
 
   const settings: Record<string, unknown> = {
     blockList: [],
     schedules: [],
-    language,
     paused: false,
     notifications: {
       timeLimitEnabled: true,

@@ -7,7 +7,7 @@ vi.mock('~/lib/storage', () => ({
 
 // i18n モジュールをモック
 vi.mock('~/lib/i18n', () => ({
-  getCurrentLanguage: vi.fn(() => 'en')
+  getUILanguage: vi.fn(() => 'en')
 }));
 
 // chromeApi モジュールをモック

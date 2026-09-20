@@ -2063,22 +2063,6 @@
       }
     }
   },
-  "languageSettingsTitle": {
-    "message": "Language Settings",
-    "description": "Language settings section title"
-  },
-  "languageSettingsDescription": {
-    "message": "Change dashboard display language",
-    "description": "Language settings section description"
-  },
-  "languageLabel": {
-    "message": "Display Language",
-    "description": "Language selection label"
-  },
-  "languageSelectDescription": {
-    "message": "Select the language for the dashboard",
-    "description": "Language selection description"
-  },
   "youtubeTimeLimitReached": {
     "message": "YouTube time limit reached. Take a break!",
     "description": "Message shown when YouTube time limit is exceeded"

@@ -29,7 +29,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube Shorts を非表示に設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -72,7 +71,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -110,7 +108,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -153,7 +150,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube を完全ブロック
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: true,
@@ -189,7 +185,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube Time Limit を設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -218,7 +213,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube Time Limit を設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -281,7 +275,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // 最初は Shorts 非表示なし
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -313,7 +306,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // スクリプトと違い chrome.storage を参照できない。拡張機能ページ経由で更新する
     const updatePage = await openStoragePage(context, extensionId);
     await setSettings(updatePage, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -345,7 +337,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       youtube: makeYouTubeSettings({
@@ -392,7 +383,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -459,7 +449,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // blockAccess と Time Limit を両方設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: true, // 完全ブロック

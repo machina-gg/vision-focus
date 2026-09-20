@@ -43,12 +43,11 @@ erDiagram
 
 ### AppSettings（アプリ設定）
 
-| フィールド   | 型          | 説明                   |
-| ------------ | ----------- | ---------------------- |
-| blockList    | BlockItem[] | ブロックリスト         |
-| schedules    | Schedule[]  | スケジュール一覧       |
-| language     | string?     | 言語設定（auto/en/ja） |
-| lockdownMode | boolean     | ロックダウンモード     |
+| フィールド   | 型          | 説明               |
+| ------------ | ----------- | ------------------ |
+| blockList    | BlockItem[] | ブロックリスト     |
+| schedules    | Schedule[]  | スケジュール一覧   |
+| lockdownMode | boolean     | ロックダウンモード |
 
 ### BlockItem（ブロック項目）
 

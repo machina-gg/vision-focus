@@ -18,7 +18,7 @@ import {
   useResolvedPreset,
   useStorageItem
 } from '~/hooks';
-import { getMessage, setCurrentLanguage } from '~/lib/i18n';
+import { getMessage } from '~/lib/i18n';
 import { formatTimeLocalized } from '~/lib/time';
 import {
   analyticsItem,
@@ -75,13 +75,6 @@ export function NewtabApp() {
     };
     loadBlockedInfo();
   }, []);
-
-  // Sync language setting with i18n module
-  useEffect(() => {
-    if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language);
-    }
-  }, [settings?.language]);
 
   const goalText = displaySettings.goalText;
   const goalSubText = displaySettings.goalSubText;

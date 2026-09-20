@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
 import { useStorageItem } from '~/hooks';
 import { settingsItem, visionItem } from '~/lib/storage';
-import { setCurrentLanguage } from '~/lib/i18n';
 import type { AppSettings, VisionSettings } from '~/types/storage';
 
 interface SettingsContextValue {
@@ -28,13 +27,6 @@ interface SettingsProviderProps {
 export function SettingsProvider({ children }: SettingsProviderProps) {
   const [settings, setSettings] = useStorageItem(settingsItem);
   const [vision, setVision] = useStorageItem(visionItem);
-
-  // Sync language setting with i18n module
-  useEffect(() => {
-    if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language);
-    }
-  }, [settings?.language]);
 
   return (
     <SettingsContext.Provider

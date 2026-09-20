@@ -45,7 +45,6 @@ const mockSettings: AppSettings = {
   blockList: mockBlockList,
   schedules: [],
   paused: false,
-  language: 'en',
   notifications: {
     timeLimitEnabled: true,
     timeLimitMinutes: 5

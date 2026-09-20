@@ -2063,22 +2063,6 @@
       }
     }
   },
-  "languageSettingsTitle": {
-    "message": "言語設定",
-    "description": "言語設定セクションのタイトル"
-  },
-  "languageSettingsDescription": {
-    "message": "ダッシュボードの表示言語を変更",
-    "description": "言語設定セクションの説明"
-  },
-  "languageLabel": {
-    "message": "表示言語",
-    "description": "言語選択のラベル"
-  },
-  "languageSelectDescription": {
-    "message": "ダッシュボードの表示言語を選択してください",
-    "description": "言語選択の説明"
-  },
   "youtubeTimeLimitReached": {
     "message": "YouTube の利用時間制限に達しました。休憩しましょう！",
     "description": "YouTube の利用時間制限を超えた時に表示されるメッセージ"

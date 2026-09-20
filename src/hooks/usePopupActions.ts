@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import { sendMessage } from '~/lib/messaging';
 
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
-import { setCurrentLanguage } from '~/lib/i18n';
-import type { AppSettings, SupportedLanguage } from '~/types/storage';
+import type { AppSettings } from '~/types/storage';
 
 interface UsePopupActionsOptions {
   settings: AppSettings | undefined;
-  setSettings: (settings: AppSettings) => void;
   clearDomain: () => void;
 }
 
@@ -17,37 +15,24 @@ interface UsePopupActionsReturn {
   handleHelpClick: () => void;
   handleAnalyticsClick: () => void;
   handleGoalClick: () => void;
-  handleLanguageChange: (language: SupportedLanguage) => Promise<void>;
   handleBlock: (domain: string) => Promise<void>;
   handlePausedChange: (paused: boolean) => Promise<void>;
   isPasswordProtected: boolean;
-  renderKey: number;
 }
 
 /**
- * Hook to encapsulate popup navigation, language, block, and pause actions.
+ * Hook to encapsulate popup navigation, block, and pause actions.
  * Password modal state is NOT managed here (kept in popup.tsx until #94 merges).
  * Instead, `handlePausedChange` calls the provided `onPasswordRequired` callback
  * when a password check is needed, which popup.tsx handles by showing the modal.
  */
 export function usePopupActions({
   settings,
-  setSettings,
   clearDomain
 }: UsePopupActionsOptions): UsePopupActionsReturn {
-  // Counter to force re-render when language changes (value unused intentionally)
-  const [renderKey, setRenderKey] = useState(0);
-
   const isPasswordProtected = Boolean(
     settings?.password?.enabled && settings?.password?.passwordHash
   );
-
-  // Sync language setting with i18n module
-  useEffect(() => {
-    if (settings?.language !== undefined) {
-      setCurrentLanguage(settings.language);
-    }
-  }, [settings?.language]);
 
   const handleSettingsClick = useCallback(() => {
     openOptionsPage();
@@ -64,20 +49,6 @@ export function usePopupActions({
   const handleGoalClick = useCallback(() => {
     openExtensionPage('newtab.html');
   }, []);
-
-  const handleLanguageChange = useCallback(
-    async (language: SupportedLanguage) => {
-      // Update i18n module immediately
-      setCurrentLanguage(language);
-      // Force re-render to update all translated text
-      setRenderKey((prev) => prev + 1);
-      // Save to storage
-      if (settings) {
-        await setSettings({ ...settings, language });
-      }
-    },
-    [settings, setSettings]
-  );
 
   const handleBlock = useCallback(
     async (domain: string) => {
@@ -108,10 +79,8 @@ export function usePopupActions({
     handleHelpClick,
     handleAnalyticsClick,
     handleGoalClick,
-    handleLanguageChange,
     handleBlock,
     handlePausedChange,
-    isPasswordProtected,
-    renderKey
+    isPasswordProtected
   };
 }
