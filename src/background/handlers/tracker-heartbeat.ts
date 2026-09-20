@@ -13,7 +13,10 @@ import { STALE_ENTRY_TIMEOUT_MS } from '~/constants/intervals';
 import type { DailyStat, SiteTime } from '~/types/storage';
 import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
-import { recordYouTubeTimeLimitUsage } from '~/lib/youtubeBlockService';
+import {
+  recordYouTubeTimeLimitUsage,
+  hasYouTubeExceededTimeLimit
+} from '~/lib/youtubeBlockService';
 import { checkYouTubeTimeLimitNotification } from '../notifications';
 import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
@@ -142,6 +145,13 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
   if (normalizedDomain === 'youtube.com') {
     await recordYouTubeTimeLimitUsage(seconds);
     await checkYouTubeTimeLimitNotification();
+
+    // 時間制限を超過したら、ブロックリストの項目と同じくその場でルールを更新し、
+    // 開いているタブもブロックする。ルール更新だけでは新しい遷移しか塞がらない（#392）
+    if (await hasYouTubeExceededTimeLimit()) {
+      await updateBlockRules();
+      await blockExistingTabs();
+    }
   }
 
   // Only track sites that are in the unblock history

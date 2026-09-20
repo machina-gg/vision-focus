@@ -25,7 +25,8 @@ vi.mock('../../blocker', () => ({
 }));
 
 vi.mock('~/lib/youtubeBlockService', () => ({
-  recordYouTubeTimeLimitUsage: vi.fn()
+  recordYouTubeTimeLimitUsage: vi.fn(),
+  hasYouTubeExceededTimeLimit: vi.fn()
 }));
 
 vi.mock('~/lib/timeLimitService', () => ({
@@ -48,7 +49,10 @@ import {
   checkYouTubeTimeLimitNotification
 } from '../../notifications';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import { recordYouTubeTimeLimitUsage } from '~/lib/youtubeBlockService';
+import {
+  recordYouTubeTimeLimitUsage,
+  hasYouTubeExceededTimeLimit
+} from '~/lib/youtubeBlockService';
 import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 import { TRACKER_CONFIG } from '~/constants/limits';
@@ -86,6 +90,7 @@ describe('tracker-heartbeat ハンドラ', () => {
     });
     vi.mocked(findBlockItemForDomain).mockResolvedValue(null);
     vi.mocked(hasExceededTimeLimit).mockResolvedValue(false);
+    vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -341,6 +346,38 @@ describe('tracker-heartbeat ハンドラ', () => {
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
       expect(recordYouTubeTimeLimitUsage).not.toHaveBeenCalled();
+    });
+
+    it('制限を超過したらブロックルールを適用し開いているタブもブロックする', async () => {
+      // ルール更新だけでは新しい遷移しか塞がらないため、開いているタブも明示的にブロックする
+      vi.useFakeTimers();
+      vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(true);
+      const handler = await loadHandler();
+
+      await invoke(handler, {
+        url: 'https://www.youtube.com/watch?v=abc',
+        status: 'active',
+        timestamp: Date.now()
+      });
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(updateBlockRules).toHaveBeenCalled();
+      expect(blockExistingTabs).toHaveBeenCalled();
+    });
+
+    it('制限未超過ならブロックルールを再適用しない', async () => {
+      vi.useFakeTimers();
+      const handler = await loadHandler();
+
+      await invoke(handler, {
+        url: 'https://www.youtube.com/watch?v=abc',
+        status: 'active',
+        timestamp: Date.now()
+      });
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(updateBlockRules).not.toHaveBeenCalled();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
     });
   });
 
