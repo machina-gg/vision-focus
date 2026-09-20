@@ -1,0 +1,172 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+
+/**
+ * YouTube のアクセスブロックを OFF→ON にしたとき、開いている YouTube のタブが
+ * newtab に置き換わることを固定するテスト（#392）。
+ *
+ * ハンドラ単体のテスト（handlers/update-youtube-settings.test.ts）は blocker を
+ * モックするため「blockExistingTabs() が呼ばれたか」までしか見られない。ここでは
+ * blocker と blockService を実物のまま通し、chrome.tabs への指示を検証する
+ */
+
+// ストレージだけをモックする（blocker / blockService / timeLimitService は実物）
+vi.mock('~/lib/storage', () => ({
+  getSettings: vi.fn(),
+  setSettings: vi.fn(),
+  getAnalytics: vi.fn(),
+  setAnalytics: vi.fn()
+}));
+
+vi.mock('~/lib/chromeApi', () => ({
+  isExtensionContextValid: vi.fn(() => true)
+}));
+
+import { getSettings, setSettings, getAnalytics } from '~/lib/storage';
+import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
+import { invoke } from './handlers/helpers';
+import { getTodayKey } from '~/lib/time';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_ANALYTICS,
+  DEFAULT_YOUTUBE_SETTINGS
+} from '~/types/storage';
+import type { AppSettings, YouTubeSettings, TimeLimit } from '~/types/storage';
+
+const YOUTUBE_TAB = { id: 1, url: 'https://www.youtube.com/watch?v=abc' };
+const OTHER_TAB = { id: 2, url: 'https://example.com/' };
+const NEWTAB_URL = 'chrome-extension://test-id/newtab.html';
+
+/** chrome API のモックを構築する */
+function setupChrome() {
+  const chromeMock = {
+    declarativeNetRequest: {
+      getDynamicRules: vi.fn().mockResolvedValue([]),
+      updateDynamicRules: vi.fn().mockResolvedValue(undefined),
+      RuleActionType: { REDIRECT: 'redirect' },
+      ResourceType: { MAIN_FRAME: 'main_frame' }
+    },
+    tabs: {
+      query: vi.fn().mockResolvedValue([YOUTUBE_TAB, OTHER_TAB]),
+      update: vi.fn().mockResolvedValue(undefined)
+    },
+    runtime: {
+      id: 'test-extension-id',
+      getURL: vi.fn(
+        (path: string) =>
+          `chrome-extension://test-id/${path.replace(/^\//, '')}`
+      )
+    }
+  };
+  (globalThis as Record<string, unknown>).chrome = chromeMock;
+  return chromeMock;
+}
+
+/** 保存前の設定を用意し、保存された設定が以降の判定に反映されるようにする */
+function givenStoredSettings(youtube: Partial<YouTubeSettings>) {
+  let stored: AppSettings = {
+    ...DEFAULT_SETTINGS,
+    youtube: { ...DEFAULT_YOUTUBE_SETTINGS, ...youtube }
+  };
+  vi.mocked(getSettings).mockImplementation(async () => stored);
+  vi.mocked(setSettings).mockImplementation(async (next: AppSettings) => {
+    stored = next;
+  });
+}
+
+/** YouTube の使用実績を用意する（計測キーは 'youtube.com' 固定） */
+function givenYouTubeUsage(dailyUsedSeconds: number) {
+  vi.mocked(getAnalytics).mockResolvedValue({
+    ...DEFAULT_ANALYTICS,
+    timeLimitUsage: {
+      'youtube.com': {
+        domain: 'youtube.com',
+        dailyUsedSeconds,
+        lastDailyReset: getTodayKey()
+      }
+    }
+  });
+}
+
+/** アクセスブロックを ON にする（必要なら時間制限つきで） */
+async function turnOnBlockAccess(timeLimit: TimeLimit | null = null) {
+  return invoke(updateYouTubeSettingsHandler, {
+    youtube: {
+      ...DEFAULT_YOUTUBE_SETTINGS,
+      enabled: true,
+      blockAccess: true,
+      timeLimit
+    }
+  });
+}
+
+describe('YouTube のアクセスブロック ON で開いているタブが置き換わる', () => {
+  let chromeMock: ReturnType<typeof setupChrome>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    chromeMock = setupChrome();
+    vi.mocked(getAnalytics).mockResolvedValue(DEFAULT_ANALYTICS);
+    givenStoredSettings({ enabled: true, blockAccess: false });
+  });
+
+  it('時間制限なしなら、開いている YouTube のタブを newtab へ置き換える', async () => {
+    await turnOnBlockAccess();
+
+    expect(chromeMock.tabs.update).toHaveBeenCalledWith(YOUTUBE_TAB.id, {
+      url: `${NEWTAB_URL}?reason=always_blocked`
+    });
+  });
+
+  it('YouTube 以外のタブは置き換えない', async () => {
+    await turnOnBlockAccess();
+
+    expect(chromeMock.tabs.update).toHaveBeenCalledOnce();
+  });
+
+  it('時間制限が未超過なら、開いているタブを置き換えない', async () => {
+    givenYouTubeUsage(30);
+
+    await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
+
+    expect(chromeMock.tabs.update).not.toHaveBeenCalled();
+  });
+
+  it('時間制限を超過していれば、超過を理由に置き換える', async () => {
+    givenYouTubeUsage(120);
+
+    await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
+
+    expect(chromeMock.tabs.update).toHaveBeenCalledWith(YOUTUBE_TAB.id, {
+      url: `${NEWTAB_URL}?reason=time_limit_exceeded`
+    });
+  });
+
+  it('ブロックルールも同じ条件で生成される（未超過なら YouTube を含めない）', async () => {
+    givenYouTubeUsage(30);
+
+    await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
+
+    const calls =
+      chromeMock.declarativeNetRequest.updateDynamicRules.mock.calls;
+    const arg = calls[calls.length - 1][0] as {
+      addRules: chrome.declarativeNetRequest.Rule[];
+    };
+    expect(arg.addRules).toEqual([]);
+  });
+
+  it('ブロックルールも同じ条件で生成される（超過なら YouTube を含める）', async () => {
+    givenYouTubeUsage(120);
+
+    await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
+
+    const calls =
+      chromeMock.declarativeNetRequest.updateDynamicRules.mock.calls;
+    const arg = calls[calls.length - 1][0] as {
+      addRules: chrome.declarativeNetRequest.Rule[];
+    };
+    expect(arg.addRules.map((rule) => rule.condition?.urlFilter)).toEqual([
+      '||youtube.com',
+      '||www.youtube.com'
+    ]);
+  });
+});

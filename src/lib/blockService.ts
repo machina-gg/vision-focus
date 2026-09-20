@@ -73,12 +73,52 @@ export function isAnyScheduleActive(
 }
 
 /**
+ * YouTube domains to block when blockAccess is enabled
+ *
+ * 先頭のドメインは時間制限の計測キーでもあり、`youtubeBlockService` の
+ * `YOUTUBE_DOMAIN`（`analytics.timeLimitUsage` のキー）と同じ値である必要がある。
+ * 値がずれると時間制限の超過判定が別のキーを読み、永久に超過しなくなる
+ * （ずれたことは `blockService.test.ts` の照合で落ちる）
+ */
+const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
+
+/**
+ * YouTube を「仮想のブロック項目」として返す
+ *
+ * YouTube はブロックリストに項目を持たないため、判定（`getBlockState`）と
+ * ルール生成（`getActiveBlockedDomains`）が別々の条件で YouTube を扱うと、
+ * 開いているタブと新しい遷移で結果がずれる（#392）。両者がこの関数だけを見ることで
+ * ブロックリストと同じ意味論（`timeLimit` なし = 常時ブロック / あり = 超過後にブロック）に揃う。
+ *
+ * アクセスブロックが無効なら null（= ブロック対象ではない）を返す
+ */
+export function getYouTubeBlockItem(settings: AppSettings): BlockItem | null {
+  const youtube = settings.youtube;
+  if (!youtube?.enabled || !youtube.blockAccess) {
+    return null;
+  }
+
+  return {
+    // 仮想項目はストレージに保存されず UI にも出ないため、id / createdAt は判定に使われない
+    id: 'virtual:youtube',
+    createdAt: new Date(0).toISOString(),
+    domain: YOUTUBE_DOMAINS[0],
+    // ワイルドカードではないが、matchesDomain はサブドメイン
+    // （www.youtube.com / m.youtube.com 等）も一致させる。
+    // declarativeNetRequest の `||youtube.com` と同じ範囲になる
+    isWildcard: false,
+    enabled: true,
+    timeLimit: youtube.timeLimit ?? null
+  };
+}
+
+/**
  * Determine the block state for a URL
  * This is the main entry point for block state determination
  *
  * Flow (see BLOCK_STATE_MACHINE.md):
  * 1. Check global pause
- * 2. Find matching block item
+ * 2. Find matching block item (ブロックリスト → YouTube の仮想ブロック項目)
  * 3. Check if item is enabled
  * 4. Check schedules
  * 5. Check time limits
@@ -95,7 +135,14 @@ export async function getBlockState(url: string): Promise<BlockState> {
   }
 
   // Step 2: Find matching block item
-  const blockItem = await findBlockItemForDomain(domain, settings);
+  // ブロックリストに一致する項目が無いときだけ YouTube の仮想ブロック項目と照合する
+  // （ブロックリストに同じドメインがあればそちらの設定が優先される）
+  const listItem = await findBlockItemForDomain(domain, settings);
+  const youtubeItem = listItem ? null : getYouTubeBlockItem(settings);
+  const matchedYouTubeItem =
+    youtubeItem && matchesDomain(domain, youtubeItem) ? youtubeItem : null;
+
+  const blockItem = listItem ?? matchedYouTubeItem;
   if (!blockItem) {
     return { blocked: false, reason: null };
   }
@@ -112,8 +159,14 @@ export async function getBlockState(url: string): Promise<BlockState> {
 
   // Step 5: Check time limits
   if (blockItem.timeLimit) {
-    const exceeded = await hasExceededTimeLimit(domain, blockItem);
-    const remaining = exceeded ? 0 : await getRemainingTime(domain, blockItem);
+    // ブロックリストの項目はアクセスしたホスト名ごとに計測されるが、YouTube の計測は
+    // youtubeBlockService が 'youtube.com' 固定で記録する。仮想項目のときだけ
+    // ホスト名ではなく項目のドメインで使用実績を引く（#392）
+    const usageDomain = matchedYouTubeItem ? matchedYouTubeItem.domain : domain;
+    const exceeded = await hasExceededTimeLimit(usageDomain, blockItem);
+    const remaining = exceeded
+      ? 0
+      : await getRemainingTime(usageDomain, blockItem);
     return {
       blocked: exceeded,
       reason: exceeded ? 'time_limit_exceeded' : null,
@@ -167,11 +220,6 @@ export async function shouldTrackBlockForDomain(
 }
 
 /**
- * YouTube domains to block when blockAccess is enabled
- */
-const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
-
-/**
  * Get list of domains that should be actively blocked via declarativeNetRequest
  * Includes always-blocked sites and time-limited sites that have exceeded their limit
  * Also includes YouTube domains when YouTube blockAccess is enabled (subject to schedule)
@@ -193,15 +241,28 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
 
   // スケジュールがアクティブな場合のみ、YouTube と時間制限サイトをブロック
   if (isAnyScheduleActive(settings.schedules)) {
-    // Add YouTube domains if YouTube blockAccess is enabled
-    if (settings.youtube?.enabled && settings.youtube?.blockAccess) {
+    const analytics = await getAnalytics();
+
+    // YouTube は仮想のブロック項目として、開いているタブの判定（getBlockState）と
+    // 同じ条件で扱う。時間制限があるときは超過後だけブロックする（#392）
+    const youtubeItem = getYouTubeBlockItem(settings);
+    const youtubeBlocked =
+      youtubeItem !== null &&
+      (!youtubeItem.timeLimit ||
+        checkTimeLimitExceeded(
+          youtubeItem.domain,
+          youtubeItem.timeLimit,
+          analytics
+        ));
+
+    if (youtubeBlocked) {
       for (const domain of YOUTUBE_DOMAINS) {
+        if (blockedDomains.includes(domain)) continue;
         blockedDomains.push(domain);
       }
     }
 
     // Also include time-limited sites that have exceeded their limit
-    const analytics = await getAnalytics();
     for (const item of settings.blockList) {
       if (!item.enabled || !item.timeLimit) continue;
       if (blockedDomains.includes(item.domain)) continue;

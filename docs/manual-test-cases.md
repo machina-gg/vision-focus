@@ -62,7 +62,7 @@
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-007: YouTube 設定変更が即座に反映される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-008: YouTube 有効化/無効化がトラッキング履歴に記録される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-010: blockAccess と Time Limit の優先順位（blockAccess 優先）
+- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-010: blockAccess と Time Limit の併用（超過後にブロック）
 
 ### 手動確認項目
 
