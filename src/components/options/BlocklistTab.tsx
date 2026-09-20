@@ -178,8 +178,13 @@ export function BlocklistTab({
             onChange={setNewDomain}
             placeholder={getMessage('domainPlaceholder')}
             containerClassName="flex-1 min-w-0"
+            className="text-base py-2.5"
           />
-          <Button data-testid="blocklist-add-button" onClick={onAddDomain}>
+          <Button
+            data-testid="blocklist-add-button"
+            onClick={onAddDomain}
+            className="shrink-0"
+          >
             <Plus className="w-4 h-4 mr-1" />
             {getMessage('add')}
           </Button>
