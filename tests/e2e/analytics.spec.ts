@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from './fixtures/extension';
 import {
   openOptions,
@@ -9,9 +11,49 @@ import {
   setStorageDataFromExtension,
   setSettingsFromExtension,
   getStorageDataFromExtension,
-  getStorageData
+  getStorageData,
+  makeAnalytics,
+  makeSiteBlockCounts
 } from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
+
+import type { AnalyticsData, UnblockHistory } from '~/types/storage';
+
+/**
+ * 保存済みの analytics から、集計の入っているキーの一覧を読む
+ *
+ * ⚠ 読めなかったときに空の配列へフォールバックしない。フォールバックすると
+ * キー名を間違えたままでも「0 件」を返し、リセットの検査が素通りする（#411）。
+ * 読めなかったことが分かる null を返し、呼び出し側のアサーションで落とす。
+ */
+async function readAnalyticsKeys(
+  page: Page
+): Promise<{ dailyStats: string[]; siteBlockCounts: string[] } | null> {
+  const analytics = await getStorageData<AnalyticsData>(page, 'analytics');
+  if (!analytics?.dailyStats || !analytics?.siteBlockCounts) {
+    return null;
+  }
+  return {
+    dailyStats: Object.keys(analytics.dailyStats),
+    siteBlockCounts: Object.keys(analytics.siteBlockCounts)
+  };
+}
+
+/** 保存済みの解除履歴から、ドメインごとの解除後の滞在時間を読む */
+async function readTimeAfterUnblock(
+  page: Page
+): Promise<Record<string, number> | null> {
+  const history = await getStorageData<UnblockHistory>(page, 'unblockHistory');
+  if (!history?.sites) {
+    return null;
+  }
+  return Object.fromEntries(
+    Object.entries(history.sites).map(([domain, site]) => [
+      domain,
+      site.timeAfterUnblock
+    ])
+  );
+}
 
 /**
  * E2E Tests: アナリティクス機能
@@ -286,23 +328,36 @@ test.describe('Analytics - アナリティクス機能', () => {
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
-    // Analytics データを設定
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {
-        '2024-01-01': {
-          date: '2024-01-01',
-          wasteTime: 300,
-          investTime: 0,
-          blockCount: 10,
-          unblockCount: 0
-        }
-      },
-      siteStats: {
-        [TEST_DOMAINS.example]: {
-          domain: TEST_DOMAINS.example,
-          blockCount: 5,
-          unblockCount: 0,
-          totalTime: 200
+    // Analytics データを設定（保存形は AnalyticsData。集計はドメインをキーに持つ）
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics({
+        dailyStats: {
+          '2024-01-01': {
+            date: '2024-01-01',
+            wasteTime: 300,
+            investTime: 0,
+            blockCount: 10,
+            unblockCount: 0
+          }
+        },
+        siteBlockCounts: makeSiteBlockCounts([[TEST_DOMAINS.example, 5]])
+      })
+    );
+
+    // 解除履歴も用意する。リセットは「一覧は残したまま滞在時間だけ 0 にする」
+    // （src/hooks/useAnalytics.ts の handleResetAnalytics）
+    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
+      sites: {
+        [TEST_DOMAINS.reddit]: {
+          domain: TEST_DOMAINS.reddit,
+          status: 'unblocked',
+          blockedAt: '2024-01-01T00:00:00.000Z',
+          unblockedAt: '2024-01-02T00:00:00.000Z',
+          timeAfterUnblock: 1200,
+          lastActivity: '2024-01-02T01:00:00.000Z'
         }
       }
     });
@@ -310,23 +365,40 @@ test.describe('Analytics - アナリティクス機能', () => {
     // Options ページを開く
     const optionsPage = await openOptions(context, extensionId, 'analytics');
 
-    // リセットボタンをクリック
-    const resetButton = optionsPage.locator(
-      'button:has-text("Reset"), button:has-text("リセット")'
+    // リセット前に集計が入っていることを確かめる。
+    // 空の状態から空を見ても「リセットされた」ことにはならない（#411）
+    const before = await readAnalyticsKeys(optionsPage);
+    expect(before?.dailyStats).toEqual(expect.arrayContaining(['2024-01-01']));
+    expect(before?.siteBlockCounts).toEqual(
+      expect.arrayContaining([TEST_DOMAINS.example])
     );
-    if (await resetButton.isVisible()) {
-      await resetButton.click();
-      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Analytics データがリセットされたことを確認
-      const analytics = (await getStorageDataFromExtension(
-        context,
-        extensionId,
-        'analytics'
-      )) as any;
-      expect(Object.keys(analytics.dailyStats).length).toBe(0);
-      expect(Object.keys(analytics.siteStats).length).toBe(0);
-    }
+    // リセットボタンをクリックすると確認モーダルが開く
+    const resetButton = optionsPage.locator(SELECTORS.analytics.resetButton);
+    await expect(resetButton).toBeVisible();
+    await resetButton.click();
+
+    // 確認モーダルの実行ボタンを押すまでリセットは走らない
+    // （window.confirm ではなくアプリ内のモーダル。
+    //   src/components/options/analytics/AnalyticsExportBar.tsx）
+    const resetConfirmButton = optionsPage.locator(
+      SELECTORS.analytics.resetConfirmButton
+    );
+    await expect(resetConfirmButton).toBeVisible();
+    await resetConfirmButton.click();
+
+    // 保存済みの集計が空になる。書き込みは非同期なので反映されるまで待つ
+    await expect
+      .poll(() => readAnalyticsKeys(optionsPage))
+      .toEqual({
+        dailyStats: [],
+        siteBlockCounts: []
+      });
+
+    // 解除履歴はドメインの一覧を残したまま、滞在時間だけ 0 になる
+    await expect
+      .poll(() => readTimeAfterUnblock(optionsPage))
+      .toEqual({ [TEST_DOMAINS.reddit]: 0 });
 
     await optionsPage.close();
   });
@@ -336,7 +408,15 @@ test.describe('Analytics - アナリティクス機能', () => {
   // 機能を検証していた。AN-008 は `if (queueData)` で囲まれていたため
   // 常に緑になっていた。キューイングを実装する場合はテストも作り直す。
 
-  test('AN-010: Opt-Out 時に Unblock History も無効化される', async ({
+  // ⚠ AN-010 は実行しない（fixme）。
+  // 題目どおりの操作（Options のブロックリストから解除する）に書き直したが、
+  // 期待結果が実装と食い違っているため今は必ず落ちる。
+  // `remove-block` ハンドラ（src/background/handlers/remove-block.ts）は
+  // analyticsOptIn を一切参照せず、解除履歴を無条件で記録する。Opt-Out が
+  // 止めるのは GA4 への外部送信だけ（src/lib/analytics.ts の isAnalyticsEnabled）。
+  // テスト名を実装に合わせるのか実装を変えるのかは未決（machina-gg/vision-focus#431
+  // 「先に判断が要るもの」2）。決まるまで、緑に見せずに未実行として残す。
+  test.fixme('AN-010: Opt-Out 時に Unblock History も無効化される', async ({
     context,
     extensionId
   }) => {
@@ -355,29 +435,30 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
+    // 解除履歴はドメインをキーにした sites に入る（entries という配列は無い）
     await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
-      entries: []
+      sites: {}
     });
 
-    // Options ページでブロック解除を試みる
+    // Options ページでブロック解除する。
+    // 解除ボタンは文言を持たず Trash2 アイコンだけなので testid で指す
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
-    await optionsPage.waitForLoadState('domcontentloaded');
 
-    const unblockButton = optionsPage
-      .locator('button:has-text("Unblock"), button:has-text("解除")')
-      .first();
-    if (await unblockButton.isVisible()) {
-      await unblockButton.click();
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
+    await optionsPage.locator(SELECTORS.options.deleteButton).first().click();
+    await expect(
+      optionsPage.locator(SELECTORS.modal.unblockConfirm)
+    ).toBeVisible();
+    await holdUnblockConfirm(optionsPage);
+    await expect(optionsPage.locator(SELECTORS.options.listItem)).toHaveCount(
+      0
+    );
 
     // Unblock History に記録されないことを確認
-    const unblockHistory = (await getStorageDataFromExtension(
-      context,
-      extensionId,
+    const history = await getStorageData<UnblockHistory>(
+      optionsPage,
       'unblockHistory'
-    )) as any;
-    expect(unblockHistory.entries.length).toBe(0);
+    );
+    expect(Object.keys(history?.sites ?? {})).toEqual([]);
 
     await optionsPage.close();
   });

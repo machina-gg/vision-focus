@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/extension';
-import { openExternalSite, openPopup } from './helpers/pages';
+import { openExternalSite, openOptions, openPopup } from './helpers/pages';
 import {
   setupStorageViaSW,
   triggerBlockRuleRecompute,
@@ -13,9 +13,10 @@ import {
   makeSettings,
   setStorageDataFromExtension,
   setSettingsFromExtension,
-  getStorageDataFromExtension
+  getStorageDataFromExtension,
+  getStorageData
 } from './helpers/storage';
-import { TEST_DOMAINS } from './helpers/constants';
+import { TEST_DATA, TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
 /**
  * E2E Tests: 機能間相互作用
@@ -328,13 +329,15 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    // パスワード保護を有効化
+    // パスワード保護を有効化。
+    // ハッシュは TEST_DATA の値を使う（SHA-256("test1234")）。
+    // 入力値と対応しないハッシュを直書きすると、認証が通らないことに
+    // 気付けないまま「モーダルが出た」だけの検査になる
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       password: {
         enabled: true,
-        passwordHash:
-          '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014'
+        passwordHash: TEST_DATA.password.validHash
       },
       blockList: [
         {
@@ -347,31 +350,46 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // ブロック解除は Options のブロックリストで行う。
+    // newtab には解除の UI が無い（src/entrypoints/newtab/ に解除の導線は無く、
+    // 解除は BlocklistTab の削除・無効化だけ）
+    const optionsPage = await openOptions(context, extensionId, 'blocklist');
 
-    // ブロックされたサイトにアクセス
-    const blockedPage = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
+    await expect(
+      optionsPage.locator(SELECTORS.options.itemDomain).first()
+    ).toContainText(TEST_DOMAINS.example);
+
+    // 削除ボタンをクリックするとパスワードモーダルが開く。
+    // パスワード保護時は長押しの Unblock 確認モーダルではなくこちらが出る
+    // （src/components/options/BlocklistTab.tsx の handleRemoveClick）
+    await optionsPage.locator(SELECTORS.options.deleteButton).first().click();
+
+    const passwordModal = optionsPage.locator(SELECTORS.modal.passwordModal);
+    await expect(passwordModal).toBeVisible();
+
+    const passwordInput = passwordModal.locator('input[type="password"]');
+    await expect(passwordInput).toBeVisible();
+
+    // 正しいパスワードを入力して確定すると削除が実行される
+    await passwordInput.fill(TEST_DATA.password.valid);
+    await optionsPage.locator(SELECTORS.modal.passwordConfirmButton).click();
+
+    await expect(passwordModal).toBeHidden();
+    await expect(optionsPage.locator(SELECTORS.options.listItem)).toHaveCount(
+      0
     );
 
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
+    // 保存済みのブロックリストからも消える
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{ blockList?: unknown[] }>(
+          optionsPage,
+          'settings'
+        );
+        return settings?.blockList?.length;
+      })
+      .toBe(0);
 
-    // newtab.html でブロック解除ボタンをクリック
-    const unblockButton = blockedPage.locator(
-      'button:has-text("Unblock"), button:has-text("解除")'
-    );
-    if (await unblockButton.isVisible()) {
-      await unblockButton.click();
-
-      // パスワードモーダルが表示されることを確認
-      const passwordModal = blockedPage.locator('[role="dialog"], .modal');
-      await passwordModal.waitFor({ state: 'visible', timeout: 3000 });
-
-      const passwordInput = passwordModal.locator('input[type="password"]');
-      expect(await passwordInput.isVisible()).toBeTruthy();
-    }
-
-    await blockedPage.close();
+    await optionsPage.close();
   });
 });
