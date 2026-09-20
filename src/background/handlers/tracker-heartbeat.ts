@@ -2,16 +2,12 @@ import type { MessageHandler } from '~/lib/messaging';
 import { extractDomain, matchesDomain } from '~/lib/domain';
 import {
   getSettings,
-  getAnalytics,
-  setAnalytics,
   getUnblockHistory,
   setUnblockHistory
 } from '~/lib/storage';
-import type { BlockItem } from '~/types/storage';
-import { getTodayKey } from '~/lib/time';
+import type { BlockItem, UnblockHistory } from '~/types/storage';
 import { TRACKER_CONFIG } from '~/constants/limits';
 import { STALE_ENTRY_TIMEOUT_MS } from '~/constants/intervals';
-import type { DailyStat, SiteTime } from '~/types/storage';
 import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
 import {
@@ -90,17 +86,23 @@ function domainsMatch(domain1: string, domain2: string): boolean {
 }
 
 // Find matching unblocked site (supports wildcards and www variants)
+// ⚠ 解除履歴は再ブロックしたエントリも保持し続けるため、
+// 「履歴にある」ではなく status === 'unblocked' で絞る（#440）
 function findUnblockedSite(
   domain: string,
-  history: { sites: Record<string, { domain: string }> }
+  history: UnblockHistory
 ): string | null {
+  const isUnblocked = (key: string): boolean =>
+    history.sites[key]?.status === 'unblocked';
+
   // Direct match first
-  if (history.sites[domain]) {
+  if (isUnblocked(domain)) {
     return domain;
   }
 
   // Check all unblocked domains for matches
   for (const unblockedDomain of Object.keys(history.sites)) {
+    if (!isUnblocked(unblockedDomain)) continue;
     // Create a BlockItem-like object for matching
     const blockItem: BlockItem = {
       id: '',
@@ -123,7 +125,7 @@ function findUnblockedSite(
   return null;
 }
 
-// Record time for a domain (tracks unblocked sites and time-limited sites)
+// Record time for a domain (tracks time-limited sites and unblock history)
 async function recordTime(domain: string, seconds: number): Promise<void> {
   if (seconds <= 0 || !domain) return;
 
@@ -139,7 +141,7 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
       await updateBlockRules();
       await blockExistingTabs();
     }
-    // Don't return here - also track in analytics if it's an unblocked site
+    // Don't return here - the unblock history is updated below as well
   }
 
   // YouTube-specific time limit recording
@@ -159,50 +161,24 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     }
   }
 
-  // Only track sites that are in the unblock history
+  // Only track sites that are currently unblocked
   const history = await getUnblockHistory();
   const matchedDomain = findUnblockedSite(domain, history);
 
   if (!matchedDomain) {
-    // Not an unblocked site, skip tracking (but time limit was already recorded above)
+    // Not an unblocked site, skip (but time limit was already recorded above)
     return;
   }
 
   const unblockedSite = history.sites[matchedDomain];
 
-  const now = new Date().toISOString();
-
   // Update unblock history time
+  // ⚠ analytics（siteTime / dailyStats）はここで更新しない。
+  // 使用時間の記録者は src/background/tracker.ts の 1 本だけで、
+  // 両方が書くと同じ滞在時間が二重に加算される（#440）
   unblockedSite.timeAfterUnblock += seconds;
-  unblockedSite.lastActivity = now;
+  unblockedSite.lastActivity = new Date().toISOString();
   await setUnblockHistory(history);
-
-  // グラフ表示用に analytics も更新する
-  const analytics = await getAnalytics();
-  const todayKey = getTodayKey();
-
-  // Update site time (for unblocked sites only)
-  const existingSiteTime = analytics.siteTime[domain];
-  const updatedSiteTime: SiteTime = {
-    domain,
-    time: (existingSiteTime?.time || 0) + seconds,
-    category: 'waste', // Unblocked sites are considered waste
-    lastUpdated: now
-  };
-  analytics.siteTime[domain] = updatedSiteTime;
-
-  // Update daily stats (for graph)
-  const existingDailyStat = analytics.dailyStats[todayKey];
-  const updatedDailyStat: DailyStat = {
-    date: todayKey,
-    wasteTime: (existingDailyStat?.wasteTime || 0) + seconds,
-    investTime: existingDailyStat?.investTime || 0,
-    blockCount: existingDailyStat?.blockCount || 0,
-    unblockCount: existingDailyStat?.unblockCount || 0
-  };
-  analytics.dailyStats[todayKey] = updatedDailyStat;
-
-  await setAnalytics(analytics);
 }
 
 // Message handler

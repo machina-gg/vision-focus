@@ -15,7 +15,7 @@ export function startTracking(): void {
     clearInterval(trackingInterval);
   }
 
-  // Update every second
+  // 一定間隔で、前回の書き出しからの経過時間をまとめて記録する
   trackingInterval = setInterval(updateTracking, TRACKING_UPDATE_INTERVAL_MS);
 
   // Listen for tab changes
@@ -118,7 +118,7 @@ function isContextValid(): boolean {
   }
 }
 
-// Update tracking (called every second)
+// Update tracking (called on every TRACKING_UPDATE_INTERVAL_MS tick)
 async function updateTracking(): Promise<void> {
   if (!activeDomain || !isContextValid()) return;
 
@@ -156,6 +156,8 @@ async function saveElapsedTime(): Promise<void> {
 }
 
 // Record time for a domain
+// 使用時間（siteTime）と日次集計（dailyStats）を書くのはこの関数だけ。
+// heartbeat 側からも書くと同じ滞在時間が二重に加算される（#440）
 async function recordTime(domain: string, seconds: number): Promise<void> {
   if (seconds <= 0) return;
 

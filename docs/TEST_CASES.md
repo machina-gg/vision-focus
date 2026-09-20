@@ -251,8 +251,8 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - 時間制限の超過判定は `analytics` を見るが、analytics の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` / `time-limit-reset` アラーム）を即時発火させて待つ
 - fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` / `makeTimeLimitUsage()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
 - storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
-- 滞在時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に載っているドメインだけ**。履歴に無いドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
-- ⚠ `analytics.siteTime` を書く経路は 2 つある（`src/background/handlers/tracker-heartbeat.ts` と、アクティブタブを 1 秒ごとに記録する `src/background/tracker.ts`）。**heartbeat が動いたことを `siteTime` で待たない**——後者が先に値を入れるため、待ちが即座に満たされて heartbeat の前に読み進めてしまう。heartbeat だけが書く値は `unblockHistory.sites[domain].timeAfterUnblock`
+- 解除後の時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に `status: 'unblocked'` で載っているドメインだけ**。履歴に無い／再ブロック中のドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
+- ⚠ `analytics.siteTime` を書くのは `src/background/tracker.ts`（フォーカスされたウィンドウのアクティブタブを一定間隔で記録する）だけで、`tracker-heartbeat` は書かない。**heartbeat が動いたことを `siteTime` で待たない**——別経路の値なので、heartbeat が止まっていても増える。heartbeat が書く値は `unblockHistory.sites[domain].timeAfterUnblock`
 - 「存在しない要素が無いこと」で合否を決めない。実装に一度も無かったセレクタや削除済みのセレクタの不在は、何を壊しても成立する。実装にある要素・値を正面から確かめる
 - テストが自分で `chrome.storage.local` に書いて同じキーを読み返すだけのテストは置かない。`src/` を全削除しても通る（確かめているのは Chrome のストレージであって本製品ではない）
 - 失敗を合格に変換しない。`isVisible()` を catch で包んで真偽値にすると、strict mode 違反（一致が複数）もタイムアウトも「表示されていない」として飲み込む。一致が 1 件になる範囲まで絞ってから判定する

@@ -267,10 +267,10 @@ describe('tracker', () => {
       await vi.advanceTimersByTimeAsync(0);
       vi.mocked(setAnalytics).mockClear();
 
-      // 5 秒経過 → 1 回分の計測のみ（タイマーが 2 本走っていれば 2 回になる）
-      await vi.advanceTimersByTimeAsync(5000);
+      // 書き出し間隔ぶん経過 → 1 回分の計測のみ（タイマーが 2 本走っていれば 2 回）
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
-      expect(vi.mocked(setAnalytics).mock.calls.length).toBeLessThanOrEqual(5);
+      expect(vi.mocked(setAnalytics).mock.calls).toHaveLength(1);
     });
   });
 
@@ -284,10 +284,13 @@ describe('tracker', () => {
       // 初期化（chrome.tabs.query）の解決を待つ
       await vi.advanceTimersByTimeAsync(0);
 
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
+      // 書き出し間隔ぶんの秒数が、まとめて 1 回で加算される
       const saved = lastSaved();
-      expect(saved.siteTime['example.com'].time).toBeGreaterThan(0);
+      expect(saved.siteTime['example.com'].time).toBe(
+        TRACKING_UPDATE_INTERVAL_MS / 1000
+      );
     });
 
     it('カテゴリ未設定のドメインは neutral として扱い、浪費/投資に加算しない', async () => {
@@ -296,7 +299,7 @@ describe('tracker', () => {
 
       startTracking();
       await vi.advanceTimersByTimeAsync(0);
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       const saved = lastSaved();
       expect(saved.siteTime['example.com'].category).toBe('neutral');
@@ -316,10 +319,12 @@ describe('tracker', () => {
 
       startTracking();
       await vi.advanceTimersByTimeAsync(0);
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       const saved = lastSaved();
-      expect(saved.dailyStats['2026-08-11'].wasteTime).toBeGreaterThan(0);
+      expect(saved.dailyStats['2026-08-11'].wasteTime).toBe(
+        TRACKING_UPDATE_INTERVAL_MS / 1000
+      );
       expect(saved.dailyStats['2026-08-11'].investTime).toBe(0);
     });
 
@@ -335,10 +340,12 @@ describe('tracker', () => {
 
       startTracking();
       await vi.advanceTimersByTimeAsync(0);
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       const saved = lastSaved();
-      expect(saved.dailyStats['2026-08-11'].investTime).toBeGreaterThan(0);
+      expect(saved.dailyStats['2026-08-11'].investTime).toBe(
+        TRACKING_UPDATE_INTERVAL_MS / 1000
+      );
       expect(saved.dailyStats['2026-08-11'].wasteTime).toBe(0);
     });
 
@@ -351,7 +358,7 @@ describe('tracker', () => {
 
       startTracking();
       await vi.advanceTimersByTimeAsync(0);
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
     });
@@ -362,7 +369,7 @@ describe('tracker', () => {
       const { startTracking } = await loadTracker();
 
       expect(() => startTracking()).not.toThrow();
-      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
     });
@@ -381,7 +388,7 @@ describe('tracker', () => {
         tabId: 2,
         windowId: 1
       } as chrome.tabs.TabActiveInfo);
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       const saved = lastSaved();
       expect(saved.siteTime['other.com']).toBeDefined();
@@ -400,7 +407,7 @@ describe('tracker', () => {
         windowId: 1
       } as chrome.tabs.TabActiveInfo);
       vi.mocked(setAnalytics).mockClear();
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
     });
@@ -417,7 +424,7 @@ describe('tracker', () => {
         { url: 'https://changed.com/page' } as chrome.tabs.TabChangeInfo,
         {} as chrome.tabs.Tab
       );
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(lastSaved().siteTime['changed.com']).toBeDefined();
     });
@@ -434,7 +441,7 @@ describe('tracker', () => {
         { url: 'https://background.com' } as chrome.tabs.TabChangeInfo,
         {} as chrome.tabs.Tab
       );
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(lastSaved().siteTime['background.com']).toBeUndefined();
     });
@@ -469,7 +476,7 @@ describe('tracker', () => {
       await harness.listeners.windowFocus[0](-1); // WINDOW_ID_NONE
       vi.mocked(setAnalytics).mockClear();
 
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
     });
@@ -490,7 +497,7 @@ describe('tracker', () => {
         currentWindow: true
       });
 
-      await vi.advanceTimersByTimeAsync(3000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
       expect(setAnalytics).toHaveBeenCalled();
     });
   });
@@ -514,7 +521,7 @@ describe('tracker', () => {
         tabId: 2,
         windowId: 1
       } as chrome.tabs.TabActiveInfo);
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
     });
