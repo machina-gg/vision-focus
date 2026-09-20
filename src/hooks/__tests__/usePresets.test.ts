@@ -2,8 +2,17 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { usePresets } from '~/hooks/usePresets';
-import type { VisionSettings, DashboardPreset } from '~/types/storage';
-import { DEFAULT_VISION, DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
+import type {
+  AppSettings,
+  Schedule,
+  VisionSettings,
+  DashboardPreset
+} from '~/types/storage';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  DEFAULT_DISPLAY_SETTINGS
+} from '~/types/storage';
 import { DEFAULT_FONT_SETTINGS } from '~/types/font';
 
 // Mock dependencies
@@ -14,6 +23,9 @@ vi.mock('~/lib/analytics', () => ({
 vi.mock('~/lib/storage', () => ({
   getVision: vi.fn(),
   visionItem: {
+    setValue: vi.fn()
+  },
+  settingsItem: {
     setValue: vi.fn()
   }
 }));
@@ -40,10 +52,40 @@ vi.mock('~/constants/intervals', () => ({
 }));
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { getVision, visionItem } from '~/lib/storage';
+import { getVision, settingsItem, visionItem } from '~/lib/storage';
 
 describe('usePresets', () => {
   const mockSetVision = vi.fn();
+  const mockSetSettings = vi.fn();
+
+  // スタイルを参照しているスケジュール（#333 の対象）
+  const makeSchedule = (overrides: Partial<Schedule> = {}): Schedule => ({
+    id: 'schedule-1',
+    name: 'Weekday Focus',
+    startTime: '09:00',
+    endTime: '12:00',
+    days: [1, 2, 3, 4, 5],
+    enabled: true,
+    ...overrides
+  });
+
+  const makeSettings = (schedules: Schedule[] = []): AppSettings => ({
+    ...DEFAULT_SETTINGS,
+    schedules
+  });
+
+  const renderUsePresets = (
+    vision: VisionSettings | undefined,
+    settings: AppSettings = makeSettings()
+  ) =>
+    renderHook(() =>
+      usePresets({
+        vision,
+        setVision: mockSetVision,
+        settings,
+        setSettings: mockSetSettings
+      })
+    );
 
   const mockPreset: DashboardPreset = {
     id: 'preset-1',
@@ -69,6 +111,7 @@ describe('usePresets', () => {
     vi.clearAllMocks();
     vi.mocked(getVision).mockResolvedValue(mockVision);
     vi.mocked(visionItem.setValue).mockResolvedValue(undefined);
+    vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
     // crypto.randomUUID のモック
     vi.stubGlobal('crypto', {
       ...global.crypto,
@@ -78,9 +121,7 @@ describe('usePresets', () => {
 
   describe('初期化', () => {
     it('プリセットがある場合、activePresetIdを選択', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -99,12 +140,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithoutActive);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithoutActive,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithoutActive);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -119,12 +155,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithoutPresets);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithoutPresets,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithoutPresets);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBeNull();
@@ -139,9 +170,7 @@ describe('usePresets', () => {
       // 未保存なら項目定義の fallback（DEFAULT_VISION）が返る
       vi.mocked(getVision).mockResolvedValue(DEFAULT_VISION);
 
-      const { result } = renderHook(() =>
-        usePresets({ vision: undefined, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(undefined);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBeNull();
@@ -151,9 +180,7 @@ describe('usePresets', () => {
 
   describe('表示設定の更新', () => {
     it('handleGoalTextChange でゴールテキストを更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -168,9 +195,7 @@ describe('usePresets', () => {
     });
 
     it('handleGoalSubTextChange でサブテキストを更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -187,9 +212,7 @@ describe('usePresets', () => {
     });
 
     it('handleTextColorChange でテキスト色を更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -204,9 +227,7 @@ describe('usePresets', () => {
     });
 
     it('handleBackgroundTypeChange で背景タイプを更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -221,9 +242,7 @@ describe('usePresets', () => {
     });
 
     it('handleBackgroundChange で背景画像を更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -240,9 +259,7 @@ describe('usePresets', () => {
     });
 
     it('handleBackgroundColorChange で背景色を更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -259,9 +276,7 @@ describe('usePresets', () => {
     });
 
     it('handleFontSettingsChange でフォント設定を更新', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -306,12 +321,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithMultiplePresets);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithMultiplePresets,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithMultiplePresets);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -328,9 +338,7 @@ describe('usePresets', () => {
     });
 
     it('存在しないプリセットIDの場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -346,9 +354,7 @@ describe('usePresets', () => {
 
   describe('handleSaveSelectedPreset', () => {
     it('選択中のプリセットを保存', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -378,12 +384,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithoutPresets);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithoutPresets,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithoutPresets);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBeNull();
@@ -397,9 +398,7 @@ describe('usePresets', () => {
     });
 
     it('goalTextが空の場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -417,9 +416,7 @@ describe('usePresets', () => {
     });
 
     it('editingPresetNameが空の場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       await waitFor(() => {
         expect(result.current.selectedPresetId).toBe('preset-1');
@@ -439,9 +436,7 @@ describe('usePresets', () => {
     it('保存後、visionSavedフラグが一時的にtrueになる', async () => {
       vi.useFakeTimers();
 
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -476,9 +471,7 @@ describe('usePresets', () => {
 
   describe('handleApplyPreset', () => {
     it('選択中のプリセットをアクティブに設定', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -505,12 +498,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithoutPresets);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithoutPresets,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithoutPresets);
 
       // 初期化が完了するまで待つ（非同期初期化がある）
       await vi.waitFor(() => {
@@ -527,9 +515,7 @@ describe('usePresets', () => {
     });
 
     it('visionがundefinedの場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: undefined, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(undefined);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -548,9 +534,7 @@ describe('usePresets', () => {
 
   describe('handleCreatePreset', () => {
     it('新しいプリセットを作成', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -580,9 +564,7 @@ describe('usePresets', () => {
     });
 
     it('プリセット名が空の場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -603,11 +585,9 @@ describe('usePresets', () => {
     });
   });
 
-  describe('handleDeletePreset', () => {
+  describe('handleRequestDeletePreset（参照しているスケジュールが無い場合）', () => {
     it('プリセットを削除', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -617,7 +597,7 @@ describe('usePresets', () => {
       });
 
       await act(async () => {
-        await result.current.handleDeletePreset('preset-1');
+        await result.current.handleRequestDeletePreset('preset-1');
       });
 
       const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
@@ -651,12 +631,7 @@ describe('usePresets', () => {
 
       vi.mocked(getVision).mockResolvedValue(visionWithMultiplePresets);
 
-      const { result } = renderHook(() =>
-        usePresets({
-          vision: visionWithMultiplePresets,
-          setVision: mockSetVision
-        })
-      );
+      const { result } = renderUsePresets(visionWithMultiplePresets);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -666,16 +641,14 @@ describe('usePresets', () => {
       });
 
       await act(async () => {
-        await result.current.handleDeletePreset('preset-2');
+        await result.current.handleRequestDeletePreset('preset-2');
       });
 
       expect(result.current.selectedPresetId).toBe('preset-1');
     });
 
     it('activePresetIdを削除した場合、nullにリセット', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -685,19 +658,157 @@ describe('usePresets', () => {
       });
 
       await act(async () => {
-        await result.current.handleDeletePreset('preset-1');
+        await result.current.handleRequestDeletePreset('preset-1');
       });
 
       const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
       expect(savedVision.activePresetId).toBeNull();
     });
+
+    it('参照が無ければ確認を出さず、スケジュールも保存し直さない', async () => {
+      const settings = makeSettings([makeSchedule({ presetId: 'preset-2' })]);
+      const { result } = renderUsePresets(mockVision, settings);
+
+      await vi.waitFor(() => {
+        if (result.current.selectedPresetId !== 'preset-1') {
+          throw new Error('Not ready');
+        }
+      });
+
+      await act(async () => {
+        await result.current.handleRequestDeletePreset('preset-1');
+      });
+
+      expect(result.current.deleteTargetPresetId).toBeNull();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(visionItem.setValue).toHaveBeenCalled();
+    });
+  });
+
+  describe('スケジュールが参照しているスタイルの削除（#333）', () => {
+    const renderWithLinkedSchedules = async (
+      schedules = [
+        makeSchedule({ id: 'schedule-1', presetId: 'preset-1' }),
+        makeSchedule({
+          id: 'schedule-2',
+          presetId: 'preset-1',
+          enabled: false
+        }),
+        makeSchedule({ id: 'schedule-3', presetId: 'other-preset' })
+      ]
+    ) => {
+      const settings = makeSettings(schedules);
+      const rendered = renderUsePresets(mockVision, settings);
+
+      await vi.waitFor(() => {
+        if (rendered.result.current.selectedPresetId !== 'preset-1') {
+          throw new Error('Not ready');
+        }
+      });
+
+      return { ...rendered, settings };
+    };
+
+    it('参照が 1 件以上あるときは確認待ちになり、件数を返す', async () => {
+      const { result } = await renderWithLinkedSchedules();
+
+      await act(async () => {
+        await result.current.handleRequestDeletePreset('preset-1');
+      });
+
+      expect(result.current.deleteTargetPresetId).toBe('preset-1');
+      expect(result.current.deleteTargetScheduleCount).toBe(2);
+      // 確認の段階では何も保存しない
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(visionItem.setValue).not.toHaveBeenCalled();
+    });
+
+    it('確認すると presetId だけが外れ、enabled は変わらない', async () => {
+      const { result } = await renderWithLinkedSchedules();
+
+      await act(async () => {
+        await result.current.handleRequestDeletePreset('preset-1');
+      });
+
+      await act(async () => {
+        await result.current.handleConfirmDeletePreset();
+      });
+
+      const savedSettings = vi.mocked(settingsItem.setValue).mock.calls[0][0];
+      // 参照していたスケジュールは残り、スタイル連携だけが外れる
+      expect(savedSettings.schedules).toHaveLength(3);
+      expect(savedSettings.schedules[0].presetId).toBeUndefined();
+      expect(savedSettings.schedules[0].enabled).toBe(true);
+      expect(savedSettings.schedules[1].presetId).toBeUndefined();
+      expect(savedSettings.schedules[1].enabled).toBe(false);
+      // 別のスタイルを参照しているスケジュールは触らない
+      expect(savedSettings.schedules[2].presetId).toBe('other-preset');
+      expect(mockSetSettings).toHaveBeenCalledWith(savedSettings);
+
+      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      expect(savedVision.presets).toHaveLength(0);
+      expect(result.current.deleteTargetPresetId).toBeNull();
+    });
+
+    it('キャンセルすると削除もスケジュールの更新も起きない', async () => {
+      const { result } = await renderWithLinkedSchedules();
+
+      await act(async () => {
+        await result.current.handleRequestDeletePreset('preset-1');
+      });
+
+      act(() => {
+        result.current.handleCancelDeletePreset();
+      });
+
+      expect(result.current.deleteTargetPresetId).toBeNull();
+      expect(result.current.draftPresets).toHaveLength(1);
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(visionItem.setValue).not.toHaveBeenCalled();
+      expect(mockSetSettings).not.toHaveBeenCalled();
+      expect(mockSetVision).not.toHaveBeenCalled();
+    });
+
+    it('確認待ちでないときに確認しても何も起きない', async () => {
+      const { result } = await renderWithLinkedSchedules();
+
+      await act(async () => {
+        await result.current.handleConfirmDeletePreset();
+      });
+
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(visionItem.setValue).not.toHaveBeenCalled();
+    });
+
+    it('settings が未取得なら確認を出さずに削除する', async () => {
+      const { result } = renderHook(() =>
+        usePresets({
+          vision: mockVision,
+          setVision: mockSetVision,
+          settings: undefined,
+          setSettings: mockSetSettings
+        })
+      );
+
+      await vi.waitFor(() => {
+        if (result.current.selectedPresetId !== 'preset-1') {
+          throw new Error('Not ready');
+        }
+      });
+
+      await act(async () => {
+        await result.current.handleRequestDeletePreset('preset-1');
+      });
+
+      expect(result.current.deleteTargetPresetId).toBeNull();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(visionItem.setValue).toHaveBeenCalled();
+    });
   });
 
   describe('モーダル管理', () => {
     it('setShowSavePresetModal でモーダルの表示状態を切り替え', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {
@@ -716,9 +827,7 @@ describe('usePresets', () => {
     });
 
     it('setPresetName でプリセット名を設定', async () => {
-      const { result } = renderHook(() =>
-        usePresets({ vision: mockVision, setVision: mockSetVision })
-      );
+      const { result } = renderUsePresets(mockVision);
 
       // 初期化が完了するまで待つ
       await vi.waitFor(() => {

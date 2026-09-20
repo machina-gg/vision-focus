@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { getVision, visionItem } from '~/lib/storage';
+import { getVision, settingsItem, visionItem } from '~/lib/storage';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type {
+  AppSettings,
   VisionSettings,
   DashboardPreset,
   DashboardDisplaySettings
@@ -17,6 +18,8 @@ import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 interface UsePresetsOptions {
   vision: VisionSettings | undefined;
   setVision: (vision: VisionSettings) => void;
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
 }
 
 export interface UsePresetsReturn {
@@ -28,11 +31,17 @@ export interface UsePresetsReturn {
   visionSaved: boolean;
   showSavePresetModal: boolean;
   presetName: string;
+  /** 削除の確認待ちになっているスタイルの ID（確認が不要なら null） */
+  deleteTargetPresetId: string | null;
+  /** 確認待ちのスタイルを参照しているスケジュールの件数 */
+  deleteTargetScheduleCount: number;
   setShowSavePresetModal: (show: boolean) => void;
   setPresetName: (name: string) => void;
   handleSelectPreset: (presetId: string) => void;
   handlePresetNameChange: (name: string) => void;
-  handleDeletePreset: (id: string) => Promise<void>;
+  handleRequestDeletePreset: (id: string) => Promise<void>;
+  handleConfirmDeletePreset: () => Promise<void>;
+  handleCancelDeletePreset: () => void;
   handleSaveSelectedPreset: () => Promise<void>;
   handleApplyPreset: () => Promise<void>;
   handleCreatePreset: () => Promise<void>;
@@ -57,6 +66,7 @@ interface PresetState {
   visionSaved: boolean;
   showSavePresetModal: boolean;
   presetName: string;
+  deleteTargetPresetId: string | null;
 }
 
 type PresetAction =
@@ -89,7 +99,9 @@ type PresetAction =
       updatedPresets: DashboardPreset[];
     }
   | { type: 'SET_SHOW_MODAL'; show: boolean }
-  | { type: 'SET_PRESET_NAME'; name: string };
+  | { type: 'SET_PRESET_NAME'; name: string }
+  | { type: 'REQUEST_DELETE_PRESET'; presetId: string }
+  | { type: 'CLEAR_DELETE_TARGET' };
 
 const INITIAL_STATE: PresetState = {
   draftDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
@@ -99,7 +111,8 @@ const INITIAL_STATE: PresetState = {
   isDirty: false,
   visionSaved: false,
   showSavePresetModal: false,
-  presetName: ''
+  presetName: '',
+  deleteTargetPresetId: null
 };
 
 function presetReducer(state: PresetState, action: PresetAction): PresetState {
@@ -139,7 +152,8 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
         draftDisplaySettings: action.wasSelected
           ? action.fallbackSettings
           : state.draftDisplaySettings,
-        isDirty: false
+        isDirty: false,
+        deleteTargetPresetId: null
       };
     case 'SAVE_PRESETS':
       return { ...state, draftPresets: action.updatedPresets, isDirty: false };
@@ -160,6 +174,10 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
       return { ...state, showSavePresetModal: action.show };
     case 'SET_PRESET_NAME':
       return { ...state, presetName: action.name };
+    case 'REQUEST_DELETE_PRESET':
+      return { ...state, deleteTargetPresetId: action.presetId };
+    case 'CLEAR_DELETE_TARGET':
+      return { ...state, deleteTargetPresetId: null };
   }
 }
 
@@ -169,7 +187,9 @@ const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
 export function usePresets({
   vision,
-  setVision
+  setVision,
+  settings,
+  setSettings
 }: UsePresetsOptions): UsePresetsReturn {
   const [state, dispatch] = useReducer(presetReducer, INITIAL_STATE);
 
@@ -268,8 +288,38 @@ export function usePresets({
     [state.draftPresets]
   );
 
-  const handleDeletePreset = useCallback(
+  // スタイルを参照しているスケジュールの件数（削除時の確認に出す）
+  const countSchedulesUsingPreset = useCallback(
+    (presetId: string) =>
+      (settings?.schedules ?? []).filter((s) => s.presetId === presetId).length,
+    [settings]
+  );
+
+  const deleteTargetScheduleCount = useMemo(
+    () =>
+      state.deleteTargetPresetId
+        ? countSchedulesUsingPreset(state.deleteTargetPresetId)
+        : 0,
+    [state.deleteTargetPresetId, countSchedulesUsingPreset]
+  );
+
+  const deletePreset = useCallback(
     async (id: string) => {
+      // スケジュール側の連携を先に外す。vision を先に書くと、途中で失敗したときに
+      // 宛先のない presetId がスケジュールに残る（#333）
+      const schedules = settings?.schedules ?? [];
+      if (settings && schedules.some((s) => s.presetId === id)) {
+        // スケジュール自体（時間帯・曜日）はユーザーの資産なので enabled は変えない
+        const updatedSettings: AppSettings = {
+          ...settings,
+          schedules: schedules.map((s) =>
+            s.presetId === id ? { ...s, presetId: undefined } : s
+          )
+        };
+        await settingsItem.setValue(updatedSettings);
+        setSettings(updatedSettings);
+      }
+
       const remainingPresets = state.draftPresets.filter((p) => p.id !== id);
       dispatch({
         type: 'DELETE_PRESET',
@@ -286,8 +336,36 @@ export function usePresets({
       await visionItem.setValue(toSave);
       setVision(toSave);
     },
-    [state.draftPresets, state.selectedPresetId, vision, setVision]
+    [
+      state.draftPresets,
+      state.selectedPresetId,
+      vision,
+      setVision,
+      settings,
+      setSettings
+    ]
   );
+
+  // 参照しているスケジュールがあるときだけ確認を挟む。0 件なら従来どおり即削除する
+  const handleRequestDeletePreset = useCallback(
+    async (id: string) => {
+      if (countSchedulesUsingPreset(id) > 0) {
+        dispatch({ type: 'REQUEST_DELETE_PRESET', presetId: id });
+        return;
+      }
+      await deletePreset(id);
+    },
+    [countSchedulesUsingPreset, deletePreset]
+  );
+
+  const handleConfirmDeletePreset = useCallback(async () => {
+    if (!state.deleteTargetPresetId) return;
+    await deletePreset(state.deleteTargetPresetId);
+  }, [state.deleteTargetPresetId, deletePreset]);
+
+  const handleCancelDeletePreset = useCallback(() => {
+    dispatch({ type: 'CLEAR_DELETE_TARGET' });
+  }, []);
 
   const handleSaveSelectedPreset = useCallback(async () => {
     const { selectedPresetId, draftDisplaySettings, editingPresetName } = state;
@@ -367,8 +445,11 @@ export function usePresets({
   return {
     ...state,
     ...displayHandlers,
+    deleteTargetScheduleCount,
     handleSelectPreset,
-    handleDeletePreset,
+    handleRequestDeletePreset,
+    handleConfirmDeletePreset,
+    handleCancelDeletePreset,
     handleSaveSelectedPreset,
     handleApplyPreset,
     handleCreatePreset

@@ -45,16 +45,17 @@
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名 | 種別    | 説明                         |
-| ---------------- | ------- | ---------------------------- |
-| GeneralTab       | options | スタイル設定（スタイル管理） |
-| BlocklistTab     | options | ブロックリスト管理           |
-| SchedulesTab     | options | スケジュール管理             |
-| WeeklyCalendar   | options | 週間カレンダー表示           |
-| AnalyticsTab     | options | 分析タブ                     |
-| HelpTab          | options | ヘルプタブ                   |
-| ScheduleModal    | modal   | スケジュール編集モーダル     |
-| NewPresetModal   | modal   | 新規スタイル作成モーダル     |
+| コンポーネント名  | 種別    | 説明                         |
+| ----------------- | ------- | ---------------------------- |
+| GeneralTab        | options | スタイル設定（スタイル管理） |
+| BlocklistTab      | options | ブロックリスト管理           |
+| SchedulesTab      | options | スケジュール管理             |
+| WeeklyCalendar    | options | 週間カレンダー表示           |
+| AnalyticsTab      | options | 分析タブ                     |
+| HelpTab           | options | ヘルプタブ                   |
+| ScheduleModal     | modal   | スケジュール編集モーダル     |
+| NewPresetModal    | modal   | 新規スタイル作成モーダル     |
+| DeletePresetModal | modal   | スタイル削除確認モーダル     |
 
 ### ユーティリティ（lib）
 
@@ -462,6 +463,9 @@ function useSchedules(props: {
 function usePresets(props: {
   vision: VisionSettings | undefined;
   setVision: (vision: VisionSettings) => void;
+  // スタイル削除時にスケジュールのスタイル連携を外すために扱う
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
 }): {
   // スタイル一覧（ドラフト状態）
   draftPresets: DashboardPreset[];
@@ -480,7 +484,12 @@ function usePresets(props: {
   // スタイル操作
   handleSelectPreset: (id: string | null) => void;
   handleCreatePreset: () => void;
-  handleDeletePreset: (id: string) => void;
+  // 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せず削除する
+  deleteTargetPresetId: string | null;
+  deleteTargetScheduleCount: number;
+  handleRequestDeletePreset: (id: string) => void;
+  handleConfirmDeletePreset: () => void;
+  handleCancelDeletePreset: () => void;
   handleApplyPreset: () => void;
   handleSaveSelectedPreset: () => void;
 
@@ -500,6 +509,8 @@ function usePresets(props: {
 **機能**
 
 - スタイルの作成・選択・削除・適用
+- 削除時、参照しているスケジュールの `presetId` を外す（`enabled` は変えない）。
+  参照が 1 件以上あるときは件数を示して確認する
 - 設定変更時のドラフト管理
 - ストレージへの永続化
 

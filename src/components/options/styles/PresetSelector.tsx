@@ -22,7 +22,7 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
     visionSaved,
     setShowSavePresetModal,
     handleSelectPreset,
-    handleDeletePreset,
+    handleRequestDeletePreset,
     handleApplyPreset,
     handleSaveSelectedPreset
   } = presets;
@@ -74,7 +74,7 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
           draftDisplaySettings={draftDisplaySettings}
           editingPresetName={editingPresetName}
           vision={vision}
-          onDeletePreset={handleDeletePreset}
+          onDeletePreset={handleRequestDeletePreset}
           onApplyPreset={handleApplyPreset}
           onSavePreset={handleSaveSelectedPreset}
         />

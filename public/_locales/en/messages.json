@@ -883,6 +883,20 @@
     "message": "Unknown style",
     "description": "Deleted style"
   },
+  "deletePresetLinkedSchedules": {
+    "message": "This style is used by $COUNT$ schedule(s). Deleting it will unlink the style from those schedules.",
+    "description": "Style delete confirmation description",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "deletePresetScheduleKept": {
+    "message": "The schedules themselves are kept, and their on/off state does not change.",
+    "description": "Note that schedules are kept when a style is deleted"
+  },
   "defaultSettings": {
     "message": "Default",
     "description": "Default settings button"

@@ -544,13 +544,7 @@ test.describe('Options - Schedule Tab', () => {
     await page.close();
   });
 
-  // 実装が未対応のため保留（#333）。
-  // handleDeletePreset は vision のみ更新し、settings.schedules を触らないため、
-  // スタイルを削除してもスケジュールは有効なまま「不明なスタイル」を指し続ける。
-  // 実行時は defaultSettings にフォールバックするためクラッシュはしないが、
-  // ユーザーからは「設定したのに切り替わらない」状態になる。
-  // 仕様を確定させてから有効化する。
-  test.fixme('OPT-S14: プリセット削除時、該当スケジュールが無効化される', async ({
+  test('OPT-S14: プリセット削除時、該当スケジュールのスタイル連携が解除される', async ({
     context,
     extensionId
   }) => {
@@ -594,20 +588,42 @@ test.describe('Options - Schedule Tab', () => {
     const deleteButton = page.locator(SELECTORS.styles.deleteButton);
     await deleteButton.click();
 
+    // 参照しているスケジュールがあるので確認モーダルが開き、件数が示される
+    const confirmModal = page.locator(SELECTORS.styles.deletePresetModal);
+    await expect(confirmModal).toBeVisible();
+    await expect(
+      page.locator(SELECTORS.styles.deletePresetScheduleCount)
+    ).toContainText('1');
+
+    // キャンセルすると削除されない
+    await page.locator(SELECTORS.styles.deletePresetCancel).click();
+    await expect(confirmModal).toBeHidden();
+    await expect(presetButton).toBeVisible();
+
+    // 改めて削除を確定する
+    await deleteButton.click();
+    await page.locator(SELECTORS.styles.deletePresetConfirm).click();
+    await expect(confirmModal).toBeHidden();
+    await expect(presetButton).toHaveCount(0);
+
     // スケジュールタブに移動
     await page.locator(SELECTORS.options.schedulesTab).click();
 
-    // スケジュールが無効化されているか確認
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Linked Schedule' });
 
-    // スケジュールが表示される
+    // スケジュール自体は残る
     await expect(scheduleItem).toBeVisible();
 
-    // トグルが無効状態になっている
+    // 有効・無効の状態は削除前のまま（有効）
     const toggle = scheduleItem.locator(SELECTORS.schedules.scheduleToggle);
-    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+    // スタイル連携が外れ、「不明なスタイル」の表示も出ない
+    await expect(
+      scheduleItem.locator(SELECTORS.schedules.scheduleItemPreset)
+    ).toHaveCount(0);
 
     await page.close();
   });
