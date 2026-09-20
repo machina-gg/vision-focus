@@ -1,13 +1,10 @@
 import { defineContentScript } from '#imports';
 
-import { analyticsItem, settingsItem } from '~/lib/storage';
+import { settingsItem } from '~/lib/storage';
 
-import type { YouTubeSettings, TimeLimitUsage } from '~/types/storage';
+import type { YouTubeSettings } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
-import {
-  AnalyticsDataSchema,
-  YouTubeSettingsSchema
-} from '~/types/messageSchemas';
+import { YouTubeSettingsSchema } from '~/types/messageSchemas';
 import { getMessage } from '~/lib/i18n';
 
 // CSS selectors for YouTube elements
@@ -40,30 +37,8 @@ const SELECTORS = {
 
 // Current settings
 let currentSettings: YouTubeSettings = DEFAULT_YOUTUBE_SETTINGS;
-let timeLimitExceeded = false;
 let styleElement: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
-
-// Check if the YouTube time limit has been exceeded based on usage data
-function checkTimeLimitExceeded(
-  settings: YouTubeSettings,
-  usage: TimeLimitUsage | undefined
-): boolean {
-  if (!settings.enabled || !settings.timeLimit || !usage) {
-    return false;
-  }
-
-  const { limitSeconds } = settings.timeLimit;
-
-  // Check if daily reset is needed
-  const now = new Date();
-  const todayKey = now.toISOString().split('T')[0];
-
-  const usedSeconds =
-    usage.lastDailyReset === todayKey ? usage.dailyUsedSeconds : 0;
-
-  return usedSeconds >= limitSeconds;
-}
 
 // Generate CSS based on current settings
 function generateCSS(settings: YouTubeSettings): string {
@@ -78,30 +53,6 @@ function generateCSS(settings: YouTubeSettings): string {
   }
 
   const rules: string[] = [];
-
-  // If time limit is exceeded, hide all content
-  if (timeLimitExceeded) {
-    const timeLimitMessage = getMessage('youtubeTimeLimitReached');
-    rules.push(`
-      /* Time limit exceeded - hide all YouTube content */
-      ytd-app #content {
-        display: none !important;
-      }
-      ytd-app::after {
-        content: '${timeLimitMessage}';
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-        color: var(--yt-spec-text-secondary, #606060);
-        font-size: 20px;
-        font-weight: 500;
-        text-align: center;
-        padding: 40px;
-      }
-    `);
-    return rules.join('\n');
-  }
 
   if (settings.hideShorts) {
     rules.push(`
@@ -198,7 +149,7 @@ function applyStyles(settings: YouTubeSettings): void {
 
 // Handle dynamic content (YouTube is an SPA)
 function handleDynamicContent(): void {
-  if (!currentSettings.enabled || timeLimitExceeded) return;
+  if (!currentSettings.enabled) return;
 
   // When blockAccess is true, the background script handles the redirect
   if (currentSettings.blockAccess) return;
@@ -258,22 +209,6 @@ function setupObserver(): void {
   startObserving();
 }
 
-// Load analytics to check time limit
-async function loadTimeLimitState(): Promise<void> {
-  try {
-    const raw = await analyticsItem.getValue();
-    const parsed = AnalyticsDataSchema.safeParse(raw);
-    if (!parsed.success) {
-      timeLimitExceeded = false;
-      return;
-    }
-    const usage = parsed.data.timeLimitUsage['youtube.com'];
-    timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
-  } catch {
-    timeLimitExceeded = false;
-  }
-}
-
 // Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
@@ -287,37 +222,19 @@ async function loadSettings(): Promise<void> {
     currentSettings = DEFAULT_YOUTUBE_SETTINGS;
   }
 
-  await loadTimeLimitState();
   applyStyles(currentSettings);
   handleDynamicContent();
 }
 
-// Watch for settings and analytics changes
+// Watch for settings changes
 function watchSettings(): void {
   const unwatchSettings = settingsItem.watch((newSettings) => {
     const parsed = YouTubeSettingsSchema.safeParse(newSettings?.youtube);
     if (!parsed.success) return;
 
     currentSettings = parsed.data;
-    // Re-check time limit when settings change (async IIFE to avoid .then)
-    void (async () => {
-      await loadTimeLimitState();
-      applyStyles(currentSettings);
-      handleDynamicContent();
-    })();
-  });
-
-  const unwatchAnalytics = analyticsItem.watch((newAnalytics) => {
-    const parsed = AnalyticsDataSchema.safeParse(newAnalytics);
-    if (!parsed.success) return;
-
-    const usage = parsed.data.timeLimitUsage['youtube.com'];
-    const wasExceeded = timeLimitExceeded;
-    timeLimitExceeded = checkTimeLimitExceeded(currentSettings, usage);
-
-    if (wasExceeded !== timeLimitExceeded) {
-      applyStyles(currentSettings);
-    }
+    applyStyles(currentSettings);
+    handleDynamicContent();
   });
 
   // ページが破棄されるときに監視を解除する。
@@ -327,7 +244,6 @@ function watchSettings(): void {
     if (event.persisted) return;
 
     unwatchSettings();
-    unwatchAnalytics();
     observer?.disconnect();
   });
 }

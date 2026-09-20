@@ -12,9 +12,17 @@ vi.mock('~/lib/timeLimitService', () => ({
   getRemainingTime: vi.fn()
 }));
 
-vi.mock('~/lib/youtubeBlockService', () => ({
-  getYouTubeRemainingTime: vi.fn()
-}));
+vi.mock('~/lib/youtubeBlockService', async () => {
+  // isYouTubeTimeLimitActive は純粋な判定関数なので実物を使い、
+  // ストレージに触る getYouTubeRemainingTime だけ差し替える
+  const actual = await vi.importActual<
+    typeof import('~/lib/youtubeBlockService')
+  >('~/lib/youtubeBlockService');
+  return {
+    isYouTubeTimeLimitActive: actual.isYouTubeTimeLimitActive,
+    getYouTubeRemainingTime: vi.fn()
+  };
+});
 
 vi.mock('~/lib/i18n', () => ({
   getMessage: vi.fn((key: string) => key)
@@ -193,6 +201,7 @@ describe('checkYouTubeTimeLimitNotification', () => {
         youtube: {
           ...DEFAULT_YOUTUBE_SETTINGS,
           enabled: true,
+          blockAccess: true,
           timeLimit: { type: 'daily', limitSeconds: 3600 }
         }
       })
@@ -218,7 +227,12 @@ describe('checkYouTubeTimeLimitNotification', () => {
   it('YouTube 機能が無効なら通知しない', async () => {
     vi.mocked(getSettings).mockResolvedValue(
       settings({
-        youtube: { ...DEFAULT_YOUTUBE_SETTINGS, enabled: false }
+        youtube: {
+          ...DEFAULT_YOUTUBE_SETTINGS,
+          enabled: false,
+          blockAccess: true,
+          timeLimit: { type: 'daily', limitSeconds: 3600 }
+        }
       })
     );
 
@@ -233,6 +247,7 @@ describe('checkYouTubeTimeLimitNotification', () => {
         youtube: {
           ...DEFAULT_YOUTUBE_SETTINGS,
           enabled: true,
+          blockAccess: true,
           timeLimit: null
         }
       })
@@ -241,6 +256,24 @@ describe('checkYouTubeTimeLimitNotification', () => {
     await checkYouTubeTimeLimitNotification();
 
     expect(harness.create).not.toHaveBeenCalled();
+  });
+
+  it('アクセスブロックが無効なら通知しない', async () => {
+    vi.mocked(getSettings).mockResolvedValue(
+      settings({
+        youtube: {
+          ...DEFAULT_YOUTUBE_SETTINGS,
+          enabled: true,
+          blockAccess: false,
+          timeLimit: { type: 'daily', limitSeconds: 3600 }
+        }
+      })
+    );
+
+    await checkYouTubeTimeLimitNotification();
+
+    expect(harness.create).not.toHaveBeenCalled();
+    expect(getYouTubeRemainingTime).not.toHaveBeenCalled();
   });
 
   it('通知設定が無効なら残り時間を問い合わせない', async () => {
@@ -253,6 +286,7 @@ describe('checkYouTubeTimeLimitNotification', () => {
         youtube: {
           ...DEFAULT_YOUTUBE_SETTINGS,
           enabled: true,
+          blockAccess: true,
           timeLimit: { type: 'daily', limitSeconds: 3600 }
         }
       })

@@ -12,7 +12,7 @@
 
 import { getSettings, getAnalytics, setAnalytics } from '~/lib/storage';
 import { getTodayKey, needsDailyReset } from '~/lib/time';
-import type { YouTubeSettings } from '~/types/storage';
+import type { TimeLimit, YouTubeSettings } from '~/types/storage';
 import {
   checkTimeLimitExceeded,
   calculateRemainingTime
@@ -22,8 +22,22 @@ import {
 export const YOUTUBE_DOMAIN = 'youtube.com';
 
 /**
+ * YouTube の時間制限が有効かどうかを判定する（計測・超過判定・残り時間・通知の共通ガード）
+ *
+ * アクセスブロックが無効なら時間制限は使わない。設定画面が時間制限の欄を
+ * アクセスブロックの下位設定として見せているのに合わせ、blockService の
+ * `getYouTubeBlockItem()` と条件を揃える（#407）
+ */
+export function isYouTubeTimeLimitActive(
+  youtube: YouTubeSettings
+): youtube is YouTubeSettings & { timeLimit: TimeLimit } {
+  return Boolean(youtube.enabled && youtube.blockAccess && youtube.timeLimit);
+}
+
+/**
  * Record YouTube time limit usage
  * Uses settings.youtube.timeLimit instead of blocklist
+ * Does nothing unless isYouTubeTimeLimitActive()
  */
 export async function recordYouTubeTimeLimitUsage(
   seconds: number
@@ -33,7 +47,7 @@ export async function recordYouTubeTimeLimitUsage(
   const settings = await getSettings();
   const youtube: YouTubeSettings = settings.youtube;
 
-  if (!youtube.enabled || !youtube.timeLimit) {
+  if (!isYouTubeTimeLimitActive(youtube)) {
     return;
   }
 
@@ -59,13 +73,14 @@ export async function recordYouTubeTimeLimitUsage(
 
 /**
  * Check if YouTube has exceeded its time limit
+ * Returns false unless isYouTubeTimeLimitActive()
  * Uses shared checkTimeLimitExceeded from timeLimitService
  */
 export async function hasYouTubeExceededTimeLimit(): Promise<boolean> {
   const settings = await getSettings();
   const youtube: YouTubeSettings = settings.youtube;
 
-  if (!youtube.enabled || !youtube.timeLimit) {
+  if (!isYouTubeTimeLimitActive(youtube)) {
     return false;
   }
 
@@ -75,14 +90,14 @@ export async function hasYouTubeExceededTimeLimit(): Promise<boolean> {
 
 /**
  * Get remaining time in seconds for YouTube
- * Returns null if no time limit is set
+ * Returns null unless isYouTubeTimeLimitActive()
  * Uses shared calculateRemainingTime from timeLimitService
  */
 export async function getYouTubeRemainingTime(): Promise<number | null> {
   const settings = await getSettings();
   const youtube: YouTubeSettings = settings.youtube;
 
-  if (!youtube.enabled || !youtube.timeLimit) {
+  if (!isYouTubeTimeLimitActive(youtube)) {
     return null;
   }
 

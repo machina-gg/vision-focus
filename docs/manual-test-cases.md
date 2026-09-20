@@ -58,7 +58,7 @@
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-003: YouTube Comments を非表示にできる
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-004: YouTube 完全ブロック（blockAccess）が動作する
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-005: YouTube Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: YouTube Time Limit 超過時に CSS で全コンテンツ非表示
+- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-007: YouTube 設定変更が即座に反映される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-008: YouTube 有効化/無効化がトラッキング履歴に記録される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する
@@ -78,9 +78,13 @@
   - 手順: YouTube で動画再生中に Hide Comments を有効化
   - 期待: 動画下のコメント欄が非表示になる
 
-- [ ] YouTube Time Limit 超過時の視覚フィードバック
-  - 手順: Time Limit を1分に設定 → 1分以上 YouTube を視聴
-  - 期待: 画面全体が非表示になり「時間制限を超過しました」メッセージが表示される
+- [ ] YouTube Time Limit 超過時のブロック
+  - 手順: アクセスブロックを有効にして Time Limit を1分に設定 → 1分以上 YouTube を視聴
+  - 期待: 超過後はブロックページにリダイレクトされる（開いているタブも置き換わる）
+
+- [ ] アクセスブロック無効時は Time Limit が効かない
+  - 手順: アクセスブロックを有効にして Time Limit を1分に設定 → アクセスブロックを無効にする → YouTube を2分以上視聴
+  - 期待: 上限到達の表示も通知も出ない。再度アクセスブロックを有効にすると制限が効く
 
 - [ ] YouTube 埋め込み動画（他サイト）での動作
   - 手順: YouTube 埋め込み動画のあるサイトにアクセス

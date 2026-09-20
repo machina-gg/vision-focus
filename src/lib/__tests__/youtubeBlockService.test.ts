@@ -27,12 +27,14 @@ import {
 } from '~/lib/timeLimitService';
 import {
   YOUTUBE_DOMAIN,
+  isYouTubeTimeLimitActive,
   recordYouTubeTimeLimitUsage,
   hasYouTubeExceededTimeLimit,
   getYouTubeRemainingTime,
   incrementYouTubeBlockCount
 } from '~/lib/youtubeBlockService';
 import { DEFAULT_SETTINGS, DEFAULT_ANALYTICS } from '~/types/storage';
+import type { YouTubeSettings } from '~/types/storage';
 
 const mockGetSettings = vi.mocked(getSettings);
 const mockGetAnalytics = vi.mocked(getAnalytics);
@@ -47,6 +49,35 @@ beforeEach(() => {
 describe('YOUTUBE_DOMAIN', () => {
   it('youtube.comが定義されている', () => {
     expect(YOUTUBE_DOMAIN).toBe('youtube.com');
+  });
+});
+
+describe('isYouTubeTimeLimitActive', () => {
+  const youtube = (overrides: Partial<YouTubeSettings> = {}): YouTubeSettings =>
+    ({
+      ...DEFAULT_SETTINGS.youtube,
+      enabled: true,
+      blockAccess: true,
+      timeLimit: { type: 'daily', limitSeconds: 3600 },
+      ...overrides
+    }) satisfies YouTubeSettings;
+
+  it('有効・アクセスブロック・タイムリミットが揃えばtrue', () => {
+    expect(isYouTubeTimeLimitActive(youtube())).toBe(true);
+  });
+
+  it('YouTube機能が無効ならfalse', () => {
+    expect(isYouTubeTimeLimitActive(youtube({ enabled: false }))).toBe(false);
+  });
+
+  it('アクセスブロックが無効ならfalse', () => {
+    expect(isYouTubeTimeLimitActive(youtube({ blockAccess: false }))).toBe(
+      false
+    );
+  });
+
+  it('タイムリミットが無ければfalse', () => {
+    expect(isYouTubeTimeLimitActive(youtube({ timeLimit: null }))).toBe(false);
   });
 });
 
@@ -71,12 +102,28 @@ describe('recordYouTubeTimeLimitUsage', () => {
     expect(mockSetAnalytics).not.toHaveBeenCalled();
   });
 
+  it('アクセスブロックが無効なら計測しない', async () => {
+    mockGetSettings.mockResolvedValue({
+      ...DEFAULT_SETTINGS,
+      youtube: {
+        ...DEFAULT_SETTINGS.youtube,
+        enabled: true,
+        blockAccess: false,
+        timeLimit: { type: 'daily', limitSeconds: 3600 }
+      }
+    });
+    await recordYouTubeTimeLimitUsage(60);
+    expect(mockGetAnalytics).not.toHaveBeenCalled();
+    expect(mockSetAnalytics).not.toHaveBeenCalled();
+  });
+
   it('使用量を記録する', async () => {
     mockGetSettings.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       youtube: {
         ...DEFAULT_SETTINGS.youtube,
         enabled: true,
+        blockAccess: true,
         timeLimit: { type: 'daily', limitSeconds: 3600 }
       }
     });
@@ -98,6 +145,7 @@ describe('recordYouTubeTimeLimitUsage', () => {
       youtube: {
         ...DEFAULT_SETTINGS.youtube,
         enabled: true,
+        blockAccess: true,
         timeLimit: { type: 'daily', limitSeconds: 3600 }
       }
     });
@@ -138,12 +186,29 @@ describe('hasYouTubeExceededTimeLimit', () => {
     expect(result).toBe(false);
   });
 
+  it('アクセスブロックが無効ならfalse', async () => {
+    mockGetSettings.mockResolvedValue({
+      ...DEFAULT_SETTINGS,
+      youtube: {
+        ...DEFAULT_SETTINGS.youtube,
+        enabled: true,
+        blockAccess: false,
+        timeLimit: { type: 'daily', limitSeconds: 3600 }
+      }
+    });
+    mockCheckTimeLimitExceeded.mockReturnValue(true);
+    const result = await hasYouTubeExceededTimeLimit();
+    expect(result).toBe(false);
+    expect(mockCheckTimeLimitExceeded).not.toHaveBeenCalled();
+  });
+
   it('タイムリミット超過の場合はtrue', async () => {
     mockGetSettings.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       youtube: {
         ...DEFAULT_SETTINGS.youtube,
         enabled: true,
+        blockAccess: true,
         timeLimit: { type: 'daily', limitSeconds: 3600 }
       }
     });
@@ -170,12 +235,29 @@ describe('getYouTubeRemainingTime', () => {
     expect(result).toBeNull();
   });
 
+  it('アクセスブロックが無効ならnull', async () => {
+    mockGetSettings.mockResolvedValue({
+      ...DEFAULT_SETTINGS,
+      youtube: {
+        ...DEFAULT_SETTINGS.youtube,
+        enabled: true,
+        blockAccess: false,
+        timeLimit: { type: 'daily', limitSeconds: 3600 }
+      }
+    });
+    mockCalculateRemainingTime.mockReturnValue(2400);
+    const result = await getYouTubeRemainingTime();
+    expect(result).toBeNull();
+    expect(mockCalculateRemainingTime).not.toHaveBeenCalled();
+  });
+
   it('残り時間を返す', async () => {
     mockGetSettings.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       youtube: {
         ...DEFAULT_SETTINGS.youtube,
         enabled: true,
+        blockAccess: true,
         timeLimit: { type: 'daily', limitSeconds: 3600 }
       }
     });

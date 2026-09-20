@@ -200,7 +200,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | YT-003 | YouTube Comments を非表示にできる                    | P2     | -          |
 | YT-004 | YouTube 完全ブロック（blockAccess）が動作する        | P1     | -          |
 | YT-005 | YouTube Time Limit を設定できる                      | P1     | -          |
-| YT-006 | YouTube Time Limit 超過時に CSS で全コンテンツ非表示 | P1     | -          |
+| YT-006 | アクセスブロック無効時は Time Limit 超過でも隠さない | P1     | -          |
 | YT-007 | YouTube 設定変更が即座に反映される                   | P2     | -          |
 | YT-008 | YouTube 有効化/無効化がトラッキング履歴に記録される  | P1     | -          |
 | YT-009 | Hide Shorts + Time Limit 同時設定時に両方が機能する  | P1     | -          |
@@ -570,10 +570,29 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 ---
 
+### YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
+
+**前提条件**
+
+- YouTube セクションで「blockAccess」がオフ
+- YouTube Time Limit が設定済みで、既に超過している
+
+**手順**
+
+1. YouTube にアクセスする
+
+**期待結果**
+
+- 「利用上限に達しました」の表示も通知も出ない
+- 時間制限の計測も進まない（アクセスブロックが有効なときだけ時間制限を使う。#407）
+
+---
+
 ### YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する
 
 **前提条件**
 
+- YouTube セクションで「blockAccess」がオン
 - YouTube セクションで「Hide Shorts」がオン
 - YouTube Time Limit が 10秒 に設定されている
 
@@ -587,6 +606,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 - Shorts が非表示になる
 - 10秒後にリダイレクトされる
+- 「blockAccess」がオフのときは Time Limit を超過してもリダイレクトされない（#407）
 
 ---
 
@@ -828,7 +848,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 7. TL-011: 複数サイトでの Time Limit 動作
 8. OPT-B06: Time Limit 設定（オプション）
 
-**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）9. YT-005: YouTube Time Limit 設定 10. YT-006: YouTube Time Limit 超過時の非表示 11. YT-008: YouTube トラッキング履歴記録 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
+**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）9. YT-005: YouTube Time Limit 設定 10. YT-006: アクセスブロック無効時の Time Limit 不適用 11. YT-008: YouTube トラッキング履歴記録 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
 
 **ブロックリスト拡張機能** 14. BLOCK-002: ワイルドカードブロック 15. BLOCK-006, BLOCK-007: ブロックアイテムの有効/無効切り替え 16. OPT-B03: ワイルドカード入力 17. OPT-B05: ブロックアイテム有効/無効切り替え（UI）18. OPT-B07: パスワード保護時の認証 19. OPT-B08: Unblock 確認モーダル
 

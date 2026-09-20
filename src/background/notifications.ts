@@ -1,7 +1,10 @@
 import { getSettings } from '~/lib/storage';
 import { findEnabledBlockItemForDomain } from '~/lib/blockService';
 import { getRemainingTime } from '~/lib/timeLimitService';
-import { getYouTubeRemainingTime } from '~/lib/youtubeBlockService';
+import {
+  getYouTubeRemainingTime,
+  isYouTubeTimeLimitActive
+} from '~/lib/youtubeBlockService';
 import { getMessage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
@@ -129,8 +132,9 @@ export async function checkYouTubeTimeLimitNotification(): Promise<void> {
     return;
   }
 
+  // アクセスブロックが無効なら時間制限そのものを使わないので通知もしない（#407）
   const youtube = settings.youtube;
-  if (!youtube.enabled || !youtube.timeLimit) {
+  if (!isYouTubeTimeLimitActive(youtube)) {
     return;
   }
 
