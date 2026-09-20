@@ -10,6 +10,12 @@ import {
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 
+// 非表示 CSS の SSOT。テストから期待値を組み立てるために実装と同じ関数を使う。
+// ⚠ hideHomeFeed を有効にした設定には使えない。そのルールだけが chrome.i18n の
+// 文言を埋め込むため、chrome の無い Node 側では出力が変わる（src/lib/i18n.ts）
+import { generateYouTubeHideCSS } from '~/lib/youtubeHideStyles';
+import type { YouTubeSettings } from '~/types/storage';
+
 /**
  * E2E Tests: YouTube ブロック機能
  *
@@ -211,19 +217,22 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    // アクセスブロックは無効のまま Time Limit だけ残っている状態（#407）
+    // アクセスブロックは無効のまま Time Limit だけ残っている状態（#407）。
+    // 注入される CSS の期待値を同じ設定から組み立てるため、変数に取る
+    const youtubeSettings = makeYouTubeSettings({
+      blockAccess: false,
+      hideShorts: true, // コンテンツスクリプトが動いたことを確かめるための目印
+      hideRecommendations: false,
+      hideComments: false,
+      timeLimit: {
+        type: 'daily',
+        limitSeconds: 1 // 1秒
+      }
+    }) as unknown as YouTubeSettings;
+
     await setSettings(page, {
       paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: true, // コンテンツスクリプトが動いたことを確かめるための目印
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 1 // 1秒
-        }
-      })
+      youtube: youtubeSettings
     });
 
     // 既に超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
@@ -263,12 +272,22 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       )
       .toBeTruthy();
 
-    // 上限超過でも全体を隠すルールは入らない
-    const limitExceeded = await youtubePage.evaluate(() => {
+    // 1. 上限超過でもリダイレクトされない
+    //    （アクセスブロックが有効なときだけ newtab.html へ飛ばす。YT-004 を参照）
+    expect(youtubePage.url()).not.toContain('newtab.html');
+    expect(new URL(youtubePage.url()).hostname).toBe(TEST_DOMAINS.youtube);
+
+    // 2. 注入された CSS は、設定で有効にした非表示のルールだけ。
+    //    コンテンツスクリプトは generateYouTubeHideCSS の出力を
+    //    そのまま style に入れる（src/entrypoints/youtube.content.ts の
+    //    applyStyles）ので、同じ設定から作った期待値と丸ごと突き合わせる。
+    //    この関数は設定しか受け取らず利用実績を見ないため、
+    //    「上限超過だから隠す」ルールが復活すれば必ず差分になる（#425）
+    const injectedCss = await youtubePage.evaluate(() => {
       const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('ytd-app #content');
+      return style?.textContent ?? null;
     });
-    expect(limitExceeded).toBeFalsy();
+    expect(injectedCss).toBe(generateYouTubeHideCSS(youtubeSettings));
 
     await youtubePage.close();
   });
