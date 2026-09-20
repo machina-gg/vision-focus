@@ -5,129 +5,19 @@ import { settingsItem } from '~/lib/storage';
 import type { YouTubeSettings } from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 import { YouTubeSettingsSchema } from '~/types/messageSchemas';
-import { getMessage } from '~/lib/i18n';
-
-// CSS selectors for YouTube elements
-const SELECTORS = {
-  // Shorts
-  shortsShelf: 'ytd-rich-shelf-renderer[is-shorts]',
-  shortsTab: 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
-  shortsSection: 'ytd-reel-shelf-renderer',
-  shortsSidebarTab:
-    'ytd-guide-entry-renderer a[title="Shorts"], ytd-guide-entry-renderer a[href="/shorts"]',
-
-  // Recommendations (Home page)
-  // ホームフィードの動画一覧を確実に非表示にするため、複数のセレクタを使用
-  homeFeed: 'ytd-browse[page-subtype="home"] ytd-rich-grid-renderer',
-  homeFeedContents: 'ytd-browse[page-subtype="home"] #contents',
-  homeChips: 'ytd-feed-filter-chip-bar-renderer',
-
-  // Recommendations (Watch page)
-  relatedVideos: '#related',
-  endScreen: '.ytp-endscreen-content',
-  autoplayToggle: '.ytp-autonav-toggle-button',
-
-  // Comments
-  comments: 'ytd-comments#comments',
-  liveChat: 'ytd-live-chat-frame#chat',
-
-  // 動画再生ページのサイドバー領域（hideRecommendations のルールから使う）
-  secondaryInner: '#secondary-inner'
-} as const;
+import {
+  YOUTUBE_SELECTORS,
+  generateYouTubeHideCSS
+} from '~/lib/youtubeHideStyles';
 
 // Current settings
 let currentSettings: YouTubeSettings = DEFAULT_YOUTUBE_SETTINGS;
 let styleElement: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
 
-// Generate CSS based on current settings
-function generateCSS(settings: YouTubeSettings): string {
-  if (!settings.enabled) {
-    return '';
-  }
-
-  // When blockAccess is true, the background script handles the redirect
-  // via declarativeNetRequest rules, so no CSS hiding is needed
-  if (settings.blockAccess) {
-    return '';
-  }
-
-  const rules: string[] = [];
-
-  if (settings.hideShorts) {
-    rules.push(`
-      /* Hide Shorts shelf on home page */
-      ${SELECTORS.shortsShelf},
-      ${SELECTORS.shortsSection},
-      /* Hide Shorts tab in navigation */
-      ${SELECTORS.shortsTab},
-      ${SELECTORS.shortsSidebarTab},
-      /* Hide Shorts in search results */
-      ytd-video-renderer[is-shorts] {
-        display: none !important;
-      }
-    `);
-  }
-
-  if (settings.hideRecommendations) {
-    rules.push(`
-      /* Hide end screen recommendations */
-      ${SELECTORS.endScreen} {
-        display: none !important;
-      }
-      /* Hide related videos in sidebar */
-      ytd-watch-flexy ${SELECTORS.relatedVideos},
-      ytd-watch-flexy ${SELECTORS.secondaryInner} #related {
-        display: none !important;
-      }
-      /* Hide autoplay toggle button */
-      ${SELECTORS.autoplayToggle} {
-        display: none !important;
-      }
-      /* Expand video player when recommendations are hidden */
-      ytd-watch-flexy[flexy][is-two-columns_] #primary {
-        max-width: 100% !important;
-      }
-    `);
-  }
-
-  if (settings.hideComments) {
-    rules.push(`
-      /* Hide comments section and live chat */
-      ${SELECTORS.comments},
-      ${SELECTORS.liveChat} {
-        display: none !important;
-      }
-    `);
-  }
-
-  if (settings.hideHomeFeed) {
-    const homeFeedHiddenMessage = getMessage('youtubeHomeFeedHidden');
-    rules.push(`
-      /* Hide home feed - show only search bar */
-      ${SELECTORS.homeFeed},
-      ${SELECTORS.homeFeedContents},
-      ${SELECTORS.homeChips} {
-        display: none !important;
-      }
-      /* Show a message instead */
-      ytd-browse[page-subtype="home"]::after {
-        content: '${homeFeedHiddenMessage}';
-        display: block;
-        text-align: center;
-        padding: 100px 20px;
-        color: var(--yt-spec-text-secondary);
-        font-size: 16px;
-      }
-    `);
-  }
-
-  return rules.join('\n');
-}
-
 // Apply CSS to the page
 function applyStyles(settings: YouTubeSettings): void {
-  const css = generateCSS(settings);
+  const css = generateYouTubeHideCSS(settings);
 
   if (!styleElement) {
     styleElement = document.createElement('style');
@@ -151,21 +41,18 @@ function applyStyles(settings: YouTubeSettings): void {
 function handleDynamicContent(): void {
   if (!currentSettings.enabled) return;
 
-  // When blockAccess is true, the background script handles the redirect
-  if (currentSettings.blockAccess) return;
-
   // Additional DOM manipulation for dynamic elements
   if (currentSettings.hideShorts) {
     // Remove Shorts from navigation dynamically
     document
-      .querySelectorAll(SELECTORS.shortsSidebarTab)
+      .querySelectorAll(YOUTUBE_SELECTORS.shortsSidebarTab)
       .forEach((el) => ((el as HTMLElement).style.display = 'none'));
   }
 
   if (currentSettings.hideRecommendations) {
     // Disable autoplay when recommendations are hidden
     const autoplayToggle = document.querySelector(
-      SELECTORS.autoplayToggle
+      YOUTUBE_SELECTORS.autoplayToggle
     ) as HTMLElement;
     if (autoplayToggle?.getAttribute('aria-checked') === 'true') {
       autoplayToggle.click();
