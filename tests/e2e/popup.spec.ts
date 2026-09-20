@@ -5,6 +5,7 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  setSettings,
   setSessionStorageData,
   getStorageData,
   SELECTORS,
@@ -295,18 +296,14 @@ test.describe('Popup 画面', () => {
     await expect
       .poll(
         async () => {
-          const settings = await getStorageData<{
-            blockList?: { domain: string }[];
-          }>(page, 'settings');
+          const settings = await getStorageData(page, 'settings');
           return (settings?.blockList ?? []).map((item) => item.domain);
         },
         { timeout: 10000 }
       )
       .toContain('reddit.com');
 
-    const settings = await getStorageData<{
-      blockList?: { domain: string; enabled: boolean }[];
-    }>(page, 'settings');
+    const settings = await getStorageData(page, 'settings');
     expect(settings?.blockList).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -358,7 +355,7 @@ test.describe('Popup 画面', () => {
   }) => {
     // Time Limit 設定済みのブロックリストをセットアップ
     const setupPage = await openPopup(context, extensionId);
-    await setStorageData(setupPage, 'settings', {
+    await setSettings(setupPage, {
       paused: false,
       blockList: [
         {

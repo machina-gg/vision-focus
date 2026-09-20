@@ -122,9 +122,7 @@ test.describe('Options - Help Tab', () => {
     ).toHaveAttribute('aria-checked', 'true');
 
     // ストレージにも反映されている
-    const settings = await getStorageData<{
-      password?: { enabled: boolean; passwordHash: string | null };
-    }>(page, 'settings');
+    const settings = await getStorageData(page, 'settings');
     expect(settings?.password?.enabled).toBe(true);
     expect(settings?.password?.passwordHash).toBeTruthy();
 
@@ -162,9 +160,7 @@ test.describe('Options - Help Tab', () => {
 
     // フォームが閉じ、新しいハッシュが保存される
     await expect(fields.first()).toBeHidden();
-    const settings = await getStorageData<{
-      password?: { enabled: boolean; passwordHash: string | null };
-    }>(page, 'settings');
+    const settings = await getStorageData(page, 'settings');
     expect(settings?.password?.enabled).toBe(true);
     expect(settings?.password?.passwordHash).not.toBe(
       TEST_DATA.password.validHash
@@ -198,9 +194,7 @@ test.describe('Options - Help Tab', () => {
 
     // 保護が解除される
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
-    const settings = await getStorageData<{
-      password?: { enabled: boolean; passwordHash: string | null };
-    }>(page, 'settings');
+    const settings = await getStorageData(page, 'settings');
     expect(settings?.password?.enabled).toBe(false);
 
     await page.close();

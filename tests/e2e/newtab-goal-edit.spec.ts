@@ -10,8 +10,6 @@ import {
   SELECTORS
 } from './helpers';
 
-import type { VisionSettings } from '~/types/storage';
-
 /**
  * E2Eテスト: NewTab 画面 - 目標編集
  *
@@ -97,7 +95,7 @@ test.describe('NewTab 画面 - 目標編集', () => {
     // （src/entrypoints/newtab/App.tsx の handleSaveGoal）
     await expect
       .poll(async () => {
-        const vision = await getStorageData<VisionSettings>(page, 'vision');
+        const vision = await getStorageData(page, 'vision');
         return vision?.defaultSettings?.goalText;
       })
       .toBe('新しい目標テキスト');

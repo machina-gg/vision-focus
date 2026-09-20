@@ -46,9 +46,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
       })
     });
 
-    const settings = await getStorageViaSW<{
-      blockList: Array<{ timeLimit: { type: string; limitSeconds: number } }>;
-    }>(context, 'settings');
+    const settings = await getStorageViaSW(context, 'settings');
 
     expect(settings?.blockList[0].timeLimit.type).toBe('daily');
     expect(settings?.blockList[0].timeLimit.limitSeconds).toBe(60);
@@ -237,9 +235,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
 
     await expect
       .poll(async () => {
-        const analytics = await getStorageViaSW<{
-          timeLimitUsage?: Record<string, { dailyUsedSeconds: number }>;
-        }>(context, 'analytics');
+        const analytics = await getStorageViaSW(context, 'analytics');
         return analytics?.timeLimitUsage?.[TEST_DOMAINS.example]
           ?.dailyUsedSeconds;
       })

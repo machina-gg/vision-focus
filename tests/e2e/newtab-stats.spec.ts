@@ -3,7 +3,7 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  setStorageData,
+  setSettings,
   setSessionStorageData,
   SELECTORS
 } from './helpers';
@@ -55,7 +55,7 @@ test.describe('NewTab 画面 - 統計カード', () => {
     const createdDate = new Date();
     createdDate.setDate(createdDate.getDate() - 10); // 10日前
 
-    await setStorageData(setupPage, 'settings', {
+    await setSettings(setupPage, {
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       blockList: [

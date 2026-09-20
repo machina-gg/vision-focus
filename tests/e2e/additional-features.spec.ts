@@ -110,7 +110,10 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const page = await openOptions(context, extensionId, 'styles');
 
-    // 上限ちょうどまでは全て選択できる（ロックはもう存在しない）
+    // 上限ちょうどまでは全て選択できる。
+    // ⚠ かつてのロックアイコンの不在では確かめない。概念ごと削除済み（#337）
+    // のセレクタは、何を壊しても不在のままで成立する。実際に選んで、その
+    // スタイルの内容が編集欄に入ることを見る
     await expect(page.locator(SELECTORS.styles.presetButton)).toHaveCount(
       MAX_PRESETS
     );
@@ -119,7 +122,10 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
         .locator(SELECTORS.styles.presetButton)
         .filter({ hasText: new RegExp(`^Preset ${n}$`) });
       await expect(button).toBeEnabled();
-      await expect(button.locator('svg.lucide-lock')).toHaveCount(0);
+      await button.click();
+      await expect(page.locator(SELECTORS.styles.goalTextInput)).toHaveValue(
+        `Goal ${n}`
+      );
     }
 
     // 上限に達したら新規作成ボタンは出さない（UI の都合による上限）
@@ -142,8 +148,23 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
       setupPage,
       'analytics',
       makeAnalytics({
-        '2026-01-01': { blockedCount: 3, wastedTime: 0, investedTime: 0 },
-        '2026-06-01': { blockedCount: 5, wastedTime: 0, investedTime: 0 }
+        // 日次の集計は analytics.dailyStats に日付をキーにして入る
+        dailyStats: {
+          '2026-01-01': {
+            date: '2026-01-01',
+            wasteTime: 0,
+            investTime: 0,
+            blockCount: 3,
+            unblockCount: 0
+          },
+          '2026-06-01': {
+            date: '2026-06-01',
+            wasteTime: 0,
+            investTime: 0,
+            blockCount: 5,
+            unblockCount: 0
+          }
+        }
       })
     );
     await setupPage.close();

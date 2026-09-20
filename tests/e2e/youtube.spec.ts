@@ -3,6 +3,7 @@ import { openExternalSite, openStoragePage } from './helpers/pages';
 import {
   setStorageData,
   setSettings,
+  makeAnalytics,
   makeYouTubeSettings,
   clearStorage,
   clearStorageFromExtension,
@@ -205,8 +206,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
 
     // 設定が保存されたことを確認
-    const settings = (await getStorageData(page, 'settings')) as any;
-    expect(settings.youtube.timeLimit.limitSeconds).toBe(120);
+    const settings = await getStorageData(page, 'settings');
+    expect(settings?.youtube.timeLimit?.limitSeconds).toBe(120);
 
     await page.close();
   });
@@ -376,27 +377,31 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       })
     });
 
-    // YouTube を訪問
-    await setStorageData(page, 'analytics', {
-      dailyStats: {},
-      siteStats: {
-        [TEST_DOMAINS.youtube]: {
-          domain: TEST_DOMAINS.youtube,
-          blockCount: 0,
-          unblockCount: 0,
-          totalTime: 120 // 2分間の使用
+    // 滞在時間は analytics.siteTime にドメインをキーとして入る
+    // （siteStats というキーも totalTime というフィールドも実装に無い）
+    await setStorageData(
+      page,
+      'analytics',
+      makeAnalytics({
+        siteTime: {
+          [TEST_DOMAINS.youtube]: {
+            domain: TEST_DOMAINS.youtube,
+            time: 120, // 2分間の使用
+            category: 'waste',
+            lastUpdated: new Date().toISOString()
+          }
         }
-      }
-    });
+      })
+    );
 
     await page.close();
 
     const page2 = await openStoragePage(context, extensionId);
-    const analytics = (await getStorageData(page2, 'analytics')) as any;
+    const analytics = await getStorageData(page2, 'analytics');
 
     // YouTube のトラッキングデータが記録されていることを確認
-    expect(analytics.siteStats[TEST_DOMAINS.youtube]).toBeDefined();
-    expect(analytics.siteStats[TEST_DOMAINS.youtube].totalTime).toBe(120);
+    expect(analytics?.siteTime[TEST_DOMAINS.youtube]).toBeDefined();
+    expect(analytics?.siteTime[TEST_DOMAINS.youtube].time).toBe(120);
 
     await page2.close();
   });

@@ -13,8 +13,6 @@ import {
   SELECTORS
 } from './helpers';
 
-import type { AnalyticsData } from '~/types/storage';
-
 /**
  * E2Eテスト: Options - Analytics Tab
  *
@@ -33,7 +31,7 @@ import type { AnalyticsData } from '~/types/storage';
  * 読めなかったことが分かる null を返し、呼び出し側のアサーションで落とす。
  */
 async function readSiteBlockCountKeys(page: Page): Promise<string[] | null> {
-  const analytics = await getStorageData<AnalyticsData>(page, 'analytics');
+  const analytics = await getStorageData(page, 'analytics');
   const siteBlockCounts = analytics?.siteBlockCounts;
   if (!siteBlockCounts || typeof siteBlockCounts !== 'object') {
     return null;
@@ -308,9 +306,7 @@ test.describe('Options - Analytics Tab', () => {
     await expect
       .poll(
         async () => {
-          const history = await getStorageData<{
-            sites?: Record<string, unknown>;
-          }>(page, 'unblockHistory');
+          const history = await getStorageData(page, 'unblockHistory');
           return Object.keys(history?.sites ?? {});
         },
         { timeout: 10000 }
