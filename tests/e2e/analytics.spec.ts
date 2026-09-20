@@ -201,23 +201,32 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     await externalPage.waitForLoadState('domcontentloaded');
 
-    // 固定待機ではなく保存値で待つ。読み出しは SW 経由で行う
-    // （拡張機能のページを開くと前面のタブが入れ替わり、計測が止まる）
+    // ⚠ 待つ対象は timeAfterUnblock にする。`analytics.siteTime` を書く経路は
+    // 2 つあり（heartbeat 側の recordTime と、アクティブタブを 1 秒ごとに
+    // 記録する src/background/tracker.ts の recordTime）、後者は解除履歴と
+    // 無関係にどのサイトでも動く。siteTime で待つと 1〜2 秒で満たされて
+    // 先へ進み、heartbeat のタイマーが 1 周する前に読んでしまう
+    // （run 35523350131 で 3.1 秒で 0 を読んで失敗）。
+    // timeAfterUnblock を増やすのは heartbeat 側の recordTime だけ。
+    // 読み出しは SW 経由で行う（拡張機能のページを開くと前面のタブが
+    // 入れ替わり、コンテンツスクリプトの heartbeat が止まる）
     await expect
       .poll(
         async () => {
-          const analytics = await getStorageViaSW(context, 'analytics');
-          return analytics?.siteTime?.[TEST_DOMAINS.example]?.time ?? 0;
+          const history = await getStorageViaSW(context, 'unblockHistory');
+          return history?.sites?.[TEST_DOMAINS.example]?.timeAfterUnblock ?? 0;
         },
         { timeout: 60_000 }
       )
       .toBeGreaterThan(0);
 
-    // 同じ経路で解除履歴の滞在時間も伸びる
-    const history = await getStorageViaSW(context, 'unblockHistory');
-    expect(
-      history?.sites?.[TEST_DOMAINS.example]?.timeAfterUnblock
-    ).toBeGreaterThan(0);
+    // 滞在時間は analytics.siteTime にも入る（キー名が siteStats のままなら
+    // ここで undefined になる）。⚠ この値は上記 2 経路のどちらでも増えるため、
+    // heartbeat が動いたことの根拠は timeAfterUnblock の方である
+    const analytics = await getStorageViaSW(context, 'analytics');
+    expect(analytics?.siteTime?.[TEST_DOMAINS.example]?.time).toBeGreaterThan(
+      0
+    );
 
     await externalPage.close();
   });
