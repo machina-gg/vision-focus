@@ -37,6 +37,7 @@ import {
   findBlockItemForDomain,
   findEnabledBlockItemForDomain,
   getBlockState,
+  findMatchingBlockItem,
   getYouTubeBlockItem,
   shouldBlockUrl,
   shouldTrackBlockForDomain,
@@ -391,6 +392,57 @@ describe('shouldBlockUrl', () => {
   });
 });
 
+describe('findMatchingBlockItem', () => {
+  it('ブロックリストの項目を返し、仮想項目ではないと示す', async () => {
+    const item = {
+      id: 'b1',
+      domain: 'twitch.tv',
+      isWildcard: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      enabled: true
+    };
+    mockGetSettings.mockResolvedValue(createSettings({ blockList: [item] }));
+
+    const matched = await findMatchingBlockItem('www.twitch.tv');
+
+    expect(matched).toEqual({ item, isVirtual: false });
+  });
+
+  it('ブロックリストに無い YouTube は仮想項目として返す', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({ blockList: [], youtube: youtubeSettings() })
+    );
+
+    const matched = await findMatchingBlockItem('m.youtube.com');
+
+    expect(matched?.isVirtual).toBe(true);
+    expect(matched?.item.domain).toBe(YOUTUBE_DOMAIN);
+  });
+
+  it('ブロックリストの項目は無効でも仮想項目より優先される', async () => {
+    const item = {
+      id: 'b1',
+      domain: 'youtube.com',
+      isWildcard: false,
+      createdAt: '2024-01-01T00:00:00Z',
+      enabled: false
+    };
+    mockGetSettings.mockResolvedValue(
+      createSettings({ blockList: [item], youtube: youtubeSettings() })
+    );
+
+    const matched = await findMatchingBlockItem('youtube.com');
+
+    expect(matched).toEqual({ item, isVirtual: false });
+  });
+
+  it('どちらにも一致しなければ null', async () => {
+    mockGetSettings.mockResolvedValue(createSettings({ blockList: [] }));
+
+    expect(await findMatchingBlockItem('example.com')).toBeNull();
+  });
+});
+
 describe('shouldTrackBlockForDomain', () => {
   it('一時停止中はfalse', async () => {
     mockGetSettings.mockResolvedValue(createSettings({ paused: true }));
@@ -438,6 +490,60 @@ describe('shouldTrackBlockForDomain', () => {
     );
     const result = await shouldTrackBlockForDomain('youtube.com');
     expect(result).toBe(true);
+  });
+
+  // 記録側もブロックリスト → 仮想項目の順で照合する（#351）。
+  // ここが getBlockState と揃っていないと、ブロックはされるのに
+  // 「最後にブロックしたドメイン」が残らず、ブロック画面に帯が出ない
+  it('ブロックリストに無くても YouTube のアクセスブロックが有効ならtrue', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({ blockList: [], youtube: youtubeSettings() })
+    );
+    const result = await shouldTrackBlockForDomain('www.youtube.com');
+    expect(result).toBe(true);
+  });
+
+  it('YouTube のアクセスブロックが無効ならfalse', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [],
+        youtube: youtubeSettings({ blockAccess: false })
+      })
+    );
+    const result = await shouldTrackBlockForDomain('www.youtube.com');
+    expect(result).toBe(false);
+  });
+
+  it('ブロックリストの項目が仮想項目より優先される（無効ならfalse）', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'youtube.com',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: false
+          }
+        ],
+        youtube: youtubeSettings()
+      })
+    );
+    const result = await shouldTrackBlockForDomain('youtube.com');
+    expect(result).toBe(false);
+  });
+
+  it('スケジュール外なら YouTube でもfalse', async () => {
+    mockIsWithinSchedule.mockReturnValue(false);
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [],
+        youtube: youtubeSettings(),
+        schedules: OUT_OF_SCHEDULE
+      })
+    );
+    const result = await shouldTrackBlockForDomain('youtube.com');
+    expect(result).toBe(false);
   });
 });
 

@@ -41,7 +41,10 @@ export default defineConfig({
     },
     web_accessible_resources: [
       {
-        resources: ['assets/images/backgrounds/*'],
+        // newtab.html は declarativeNetRequest の redirect 先。公開しないと
+        // 他サイト（検索結果のリンク等）からの遷移が ERR_BLOCKED_BY_CLIENT で
+        // 止まり、ブロック画面に到達できない（machina-gg/vision-focus#351）
+        resources: ['newtab.html', 'assets/images/backgrounds/*'],
         matches: ['<all_urls>']
       }
     ],

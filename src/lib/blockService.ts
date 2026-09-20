@@ -123,6 +123,49 @@ export function getYouTubeBlockItem(settings: AppSettings): BlockItem | null {
 }
 
 /**
+ * ドメインに対応するブロック項目の照合結果
+ */
+export interface MatchedBlockItem {
+  item: BlockItem;
+  /**
+   * ブロックリストではなく YouTube 設定から組み立てた仮想項目か
+   *
+   * 仮想項目は時間制限の使用実績をホスト名ではなく項目のドメインで引く（#392）ため、
+   * 呼び出し側がこの区別を必要とする
+   */
+  isVirtual: boolean;
+}
+
+/**
+ * ドメインに対応するブロック項目を優先順位付きで探す
+ *
+ * ブロックリスト → YouTube の仮想ブロック項目の順に見る
+ * （ブロックリストに同じドメインの項目があればそちらの設定が優先される）。
+ *
+ * ⚠ 判定（`getBlockState`）と記録（`shouldTrackBlockForDomain`）は必ずこの関数を通す。
+ * 片方だけが優先順位を持っていると、ブロックはされるのに記録されないドメインが出る
+ * （machina-gg/vision-focus#351）
+ */
+export async function findMatchingBlockItem(
+  domain: string,
+  settings?: AppSettings
+): Promise<MatchedBlockItem | null> {
+  const s = settings ?? (await getSettings());
+
+  const listItem = await findBlockItemForDomain(domain, s);
+  if (listItem) {
+    return { item: listItem, isVirtual: false };
+  }
+
+  const youtubeItem = getYouTubeBlockItem(s);
+  if (youtubeItem && matchesDomain(domain, youtubeItem)) {
+    return { item: youtubeItem, isVirtual: true };
+  }
+
+  return null;
+}
+
+/**
  * Determine the block state for a URL
  * This is the main entry point for block state determination
  *
@@ -144,18 +187,12 @@ export async function getBlockState(url: string): Promise<BlockState> {
     return { blocked: false, reason: null };
   }
 
-  // Step 2: Find matching block item
-  // ブロックリストに一致する項目が無いときだけ YouTube の仮想ブロック項目と照合する
-  // （ブロックリストに同じドメインがあればそちらの設定が優先される）
-  const listItem = await findBlockItemForDomain(domain, settings);
-  const youtubeItem = listItem ? null : getYouTubeBlockItem(settings);
-  const matchedYouTubeItem =
-    youtubeItem && matchesDomain(domain, youtubeItem) ? youtubeItem : null;
-
-  const blockItem = listItem ?? matchedYouTubeItem;
-  if (!blockItem) {
+  // Step 2: Find matching block item（ブロックリスト → YouTube の仮想ブロック項目）
+  const matched = await findMatchingBlockItem(domain, settings);
+  if (!matched) {
     return { blocked: false, reason: null };
   }
+  const blockItem = matched.item;
 
   // Step 3: Check if item is enabled
   if (!blockItem.enabled) {
@@ -172,7 +209,7 @@ export async function getBlockState(url: string): Promise<BlockState> {
     // ブロックリストの項目はアクセスしたホスト名ごとに計測されるが、YouTube の計測は
     // youtubeBlockService が 'youtube.com' 固定で記録する。仮想項目のときだけ
     // ホスト名ではなく項目のドメインで使用実績を引く（#392）
-    const usageDomain = matchedYouTubeItem ? matchedYouTubeItem.domain : domain;
+    const usageDomain = matched.isVirtual ? blockItem.domain : domain;
     const exceeded = await hasExceededTimeLimit(usageDomain, blockItem);
     const remaining = exceeded
       ? 0
@@ -199,6 +236,9 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
 /**
  * Check if a domain should be tracked for block count
  * This validates all conditions: enabled, schedule, etc.
+ *
+ * 照合は `getBlockState` と同じ `findMatchingBlockItem` を通すため、
+ * ブロックリストに項目を持たない YouTube も記録対象になる（#351）
  */
 export async function shouldTrackBlockForDomain(
   domain: string
@@ -210,14 +250,14 @@ export async function shouldTrackBlockForDomain(
     return false;
   }
 
-  // Find matching block item
-  const blockItem = await findBlockItemForDomain(domain, settings);
-  if (!blockItem) {
+  // Find matching block item（ブロックリスト → YouTube の仮想ブロック項目）
+  const matched = await findMatchingBlockItem(domain, settings);
+  if (!matched) {
     return false;
   }
 
   // Check if enabled
-  if (!blockItem.enabled) {
+  if (!matched.item.enabled) {
     return false;
   }
 

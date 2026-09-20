@@ -15,9 +15,14 @@ vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
 
+vi.mock('~/lib/blockRecordService', () => ({
+  recordBlockedDomain: vi.fn()
+}));
+
 import { getSettings } from '~/lib/storage';
 import { getBlockState, getActiveBlockedDomains } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
+import { recordBlockedDomain } from '~/lib/blockRecordService';
 import {
   updateBlockRules,
   shouldBlockUrl,
@@ -283,6 +288,46 @@ describe('blocker', () => {
       await blockExistingTabs();
 
       expect(chromeMock.tabs.update).not.toHaveBeenCalled();
+    });
+
+    it('リダイレクトするタブのドメインをブロック記録に渡す', async () => {
+      chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: 'https://example.com/page' }
+      ]);
+      vi.mocked(getBlockState).mockResolvedValue({
+        blocked: true,
+        reason: null
+      });
+
+      await blockExistingTabs();
+
+      expect(recordBlockedDomain).toHaveBeenCalledWith('example.com');
+    });
+
+    it('記録はリダイレクトより先に行う', async () => {
+      chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: 'https://example.com/page' }
+      ]);
+      vi.mocked(getBlockState).mockResolvedValue({
+        blocked: true,
+        reason: null
+      });
+
+      await blockExistingTabs();
+
+      expect(
+        vi.mocked(recordBlockedDomain).mock.invocationCallOrder[0]
+      ).toBeLessThan(chromeMock.tabs.update.mock.invocationCallOrder[0]);
+    });
+
+    it('ブロック対象でないタブは記録しない', async () => {
+      chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: 'https://example.com' }
+      ]);
+
+      await blockExistingTabs();
+
+      expect(recordBlockedDomain).not.toHaveBeenCalled();
     });
 
     it('複数タブのうちブロック対象のみリダイレクトする', async () => {

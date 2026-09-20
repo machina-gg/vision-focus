@@ -1,11 +1,6 @@
-import {
-  getAnalytics,
-  setAnalytics,
-  incrementSiteBlockCount,
-  setLastBlockedDomain
-} from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
 import { shouldTrackBlockForDomain } from '~/lib/blockService';
+import { recordBlockedDomain } from '~/lib/blockRecordService';
 
 /**
  * ブロックされたナビゲーションを追跡し、サイトブロックカウントを増やす
@@ -25,32 +20,7 @@ export function setupNavigationTracking(): void {
     const shouldTrack = await shouldTrackBlockForDomain(domain);
     if (!shouldTrack) return;
 
-    // Increment block count for this domain
-    await incrementSiteBlockCount(domain);
-
-    // Store last blocked domain for newtab display
-    await setLastBlockedDomain(domain);
-
-    // Also increment daily stats block count
-    const analytics = await getAnalytics();
-    const today = new Date().toISOString().slice(0, 10);
-    const todayStats = analytics.dailyStats[today] || {
-      date: today,
-      wasteTime: 0,
-      investTime: 0,
-      blockCount: 0,
-      unblockCount: 0
-    };
-
-    await setAnalytics({
-      ...analytics,
-      dailyStats: {
-        ...analytics.dailyStats,
-        [today]: {
-          ...todayStats,
-          blockCount: todayStats.blockCount + 1
-        }
-      }
-    });
+    // 記録は blockExistingTabs 経由と共通（machina-gg/vision-focus#351）
+    await recordBlockedDomain(domain);
   });
 }

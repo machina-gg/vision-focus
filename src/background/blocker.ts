@@ -6,6 +6,8 @@ import {
   type BlockReason
 } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
+import { extractDomain } from '~/lib/domain';
+import { recordBlockedDomain } from '~/lib/blockRecordService';
 
 // Re-export types for backwards compatibility
 export type { BlockReason };
@@ -99,6 +101,15 @@ export async function blockExistingTabs(): Promise<void> {
 
     const result = await shouldBlockUrl(tab.url);
     if (result.blocked) {
+      // リダイレクトすると元ドメインの webNavigation イベントが発生せず
+      // navigationTracking の記録が走らないため、ここで記録する（#351）。
+      // 順序が重要: 先に記録しないと、ブロック画面が読み出す時点で
+      // 「最後にブロックしたドメイン」が未設定になりうる
+      const domain = extractDomain(tab.url);
+      if (domain) {
+        await recordBlockedDomain(domain);
+      }
+
       // Add reason to URL for newtab page to display appropriate message
       const redirectUrl = result.reason
         ? `${newtabUrl}?reason=${result.reason}`
