@@ -8,7 +8,11 @@ import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
  *
  * ブロックリストの操作（add-block / toggle-block）と同じく、保存と既存タブの
  * ブロックを background 側で完結させる。アクセスブロックが無効から有効に
- * 変わった場合だけ、開いている YouTube のタブをブロックする
+ * 変わった場合だけ、開いている YouTube のタブをブロックする。
+ *
+ * どのタブを実際に置き換えるかは blockService が決める。時間制限を設定している
+ * 場合は超過するまでブロックされないため、ここで blockExistingTabs() を呼んでも
+ * タブは置き換わらない（#392）
  */
 export const updateYouTubeSettingsHandler: MessageHandler<
   'update-youtube-settings'

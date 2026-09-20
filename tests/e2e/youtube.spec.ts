@@ -441,7 +441,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await youtubePage.close();
   });
 
-  test('YT-010: blockAccess と Time Limit の優先順位（blockAccess 優先）', async ({
+  test('YT-010: blockAccess と Time Limit の併用（超過後にブロック）', async ({
     context,
     extensionId
   }) => {
@@ -462,7 +462,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       })
     });
 
-    // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
+    // Time Limit を超過させる（analytics.timeLimitUsage に youtube.com の使用データを設定）。
+    // blockAccess に時間制限を併用した場合は、ブロックリストと同じく超過後にブロックする（#392）
     const todayKey = new Date().toISOString().split('T')[0];
     await setStorageData(page, 'analytics', {
       dailyStats: {},
@@ -473,7 +474,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       timeLimitUsage: {
         'youtube.com': {
           domain: 'youtube.com',
-          dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
+          dailyUsedSeconds: 120, // 超過（limitSeconds: 60）
           lastDailyReset: todayKey
         }
       }
@@ -489,7 +490,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       `https://${TEST_DOMAINS.youtube}`
     );
 
-    // blockAccess が優先され、newtab.html にリダイレクト
+    // 超過しているので newtab.html にリダイレクトされる
     await youtubePage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(youtubePage.url()).toContain('newtab.html');
 

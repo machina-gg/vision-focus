@@ -15,8 +15,11 @@ flowchart TD
     A -->|Yes| Unblocked["✅ 許可"]
     A -->|No| B{"ブロックリストに存在？<br/>findBlockItemForDomain()"}
 
-    B -->|No| Unblocked
+    B -->|No| YT{"YouTube のアクセスブロック？<br/>getYouTubeBlockItem()"}
     B -->|Yes| C{"サイト別ブロック有効？<br/>blockItem.enabled"}
+
+    YT -->|No| Unblocked
+    YT -->|Yes| C
 
     C -->|No| Unblocked
     C -->|Yes| D{"スケジュール設定あり？<br/>schedules.length > 0"}
@@ -102,6 +105,23 @@ stateDiagram-v2
 | サイト別時間制限   | `blockItem.timeLimit`      | `TimeLimit \| null`              | 「1日30分まで」などの設定   |
 | スケジュール       | `settings.schedules`       | `Schedule[]`                     | ブロック有効時間帯          |
 | 時間制限使用量     | `analytics.timeLimitUsage` | `Record<string, TimeLimitUsage>` | 実際の消費時間              |
+| YouTube 設定       | `settings.youtube`         | `YouTubeSettings`                | アクセスブロックと時間制限  |
+
+### YouTube の扱い（仮想のブロック項目）
+
+YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem()` が
+`settings.youtube` から「仮想のブロック項目」を組み立て、判定（`getBlockState()`）と
+ルール生成（`getActiveBlockedDomains()`）の両方がそれを使う。意味論はブロックリストと同じ。
+
+| `settings.youtube`                         | 結果                                      |
+| ------------------------------------------ | ----------------------------------------- |
+| `enabled && blockAccess`、`timeLimit` なし | 常時ブロック（`always_blocked`）          |
+| `enabled && blockAccess`、`timeLimit` あり | 超過後にブロック（`time_limit_exceeded`） |
+| `blockAccess` が無効                       | ブロックしない                            |
+
+- ブロックリストに同じドメインの項目があれば、そちらの設定が優先される
+- 時間制限の使用実績はホスト名ではなく `youtube.com` をキーに記録される
+  （`youtubeBlockService` の `YOUTUBE_DOMAIN`）
 
 ## リセットタイミング
 
@@ -138,3 +158,4 @@ flowchart LR
 | `src/background/notifications.ts`           | 通知判定と送信                   |
 | `src/background/listeners/alarmHandlers.ts` | アラームによるリセット処理       |
 | `src/lib/blockService.ts`                   | ブロック状態の一元管理（新規）   |
+| `src/lib/youtubeBlockService.ts`            | YouTube の使用時間記録と超過判定 |
