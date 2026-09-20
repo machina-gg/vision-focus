@@ -38,10 +38,12 @@ test.describe('NewTab 画面 - 統計カード', () => {
       .first();
     await expect(blockCountCard).toBeVisible();
 
-    // デフォルト値は0
+    // デフォルト値は 0。
+    // toContainText だと 10 / 20 / 100 でも通るため、表示そのものと突き合わせる
     const blockCount = page.locator(SELECTORS.newtab.miniStats.blockCount);
-    await expect(blockCount.first()).toBeVisible();
-    await expect(blockCount.first()).toContainText('0');
+    await expect(blockCount).toHaveCount(1);
+    await expect(blockCount).toBeVisible();
+    await expect(blockCount).toHaveText('0');
 
     await page.close();
   });

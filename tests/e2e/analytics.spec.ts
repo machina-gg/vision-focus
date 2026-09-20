@@ -97,31 +97,30 @@ test.describe('Analytics - アナリティクス機能', () => {
       makeAnalytics()
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
-    // ブロック対象サイトに3回アクセス
+    // 記録は background が非同期に書く。読み出しは SW 経由で行い、
+    // この値を増やす経路（ブロックされたナビゲーション）だけを待つ
+    const siteBlockCount = async () => {
+      const analytics = await getStorageViaSW(context, 'analytics');
+      return analytics?.siteBlockCounts[TEST_DOMAINS.example]?.count ?? 0;
+    };
+
+    // ブロック対象サイトに3回アクセス。
+    // ⚠ 1 回ごとに記録を待つ。記録は読み出してから書き戻すため、
+    //    重なると片方の加算が消える
     for (let i = 0; i < 3; i++) {
       const blockedPage = await openExternalSite(
         context,
         `https://${TEST_DOMAINS.example}`
       );
       await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
+      await expect.poll(siteBlockCount).toBeGreaterThanOrEqual(i + 1);
       await blockedPage.close();
-      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
-    // Analytics データを確認
-    const analytics = await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics'
-    );
-
     // サイト別の回数は siteBlockCounts[domain].count に入る
-    expect(analytics?.siteBlockCounts[TEST_DOMAINS.example]).toBeDefined();
-    expect(
-      analytics?.siteBlockCounts[TEST_DOMAINS.example].count
-    ).toBeGreaterThanOrEqual(3);
+    expect(await siteBlockCount()).toBeGreaterThanOrEqual(3);
   });
 
   test('AN-002: Unblock History（ブロック解除サイト）が記録される', async ({
@@ -254,6 +253,15 @@ test.describe('Analytics - アナリティクス機能', () => {
     );
 
     await externalPage.waitForLoadState('domcontentloaded');
+
+    // ⚠ この固定待機は残している。このテストは記録の経路を通っておらず、
+    //    待ち先にできる「狙った経路だけが書く値」が無いため。
+    //    tracker-heartbeat は解除履歴に載っているドメインだけを計測するので
+    //    （src/background/handlers/tracker-heartbeat.ts）、この前提では
+    //    何秒待っても dailyStats には何も入らない。下の判定も if で
+    //    囲まれており、実質的に何も検査していない。
+    //    同じ観点は AN-003 と INT-005 が実際の経路を通して検証している。
+    //    本テストを書き直すか削除するかは仕様の判断が要るため #441 で報告する
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Analytics データを確認
@@ -295,15 +303,14 @@ test.describe('Analytics - アナリティクス機能', () => {
     );
     await allowButton.click();
 
-    // 設定が保存されたことを確認
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const settings = await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'settings'
-    );
-    expect(settings?.analyticsOptIn).toBeDefined();
-    expect(settings?.analyticsOptIn?.enabled).toBe(true);
+    // 設定が保存されたことを確認する。
+    // analyticsOptIn を enabled: true にするのは、このモーダルの許可だけ
+    await expect
+      .poll(async () => {
+        const settings = await getStorageViaSW(context, 'settings');
+        return settings?.analyticsOptIn?.enabled ?? null;
+      })
+      .toBe(true);
 
     await optionsPage.close();
   });

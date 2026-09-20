@@ -3,18 +3,19 @@ import { openExternalSite, openStoragePage } from './helpers/pages';
 import {
   setStorageData,
   setSettings,
-  makeAnalytics,
   makeYouTubeSettings,
-  clearStorage,
-  clearStorageFromExtension,
-  getStorageData
+  clearStorageFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
+import { triggerBlockRuleRecompute, waitForBlockRules } from './helpers/sw';
 
 // 非表示 CSS の SSOT。テストから期待値を組み立てるために実装と同じ関数を使う。
 // ⚠ hideHomeFeed を有効にした設定には使えない。そのルールだけが chrome.i18n の
 // 文言を埋め込むため、chrome の無い Node 側では出力が変わる（src/lib/i18n.ts）
-import { generateYouTubeHideCSS } from '~/lib/youtubeHideStyles';
+import {
+  YOUTUBE_SELECTORS,
+  generateYouTubeHideCSS
+} from '~/lib/youtubeHideStyles';
 import type { YouTubeSettings } from '~/types/storage';
 
 /**
@@ -97,13 +98,18 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await youtubePage.waitForLoadState('domcontentloaded');
 
-    // Recommendations が非表示になる CSS が適用されているか確認
-    const recsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('#secondary-inner #related');
-    });
-
-    expect(recsHidden).toBeTruthy();
+    // Recommendations が非表示になる CSS が適用されているか確認。
+    // コンテンツスクリプトは storage を読んでから style を注入するため、
+    // 注入が終わるまで待つ（evaluate 一発だと style 要素が無い間は
+    // undefined になり、「非表示になっていない」と区別が付かない）
+    await expect
+      .poll(() =>
+        youtubePage.evaluate(() => {
+          const style = document.getElementById('vision-focus-youtube-blocker');
+          return style?.textContent?.includes('#secondary-inner #related');
+        })
+      )
+      .toBeTruthy();
 
     await youtubePage.close();
   });
@@ -169,7 +175,9 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // アクセスブロックは declarativeNetRequest の動的ルールで実現される。
+    // 固定時間ではなく、youtube.com のルールが載るまで待つ
+    await waitForBlockRules(context, [TEST_DOMAINS.youtube]);
 
     // YouTube にアクセス
     const youtubePage = await openExternalSite(
@@ -182,34 +190,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     expect(youtubePage.url()).toContain('newtab.html');
 
     await youtubePage.close();
-  });
-
-  test('YT-005: YouTube Time Limit を設定できる', async ({
-    context,
-    extensionId
-  }) => {
-    const page = await openStoragePage(context, extensionId);
-
-    // YouTube Time Limit を設定
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 120
-        }
-      })
-    });
-
-    // 設定が保存されたことを確認
-    const settings = await getStorageData(page, 'settings');
-    expect(settings?.youtube.timeLimit?.limitSeconds).toBe(120);
-
-    await page.close();
   });
 
   test('YT-006: アクセスブロックが無効なら Time Limit 超過でも画面を隠さない', async ({
@@ -299,16 +279,19 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    // 最初は Shorts 非表示なし
+    // 最初は Shorts 非表示なし。注入される CSS の期待値を同じ設定から
+    // 組み立てるため、変数に取る
+    const initialSettings = makeYouTubeSettings({
+      blockAccess: false,
+      hideShorts: false,
+      hideRecommendations: false,
+      hideComments: false,
+      timeLimit: null
+    });
+
     await setSettings(page, {
       paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: null
-      })
+      youtube: initialSettings
     });
 
     await page.close();
@@ -320,12 +303,21 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await youtubePage.waitForLoadState('domcontentloaded');
 
-    // Shorts が表示されていることを確認
-    let shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('a[title="Shorts"]');
-    });
-    expect(shortsHidden).toBeFalsy();
+    // Shorts が表示されていることを確認する。
+    // ⚠ style 要素が無い間は textContent が undefined になり、
+    //    「まだ注入されていない」状態でも falsy として通ってしまう。
+    //    先に注入そのものを待ってから中身を確かめる
+    const styleContent = () =>
+      youtubePage.evaluate(() => {
+        const style = document.getElementById('vision-focus-youtube-blocker');
+        return style ? (style.textContent ?? '') : null;
+      });
+
+    await expect.poll(styleContent).not.toBeNull();
+
+    // 注入された CSS は設定から組み立てた期待値と丸ごと一致する
+    // （この設定では非表示のルールが 1 つも無いので空文字列）
+    expect(await styleContent()).toBe(generateYouTubeHideCSS(initialSettings));
 
     // 設定を変更する。
     // page.evaluate はページのメインワールドで実行されるため、コンテンツ
@@ -343,67 +335,14 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     await updatePage.close();
 
-    // settings の watch が反応するまで待機
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Shorts が非表示になることを確認
-    shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('a[title="Shorts"]');
-    });
-    expect(shortsHidden).toBeTruthy();
+    // settings の watch が反応して CSS が差し替わるまで待つ。
+    // 待つ対象は「Shorts 非表示のルールが入ったか」そのもので、
+    // これを書くのは設定変更を受け取ったコンテンツスクリプトだけ
+    await expect
+      .poll(styleContent)
+      .toContain(YOUTUBE_SELECTORS.shortsSidebarTab);
 
     await youtubePage.close();
-  });
-
-  test('YT-008: YouTube 有効化/無効化がトラッキング履歴に記録される', async ({
-    context,
-    extensionId
-  }) => {
-    const page = await openStoragePage(context, extensionId);
-
-    await setSettings(page, {
-      paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 60
-        }
-      })
-    });
-
-    // 滞在時間は analytics.siteTime にドメインをキーとして入る
-    // （siteStats というキーも totalTime というフィールドも実装に無い）
-    await setStorageData(
-      page,
-      'analytics',
-      makeAnalytics({
-        siteTime: {
-          [TEST_DOMAINS.youtube]: {
-            domain: TEST_DOMAINS.youtube,
-            time: 120, // 2分間の使用
-            category: 'waste',
-            lastUpdated: new Date().toISOString()
-          }
-        }
-      })
-    );
-
-    await page.close();
-
-    const page2 = await openStoragePage(context, extensionId);
-    const analytics = await getStorageData(page2, 'analytics');
-
-    // YouTube のトラッキングデータが記録されていることを確認
-    expect(analytics?.siteTime[TEST_DOMAINS.youtube]).toBeDefined();
-    expect(analytics?.siteTime[TEST_DOMAINS.youtube].time).toBe(120);
-
-    await page2.close();
   });
 
   test('YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する', async ({
@@ -453,15 +392,22 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await youtubePage.waitForLoadState('domcontentloaded');
 
-    // Shorts 非表示の CSS が適用されていることを確認
-    const shortsHidden = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('a[title="Shorts"]');
-    });
-    expect(shortsHidden).toBeTruthy();
+    // Shorts 非表示の CSS が適用されていることを確認。
+    // 注入は storage の読み出し後なので、入るまで待つ
+    await expect
+      .poll(() =>
+        youtubePage.evaluate(() => {
+          const style = document.getElementById('vision-focus-youtube-blocker');
+          return style?.textContent ?? '';
+        })
+      )
+      .toContain(YOUTUBE_SELECTORS.shortsSidebarTab);
 
-    // 上限に達していないのでブロックページへは飛ばない（#392）
-    expect(youtubePage.url()).toContain(TEST_DOMAINS.youtube);
+    // 上限に達していないのでブロックページへは飛ばない（#392）。
+    // URL の部分一致だと newtab.html?reason=... でも通るため、
+    // ホスト名そのものを確かめる
+    expect(youtubePage.url()).not.toContain('newtab.html');
+    expect(new URL(youtubePage.url()).hostname).toBe(TEST_DOMAINS.youtube);
 
     await youtubePage.close();
   });
@@ -507,7 +453,11 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await page.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 超過判定は analytics を見るが、analytics の変更は再計算のトリガーに
+    // ならない。実装と同じ経路（check-schedule アラーム）で再計算させてから、
+    // youtube.com のルールが載るまで待つ
+    await triggerBlockRuleRecompute(context);
+    await waitForBlockRules(context, [TEST_DOMAINS.youtube]);
 
     // YouTube にアクセス
     const youtubePage = await openExternalSite(

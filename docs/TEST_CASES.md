@@ -17,14 +17,16 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 - `--disable-extensions-except` と `--load-extension` フラグを使用
 - Service Worker のテストには `chrome.runtime` API のモックが必要な場合あり
 
-### テストケース統計
+### テストケースの件数
 
-| 項目       | 件数 |
-| ---------- | ---- |
-| 合計       | 97   |
-| P0（必須） | 15   |
-| P1（重要） | 55   |
-| P2（推奨） | 27   |
+件数は下の一覧そのものが SSOT。ここに数字を書くと一覧の増減と必ずずれるため、
+必要なときは次のコマンドで数える。
+
+```bash
+# 優先度ごとの件数（ID 列を持つ行だけを数える）
+grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
+  grep -oE 'P[012]' | sort | uniq -c
+```
 
 ## 2. テストケース一覧
 
@@ -184,7 +186,6 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 | ID     | シナリオ                                             | 優先度 | ステータス |
 | ------ | ---------------------------------------------------- | ------ | ---------- |
-| TL-001 | Daily Time Limit を設定できる                        | P1     | -          |
 | TL-003 | Time Limit 超過時に newtab.html へリダイレクトされる | P0     | -          |
 | TL-006 | 残り時間がポップアップで表示される                   | P1     | -          |
 | TL-007 | Time Limit の残り時間がブロックリストに表示される    | P2     | -          |
@@ -200,10 +201,8 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | YT-002 | YouTube Recommendations（関連動画）を非表示にできる  | P1     | -          |
 | YT-003 | YouTube Comments を非表示にできる                    | P2     | -          |
 | YT-004 | YouTube 完全ブロック（blockAccess）が動作する        | P1     | -          |
-| YT-005 | YouTube Time Limit を設定できる                      | P1     | -          |
 | YT-006 | アクセスブロック無効時は Time Limit 超過でも隠さない | P1     | -          |
 | YT-007 | YouTube 設定変更が即座に反映される                   | P2     | -          |
-| YT-008 | YouTube 有効化/無効化がトラッキング履歴に記録される  | P1     | -          |
 | YT-009 | Hide Shorts + Time Limit 同時設定時に両方が機能する  | P1     | -          |
 | YT-010 | blockAccess と Time Limit の併用（超過後にブロック） | P1     | -          |
 
@@ -228,17 +227,6 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | I18N-002 | ブラウザ言語が日本語の場合、日本語UIが表示される | P1     | -          |
 | I18N-003 | ヘッダーの操作は実装どおりのものだけ             | P1     | -          |
 | I18N-004 | 表示言語が全画面で統一されている                 | P1     | -          |
-
-### データ永続化
-
-| ID       | シナリオ                                      | 優先度 | ステータス |
-| -------- | --------------------------------------------- | ------ | ---------- |
-| DATA-001 | 設定が chrome.storage.local に保存される      | P0     | -          |
-| DATA-002 | ブラウザ再起動後も設定が保持される            | P0     | -          |
-| DATA-003 | 拡張機能を無効化→有効化しても設定が保持される | P1     | -          |
-| DATA-004 | プリセット（Vision）が正しく保存される        | P1     | -          |
-| DATA-005 | スケジュールが正しく保存される                | P1     | -          |
-| DATA-006 | Analytics データが正しく保存される            | P1     | -          |
 
 ### 追加機能
 
@@ -266,6 +254,12 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 - 滞在時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に載っているドメインだけ**。履歴に無いドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
 - ⚠ `analytics.siteTime` を書く経路は 2 つある（`src/background/handlers/tracker-heartbeat.ts` と、アクティブタブを 1 秒ごとに記録する `src/background/tracker.ts`）。**heartbeat が動いたことを `siteTime` で待たない**——後者が先に値を入れるため、待ちが即座に満たされて heartbeat の前に読み進めてしまう。heartbeat だけが書く値は `unblockHistory.sites[domain].timeAfterUnblock`
 - 「存在しない要素が無いこと」で合否を決めない。実装に一度も無かったセレクタや削除済みのセレクタの不在は、何を壊しても成立する。実装にある要素・値を正面から確かめる
+- テストが自分で `chrome.storage.local` に書いて同じキーを読み返すだけのテストは置かない。`src/` を全削除しても通る（確かめているのは Chrome のストレージであって本製品ではない）
+- 失敗を合格に変換しない。`isVisible()` を catch で包んで真偽値にすると、strict mode 違反（一致が複数）もタイムアウトも「表示されていない」として飲み込む。一致が 1 件になる範囲まで絞ってから判定する
+- 広すぎる一致で判定しない。`text=/5/i` のようなページ全体の数字一致や `toContainText('0')`（10 / 100 でも通る）は、壊れても落ちない。文言は `UI_TEXT`（`tests/e2e/helpers/constants.ts`）から、要素は data-testid から指す
+- 範囲を絞るのに `xpath=../..` のような「何階層上」を使わない。構造が変わると範囲が広がり、ページのどこかに文字列があるだけで通る。指す先が無くなれば落ちる書き方（見出しからドキュメント順にたどる等）にする
+- 固定 `setTimeout` で待たない。ブロックルールは `waitForBlockRules` / `waitForNoBlockRules`、それ以外の反映は `expect.poll`。⚠ poll の対象は**狙った経路だけが書く値**にする（別の経路も書く値だと、検証したい処理が走る前に条件が満たされる）
+- `locator.count()` は自動リトライしない。件数は `toHaveCount`、下限だけを見るなら `expect.poll(() => locator.count())` で待つ
 
 ### 開発支援（投げ銭）
 
@@ -834,30 +828,29 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 4. NEW-008: プリセット未設定時のシンプルUI表示
 5. OPT-001, OPT-002: オプション画面の基本表示・タブ切り替え
 
-**ブロックリスト管理** 6. OPT-B01, OPT-B02: ブロックリストタブ表示・ドメイン追加 7. OPT-B04: ブロックリストからドメイン削除 8. DATA-001, DATA-002: 設定の永続化・再起動後の保持
+**ブロックリスト管理** 6. OPT-B01, OPT-B02: ブロックリストタブ表示・ドメイン追加 7. OPT-B04: ブロックリストからドメイン削除
 
-**ポップアップ基本機能** 9. POP-001: ポップアップ表示 10. POP-003: 目標カード表示 11. POP-004: 今日のサマリー表示
+**ポップアップ基本機能** 8. POP-001: ポップアップ表示 9. POP-003: 目標カード表示 10. POP-004: 今日のサマリー表示
 
-**スタイル設定（基本）** 12. OPT-ST01, OPT-ST02: スタイルタブ表示・プリセット一覧 13. OPT-ST03: プリセット選択・適用 14. OPT-ST06: 目標テキスト入力
+**スタイル設定（基本）** 11. OPT-ST01, OPT-ST02: スタイルタブ表示・プリセット一覧 12. OPT-ST03: プリセット選択・適用 13. OPT-ST06: 目標テキスト入力
 
-**Pause 機能** 15. BLOCK-004, BLOCK-005: Pause トグルでブロック一時停止・解除 16. POP-008: Pause トグル動作
+**Pause 機能** 14. BLOCK-004, BLOCK-005: Pause トグルでブロック一時停止・解除 15. POP-008: Pause トグル動作
 
-**スケジュール自動適用** 17. OPT-S10: スケジュールによるプリセット自動適用
+**スケジュール自動適用** 16. OPT-S10: スケジュールによるプリセット自動適用
 
 ### Phase 2: 主要機能（P1）
 
 **Time Limit 機能**
 
-1. TL-001: Time Limit 設定（Daily）
-2. TL-003: Time Limit 超過時のリダイレクト
-3. TL-009: Time Limit の使用実績リセット（日付変更）
-4. TL-006: 残り時間バッジ表示（ポップアップ）
-5. TL-008: Pause 有効中の Time Limit 挙動
-6. TL-009: リセット境界値テスト
-7. TL-011: 複数サイトでの Time Limit 動作
-8. OPT-B06: Time Limit 設定（オプション）
+1. TL-003: Time Limit 超過時のリダイレクト
+2. TL-009: Time Limit の使用実績リセット（日付変更）
+3. TL-006: 残り時間バッジ表示（ポップアップ）
+4. TL-008: Pause 有効中の Time Limit 挙動
+5. TL-009: リセット境界値テスト
+6. TL-011: 複数サイトでの Time Limit 動作
+7. OPT-B06: Time Limit 設定（オプション）
 
-**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）9. YT-005: YouTube Time Limit 設定 10. YT-006: アクセスブロック無効時の Time Limit 不適用 11. YT-008: YouTube トラッキング履歴記録 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
+**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）10. YT-006: アクセスブロック無効時の Time Limit 不適用 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
 
 **ブロックリスト拡張機能** 14. BLOCK-002: ワイルドカードブロック 15. BLOCK-006, BLOCK-007: ブロックアイテムの有効/無効切り替え 16. OPT-B03: ワイルドカード入力 17. OPT-B05: ブロックアイテム有効/無効切り替え（UI）18. OPT-B07: パスワード保護時の認証 19. OPT-B08: Unblock 確認モーダル
 
@@ -873,7 +866,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **機能間相互作用** 41. INT-001, INT-002, INT-003, INT-004: Pause/Time Limit/Schedule の優先順位 42. INT-005: Analytics Opt-Out でも滞在時間を記録 43. INT-006, INT-007: パスワード保護の認証フロー
 
-**その他主要機能** 44. POP-010, POP-011: QuickBlock 機能 45. NEW-006, NEW-007: 目標テキスト編集・保存 46. DATA-004, DATA-005, DATA-006: プリセット・スケジュール・Analytics データの永続化
+**その他主要機能** 44. POP-010, POP-011: QuickBlock 機能 45. NEW-006, NEW-007: 目標テキスト編集・保存
 
 ### Phase 3: 追加機能（P2）
 
@@ -885,7 +878,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **Analytics 詳細機能** 8. AN-004: トラッキング中サイト滞在時間 9. AN-006, AN-007: Opt-Out 時の集計継続・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
 
-**その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-B13: 通知設定 19. OPT-H01, OPT-H02, OPT-H03, OPT-H08, OPT-H09, OPT-H10: ヘルプタブ全般 20. DATA-003: 拡張機能再有効化後の設定保持
+**その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-B13: 通知設定 19. OPT-H01, OPT-H02, OPT-H03, OPT-H08, OPT-H09, OPT-H10: ヘルプタブ全般
 
 ## 7. テストカバレッジ目標
 

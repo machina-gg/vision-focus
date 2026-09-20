@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { test, expect } from './fixtures/extension';
 import {
@@ -12,6 +12,11 @@ import {
   getStorageData,
   SELECTORS
 } from './helpers';
+
+// 表示される滞在時間の期待値は実装と同じ関数で組み立てる
+// （整形の仕様が変わってもテストが壊れないようにするため。
+//   「0 秒でも通る」ことを防ぐのは秒数を固定していることの方）
+import { formatTime } from '~/lib/time';
 
 /**
  * E2Eテスト: Options - Analytics Tab
@@ -37,6 +42,26 @@ async function readSiteBlockCountKeys(page: Page): Promise<string[] | null> {
     return null;
   }
   return Object.keys(siteBlockCounts);
+}
+
+/**
+ * サイト別ランキングの N 位に表示されているドメインを指す
+ *
+ * ランキングの行は「順位バッジ + ドメイン + ブロック回数」で、行を指す
+ * data-testid は無い。ページ全体から探すと追跡中一覧の同じドメインにも
+ * 一致するため、見出しからドキュメント順で順位バッジをたどり、その隣の
+ * ドメインを読む。
+ *
+ * ⚠ 構造が変われば一致する要素が無くなって落ちる。範囲指定を `xpath=../..`
+ * のように「何階層上」で書くと、構造が変わったときに範囲が広がり、
+ * ページのどこかに文字列があるだけで通ってしまう（#441）
+ */
+function rankingDomainAt(page: Page, rank: number): Locator {
+  return page
+    .locator(SELECTORS.analytics.siteRankingList)
+    .locator(
+      `xpath=following::span[normalize-space(text())="${rank}"][1]/following-sibling::span[1]`
+    );
 }
 
 test.describe('Options - Analytics Tab', () => {
@@ -102,15 +127,13 @@ test.describe('Options - Analytics Tab', () => {
     const page = await openOptions(context, extensionId, 'analytics');
 
     // サイトランキングが表示される
-    const rankingSection = page
-      .locator(SELECTORS.analytics.siteRankingList)
-      .locator('xpath=../..');
-    await expect(rankingSection).toBeVisible();
+    await expect(
+      page.locator(SELECTORS.analytics.siteRankingList)
+    ).toBeVisible();
 
-    // ランキング内に対象ドメインが表示される
-    // （ページ全体では追跡中一覧にも同じドメインが出るため範囲を限定する）
-    await expect(rankingSection).toContainText('youtube.com');
-    await expect(rankingSection).toContainText('reddit.com');
+    // ブロック回数の多い順に並ぶ（youtube.com: 10 回 > reddit.com: 5 回）
+    await expect(rankingDomainAt(page, 1)).toHaveText('youtube.com');
+    await expect(rankingDomainAt(page, 2)).toHaveText('reddit.com');
 
     await page.close();
   });
@@ -154,6 +177,7 @@ test.describe('Options - Analytics Tab', () => {
     extensionId
   }) => {
     // テスト用の解除履歴データを追加
+    const wastedSeconds = 7200; // 2 時間
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'unblockHistory', {
       sites: {
@@ -162,7 +186,7 @@ test.describe('Options - Analytics Tab', () => {
           status: 'unblocked',
           blockedAt: '2024-01-01T00:00:00.000Z',
           unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: 7200, // 2時間（秒）
+          timeAfterUnblock: wastedSeconds,
           lastActivity: '2024-01-01T12:00:00.000Z'
         }
       }
@@ -182,8 +206,9 @@ test.describe('Options - Analytics Tab', () => {
       .locator('xpath=..');
     await expect(trackedSection).toContainText('reddit.com');
 
-    // 滞在時間が何らかの形式で表示される（h / m / s のいずれか）
-    await expect(trackedSection).toContainText(/\d+\s*(h|m|s|時間|分|秒)/i);
+    // 保存した滞在時間そのものが表示される。
+    // 「数字 + 単位」の正規表現だと 0 秒表示や別の行の日付でも通る
+    await expect(trackedSection).toContainText(formatTime(wastedSeconds));
 
     await page.close();
   });
@@ -260,9 +285,15 @@ test.describe('Options - Analytics Tab', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // reddit.com の解除履歴が表示される
-    const unblockItem = page.locator('text=/reddit.com/i').first();
-    await expect(unblockItem).toBeVisible();
+    // 停止前は追跡中の一覧に reddit.com が並ぶ。
+    // ⚠ ページ全体から reddit.com を探さない。サイト別ランキングにも
+    //    同じドメインが出るため、停止後も一致が残る（一致が複数になると
+    //    isVisible() は strict mode 違反で落ちる。従来はそれを握りつぶす
+    //    catch が付いており、失敗が「合格」に変換されていた。#441）
+    const trackedSection = page
+      .locator(SELECTORS.analytics.trackedSitesList)
+      .locator('xpath=..');
+    await expect(trackedSection).toContainText('reddit.com');
 
     // トラッキング停止ボタンをクリック
     const stopButton = page
@@ -270,17 +301,24 @@ test.describe('Options - Analytics Tab', () => {
       .first();
     await stopButton.click();
 
-    // サイトがトラッキングから削除される
-    // ページをリロードして確認
+    // 解除履歴から当該ドメインが消える。
+    // このキーを消すのは停止ボタンの経路だけ（useAnalytics の handleStopTracking）
+    await expect
+      .poll(async () => {
+        const history = await getStorageData(page, 'unblockHistory');
+        return Object.keys(history?.sites ?? {});
+      })
+      .not.toContain('reddit.com');
+
+    // 保存内容から描き直させて、画面からも消えていることを確かめる
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
-    // reddit.com が表示されない（または status が変更される）
-    const unblockItemAfter = page.locator('text=/reddit.com/i');
-    const isVisible = await unblockItemAfter.isVisible().catch(() => false);
-
-    // トラッキング停止後は表示されないか、ステータスが変わる
-    expect(isVisible).toBe(false);
+    // 追跡中のサイトが 0 件になると一覧そのものが描画されない
+    // （AnalyticsSummary は hasTrackedSites が false なら空状態を出す）
+    await expect(
+      page.locator(SELECTORS.analytics.trackedSitesList)
+    ).toHaveCount(0);
 
     await page.close();
   });

@@ -3,7 +3,8 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  SELECTORS
+  SELECTORS,
+  UI_TEXT
 } from './helpers';
 
 /**
@@ -59,14 +60,18 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
 
     const page = await openNewTab(context, extensionId);
 
-    // ダウンロードボタンが表示される
-    const downloadButton = page
-      .locator(SELECTORS.newtab.downloadButton)
-      .filter({ hasText: /Download|ダウンロード|^$/ });
-
-    // ボタンの存在を確認（テキストがない場合もあるのでアイコンで判定）
-    const downloadButtonCount = await downloadButton.count();
-    expect(downloadButtonCount).toBeGreaterThan(0);
+    // ダウンロードボタンが表示される。
+    // `^$` を含む filter は実質無条件で、count() も自動リトライしない。
+    // data-testid で 1 件に絞り、ラベルと押せる状態まで確かめる
+    const downloadButton = page.locator(SELECTORS.newtab.downloadButton);
+    await expect(downloadButton).toHaveCount(1);
+    await expect(downloadButton).toBeVisible();
+    await expect(downloadButton).toHaveText(UI_TEXT.newtab.download);
+    await expect(downloadButton).toHaveAttribute(
+      'title',
+      UI_TEXT.newtab.downloadWallpaper
+    );
+    await expect(downloadButton).toBeEnabled();
 
     await page.close();
   });

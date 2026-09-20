@@ -231,6 +231,35 @@ export const UI_TEXT = {
   common: {
     save: 'Save'
   },
+  // $COUNT$ のような置換を含む文言は、置換後の文字列を組み立てる関数で持つ
+  // （messages.json の message をそのまま書くと `$COUNT$` が残り、画面の
+  //   表示と一致しない）
+  blockCount: {
+    /** ブロックリストとサイト別ランキングのバッジ（blockedTimesShort） */
+    short: (count: number) => `${count} blocks`,
+    /** newtab のブロック情報バナー（blockedTimes） */
+    long: (count: number) => `You've blocked this site ${count} times`
+  },
+  newtab: {
+    download: 'Download',
+    downloadWallpaper: 'Download Wallpaper'
+  },
+  styles: {
+    // 選択中のプリセットが適用済みなら Active の表示、未適用なら Apply ボタン
+    activePreset: 'Active',
+    applyPreset: 'Apply'
+  },
+  help: {
+    // 「はじめに」に並ぶ手順の見出し（HelpGettingStarted）。
+    // ⚠ ここに無い手順が増えても検査は落ちない（存在の確認だけを行う）
+    gettingStartedSteps: [
+      'Block Distracting Sites',
+      'Set Up Schedules',
+      'Customize Your Dashboard',
+      'Set Time Limits',
+      'Track Your Progress'
+    ]
+  },
   timeLimit: {
     // 時間制限の編集欄の開閉ボタンは、未設定なら現在の設定として
     // 「Always Blocked」を表示する（"Time Limit" という文言のボタンは無い）
