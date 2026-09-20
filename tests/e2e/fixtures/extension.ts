@@ -9,17 +9,25 @@ import { startTestServer, type TestServer } from './testServer';
  * 拡張機能をロードした状態でテストを実行するための設定
  */
 
-// 拡張機能のビルドディレクトリパス（CI では pnpm build で chrome-mv3-prod を生成）
+// 拡張機能のビルドディレクトリパス（CI では pnpm build で chrome-mv3 を生成）
 import fs from 'fs';
 
-const PROD_PATH = path.join(__dirname, '../../../build/chrome-mv3-prod');
-const DEV_PATH = path.join(__dirname, '../../../build/chrome-mv3-dev');
+const PROD_PATH = path.join(__dirname, '../../../.output/chrome-mv3');
+const DEV_PATH = path.join(__dirname, '../../../.output/chrome-mv3-dev');
 const EXTENSION_PATH = fs.existsSync(PROD_PATH) ? PROD_PATH : DEV_PATH;
 
 // カスタムフィクスチャの型定義
 export type ExtensionFixtures = {
   context: BrowserContext;
   extensionId: string;
+  /**
+   * ブラウザの起動言語（`--lang`）
+   *
+   * 拡張機能の表示言語は chrome.i18n がブラウザの言語設定から決める
+   * （machina-gg/vision-focus#401）。テスト側から切り替える手段は起動言語しかない。
+   * 未指定なら Chromium の既定（拡張機能は default_locale の en で表示される）。
+   */
+  browserLanguage: string | undefined;
 };
 
 /** ワーカー単位で共有するフィクスチャ */
@@ -45,8 +53,11 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
     { scope: 'worker' }
   ],
 
+  // 起動言語（`test.use({ browserLanguage: 'ja' })` で上書きする）
+  browserLanguage: [undefined, { option: true }],
+
   // BrowserContextのカスタマイズ
-  context: async ({ testServer, headless }, use) => {
+  context: async ({ testServer, headless, browserLanguage }, use) => {
     // Chrome拡張機能をロードした状態で BrowserContext を起動
     const context = await chromium.launchPersistentContext('', {
       // 新ヘッドレス（channel: 'chromium'）は拡張機能をサポートする。
@@ -65,7 +76,8 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
         // localhost / 127.0.0.1 は拡張機能の内部通信に使うため除外する
         `--host-resolver-rules=MAP * 127.0.0.1:${testServer.port}, EXCLUDE localhost`,
         // テストサーバは自己署名証明書を使うため、警告を無視させる
-        '--ignore-certificate-errors'
+        '--ignore-certificate-errors',
+        ...(browserLanguage ? [`--lang=${browserLanguage}`] : [])
       ]
     });
 

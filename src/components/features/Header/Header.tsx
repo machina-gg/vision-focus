@@ -1,16 +1,13 @@
 import React from 'react';
 
-import { Settings, HelpCircle, ChevronDown } from 'lucide-react';
+import { Settings, HelpCircle } from 'lucide-react';
 
-import iconBase64 from 'data-base64:assets/icon.png';
+// アイコンはバンドルに含めるため ?inline（データ URL）で import する。
+// html2canvas によるキャプチャ対象に入るため、外部 URL ではなくデータ URL の方が安全
+import iconBase64 from '~/assets/icon.png?inline';
 
 import { Toggle } from '~/components/ui';
-import {
-  getMessage,
-  getSupportedLanguages,
-  getCurrentLanguage
-} from '~/lib/i18n';
-import type { SupportedLanguage } from '~/types/storage';
+import { getMessage } from '~/lib/i18n';
 
 const VERSION = '1.0.0';
 
@@ -20,8 +17,6 @@ export interface HeaderProps {
   onHelpClick?: () => void;
   paused?: boolean;
   onPausedChange?: (paused: boolean) => void;
-  language?: SupportedLanguage | null;
-  onLanguageChange?: (language: SupportedLanguage) => void;
 }
 
 export function Header({
@@ -29,13 +24,8 @@ export function Header({
   onSettingsClick,
   onHelpClick,
   paused = false,
-  onPausedChange,
-  language,
-  onLanguageChange
+  onPausedChange
 }: HeaderProps) {
-  const supportedLanguages = getSupportedLanguages();
-  const currentLang = language ?? getCurrentLanguage();
-
   return (
     <header
       className="flex items-center justify-between px-4 py-3 border-b border-gray-100"
@@ -61,27 +51,6 @@ export function Header({
 
       {/* Controls */}
       <div className="flex items-center gap-2">
-        {/* Language Selector */}
-        {onLanguageChange && (
-          <div className="relative">
-            <select
-              data-testid="language-selector"
-              value={currentLang}
-              onChange={(e) =>
-                onLanguageChange(e.target.value as SupportedLanguage)
-              }
-              className="appearance-none bg-gray-50 border border-gray-200 rounded-md px-2 py-1 pr-6 text-xs text-gray-600 cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
-            >
-              {supportedLanguages.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-          </div>
-        )}
-
         {/* Block Toggle */}
         {onPausedChange && (
           <div className="flex items-center gap-1.5">

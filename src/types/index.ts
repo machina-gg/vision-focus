@@ -56,14 +56,21 @@ export {
   type AddBlockResponse,
   type RemoveBlockRequest,
   type RemoveBlockResponse,
-  type GetStatsRequest,
+  type GetRemainingTimeRequest,
+  type GetRemainingTimeResponse,
   type GetStatsResponse,
   type SetSiteCategoryRequest,
   type SetSiteCategoryResponse,
   type ToggleBlockRequest,
   type ToggleBlockResponse,
+  type TogglePauseRequest,
+  type TogglePauseResponse,
   type TrackerHeartbeatRequest,
-  type TrackerHeartbeatResponse
+  type TrackerHeartbeatResponse,
+  type UpdateTimeLimitRequest,
+  type UpdateTimeLimitResponse,
+  type UpdateYouTubeSettingsRequest,
+  type UpdateYouTubeSettingsResponse
 } from './messages';
 
 // Storage types (AppSettings and related)
@@ -76,10 +83,12 @@ export {
   type YouTubeSettings,
   type PasswordSettings,
   type AppSettings,
+  type SupportPromptState,
   type StorageSchema,
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_YOUTUBE_SETTINGS,
   DEFAULT_PASSWORD_SETTINGS,
+  DEFAULT_SUPPORT_PROMPT_STATE,
   DEFAULT_SETTINGS,
   DEFAULT_STORAGE
 } from './storage';

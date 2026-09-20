@@ -46,7 +46,6 @@ export interface ExportedSettings {
     presets: DashboardPreset[];
     defaultDisplaySettings: VisionSettings['defaultSettings'];
     activePresetId: string | null;
-    language: AppSettings['language'];
     notifications?: NotificationSettings;
   };
 }
@@ -82,7 +81,7 @@ const displaySettingsSchema = z.object({
 });
 
 const timeLimitSchema = z.object({
-  type: z.enum(['daily', 'hourly']),
+  type: z.literal('daily'),
   limitSeconds: z.number()
 });
 
@@ -130,7 +129,6 @@ const exportDataSchema = z.object({
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
     activePresetId: z.string().nullable(),
-    language: z.enum(['en', 'ja']).nullable(),
     notifications: notificationSettingsSchema.optional()
   })
 });
@@ -174,7 +172,6 @@ export function exportSettings(
       presets: vision.presets,
       defaultDisplaySettings: vision.defaultSettings,
       activePresetId: vision.activePresetId,
-      language: settings.language,
       notifications: settings.notifications
     }
   };
@@ -318,7 +315,6 @@ export function applyImportedSettings(
     ...currentSettings,
     blockList: mergedBlockList,
     schedules: mergedSchedules,
-    language: data.language ?? currentSettings.language,
     notifications:
       data.notifications ??
       currentSettings.notifications ??
@@ -348,7 +344,6 @@ export function createDefaultExportData(): ExportedSettings {
       presets: DEFAULT_VISION.presets,
       defaultDisplaySettings: DEFAULT_VISION.defaultSettings,
       activePresetId: DEFAULT_VISION.activePresetId,
-      language: DEFAULT_SETTINGS.language,
       notifications: DEFAULT_SETTINGS.notifications
     }
   };

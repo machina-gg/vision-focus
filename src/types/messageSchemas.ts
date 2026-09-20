@@ -26,7 +26,7 @@ export type TrackerHeartbeatBody = z.infer<typeof TrackerHeartbeatBodySchema>;
 
 // Schema for update-time-limit message handler
 const TimeLimitSchema = z.object({
-  type: z.enum(['daily', 'hourly']),
+  type: z.literal('daily'),
   limitSeconds: z.number().positive()
 });
 
@@ -41,9 +41,7 @@ export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 const TimeLimitUsageSchema = z.object({
   domain: z.string(),
   dailyUsedSeconds: z.number(),
-  hourlyUsedSeconds: z.number(),
-  lastDailyReset: z.string(),
-  lastHourlyReset: z.string()
+  lastDailyReset: z.string()
 });
 
 const DailyStatSchema = z.object({
@@ -75,13 +73,24 @@ export const AnalyticsDataSchema = z.object({
 });
 
 // Schema for YouTubeSettings validation (used in youtube.ts content script)
+// 非 strict な z.object なので、廃止したキーが保存済みデータに残っていても
+// parse は落ちずに無視される。そのため設定削除時の移行処理は持たない（#393）
 export const YouTubeSettingsSchema = z.object({
   enabled: z.boolean(),
   blockAccess: z.boolean().optional().default(false),
   hideShorts: z.boolean(),
   hideRecommendations: z.boolean(),
   hideComments: z.boolean(),
-  hideSidebar: z.boolean(),
   hideHomeFeed: z.boolean(),
   timeLimit: TimeLimitSchema.nullable().optional()
 });
+
+// Schema for update-youtube-settings message handler
+// YouTube 設定は background 経由で保存する（保存と同時に既存タブのブロックを行うため）
+export const UpdateYouTubeSettingsBodySchema = z.object({
+  youtube: YouTubeSettingsSchema
+});
+
+export type UpdateYouTubeSettingsBody = z.infer<
+  typeof UpdateYouTubeSettingsBodySchema
+>;

@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
+import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 import { normalizeEndTime } from '~/lib/time';
 import type { AppSettings, Schedule } from '~/types/storage';
 
@@ -69,7 +70,7 @@ export function useSchedules({
       : [...settings.schedules, newSchedule];
 
     const updated = { ...settings, schedules: updatedSchedules };
-    await storage.set('settings', updated);
+    await settingsItem.setValue(updated);
     setSettings(updated);
 
     if (!editingSchedule) {
@@ -88,7 +89,7 @@ export function useSchedules({
         ...settings,
         schedules: settings.schedules.filter((s) => s.id !== id)
       };
-      await storage.set('settings', updated);
+      await settingsItem.setValue(updated);
       setSettings(updated);
     },
     [settings, setSettings]
@@ -99,14 +100,21 @@ export function useSchedules({
       if (!settings) return;
       const updated = {
         ...settings,
-        // When enabling a schedule, also enable blocking (paused=false)
-        paused: enabled ? false : settings.paused,
         schedules: settings.schedules.map((s) =>
           s.id === id ? { ...s, enabled } : s
         )
       };
-      await storage.set('settings', updated);
+      await settingsItem.setValue(updated);
       setSettings(updated);
+
+      // スケジュールを有効化したときは一時停止も解除する。
+      // paused の切り替えは background の toggle-pause ハンドラに寄せる
+      // （ハンドラが既存タブのブロックまで行うため。画面から直接書くと
+      // 開いているタブが次の遷移までブロックされない）(#392)
+      if (enabled && settings.paused) {
+        await resumeBlocking(setSettings);
+      }
+
       trackFeatureUse('schedule_toggle');
     },
     [settings, setSettings]
@@ -142,4 +150,19 @@ export function useSchedules({
     openEditSchedule,
     openAddSchedule
   };
+}
+
+/**
+ * 一時停止を解除する（background の toggle-pause ハンドラ経由）。
+ * ハンドラがブロックルールの更新と既存タブのブロックまで行う
+ */
+async function resumeBlocking(
+  setSettings: (settings: AppSettings) => void
+): Promise<void> {
+  try {
+    await sendMessage('toggle-pause', { paused: false });
+    setSettings(await getSettings());
+  } catch {
+    // 送信に失敗しても、スケジュールの変更自体は保存済みのため表示は保つ
+  }
 }

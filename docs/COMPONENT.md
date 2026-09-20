@@ -377,20 +377,15 @@ graph TD
 
 ## 4. カスタムフック
 
-### useStorage（@plasmohq/storage/hook）
+### useStorageItem
 
-Plasmo提供のストレージ同期フック。chrome.storage の値をReactで自動同期。
+ストレージ同期フック。`@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を受け取り、chrome.storage の値を React で自動同期する。初期値は項目定義の `fallback`。
 
 ```typescript
-import { useStorage } from '@plasmohq/storage/hook';
+import { useStorageItem } from '~/hooks';
+import { settingsItem } from '~/lib/storage';
 
-const [settings, setSettings] = useStorage<AppSettings>(
-  {
-    key: 'settings',
-    instance: storage
-  },
-  DEFAULT_SETTINGS
-);
+const [settings, setSettings] = useStorageItem(settingsItem);
 ```
 
 ---
@@ -523,6 +518,27 @@ function useAnalytics(period: 'today' | 'week' | 'month'): {
   loading: boolean;
 };
 ```
+
+---
+
+### useYouTubeSettings
+
+YouTube 設定の保存フック。
+
+```typescript
+function useYouTubeSettings(props: {
+  settings: AppSettings | undefined;
+  setSettings: (settings: AppSettings) => void;
+}): {
+  handleYouTubeChange: (youtube: YouTubeSettings) => Promise<void>;
+};
+```
+
+**機能**
+
+- 保存は background の `update-youtube-settings` ハンドラが行い、画面側は保存後の設定を読み直して反映する
+- ハンドラ側でブロックルールの更新と既存タブのブロックまで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
+- YouTube ブロックの有効・無効の切り替えを追跡履歴に記録する
 
 ---
 

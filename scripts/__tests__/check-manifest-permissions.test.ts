@@ -1,21 +1,24 @@
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   diffPermissions,
   extractPermissions,
   formatDiffReport,
-  hasAddedPermissions
+  hasAddedPermissions,
+  isStaticManifest
 } from '../check-manifest-permissions';
 
 describe('extractPermissions', () => {
-  it('package.json から manifest の権限を抽出できる', () => {
-    const pkg = {
+  it('wxt.config.ts の default export から manifest の権限を抽出できる', () => {
+    const config = {
       manifest: {
         permissions: ['storage', 'tabs'],
         host_permissions: ['<all_urls>']
       }
     };
 
-    expect(extractPermissions(pkg)).toEqual({
+    expect(extractPermissions(config)).toEqual({
       permissions: ['storage', 'tabs'],
       hostPermissions: ['<all_urls>']
     });
@@ -98,5 +101,100 @@ describe('formatDiffReport', () => {
 
     expect(report).toContain('tabs');
     expect(report).toContain('<all_urls>');
+  });
+});
+
+describe('isStaticManifest', () => {
+  it('manifest がオブジェクトなら静的と判定する', () => {
+    expect(isStaticManifest({ manifest: { permissions: ['storage'] } })).toBe(
+      true
+    );
+  });
+
+  it('manifest が無い場合も静的と判定する', () => {
+    expect(isStaticManifest({})).toBe(true);
+  });
+
+  it('manifest が関数の場合は静的でないと判定する', () => {
+    expect(isStaticManifest({ manifest: () => ({ permissions: [] }) })).toBe(
+      false
+    );
+  });
+});
+
+describe('CLI として起動したとき', () => {
+  // tsx は package.json に "type": "module" が無いと .ts を CJS として変換するため、
+  // スクリプト本体に top-level await があると起動時点で必ず落ちる（#417）。
+  // 純粋関数のテストでは検知できないので、実際に起動して結果を確かめる
+  //
+  // パス解決に new URL(..., import.meta.url) は使わない。Vite がアセット URL の
+  // 参照として書き換えてしまい、テスト実行時に file スキームでなくなる
+  const repoRoot = path.resolve(__dirname, '../..');
+  const scriptPath = path.resolve(
+    __dirname,
+    '../check-manifest-permissions.ts'
+  );
+  const fixturesDir = path.resolve(__dirname, 'fixtures');
+  const fixture = (name: string) => path.join(fixturesDir, name);
+
+  /** スクリプトを子プロセスで起動し、終了コードと出力を返す */
+  function runScript(...args: string[]): {
+    status: number;
+    stdout: string;
+    stderr: string;
+  } {
+    try {
+      // CI の `pnpm exec tsx <script>` と同じ tsx のローダを使う
+      const stdout = execFileSync(
+        process.execPath,
+        ['--import', 'tsx', scriptPath, ...args],
+        { cwd: repoRoot, encoding: 'utf8' }
+      );
+      return { status: 0, stdout, stderr: '' };
+    } catch (error) {
+      const failure = error as {
+        status?: number | null;
+        stdout?: string;
+        stderr?: string;
+      };
+      return {
+        // シグナル終了など終了コードを取れない場合は別の値にして取り違えを防ぐ
+        status: typeof failure.status === 'number' ? failure.status : -1,
+        stdout: failure.stdout ?? '',
+        stderr: failure.stderr ?? ''
+      };
+    }
+  }
+
+  it('権限が同一なら 0 で終了する', () => {
+    const result = runScript(
+      fixture('base.config.ts'),
+      fixture('base.config.ts')
+    );
+
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('権限に増加はありません');
+    expect(result.status).toBe(0);
+  });
+
+  it('権限が増えていれば 1 で終了する', () => {
+    const result = runScript(
+      fixture('base.config.ts'),
+      fixture('added.config.ts')
+    );
+
+    // 起動に失敗しても終了コードは 1 になるため、出力まで確かめる
+    expect(result.stderr).toContain('permissions が増加: tabs');
+    expect(result.status).toBe(1);
+  });
+
+  it('manifest が関数形式なら 2 で終了する', () => {
+    const result = runScript(
+      fixture('base.config.ts'),
+      fixture('function-manifest.config.ts')
+    );
+
+    expect(result.stderr).toContain('関数形式');
+    expect(result.status).toBe(2);
   });
 });

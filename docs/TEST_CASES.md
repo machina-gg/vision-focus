@@ -43,7 +43,6 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | POP-009 | パスワード保護設定時、Pause トグルにパスワード認証が必要     | P1     | -          |
 | POP-010 | クイックブロックボタンに現在のドメインが表示される           | P1     | -          |
 | POP-011 | クイックブロッククリックでサイトがブロックリストに追加される | P1     | -          |
-| POP-012 | 言語切り替えで UI が即座に変更される                         | P2     | -          |
 | POP-013 | Analytics リンクが表示される                                 | P2     | -          |
 | POP-014 | Time Limit 設定中のサイトで残り時間バッジが表示される        | P1     | -          |
 
@@ -185,29 +184,27 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | ID     | シナリオ                                             | 優先度 | ステータス |
 | ------ | ---------------------------------------------------- | ------ | ---------- |
 | TL-001 | Daily Time Limit を設定できる                        | P1     | -          |
-| TL-002 | Hourly Time Limit を設定できる                       | P1     | -          |
 | TL-003 | Time Limit 超過時に newtab.html へリダイレクトされる | P0     | -          |
 | TL-006 | 残り時間がポップアップで表示される                   | P1     | -          |
 | TL-007 | Time Limit の残り時間がブロックリストに表示される    | P2     | -          |
 | TL-008 | Pause 有効中は Time Limit 超過してもブロックされない | P1     | -          |
 | TL-009 | Daily の使用実績は日付が変わるとリセットされる       | P1     | -          |
-| TL-010 | Hourly の使用実績は時刻が変わるとリセットされる      | P1     | -          |
 | TL-011 | 複数サイトで異なる Time Limit が同時に動作する       | P1     | -          |
 
 ### YouTube ブロック機能
 
-| ID     | シナリオ                                                 | 優先度 | ステータス |
-| ------ | -------------------------------------------------------- | ------ | ---------- |
-| YT-001 | YouTube Shorts を非表示にできる                          | P1     | -          |
-| YT-002 | YouTube Recommendations（関連動画）を非表示にできる      | P1     | -          |
-| YT-003 | YouTube Comments を非表示にできる                        | P2     | -          |
-| YT-004 | YouTube 完全ブロック（blockAccess）が動作する            | P1     | -          |
-| YT-005 | YouTube Time Limit を設定できる                          | P1     | -          |
-| YT-006 | YouTube Time Limit 超過時に CSS で全コンテンツ非表示     | P1     | -          |
-| YT-007 | YouTube 設定変更が即座に反映される                       | P2     | -          |
-| YT-008 | YouTube 有効化/無効化がトラッキング履歴に記録される      | P1     | -          |
-| YT-009 | Hide Shorts + Time Limit 同時設定時に両方が機能する      | P1     | -          |
-| YT-010 | blockAccess と Time Limit の優先順位（blockAccess 優先） | P1     | -          |
+| ID     | シナリオ                                             | 優先度 | ステータス |
+| ------ | ---------------------------------------------------- | ------ | ---------- |
+| YT-001 | YouTube Shorts を非表示にできる                      | P1     | -          |
+| YT-002 | YouTube Recommendations（関連動画）を非表示にできる  | P1     | -          |
+| YT-003 | YouTube Comments を非表示にできる                    | P2     | -          |
+| YT-004 | YouTube 完全ブロック（blockAccess）が動作する        | P1     | -          |
+| YT-005 | YouTube Time Limit を設定できる                      | P1     | -          |
+| YT-006 | アクセスブロック無効時は Time Limit 超過でも隠さない | P1     | -          |
+| YT-007 | YouTube 設定変更が即座に反映される                   | P2     | -          |
+| YT-008 | YouTube 有効化/無効化がトラッキング履歴に記録される  | P1     | -          |
+| YT-009 | Hide Shorts + Time Limit 同時設定時に両方が機能する  | P1     | -          |
+| YT-010 | blockAccess と Time Limit の併用（超過後にブロック） | P1     | -          |
 
 ### アナリティクス機能
 
@@ -228,9 +225,8 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | -------- | ------------------------------------------------ | ------ | ---------- |
 | I18N-001 | ブラウザ言語が英語の場合、英語UIが表示される     | P1     | -          |
 | I18N-002 | ブラウザ言語が日本語の場合、日本語UIが表示される | P1     | -          |
-| I18N-003 | ポップアップで言語を切り替えできる               | P1     | -          |
-| I18N-004 | 言語設定が全画面で統一されている                 | P1     | -          |
-| I18N-005 | 言語変更が即座に反映される                       | P2     | -          |
+| I18N-003 | 言語切替 UI を持たない                           | P1     | -          |
+| I18N-004 | 表示言語が全画面で統一されている                 | P1     | -          |
 
 ### データ永続化
 
@@ -303,7 +299,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 **期待結果**
 
 - ポップアップウィンドウが表示される
-- Header（ロゴ・設定・Pauseトグル・言語選択）が表示される
+- Header（ロゴ・設定・Pauseトグル）が表示される
 - QuickBlockButton が表示される
 - GoalCard が表示される
 - 今日のサマリー（ブロック回数・トップブロックサイト）が表示される
@@ -554,32 +550,12 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 ---
 
-### TL-010: Hourly の使用実績は時刻が変わるとリセットされる
-
-**前提条件**
-
-- ブロックリストに「youtube.com」が登録されている
-- Hourly Time Limit が 60秒 に設定されている
-- 09:59:55 時点で 55秒 使用している
-
-**手順**
-
-1. 09:59:55 に YouTube にアクセスする
-2. 10秒間待つ（10:00:05 に到達）
-
-**期待結果**
-
-- 10:00:00 に Time Limit がリセットされる
-- リダイレクトされない
-
----
-
 ### TL-011: 複数サイトで異なる Time Limit が同時に動作する
 
 **前提条件**
 
 - ブロックリストに「youtube.com」（Daily 60秒）が登録されている
-- ブロックリストに「twitter.com」（Hourly 120秒）が登録されている
+- ブロックリストに「twitter.com」（Daily 120秒）が登録されている
 
 **手順**
 
@@ -590,7 +566,25 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 **期待結果**
 
 - YouTube のみリダイレクトされる（Daily 60秒 超過）
-- Twitter はリダイレクトされない（Hourly 120秒 未満）
+- Twitter はリダイレクトされない（Daily 120秒 未満）
+
+---
+
+### YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
+
+**前提条件**
+
+- YouTube セクションで「blockAccess」がオフ
+- YouTube Time Limit が設定済みで、既に超過している
+
+**手順**
+
+1. YouTube にアクセスする
+
+**期待結果**
+
+- 「利用上限に達しました」の表示も通知も出ない
+- 時間制限の計測も進まない（アクセスブロックが有効なときだけ時間制限を使う。#407）
 
 ---
 
@@ -598,6 +592,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **前提条件**
 
+- YouTube セクションで「blockAccess」がオン
 - YouTube セクションで「Hide Shorts」がオン
 - YouTube Time Limit が 10秒 に設定されている
 
@@ -611,10 +606,12 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 - Shorts が非表示になる
 - 10秒後にリダイレクトされる
+- 「blockAccess」がオンでも、上限に達するまでは非表示の設定（Shorts / おすすめ / コメント / ホームフィード）が効く（#422）
+- 「blockAccess」がオフのときは Time Limit を超過してもリダイレクトされない（#407）
 
 ---
 
-### YT-010: blockAccess と Time Limit の優先順位（blockAccess 優先）
+### YT-010: blockAccess と Time Limit の併用（超過後にブロック）
 
 **前提条件**
 
@@ -623,12 +620,14 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **手順**
 
-1. YouTube にアクセスする
+1. Time Limit 未超過の状態で YouTube にアクセスする
+2. Time Limit を超過させてから YouTube にアクセスする
 
 **期待結果**
 
-- 即座にリダイレクトされる（Time Limit の判定前）
-- blockAccess が優先される
+- 未超過のうちは YouTube を開ける
+- 超過後はリダイレクトされる（reason: time_limit_exceeded）
+- blockAccess と Time Limit を併用した場合はブロックリストと同じ意味論になる
 
 ---
 
@@ -841,16 +840,16 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **Time Limit 機能**
 
-1. TL-001, TL-002: Time Limit 設定（Daily/Hourly）
+1. TL-001: Time Limit 設定（Daily）
 2. TL-003: Time Limit 超過時のリダイレクト
-3. TL-009, TL-010: Time Limit の使用実績リセット（日付/時刻変更）
+3. TL-009: Time Limit の使用実績リセット（日付変更）
 4. TL-006: 残り時間バッジ表示（ポップアップ）
 5. TL-008: Pause 有効中の Time Limit 挙動
-6. TL-009, TL-010: リセット境界値テスト
+6. TL-009: リセット境界値テスト
 7. TL-011: 複数サイトでの Time Limit 動作
 8. OPT-B06: Time Limit 設定（オプション）
 
-**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）9. YT-005: YouTube Time Limit 設定 10. YT-006: YouTube Time Limit 超過時の非表示 11. YT-008: YouTube トラッキング履歴記録 12. YT-009, YT-010: YouTube 複合モード・優先順位 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
+**YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）9. YT-005: YouTube Time Limit 設定 10. YT-006: アクセスブロック無効時の Time Limit 不適用 11. YT-008: YouTube トラッキング履歴記録 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
 
 **ブロックリスト拡張機能** 14. BLOCK-002: ワイルドカードブロック 15. BLOCK-006, BLOCK-007: ブロックアイテムの有効/無効切り替え 16. OPT-B03: ワイルドカード入力 17. OPT-B05: ブロックアイテム有効/無効切り替え（UI）18. OPT-B07: パスワード保護時の認証 19. OPT-B08: Unblock 確認モーダル
 
@@ -862,7 +861,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 **パスワード保護** 36. OPT-H04, OPT-H05, OPT-H06, OPT-H07: パスワード設定・変更・削除 37. POP-009: パスワード認証（Pause）
 
-**多言語対応** 38. I18N-001, I18N-002: ブラウザ言語の自動検出 39. I18N-003: ポップアップでの言語切り替え 40. I18N-004, I18N-005: 全画面統一・即座反映
+**多言語対応** 38. I18N-001, I18N-002: ブラウザ言語の自動検出 39. I18N-003: 言語切替 UI を持たない 40. I18N-004: 全画面統一
 
 **機能間相互作用** 41. INT-001, INT-002, INT-003, INT-004: Pause/Time Limit/Schedule の優先順位 42. INT-005: Analytics Opt-Out と Unblock History の連動 43. INT-006, INT-007: パスワード保護の認証フロー
 

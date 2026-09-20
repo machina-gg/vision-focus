@@ -31,7 +31,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     extensionId
   }) => {
     const page = await openOptions(context, extensionId);
-    await setupTestStorage(page, { language: 'en' });
+    await setupTestStorage(page, {});
     await page.close();
 
     const optionsPage = await openOptions(context, extensionId, 'styles');
@@ -52,7 +52,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     extensionId
   }) => {
     const page = await openOptions(context, extensionId);
-    await setupTestStorage(page, { language: 'en' });
+    await setupTestStorage(page, {});
     await page.close();
 
     const optionsPage = await openOptions(context, extensionId, 'styles');
@@ -76,7 +76,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     extensionId
   }) => {
     const page = await openOptions(context, extensionId);
-    await setupTestStorage(page, { withGoal: true, language: 'en' });
+    await setupTestStorage(page, { withGoal: true });
     await page.close();
 
     const newtab = await openNewTab(context, extensionId);
@@ -93,7 +93,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     extensionId
   }) => {
     const setupPage = await openOptions(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'en' });
+    await setupTestStorage(setupPage, {});
 
     // 上限（MAX_PRESETS）ちょうどのスタイルを用意する
     await setStorageData(setupPage, 'vision', {
@@ -135,7 +135,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     extensionId
   }) => {
     const setupPage = await openStoragePage(context, extensionId);
-    await setupTestStorage(setupPage, { language: 'en' });
+    await setupTestStorage(setupPage, {});
 
     // 7 日より前のデータを含む履歴を用意する
     await setStorageData(
@@ -160,7 +160,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
   test('PR-007: CSV エクスポートが使える', async ({ context, extensionId }) => {
     const setupPage = await openStoragePage(context, extensionId);
-    await setupTestStorage(setupPage, { withBlockList: true, language: 'en' });
+    await setupTestStorage(setupPage, { withBlockList: true });
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');

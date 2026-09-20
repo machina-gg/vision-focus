@@ -6,11 +6,12 @@
  */
 
 import { getSettings } from '~/lib/storage';
-import { getCurrentLanguage } from '~/lib/i18n';
+import { getUILanguage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
-const GA_MEASUREMENT_ID = process.env.PLASMO_PUBLIC_GA_MEASUREMENT_ID ?? '';
-const GA_API_SECRET = process.env.PLASMO_PUBLIC_GA_API_SECRET ?? '';
+// WXT は WXT_ / VITE_ 接頭辞の環境変数だけをビルド時に埋め込む（.env.example 参照）
+const GA_MEASUREMENT_ID = import.meta.env.WXT_GA_MEASUREMENT_ID ?? '';
+const GA_API_SECRET = import.meta.env.WXT_GA_API_SECRET ?? '';
 const MP_ENDPOINT = `https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`;
 const CLIENT_ID_KEY = 'ga_client_id';
 const SESSION_ID_KEY = 'ga_session_id';
@@ -119,9 +120,8 @@ export async function sendDailyActive(): Promise<void> {
     return;
   }
 
-  const settings = await getSettings();
   const version = chrome.runtime.getManifest().version;
-  const language = settings.language ?? getCurrentLanguage();
+  const language = getUILanguage();
 
   // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
   await trackEvent('daily_active', { version, language });

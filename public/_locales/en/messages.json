@@ -1,0 +1,2098 @@
+{
+  "extensionName": {
+    "message": "VisionFocus",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Block distractions, track time, and stay focused on your goals",
+    "description": "Extension description"
+  },
+  "siteBlocked": {
+    "message": "Site Blocked",
+    "description": "Title shown on blocked page"
+  },
+  "siteBlockedMessage": {
+    "message": "$DOMAIN$ is on your block list",
+    "description": "Message shown on blocked page",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "blockedTimes": {
+    "message": "You've blocked this site $COUNT$ times",
+    "description": "Block count display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "blockedTimesShort": {
+    "message": "$COUNT$ blocks",
+    "description": "Block count short display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "wastedTime": {
+    "message": "Wasted Time",
+    "description": "Wasted time label"
+  },
+  "topBlockedSites": {
+    "message": "Top Blocked Sites",
+    "description": "Block count ranking heading"
+  },
+  "rememberGoal": {
+    "message": "Remember your goal",
+    "description": "Goal reminder heading"
+  },
+  "goBack": {
+    "message": "Go Back",
+    "description": "Go back button text"
+  },
+  "goToDashboard": {
+    "message": "Go to Dashboard",
+    "description": "Go to dashboard button text"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button text"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirm button text"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button text"
+  },
+  "add": {
+    "message": "Add",
+    "description": "Add button text"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button text"
+  },
+  "edit": {
+    "message": "Edit",
+    "description": "Edit button text"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings page title"
+  },
+  "paused": {
+    "message": "Paused",
+    "description": "Paused toggle label"
+  },
+  "help": {
+    "message": "Help",
+    "description": "Help button label"
+  },
+  "general": {
+    "message": "General",
+    "description": "General settings tab"
+  },
+  "styles": {
+    "message": "Customize",
+    "description": "Customize settings tab"
+  },
+  "blockList": {
+    "message": "Block List",
+    "description": "Block list tab"
+  },
+  "schedules": {
+    "message": "Schedules",
+    "description": "Schedules tab"
+  },
+  "analytics": {
+    "message": "Analytics",
+    "description": "Analytics tab"
+  },
+  "dashboardBackground": {
+    "message": "Dashboard Background",
+    "description": "Background setting title"
+  },
+  "addSiteToBlock": {
+    "message": "Add Site to Block",
+    "description": "Add block input heading"
+  },
+  "blockWebsites": {
+    "message": "Block Websites",
+    "description": "Block websites section heading"
+  },
+  "block": {
+    "message": "Block",
+    "description": "Block button text"
+  },
+  "domainPlaceholder": {
+    "message": "example.com or *.example.com",
+    "description": "Domain input placeholder"
+  },
+  "freeTierLimit": {
+    "message": "Free tier: $COUNT$ / $MAX$ sites",
+    "description": "Free tier limit display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "max": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "blockedSites": {
+    "message": "Blocked Sites",
+    "description": "Blocked sites list heading"
+  },
+  "noBlockedSites": {
+    "message": "No sites blocked yet. Add a domain above to get started.",
+    "description": "Empty block list message"
+  },
+  "blockingSchedules": {
+    "message": "Blocking Schedules",
+    "description": "Schedules list heading"
+  },
+  "addSchedule": {
+    "message": "Add Schedule",
+    "description": "Add schedule button"
+  },
+  "noSchedules": {
+    "message": "No schedules created. Add a schedule to automatically block sites during specific times.",
+    "description": "Empty schedules message"
+  },
+  "scheduleName": {
+    "message": "Schedule Name",
+    "description": "Schedule name label"
+  },
+  "startTime": {
+    "message": "Start Time",
+    "description": "Start time label"
+  },
+  "endTime": {
+    "message": "End Time",
+    "description": "End time label"
+  },
+  "activeDays": {
+    "message": "Active Days",
+    "description": "Active days label"
+  },
+  "recentActivity": {
+    "message": "Recent Activity",
+    "description": "Analytics heading"
+  },
+  "noActivity": {
+    "message": "No activity recorded yet. Start browsing to see your stats.",
+    "description": "Empty analytics message"
+  },
+  "today": {
+    "message": "Today",
+    "description": "Today label"
+  },
+  "waste": {
+    "message": "Waste",
+    "description": "Waste time label"
+  },
+  "invest": {
+    "message": "Invest",
+    "description": "Invest time label"
+  },
+  "blocked": {
+    "message": "Blocked",
+    "description": "Blocked count label"
+  },
+  "blocks": {
+    "message": "$COUNT$ blocks",
+    "description": "Block count display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "todaysSummary": {
+    "message": "Today's Summary",
+    "description": "Popup summary heading"
+  },
+  "quickBlock": {
+    "message": "Quick Block",
+    "description": "Quick block button heading"
+  },
+  "blockThisSite": {
+    "message": "Block $DOMAIN$",
+    "description": "Quick block button text",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "settingsTitle": {
+    "message": "Dashboard",
+    "description": "Dashboard page title"
+  },
+  "saveChanges": {
+    "message": "Save Changes",
+    "description": "Save changes button"
+  },
+  "addedOn": {
+    "message": "Added $DATE$",
+    "description": "Added date text",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "1/19/2026"
+      }
+    }
+  },
+  "editSchedule": {
+    "message": "Edit Schedule",
+    "description": "Edit schedule modal title"
+  },
+  "noSiteToBlock": {
+    "message": "No site to block",
+    "description": "No site available to block"
+  },
+  "enterGoalPlaceholder": {
+    "message": "Enter your goal...",
+    "description": "Goal input placeholder text"
+  },
+  "goalSettings": {
+    "message": "Goal Settings",
+    "description": "Goal settings section title"
+  },
+  "yourGoal": {
+    "message": "Your Goal",
+    "description": "Goal input label"
+  },
+  "goalDescription": {
+    "message": "This goal will be displayed on the new tab page and block page to remind you of your purpose.",
+    "description": "Goal setting description"
+  },
+  "goalPlaceholder": {
+    "message": "e.g., Ship my SaaS product by end of month",
+    "description": "Goal input placeholder"
+  },
+  "todaysGoal": {
+    "message": "Current Goal",
+    "description": "Goal card label"
+  },
+  "noGoalSet": {
+    "message": "No goal set yet - click to set one",
+    "description": "Prompt shown on the goal card when no goal is set"
+  },
+  "goalPreviewPlaceholder": {
+    "message": "Your goal will appear here",
+    "description": "Placeholder shown in the style settings preview when no goal is set"
+  },
+  "saved": {
+    "message": "Saved!",
+    "description": "Save success feedback"
+  },
+  "dashboardPreview": {
+    "message": "Preview",
+    "description": "Preview section title"
+  },
+  "backgroundType": {
+    "message": "Background Type",
+    "description": "Background type label"
+  },
+  "backgroundTypeImage": {
+    "message": "Image",
+    "description": "Image background option"
+  },
+  "backgroundTypeColor": {
+    "message": "Solid Color",
+    "description": "Color background option"
+  },
+  "selectColor": {
+    "message": "Select Color",
+    "description": "Color selection label"
+  },
+  "goalSubText": {
+    "message": "Sub-message (Optional)",
+    "description": "Goal sub-message label"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "Add a motivational message...",
+    "description": "Goal sub-text placeholder"
+  },
+  "textColor": {
+    "message": "Text Color",
+    "description": "Text color label"
+  },
+  "unsavedChanges": {
+    "message": "You have unsaved changes",
+    "description": "Text indicating unsaved changes"
+  },
+  "license": {
+    "message": "License",
+    "description": "License tab"
+  },
+  "premium": {
+    "message": "Premium",
+    "description": "Premium label"
+  },
+  "free": {
+    "message": "Free",
+    "description": "Free tier label"
+  },
+  "currentPlan": {
+    "message": "Current Plan",
+    "description": "Current plan heading"
+  },
+  "freePlan": {
+    "message": "Free Plan",
+    "description": "Free plan name"
+  },
+  "premiumPlan": {
+    "message": "Premium Plan",
+    "description": "Premium plan name"
+  },
+  "subscriptionActive": {
+    "message": "Your subscription is active",
+    "description": "Active subscription status"
+  },
+  "manageSubscription": {
+    "message": "Manage Subscription",
+    "description": "Manage subscription button"
+  },
+  "licenseKey": {
+    "message": "License Key",
+    "description": "License key input label"
+  },
+  "enterLicenseKey": {
+    "message": "Enter your license key",
+    "description": "License key input placeholder"
+  },
+  "activateLicense": {
+    "message": "Activate License",
+    "description": "Activate license button"
+  },
+  "activating": {
+    "message": "Activating...",
+    "description": "License activation in progress"
+  },
+  "licenseActivated": {
+    "message": "License activated successfully!",
+    "description": "License activation success message"
+  },
+  "invalidLicenseKey": {
+    "message": "Invalid license key. Please check and try again.",
+    "description": "Invalid license key error"
+  },
+  "deactivateLicense": {
+    "message": "Deactivate License",
+    "description": "Deactivate license button"
+  },
+  "licenseDeactivated": {
+    "message": "License deactivated",
+    "description": "License deactivation message"
+  },
+  "licenseExpires": {
+    "message": "Expires: $DATE$",
+    "description": "License expiration date",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-12-31"
+      }
+    }
+  },
+  "licenseLifetime": {
+    "message": "Lifetime License",
+    "description": "Lifetime license label"
+  },
+  "upgradeToPremium": {
+    "message": "Upgrade to Premium",
+    "description": "Upgrade button text"
+  },
+  "premiumFeatures": {
+    "message": "Premium Features",
+    "description": "Premium features heading"
+  },
+  "premiumFeatureUnlimitedBlocklist": {
+    "message": "Unlimited block list",
+    "description": "Premium feature: unlimited blocklist"
+  },
+  "premiumFeatureUnlimitedHistory": {
+    "message": "Unlimited analytics history",
+    "description": "Premium feature: unlimited history"
+  },
+  "premiumFeatureCustomBackground": {
+    "message": "Custom backgrounds",
+    "description": "Premium feature: custom backgrounds"
+  },
+  "premiumFeatureReports": {
+    "message": "Weekly & monthly reports",
+    "description": "Premium feature: reports"
+  },
+  "freeTierLimitReached": {
+    "message": "Free tier limit reached",
+    "description": "Free tier limit reached heading"
+  },
+  "upgradeToAddMore": {
+    "message": "Upgrade to Premium to add more sites to your block list.",
+    "description": "Upgrade prompt for blocklist"
+  },
+  "upgradeForCustomBackground": {
+    "message": "Upgrade to Premium to upload custom background images.",
+    "description": "Upgrade prompt for custom background"
+  },
+  "gracePeriodWarning": {
+    "message": "License verification failed. Premium features will remain active until $DATE$.",
+    "description": "Grace period warning",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-01-26"
+      }
+    }
+  },
+  "getPremium": {
+    "message": "Get Premium",
+    "description": "Get premium button"
+  },
+  "learnMore": {
+    "message": "Learn More",
+    "description": "Learn more link"
+  },
+  "premiumRequired": {
+    "message": "Premium Required",
+    "description": "Premium required heading"
+  },
+  "premiumRequiredDescription": {
+    "message": "This feature requires a Premium subscription.",
+    "description": "Premium required description"
+  },
+  "remove": {
+    "message": "Remove",
+    "description": "Remove button text"
+  },
+  "uploadImage": {
+    "message": "Click or drag image to upload",
+    "description": "Image upload prompt"
+  },
+  "dropImage": {
+    "message": "Drop image here",
+    "description": "Image drop prompt"
+  },
+  "uploadedImage": {
+    "message": "Uploaded image",
+    "description": "Uploaded image label"
+  },
+  "supportedFormats": {
+    "message": "JPEG, PNG, or WebP (max 5MB)",
+    "description": "Supported image formats"
+  },
+  "processing": {
+    "message": "Processing...",
+    "description": "Processing text"
+  },
+  "fontCategory": {
+    "message": "Font Category",
+    "description": "Font category label"
+  },
+  "fontFamily": {
+    "message": "Font",
+    "description": "Font family label"
+  },
+  "fontSize": {
+    "message": "Font Size",
+    "description": "Font size label"
+  },
+  "fontWeight": {
+    "message": "Font Weight",
+    "description": "Font weight label"
+  },
+  "fontCustomization": {
+    "message": "Font Customization",
+    "description": "Font customization section title"
+  },
+  "addGoal": {
+    "message": "Add Goal",
+    "description": "Add goal button"
+  },
+  "editGoal": {
+    "message": "Edit Goal",
+    "description": "Edit goal modal title"
+  },
+  "goalText": {
+    "message": "Goal Text",
+    "description": "Goal text input label"
+  },
+  "goalTextPlaceholder": {
+    "message": "What's your main focus today?",
+    "description": "Goal text placeholder"
+  },
+  "previewText": {
+    "message": "Preview",
+    "description": "Preview text"
+  },
+  "noGoals": {
+    "message": "No goals yet. Add a goal to get started.",
+    "description": "Empty goals message"
+  },
+  "maxGoalsReached": {
+    "message": "Maximum goals reached ($COUNT$). Upgrade to Premium for unlimited goals.",
+    "description": "Max goals reached message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "multipleGoals": {
+    "message": "Multiple Goals",
+    "description": "Multiple goals section title"
+  },
+  "wasteTime": {
+    "message": "Waste Time",
+    "description": "Waste time label"
+  },
+  "investTime": {
+    "message": "Invest Time",
+    "description": "Invest time label"
+  },
+  "blockedCount": {
+    "message": "Blocked",
+    "description": "Blocked count label"
+  },
+  "unblockedCount": {
+    "message": "Unblocked",
+    "description": "Unblocked count label"
+  },
+  "noData": {
+    "message": "No data available",
+    "description": "No data message"
+  },
+  "lineChart": {
+    "message": "Line Chart",
+    "description": "Line chart label"
+  },
+  "barChart": {
+    "message": "Bar Chart",
+    "description": "Bar chart label"
+  },
+  "pieChart": {
+    "message": "Pie Chart",
+    "description": "Pie chart label"
+  },
+  "neutral": {
+    "message": "Neutral",
+    "description": "Neutral category label"
+  },
+  "weeklyReport": {
+    "message": "Weekly Report",
+    "description": "Weekly report title"
+  },
+  "monthlyReport": {
+    "message": "Monthly Report",
+    "description": "Monthly report title"
+  },
+  "inProgress": {
+    "message": "In Progress",
+    "description": "In progress badge label"
+  },
+  "noReportData": {
+    "message": "Not enough data for report",
+    "description": "No report data message"
+  },
+  "improving": {
+    "message": "Improving",
+    "description": "Improving trend label"
+  },
+  "declining": {
+    "message": "Declining",
+    "description": "Declining trend label"
+  },
+  "stable": {
+    "message": "Stable",
+    "description": "Stable trend label"
+  },
+  "clickForDetails": {
+    "message": "Click for details",
+    "description": "Click for details hint"
+  },
+  "productivityImproving": {
+    "message": "Your productivity is improving!",
+    "description": "Productivity improving message"
+  },
+  "productivityDeclining": {
+    "message": "Your productivity is declining",
+    "description": "Productivity declining message"
+  },
+  "productivityStable": {
+    "message": "Your productivity is stable",
+    "description": "Productivity stable message"
+  },
+  "topWasteSites": {
+    "message": "Top Waste Sites",
+    "description": "Top waste sites heading"
+  },
+  "topInvestSites": {
+    "message": "Top Invest Sites",
+    "description": "Top invest sites heading"
+  },
+  "previousPeriodComparison": {
+    "message": "vs Previous Period",
+    "description": "Previous period comparison label"
+  },
+  "wasteTimeReduction": {
+    "message": "Waste Time Reduction",
+    "description": "Waste time reduction label"
+  },
+  "wasteTimeIncrease": {
+    "message": "Waste Time Increase",
+    "description": "Waste time increase label"
+  },
+  "noComparisonData": {
+    "message": "No comparison data",
+    "description": "No comparison data message"
+  },
+  "dailyBlockCount": {
+    "message": "Daily Block Count",
+    "description": "Daily block count chart title"
+  },
+  "weeklyTrend": {
+    "message": "Weekly Trend",
+    "description": "Weekly trend chart title"
+  },
+  "dailyBreakdown": {
+    "message": "Daily Breakdown",
+    "description": "Daily breakdown chart title"
+  },
+  "weeklyBreakdown": {
+    "message": "Weekly Breakdown",
+    "description": "Weekly breakdown chart title"
+  },
+  "reportsSection": {
+    "message": "Reports",
+    "description": "Reports section title"
+  },
+  "reportsPremiumDescription": {
+    "message": "View detailed weekly and monthly reports to track your productivity trends",
+    "description": "Reports premium feature description"
+  },
+  "close": {
+    "message": "Close",
+    "description": "Close button"
+  },
+  "download": {
+    "message": "Download",
+    "description": "Download button"
+  },
+  "downloadWallpaper": {
+    "message": "Download Wallpaper",
+    "description": "Download wallpaper button"
+  },
+  "selectResolution": {
+    "message": "Select Resolution",
+    "description": "Resolution selection label"
+  },
+  "customBackground": {
+    "message": "Custom Background",
+    "description": "Custom background section title"
+  },
+  "uploadCustomBackground": {
+    "message": "Upload Custom Background",
+    "description": "Upload custom background button"
+  },
+  "premiumFeatureMultipleGoals": {
+    "message": "Multiple goal cards",
+    "description": "Premium feature: multiple goals"
+  },
+  "premiumFeatureFontCustomization": {
+    "message": "Font customization",
+    "description": "Premium feature: font customization"
+  },
+  "premiumFeatureDownloadWallpaper": {
+    "message": "Download wallpaper",
+    "description": "Premium feature: download wallpaper"
+  },
+  "detailedAnalytics": {
+    "message": "Detailed Analytics",
+    "description": "Detailed analytics section title"
+  },
+  "reports": {
+    "message": "Reports",
+    "description": "Reports section title"
+  },
+  "siteCategories": {
+    "message": "Site Categories",
+    "description": "Site categories section title"
+  },
+  "noSiteData": {
+    "message": "No sites visited yet. Start browsing to see your site data.",
+    "description": "Empty site data message"
+  },
+  "searchSites": {
+    "message": "Search sites...",
+    "description": "Search sites placeholder"
+  },
+  "allCategories": {
+    "message": "All Categories",
+    "description": "All categories filter option"
+  },
+  "site": {
+    "message": "Site",
+    "description": "Site column header"
+  },
+  "time": {
+    "message": "Time",
+    "description": "Time column header"
+  },
+  "category": {
+    "message": "Category",
+    "description": "Category column header"
+  },
+  "noMatchingSites": {
+    "message": "No sites match your search.",
+    "description": "No matching sites message"
+  },
+  "wasteShort": {
+    "message": "W",
+    "description": "Waste category short label"
+  },
+  "investShort": {
+    "message": "I",
+    "description": "Invest category short label"
+  },
+  "neutralShort": {
+    "message": "N",
+    "description": "Neutral category short label"
+  },
+  "siteCategoryHelp": {
+    "message": "Categorize your sites as Waste (time wasters), Invest (productive), or Neutral to track your productivity.",
+    "description": "Site category help text"
+  },
+  "dashboardPresets": {
+    "message": "Styles",
+    "description": "Styles section title"
+  },
+  "saveAsPreset": {
+    "message": "Save as Style",
+    "description": "Save as style button"
+  },
+  "savePresetDescription": {
+    "message": "Save the current dashboard settings (goal, background, font) as a style for quick switching",
+    "description": "Save style description"
+  },
+  "presetName": {
+    "message": "Style Name",
+    "description": "Style name label"
+  },
+  "presetNamePlaceholder": {
+    "message": "e.g., Work Mode, Weekend, Morning Routine",
+    "description": "Style name input placeholder"
+  },
+  "maxPresetsReached": {
+    "message": "Maximum styles reached ($COUNT$). Upgrade to Premium for more slots.",
+    "description": "Max styles reached message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "Save up to 5 styles",
+    "description": "Premium feature: dashboard styles"
+  },
+  "noPresets": {
+    "message": "No styles saved yet. Configure your dashboard and save it as a style.",
+    "description": "No styles message"
+  },
+  "presetsDescription": {
+    "message": "Save your dashboard settings as styles to quickly switch between different configurations.",
+    "description": "Styles feature description"
+  },
+  "defaultPreset": {
+    "message": "Default",
+    "description": "Default style name"
+  },
+  "editingPreset": {
+    "message": "Editing \"$NAME$\"",
+    "description": "Currently editing style label",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Work Mode"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "New Style",
+    "description": "New style button"
+  },
+  "deletePresetConfirm": {
+    "message": "Delete this style?",
+    "description": "Delete style confirmation"
+  },
+  "applyPreset": {
+    "message": "Apply",
+    "description": "Apply style button"
+  },
+  "activePreset": {
+    "message": "Active",
+    "description": "Currently active style"
+  },
+  "noPresetsTitle": {
+    "message": "No Styles",
+    "description": "Title when no styles exist"
+  },
+  "noPresetsDescription": {
+    "message": "Add a style to customize your dashboard appearance",
+    "description": "Description when no styles exist"
+  },
+  "createFirstPreset": {
+    "message": "Create First Style",
+    "description": "Create first style button"
+  },
+  "schedulePreset": {
+    "message": "Display Style",
+    "description": "Schedule style selection label"
+  },
+  "noPresetSelected": {
+    "message": "None",
+    "description": "No style selected option"
+  },
+  "schedulePresetDescription": {
+    "message": "When this schedule becomes active, the selected style will be automatically applied",
+    "description": "Schedule style description"
+  },
+  "presetLabel": {
+    "message": "Style",
+    "description": "Style label"
+  },
+  "unknownPreset": {
+    "message": "Unknown style",
+    "description": "Deleted style"
+  },
+  "defaultSettings": {
+    "message": "Default",
+    "description": "Default settings button"
+  },
+  "editingDefault": {
+    "message": "Editing default settings",
+    "description": "Editing default settings label"
+  },
+  "active": {
+    "message": "Active",
+    "description": "Active label"
+  },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Disabled label"
+  },
+  "useDefault": {
+    "message": "Use Default",
+    "description": "Use default button"
+  },
+  "upgradeToUsePreset": {
+    "message": "Upgrade to Premium to use this style",
+    "description": "Tooltip for locked style"
+  },
+  "lockedPresetWarning": {
+    "message": "The currently selected style is not available on the Free plan. Default settings will be applied.",
+    "description": "Warning when active style is locked"
+  },
+  "scheduleLockedPresetWarning": {
+    "message": "The selected style will not be applied on the Free plan.",
+    "description": "Warning when schedule style is locked"
+  },
+  "featureBlocklist": {
+    "message": "Block List",
+    "description": "Feature name: blocklist"
+  },
+  "featureBlocklistFree": {
+    "message": "Up to $COUNT$ sites",
+    "description": "Free tier blocklist limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureUnlimited": {
+    "message": "Unlimited",
+    "description": "Unlimited feature text"
+  },
+  "featureHistoryRetention": {
+    "message": "History Retention",
+    "description": "Feature name: history retention"
+  },
+  "featureHistoryDays": {
+    "message": "$COUNT$ days",
+    "description": "History days limit",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "featureAllTime": {
+    "message": "All time",
+    "description": "All time history"
+  },
+  "featurePresets": {
+    "message": "Styles",
+    "description": "Feature name: styles"
+  },
+  "featurePresetCount": {
+    "message": "$COUNT$ styles",
+    "description": "Style count",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureCustomBackground": {
+    "message": "Custom Background",
+    "description": "Feature name: custom background"
+  },
+  "featureWallpaperDownload": {
+    "message": "Wallpaper Download",
+    "description": "Feature name: wallpaper download"
+  },
+  "featureWeeklyMonthlyReports": {
+    "message": "Weekly & Monthly Reports",
+    "description": "Feature name: reports"
+  },
+  "premiumActiveTitle": {
+    "message": "You're on Premium",
+    "description": "Premium active title"
+  },
+  "premiumActiveDescription": {
+    "message": "Enjoy all features without limits",
+    "description": "Premium active description"
+  },
+  "premiumFeaturesIncluded": {
+    "message": "What's Included",
+    "description": "Premium features included heading"
+  },
+  "currentUsage": {
+    "message": "Current Usage",
+    "description": "Current usage heading"
+  },
+  "limitReachedUpgrade": {
+    "message": "Limit reached. Upgrade to Premium for unlimited.",
+    "description": "Limit reached message"
+  },
+  "limitWarning": {
+    "message": "$COUNT$ more until limit",
+    "description": "Limit warning message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "historySaving": {
+    "message": "History",
+    "description": "History saving label"
+  },
+  "premiumMarketingHeadline": {
+    "message": "Unlock Your Full Potential",
+    "description": "Premium marketing headline"
+  },
+  "premiumMarketingPrice": {
+    "message": "For less than $0.10/day, get unlimited focus power",
+    "description": "Premium marketing price copy"
+  },
+  "premiumMarketingPriceNote": {
+    "message": "* Based on monthly subscription",
+    "description": "Premium price note"
+  },
+  "cancelAnytime": {
+    "message": "Cancel anytime",
+    "description": "Cancel anytime text"
+  },
+  "planComparison": {
+    "message": "Plan Comparison",
+    "description": "Plan comparison heading"
+  },
+  "featureColumn": {
+    "message": "Feature",
+    "description": "Feature column header"
+  },
+  "trackedSitesTitle": {
+    "message": "Site Tracking",
+    "description": "Tracked sites section title"
+  },
+  "trackedSitesDescription": {
+    "message": "Track your blocked and unblocked sites. Blocked sites show 0 time - that's your discipline!",
+    "description": "Tracked sites section description"
+  },
+  "unblockedSitesTitle": {
+    "message": "Unblocked Sites Usage",
+    "description": "Unblocked sites section title"
+  },
+  "unblockedSitesDescription": {
+    "message": "These sites were removed from your block list. Are you still spending time on them?",
+    "description": "Unblocked sites section description"
+  },
+  "statusBlocked": {
+    "message": "Blocked",
+    "description": "Status label for blocked sites"
+  },
+  "statusUnblocked": {
+    "message": "Unblocked",
+    "description": "Status label for unblocked sites"
+  },
+  "blockedSince": {
+    "message": "Blocked since",
+    "description": "Blocked since label"
+  },
+  "timeSaved": {
+    "message": "Time saved",
+    "description": "Time saved label for blocked sites"
+  },
+  "timeSavedTooltip": {
+    "message": "Calculated as: blocked access attempts × avg. browsing time (5 min)",
+    "description": "Tooltip explaining how time saved is calculated"
+  },
+  "noUnblockedSites": {
+    "message": "No unblocked sites",
+    "description": "No unblocked sites title"
+  },
+  "noUnblockedSitesDescription": {
+    "message": "Great job staying focused! You haven't removed any sites from your block list.",
+    "description": "No unblocked sites description"
+  },
+  "unblockedOn": {
+    "message": "Unblocked",
+    "description": "Unblocked on label"
+  },
+  "timeSpentSinceUnblock": {
+    "message": "Time since unblock",
+    "description": "Time spent since unblock label"
+  },
+  "reblock": {
+    "message": "Re-block",
+    "description": "Re-block button"
+  },
+  "totalTimeOnUnblockedSites": {
+    "message": "Total time on unblocked sites",
+    "description": "Total time on unblocked sites label"
+  },
+  "totalTimeOnTrackedSites": {
+    "message": "Total time on tracked sites",
+    "description": "Total time on tracked sites label"
+  },
+  "yesterday": {
+    "message": "Yesterday",
+    "description": "Yesterday label"
+  },
+  "daysAgo": {
+    "message": "$COUNT$ days ago",
+    "description": "Days ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "weeksAgo": {
+    "message": "$COUNT$ week(s) ago",
+    "description": "Weeks ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "monthsAgo": {
+    "message": "$COUNT$ month(s) ago",
+    "description": "Months ago label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "upgradeFeatureViewTime": {
+    "message": "View time spent since unblocking",
+    "description": "Upgrade feature: view time"
+  },
+  "upgradeFeatureReblock": {
+    "message": "One-click re-block",
+    "description": "Upgrade feature: re-block"
+  },
+  "upgradeFeatureChart": {
+    "message": "Usage trend chart",
+    "description": "Upgrade feature: chart"
+  },
+  "usageChart": {
+    "message": "Usage Trend",
+    "description": "Usage chart title"
+  },
+  "chartTypeDaily": {
+    "message": "Daily",
+    "description": "Daily chart type"
+  },
+  "chartTypeBySite": {
+    "message": "By Site",
+    "description": "By site chart type"
+  },
+  "chartTypeCumulative": {
+    "message": "Cumulative",
+    "description": "Cumulative chart type"
+  },
+  "chartDailyLabel": {
+    "message": "Time spent",
+    "description": "Daily chart label"
+  },
+  "chartCumulativeLabel": {
+    "message": "Total time",
+    "description": "Cumulative chart label"
+  },
+  "chartSiteCount": {
+    "message": "Across $COUNT$ site(s)",
+    "description": "Site count label",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reset": {
+    "message": "Reset",
+    "description": "Reset button"
+  },
+  "resetAnalyticsTitle": {
+    "message": "Reset Analytics Data?",
+    "description": "Reset analytics modal title"
+  },
+  "resetAnalyticsDescription": {
+    "message": "Usage time will be reset to zero for all sites. The site list will be kept.",
+    "description": "Reset analytics modal description"
+  },
+  "stopTracking": {
+    "message": "Stop tracking",
+    "description": "Stop tracking button"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Refresh button tooltip"
+  },
+  "addSiteToTrack": {
+    "message": "Add Tracking Site",
+    "description": "Add site to track heading"
+  },
+  "trackedSitesList": {
+    "message": "Tracked Sites",
+    "description": "Tracked sites list section title"
+  },
+  "trackedSitesListDescription": {
+    "message": "List of sites currently being tracked.",
+    "description": "Tracked sites list section description"
+  },
+  "noTrackedSites": {
+    "message": "No tracked sites",
+    "description": "No tracked sites title"
+  },
+  "noTrackedSitesDescription": {
+    "message": "Add sites to track their blocking status and usage time.",
+    "description": "No tracked sites description"
+  },
+  "wastedTimeSite": {
+    "message": "Wasted Time by Site",
+    "description": "Wasted time by site section title"
+  },
+  "totalWastedTime": {
+    "message": "Total Wasted Time",
+    "description": "Total wasted time label"
+  },
+  "wastedTimeDescription": {
+    "message": "Time spent browsing beyond daily limit (or within limit)",
+    "description": "Wasted time description"
+  },
+  "trackSitePlaceholder": {
+    "message": "example.com",
+    "description": "Track site input placeholder"
+  },
+  "exportData": {
+    "message": "Export Data",
+    "description": "Export data button"
+  },
+  "exportBlockList": {
+    "message": "Export Block List",
+    "description": "Export block list button"
+  },
+  "exportBlockCounts": {
+    "message": "Export Block Counts",
+    "description": "Export block counts button"
+  },
+  "exportDailyStats": {
+    "message": "Export Daily Stats",
+    "description": "Export daily stats button"
+  },
+  "exportUnblockedSites": {
+    "message": "Export Unblocked Sites",
+    "description": "Export unblocked sites button (premium)"
+  },
+  "exportAll": {
+    "message": "Export All",
+    "description": "Export all data button"
+  },
+  "noDataToExport": {
+    "message": "No data to export",
+    "description": "Message when there's no data to export"
+  },
+  "helpGettingStarted": {
+    "message": "Getting Started",
+    "description": "Help getting started title"
+  },
+  "helpGettingStartedDescription": {
+    "message": "Learn the basics of VisionFocus",
+    "description": "Help getting started description"
+  },
+  "helpBlockSites": {
+    "message": "Block Distracting Sites",
+    "description": "Help block sites title"
+  },
+  "helpBlockSitesDescription": {
+    "message": "Add domains to your block list from the popup or settings. Use wildcards (*.example.com) to block all subdomains.",
+    "description": "Help block sites description"
+  },
+  "helpSchedules": {
+    "message": "Set Up Schedules",
+    "description": "Help schedules title"
+  },
+  "helpSchedulesDescription": {
+    "message": "Create schedules to automatically enable blocking during specific times and days.",
+    "description": "Help schedules description"
+  },
+  "helpDashboard": {
+    "message": "Customize Your Dashboard",
+    "description": "Help dashboard title"
+  },
+  "helpDashboardDescription": {
+    "message": "Personalize your new tab page with your goals, background images, and fonts to stay motivated.",
+    "description": "Help dashboard description"
+  },
+  "helpTimeLimits": {
+    "message": "Set Time Limits",
+    "description": "Help time limits title"
+  },
+  "helpTimeLimitsDescription": {
+    "message": "Instead of fully blocking a site, set a daily time limit. Once your allotted time is used up, the site will be blocked for the rest of the day.",
+    "description": "Help time limits description"
+  },
+  "helpAnalytics": {
+    "message": "Track Your Progress",
+    "description": "Help analytics title"
+  },
+  "helpAnalyticsDescription": {
+    "message": "View your blocking statistics in the Analytics tab. See which sites you block most, track daily trends, and categorize sites as Waste, Invest, or Neutral.",
+    "description": "Help analytics description"
+  },
+  "helpFaq": {
+    "message": "FAQ",
+    "description": "Help FAQ title"
+  },
+  "helpFaqDescription": {
+    "message": "Frequently asked questions",
+    "description": "Help FAQ description"
+  },
+  "helpFaqWildcard": {
+    "message": "How do wildcard blocks work?",
+    "description": "Help FAQ wildcard question"
+  },
+  "helpFaqWildcardAnswer": {
+    "message": "Use *.example.com to block all subdomains (like news.example.com, blog.example.com). Use example.com without wildcard to block only the main domain.",
+    "description": "Help FAQ wildcard answer"
+  },
+  "helpFaqPause": {
+    "message": "How do I temporarily disable blocking?",
+    "description": "Help FAQ pause question"
+  },
+  "helpFaqPauseAnswer": {
+    "message": "Toggle the 'Paused' switch in the popup header to temporarily disable all blocking. Remember to turn it back on!",
+    "description": "Help FAQ pause answer"
+  },
+  "helpFaqPresets": {
+    "message": "What are dashboard styles?",
+    "description": "Help FAQ styles question"
+  },
+  "helpFaqPresetsAnswer": {
+    "message": "Styles save your dashboard settings (goal, background, fonts) so you can quickly switch between different configurations for work, study, or relaxation.",
+    "description": "Help FAQ styles answer"
+  },
+  "helpFaqTimeLimit": {
+    "message": "How do time limits work?",
+    "description": "Help FAQ time limit question"
+  },
+  "helpFaqTimeLimitAnswer": {
+    "message": "Time limits let you allow a site for a set amount of time per day. Once you reach the limit, the site is blocked until the next day. You can configure this in the block list by selecting 'Daily Limit' instead of 'Always Blocked'.",
+    "description": "Help FAQ time limit answer"
+  },
+  "helpFaqPassword": {
+    "message": "How does password protection work?",
+    "description": "Help FAQ password question"
+  },
+  "helpFaqPasswordAnswer": {
+    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to pause blocking, remove sites from the block list, or disable blocking rules. Set it up in the Help tab under Password Protection.",
+    "description": "Help FAQ password answer"
+  },
+  "helpFaqBackup": {
+    "message": "How do I back up or restore my settings?",
+    "description": "Help FAQ backup question"
+  },
+  "helpFaqBackupAnswer": {
+    "message": "Use the Settings Backup section in the Help tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
+    "description": "Help FAQ backup answer"
+  },
+  "helpFaqPremium": {
+    "message": "What's included in Premium?",
+    "description": "Help FAQ premium question"
+  },
+  "helpFaqPremiumAnswer": {
+    "message": "Premium unlocks unlimited block list entries (Free: 5), up to 5 dashboard styles (Free: 1), custom backgrounds, wallpaper downloads, full analytics history (Free: 7 days), and weekly/monthly reports. Check the Premium tab for details.",
+    "description": "Help FAQ premium answer"
+  },
+  "helpFaqDataStorage": {
+    "message": "Where is my data stored?",
+    "description": "Help FAQ data storage question"
+  },
+  "helpFaqDataStorageAnswer": {
+    "message": "All your data (block list, schedules, statistics, settings) is stored locally in Chrome's storage on your device. Nothing is sent to external servers. If you opt in to anonymous usage statistics, only aggregated feature usage data is shared via Google Analytics — no personal information.",
+    "description": "Help FAQ data storage answer"
+  },
+  "helpFaqBlockLimit": {
+    "message": "Why can't I add more sites to the block list?",
+    "description": "Help FAQ block limit question"
+  },
+  "helpFaqBlockLimitAnswer": {
+    "message": "The free plan allows up to 5 blocked sites. Upgrade to Premium for unlimited block list entries. You can still use wildcards (*.example.com) to block entire domains and their subdomains with a single entry.",
+    "description": "Help FAQ block limit answer"
+  },
+  "helpTroubleshooting": {
+    "message": "Troubleshooting",
+    "description": "Help troubleshooting title"
+  },
+  "helpTroubleshootingDescription": {
+    "message": "Common issues and how to fix them",
+    "description": "Help troubleshooting description"
+  },
+  "helpTroubleshootSiteNotBlocked": {
+    "message": "A site isn't being blocked",
+    "description": "Help troubleshoot site not blocked title"
+  },
+  "helpTroubleshootSiteNotBlockedAnswer": {
+    "message": "Make sure the domain is in your block list and enabled. Check that blocking isn't paused (look for the Paused toggle in the popup). If the site uses a subdomain (e.g., m.example.com), add a wildcard entry (*.example.com) to cover all subdomains. Also verify that your schedule is active for the current time and day.",
+    "description": "Help troubleshoot site not blocked answer"
+  },
+  "helpTroubleshootNewTab": {
+    "message": "The new tab page isn't showing",
+    "description": "Help troubleshoot new tab title"
+  },
+  "helpTroubleshootNewTabAnswer": {
+    "message": "Check that VisionFocus is enabled in chrome://extensions. Another extension may be overriding the new tab page — try disabling other new-tab extensions temporarily. If the issue persists, try removing and reinstalling VisionFocus.",
+    "description": "Help troubleshoot new tab answer"
+  },
+  "helpTroubleshootSchedule": {
+    "message": "My schedule isn't working",
+    "description": "Help troubleshoot schedule title"
+  },
+  "helpTroubleshootScheduleAnswer": {
+    "message": "Verify that the schedule is enabled (toggle is on). Check the time range and selected days — schedules use your local timezone. If you have multiple schedules, make sure they don't conflict. Note that changes take effect immediately, no restart is needed.",
+    "description": "Help troubleshoot schedule answer"
+  },
+  "helpTroubleshootSettingsReset": {
+    "message": "My settings were reset",
+    "description": "Help troubleshoot settings reset title"
+  },
+  "helpTroubleshootSettingsResetAnswer": {
+    "message": "Settings may reset if Chrome clears extension storage (e.g., clearing all browsing data). To prevent data loss, regularly export your settings using the Settings Backup feature. If you have a backup file, you can restore your settings by importing it.",
+    "description": "Help troubleshoot settings reset answer"
+  },
+  "helpSupport": {
+    "message": "Support",
+    "description": "Help support title"
+  },
+  "helpSupportDescription": {
+    "message": "Need help? We're here for you",
+    "description": "Help support description"
+  },
+  "helpReportIssue": {
+    "message": "Report an issue on GitHub",
+    "description": "Help report issue link"
+  },
+  "helpContactUs": {
+    "message": "Send us feedback",
+    "description": "Help contact form link"
+  },
+  "todayBlocks": {
+    "message": "Today's Blocks",
+    "description": "Today's block count label"
+  },
+  "topBlockedSite": {
+    "message": "Most Blocked",
+    "description": "Top blocked site label"
+  },
+  "blockingDays": {
+    "message": "Blocking Days",
+    "description": "Days since blocking started label"
+  },
+  "blockedForDays": {
+    "message": "$COUNT$ days",
+    "description": "Number of days blocked",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "viewAnalytics": {
+    "message": "View Analytics",
+    "description": "View analytics link text"
+  },
+  "noBlockedSitesYet": {
+    "message": "None yet",
+    "description": "No blocked sites yet message"
+  },
+  "todayWastedTime": {
+    "message": "Wasted Time",
+    "description": "Today's wasted time label"
+  },
+  "todayUnblocks": {
+    "message": "Unblock Count",
+    "description": "Today's unblock count label"
+  },
+  "settingsBackup": {
+    "message": "Settings Backup",
+    "description": "Settings backup section title"
+  },
+  "settingsBackupDescription": {
+    "message": "Export and import your settings to backup or transfer to another device",
+    "description": "Settings backup description"
+  },
+  "exportSettings": {
+    "message": "Export Settings",
+    "description": "Export settings button"
+  },
+  "importSettings": {
+    "message": "Import Settings",
+    "description": "Import settings button"
+  },
+  "exportSettingsDescription": {
+    "message": "Download your block list, schedules, and styles as a JSON file",
+    "description": "Export settings description"
+  },
+  "importSettingsDescription": {
+    "message": "Restore settings from a previously exported file",
+    "description": "Import settings description"
+  },
+  "exportLargeWarning": {
+    "message": "Your settings file is large (contains custom background images). The download may take a moment.",
+    "description": "Warning for large export files"
+  },
+  "exportSuccess": {
+    "message": "Settings exported successfully!",
+    "description": "Export success message"
+  },
+  "importSuccess": {
+    "message": "Settings imported successfully!",
+    "description": "Import success message"
+  },
+  "importSuccessWithMerge": {
+    "message": "Settings imported and merged with existing data",
+    "description": "Import success message with merge"
+  },
+  "importErrorFileTooLarge": {
+    "message": "File is too large (max 5MB)",
+    "description": "Import error: file too large"
+  },
+  "importErrorInvalidJson": {
+    "message": "Invalid file format. Please select a valid JSON file.",
+    "description": "Import error: invalid JSON"
+  },
+  "importErrorInvalidFormat": {
+    "message": "Invalid settings file format. Please select a VisionFocus settings file.",
+    "description": "Import error: invalid format"
+  },
+  "importWarningNewerVersion": {
+    "message": "This file was exported from a newer version of VisionFocus. Some settings may not be fully compatible.",
+    "description": "Import warning: newer version"
+  },
+  "importWarningOrphanedPresets": {
+    "message": "Some schedules referenced missing styles and have been cleared.",
+    "description": "Import warning: orphaned presets"
+  },
+  "importWarningActivePresetNotFound": {
+    "message": "The active style was not found and has been reset to default.",
+    "description": "Import warning: active preset not found"
+  },
+  "selectFile": {
+    "message": "Select File",
+    "description": "Select file button"
+  },
+  "settingsIncluded": {
+    "message": "Includes: Block list, Schedules, Styles, Dashboard settings",
+    "description": "What's included in settings export"
+  },
+  "settingsNotIncluded": {
+    "message": "Not included: Premium status, Analytics data",
+    "description": "What's not included in settings export"
+  },
+  "alwaysBlocked": {
+    "message": "Always Blocked",
+    "description": "Option for always blocking a site"
+  },
+  "dailyLimit": {
+    "message": "Daily Limit",
+    "description": "Option for daily time limit"
+  },
+  "timeLimitRemaining": {
+    "message": "$TIME$ remaining",
+    "description": "Remaining time display",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15m"
+      }
+    }
+  },
+  "timeLimitReached": {
+    "message": "Time limit reached",
+    "description": "Message when time limit is exceeded"
+  },
+  "timeLimitReachedDescription": {
+    "message": "You've used all your allowed time for $DOMAIN$",
+    "description": "Detailed message when time limit is exceeded",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "perDay": {
+    "message": "/day",
+    "description": "Per day suffix"
+  },
+  "limitMinutes": {
+    "message": "$COUNT$ min",
+    "description": "Minutes limit display",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "30"
+      }
+    }
+  },
+  "timeLimitType": {
+    "message": "Limit Type",
+    "description": "Time limit type selection label"
+  },
+  "timeLimitDuration": {
+    "message": "Limit Duration",
+    "description": "Time limit duration input label"
+  },
+  "minutes": {
+    "message": "minutes",
+    "description": "Minutes unit label"
+  },
+  "usedTime": {
+    "message": "Used: $TIME$",
+    "description": "Used time display",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15m"
+      }
+    }
+  },
+  "resetDaily": {
+    "message": "Resets daily",
+    "description": "Daily reset note"
+  },
+  "timeLimitSettings": {
+    "message": "Time Limit Settings",
+    "description": "Time limit settings section title"
+  },
+  "currentSetting": {
+    "message": "Current setting",
+    "description": "Label for current setting display"
+  },
+  "timeLimitWarning": {
+    "message": "Only $TIME$ remaining!",
+    "description": "Warning when time is running low",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "5m"
+      }
+    }
+  },
+  "weeklyCalendar": {
+    "message": "Weekly Calendar",
+    "description": "Weekly calendar title"
+  },
+  "sun": {
+    "message": "Sun",
+    "description": "Sunday abbreviation"
+  },
+  "mon": {
+    "message": "Mon",
+    "description": "Monday abbreviation"
+  },
+  "tue": {
+    "message": "Tue",
+    "description": "Tuesday abbreviation"
+  },
+  "wed": {
+    "message": "Wed",
+    "description": "Wednesday abbreviation"
+  },
+  "thu": {
+    "message": "Thu",
+    "description": "Thursday abbreviation"
+  },
+  "fri": {
+    "message": "Fri",
+    "description": "Friday abbreviation"
+  },
+  "sat": {
+    "message": "Sat",
+    "description": "Saturday abbreviation"
+  },
+  "notificationSettings": {
+    "message": "Notification Settings",
+    "description": "Notification settings section title"
+  },
+  "notificationTimeLimitEnabled": {
+    "message": "Time Limit Notifications",
+    "description": "Enable time limit notifications toggle"
+  },
+  "notificationTimeLimitEnabledDescription": {
+    "message": "Get notified when you're running low on time for a site",
+    "description": "Time limit notification description"
+  },
+  "notificationTimeLimitMinutes": {
+    "message": "Notify before limit",
+    "description": "Notification timing selection label"
+  },
+  "notificationMinutesOption": {
+    "message": "$COUNT$ minute(s) before",
+    "description": "Minutes before option",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "notificationTimeLimitTitle": {
+    "message": "⏰ Time Running Low",
+    "description": "Time limit notification title"
+  },
+  "notificationTimeLimitMessage": {
+    "message": "$DOMAIN$ has $REMAINING$ min left of your $TOTAL$ min$TYPE$ limit",
+    "description": "Time limit notification message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      },
+      "remaining": {
+        "content": "$2",
+        "example": "5"
+      },
+      "total": {
+        "content": "$3",
+        "example": "30"
+      },
+      "type": {
+        "content": "$4",
+        "example": "/day"
+      }
+    }
+  },
+  "youtube": {
+    "message": "YouTube",
+    "description": "YouTube tab"
+  },
+  "youtubeBlockingTitle": {
+    "message": "YouTube In-App Blocking",
+    "description": "YouTube blocking section title"
+  },
+  "youtubeBlockingDescription": {
+    "message": "Hide distracting elements on YouTube without blocking the entire site. Watch educational content while avoiding the rabbit hole.",
+    "description": "YouTube blocking description"
+  },
+  "youtubeEnabled": {
+    "message": "Enable YouTube blocking",
+    "description": "Master switch for YouTube blocking"
+  },
+  "youtubeEnabledDescription": {
+    "message": "Turn on to hide distracting YouTube elements based on your settings below",
+    "description": "YouTube enabled description"
+  },
+  "youtubeBlockAccess": {
+    "message": "Block access to YouTube",
+    "description": "Block access to YouTube option"
+  },
+  "youtubeBlockAccessDescription": {
+    "message": "Block access to YouTube. If a daily limit is set, access is blocked after the limit is reached.",
+    "description": "Block access to YouTube description"
+  },
+  "youtubeHideShorts": {
+    "message": "Hide Shorts",
+    "description": "Hide Shorts option"
+  },
+  "youtubeHideShortsDescription": {
+    "message": "Hide the Shorts shelf, tab, and Shorts in search results",
+    "description": "Hide Shorts description"
+  },
+  "youtubeHideRecommendations": {
+    "message": "Hide Recommendations",
+    "description": "Hide recommendations option"
+  },
+  "youtubeHideRecommendationsDescription": {
+    "message": "Hide end screen recommendations, related videos in sidebar, and autoplay",
+    "description": "Hide recommendations description"
+  },
+  "youtubeHideComments": {
+    "message": "Hide Comments",
+    "description": "Hide comments option"
+  },
+  "youtubeHideCommentsDescription": {
+    "message": "Hide the comment section below videos and live chat",
+    "description": "Hide comments description"
+  },
+  "youtubeHideHomeFeed": {
+    "message": "Hide Home Feed",
+    "description": "Hide home feed option"
+  },
+  "youtubeHideHomeFeedDescription": {
+    "message": "Hide the home page feed, allowing only search to find specific videos",
+    "description": "Hide home feed description"
+  },
+  "youtubeTimeLimit": {
+    "message": "Time limit",
+    "description": "YouTube time limit label"
+  },
+  "youtubeNoTimeLimit": {
+    "message": "No limit",
+    "description": "YouTube no time limit option"
+  },
+  "youtubeDisabledNote": {
+    "message": "Enable YouTube blocking above to configure these options",
+    "description": "Note shown when YouTube blocking is disabled"
+  },
+  "youtubePreviewTitle": {
+    "message": "What gets hidden",
+    "description": "Preview section title"
+  },
+  "shareToX": {
+    "message": "Share to X",
+    "description": "Share to X button"
+  },
+  "downloadImage": {
+    "message": "Download Image",
+    "description": "Download image button"
+  },
+  "shareSuccess": {
+    "message": "Image copied to clipboard! Paste it in the X post.",
+    "description": "Share success message"
+  },
+  "shareError": {
+    "message": "Failed to copy image. Please try again.",
+    "description": "Share error message"
+  },
+  "downloadSuccess": {
+    "message": "Image downloaded successfully.",
+    "description": "Download success message"
+  },
+  "passwordProtection": {
+    "message": "Password Protection",
+    "description": "Password protection section title"
+  },
+  "passwordProtectionDescription": {
+    "message": "Require a password to disable blocking or remove sites. Great for family accountability.",
+    "description": "Password protection description"
+  },
+  "passwordProtectionEnabled": {
+    "message": "Password protection is enabled",
+    "description": "Password protection enabled status"
+  },
+  "passwordProtectionDisabled": {
+    "message": "Password protection is not enabled",
+    "description": "Password protection disabled status"
+  },
+  "passwordProtectionActive": {
+    "message": "Password protection is active for these actions",
+    "description": "Password protection active indicator"
+  },
+  "setPassword": {
+    "message": "Set Password",
+    "description": "Set password button"
+  },
+  "changePassword": {
+    "message": "Change Password",
+    "description": "Change password button"
+  },
+  "removePassword": {
+    "message": "Remove Password",
+    "description": "Remove password button"
+  },
+  "newPassword": {
+    "message": "New Password",
+    "description": "New password label"
+  },
+  "currentPassword": {
+    "message": "Current Password",
+    "description": "Current password label"
+  },
+  "confirmPassword": {
+    "message": "Confirm Password",
+    "description": "Confirm password label"
+  },
+  "enterPassword": {
+    "message": "Enter Password",
+    "description": "Enter password label"
+  },
+  "passwordPlaceholder": {
+    "message": "Enter your password",
+    "description": "Password input placeholder"
+  },
+  "currentPasswordPlaceholder": {
+    "message": "Enter current password",
+    "description": "Current password placeholder"
+  },
+  "confirmPasswordPlaceholder": {
+    "message": "Confirm your password",
+    "description": "Confirm password placeholder"
+  },
+  "passwordRequired": {
+    "message": "Password Required",
+    "description": "Password required title"
+  },
+  "passwordRequiredDescription": {
+    "message": "Enter your password to continue with this action.",
+    "description": "Password required description"
+  },
+  "passwordRequiredForUnblock": {
+    "message": "Password Required",
+    "description": "Password required for unblock title"
+  },
+  "passwordRequiredForUnblockDescription": {
+    "message": "Enter your password to remove or disable this blocked site.",
+    "description": "Password required for unblock description"
+  },
+  "passwordRequiredForPause": {
+    "message": "Enter your password to pause blocking.",
+    "description": "Password required for pause description"
+  },
+  "passwordIncorrect": {
+    "message": "Incorrect password. Please try again.",
+    "description": "Incorrect password error"
+  },
+  "passwordVerificationFailed": {
+    "message": "Failed to verify password. Please try again.",
+    "description": "Password verification failed error"
+  },
+  "verifying": {
+    "message": "Verifying...",
+    "description": "Verifying text"
+  },
+  "passwordTooShort": {
+    "message": "Password must be at least 4 characters",
+    "description": "Password too short error"
+  },
+  "passwordTooLong": {
+    "message": "Password is too long",
+    "description": "Password too long error"
+  },
+  "passwordMismatch": {
+    "message": "Passwords do not match",
+    "description": "Password mismatch error"
+  },
+  "passwordNotSet": {
+    "message": "Password is not set",
+    "description": "Password not set error"
+  },
+  "currentPasswordIncorrect": {
+    "message": "Current password is incorrect",
+    "description": "Current password incorrect error"
+  },
+  "passwordSetSuccess": {
+    "message": "Password has been set successfully",
+    "description": "Password set success message"
+  },
+  "passwordChangedSuccess": {
+    "message": "Password has been changed successfully",
+    "description": "Password changed success message"
+  },
+  "passwordRemovedSuccess": {
+    "message": "Password protection has been disabled",
+    "description": "Password removed success message"
+  },
+  "passwordSetFailed": {
+    "message": "Failed to set password",
+    "description": "Password set failed error"
+  },
+  "passwordChangeFailed": {
+    "message": "Failed to change password",
+    "description": "Password change failed error"
+  },
+  "passwordRemoveFailed": {
+    "message": "Failed to remove password",
+    "description": "Password remove failed error"
+  },
+  "passwordSetInstructions": {
+    "message": "Set a password to protect your blocking settings. Share it with a family member or partner for accountability.",
+    "description": "Password set instructions"
+  },
+  "passwordRemoveWarning": {
+    "message": "Removing password protection will allow anyone to disable blocking without entering a password.",
+    "description": "Password remove warning"
+  },
+  "analyticsOptInTitle": {
+    "message": "Help improve VisionFocus",
+    "description": "Analytics opt-in modal title"
+  },
+  "analyticsOptInDescription": {
+    "message": "Send anonymous usage statistics to help us improve the app. No personal information (blocked sites, goals, browsing history) is ever collected.",
+    "description": "Analytics opt-in modal description"
+  },
+  "analyticsOptInAllow": {
+    "message": "Allow",
+    "description": "Analytics opt-in allow button"
+  },
+  "analyticsOptInDeny": {
+    "message": "No thanks",
+    "description": "Analytics opt-in deny button"
+  },
+  "analyticsPrivacyTitle": {
+    "message": "Data & Privacy",
+    "description": "Analytics privacy section title in Help tab"
+  },
+  "analyticsPrivacyDescription": {
+    "message": "Manage anonymous usage statistics",
+    "description": "Analytics privacy section description"
+  },
+  "analyticsShareStats": {
+    "message": "Share anonymous usage statistics",
+    "description": "Analytics toggle label"
+  },
+  "analyticsShareStatsDescription": {
+    "message": "Help us improve VisionFocus by sharing anonymous feature usage data. No personal information is collected.",
+    "description": "Analytics toggle description"
+  },
+  "unblockConfirmTitle": {
+    "message": "Confirm Unblock",
+    "description": "Unblock confirmation dialog title"
+  },
+  "unblockConfirmDescription": {
+    "message": "You are about to unblock $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "description": "Unblock confirmation description",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "deleteBlockConfirmDescription": {
+    "message": "You are about to delete the block for $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "description": "Delete block confirmation description",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "unblockConfirmHoldButton": {
+    "message": "Hold to Confirm",
+    "description": "Long press button label"
+  },
+  "unblockConfirmBlockStyle": {
+    "message": "Block style: $STYLE$",
+    "description": "Block style display in confirmation dialog",
+    "placeholders": {
+      "style": {
+        "content": "$1",
+        "example": "Always Blocked"
+      }
+    }
+  },
+  "scheduleBlockingNotice": {
+    "message": "Blocking is only active during scheduled times. Outside of schedules, sites will not be blocked.",
+    "description": "Notice shown when schedules are configured"
+  },
+  "trackedSites": {
+    "message": "Tracked Sites",
+    "description": "Tracked sites section title in blocklist tab"
+  },
+  "trackedSitesCount": {
+    "message": "$COUNT$ tracked",
+    "description": "Number of tracked sites",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "youtubeTimeLimitReached": {
+    "message": "YouTube time limit reached. Take a break!",
+    "description": "Message shown when YouTube time limit is exceeded"
+  },
+  "youtubeHomeFeedHidden": {
+    "message": "Home feed is hidden",
+    "description": "Message shown when YouTube home feed is hidden"
+  },
+  "supportTitle": {
+    "message": "Support development",
+    "description": "Title of the support section"
+  },
+  "supportDescription": {
+    "message": "VisionFocus offers every feature for free",
+    "description": "Description of the support section"
+  },
+  "supportBody": {
+    "message": "If this tool helps you, consider supporting its development. Your support keeps VisionFocus going.",
+    "description": "Body of the support section"
+  },
+  "supportButtonLabel": {
+    "message": "Buy me a coffee",
+    "description": "Label of the Buy Me a Coffee button"
+  },
+  "supportPromptBody": {
+    "message": "If this report helps you, consider supporting development",
+    "description": "Body of the support prompt below reports"
+  },
+  "supportPromptDismiss": {
+    "message": "Dismiss",
+    "description": "Dismiss button of the support prompt"
+  }
+}

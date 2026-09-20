@@ -45,7 +45,6 @@ const mockSettings: AppSettings = {
   blockList: mockBlockList,
   schedules: [],
   paused: false,
-  language: 'en',
   notifications: {
     timeLimitEnabled: true,
     timeLimitMinutes: 5
@@ -60,7 +59,6 @@ const mockSettings: AppSettings = {
     hideShorts: false,
     hideRecommendations: false,
     hideComments: false,
-    hideSidebar: false,
     hideHomeFeed: false,
     timeLimit: null
   },
@@ -175,4 +173,29 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: () => <BlocklistTabWrapper />
+};
+
+// #370: 長い URL を入力した状態で、入力欄の末尾が確認できること・
+// 「追加」ボタンが潰れたり折り返したりしないことを確認するための story
+// BlocklistTab は内部で useSettings() を呼ぶため、SettingsProvider で
+// ラップしないと Storybook 上でクラッシュする（Default と同じ制約）
+export const LongUrlInput: Story = {
+  render: () => (
+    <SettingsProvider>
+      <BlocklistTab
+        newDomain="https://example.com/very/long/path/that/keeps/going/on/and/on?query=1234567890&another=abcdefghijklmnopqrstuvwxyz"
+        setNewDomain={() => {}}
+        blockError=""
+        onAddDomain={() => {}}
+        onRemoveDomain={() => {}}
+        onToggleDomain={() => {}}
+        onUpdateTimeLimit={() => {}}
+        onUpdateNotifications={() => {}}
+        siteBlockCounts={{}}
+        timeLimitUsage={{}}
+        youtube={mockSettings.youtube}
+        onYouTubeChange={() => {}}
+      />
+    </SettingsProvider>
+  )
 };

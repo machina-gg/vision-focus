@@ -19,14 +19,15 @@ export async function setStorageData(
   key: string,
   value: unknown
 ): Promise<void> {
-  // アプリは @plasmohq/storage 経由で読み書きしており、値は JSON 文字列として
-  // 保存される。生のオブジェクトを書き込むとアプリ側から読み取れず、
-  // テストが用意したデータが一切反映されないため、同じ形式で保存する
+  // アプリは @wxt-dev/storage 経由で読み書きしており、値は生のオブジェクトの
+  // まま保存される（キーは `local:` を除いた `settings` などで、接頭辞は
+  // 保存領域の指定にしか使われない）。JSON 文字列で書き込むとアプリ側の
+  // スキーマ検証に落ちるため、同じ形式で保存する
   await page.evaluate(
     async ({ key, value }) => {
       await chrome.storage.local.set({ [key]: value });
     },
-    { key, value: JSON.stringify(value) }
+    { key, value }
   );
 }
 
@@ -35,8 +36,7 @@ export async function setStorageData(
  *
  * lastBlockedDomain のように session エリアに保存される値は、local に書いても
  * アプリから読めない（src/lib/storage.ts の SESSION_KEYS）。
- * session は @plasmohq/storage を経由せず素の値を保存するため、
- * JSON 文字列化はしない。
+ * session は chrome.storage.session を直接使う。
  *
  * @param page - Playwright Page オブジェクト（拡張機能コンテキストのページ）
  * @param key - ストレージキー
@@ -59,7 +59,7 @@ export async function setSessionStorageData(
  * chrome.storage.session からデータを取得する
  *
  * lastBlockedDomain のように、拡張機能が session 領域に置く値は
- * local を読んでも取れない（@plasmohq/storage も経由しないため生の値）。
+ * local を読んでも取れない。
  */
 export async function getSessionStorageData<T = unknown>(
   page: Page,
@@ -84,19 +84,8 @@ export async function getStorageData<T = unknown>(
 ): Promise<T | null> {
   return page.evaluate(async (key) => {
     const result = await chrome.storage.local.get(key);
-    const raw = result[key];
-    if (raw === undefined || raw === null) return null;
-
-    // @plasmohq/storage は値を JSON 文字列で保存する。
-    // 旧データやテストが直接書いたオブジェクトも読めるよう両方に対応する
-    if (typeof raw === 'string') {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return raw;
-      }
-    }
-    return raw;
+    // @wxt-dev/storage は値を生のまま保存するので、読み出しも変換しない
+    return (result[key] ?? null) as T;
   }, key);
 }
 
@@ -272,7 +261,6 @@ export function makeYouTubeSettings(
     hideShorts: false,
     hideRecommendations: false,
     hideComments: false,
-    hideSidebar: false,
     hideHomeFeed: false,
     timeLimit: null,
     ...overrides
@@ -283,25 +271,22 @@ export function makeYouTubeSettings(
  * Time Limit の使用実績を作る
  *
  * 実装は `analytics.timeLimitUsage[domain]` に
- * `{ domain, dailyUsedSeconds, hourlyUsedSeconds, lastDailyReset, lastHourlyReset }`
+ * `{ domain, dailyUsedSeconds, lastDailyReset }`
  * の形で持つ。トップレベルの `timeLimitUsage` キーや
  * `{ daily: { used, resetAt } }` という形は実装に存在しない。
  */
 export function makeTimeLimitUsage(
   domain: string,
-  used: { daily?: number; hourly?: number } = {},
+  used: { daily?: number } = {},
   now: Date = new Date()
 ): Record<string, unknown> {
   const todayKey = now.toISOString().slice(0, 10);
-  const hourKey = `${todayKey}-${String(now.getHours()).padStart(2, '0')}`;
 
   return {
     [domain]: {
       domain,
       dailyUsedSeconds: used.daily ?? 0,
-      hourlyUsedSeconds: used.hourly ?? 0,
-      lastDailyReset: todayKey,
-      lastHourlyReset: hourKey
+      lastDailyReset: todayKey
     }
   };
 }
@@ -312,7 +297,6 @@ export function makeSettings(
   return {
     blockList: [],
     schedules: [],
-    language: 'en',
     paused: false,
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
     youtube: {
@@ -380,7 +364,6 @@ export interface TestStorageOptions {
   withPassword?: boolean;
   withAnalyticsOptIn?: boolean;
   withSchedule?: boolean;
-  language?: 'en' | 'ja';
 }
 
 /**
@@ -398,14 +381,12 @@ export function makeTestStorage(
     withBlockList = false,
     withPassword = false,
     withAnalyticsOptIn = true,
-    withSchedule = false,
-    language = 'en'
+    withSchedule = false
   } = options;
 
   const settings: Record<string, unknown> = {
     blockList: [],
     schedules: [],
-    language,
     paused: false,
     notifications: {
       timeLimitEnabled: true,

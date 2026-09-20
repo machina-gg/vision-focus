@@ -5,9 +5,9 @@
   "description": "Spend your time on what matters - A productivity Chrome extension",
   "author": "machina-gg",
   "scripts": {
-    "dev": "plasmo dev",
-    "build": "plasmo build",
-    "package": "plasmo package",
+    "dev": "wxt",
+    "build": "wxt build",
+    "package": "wxt zip",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
@@ -18,14 +18,14 @@
     "format:check": "prettier --check .",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@plasmohq/messaging": "^0.7.2",
-    "@plasmohq/storage": "^1.15.0",
+    "@webext-core/messaging": "^4.0.0",
+    "@wxt-dev/storage": "^1.2.9",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.468.0",
-    "plasmo": "^0.90.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.10.1",
@@ -50,6 +50,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.7",
+    "@wxt-dev/module-react": "^1.2.2",
     "autoprefixer": "^10.5.4",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
@@ -64,43 +65,12 @@
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "wxt": "^0.21.4"
   },
   "pnpm": {
     "overrides": {
-      "nanoid": "^5.1.16",
-      "msgpackr": "^2.0.5",
-      "content-security-policy-parser": "^0.6.0",
-      "sharp": "^0.35.3",
       "vite": "^6.4.3"
     }
-  },
-  "manifest": {
-    "default_locale": "en",
-    "host_permissions": [
-      "<all_urls>"
-    ],
-    "permissions": [
-      "storage",
-      "tabs",
-      "declarativeNetRequest",
-      "alarms",
-      "webNavigation",
-      "notifications",
-      "clipboardWrite"
-    ],
-    "content_security_policy": {
-      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-    },
-    "web_accessible_resources": [
-      {
-        "resources": [
-          "assets/images/backgrounds/*"
-        ],
-        "matches": [
-          "<all_urls>"
-        ]
-      }
-    ]
   }
 }

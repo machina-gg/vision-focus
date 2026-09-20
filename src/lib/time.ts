@@ -1,5 +1,5 @@
 import { MS_PER_DAY } from '~/constants/intervals';
-import { getCurrentLanguage } from '~/lib/i18n';
+import { getUILanguage } from '~/lib/i18n';
 
 // Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
@@ -19,7 +19,7 @@ export function formatTime(seconds: number): string {
 
 // ローカライズされた時間表記（例: "23分" / "23 min"）
 export function formatTimeLocalized(seconds: number): string {
-  const language = getCurrentLanguage();
+  const language = getUILanguage();
 
   if (seconds < 60) {
     return language === 'ja' ? `${seconds}秒` : `${seconds} sec`;
@@ -108,22 +108,9 @@ export function normalizeEndTime(endTime: string): string {
   return endTime === '00:00' ? '24:00' : endTime;
 }
 
-// Get current hour key in YYYY-MM-DD-HH format
-export function getCurrentHourKey(): string {
-  const now = new Date();
-  const dateKey = now.toISOString().split('T')[0];
-  const hour = now.getHours().toString().padStart(2, '0');
-  return `${dateKey}-${hour}`;
-}
-
 // Check if daily reset is needed
 export function needsDailyReset(lastDailyReset: string): boolean {
   return lastDailyReset !== getTodayKey();
-}
-
-// Check if hourly reset is needed
-export function needsHourlyReset(lastHourlyReset: string): boolean {
-  return lastHourlyReset !== getCurrentHourKey();
 }
 
 // Check if current time is within schedule

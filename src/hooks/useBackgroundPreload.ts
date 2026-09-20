@@ -6,8 +6,8 @@ import {
   FONT_WEIGHT_VALUE
 } from '~/constants';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
-import { storage } from '~/lib/storage';
-import type { DashboardDisplaySettings, VisionSettings } from '~/types/storage';
+import { hasStoredVision } from '~/lib/storage';
+import type { DashboardDisplaySettings } from '~/types/storage';
 import { getFontDefinition } from '~/types/font';
 
 const FONT_SIZE_PX: Record<string, number> = {
@@ -40,8 +40,7 @@ export function useBackgroundPreload({
   // Mark storage as loaded once we have vision data beyond default
   useEffect(() => {
     const checkStorageLoaded = async () => {
-      const storedVision = await storage.get<VisionSettings>('vision');
-      if (storedVision !== undefined) {
+      if (await hasStoredVision()) {
         setIsStorageLoaded(true);
       }
     };

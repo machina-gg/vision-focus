@@ -58,11 +58,11 @@
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-003: YouTube Comments を非表示にできる
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-004: YouTube 完全ブロック（blockAccess）が動作する
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-005: YouTube Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: YouTube Time Limit 超過時に CSS で全コンテンツ非表示
+- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-007: YouTube 設定変更が即座に反映される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-008: YouTube 有効化/無効化がトラッキング履歴に記録される
 - 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-009: Hide Shorts + Time Limit 同時設定時に両方が機能する
-- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-010: blockAccess と Time Limit の優先順位（blockAccess 優先）
+- 📎 E2E 参照: `tests/e2e/youtube.spec.ts` — YT-010: blockAccess と Time Limit の併用（超過後にブロック）
 
 ### 手動確認項目
 
@@ -78,9 +78,17 @@
   - 手順: YouTube で動画再生中に Hide Comments を有効化
   - 期待: 動画下のコメント欄が非表示になる
 
-- [ ] YouTube Time Limit 超過時の視覚フィードバック
-  - 手順: Time Limit を1分に設定 → 1分以上 YouTube を視聴
-  - 期待: 画面全体が非表示になり「時間制限を超過しました」メッセージが表示される
+- [ ] アクセスブロックと 1 日の制限を併用しても非表示が効く
+  - 手順: アクセスブロックを有効にして Time Limit を5分に設定 → Shorts / おすすめ / コメント / ホームフィードの非表示をすべて有効化 → 上限に達する前に YouTube を開く
+  - 期待: リダイレクトされずに開け、4 つとも非表示になる（#422）
+
+- [ ] YouTube Time Limit 超過時のブロック
+  - 手順: アクセスブロックを有効にして Time Limit を1分に設定 → 1分以上 YouTube を視聴
+  - 期待: 超過後はブロックページにリダイレクトされる（開いているタブも置き換わる）
+
+- [ ] アクセスブロック無効時は Time Limit が効かない
+  - 手順: アクセスブロックを有効にして Time Limit を1分に設定 → アクセスブロックを無効にする → YouTube を2分以上視聴
+  - 期待: 上限到達の表示も通知も出ない。再度アクセスブロックを有効にすると制限が効く
 
 - [ ] YouTube 埋め込み動画（他サイト）での動作
   - 手順: YouTube 埋め込み動画のあるサイトにアクセス
@@ -93,15 +101,12 @@
 ### E2E カバー済み
 
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-001: Daily Time Limit を設定できる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-002: Hourly Time Limit を設定できる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-003: Time Limit 超過時に newtab.html へリダイレクト（reason付き）
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily の使用実績は日付が変わるとリセットされる
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-010: Hourly の使用実績は時刻が変わるとリセットされる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-006: 残り時間がポップアップで表示される
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-007: Time Limit 使用状況が Analytics タブで確認できる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-008: Pause 有効中に Time Limit 超過した場合もリダイレクトされない
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily リセット境界値テスト（23:59→00:00）
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-010: Hourly リセット境界値テスト（09:59→10:00）
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-011: 複数サイトで異なる Time Limit が同時に動作する
 
 ### 手動確認項目
@@ -143,7 +148,6 @@
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-009: パスワード保護設定時、Pause トグルにパスワード認証が必要
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-010: クイックブロックボタンに現在のドメインが表示される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-011: クイックブロッククリックでサイトがブロックリストに追加される
-- 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-012: 言語切り替えでUIが即座に変更される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-013: Analytics リンクが表示される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される
 
@@ -425,9 +429,8 @@
 
 - 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-001: ブラウザ言語が英語の場合、英語UIが表示される
 - 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-002: ブラウザ言語が日本語の場合、日本語UIが表示される
-- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-003: ポップアップで言語を切り替えできる
-- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-004: 言語設定が全画面で統一されている
-- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-005: 言語変更が即座に反映される
+- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-003: 言語切替 UI を持たない
+- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-004: 表示言語が全画面で統一されている
 
 ### 手動確認項目
 
@@ -436,19 +439,19 @@
   - 期待: 初回起動時に日本語UIが表示される
 
 - [ ] 日本語UIの翻訳品質
-  - 手順: 日本語に切り替え → 全画面を確認
+  - 手順: Chrome の言語設定を日本語にして再起動 → 全画面を確認
   - 期待: 不自然な翻訳がなく、文脈に合った日本語が使用されている
 
 - [ ] 英語UIの翻訳品質
-  - 手順: 英語に切り替え → 全画面を確認
+  - 手順: Chrome の言語設定を英語にして再起動 → 全画面を確認
   - 期待: 文法的に正しく、ネイティブが理解できる英語が使用されている
 
-- [ ] 言語切り替え後のリロード不要
-  - 手順: Popup で言語を英語→日本語に切り替え
-  - 期待: ページリロードなしで即座にUIが日本語に変わる
+- [ ] 拡張機能の名前・説明のローカライズ
+  - 手順: Chrome の言語設定を切り替えて再起動 → `chrome://extensions` を確認
+  - 期待: 拡張機能の名前・説明がその言語で表示される
 
-- [ ] 長いテキストの言語切り替え
-  - 手順: 長い目標テキスト（100文字）を設定 → 言語を切り替え
+- [ ] 長いテキストのレイアウト
+  - 手順: 長い目標テキスト（100文字）を設定 → 言語の異なるブラウザで表示
   - 期待: レイアウトが崩れず、テキストが正しく表示される
 
 - [ ] 日付・時刻のローカライズ

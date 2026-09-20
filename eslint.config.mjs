@@ -75,7 +75,8 @@ export default tseslint.config(
     ignores: [
       'node_modules/',
       'build/',
-      '.plasmo/',
+      '.output/',
+      '.wxt/',
       '*.config.js',
       '*.config.ts',
       '.storybook/'

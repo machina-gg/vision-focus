@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/logo.png" alt="VisionFocus" width="400">
+  <img src="src/assets/images/logo.png" alt="VisionFocus" width="400">
 </p>
 
 # VisionFocus
@@ -23,7 +23,7 @@ VisionFocusは、非AIによる爆速な動作と月額$1.99という競合最�
 | カテゴリ           | 技術              |
 | ------------------ | ----------------- |
 | 拡張機能仕様       | Manifest V3       |
-| フレームワーク     | Plasmo            |
+| フレームワーク     | WXT               |
 | 言語               | TypeScript        |
 | UIライブラリ       | React             |
 | スタイリング       | Tailwind CSS      |
@@ -82,17 +82,17 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 
 環境構築後（`/project:setup` 実行後）に使用可能：
 
-| コマンド               | 説明                                       |
-| ---------------------- | ------------------------------------------ |
-| `pnpm dev`             | 開発サーバー起動（HMR対応）                |
-| `pnpm build`           | 本番ビルド（build/chrome-mv3-prod）        |
-| `pnpm package`         | Chrome Web Store用zipファイル作成          |
-| `pnpm lint`            | ESLint 実行                                |
-| `pnpm format`          | Prettier でフォーマット                    |
-| `pnpm test`            | Vitest で単体テスト                        |
-| `pnpm test:coverage`   | カバレッジ計測（閾値チェック付き）         |
-| `pnpm test:e2e`        | Playwright で E2E テスト（ヘッドレス）     |
-| `pnpm test:e2e:headed` | E2E をブラウザ表示付きで実行（デバッグ用） |
+| コマンド               | 説明                                         |
+| ---------------------- | -------------------------------------------- |
+| `pnpm dev`             | 開発サーバー起動（HMR対応）                  |
+| `pnpm build`           | 本番ビルド（.output/chrome-mv3）             |
+| `pnpm package`         | Chrome Web Store 用 zip を作成（`.output/`） |
+| `pnpm lint`            | ESLint 実行                                  |
+| `pnpm format`          | Prettier でフォーマット                      |
+| `pnpm test`            | Vitest で単体テスト                          |
+| `pnpm test:coverage`   | カバレッジ計測（閾値チェック付き）           |
+| `pnpm test:e2e`        | Playwright で E2E テスト（ヘッドレス）       |
+| `pnpm test:e2e:headed` | E2E をブラウザ表示付きで実行（デバッグ用）   |
 
 **カバレッジ:**
 
@@ -195,13 +195,13 @@ pnpm test:e2e
 
 このプロジェクトを開発するには以下が必要です：
 
-| 項目         | 必須 | 説明                                 |
-| ------------ | ---- | ------------------------------------ |
-| Node.js 24.x | ✅   | JavaScript ランタイム                |
-| pnpm         | ✅   | パッケージマネージャー（Plasmo推奨） |
-| Claude Code  | ✅   | AI コーディングアシスタント          |
-| GitHub MCP   | ✅   | Issue 管理に必要                     |
-| Chrome       | ✅   | 開発・テスト用ブラウザ               |
+| 項目         | 必須 | 説明                        |
+| ------------ | ---- | --------------------------- |
+| Node.js 24.x | ✅   | JavaScript ランタイム       |
+| pnpm         | ✅   | パッケージマネージャー      |
+| Claude Code  | ✅   | AI コーディングアシスタント |
+| GitHub MCP   | ✅   | Issue 管理に必要            |
+| Chrome       | ✅   | 開発・テスト用ブラウザ      |
 
 ### セットアップ手順
 
@@ -232,7 +232,19 @@ pnpm test:e2e
 2. Chrome で `chrome://extensions` を開く
 3. 「デベロッパーモード」を有効化
 4. 「パッケージ化されていない拡張機能を読み込む」をクリック
-5. `build/chrome-mv3-dev` フォルダを選択
+5. `.output/chrome-mv3-dev` フォルダを選択
+
+`pnpm build` の出力は `.output/chrome-mv3` で、こちらも同じ手順で読み込める。
+
+### 環境変数
+
+GA4 の計測を使う場合のみ設定する（未設定でもビルド・動作し、計測イベントの送信だけがスキップされる）。
+
+1. `.env.example` をコピーして `.env` を作る
+2. `WXT_GA_MEASUREMENT_ID` / `WXT_GA_API_SECRET` に値を入れる
+
+- WXT がビルド時に埋め込むのは `WXT_` / `VITE_` で始まる変数だけ。コードからは `import.meta.env.WXT_GA_MEASUREMENT_ID` のように参照する（`src/lib/analytics.ts`）
+- 計測内容は [ANALYTICS.md](./docs/ANALYTICS.md) を参照
 
 ## License
 

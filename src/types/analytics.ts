@@ -32,7 +32,9 @@ export interface SiteUnblockCount {
 }
 
 // Time limit configuration for a site
-export type TimeLimitType = 'daily' | 'hourly';
+// 時間制限は「1 日の制限」のみ（型として残すのは、制限の種類が増えたときに
+// 追加する場所を 1 箇所に保つため）
+export type TimeLimitType = 'daily';
 
 export interface TimeLimit {
   type: TimeLimitType;
@@ -43,9 +45,7 @@ export interface TimeLimit {
 export interface TimeLimitUsage {
   domain: string;
   dailyUsedSeconds: number;
-  hourlyUsedSeconds: number;
   lastDailyReset: string; // YYYY-MM-DD
-  lastHourlyReset: string; // YYYY-MM-DD-HH
 }
 
 // Analytics data

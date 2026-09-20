@@ -1,0 +1,154 @@
+import React, { useState } from 'react';
+
+import type { Meta, StoryObj } from '@storybook/react';
+import { Ban, Calendar, HelpCircle } from 'lucide-react';
+
+import { Tabs } from '~/components/ui';
+import { BlocklistTab, SchedulesTab, HelpTab } from '~/components/options';
+import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
+
+import '~/styles/globals.css';
+
+const tabs = [
+  { id: 'blocklist', label: 'Blocklist', icon: Ban },
+  { id: 'schedules', label: 'Schedules', icon: Calendar },
+  { id: 'help', label: 'Help', icon: HelpCircle }
+] as const;
+
+type TabId = (typeof tabs)[number]['id'];
+
+function OptionsDemoContent() {
+  const [activeTab, setActiveTab] = useState<TabId>('blocklist');
+  const { settings } = useSettings();
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'blocklist':
+        return (
+          <BlocklistTab
+            newDomain=""
+            setNewDomain={() => {}}
+            blockError=""
+            onAddDomain={() => {}}
+            onRemoveDomain={() => {}}
+            onToggleDomain={() => {}}
+            onUpdateTimeLimit={() => {}}
+            onUpdateNotifications={() => {}}
+            youtube={settings.youtube}
+            onYouTubeChange={() => {}}
+          />
+        );
+      case 'schedules':
+        return (
+          <SchedulesTab
+            onAddSchedule={() => alert('Add schedule')}
+            onEditSchedule={() => {}}
+            onDeleteSchedule={() => {}}
+            onToggleSchedule={() => {}}
+          />
+        );
+      case 'help':
+        return (
+          <HelpTab
+            onSettingsChange={() => {}}
+            onPasswordUpdate={async () => {}}
+            onAnalyticsOptInChange={async () => {}}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
+            <h1 className="text-2xl font-bold text-gray-900">
+              VisionFocus Settings
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Configure your blocking and display preferences
+            </p>
+          </div>
+
+          <Tabs
+            tabs={tabs.map((tab) => ({
+              id: tab.id,
+              label: tab.label,
+              icon: <tab.icon className="w-4 h-4" />
+            }))}
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as TabId)}
+          />
+
+          <div className="p-6">{renderTabContent()}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OptionsDemo() {
+  return (
+    <SettingsProvider>
+      <OptionsDemoContent />
+    </SettingsProvider>
+  );
+}
+
+const meta = {
+  title: 'Pages/Options',
+  component: OptionsDemo,
+  parameters: {
+    layout: 'fullscreen'
+  },
+  tags: ['autodocs']
+} satisfies Meta<typeof OptionsDemo>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+
+const SchedulesViewWrapper = () => {
+  const [activeTab, setActiveTab] = useState<TabId>('schedules');
+
+  return (
+    <SettingsProvider>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h1 className="text-2xl font-bold text-gray-900">
+                VisionFocus Settings
+              </h1>
+            </div>
+            <Tabs
+              tabs={tabs.map((tab) => ({
+                id: tab.id,
+                label: tab.label,
+                icon: <tab.icon className="w-4 h-4" />
+              }))}
+              activeTab={activeTab}
+              onChange={(id) => setActiveTab(id as TabId)}
+            />
+            <div className="p-6">
+              <SchedulesTab
+                onAddSchedule={() => alert('Add schedule')}
+                onEditSchedule={() => {}}
+                onDeleteSchedule={() => {}}
+                onToggleSchedule={() => {}}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </SettingsProvider>
+  );
+};
+
+export const SchedulesView: Story = {
+  render: () => <SchedulesViewWrapper />
+};

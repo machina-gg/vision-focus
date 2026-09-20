@@ -29,7 +29,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube Shorts を非表示に設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -72,7 +71,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -110,7 +108,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -153,7 +150,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube を完全ブロック
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: true,
@@ -189,7 +185,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // YouTube Time Limit を設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -210,19 +205,18 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await page.close();
   });
 
-  test('YT-006: YouTube Time Limit 超過時に CSS で全コンテンツ非表示', async ({
+  test('YT-006: アクセスブロックが無効なら Time Limit 超過でも画面を隠さない', async ({
     context,
     extensionId
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    // YouTube Time Limit を設定
+    // アクセスブロックは無効のまま Time Limit だけ残っている状態（#407）
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
-        hideShorts: false,
+        hideShorts: true, // コンテンツスクリプトが動いたことを確かめるための目印
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
@@ -244,9 +238,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 10, // 超過（limitSeconds: 1）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          lastDailyReset: todayKey
         }
       }
     });
@@ -260,17 +252,23 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await youtubePage.waitForLoadState('domcontentloaded');
 
-    // 全コンテンツが非表示になる CSS が適用されているか確認
     // コンテンツスクリプトは storage を読んでから style を注入するため、
-    // 注入が終わるまで待つ
+    // Shorts 非表示のルールが入るまで待つ
     await expect
       .poll(() =>
         youtubePage.evaluate(() => {
           const style = document.getElementById('vision-focus-youtube-blocker');
-          return style?.textContent?.includes('display: none !important');
+          return style?.textContent?.includes('a[title="Shorts"]');
         })
       )
       .toBeTruthy();
+
+    // 上限超過でも全体を隠すルールは入らない
+    const limitExceeded = await youtubePage.evaluate(() => {
+      const style = document.getElementById('vision-focus-youtube-blocker');
+      return style?.textContent?.includes('ytd-app #content');
+    });
+    expect(limitExceeded).toBeFalsy();
 
     await youtubePage.close();
   });
@@ -283,7 +281,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // 最初は Shorts 非表示なし
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -315,7 +312,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // スクリプトと違い chrome.storage を参照できない。拡張機能ページ経由で更新する
     const updatePage = await openStoragePage(context, extensionId);
     await setSettings(updatePage, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
@@ -327,7 +323,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     await updatePage.close();
 
-    // storage.watch が反応するまで待機
+    // settings の watch が反応するまで待機
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Shorts が非表示になることを確認
@@ -347,7 +343,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     await setSettings(page, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       youtube: makeYouTubeSettings({
@@ -393,11 +388,11 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
+    // アクセスブロックと制限を併用しても、上限に達するまでは非表示が効く（#422）
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
-        blockAccess: false,
+        blockAccess: true,
         hideShorts: true, // Shorts 非表示
         hideRecommendations: false,
         hideComments: false,
@@ -420,9 +415,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          lastDailyReset: todayKey
         }
       }
     });
@@ -443,19 +436,13 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     });
     expect(shortsHidden).toBeTruthy();
 
-    // Time Limit 超過の CSS は適用されていないことを確認。
-    // style 要素自体は Shorts 非表示のために存在するため、
-    // 超過時だけ入る全体非表示ルールの有無で判定する
-    const limitExceeded = await youtubePage.evaluate(() => {
-      const style = document.getElementById('vision-focus-youtube-blocker');
-      return style?.textContent?.includes('ytd-app #content');
-    });
-    expect(limitExceeded).toBeFalsy();
+    // 上限に達していないのでブロックページへは飛ばない（#392）
+    expect(youtubePage.url()).toContain(TEST_DOMAINS.youtube);
 
     await youtubePage.close();
   });
 
-  test('YT-010: blockAccess と Time Limit の優先順位（blockAccess 優先）', async ({
+  test('YT-010: blockAccess と Time Limit の併用（超過後にブロック）', async ({
     context,
     extensionId
   }) => {
@@ -463,7 +450,6 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // blockAccess と Time Limit を両方設定
     await setSettings(page, {
-      language: 'en',
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: true, // 完全ブロック
@@ -477,7 +463,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       })
     });
 
-    // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
+    // Time Limit を超過させる（analytics.timeLimitUsage に youtube.com の使用データを設定）。
+    // blockAccess に時間制限を併用した場合は、ブロックリストと同じく超過後にブロックする（#392）
     const todayKey = new Date().toISOString().split('T')[0];
     await setStorageData(page, 'analytics', {
       dailyStats: {},
@@ -488,10 +475,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       timeLimitUsage: {
         'youtube.com': {
           domain: 'youtube.com',
-          dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
-          hourlyUsedSeconds: 0,
-          lastDailyReset: todayKey,
-          lastHourlyReset: ''
+          dailyUsedSeconds: 120, // 超過（limitSeconds: 60）
+          lastDailyReset: todayKey
         }
       }
     });
@@ -506,7 +491,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       `https://${TEST_DOMAINS.youtube}`
     );
 
-    // blockAccess が優先され、newtab.html にリダイレクト
+    // 超過しているので newtab.html にリダイレクトされる
     await youtubePage.waitForURL(`**newtab.html**`, { timeout: 10000 });
     expect(youtubePage.url()).toContain('newtab.html');
 

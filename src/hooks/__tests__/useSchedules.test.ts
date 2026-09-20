@@ -11,17 +11,23 @@ vi.mock('~/lib/analytics', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  storage: {
-    set: vi.fn()
+  getSettings: vi.fn(),
+  settingsItem: {
+    setValue: vi.fn()
   }
+}));
+
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
 vi.mock('~/lib/time', () => ({
   normalizeEndTime: vi.fn((time: string) => (time === '00:00' ? '24:00' : time))
 }));
 
+import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 
 describe('useSchedules', () => {
   const mockSetSettings = vi.fn();
@@ -174,7 +180,7 @@ describe('useSchedules', () => {
 
   describe('handleSaveSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue(undefined);
+      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
       // crypto.randomUUID のモック
       vi.stubGlobal('crypto', {
         ...global.crypto,
@@ -191,7 +197,7 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
     it('名前が空の場合、何もしない', async () => {
@@ -213,7 +219,7 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
     it('新規作成時、スケジュールを追加', async () => {
@@ -252,7 +258,7 @@ describe('useSchedules', () => {
         ]
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_create');
       expect(result.current.showScheduleModal).toBe(false);
@@ -279,8 +285,7 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(storage.set).mock
-        .calls[0][1] as AppSettings;
+      const savedSchedule = vi.mocked(settingsItem.setValue).mock.calls[0][0];
       expect(savedSchedule.schedules[1].presetId).toBeUndefined();
     });
 
@@ -319,7 +324,7 @@ describe('useSchedules', () => {
         ]
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
       expect(trackFeatureUse).not.toHaveBeenCalled(); // 編集時は呼ばれない
       expect(result.current.showScheduleModal).toBe(false);
@@ -346,15 +351,14 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(storage.set).mock
-        .calls[0][1] as AppSettings;
+      const savedSchedule = vi.mocked(settingsItem.setValue).mock.calls[0][0];
       expect(savedSchedule.schedules[1].endTime).toBe('24:00');
     });
   });
 
   describe('handleDeleteSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue(undefined);
+      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
     });
 
     it('settingsがundefinedの場合、何もしない', async () => {
@@ -366,7 +370,7 @@ describe('useSchedules', () => {
         await result.current.handleDeleteSchedule('schedule-1');
       });
 
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
     it('指定したIDのスケジュールを削除', async () => {
@@ -383,7 +387,7 @@ describe('useSchedules', () => {
         schedules: []
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
     });
 
@@ -401,14 +405,14 @@ describe('useSchedules', () => {
         schedules: [mockSchedule]
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
     });
   });
 
   describe('handleToggleSchedule', () => {
     beforeEach(() => {
-      vi.mocked(storage.set).mockResolvedValue(undefined);
+      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
     });
 
     it('settingsがundefinedの場合、何もしない', async () => {
@@ -420,7 +424,7 @@ describe('useSchedules', () => {
         await result.current.handleToggleSchedule('schedule-1', false);
       });
 
-      expect(storage.set).not.toHaveBeenCalled();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
     it('スケジュールのenabledを切り替え', async () => {
@@ -438,37 +442,103 @@ describe('useSchedules', () => {
         schedules: [{ ...mockSchedule, enabled: false }]
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
     });
 
-    it('スケジュールを有効化すると、pausedもfalseになる', async () => {
+    describe('一時停止中にスケジュールを有効化したとき', () => {
       const pausedSettings: AppSettings = {
         ...mockSettings,
         paused: true,
         schedules: [{ ...mockSchedule, enabled: false }]
       };
 
+      const resumedSettings: AppSettings = {
+        ...pausedSettings,
+        paused: false,
+        schedules: [{ ...mockSchedule, enabled: true }]
+      };
+
+      beforeEach(() => {
+        vi.mocked(sendMessage).mockResolvedValue({
+          success: true,
+          paused: false
+        });
+        vi.mocked(getSettings).mockResolvedValue(resumedSettings);
+      });
+
+      it('一時停止の解除は toggle-pause ハンドラ経由で行う（paused を直接書かない）', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await result.current.handleToggleSchedule('schedule-1', true);
+        });
+
+        // 画面から書くのはスケジュールだけで、paused は変更しない
+        expect(settingsItem.setValue).toHaveBeenCalledWith({
+          ...pausedSettings,
+          schedules: [{ ...mockSchedule, enabled: true }]
+        });
+        expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
+          paused: false
+        });
+      });
+
+      it('解除後の設定を読み直して表示へ反映する', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await result.current.handleToggleSchedule('schedule-1', true);
+        });
+
+        expect(mockSetSettings).toHaveBeenCalledWith(resumedSettings);
+      });
+
+      it('送信に失敗してもスケジュールの変更は残る（例外を外に投げない）', async () => {
+        vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
+
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: pausedSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        await act(async () => {
+          await expect(
+            result.current.handleToggleSchedule('schedule-1', true)
+          ).resolves.toBeUndefined();
+        });
+
+        expect(settingsItem.setValue).toHaveBeenCalledWith({
+          ...pausedSettings,
+          schedules: [{ ...mockSchedule, enabled: true }]
+        });
+        expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
+      });
+    });
+
+    it('一時停止していなければ toggle-pause を送らない', async () => {
       const { result } = renderHook(() =>
-        useSchedules({
-          settings: pausedSettings,
-          setSettings: mockSetSettings
-        })
+        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
       );
 
       await act(async () => {
         await result.current.handleToggleSchedule('schedule-1', true);
       });
 
-      const expectedSettings = {
-        ...pausedSettings,
-        paused: false, // enabled=true の場合は paused が false になる
-        schedules: [{ ...mockSchedule, enabled: true }]
-      };
-
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('存在しないIDの場合、何も変更しない', async () => {
@@ -486,7 +556,7 @@ describe('useSchedules', () => {
         schedules: [mockSchedule]
       };
 
-      expect(storage.set).toHaveBeenCalledWith('settings', expectedSettings);
+      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
     });
   });

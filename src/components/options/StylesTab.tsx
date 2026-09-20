@@ -1,24 +1,17 @@
 import React from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
-
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { getBackgroundUrl } from '~/constants/backgrounds';
 import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts';
 import { getFontDefinition } from '~/types/font';
-import { usePresets } from '~/hooks';
-import { storage } from '~/lib/storage';
+import { usePresets, useStorageItem } from '~/hooks';
+import { visionItem } from '~/lib/storage';
 import { NewPresetModal } from '~/components/options/modals';
 import { PresetSelector, DisplaySettingsForm } from './styles';
-import type { VisionSettings } from '~/types/storage';
-import { DEFAULT_VISION } from '~/types/storage';
 
 export function StylesTab() {
-  const [vision, setVision] = useStorage<VisionSettings>(
-    { key: 'vision', instance: storage },
-    DEFAULT_VISION
-  );
+  const [vision, setVision] = useStorageItem(visionItem);
 
   const presets = usePresets({ vision, setVision });
 

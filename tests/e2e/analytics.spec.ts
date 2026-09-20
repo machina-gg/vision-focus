@@ -29,7 +29,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       blockList: [
@@ -80,7 +79,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
       blockList: [
@@ -132,7 +130,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
@@ -175,7 +172,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
@@ -216,7 +212,6 @@ test.describe('Analytics - アナリティクス機能', () => {
   }) => {
     // Opt-In が未決定の状態
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: null
     });
@@ -253,7 +248,6 @@ test.describe('Analytics - アナリティクス機能', () => {
   }) => {
     // Opt-Out 状態
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
@@ -288,7 +282,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
@@ -349,7 +342,6 @@ test.describe('Analytics - アナリティクス機能', () => {
   }) => {
     // Opt-Out 状態
     await setSettingsFromExtension(context, extensionId, {
-      language: 'en',
       paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },
       blockList: [

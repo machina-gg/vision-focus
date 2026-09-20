@@ -15,8 +15,11 @@ flowchart TD
     A -->|Yes| Unblocked["✅ 許可"]
     A -->|No| B{"ブロックリストに存在？<br/>findBlockItemForDomain()"}
 
-    B -->|No| Unblocked
+    B -->|No| YT{"YouTube のアクセスブロック？<br/>getYouTubeBlockItem()"}
     B -->|Yes| C{"サイト別ブロック有効？<br/>blockItem.enabled"}
+
+    YT -->|No| Unblocked
+    YT -->|Yes| C
 
     C -->|No| Unblocked
     C -->|Yes| D{"スケジュール設定あり？<br/>schedules.length > 0"}
@@ -28,19 +31,12 @@ flowchart TD
     F -->|Yes| E
 
     E -->|No| Blocked["🚫 ブロック<br/>reason: always_blocked"]
-    E -->|Yes| G{"時間制限タイプ？"}
-
-    G -->|Daily| H{"日次リセット必要？<br/>needsDailyReset()"}
-    G -->|Hourly| I{"時間リセット必要？<br/>needsHourlyReset()"}
+    E -->|Yes| H{"日次リセット必要？<br/>needsDailyReset()"}
 
     H -->|Yes| J["使用時間をリセット<br/>dailyUsedSeconds = 0"]
     H -->|No| K{"使用時間 >= 制限？"}
 
-    I -->|Yes| L["使用時間をリセット<br/>hourlyUsedSeconds = 0"]
-    I -->|No| K
-
     J --> K
-    L --> K
 
     K -->|Yes| TimeLimitExceeded["🚫 ブロック<br/>reason: time_limit_exceeded"]
     K -->|No| Unblocked
@@ -109,6 +105,29 @@ stateDiagram-v2
 | サイト別時間制限   | `blockItem.timeLimit`      | `TimeLimit \| null`              | 「1日30分まで」などの設定   |
 | スケジュール       | `settings.schedules`       | `Schedule[]`                     | ブロック有効時間帯          |
 | 時間制限使用量     | `analytics.timeLimitUsage` | `Record<string, TimeLimitUsage>` | 実際の消費時間              |
+| YouTube 設定       | `settings.youtube`         | `YouTubeSettings`                | アクセスブロックと時間制限  |
+
+### YouTube の扱い（仮想のブロック項目）
+
+YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem()` が
+`settings.youtube` から「仮想のブロック項目」を組み立て、判定（`getBlockState()`）と
+ルール生成（`getActiveBlockedDomains()`）の両方がそれを使う。意味論はブロックリストと同じ。
+
+| `settings.youtube`                         | 結果                                      |
+| ------------------------------------------ | ----------------------------------------- |
+| `enabled && blockAccess`、`timeLimit` なし | 常時ブロック（`always_blocked`）          |
+| `enabled && blockAccess`、`timeLimit` あり | 超過後にブロック（`time_limit_exceeded`） |
+| `blockAccess` が無効                       | ブロックしない（時間制限も使わない）      |
+
+- ブロックリストに同じドメインの項目があれば、そちらの設定が優先される
+- 時間制限の使用実績はホスト名ではなく `youtube.com` をキーに記録される
+  （`youtubeBlockService` の `YOUTUBE_DOMAIN`）
+- 計測・超過判定・残り時間・通知は `enabled && blockAccess && timeLimit` のときだけ動く
+  （`youtubeBlockService` の `isYouTubeTimeLimitActive()`）。アクセスブロックが無効なら
+  計測も通知も行わず、コンテンツスクリプトが画面を隠すこともない（#407）
+- 非表示の設定（Shorts / おすすめ / コメント / ホームフィード）はこの状態遷移とは独立で、
+  `enabled` なら `blockAccess` の値に関わらず適用される。制限を併用していると上限までは
+  YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`。#422）
 
 ## リセットタイミング
 
@@ -116,12 +135,6 @@ stateDiagram-v2
 
 - 条件: `lastDailyReset !== 今日の日付`
 - 処理: `dailyUsedSeconds = 0`, `lastDailyReset = 今日`
-- トリガー: `recordTimeLimitUsage()` または `resetExpiredUsage()`
-
-### 時間リセット（Hourly）
-
-- 条件: `lastHourlyReset !== 現在の時間キー`
-- 処理: `hourlyUsedSeconds = 0`, `lastHourlyReset = 現在の時間キー`
 - トリガー: `recordTimeLimitUsage()` または `resetExpiredUsage()`
 
 ## 通知フロー
@@ -144,10 +157,11 @@ flowchart LR
 
 ## 関連ファイル
 
-| ファイル                          | 責務                             |
-| --------------------------------- | -------------------------------- |
-| `src/background/blocker.ts`       | メインのブロック判定、ルール更新 |
-| `src/background/time-limit.ts`    | 時間制限の判定と記録             |
-| `src/background/notifications.ts` | 通知判定と送信                   |
-| `src/background/index.ts`         | アラームによるリセット処理       |
-| `src/lib/blockService.ts`         | ブロック状態の一元管理（新規）   |
+| ファイル                                    | 責務                             |
+| ------------------------------------------- | -------------------------------- |
+| `src/background/blocker.ts`                 | メインのブロック判定、ルール更新 |
+| `src/background/time-limit.ts`              | 時間制限の判定と記録             |
+| `src/background/notifications.ts`           | 通知判定と送信                   |
+| `src/background/listeners/alarmHandlers.ts` | アラームによるリセット処理       |
+| `src/lib/blockService.ts`                   | ブロック状態の一元管理（新規）   |
+| `src/lib/youtubeBlockService.ts`            | YouTube の使用時間記録と超過判定 |

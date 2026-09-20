@@ -8,7 +8,6 @@ import { TIME_LIMIT_CONFIG } from '~/constants/limits';
 interface TimeLimitBadgeProps {
   remainingSeconds: number;
   limitSeconds: number;
-  limitType: 'daily' | 'hourly';
   showWarning?: boolean;
   compact?: boolean;
 }
@@ -16,7 +15,6 @@ interface TimeLimitBadgeProps {
 export function TimeLimitBadge({
   remainingSeconds,
   limitSeconds,
-  limitType,
   showWarning = true,
   compact = false
 }: TimeLimitBadgeProps) {
@@ -43,8 +41,8 @@ export function TimeLimitBadge({
 
   const timeDisplay = formatTime(remainingSeconds);
   const timeDisplayLocalized = formatTimeLocalized(remainingSeconds);
-  const suffix =
-    limitType === 'daily' ? getMessage('perDay') : getMessage('perHour');
+  // 時間制限は 1 日単位のみ
+  const suffix = getMessage('perDay');
 
   if (compact) {
     return (

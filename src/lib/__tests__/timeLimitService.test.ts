@@ -12,9 +12,7 @@ import { DEFAULT_ANALYTICS } from '~/types/storage';
 // time モジュールをモック
 vi.mock('~/lib/time', () => ({
   getTodayKey: vi.fn(() => '2024-06-12'),
-  getCurrentHourKey: vi.fn(() => '2024-06-12-12'),
   needsDailyReset: vi.fn(() => false),
-  needsHourlyReset: vi.fn(() => false),
   isWithinSchedule: vi.fn(() => true)
 }));
 
@@ -30,7 +28,7 @@ vi.mock('~/lib/blockService', () => ({
   findEnabledBlockItemForDomain: vi.fn()
 }));
 
-import { needsDailyReset, needsHourlyReset } from '~/lib/time';
+import { needsDailyReset } from '~/lib/time';
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { findEnabledBlockItemForDomain } from '~/lib/blockService';
 
@@ -43,7 +41,6 @@ import {
 } from '~/lib/timeLimitService';
 
 const mockNeedsDailyReset = vi.mocked(needsDailyReset);
-const mockNeedsHourlyReset = vi.mocked(needsHourlyReset);
 const mockGetAnalytics = vi.mocked(getAnalytics);
 const mockSetAnalytics = vi.mocked(setAnalytics);
 const mockFindEnabledBlockItemForDomain = vi.mocked(
@@ -53,7 +50,6 @@ const mockFindEnabledBlockItemForDomain = vi.mocked(
 beforeEach(() => {
   vi.clearAllMocks();
   mockNeedsDailyReset.mockReturnValue(false);
-  mockNeedsHourlyReset.mockReturnValue(false);
 });
 
 describe('getOrCreateUsage', () => {
@@ -61,9 +57,7 @@ describe('getOrCreateUsage', () => {
     const usage: TimeLimitUsage = {
       domain: 'youtube.com',
       dailyUsedSeconds: 100,
-      hourlyUsedSeconds: 50,
-      lastDailyReset: '2024-06-12',
-      lastHourlyReset: '2024-06-12-12'
+      lastDailyReset: '2024-06-12'
     };
     const analytics: AnalyticsData = {
       ...DEFAULT_ANALYTICS,
@@ -78,7 +72,6 @@ describe('getOrCreateUsage', () => {
     const result = getOrCreateUsage('youtube.com', analytics);
     expect(result.domain).toBe('youtube.com');
     expect(result.dailyUsedSeconds).toBe(0);
-    expect(result.hourlyUsedSeconds).toBe(0);
   });
 });
 
@@ -87,13 +80,10 @@ describe('getEffectiveUsage', () => {
     const usage: TimeLimitUsage = {
       domain: 'youtube.com',
       dailyUsedSeconds: 100,
-      hourlyUsedSeconds: 50,
-      lastDailyReset: '2024-06-12',
-      lastHourlyReset: '2024-06-12-12'
+      lastDailyReset: '2024-06-12'
     };
     const result = getEffectiveUsage(usage);
     expect(result.dailyUsedSeconds).toBe(100);
-    expect(result.hourlyUsedSeconds).toBe(50);
     expect(result.wasReset).toBe(false);
   });
 
@@ -102,44 +92,10 @@ describe('getEffectiveUsage', () => {
     const usage: TimeLimitUsage = {
       domain: 'youtube.com',
       dailyUsedSeconds: 100,
-      hourlyUsedSeconds: 50,
-      lastDailyReset: '2024-06-11',
-      lastHourlyReset: '2024-06-12-12'
+      lastDailyReset: '2024-06-11'
     };
     const result = getEffectiveUsage(usage);
     expect(result.dailyUsedSeconds).toBe(0);
-    expect(result.hourlyUsedSeconds).toBe(50);
-    expect(result.wasReset).toBe(true);
-  });
-
-  it('時間リセットが必要な場合はhourlyを0にする', () => {
-    mockNeedsHourlyReset.mockReturnValue(true);
-    const usage: TimeLimitUsage = {
-      domain: 'youtube.com',
-      dailyUsedSeconds: 100,
-      hourlyUsedSeconds: 50,
-      lastDailyReset: '2024-06-12',
-      lastHourlyReset: '2024-06-12-11'
-    };
-    const result = getEffectiveUsage(usage);
-    expect(result.dailyUsedSeconds).toBe(100);
-    expect(result.hourlyUsedSeconds).toBe(0);
-    expect(result.wasReset).toBe(true);
-  });
-
-  it('両方リセットが必要な場合は両方0にする', () => {
-    mockNeedsDailyReset.mockReturnValue(true);
-    mockNeedsHourlyReset.mockReturnValue(true);
-    const usage: TimeLimitUsage = {
-      domain: 'youtube.com',
-      dailyUsedSeconds: 100,
-      hourlyUsedSeconds: 50,
-      lastDailyReset: '2024-06-11',
-      lastHourlyReset: '2024-06-12-11'
-    };
-    const result = getEffectiveUsage(usage);
-    expect(result.dailyUsedSeconds).toBe(0);
-    expect(result.hourlyUsedSeconds).toBe(0);
     expect(result.wasReset).toBe(true);
   });
 });
@@ -152,9 +108,7 @@ describe('checkTimeLimitExceeded', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 3601, // 制限時間を超えている
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     };
@@ -171,9 +125,7 @@ describe('checkTimeLimitExceeded', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 1800,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     };
@@ -190,51 +142,11 @@ describe('checkTimeLimitExceeded', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 3600, // 制限時間ちょうど
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     };
     const timeLimit: TimeLimit = { type: 'daily', limitSeconds: 3600 };
-    expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
-      false
-    );
-  });
-
-  it('時間リミット超過の場合trueを返す', () => {
-    const analytics: AnalyticsData = {
-      ...DEFAULT_ANALYTICS,
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 0,
-          hourlyUsedSeconds: 1801, // 制限時間を超えている
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
-        }
-      }
-    };
-    const timeLimit: TimeLimit = { type: 'hourly', limitSeconds: 1800 };
-    expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
-      true
-    );
-  });
-
-  it('時間リミットちょうどの場合falseを返す（制限時間内として扱う）', () => {
-    const analytics: AnalyticsData = {
-      ...DEFAULT_ANALYTICS,
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 0,
-          hourlyUsedSeconds: 1800, // 制限時間ちょうど
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
-        }
-      }
-    };
-    const timeLimit: TimeLimit = { type: 'hourly', limitSeconds: 1800 };
     expect(checkTimeLimitExceeded('youtube.com', timeLimit, analytics)).toBe(
       false
     );
@@ -249,41 +161,20 @@ describe('checkTimeLimitExceeded', () => {
 });
 
 describe('calculateRemainingTime', () => {
-  it('残り時間を正しく計算する（日次）', () => {
+  it('残り時間を正しく計算する', () => {
     const analytics: AnalyticsData = {
       ...DEFAULT_ANALYTICS,
       timeLimitUsage: {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 1000,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     };
     const timeLimit: TimeLimit = { type: 'daily', limitSeconds: 3600 };
     expect(calculateRemainingTime('youtube.com', timeLimit, analytics)).toBe(
       2600
-    );
-  });
-
-  it('残り時間を正しく計算する（時間）', () => {
-    const analytics: AnalyticsData = {
-      ...DEFAULT_ANALYTICS,
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 0,
-          hourlyUsedSeconds: 600,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
-        }
-      }
-    };
-    const timeLimit: TimeLimit = { type: 'hourly', limitSeconds: 1800 };
-    expect(calculateRemainingTime('youtube.com', timeLimit, analytics)).toBe(
-      1200
     );
   });
 
@@ -294,9 +185,7 @@ describe('calculateRemainingTime', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 5000,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     };
@@ -339,9 +228,7 @@ describe('hasExceededTimeLimit', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 4000,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     });
@@ -384,9 +271,7 @@ describe('getRemainingTime', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 1000,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     });
@@ -437,9 +322,6 @@ describe('recordTimeLimitUsage', () => {
     expect(savedAnalytics.timeLimitUsage['youtube.com'].dailyUsedSeconds).toBe(
       60
     );
-    expect(savedAnalytics.timeLimitUsage['youtube.com'].hourlyUsedSeconds).toBe(
-      60
-    );
   });
 });
 
@@ -451,9 +333,7 @@ describe('resetExpiredUsage', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 100,
-          hourlyUsedSeconds: 50,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     });
@@ -469,9 +349,7 @@ describe('resetExpiredUsage', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 100,
-          hourlyUsedSeconds: 50,
-          lastDailyReset: '2024-06-11',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-11'
         }
       }
     });
@@ -525,9 +403,7 @@ describe('getTimeLimitInfo', () => {
         'youtube.com': {
           domain: 'youtube.com',
           dailyUsedSeconds: 1000,
-          hourlyUsedSeconds: 0,
-          lastDailyReset: '2024-06-12',
-          lastHourlyReset: '2024-06-12-12'
+          lastDailyReset: '2024-06-12'
         }
       }
     });

@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { parseDomainInput } from '~/lib/domain';
-import { storage } from '~/lib/storage';
+import { getSettings, settingsItem } from '~/lib/storage';
 import type {
   AppSettings,
   TimeLimit,
@@ -53,19 +53,15 @@ export function useBlocklist({
     }
 
     try {
-      const response = await sendToBackground({
-        name: 'add-block',
-        body: { domain: newDomain.trim() }
+      const response = await sendMessage('add-block', {
+        domain: newDomain.trim()
       });
 
       if (response.success) {
         trackFeatureUse('block_add');
         setNewDomain('');
         setBlockError('');
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } else {
         setBlockError(response.error || 'Failed to add domain');
       }
@@ -77,12 +73,9 @@ export function useBlocklist({
   const handleRemoveDomain = useCallback(
     async (id: string) => {
       try {
-        await sendToBackground({ name: 'remove-block', body: { id } });
+        await sendMessage('remove-block', { id });
         trackFeatureUse('block_remove');
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -93,11 +86,8 @@ export function useBlocklist({
   const handleToggleDomain = useCallback(
     async (id: string, enabled: boolean) => {
       try {
-        await sendToBackground({ name: 'toggle-block', body: { id, enabled } });
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        await sendMessage('toggle-block', { id, enabled });
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -108,14 +98,8 @@ export function useBlocklist({
   const handleUpdateTimeLimit = useCallback(
     async (id: string, timeLimit: TimeLimit | null) => {
       try {
-        await sendToBackground({
-          name: 'update-time-limit',
-          body: { id, timeLimit }
-        });
-        const updatedSettings = await storage.get<AppSettings>('settings');
-        if (updatedSettings) {
-          setSettings(updatedSettings);
-        }
+        await sendMessage('update-time-limit', { id, timeLimit });
+        setSettings(await getSettings());
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
@@ -132,7 +116,7 @@ export function useBlocklist({
           ...settings,
           notifications
         };
-        await storage.set('settings', updatedSettings);
+        await settingsItem.setValue(updatedSettings);
         setSettings(updatedSettings);
       } catch {
         // Silently handle error

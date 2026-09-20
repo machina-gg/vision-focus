@@ -5,7 +5,6 @@ import {
   PlaySquare,
   ThumbsUp,
   MessageSquare,
-  LayoutPanelLeft,
   Home,
   Info,
   Clock,
@@ -16,7 +15,7 @@ import { Card, Toggle, Select, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import type { YouTubeSettings, TimeLimitType } from '~/types/storage';
+import type { YouTubeSettings } from '~/types/storage';
 
 interface YouTubeSectionProps {
   youtube: YouTubeSettings;
@@ -25,7 +24,7 @@ interface YouTubeSectionProps {
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
-type LimitTypeOption = 'always' | 'daily' | 'hourly';
+type LimitTypeOption = 'always' | 'daily';
 
 export function YouTubeSection({
   youtube,
@@ -65,21 +64,17 @@ export function YouTubeSection({
   // 現在の保存済み分数
   const currentMinutes = youtube?.timeLimit
     ? Math.floor(youtube.timeLimit.limitSeconds / 60)
-    : currentType === 'daily'
-      ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-      : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+    : TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
 
   // 既存の制限時間を取得し、プリセット値に丸める
   const getInitialMinutes = () => {
     if (!youtube?.timeLimit) {
-      return currentType === 'daily'
-        ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-        : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
+      return TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
     }
 
     const existingMinutes = Math.floor(youtube.timeLimit.limitSeconds / 60);
     // 既存の値がプリセット外の場合、最も近いプリセット値に丸める
-    return roundToNearestPreset(existingMinutes, youtube.timeLimit.type);
+    return roundToNearestPreset(existingMinutes);
   };
 
   // ローカルステートで編集中の値を管理
@@ -110,12 +105,8 @@ export function YouTubeSection({
 
     // タイプ変更時にデフォルトのプリセット値を設定
     if (newType !== 'always') {
-      const defaultMinutes =
-        newType === 'daily'
-          ? TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60
-          : TIME_LIMIT_CONFIG.DEFAULT_HOURLY_LIMIT / 60;
-      const presetMinutes = roundToNearestPreset(defaultMinutes, newType);
-      setMinutes(presetMinutes);
+      const defaultMinutes = TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
+      setMinutes(roundToNearestPreset(defaultMinutes));
     }
   }, []);
 
@@ -133,7 +124,7 @@ export function YouTubeSection({
       onYouTubeChange({
         ...youtube,
         timeLimit: {
-          type: selectedType as TimeLimitType,
+          type: selectedType,
           limitSeconds: minutes * 60
         }
       });
@@ -143,16 +134,12 @@ export function YouTubeSection({
 
   const typeOptions = [
     { value: 'always', label: getMessage('alwaysBlocked') },
-    { value: 'daily', label: getMessage('dailyLimit') },
-    { value: 'hourly', label: getMessage('hourlyLimit') }
+    { value: 'daily', label: getMessage('dailyLimit') }
   ];
 
-  // プリセット選択肢を生成（タイプに応じて daily または hourly のプリセットを使用）
+  // プリセット選択肢を生成
   const getPresetOptions = () => {
-    const presets =
-      selectedType === 'daily'
-        ? TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES
-        : TIME_LIMIT_CONFIG.HOURLY_PRESET_MINUTES;
+    const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
     return presets.map((preset) => ({
       value: preset.toString(),
@@ -178,12 +165,6 @@ export function YouTubeSection({
       icon: <MessageSquare className="w-4 h-4" />,
       title: getMessage('youtubeHideComments'),
       description: getMessage('youtubeHideCommentsDescription')
-    },
-    {
-      key: 'hideSidebar' as const,
-      icon: <LayoutPanelLeft className="w-4 h-4" />,
-      title: getMessage('youtubeHideSidebar'),
-      description: getMessage('youtubeHideSidebarDescription')
     },
     {
       key: 'hideHomeFeed' as const,
@@ -274,9 +255,7 @@ export function YouTubeSection({
                     options={getPresetOptions()}
                   />
                   <p className="text-xs text-gray-400 mt-1">
-                    {selectedType === 'daily'
-                      ? getMessage('resetDaily')
-                      : getMessage('resetHourly')}
+                    {getMessage('resetDaily')}
                   </p>
                 </div>
               )}
@@ -302,11 +281,8 @@ export function YouTubeSection({
               {/* Current settings display */}
               {youtube?.timeLimit && (
                 <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
-                  {getMessage('currentSetting')}:{' '}
-                  {youtube.timeLimit.type === 'daily'
-                    ? getMessage('dailyLimit')
-                    : getMessage('hourlyLimit')}{' '}
-                  - {Math.floor(youtube.timeLimit.limitSeconds / 60)}{' '}
+                  {getMessage('currentSetting')}: {getMessage('dailyLimit')} -{' '}
+                  {Math.floor(youtube.timeLimit.limitSeconds / 60)}{' '}
                   {getMessage('minutes')}
                 </div>
               )}

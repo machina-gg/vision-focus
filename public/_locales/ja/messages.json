@@ -1,0 +1,2098 @@
+{
+  "extensionName": {
+    "message": "VisionFocus",
+    "description": "拡張機能名"
+  },
+  "extensionDescription": {
+    "message": "気が散るサイトをブロックし、時間を追跡して、目標に集中しましょう",
+    "description": "拡張機能の説明"
+  },
+  "siteBlocked": {
+    "message": "サイトをブロックしました",
+    "description": "ブロックページのタイトル"
+  },
+  "siteBlockedMessage": {
+    "message": "$DOMAIN$ はブロックリストに登録されています",
+    "description": "ブロックページのメッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "blockedTimes": {
+    "message": "このサイトを $COUNT$ 回ブロックしました",
+    "description": "ブロック回数表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "blockedTimesShort": {
+    "message": "$COUNT$ 回",
+    "description": "ブロック回数短縮表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "wastedTime": {
+    "message": "浪費時間",
+    "description": "浪費時間ラベル"
+  },
+  "topBlockedSites": {
+    "message": "よくブロックしたサイト",
+    "description": "ブロック回数ランキング見出し"
+  },
+  "rememberGoal": {
+    "message": "あなたの目標を思い出してください",
+    "description": "目標リマインダーの見出し"
+  },
+  "goBack": {
+    "message": "戻る",
+    "description": "戻るボタンテキスト"
+  },
+  "goToDashboard": {
+    "message": "ダッシュボードへ",
+    "description": "ダッシュボードへ移動するボタンテキスト"
+  },
+  "cancel": {
+    "message": "キャンセル",
+    "description": "キャンセルボタンテキスト"
+  },
+  "confirm": {
+    "message": "確認",
+    "description": "確認ボタンテキスト"
+  },
+  "save": {
+    "message": "保存",
+    "description": "保存ボタンテキスト"
+  },
+  "add": {
+    "message": "追加",
+    "description": "追加ボタンテキスト"
+  },
+  "delete": {
+    "message": "削除",
+    "description": "削除ボタンテキスト"
+  },
+  "edit": {
+    "message": "編集",
+    "description": "編集ボタンテキスト"
+  },
+  "settings": {
+    "message": "設定",
+    "description": "設定ページタイトル"
+  },
+  "paused": {
+    "message": "一時停止",
+    "description": "一時停止トグルのラベル"
+  },
+  "help": {
+    "message": "ヘルプ",
+    "description": "ヘルプボタンのラベル"
+  },
+  "general": {
+    "message": "一般",
+    "description": "一般設定タブ"
+  },
+  "styles": {
+    "message": "カスタマイズ",
+    "description": "カスタマイズ設定タブ"
+  },
+  "blockList": {
+    "message": "ブロックリスト",
+    "description": "ブロックリストタブ"
+  },
+  "schedules": {
+    "message": "スケジュール",
+    "description": "スケジュールタブ"
+  },
+  "analytics": {
+    "message": "分析",
+    "description": "分析タブ"
+  },
+  "dashboardBackground": {
+    "message": "ダッシュボードの背景",
+    "description": "背景設定タイトル"
+  },
+  "addSiteToBlock": {
+    "message": "ブロックするサイトを追加",
+    "description": "ブロック追加入力の見出し"
+  },
+  "blockWebsites": {
+    "message": "サイトをブロック",
+    "description": "サイトブロックセクションの見出し"
+  },
+  "block": {
+    "message": "ブロック",
+    "description": "ブロックボタンのテキスト"
+  },
+  "domainPlaceholder": {
+    "message": "example.com または *.example.com",
+    "description": "ドメイン入力プレースホルダー"
+  },
+  "freeTierLimit": {
+    "message": "無料枠: $COUNT$ / $MAX$ サイト",
+    "description": "無料枠制限表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "max": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "blockedSites": {
+    "message": "ブロック中のサイト",
+    "description": "ブロックリスト見出し"
+  },
+  "noBlockedSites": {
+    "message": "ブロックしているサイトはありません。上のフィールドにドメインを追加してください。",
+    "description": "空のブロックリストメッセージ"
+  },
+  "blockingSchedules": {
+    "message": "ブロックスケジュール",
+    "description": "スケジュールリスト見出し"
+  },
+  "addSchedule": {
+    "message": "スケジュールを追加",
+    "description": "スケジュール追加ボタン"
+  },
+  "noSchedules": {
+    "message": "スケジュールが作成されていません。特定の時間帯にサイトを自動的にブロックするスケジュールを追加してください。",
+    "description": "空のスケジュールメッセージ"
+  },
+  "scheduleName": {
+    "message": "スケジュール名",
+    "description": "スケジュール名ラベル"
+  },
+  "startTime": {
+    "message": "開始時刻",
+    "description": "開始時刻ラベル"
+  },
+  "endTime": {
+    "message": "終了時刻",
+    "description": "終了時刻ラベル"
+  },
+  "activeDays": {
+    "message": "有効な曜日",
+    "description": "有効な曜日ラベル"
+  },
+  "recentActivity": {
+    "message": "最近のアクティビティ",
+    "description": "分析見出し"
+  },
+  "noActivity": {
+    "message": "まだアクティビティが記録されていません。ブラウジングを開始すると統計が表示されます。",
+    "description": "空の分析メッセージ"
+  },
+  "today": {
+    "message": "今日",
+    "description": "今日ラベル"
+  },
+  "waste": {
+    "message": "浪費",
+    "description": "浪費時間ラベル"
+  },
+  "invest": {
+    "message": "投資",
+    "description": "投資時間ラベル"
+  },
+  "blocked": {
+    "message": "ブロック",
+    "description": "ブロック数ラベル"
+  },
+  "blocks": {
+    "message": "$COUNT$ 回ブロック",
+    "description": "ブロック数表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "todaysSummary": {
+    "message": "今日のサマリー",
+    "description": "ポップアップサマリー見出し"
+  },
+  "quickBlock": {
+    "message": "クイックブロック",
+    "description": "クイックブロックボタン見出し"
+  },
+  "blockThisSite": {
+    "message": "$DOMAIN$ をブロック",
+    "description": "クイックブロックボタンテキスト",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "settingsTitle": {
+    "message": "ダッシュボード",
+    "description": "ダッシュボードページタイトル"
+  },
+  "saveChanges": {
+    "message": "変更を保存",
+    "description": "変更保存ボタン"
+  },
+  "addedOn": {
+    "message": "$DATE$ に追加",
+    "description": "追加日テキスト",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026/1/19"
+      }
+    }
+  },
+  "editSchedule": {
+    "message": "スケジュールを編集",
+    "description": "スケジュール編集モーダルタイトル"
+  },
+  "noSiteToBlock": {
+    "message": "ブロックするサイトがありません",
+    "description": "ブロック可能なサイトがない"
+  },
+  "enterGoalPlaceholder": {
+    "message": "目標を入力してください...",
+    "description": "目標入力プレースホルダー"
+  },
+  "goalSettings": {
+    "message": "目標設定",
+    "description": "目標設定セクションタイトル"
+  },
+  "yourGoal": {
+    "message": "あなたの目標",
+    "description": "目標入力ラベル"
+  },
+  "goalDescription": {
+    "message": "この目標は新しいタブページとブロックページに表示され、目的を思い出させてくれます。",
+    "description": "目標設定の説明"
+  },
+  "goalPlaceholder": {
+    "message": "例: 今月中にSaaSプロダクトをリリースする",
+    "description": "目標入力プレースホルダー"
+  },
+  "todaysGoal": {
+    "message": "只今の目標",
+    "description": "目標カードラベル"
+  },
+  "noGoalSet": {
+    "message": "目標が未設定です。クリックして設定しましょう",
+    "description": "目標未設定時に目標カードへ表示する案内"
+  },
+  "goalPreviewPlaceholder": {
+    "message": "ここに目標が表示されます",
+    "description": "スタイル設定プレビューで目標未入力時に表示する文言"
+  },
+  "saved": {
+    "message": "保存しました",
+    "description": "保存成功フィードバック"
+  },
+  "dashboardPreview": {
+    "message": "プレビュー",
+    "description": "プレビューセクションタイトル"
+  },
+  "backgroundType": {
+    "message": "背景タイプ",
+    "description": "背景タイプラベル"
+  },
+  "backgroundTypeImage": {
+    "message": "画像",
+    "description": "画像背景オプション"
+  },
+  "backgroundTypeColor": {
+    "message": "単色",
+    "description": "単色背景オプション"
+  },
+  "selectColor": {
+    "message": "色を選択",
+    "description": "色選択ラベル"
+  },
+  "goalSubText": {
+    "message": "サブメッセージ（任意）",
+    "description": "目標サブメッセージラベル"
+  },
+  "goalSubTextPlaceholder": {
+    "message": "モチベーションメッセージを追加...",
+    "description": "目標サブテキストプレースホルダー"
+  },
+  "textColor": {
+    "message": "文字色",
+    "description": "文字色ラベル"
+  },
+  "unsavedChanges": {
+    "message": "未保存の変更があります",
+    "description": "未保存の変更があることを知らせるテキスト"
+  },
+  "license": {
+    "message": "ライセンス",
+    "description": "ライセンスタブ"
+  },
+  "premium": {
+    "message": "プレミアム",
+    "description": "プレミアムラベル"
+  },
+  "free": {
+    "message": "無料",
+    "description": "無料ティアラベル"
+  },
+  "currentPlan": {
+    "message": "現在のプラン",
+    "description": "現在のプラン見出し"
+  },
+  "freePlan": {
+    "message": "無料プラン",
+    "description": "無料プラン名"
+  },
+  "premiumPlan": {
+    "message": "プレミアムプラン",
+    "description": "プレミアムプラン名"
+  },
+  "subscriptionActive": {
+    "message": "サブスクリプションが有効です",
+    "description": "サブスクリプション有効状態"
+  },
+  "manageSubscription": {
+    "message": "サブスクリプションを管理",
+    "description": "サブスクリプション管理ボタン"
+  },
+  "licenseKey": {
+    "message": "ライセンスキー",
+    "description": "ライセンスキー入力ラベル"
+  },
+  "enterLicenseKey": {
+    "message": "ライセンスキーを入力してください",
+    "description": "ライセンスキー入力プレースホルダー"
+  },
+  "activateLicense": {
+    "message": "ライセンスを有効化",
+    "description": "ライセンス有効化ボタン"
+  },
+  "activating": {
+    "message": "有効化中...",
+    "description": "ライセンス有効化中"
+  },
+  "licenseActivated": {
+    "message": "ライセンスが正常に有効化されました！",
+    "description": "ライセンス有効化成功メッセージ"
+  },
+  "invalidLicenseKey": {
+    "message": "無効なライセンスキーです。確認して再度お試しください。",
+    "description": "無効なライセンスキーエラー"
+  },
+  "deactivateLicense": {
+    "message": "ライセンスを無効化",
+    "description": "ライセンス無効化ボタン"
+  },
+  "licenseDeactivated": {
+    "message": "ライセンスが無効化されました",
+    "description": "ライセンス無効化メッセージ"
+  },
+  "licenseExpires": {
+    "message": "有効期限: $DATE$",
+    "description": "ライセンス有効期限",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-12-31"
+      }
+    }
+  },
+  "licenseLifetime": {
+    "message": "永続ライセンス",
+    "description": "永続ライセンスラベル"
+  },
+  "upgradeToPremium": {
+    "message": "プレミアムにアップグレード",
+    "description": "アップグレードボタンテキスト"
+  },
+  "premiumFeatures": {
+    "message": "プレミアム機能",
+    "description": "プレミアム機能見出し"
+  },
+  "premiumFeatureUnlimitedBlocklist": {
+    "message": "無制限のブロックリスト",
+    "description": "プレミアム機能: 無制限のブロックリスト"
+  },
+  "premiumFeatureUnlimitedHistory": {
+    "message": "無制限の分析履歴",
+    "description": "プレミアム機能: 無制限の履歴"
+  },
+  "premiumFeatureCustomBackground": {
+    "message": "カスタム背景",
+    "description": "プレミアム機能: カスタム背景"
+  },
+  "premiumFeatureReports": {
+    "message": "週次・月次レポート",
+    "description": "プレミアム機能: レポート"
+  },
+  "freeTierLimitReached": {
+    "message": "無料枠の上限に達しました",
+    "description": "無料枠上限到達見出し"
+  },
+  "upgradeToAddMore": {
+    "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
+    "description": "ブロックリストのアップグレードプロンプト"
+  },
+  "upgradeForCustomBackground": {
+    "message": "プレミアムにアップグレードして、カスタム背景画像をアップロードしましょう。",
+    "description": "カスタム背景のアップグレードプロンプト"
+  },
+  "gracePeriodWarning": {
+    "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",
+    "description": "猶予期間警告",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026-01-26"
+      }
+    }
+  },
+  "getPremium": {
+    "message": "プレミアムを取得",
+    "description": "プレミアム取得ボタン"
+  },
+  "learnMore": {
+    "message": "詳細を見る",
+    "description": "詳細リンク"
+  },
+  "premiumRequired": {
+    "message": "プレミアムが必要です",
+    "description": "プレミアム必須見出し"
+  },
+  "premiumRequiredDescription": {
+    "message": "この機能にはプレミアムサブスクリプションが必要です。",
+    "description": "プレミアム必須説明"
+  },
+  "remove": {
+    "message": "削除",
+    "description": "削除ボタンテキスト"
+  },
+  "uploadImage": {
+    "message": "クリックまたはドラッグして画像をアップロード",
+    "description": "画像アップロードプロンプト"
+  },
+  "dropImage": {
+    "message": "ここに画像をドロップ",
+    "description": "画像ドロッププロンプト"
+  },
+  "uploadedImage": {
+    "message": "アップロードされた画像",
+    "description": "アップロード済み画像ラベル"
+  },
+  "supportedFormats": {
+    "message": "JPEG、PNG、WebP（最大5MB）",
+    "description": "サポートされている画像形式"
+  },
+  "processing": {
+    "message": "処理中...",
+    "description": "処理中テキスト"
+  },
+  "fontCategory": {
+    "message": "フォントカテゴリ",
+    "description": "フォントカテゴリラベル"
+  },
+  "fontFamily": {
+    "message": "フォント",
+    "description": "フォントファミリーラベル"
+  },
+  "fontSize": {
+    "message": "フォントサイズ",
+    "description": "フォントサイズラベル"
+  },
+  "fontWeight": {
+    "message": "フォントの太さ",
+    "description": "フォントの太さラベル"
+  },
+  "fontCustomization": {
+    "message": "フォントカスタマイズ",
+    "description": "フォントカスタマイズセクションタイトル"
+  },
+  "addGoal": {
+    "message": "目標を追加",
+    "description": "目標追加ボタン"
+  },
+  "editGoal": {
+    "message": "目標を編集",
+    "description": "目標編集モーダルタイトル"
+  },
+  "goalText": {
+    "message": "目標テキスト",
+    "description": "目標テキスト入力ラベル"
+  },
+  "goalTextPlaceholder": {
+    "message": "今日の主な目標は？",
+    "description": "目標テキストプレースホルダー"
+  },
+  "previewText": {
+    "message": "プレビュー",
+    "description": "プレビューテキスト"
+  },
+  "noGoals": {
+    "message": "目標がありません。目標を追加して始めましょう。",
+    "description": "空の目標メッセージ"
+  },
+  "maxGoalsReached": {
+    "message": "目標の上限に達しました（$COUNT$件）。プレミアムにアップグレードすると無制限に追加できます。",
+    "description": "最大目標数到達メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "multipleGoals": {
+    "message": "複数の目標",
+    "description": "複数の目標セクションタイトル"
+  },
+  "wasteTime": {
+    "message": "浪費時間",
+    "description": "浪費時間ラベル"
+  },
+  "investTime": {
+    "message": "投資時間",
+    "description": "投資時間ラベル"
+  },
+  "blockedCount": {
+    "message": "ブロック",
+    "description": "ブロック数ラベル"
+  },
+  "unblockedCount": {
+    "message": "ブロック解除",
+    "description": "ブロック解除数ラベル"
+  },
+  "noData": {
+    "message": "データがありません",
+    "description": "データなしメッセージ"
+  },
+  "lineChart": {
+    "message": "折れ線グラフ",
+    "description": "折れ線グラフラベル"
+  },
+  "barChart": {
+    "message": "棒グラフ",
+    "description": "棒グラフラベル"
+  },
+  "pieChart": {
+    "message": "円グラフ",
+    "description": "円グラフラベル"
+  },
+  "neutral": {
+    "message": "中立",
+    "description": "中立カテゴリラベル"
+  },
+  "weeklyReport": {
+    "message": "週次レポート",
+    "description": "週次レポートタイトル"
+  },
+  "monthlyReport": {
+    "message": "月次レポート",
+    "description": "月次レポートタイトル"
+  },
+  "inProgress": {
+    "message": "途中経過",
+    "description": "途中経過バッジラベル"
+  },
+  "noReportData": {
+    "message": "レポート用のデータが不足しています",
+    "description": "レポートデータなしメッセージ"
+  },
+  "improving": {
+    "message": "改善中",
+    "description": "改善トレンドラベル"
+  },
+  "declining": {
+    "message": "低下中",
+    "description": "低下トレンドラベル"
+  },
+  "stable": {
+    "message": "安定",
+    "description": "安定トレンドラベル"
+  },
+  "clickForDetails": {
+    "message": "クリックして詳細を表示",
+    "description": "詳細表示ヒント"
+  },
+  "productivityImproving": {
+    "message": "生産性が向上しています！",
+    "description": "生産性向上メッセージ"
+  },
+  "productivityDeclining": {
+    "message": "生産性が低下しています",
+    "description": "生産性低下メッセージ"
+  },
+  "productivityStable": {
+    "message": "生産性は安定しています",
+    "description": "生産性安定メッセージ"
+  },
+  "topWasteSites": {
+    "message": "浪費サイトトップ",
+    "description": "浪費サイトトップ見出し"
+  },
+  "topInvestSites": {
+    "message": "投資サイトトップ",
+    "description": "投資サイトトップ見出し"
+  },
+  "previousPeriodComparison": {
+    "message": "前期比",
+    "description": "前期比較ラベル"
+  },
+  "wasteTimeReduction": {
+    "message": "浪費時間削減",
+    "description": "浪費時間削減ラベル"
+  },
+  "wasteTimeIncrease": {
+    "message": "浪費時間増加",
+    "description": "浪費時間増加ラベル"
+  },
+  "noComparisonData": {
+    "message": "比較データなし",
+    "description": "比較データなしメッセージ"
+  },
+  "dailyBlockCount": {
+    "message": "日別ブロック数",
+    "description": "日別ブロック数チャートタイトル"
+  },
+  "weeklyTrend": {
+    "message": "週次トレンド",
+    "description": "週次トレンドチャートタイトル"
+  },
+  "dailyBreakdown": {
+    "message": "日別内訳",
+    "description": "日別内訳チャートタイトル"
+  },
+  "weeklyBreakdown": {
+    "message": "週別内訳",
+    "description": "週別内訳チャートタイトル"
+  },
+  "reportsSection": {
+    "message": "レポート",
+    "description": "レポートセクションタイトル"
+  },
+  "reportsPremiumDescription": {
+    "message": "週次・月次レポートで生産性の推移を確認",
+    "description": "レポートプレミアム機能の説明"
+  },
+  "close": {
+    "message": "閉じる",
+    "description": "閉じるボタン"
+  },
+  "download": {
+    "message": "ダウンロード",
+    "description": "ダウンロードボタン"
+  },
+  "downloadWallpaper": {
+    "message": "壁紙をダウンロード",
+    "description": "壁紙ダウンロードボタン"
+  },
+  "selectResolution": {
+    "message": "解像度を選択",
+    "description": "解像度選択ラベル"
+  },
+  "customBackground": {
+    "message": "カスタム背景",
+    "description": "カスタム背景セクションタイトル"
+  },
+  "uploadCustomBackground": {
+    "message": "カスタム背景をアップロード",
+    "description": "カスタム背景アップロードボタン"
+  },
+  "premiumFeatureMultipleGoals": {
+    "message": "複数の目標カード",
+    "description": "プレミアム機能: 複数の目標"
+  },
+  "premiumFeatureFontCustomization": {
+    "message": "フォントカスタマイズ",
+    "description": "プレミアム機能: フォントカスタマイズ"
+  },
+  "premiumFeatureDownloadWallpaper": {
+    "message": "壁紙ダウンロード",
+    "description": "プレミアム機能: 壁紙ダウンロード"
+  },
+  "detailedAnalytics": {
+    "message": "詳細分析",
+    "description": "詳細分析セクションタイトル"
+  },
+  "reports": {
+    "message": "レポート",
+    "description": "レポートセクションタイトル"
+  },
+  "siteCategories": {
+    "message": "サイトカテゴリ",
+    "description": "サイトカテゴリセクションタイトル"
+  },
+  "noSiteData": {
+    "message": "まだサイトを訪問していません。ブラウジングを開始してデータを記録しましょう。",
+    "description": "サイトデータなしメッセージ"
+  },
+  "searchSites": {
+    "message": "サイトを検索...",
+    "description": "サイト検索プレースホルダー"
+  },
+  "allCategories": {
+    "message": "すべてのカテゴリ",
+    "description": "全カテゴリフィルターオプション"
+  },
+  "site": {
+    "message": "サイト",
+    "description": "サイト列ヘッダー"
+  },
+  "time": {
+    "message": "時間",
+    "description": "時間列ヘッダー"
+  },
+  "category": {
+    "message": "カテゴリ",
+    "description": "カテゴリ列ヘッダー"
+  },
+  "noMatchingSites": {
+    "message": "検索条件に一致するサイトがありません。",
+    "description": "一致するサイトなしメッセージ"
+  },
+  "wasteShort": {
+    "message": "浪",
+    "description": "浪費カテゴリ短縮ラベル"
+  },
+  "investShort": {
+    "message": "投",
+    "description": "投資カテゴリ短縮ラベル"
+  },
+  "neutralShort": {
+    "message": "中",
+    "description": "中立カテゴリ短縮ラベル"
+  },
+  "siteCategoryHelp": {
+    "message": "サイトを浪費（時間の無駄）、投資（生産的）、または中立に分類して生産性を追跡しましょう。",
+    "description": "サイトカテゴリヘルプテキスト"
+  },
+  "dashboardPresets": {
+    "message": "スタイル",
+    "description": "スタイルセクションタイトル"
+  },
+  "saveAsPreset": {
+    "message": "スタイルとして保存",
+    "description": "スタイル保存ボタン"
+  },
+  "savePresetDescription": {
+    "message": "現在のダッシュボード設定（目標、背景、フォント）をスタイルとして保存し、すぐに切り替えられます",
+    "description": "スタイル保存の説明"
+  },
+  "presetName": {
+    "message": "スタイル名",
+    "description": "スタイル名ラベル"
+  },
+  "presetNamePlaceholder": {
+    "message": "例: 仕事モード、休日、朝のルーティン",
+    "description": "スタイル名入力プレースホルダー"
+  },
+  "maxPresetsReached": {
+    "message": "スタイルの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "description": "最大スタイル数到達メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "premiumFeaturePresets": {
+    "message": "最大5つのスタイルを保存",
+    "description": "プレミアム機能: ダッシュボードスタイル"
+  },
+  "noPresets": {
+    "message": "まだスタイルがありません。ダッシュボードを設定してスタイルとして保存してください。",
+    "description": "スタイルなしメッセージ"
+  },
+  "presetsDescription": {
+    "message": "ダッシュボード設定をスタイルとして保存し、異なる設定をすぐに切り替えられます。",
+    "description": "スタイル機能の説明"
+  },
+  "defaultPreset": {
+    "message": "デフォルト",
+    "description": "デフォルトスタイル名"
+  },
+  "editingPreset": {
+    "message": "「$NAME$」を編集中",
+    "description": "編集中のスタイルラベル",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "仕事モード"
+      }
+    }
+  },
+  "newPreset": {
+    "message": "新規スタイル",
+    "description": "新規スタイルボタン"
+  },
+  "deletePresetConfirm": {
+    "message": "このスタイルを削除しますか？",
+    "description": "スタイル削除確認"
+  },
+  "applyPreset": {
+    "message": "切り替え",
+    "description": "スタイルを適用するボタン"
+  },
+  "activePreset": {
+    "message": "設定中",
+    "description": "現在アクティブなスタイル"
+  },
+  "noPresetsTitle": {
+    "message": "スタイルがありません",
+    "description": "スタイルがない場合のタイトル"
+  },
+  "noPresetsDescription": {
+    "message": "スタイルを追加して、ダッシュボードの外観をカスタマイズしましょう",
+    "description": "スタイルがない場合の説明"
+  },
+  "createFirstPreset": {
+    "message": "最初のスタイルを作成",
+    "description": "最初のスタイル作成ボタン"
+  },
+  "schedulePreset": {
+    "message": "表示するスタイル",
+    "description": "スケジュール用スタイル選択ラベル"
+  },
+  "noPresetSelected": {
+    "message": "設定しない",
+    "description": "スタイル未選択オプション"
+  },
+  "schedulePresetDescription": {
+    "message": "このスケジュールがアクティブになると、選択したスタイルが自動的に適用されます",
+    "description": "スケジュールスタイルの説明"
+  },
+  "presetLabel": {
+    "message": "スタイル",
+    "description": "スタイルラベル"
+  },
+  "unknownPreset": {
+    "message": "不明なスタイル",
+    "description": "削除されたスタイル"
+  },
+  "defaultSettings": {
+    "message": "デフォルト",
+    "description": "デフォルト設定ボタン"
+  },
+  "editingDefault": {
+    "message": "デフォルト設定を編集中",
+    "description": "デフォルト設定編集中ラベル"
+  },
+  "active": {
+    "message": "有効",
+    "description": "有効ラベル"
+  },
+  "disabled": {
+    "message": "無効",
+    "description": "無効ラベル"
+  },
+  "useDefault": {
+    "message": "デフォルトに戻す",
+    "description": "デフォルトに戻すボタン"
+  },
+  "upgradeToUsePreset": {
+    "message": "プレミアムにアップグレードしてこのスタイルを使用",
+    "description": "ロックされたスタイルのツールチップ"
+  },
+  "lockedPresetWarning": {
+    "message": "現在設定中のスタイルはFreeプランでは使用できません。デフォルト設定が適用されます。",
+    "description": "アクティブなスタイルがロックされている場合の警告"
+  },
+  "scheduleLockedPresetWarning": {
+    "message": "選択中のスタイルはFreeプランでは適用されません。",
+    "description": "スケジュールのスタイルがロックされている場合の警告"
+  },
+  "featureBlocklist": {
+    "message": "ブロックリスト",
+    "description": "機能名: ブロックリスト"
+  },
+  "featureBlocklistFree": {
+    "message": "$COUNT$件まで",
+    "description": "無料枠のブロックリスト制限",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureUnlimited": {
+    "message": "無制限",
+    "description": "無制限テキスト"
+  },
+  "featureHistoryRetention": {
+    "message": "履歴保存期間",
+    "description": "機能名: 履歴保存期間"
+  },
+  "featureHistoryDays": {
+    "message": "$COUNT$日間",
+    "description": "履歴日数制限",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "featureAllTime": {
+    "message": "無制限",
+    "description": "全期間履歴"
+  },
+  "featurePresets": {
+    "message": "スタイル",
+    "description": "機能名: スタイル"
+  },
+  "featurePresetCount": {
+    "message": "$COUNT$件",
+    "description": "スタイル数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "featureCustomBackground": {
+    "message": "カスタム背景画像",
+    "description": "機能名: カスタム背景"
+  },
+  "featureWallpaperDownload": {
+    "message": "壁紙ダウンロード",
+    "description": "機能名: 壁紙ダウンロード"
+  },
+  "featureWeeklyMonthlyReports": {
+    "message": "週次・月次レポート",
+    "description": "機能名: レポート"
+  },
+  "premiumActiveTitle": {
+    "message": "Premiumプランをご利用中",
+    "description": "プレミアムアクティブタイトル"
+  },
+  "premiumActiveDescription": {
+    "message": "すべての機能をお楽しみいただけます",
+    "description": "プレミアムアクティブ説明"
+  },
+  "premiumFeaturesIncluded": {
+    "message": "ご利用中の機能",
+    "description": "プレミアム機能一覧見出し"
+  },
+  "currentUsage": {
+    "message": "現在の使用状況",
+    "description": "現在の使用状況見出し"
+  },
+  "limitReachedUpgrade": {
+    "message": "上限に達しました。Premiumで無制限に。",
+    "description": "上限到達メッセージ"
+  },
+  "limitWarning": {
+    "message": "あと$COUNT$件で上限です",
+    "description": "上限警告メッセージ",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "historySaving": {
+    "message": "履歴保存",
+    "description": "履歴保存ラベル"
+  },
+  "premiumMarketingHeadline": {
+    "message": "もっと集中したいあなたへ",
+    "description": "プレミアムマーケティング見出し"
+  },
+  "premiumMarketingPrice": {
+    "message": "1日たった約15円で、無制限の集中環境を",
+    "description": "プレミアムマーケティング価格コピー"
+  },
+  "premiumMarketingPriceNote": {
+    "message": "※ 1ドル=155円換算",
+    "description": "価格備考"
+  },
+  "cancelAnytime": {
+    "message": "いつでもキャンセル可能",
+    "description": "いつでもキャンセル可能テキスト"
+  },
+  "planComparison": {
+    "message": "プラン比較",
+    "description": "プラン比較見出し"
+  },
+  "featureColumn": {
+    "message": "機能",
+    "description": "機能列ヘッダー"
+  },
+  "trackedSitesTitle": {
+    "message": "サイト追跡",
+    "description": "追跡サイトのセクションタイトル"
+  },
+  "trackedSitesDescription": {
+    "message": "ブロック中・解除済みサイトの状況を追跡します。ブロック中は0分 - それがあなたの成果です！",
+    "description": "追跡サイトのセクション説明"
+  },
+  "unblockedSitesTitle": {
+    "message": "ブロック解除したサイトの利用状況",
+    "description": "ブロック解除サイトのセクションタイトル"
+  },
+  "unblockedSitesDescription": {
+    "message": "ブロックリストから削除したサイトです。やっぱり時間を使ってしまっていませんか？",
+    "description": "ブロック解除サイトのセクション説明"
+  },
+  "statusBlocked": {
+    "message": "ブロック中",
+    "description": "ブロック中サイトのステータスラベル"
+  },
+  "statusUnblocked": {
+    "message": "解除済み",
+    "description": "解除済みサイトのステータスラベル"
+  },
+  "blockedSince": {
+    "message": "ブロック開始",
+    "description": "ブロック開始日ラベル"
+  },
+  "timeSaved": {
+    "message": "節約した時間",
+    "description": "ブロック中サイトの節約時間ラベル"
+  },
+  "timeSavedTooltip": {
+    "message": "ブロック中にアクセスを試みた回数 × 平均滞在時間（5分）で算出",
+    "description": "節約した時間の算出方法の説明ツールチップ"
+  },
+  "noUnblockedSites": {
+    "message": "ブロック解除したサイトはありません",
+    "description": "ブロック解除サイトなしタイトル"
+  },
+  "noUnblockedSitesDescription": {
+    "message": "集中を維持できています！ブロックリストから削除したサイトはありません。",
+    "description": "ブロック解除サイトなし説明"
+  },
+  "unblockedOn": {
+    "message": "解除",
+    "description": "解除日ラベル"
+  },
+  "timeSpentSinceUnblock": {
+    "message": "その後の利用時間",
+    "description": "解除後の利用時間ラベル"
+  },
+  "reblock": {
+    "message": "再ブロック",
+    "description": "再ブロックボタン"
+  },
+  "totalTimeOnUnblockedSites": {
+    "message": "ブロック解除サイトの合計利用時間",
+    "description": "合計利用時間ラベル"
+  },
+  "totalTimeOnTrackedSites": {
+    "message": "追跡サイト全体の合計利用時間",
+    "description": "追跡サイト全体の合計利用時間ラベル"
+  },
+  "yesterday": {
+    "message": "昨日",
+    "description": "昨日ラベル"
+  },
+  "daysAgo": {
+    "message": "$COUNT$日前",
+    "description": "○日前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "weeksAgo": {
+    "message": "$COUNT$週間前",
+    "description": "○週間前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "monthsAgo": {
+    "message": "$COUNT$ヶ月前",
+    "description": "○ヶ月前ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "upgradeFeatureViewTime": {
+    "message": "解除後の利用時間を確認",
+    "description": "アップグレード機能: 時間確認"
+  },
+  "upgradeFeatureReblock": {
+    "message": "ワンクリックで再ブロック",
+    "description": "アップグレード機能: 再ブロック"
+  },
+  "upgradeFeatureChart": {
+    "message": "利用時間の推移グラフ",
+    "description": "アップグレード機能: グラフ"
+  },
+  "usageChart": {
+    "message": "利用時間の推移",
+    "description": "利用グラフタイトル"
+  },
+  "chartTypeDaily": {
+    "message": "日別",
+    "description": "日別グラフタイプ"
+  },
+  "chartTypeBySite": {
+    "message": "サイト別",
+    "description": "サイト別グラフタイプ"
+  },
+  "chartTypeCumulative": {
+    "message": "累積",
+    "description": "累積グラフタイプ"
+  },
+  "chartDailyLabel": {
+    "message": "利用時間",
+    "description": "日別グラフラベル"
+  },
+  "chartCumulativeLabel": {
+    "message": "累積時間",
+    "description": "累積グラフラベル"
+  },
+  "chartSiteCount": {
+    "message": "$COUNT$サイトの合計",
+    "description": "サイト数ラベル",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reset": {
+    "message": "リセット",
+    "description": "リセットボタン"
+  },
+  "resetAnalyticsTitle": {
+    "message": "データをリセットしますか？",
+    "description": "リセット確認モーダルタイトル"
+  },
+  "resetAnalyticsDescription": {
+    "message": "すべてのサイトの利用時間が0にリセットされます。サイト一覧は維持されます。",
+    "description": "リセット確認モーダル説明"
+  },
+  "stopTracking": {
+    "message": "追跡を停止",
+    "description": "追跡停止ボタン"
+  },
+  "refresh": {
+    "message": "更新",
+    "description": "更新ボタンツールチップ"
+  },
+  "addSiteToTrack": {
+    "message": "追跡サイトを追加",
+    "description": "追跡サイト追加見出し"
+  },
+  "trackedSitesList": {
+    "message": "追跡中のサイト",
+    "description": "追跡中サイト一覧セクションタイトル"
+  },
+  "trackedSitesListDescription": {
+    "message": "現在追跡しているサイトの一覧です。",
+    "description": "追跡中サイト一覧セクション説明"
+  },
+  "noTrackedSites": {
+    "message": "追跡中のサイトはありません",
+    "description": "追跡中サイトなしタイトル"
+  },
+  "noTrackedSitesDescription": {
+    "message": "サイトを追加して、ブロック状況や利用時間を追跡しましょう。",
+    "description": "追跡中サイトなし説明"
+  },
+  "wastedTimeSite": {
+    "message": "サイト別浪費時間",
+    "description": "サイト別浪費時間セクションタイトル"
+  },
+  "totalWastedTime": {
+    "message": "合計浪費時間",
+    "description": "合計浪費時間ラベル"
+  },
+  "wastedTimeDescription": {
+    "message": "1日の制限を超えて閲覧した時間（または制限内での閲覧時間）",
+    "description": "浪費時間の説明"
+  },
+  "trackSitePlaceholder": {
+    "message": "example.com",
+    "description": "追跡サイト入力プレースホルダー"
+  },
+  "exportData": {
+    "message": "データをエクスポート",
+    "description": "データエクスポートボタン"
+  },
+  "exportBlockList": {
+    "message": "ブロックリストをエクスポート",
+    "description": "ブロックリストエクスポートボタン"
+  },
+  "exportBlockCounts": {
+    "message": "ブロック回数をエクスポート",
+    "description": "ブロック回数エクスポートボタン"
+  },
+  "exportDailyStats": {
+    "message": "日別統計をエクスポート",
+    "description": "日別統計エクスポートボタン"
+  },
+  "exportUnblockedSites": {
+    "message": "解除サイトをエクスポート",
+    "description": "解除サイトエクスポートボタン（プレミアム）"
+  },
+  "exportAll": {
+    "message": "すべてエクスポート",
+    "description": "全データエクスポートボタン"
+  },
+  "noDataToExport": {
+    "message": "エクスポートするデータがありません",
+    "description": "エクスポートするデータがない場合のメッセージ"
+  },
+  "helpGettingStarted": {
+    "message": "はじめに",
+    "description": "ヘルプ開始タイトル"
+  },
+  "helpGettingStartedDescription": {
+    "message": "VisionFocusの基本を学びましょう",
+    "description": "ヘルプ開始説明"
+  },
+  "helpBlockSites": {
+    "message": "サイトをブロック",
+    "description": "ヘルプサイトブロックタイトル"
+  },
+  "helpBlockSitesDescription": {
+    "message": "ポップアップまたは設定からブロックリストにドメインを追加します。ワイルドカード（*.example.com）を使用すると、すべてのサブドメインをブロックできます。",
+    "description": "ヘルプサイトブロック説明"
+  },
+  "helpSchedules": {
+    "message": "スケジュールを設定",
+    "description": "ヘルプスケジュールタイトル"
+  },
+  "helpSchedulesDescription": {
+    "message": "特定の時間帯と曜日にブロックを自動的に有効にするスケジュールを作成します。",
+    "description": "ヘルプスケジュール説明"
+  },
+  "helpDashboard": {
+    "message": "ダッシュボードをカスタマイズ",
+    "description": "ヘルプダッシュボードタイトル"
+  },
+  "helpDashboardDescription": {
+    "message": "目標、背景画像、フォントで新しいタブページをカスタマイズして、モチベーションを維持しましょう。",
+    "description": "ヘルプダッシュボード説明"
+  },
+  "helpTimeLimits": {
+    "message": "時間制限を設定",
+    "description": "ヘルプ時間制限タイトル"
+  },
+  "helpTimeLimitsDescription": {
+    "message": "サイトを完全にブロックする代わりに、1日の使用時間を制限できます。制限時間を使い切ると、その日はサイトがブロックされます。",
+    "description": "ヘルプ時間制限説明"
+  },
+  "helpAnalytics": {
+    "message": "進捗を確認",
+    "description": "ヘルプ統計タイトル"
+  },
+  "helpAnalyticsDescription": {
+    "message": "統計タブでブロック状況を確認できます。最もブロックしたサイトの確認、日次のトレンド追跡、サイトの「浪費」「投資」「中立」カテゴリ分けが可能です。",
+    "description": "ヘルプ統計説明"
+  },
+  "helpFaq": {
+    "message": "よくある質問",
+    "description": "ヘルプFAQタイトル"
+  },
+  "helpFaqDescription": {
+    "message": "よく寄せられる質問と回答",
+    "description": "ヘルプFAQ説明"
+  },
+  "helpFaqWildcard": {
+    "message": "ワイルドカードブロックはどう機能しますか？",
+    "description": "ヘルプFAQワイルドカード質問"
+  },
+  "helpFaqWildcardAnswer": {
+    "message": "*.example.com を使用すると、すべてのサブドメイン（news.example.com、blog.example.comなど）をブロックできます。ワイルドカードなしでexample.comを指定すると、メインドメインのみがブロックされます。",
+    "description": "ヘルプFAQワイルドカード回答"
+  },
+  "helpFaqPause": {
+    "message": "一時的にブロックを無効にするには？",
+    "description": "ヘルプFAQ一時停止質問"
+  },
+  "helpFaqPauseAnswer": {
+    "message": "ポップアップヘッダーの「一時停止」スイッチを切り替えると、すべてのブロックが一時的に無効になります。忘れずに元に戻してください！",
+    "description": "ヘルプFAQ一時停止回答"
+  },
+  "helpFaqPresets": {
+    "message": "ダッシュボードスタイルとは？",
+    "description": "ヘルプFAQスタイル質問"
+  },
+  "helpFaqPresetsAnswer": {
+    "message": "スタイルはダッシュボード設定（目標、背景、フォント）を保存し、仕事、勉強、リラックスなど、異なる設定をすぐに切り替えられるようにします。",
+    "description": "ヘルプFAQスタイル回答"
+  },
+  "helpFaqTimeLimit": {
+    "message": "時間制限はどう機能しますか？",
+    "description": "ヘルプFAQ時間制限質問"
+  },
+  "helpFaqTimeLimitAnswer": {
+    "message": "時間制限を使うと、1日あたりの使用時間を設定できます。制限時間に達すると、翌日リセットされるまでサイトがブロックされます。ブロックリストで「常時ブロック」の代わりに「1日の制限」を選択して設定できます。",
+    "description": "ヘルプFAQ時間制限回答"
+  },
+  "helpFaqPassword": {
+    "message": "パスワード保護はどう機能しますか？",
+    "description": "ヘルプFAQパスワード質問"
+  },
+  "helpFaqPasswordAnswer": {
+    "message": "パスワード保護を有効にすると、ブロック設定の変更（一時停止、サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。ヘルプタブの「パスワード保護」から設定できます。",
+    "description": "ヘルプFAQパスワード回答"
+  },
+  "helpFaqBackup": {
+    "message": "設定のバックアップ・復元方法は？",
+    "description": "ヘルプFAQバックアップ質問"
+  },
+  "helpFaqBackupAnswer": {
+    "message": "ヘルプタブの「設定バックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
+    "description": "ヘルプFAQバックアップ回答"
+  },
+  "helpFaqPremium": {
+    "message": "Premium版には何が含まれますか？",
+    "description": "ヘルプFAQプレミアム質問"
+  },
+  "helpFaqPremiumAnswer": {
+    "message": "Premiumでは、ブロックリスト無制限（無料版：5件）、スタイル最大5個（無料版：1個）、カスタム背景、壁紙ダウンロード、全期間の統計履歴（無料版：7日間）、週次・月次レポートが利用できます。詳しくはPremiumタブをご確認ください。",
+    "description": "ヘルプFAQプレミアム回答"
+  },
+  "helpFaqDataStorage": {
+    "message": "データはどこに保存されますか？",
+    "description": "ヘルプFAQデータ保存場所質問"
+  },
+  "helpFaqDataStorageAnswer": {
+    "message": "すべてのデータ（ブロックリスト、スケジュール、統計、設定）はChromeのストレージにローカル保存されます。外部サーバーには送信されません。匿名使用統計をオプトインした場合のみ、集計された機能使用データがGoogle Analytics経由で共有されます（個人情報は含まれません）。",
+    "description": "ヘルプFAQデータ保存場所回答"
+  },
+  "helpFaqBlockLimit": {
+    "message": "ブロックリストにサイトを追加できないのはなぜ？",
+    "description": "ヘルプFAQブロック上限質問"
+  },
+  "helpFaqBlockLimitAnswer": {
+    "message": "無料プランではブロックリストに最大5件まで登録できます。Premiumにアップグレードすると無制限になります。ワイルドカード（*.example.com）を使えば、1つのエントリでドメインとすべてのサブドメインをブロックできます。",
+    "description": "ヘルプFAQブロック上限回答"
+  },
+  "helpTroubleshooting": {
+    "message": "トラブルシューティング",
+    "description": "ヘルプトラブルシューティングタイトル"
+  },
+  "helpTroubleshootingDescription": {
+    "message": "よくある問題と解決方法",
+    "description": "ヘルプトラブルシューティング説明"
+  },
+  "helpTroubleshootSiteNotBlocked": {
+    "message": "サイトがブロックされない",
+    "description": "ヘルプトラブルシューティングブロックされない"
+  },
+  "helpTroubleshootSiteNotBlockedAnswer": {
+    "message": "ブロックリストにドメインが登録され有効になっていることを確認してください。ポップアップの「一時停止」がオンになっていないか確認してください。サブドメイン（例：m.example.com）を使用している場合は、ワイルドカード（*.example.com）を追加してください。また、現在の時間帯と曜日にスケジュールが有効か確認してください。",
+    "description": "ヘルプトラブルシューティングブロックされない回答"
+  },
+  "helpTroubleshootNewTab": {
+    "message": "新しいタブページが表示されない",
+    "description": "ヘルプトラブルシューティング新しいタブ"
+  },
+  "helpTroubleshootNewTabAnswer": {
+    "message": "chrome://extensions でVisionFocusが有効になっていることを確認してください。他の拡張機能が新しいタブページを上書きしている可能性があります。他の新しいタブ系の拡張機能を一時的に無効にしてみてください。問題が解決しない場合は、VisionFocusを再インストールしてください。",
+    "description": "ヘルプトラブルシューティング新しいタブ回答"
+  },
+  "helpTroubleshootSchedule": {
+    "message": "スケジュールが動作しない",
+    "description": "ヘルプトラブルシューティングスケジュール"
+  },
+  "helpTroubleshootScheduleAnswer": {
+    "message": "スケジュールが有効（トグルがオン）であることを確認してください。時間範囲と選択した曜日を確認してください（ローカルタイムゾーンが使用されます）。複数のスケジュールがある場合、競合していないか確認してください。変更は即座に反映され、再起動は不要です。",
+    "description": "ヘルプトラブルシューティングスケジュール回答"
+  },
+  "helpTroubleshootSettingsReset": {
+    "message": "設定がリセットされた",
+    "description": "ヘルプトラブルシューティング設定リセット"
+  },
+  "helpTroubleshootSettingsResetAnswer": {
+    "message": "Chromeが拡張機能のストレージをクリアした場合（例：閲覧データの全削除）、設定がリセットされることがあります。データ損失を防ぐため、定期的に「設定バックアップ」機能でエクスポートしておくことをお勧めします。バックアップファイルがあれば、インポートで復元できます。",
+    "description": "ヘルプトラブルシューティング設定リセット回答"
+  },
+  "helpSupport": {
+    "message": "サポート",
+    "description": "ヘルプサポートタイトル"
+  },
+  "helpSupportDescription": {
+    "message": "お困りですか？お手伝いします",
+    "description": "ヘルプサポート説明"
+  },
+  "helpReportIssue": {
+    "message": "GitHubで問題を報告する",
+    "description": "ヘルプ問題報告リンク"
+  },
+  "helpContactUs": {
+    "message": "フィードバックを送る",
+    "description": "ヘルプお問い合わせフォームリンク"
+  },
+  "todayBlocks": {
+    "message": "今日のブロック",
+    "description": "今日のブロック回数ラベル"
+  },
+  "topBlockedSite": {
+    "message": "最もブロック",
+    "description": "最もブロックしたサイトラベル"
+  },
+  "blockingDays": {
+    "message": "継続日数",
+    "description": "ブロック継続日数ラベル"
+  },
+  "blockedForDays": {
+    "message": "$COUNT$日",
+    "description": "ブロック日数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "viewAnalytics": {
+    "message": "分析を見る",
+    "description": "分析リンクテキスト"
+  },
+  "noBlockedSitesYet": {
+    "message": "まだなし",
+    "description": "ブロックサイトがまだない場合のメッセージ"
+  },
+  "todayWastedTime": {
+    "message": "浪費時間",
+    "description": "今日の浪費時間ラベル"
+  },
+  "todayUnblocks": {
+    "message": "ブロック解除",
+    "description": "今日のブロック解除回数ラベル"
+  },
+  "settingsBackup": {
+    "message": "設定のバックアップ",
+    "description": "設定バックアップセクションタイトル"
+  },
+  "settingsBackupDescription": {
+    "message": "設定をエクスポート・インポートして、バックアップしたり他のデバイスに移行できます",
+    "description": "設定バックアップの説明"
+  },
+  "exportSettings": {
+    "message": "設定をエクスポート",
+    "description": "設定エクスポートボタン"
+  },
+  "importSettings": {
+    "message": "設定をインポート",
+    "description": "設定インポートボタン"
+  },
+  "exportSettingsDescription": {
+    "message": "ブロックリスト、スケジュール、スタイルをJSONファイルとしてダウンロード",
+    "description": "設定エクスポートの説明"
+  },
+  "importSettingsDescription": {
+    "message": "以前エクスポートしたファイルから設定を復元",
+    "description": "設定インポートの説明"
+  },
+  "exportLargeWarning": {
+    "message": "設定ファイルが大きいです（カスタム背景画像を含む）。ダウンロードに時間がかかる場合があります。",
+    "description": "大きなエクスポートファイルの警告"
+  },
+  "exportSuccess": {
+    "message": "設定をエクスポートしました！",
+    "description": "エクスポート成功メッセージ"
+  },
+  "importSuccess": {
+    "message": "設定をインポートしました！",
+    "description": "インポート成功メッセージ"
+  },
+  "importSuccessWithMerge": {
+    "message": "設定をインポートし、既存のデータとマージしました",
+    "description": "マージ付きインポート成功メッセージ"
+  },
+  "importErrorFileTooLarge": {
+    "message": "ファイルが大きすぎます（最大5MB）",
+    "description": "インポートエラー: ファイルが大きすぎる"
+  },
+  "importErrorInvalidJson": {
+    "message": "無効なファイル形式です。有効なJSONファイルを選択してください。",
+    "description": "インポートエラー: 無効なJSON"
+  },
+  "importErrorInvalidFormat": {
+    "message": "無効な設定ファイル形式です。VisionFocusの設定ファイルを選択してください。",
+    "description": "インポートエラー: 無効な形式"
+  },
+  "importWarningNewerVersion": {
+    "message": "このファイルはより新しいバージョンのVisionFocusからエクスポートされました。一部の設定が完全に互換性がない可能性があります。",
+    "description": "インポート警告: より新しいバージョン"
+  },
+  "importWarningOrphanedPresets": {
+    "message": "一部のスケジュールが存在しないスタイルを参照していたため、クリアされました。",
+    "description": "インポート警告: 孤立したプリセット"
+  },
+  "importWarningActivePresetNotFound": {
+    "message": "アクティブなスタイルが見つからなかったため、デフォルトにリセットされました。",
+    "description": "インポート警告: アクティブなプリセットが見つからない"
+  },
+  "selectFile": {
+    "message": "ファイルを選択",
+    "description": "ファイル選択ボタン"
+  },
+  "settingsIncluded": {
+    "message": "含まれる: ブロックリスト、スケジュール、スタイル、ダッシュボード設定",
+    "description": "設定エクスポートに含まれるもの"
+  },
+  "settingsNotIncluded": {
+    "message": "含まれない: プレミアムステータス、分析データ",
+    "description": "設定エクスポートに含まれないもの"
+  },
+  "alwaysBlocked": {
+    "message": "常時ブロック",
+    "description": "常時ブロックオプション"
+  },
+  "dailyLimit": {
+    "message": "1日の制限",
+    "description": "1日の時間制限オプション"
+  },
+  "timeLimitRemaining": {
+    "message": "残り $TIME$",
+    "description": "残り時間表示",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15分"
+      }
+    }
+  },
+  "timeLimitReached": {
+    "message": "時間制限に達しました",
+    "description": "時間制限超過時のメッセージ"
+  },
+  "timeLimitReachedDescription": {
+    "message": "$DOMAIN$ の許可された時間を使い切りました",
+    "description": "時間制限超過時の詳細メッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "perDay": {
+    "message": "/日",
+    "description": "1日あたりの接尾辞"
+  },
+  "limitMinutes": {
+    "message": "$COUNT$分",
+    "description": "分単位の制限表示",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "30"
+      }
+    }
+  },
+  "timeLimitType": {
+    "message": "制限タイプ",
+    "description": "時間制限タイプ選択ラベル"
+  },
+  "timeLimitDuration": {
+    "message": "制限時間",
+    "description": "時間制限入力ラベル"
+  },
+  "minutes": {
+    "message": "分",
+    "description": "分の単位ラベル"
+  },
+  "usedTime": {
+    "message": "使用: $TIME$",
+    "description": "使用時間表示",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15分"
+      }
+    }
+  },
+  "resetDaily": {
+    "message": "毎日リセット",
+    "description": "日次リセット注記"
+  },
+  "timeLimitSettings": {
+    "message": "時間制限の設定",
+    "description": "時間制限設定セクションのタイトル"
+  },
+  "currentSetting": {
+    "message": "現在の設定",
+    "description": "現在の設定表示ラベル"
+  },
+  "timeLimitWarning": {
+    "message": "残り $TIME$ です！",
+    "description": "残り時間が少ない場合の警告",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "5分"
+      }
+    }
+  },
+  "weeklyCalendar": {
+    "message": "週間カレンダー",
+    "description": "週間カレンダータイトル"
+  },
+  "sun": {
+    "message": "日",
+    "description": "日曜日の略称"
+  },
+  "mon": {
+    "message": "月",
+    "description": "月曜日の略称"
+  },
+  "tue": {
+    "message": "火",
+    "description": "火曜日の略称"
+  },
+  "wed": {
+    "message": "水",
+    "description": "水曜日の略称"
+  },
+  "thu": {
+    "message": "木",
+    "description": "木曜日の略称"
+  },
+  "fri": {
+    "message": "金",
+    "description": "金曜日の略称"
+  },
+  "sat": {
+    "message": "土",
+    "description": "土曜日の略称"
+  },
+  "notificationSettings": {
+    "message": "通知設定",
+    "description": "通知設定セクションタイトル"
+  },
+  "notificationTimeLimitEnabled": {
+    "message": "時間制限の通知",
+    "description": "時間制限通知の有効化トグル"
+  },
+  "notificationTimeLimitEnabledDescription": {
+    "message": "サイトの残り時間が少なくなったら通知を受け取る",
+    "description": "時間制限通知の説明"
+  },
+  "notificationTimeLimitMinutes": {
+    "message": "通知タイミング",
+    "description": "通知タイミング選択ラベル"
+  },
+  "notificationMinutesOption": {
+    "message": "$COUNT$分前",
+    "description": "通知タイミングオプション",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "notificationTimeLimitTitle": {
+    "message": "⏰ 残り時間わずか",
+    "description": "時間制限通知タイトル"
+  },
+  "notificationTimeLimitMessage": {
+    "message": "$DOMAIN$ はあと$REMAINING$分で今日の制限（$TOTAL$分$TYPE$）に達します",
+    "description": "時間制限通知メッセージ",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      },
+      "remaining": {
+        "content": "$2",
+        "example": "5"
+      },
+      "total": {
+        "content": "$3",
+        "example": "30"
+      },
+      "type": {
+        "content": "$4",
+        "example": "/日"
+      }
+    }
+  },
+  "youtube": {
+    "message": "YouTube",
+    "description": "YouTubeタブ"
+  },
+  "youtubeBlockingTitle": {
+    "message": "YouTube内ブロック",
+    "description": "YouTubeブロックセクションタイトル"
+  },
+  "youtubeBlockingDescription": {
+    "message": "YouTube全体をブロックせずに、気が散る要素だけを非表示にします。教育コンテンツを見ながら、時間の無駄遣いを防ぎましょう。",
+    "description": "YouTubeブロック説明"
+  },
+  "youtubeEnabled": {
+    "message": "YouTubeブロックを有効にする",
+    "description": "YouTubeブロックのマスタースイッチ"
+  },
+  "youtubeEnabledDescription": {
+    "message": "オンにすると、下の設定に基づいてYouTubeの気が散る要素を非表示にします",
+    "description": "YouTube有効化の説明"
+  },
+  "youtubeBlockAccess": {
+    "message": "YouTubeへのアクセスをブロック",
+    "description": "YouTubeへのアクセスブロックオプション"
+  },
+  "youtubeBlockAccessDescription": {
+    "message": "YouTubeへのアクセスをブロックします。1日の制限を設定すると、上限を超えたあとにブロックします。",
+    "description": "YouTubeへのアクセスブロックの説明"
+  },
+  "youtubeHideShorts": {
+    "message": "Shortsを非表示",
+    "description": "Shorts非表示オプション"
+  },
+  "youtubeHideShortsDescription": {
+    "message": "Shortsシェルフ、タブ、検索結果のShortsを非表示にします",
+    "description": "Shorts非表示の説明"
+  },
+  "youtubeHideRecommendations": {
+    "message": "おすすめを非表示",
+    "description": "おすすめ非表示オプション"
+  },
+  "youtubeHideRecommendationsDescription": {
+    "message": "エンドスクリーンのおすすめ動画・サイドバーの関連動画・自動再生を非表示にします",
+    "description": "おすすめ非表示の説明"
+  },
+  "youtubeHideComments": {
+    "message": "コメントを非表示",
+    "description": "コメント非表示オプション"
+  },
+  "youtubeHideCommentsDescription": {
+    "message": "動画下のコメント欄とライブチャットを非表示にします",
+    "description": "コメント非表示の説明"
+  },
+  "youtubeHideHomeFeed": {
+    "message": "ホームフィードを非表示",
+    "description": "ホームフィード非表示オプション"
+  },
+  "youtubeHideHomeFeedDescription": {
+    "message": "ホームページのフィードを非表示にし、検索のみで動画を探せるようにします",
+    "description": "ホームフィード非表示の説明"
+  },
+  "youtubeTimeLimit": {
+    "message": "時間制限",
+    "description": "YouTube時間制限ラベル"
+  },
+  "youtubeNoTimeLimit": {
+    "message": "制限なし",
+    "description": "YouTube時間制限なしオプション"
+  },
+  "youtubeDisabledNote": {
+    "message": "これらのオプションを設定するには、上のYouTubeブロックを有効にしてください",
+    "description": "YouTubeブロックが無効時の注記"
+  },
+  "youtubePreviewTitle": {
+    "message": "非表示になる要素",
+    "description": "プレビューセクションタイトル"
+  },
+  "shareToX": {
+    "message": "Xでシェア",
+    "description": "Xでシェアボタン"
+  },
+  "downloadImage": {
+    "message": "画像をダウンロード",
+    "description": "画像ダウンロードボタン"
+  },
+  "shareSuccess": {
+    "message": "画像をクリップボードにコピーしました！Xの投稿画面に貼り付けてください。",
+    "description": "シェア成功メッセージ"
+  },
+  "shareError": {
+    "message": "画像のコピーに失敗しました。もう一度お試しください。",
+    "description": "シェアエラーメッセージ"
+  },
+  "downloadSuccess": {
+    "message": "画像をダウンロードしました。",
+    "description": "ダウンロード成功メッセージ"
+  },
+  "passwordProtection": {
+    "message": "パスワード保護",
+    "description": "パスワード保護セクションタイトル"
+  },
+  "passwordProtectionDescription": {
+    "message": "ブロックの無効化やサイトの削除にパスワードを必要とします。家族やパートナーとの約束に最適です。",
+    "description": "パスワード保護の説明"
+  },
+  "passwordProtectionEnabled": {
+    "message": "パスワード保護が有効です",
+    "description": "パスワード保護有効状態"
+  },
+  "passwordProtectionDisabled": {
+    "message": "パスワード保護が無効です",
+    "description": "パスワード保護無効状態"
+  },
+  "passwordProtectionActive": {
+    "message": "これらの操作にはパスワードが必要です",
+    "description": "パスワード保護アクティブ表示"
+  },
+  "setPassword": {
+    "message": "パスワードを設定",
+    "description": "パスワード設定ボタン"
+  },
+  "changePassword": {
+    "message": "パスワードを変更",
+    "description": "パスワード変更ボタン"
+  },
+  "removePassword": {
+    "message": "パスワードを解除",
+    "description": "パスワード解除ボタン"
+  },
+  "newPassword": {
+    "message": "新しいパスワード",
+    "description": "新しいパスワードラベル"
+  },
+  "currentPassword": {
+    "message": "現在のパスワード",
+    "description": "現在のパスワードラベル"
+  },
+  "confirmPassword": {
+    "message": "パスワードの確認",
+    "description": "パスワード確認ラベル"
+  },
+  "enterPassword": {
+    "message": "パスワードを入力",
+    "description": "パスワード入力ラベル"
+  },
+  "passwordPlaceholder": {
+    "message": "パスワードを入力してください",
+    "description": "パスワード入力プレースホルダー"
+  },
+  "currentPasswordPlaceholder": {
+    "message": "現在のパスワードを入力",
+    "description": "現在のパスワードプレースホルダー"
+  },
+  "confirmPasswordPlaceholder": {
+    "message": "パスワードを再入力",
+    "description": "パスワード確認プレースホルダー"
+  },
+  "passwordRequired": {
+    "message": "パスワードが必要です",
+    "description": "パスワード必須タイトル"
+  },
+  "passwordRequiredDescription": {
+    "message": "この操作を続行するにはパスワードを入力してください。",
+    "description": "パスワード必須説明"
+  },
+  "passwordRequiredForUnblock": {
+    "message": "パスワードが必要です",
+    "description": "ブロック解除用パスワード必須タイトル"
+  },
+  "passwordRequiredForUnblockDescription": {
+    "message": "ブロックサイトを削除または無効にするにはパスワードを入力してください。",
+    "description": "ブロック解除用パスワード必須説明"
+  },
+  "passwordRequiredForPause": {
+    "message": "ブロックを一時停止するにはパスワードを入力してください。",
+    "description": "一時停止用パスワード必須説明"
+  },
+  "passwordIncorrect": {
+    "message": "パスワードが正しくありません。再度お試しください。",
+    "description": "パスワード不正エラー"
+  },
+  "passwordVerificationFailed": {
+    "message": "パスワードの確認に失敗しました。再度お試しください。",
+    "description": "パスワード確認失敗エラー"
+  },
+  "verifying": {
+    "message": "確認中...",
+    "description": "確認中テキスト"
+  },
+  "passwordTooShort": {
+    "message": "パスワードは4文字以上で入力してください",
+    "description": "パスワード短すぎエラー"
+  },
+  "passwordTooLong": {
+    "message": "パスワードが長すぎます",
+    "description": "パスワード長すぎエラー"
+  },
+  "passwordMismatch": {
+    "message": "パスワードが一致しません",
+    "description": "パスワード不一致エラー"
+  },
+  "passwordNotSet": {
+    "message": "パスワードが設定されていません",
+    "description": "パスワード未設定エラー"
+  },
+  "currentPasswordIncorrect": {
+    "message": "現在のパスワードが正しくありません",
+    "description": "現在のパスワード不正エラー"
+  },
+  "passwordSetSuccess": {
+    "message": "パスワードを設定しました",
+    "description": "パスワード設定成功メッセージ"
+  },
+  "passwordChangedSuccess": {
+    "message": "パスワードを変更しました",
+    "description": "パスワード変更成功メッセージ"
+  },
+  "passwordRemovedSuccess": {
+    "message": "パスワード保護を解除しました",
+    "description": "パスワード解除成功メッセージ"
+  },
+  "passwordSetFailed": {
+    "message": "パスワードの設定に失敗しました",
+    "description": "パスワード設定失敗エラー"
+  },
+  "passwordChangeFailed": {
+    "message": "パスワードの変更に失敗しました",
+    "description": "パスワード変更失敗エラー"
+  },
+  "passwordRemoveFailed": {
+    "message": "パスワードの解除に失敗しました",
+    "description": "パスワード解除失敗エラー"
+  },
+  "passwordSetInstructions": {
+    "message": "ブロック設定を保護するパスワードを設定します。家族やパートナーと共有して、お互いに責任を持ちましょう。",
+    "description": "パスワード設定の説明"
+  },
+  "passwordRemoveWarning": {
+    "message": "パスワード保護を解除すると、誰でもパスワードなしでブロックを無効にできるようになります。",
+    "description": "パスワード解除の警告"
+  },
+  "analyticsOptInTitle": {
+    "message": "VisionFocusの改善にご協力ください",
+    "description": "アナリティクスオプトインモーダルのタイトル"
+  },
+  "analyticsOptInDescription": {
+    "message": "匿名の使用統計を送信して、アプリの改善にご協力ください。個人情報（ブロックサイト、目標、閲覧履歴）は一切収集されません。",
+    "description": "アナリティクスオプトインモーダルの説明"
+  },
+  "analyticsOptInAllow": {
+    "message": "許可する",
+    "description": "アナリティクスオプトイン許可ボタン"
+  },
+  "analyticsOptInDeny": {
+    "message": "許可しない",
+    "description": "アナリティクスオプトイン拒否ボタン"
+  },
+  "analyticsPrivacyTitle": {
+    "message": "データとプライバシー",
+    "description": "ヘルプタブのプライバシーセクションタイトル"
+  },
+  "analyticsPrivacyDescription": {
+    "message": "匿名の使用統計を管理",
+    "description": "プライバシーセクションの説明"
+  },
+  "analyticsShareStats": {
+    "message": "匿名の使用統計を共有する",
+    "description": "アナリティクストグルのラベル"
+  },
+  "analyticsShareStatsDescription": {
+    "message": "匿名の機能使用データを共有して、VisionFocusの改善にご協力ください。個人情報は一切収集されません。",
+    "description": "アナリティクストグルの説明"
+  },
+  "unblockConfirmTitle": {
+    "message": "ブロック解除の確認",
+    "description": "ブロック解除確認ダイアログタイトル"
+  },
+  "unblockConfirmDescription": {
+    "message": "$DOMAIN$ のブロックを解除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "description": "ブロック解除確認の説明",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "deleteBlockConfirmDescription": {
+    "message": "$DOMAIN$ のブロックを削除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "description": "ブロック削除確認の説明",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "twitter.com"
+      }
+    }
+  },
+  "unblockConfirmHoldButton": {
+    "message": "長押しして確認",
+    "description": "長押しボタンラベル"
+  },
+  "unblockConfirmBlockStyle": {
+    "message": "ブロック方式: $STYLE$",
+    "description": "確認ダイアログのブロック方式表示",
+    "placeholders": {
+      "style": {
+        "content": "$1",
+        "example": "常時ブロック"
+      }
+    }
+  },
+  "scheduleBlockingNotice": {
+    "message": "スケジュール設定中は、設定された時間帯のみブロックが有効になります。スケジュール対象外の時間帯はブロックされません。",
+    "description": "スケジュール設定時に表示される注意書き"
+  },
+  "trackedSites": {
+    "message": "追跡中のサイト",
+    "description": "ブロックリストタブの追跡サイトセクションタイトル"
+  },
+  "trackedSitesCount": {
+    "message": "$COUNT$ サイト追跡中",
+    "description": "追跡中のサイト数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "youtubeTimeLimitReached": {
+    "message": "YouTube の利用時間制限に達しました。休憩しましょう！",
+    "description": "YouTube の利用時間制限を超えた時に表示されるメッセージ"
+  },
+  "youtubeHomeFeedHidden": {
+    "message": "ホームフィードが隠れています",
+    "description": "YouTube のホームフィードが非表示の時に表示されるメッセージ"
+  },
+  "supportTitle": {
+    "message": "開発を支援する",
+    "description": "支援セクションのタイトル"
+  },
+  "supportDescription": {
+    "message": "VisionFocus は全機能を無料で提供しています",
+    "description": "支援セクションの説明"
+  },
+  "supportBody": {
+    "message": "このツールが役に立っていたら、開発の支援をご検討ください。いただいた支援は開発を続けるために使わせていただきます。",
+    "description": "支援セクションの本文"
+  },
+  "supportButtonLabel": {
+    "message": "コーヒーをおごる",
+    "description": "Buy Me a Coffee ボタンのラベル"
+  },
+  "supportPromptBody": {
+    "message": "このレポートが役に立っていたら、開発の支援をご検討ください",
+    "description": "レポート下の支援誘導の本文"
+  },
+  "supportPromptDismiss": {
+    "message": "閉じる",
+    "description": "支援誘導を閉じるボタン"
+  }
+}

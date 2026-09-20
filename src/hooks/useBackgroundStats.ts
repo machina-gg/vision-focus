@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { sendToBackground } from '@plasmohq/messaging';
+import { sendMessage } from '~/lib/messaging';
 
 import { DEFAULT_STATS_POLLING_MS } from '~/constants/intervals';
 
@@ -32,7 +32,7 @@ export function useBackgroundStats(
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await sendToBackground({ name: 'get-stats' });
+        const response = await sendMessage('get-stats');
         setStats(response);
       } catch {
         // Silently handle error - stats will refresh on next interval
