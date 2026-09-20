@@ -153,7 +153,12 @@ export const SELECTORS = {
     preview: '[data-testid="style-preview"]',
     newPresetNameInput: '[data-testid="new-preset-name-input"]',
     newPresetConfirm: '[data-testid="new-preset-confirm"]',
-    newPresetCancel: '[data-testid="new-preset-cancel"]'
+    newPresetCancel: '[data-testid="new-preset-cancel"]',
+    // スタイル削除の確認モーダル（参照しているスケジュールがあるときだけ開く）
+    deletePresetModal: '[role="dialog"]',
+    deletePresetScheduleCount: '[data-testid="delete-preset-schedule-count"]',
+    deletePresetConfirm: '[data-testid="delete-preset-confirm"]',
+    deletePresetCancel: '[data-testid="delete-preset-cancel"]'
   },
 
   // Options - Schedules Tab

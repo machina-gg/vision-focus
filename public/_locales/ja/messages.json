@@ -883,6 +883,20 @@
     "message": "不明なスタイル",
     "description": "削除されたスタイル"
   },
+  "deletePresetLinkedSchedules": {
+    "message": "このスタイルは $COUNT$ 件のスケジュールで使用されています。削除するとスケジュールのスタイル連携が解除されます。",
+    "description": "スタイル削除確認の説明",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "deletePresetScheduleKept": {
+    "message": "スケジュール自体は残り、有効・無効の状態も変わりません。",
+    "description": "スタイル削除時にスケジュールが残ることの補足"
+  },
   "defaultSettings": {
     "message": "デフォルト",
     "description": "デフォルト設定ボタン"

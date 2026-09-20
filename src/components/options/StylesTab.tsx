@@ -6,14 +6,16 @@ import { getBackgroundUrl } from '~/constants/backgrounds';
 import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts';
 import { getFontDefinition } from '~/types/font';
 import { usePresets, useStorageItem } from '~/hooks';
-import { visionItem } from '~/lib/storage';
-import { NewPresetModal } from '~/components/options/modals';
+import { settingsItem, visionItem } from '~/lib/storage';
+import { DeletePresetModal, NewPresetModal } from '~/components/options/modals';
 import { PresetSelector, DisplaySettingsForm } from './styles';
 
 export function StylesTab() {
   const [vision, setVision] = useStorageItem(visionItem);
+  // スタイル削除時にスケジュールの連携を外すため settings も扱う（#333）
+  const [settings, setSettings] = useStorageItem(settingsItem);
 
-  const presets = usePresets({ vision, setVision });
+  const presets = usePresets({ vision, setVision, settings, setSettings });
 
   const { draftDisplaySettings, selectedPresetId } = presets;
   const isEditing = !!selectedPresetId;
@@ -123,6 +125,14 @@ export function StylesTab() {
         presetName={presets.presetName}
         onPresetNameChange={presets.setPresetName}
         onCreate={presets.handleCreatePreset}
+      />
+
+      {/* Delete Preset Confirmation Modal（参照しているスケジュールがあるときだけ開く） */}
+      <DeletePresetModal
+        isOpen={presets.deleteTargetPresetId !== null}
+        onClose={presets.handleCancelDeletePreset}
+        onConfirm={presets.handleConfirmDeletePreset}
+        scheduleCount={presets.deleteTargetScheduleCount}
       />
     </div>
   );
