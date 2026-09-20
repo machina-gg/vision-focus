@@ -1537,6 +1537,10 @@
     "message": "Invalid settings file format. Please select a VisionFocus settings file.",
     "description": "Import error: invalid format"
   },
+  "importErrorSaveFailed": {
+    "message": "Could not save the imported settings. Please try again.",
+    "description": "Import error: failed to save"
+  },
   "importWarningNewerVersion": {
     "message": "This file was exported from a newer version of VisionFocus. Some settings may not be fully compatible.",
     "description": "Import warning: newer version"

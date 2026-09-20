@@ -49,7 +49,7 @@ stateDiagram-v2
     [*] --> Unknown: ドメイン初期状態
 
     Unknown --> NotInBlocklist: ブロックリストに未登録
-    Unknown --> InBlocklist: add-block で追加
+    Unknown --> InBlocklist: add-block で追加 / import-settings で取り込み
 
     state InBlocklist {
         [*] --> Enabled
@@ -82,7 +82,7 @@ stateDiagram-v2
     }
 
     InBlocklist --> NotInBlocklist: remove-block で削除
-    NotInBlocklist --> InBlocklist: add-block で追加
+    NotInBlocklist --> InBlocklist: add-block で追加 / import-settings で取り込み
 
     NotInBlocklist --> [*]: 許可（常に）
 ```

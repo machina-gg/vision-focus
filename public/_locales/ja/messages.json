@@ -1537,6 +1537,10 @@
     "message": "無効な設定ファイル形式です。VisionFocusの設定ファイルを選択してください。",
     "description": "インポートエラー: 無効な形式"
   },
+  "importErrorSaveFailed": {
+    "message": "インポートした設定を保存できませんでした。もう一度お試しください。",
+    "description": "インポートエラー: 保存に失敗"
+  },
   "importWarningNewerVersion": {
     "message": "このファイルはより新しいバージョンのVisionFocusからエクスポートされました。一部の設定が完全に互換性がない可能性があります。",
     "description": "インポート警告: より新しいバージョン"
