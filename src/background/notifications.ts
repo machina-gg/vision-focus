@@ -45,6 +45,18 @@ function isNotificationsApiAvailable(): boolean {
   return !!chrome?.notifications?.create;
 }
 
+// manifest から引けなかったときに使う通知アイコンのパス
+const FALLBACK_NOTIFICATION_ICON_PATH = 'icon/128.png';
+
+// 通知アイコンの URL を返す。パスの SSOT は manifest の icons（wxt.config.ts が生成する）で、
+// ビルド出力の配置が変わっても追随する（machina-gg/vision-focus#400）
+function getNotificationIconUrl(): string {
+  const iconPath =
+    chrome.runtime.getManifest?.()?.icons?.['128'] ??
+    FALLBACK_NOTIFICATION_ICON_PATH;
+  return chrome.runtime.getURL(iconPath);
+}
+
 // Show a time limit notification
 async function showTimeLimitNotification(
   domain: string,
@@ -66,7 +78,7 @@ async function showTimeLimitNotification(
 
   await chrome.notifications.create(`time-limit-${domain}-${Date.now()}`, {
     type: 'basic',
-    iconUrl: chrome.runtime.getURL('assets/icon-128.png'),
+    iconUrl: getNotificationIconUrl(),
     title: getMessage('notificationTimeLimitTitle'),
     message: getMessage('notificationTimeLimitMessage', [
       domain,
