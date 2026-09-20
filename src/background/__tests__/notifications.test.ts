@@ -50,19 +50,29 @@ import {
 } from '~/types/storage';
 import type { AppSettings } from '~/types/storage';
 
-/** 通知 API を差し替えた chrome モックを構築する */
-function setupChrome(withNotifications = true) {
+/**
+ * 通知 API を差し替えた chrome モックを構築する。
+ * manifest は通知アイコンのパスの参照元なので、テストごとに差し替えられるようにする
+ */
+function setupChrome(
+  withNotifications = true,
+  manifest: { icons?: Record<string, string> } = {
+    icons: { '128': 'icon/128.png' }
+  }
+) {
   const create = vi.fn().mockResolvedValue(undefined);
+  const getURL = vi.fn((p: string) => `chrome-extension://test/${p}`);
 
   (globalThis as Record<string, unknown>).chrome = {
     runtime: {
       id: 'test-extension-id',
-      getURL: vi.fn((p: string) => `chrome-extension://test/${p}`)
+      getURL,
+      getManifest: vi.fn(() => manifest)
     },
     ...(withNotifications ? { notifications: { create } } : {})
   };
 
-  return { create };
+  return { create, getURL };
 }
 
 const blockItem = (limitSeconds = 1800) => ({
@@ -295,6 +305,76 @@ describe('checkYouTubeTimeLimitNotification', () => {
     await checkYouTubeTimeLimitNotification();
 
     expect(getYouTubeRemainingTime).not.toHaveBeenCalled();
+  });
+});
+
+describe('通知アイコン', () => {
+  /** YouTube の時間制限を有効にした設定を返す */
+  const youtubeSettings = () =>
+    settings({
+      youtube: {
+        ...DEFAULT_YOUTUBE_SETTINGS,
+        enabled: true,
+        blockAccess: true,
+        timeLimit: { type: 'daily', limitSeconds: 3600 }
+      }
+    });
+
+  it('manifest の icons["128"] を通知アイコンに使う', async () => {
+    await checkTimeLimitNotification('example.com');
+
+    expect(harness.getURL).toHaveBeenCalledWith('icon/128.png');
+    expect(harness.create).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        iconUrl: 'chrome-extension://test/icon/128.png'
+      })
+    );
+  });
+
+  it('manifest の icons["128"] が別のパスならそれに追随する', async () => {
+    harness = setupChrome(true, { icons: { '128': 'images/app-128.png' } });
+
+    await checkTimeLimitNotification('example.com');
+
+    expect(harness.getURL).toHaveBeenCalledWith('images/app-128.png');
+    expect(harness.create).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        iconUrl: 'chrome-extension://test/images/app-128.png'
+      })
+    );
+  });
+
+  it.each([
+    ['icons が無い', {}],
+    ['icons に 128 が無い', { icons: { '48': 'icon/48.png' } }]
+  ])('manifest の %s なら icon/128.png にフォールバックする', async (_l, m) => {
+    harness = setupChrome(true, m);
+
+    await checkTimeLimitNotification('example.com');
+
+    expect(harness.getURL).toHaveBeenCalledWith('icon/128.png');
+    expect(harness.create).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        iconUrl: 'chrome-extension://test/icon/128.png'
+      })
+    );
+  });
+
+  it('YouTube の通知も同じ解決結果のアイコンを使う', async () => {
+    harness = setupChrome(true, { icons: { '128': 'images/app-128.png' } });
+    vi.mocked(getSettings).mockResolvedValue(youtubeSettings());
+
+    await checkYouTubeTimeLimitNotification();
+
+    expect(harness.create).toHaveBeenCalledWith(
+      expect.stringContaining('time-limit-youtube.com-'),
+      expect.objectContaining({
+        iconUrl: 'chrome-extension://test/images/app-128.png'
+      })
+    );
   });
 });
 
