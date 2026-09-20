@@ -179,7 +179,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 | BLOCK-006 | 無効化したブロックアイテムはブロックされない                | P1     | -          |
 | BLOCK-007 | 有効化したブロックアイテムがブロックされる                  | P1     | -          |
 | BLOCK-008 | declarativeNetRequest でリダイレクトが実行される            | P0     | -          |
-| BLOCK-009 | ブロック時に lastBlockedDomain がポップアップ用に記録される | P2     | -          |
+| BLOCK-009 | ブロック時にリダイレクト先でブロック元ドメインが表示される  | P2     | -          |
 | BLOCK-010 | ブロック回数がカウントされる                                | P1     | -          |
 
 ### Time Limit 機能
