@@ -1,9 +1,23 @@
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { EXTENSION_URLS } from './constants';
 
 /**
  * 拡張機能の各ページを開くヘルパー関数
  */
+
+/**
+ * ある要素より後ろにある最初のトグル（`role="switch"`）を指す
+ *
+ * `Toggle`（src/components/ui/Toggle）はラベルを button の外の兄弟要素に
+ * 描画するため、`[role="switch"]` を `has: text=…` で絞り込んでも構造上
+ * 一致しない（絞り込みは常に空になり、テストが何も検査しなくなる）。
+ * data-testid を持たないトグルは、見出しやラベルからドキュメント順でたどる。
+ *
+ * @param anchor - 見出しなど、トグルの直前にある要素
+ */
+export function toggleAfter(anchor: Locator): Locator {
+  return anchor.locator('xpath=following::button[@role="switch"][1]');
+}
 
 /**
  * Popup ページを開く

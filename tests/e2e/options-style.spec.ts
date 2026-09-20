@@ -6,7 +6,8 @@ import {
   setStorageData,
   makeDisplaySettings,
   makePreset,
-  SELECTORS
+  SELECTORS,
+  UI_TEXT
 } from './helpers';
 
 /**
@@ -391,20 +392,25 @@ test.describe('Options - Style Tab', () => {
     const preview = page.locator(SELECTORS.styles.preview);
     await expect(preview).toBeVisible();
 
-    // フォントサイズを変更
-    const fontSizeSelect = page.locator('select').filter({
-      has: page.locator('option:has-text("Medium"), option:has-text("中")')
-    });
-    if (await fontSizeSelect.isVisible()) {
-      await fontSizeSelect.selectOption({ index: 1 });
+    // フォントサイズはボタン群で選ぶ（select ではない）。
+    // 文言はコード内の定数で i18n を通らない
+    // （src/components/features/FontPicker/FontPicker.tsx の FONT_SIZES）
+    const previewText = preview.locator('p').first();
+    const sizeButtons = page.locator(SELECTORS.styles.fontSizeButton);
 
-      // プレビュー内のテキストのスタイルが変更される
-      const previewText = preview.locator('p').first();
-      const fontSize = await previewText.evaluate(
-        (el) => window.getComputedStyle(el).fontSize
-      );
-      expect(fontSize).toBeTruthy();
-    }
+    // 既定のプリセットは lg（36px）で作られている
+    await expect(previewText).toHaveCSS('font-size', '36px');
+
+    // Small を選ぶとプレビューが 24px になる
+    // （src/constants/fonts.ts の FONT_SIZE_PX）
+    await sizeButtons.filter({ hasText: UI_TEXT.font.sizeSmall }).click();
+    await expect(previewText).toHaveCSS('font-size', '24px');
+
+    // Large に戻すと 36px に戻る（一方向の変化だけを見て終わらせない）
+    await sizeButtons
+      .filter({ hasText: new RegExp(`^${UI_TEXT.font.sizeLarge}$`) })
+      .click();
+    await expect(previewText).toHaveCSS('font-size', '36px');
 
     await page.close();
   });

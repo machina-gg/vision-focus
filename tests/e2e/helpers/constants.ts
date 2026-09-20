@@ -219,6 +219,41 @@ export const SELECTORS = {
   }
 };
 
+/**
+ * 画面に出る文言（英語）
+ *
+ * data-testid を持たない要素は文言で指すしかない。文言は実装（`getMessage` が
+ * 引く `public/_locales/en/messages.json`、FontPicker はコード内の定数）と
+ * 一致させる必要があるため、テストごとに直書きせずここへ集める。
+ * テストは既定のブラウザ言語で走るので、拡張機能は default_locale の en で表示される。
+ */
+export const UI_TEXT = {
+  common: {
+    save: 'Save'
+  },
+  timeLimit: {
+    // 時間制限の編集欄の開閉ボタンは、未設定なら現在の設定として
+    // 「Always Blocked」を表示する（"Time Limit" という文言のボタンは無い）
+    alwaysBlocked: 'Always Blocked'
+  },
+  youtube: {
+    enable: 'Enable YouTube blocking',
+    blockAccess: 'Block access to YouTube',
+    hideShorts: 'Hide Shorts',
+    hideRecommendations: 'Hide Recommendations',
+    hideComments: 'Hide Comments',
+    timeLimitSettings: 'Time Limit Settings'
+  },
+  notifications: {
+    heading: 'Notification Settings',
+    minutesLabel: 'Notify before limit'
+  },
+  font: {
+    sizeSmall: 'Small',
+    sizeLarge: 'Large'
+  }
+};
+
 // テストデータ
 export const TEST_DATA = {
   goal: {

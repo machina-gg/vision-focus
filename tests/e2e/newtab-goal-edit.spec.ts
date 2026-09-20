@@ -2,9 +2,15 @@ import { test, expect } from './fixtures/extension';
 import {
   openNewTab,
   setupTestStorage,
+  setStorageData,
+  getStorageData,
   clearStorage,
+  makeDisplaySettings,
+  makePreset,
   SELECTORS
 } from './helpers';
+
+import type { VisionSettings } from '~/types/storage';
 
 /**
  * E2Eテスト: NewTab 画面 - 目標編集
@@ -21,6 +27,16 @@ test.describe('NewTab 画面 - 目標編集', () => {
       withGoal: true,
       withAnalyticsOptIn: true
     });
+
+    // 編集ボタンは「プリセットを適用していない」ときだけ描画される
+    // （src/entrypoints/newtab/App.tsx の canEdit={!vision?.activePresetId}）。
+    // setupTestStorage は activePresetId: 'default' を書くため、
+    // そのままでは編集ボタンが存在せず目標編集を一度も操作できない
+    await setStorageData(page, 'vision', {
+      defaultSettings: makeDisplaySettings(),
+      presets: [makePreset('default', 'Default')],
+      activePresetId: null
+    });
     await page.close();
   });
 
@@ -30,27 +46,23 @@ test.describe('NewTab 画面 - 目標編集', () => {
   }) => {
     const page = await openNewTab(context, extensionId);
 
-    // 目標テキストを探す（編集可能な場合）
+    // 目標テキストを探す
     const goalText = page.locator(SELECTORS.newtab.goalText);
     await expect(goalText).toBeVisible();
 
     // 編集ボタンが表示されるまでホバー
     await goalText.hover();
 
-    // 編集ボタンを探してクリック
-    const editButton = page.locator(SELECTORS.newtab.goalEditButton).first();
+    // 編集ボタンをクリックすると編集モードに入る
+    await page.locator(SELECTORS.newtab.goalEditButton).click();
 
-    // 編集ボタンが存在する場合のみクリック（プリセット使用時は編集不可）
-    const editButtonCount = await editButton.count();
-    if (editButtonCount > 0) {
-      await editButton.click();
+    // 入力フィールドと保存・キャンセルのボタンが表示される
+    await expect(page.locator(SELECTORS.newtab.goalInput)).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.goalSaveButton)).toBeVisible();
+    await expect(page.locator(SELECTORS.newtab.goalCancelButton)).toBeVisible();
 
-      // 入力フィールドが表示される
-      const input = page.locator(
-        'input[placeholder*="goal" i], input[placeholder*="目標" i]'
-      );
-      await expect(input).toBeVisible();
-    }
+    // 編集中は見出しが入力フィールドに置き換わる
+    await expect(page.locator(SELECTORS.newtab.goalText)).toHaveCount(0);
 
     await page.close();
   });
@@ -66,26 +78,29 @@ test.describe('NewTab 画面 - 目標編集', () => {
     await goalText.hover();
 
     // 編集ボタンをクリック
-    const editButton = page.locator(SELECTORS.newtab.goalEditButton).first();
-    const editButtonCount = await editButton.count();
+    await page.locator(SELECTORS.newtab.goalEditButton).click();
 
-    if (editButtonCount > 0) {
-      await editButton.click();
+    // 入力フィールドに新しいテキストを入力
+    const input = page.locator(SELECTORS.newtab.goalInput);
+    await input.fill('新しい目標テキスト');
 
-      // 入力フィールドに新しいテキストを入力
-      const input = page.locator(SELECTORS.newtab.goalInput);
-      await input.fill('新しい目標テキスト');
+    // Enter キーで保存
+    await input.press('Enter');
 
-      // Enter キーで保存
-      await input.press('Enter');
+    // 編集モードが終了し、新しいテキストが表示される
+    await expect(page.locator(SELECTORS.newtab.goalInput)).toHaveCount(0);
+    await expect(page.locator(SELECTORS.newtab.goalText)).toHaveText(
+      '新しい目標テキスト'
+    );
 
-      // 編集モードが終了し、新しいテキストが表示される
-      await expect(
-        page
-          .locator(SELECTORS.newtab.goalText)
-          .filter({ hasText: '新しい目標テキスト' })
-      ).toBeVisible();
-    }
+    // 保存先は vision.defaultSettings.goalText
+    // （src/entrypoints/newtab/App.tsx の handleSaveGoal）
+    await expect
+      .poll(async () => {
+        const vision = await getStorageData<VisionSettings>(page, 'vision');
+        return vision?.defaultSettings?.goalText;
+      })
+      .toBe('新しい目標テキスト');
 
     await page.close();
   });

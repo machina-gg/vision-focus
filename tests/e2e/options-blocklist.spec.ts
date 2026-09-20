@@ -4,10 +4,14 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  makeSettings,
+  makeYouTubeSettings,
   TEST_DATA,
   SELECTORS,
+  UI_TEXT,
   getStorageData,
-  holdUnblockConfirm
+  holdUnblockConfirm,
+  toggleAfter
 } from './helpers';
 
 /**
@@ -204,20 +208,34 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // Time Limit 設定ボタンまたはセクションを探す
-    const timeLimitButton = page
-      .locator('button, a')
-      .filter({ hasText: /Time Limit|時間制限|Set limit/i })
-      .first();
+    const item = page.locator(SELECTORS.options.listItem).first();
 
-    // ボタンが存在する場合はクリック
-    if (await timeLimitButton.isVisible()) {
-      await timeLimitButton.click();
+    // 時間制限の編集欄は折りたたまれている。開閉ボタンの文言は現在の設定
+    // （未設定なら「Always Blocked」）で、"Time Limit" という文言のボタンは無い
+    // （src/components/options/blocklist/TimeLimitEditor.tsx）
+    await item
+      .getByRole('button', { name: UI_TEXT.timeLimit.alwaysBlocked })
+      .click();
 
-      // Time Limit 設定 UI が表示される
-      const timeLimitUI = page.locator('text=/Daily|毎日/i');
-      await expect(timeLimitUI.first()).toBeVisible();
-    }
+    // 種別を「毎日の上限」に変えると、制限時間の選択肢が現れる
+    const selects = item.locator('select');
+    await selects.first().selectOption('daily');
+    await selects.nth(1).selectOption('5');
+
+    // 保存ボタンを押すまでストレージには書かれない
+    await item.getByRole('button', { name: UI_TEXT.common.save }).click();
+
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{
+          blockList?: { timeLimit?: unknown }[];
+        }>(page, 'settings');
+        return settings?.blockList?.[0]?.timeLimit;
+      })
+      .toEqual({ type: 'daily', limitSeconds: 5 * 60 });
+
+    // 開閉ボタンの表示も保存済みの値に追従する
+    await expect(item.getByRole('button', { name: /5 min/ })).toBeVisible();
 
     await page.close();
   });
@@ -352,31 +370,71 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     context,
     extensionId
   }) => {
+    // YouTube 設定はフィールドが欠けているとスキーマ検証に落ち、保存されない
+    // （UpdateYouTubeSettingsBodySchema の hideHomeFeed は必須）。
+    // 完全な形を書く makeYouTubeSettings を使う
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'settings',
+      makeSettings({ youtube: makeYouTubeSettings({ enabled: false }) })
+    );
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // YouTube セクションまでスクロール
-    const youtubeSection = page.locator('text=/YouTube/i').first();
-    await youtubeSection.scrollIntoViewIfNeeded();
+    // 各トグルはラベルを button の外に描画するため、見出しからたどる
+    const masterToggle = toggleAfter(
+      page.getByRole('heading', { name: UI_TEXT.youtube.enable })
+    );
+    const shortsToggle = toggleAfter(
+      page.getByRole('heading', { name: UI_TEXT.youtube.hideShorts })
+    );
+    const recommendationsToggle = toggleAfter(
+      page.getByRole('heading', { name: UI_TEXT.youtube.hideRecommendations })
+    );
+    const commentsToggle = toggleAfter(
+      page.getByRole('heading', { name: UI_TEXT.youtube.hideComments })
+    );
 
-    // YouTube 有効化トグルを探す
-    const youtubeToggle = page
-      .locator('[role="switch"]')
-      .filter({ has: page.locator('text=/YouTube|Enable/i') })
-      .first();
+    // 個別のトグルは YouTube ブロックが無効な間は操作できない
+    await expect(masterToggle).toHaveAttribute('aria-checked', 'false');
+    await expect(shortsToggle).toBeDisabled();
 
-    // トグルが存在する場合はクリック
-    if (await youtubeToggle.isVisible()) {
-      await youtubeToggle.click();
+    await masterToggle.click();
+    await expect(masterToggle).toHaveAttribute('aria-checked', 'true');
+    await expect(shortsToggle).toBeEnabled();
 
-      // Shorts/Recommendations/Comments のトグルが表示される
-      const shortsToggle = page.locator('text=/Shorts/i');
-      const recsToggle = page.locator('text=/Recommendations|おすすめ/i');
-      const commentsToggle = page.locator('text=/Comments|コメント/i');
-
-      await expect(shortsToggle.first()).toBeVisible();
-      await expect(recsToggle.first()).toBeVisible();
-      await expect(commentsToggle.first()).toBeVisible();
+    // Shorts / Recommendations / Comments を順に有効化する。
+    // 保存は 1 件ずつ background 経由で行われるため、反映を待ってから次へ進む
+    for (const toggle of [
+      shortsToggle,
+      recommendationsToggle,
+      commentsToggle
+    ]) {
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
     }
+
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{
+          youtube?: Record<string, unknown>;
+        }>(page, 'settings');
+        const youtube = settings?.youtube;
+        return {
+          enabled: youtube?.enabled,
+          hideShorts: youtube?.hideShorts,
+          hideRecommendations: youtube?.hideRecommendations,
+          hideComments: youtube?.hideComments
+        };
+      })
+      .toEqual({
+        enabled: true,
+        hideShorts: true,
+        hideRecommendations: true,
+        hideComments: true
+      });
 
     await page.close();
   });
@@ -385,56 +443,108 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     context,
     extensionId
   }) => {
+    // Time Limit の設定欄は「YouTube ブロック有効 + アクセスブロック有効」の
+    // ときだけ描画される（src/components/options/blocklist/YouTubeSection.tsx）
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'settings',
+      makeSettings({
+        youtube: makeYouTubeSettings({ enabled: true, blockAccess: true })
+      })
+    );
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // YouTube セクションまでスクロール
-    const youtubeSection = page.locator('text=/YouTube/i').first();
-    await youtubeSection.scrollIntoViewIfNeeded();
+    const timeLimitHeading = page.getByRole('heading', {
+      name: UI_TEXT.youtube.timeLimitSettings
+    });
+    await expect(timeLimitHeading).toBeVisible();
 
-    // YouTube を有効化
-    const youtubeToggle = page
-      .locator('[role="switch"]')
-      .filter({ has: page.locator('text=/YouTube|Enable/i') })
-      .first();
-    if (await youtubeToggle.isVisible()) {
-      const isEnabled = await youtubeToggle.getAttribute('aria-checked');
-      if (isEnabled === 'false') {
-        await youtubeToggle.click();
-      }
+    // 見出しの後ろにある 2 つの select が種別と制限時間
+    await timeLimitHeading
+      .locator('xpath=following::select[1]')
+      .selectOption('daily');
+    await timeLimitHeading
+      .locator('xpath=following::select[2]')
+      .selectOption('15');
 
-      // Time Limit 設定が表示される
-      const timeLimitSection = page.locator('text=/Time Limit|時間制限/i');
-      await expect(timeLimitSection.first()).toBeVisible();
-    }
+    // 保存ボタンを押すまでストレージには書かれない
+    await timeLimitHeading
+      .locator('xpath=following::button[normalize-space(.)="Save"][1]')
+      .click();
+
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{
+          youtube?: { timeLimit?: unknown };
+        }>(page, 'settings');
+        return settings?.youtube?.timeLimit;
+      })
+      .toEqual({ type: 'daily', limitSeconds: 15 * 60 });
 
     await page.close();
   });
 
   test('OPT-B13: 通知設定を変更できる', async ({ context, extensionId }) => {
+    // 通知セクションは時間制限付きのサイトが 1 件以上ないと描画されない
+    // （NotificationSettingsSection は hasTimeLimitSites が false なら null を返す）
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'settings',
+      makeSettings({
+        blockList: [
+          {
+            id: '1',
+            domain: 'example.com',
+            isWildcard: false,
+            createdAt: new Date().toISOString(),
+            enabled: true,
+            timeLimit: { type: 'daily', limitSeconds: 30 * 60 }
+          }
+        ],
+        notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 }
+      })
+    );
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'blocklist');
 
-    // 通知設定セクションまでスクロール
-    const notificationSection = page.locator('text=/Notification|通知/i');
+    const heading = page.getByRole('heading', {
+      name: UI_TEXT.notifications.heading
+    });
+    await expect(heading).toBeVisible();
 
-    // セクションが存在する場合は表示を確認
-    if (await notificationSection.first().isVisible()) {
-      await notificationSection.first().scrollIntoViewIfNeeded();
+    // 通知のタイミングを変更する
+    await heading.locator('xpath=following::select[1]').selectOption('10');
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{
+          notifications?: { timeLimitMinutes?: number };
+        }>(page, 'settings');
+        return settings?.notifications?.timeLimitMinutes;
+      })
+      .toBe(10);
 
-      // 通知トグルが表示される
-      const notificationToggle = page
-        .locator('[role="switch"]')
-        .filter({ has: page.locator('text=/Notification|Enable/i') })
-        .first();
-      await expect(notificationToggle).toBeVisible();
+    // 通知を切ると、タイミングの選択欄も消える
+    const toggle = toggleAfter(heading);
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(
+      page.getByText(UI_TEXT.notifications.minutesLabel)
+    ).toHaveCount(0);
 
-      // トグルをクリック
-      const isEnabled = await notificationToggle.getAttribute('aria-checked');
-      await notificationToggle.click();
-
-      // トグル状態が変更される
-      const newState = await notificationToggle.getAttribute('aria-checked');
-      expect(newState).not.toBe(isEnabled);
-    }
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData<{
+          notifications?: { timeLimitEnabled?: boolean };
+        }>(page, 'settings');
+        return settings?.notifications?.timeLimitEnabled;
+      })
+      .toBe(false);
 
     await page.close();
   });
