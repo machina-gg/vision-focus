@@ -13,7 +13,7 @@ flowchart TD
     Start["URL アクセス"] --> A{"グローバル一時停止？<br/>settings.paused"}
 
     A -->|Yes| Unblocked["✅ 許可"]
-    A -->|No| B{"ブロックリストに存在？<br/>findBlockItemForDomain()"}
+    A -->|No| B{"ブロックリストに存在？<br/>findMatchingBlockItem()"}
 
     B -->|No| YT{"YouTube のアクセスブロック？<br/>getYouTubeBlockItem()"}
     B -->|Yes| C{"サイト別ブロック有効？<br/>blockItem.enabled"}
@@ -41,6 +41,11 @@ flowchart TD
     K -->|Yes| TimeLimitExceeded["🚫 ブロック<br/>reason: time_limit_exceeded"]
     K -->|No| Unblocked
 ```
+
+「ブロックリスト → YouTube の仮想ブロック項目」の 2 段の照合は
+`findMatchingBlockItem()` に閉じている。判定（`getBlockState()`）と
+記録（`shouldTrackBlockForDomain()`）は必ずこの関数を通る。片方だけが優先順位を
+持っていると、ブロックはされるのに記録されないドメインが生まれる。
 
 ## 状態遷移図
 
@@ -129,6 +134,38 @@ YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem(
   `enabled` なら `blockAccess` の値に関わらず適用される。制限を併用していると上限までは
   YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`。#422）
 
+## ブロックの記録とブロック画面
+
+ブロックが成立すると、ブロック画面（`newtab.html`）へリダイレクトし、
+`recordBlockedDomain()` が 3 つの記録を残す。
+
+| 記録                       | 保存場所                    | 使い道                                 |
+| -------------------------- | --------------------------- | -------------------------------------- |
+| サイト別ブロック回数       | `analytics.siteBlockCounts` | ブロック画面の「〜回ブロックしました」 |
+| 最後にブロックしたドメイン | `chrome.storage.session`    | ブロック画面の帯に出すドメイン名       |
+| 当日のブロック回数         | `analytics.dailyStats`      | 統計                                   |
+
+リダイレクトが起きる経路は 2 つあり、**どちらも同じ記録を残す**。
+
+| 経路                                   | 何が引き金か                         | 記録の呼び出し元                                  |
+| -------------------------------------- | ------------------------------------ | ------------------------------------------------- |
+| `declarativeNetRequest` のリダイレクト | ブロック対象への新しい遷移           | `listeners/navigationTracking.ts`（遷移イベント） |
+| `chrome.tabs.update` による差し替え    | 設定変更で既に開いているタブを飛ばす | `blocker.ts` の `blockExistingTabs()`             |
+
+- 後者は元ドメインの `webNavigation.onBeforeNavigate` を起こさないため、
+  記録を遷移イベント側だけに置くと記録が残らず、帯が出ない
+- 記録はリダイレクトより先に行う（ブロック画面が読み出す時点で値が無いと帯が出ない）
+
+### `newtab.html` は web accessible でなければならない
+
+`declarativeNetRequest` のリダイレクト先は、公開リソース
+（`manifest.web_accessible_resources`）でなければ他サイトからの遷移で拒否される。
+宣言が無いと、検索結果や SNS のリンクから踏んだときだけ `ERR_BLOCKED_BY_CLIENT` に
+なり、ブロック画面自体が表示されない（アドレスバーへの直打ちはブラウザ発の遷移なので通る）。
+宣言は `wxt.config.ts` にあり、`scripts/__tests__/wxt-config-manifest.test.ts` が固定している。
+
+出典: [declarativeNetRequest](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest)
+
 ## リセットタイミング
 
 ### 日次リセット（Daily）
@@ -157,11 +194,14 @@ flowchart LR
 
 ## 関連ファイル
 
-| ファイル                                    | 責務                             |
-| ------------------------------------------- | -------------------------------- |
-| `src/background/blocker.ts`                 | メインのブロック判定、ルール更新 |
-| `src/background/time-limit.ts`              | 時間制限の判定と記録             |
-| `src/background/notifications.ts`           | 通知判定と送信                   |
-| `src/background/listeners/alarmHandlers.ts` | アラームによるリセット処理       |
-| `src/lib/blockService.ts`                   | ブロック状態の一元管理（新規）   |
-| `src/lib/youtubeBlockService.ts`            | YouTube の使用時間記録と超過判定 |
+| ファイル                                         | 責務                                 |
+| ------------------------------------------------ | ------------------------------------ |
+| `src/background/blocker.ts`                      | メインのブロック判定、ルール更新     |
+| `src/background/time-limit.ts`                   | 時間制限の判定と記録                 |
+| `src/background/notifications.ts`                | 通知判定と送信                       |
+| `src/background/listeners/alarmHandlers.ts`      | アラームによるリセット処理           |
+| `src/lib/blockService.ts`                        | ブロック状態の一元管理               |
+| `src/lib/blockRecordService.ts`                  | ブロック成立時の記録の一元管理       |
+| `src/lib/youtubeBlockService.ts`                 | YouTube の使用時間記録と超過判定     |
+| `src/background/listeners/navigationTracking.ts` | 遷移イベントからの記録               |
+| `wxt.config.ts`                                  | manifest（リダイレクト先の公開宣言） |

@@ -14,14 +14,23 @@ vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   setSettings: vi.fn(),
   getAnalytics: vi.fn(),
-  setAnalytics: vi.fn()
+  setAnalytics: vi.fn(),
+  // blockExistingTabs はリダイレクト前にブロックを記録する（#351）
+  incrementSiteBlockCount: vi.fn(),
+  setLastBlockedDomain: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
 
-import { getSettings, setSettings, getAnalytics } from '~/lib/storage';
+import {
+  getSettings,
+  setSettings,
+  getAnalytics,
+  incrementSiteBlockCount,
+  setLastBlockedDomain
+} from '~/lib/storage';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
 import { invoke } from './handlers/helpers';
 import { getTodayKey } from '~/lib/time';
@@ -115,6 +124,24 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     expect(chromeMock.tabs.update).toHaveBeenCalledWith(YOUTUBE_TAB.id, {
       url: `${NEWTAB_URL}?reason=always_blocked`
     });
+  });
+
+  it('置き換えたタブのブロックを記録する（ブロック画面の帯の表示元）', async () => {
+    // 置き換え経路では元ドメインの webNavigation イベントが発生しないため、
+    // ここで記録しないと帯に出す「最後にブロックしたドメイン」が残らない（#351）
+    await turnOnBlockAccess();
+
+    expect(setLastBlockedDomain).toHaveBeenCalledWith('www.youtube.com');
+    expect(incrementSiteBlockCount).toHaveBeenCalledWith('www.youtube.com');
+  });
+
+  it('置き換えないタブのブロックは記録しない', async () => {
+    givenYouTubeUsage(30);
+
+    await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
+
+    expect(setLastBlockedDomain).not.toHaveBeenCalled();
+    expect(incrementSiteBlockCount).not.toHaveBeenCalled();
   });
 
   it('YouTube 以外のタブは置き換えない', async () => {
