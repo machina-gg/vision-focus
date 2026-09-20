@@ -42,15 +42,16 @@
 
 ## ドキュメント構成
 
-| ドキュメント       | 内容                         | SSOT |
-| ------------------ | ---------------------------- | ---- |
-| docs/PRD.md        | 機能要件・制約               | ✓    |
-| docs/DESIGN.md     | 技術スタック・アーキテクチャ | ✓    |
-| docs/SCREEN.md     | 画面設計                     | ✓    |
-| docs/COMPONENT.md  | コンポーネント設計           | ✓    |
-| docs/DATA_MODEL.md | データモデル                 | ✓    |
-| docs/TEST_CASES.md | E2Eテストケース              |      |
-| GitHub Issues      | 実装状況                     | ✓    |
+| ドキュメント              | 内容                         | SSOT |
+| ------------------------- | ---------------------------- | ---- |
+| docs/PRD.md               | 機能要件・制約               | ✓    |
+| docs/DESIGN.md            | 技術スタック・アーキテクチャ | ✓    |
+| docs/SCREEN.md            | 画面設計                     | ✓    |
+| docs/COMPONENT.md         | コンポーネント設計           | ✓    |
+| docs/DATA_MODEL.md        | データモデル                 | ✓    |
+| docs/TEST_CASES.md        | E2Eテストケース              |      |
+| docs/COMPONENT_TESTING.md | コンポーネントテスト方針     | ✓    |
+| GitHub Issues             | 実装状況                     | ✓    |
 
 ## よく使う npm コマンド
 
