@@ -158,6 +158,8 @@ function setupChrome() {
     },
     windows: {
       WINDOW_ID_NONE: -1,
+      // ブラウザが前面にある状態（この前提でないと常時計測が始まらない）
+      getLastFocused: vi.fn().mockResolvedValue({ id: 1, focused: true }),
       onFocusChanged: { addListener: vi.fn(), removeListener: vi.fn() }
     }
   };

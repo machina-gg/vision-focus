@@ -10,10 +10,11 @@ let lastUpdateTime: number = Date.now();
 let trackingInterval: ReturnType<typeof setInterval> | null = null;
 
 // Start tracking
+// ⚠ service worker が起きるたびに呼ばれる（src/background/init.ts）ので、
+// 何度呼ばれてもタイマーとリスナーが 1 組だけになるよう、先に今のぶんを畳む。
+// Chrome が同一参照のリスナーを重複登録しないかどうかに依存しない（#440）
 export function startTracking(): void {
-  if (trackingInterval) {
-    clearInterval(trackingInterval);
-  }
+  stopTracking();
 
   // 一定間隔で、前回の書き出しからの経過時間をまとめて記録する
   trackingInterval = setInterval(updateTracking, TRACKING_UPDATE_INTERVAL_MS);
@@ -42,6 +43,18 @@ export function stopTracking(): void {
 // Initialize with current active tab
 async function initializeCurrentTab(): Promise<void> {
   try {
+    // ⚠ ブラウザが前面にあるときだけ計測対象にする。
+    // service worker が起きるたびにここを通るため、これを見ないと
+    // 他アプリを使っている最中に起こされたときに、見ていないサイトの
+    // 時間が加算される（#440）
+    const lastFocused = await chrome.windows.getLastFocused();
+    if (!lastFocused.focused) {
+      // 前面でない間は計測しない（古いドメインを残すと、次の書き出しで
+      // 不在ぶんがまとめて加算される）
+      activeDomain = null;
+      return;
+    }
+
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true

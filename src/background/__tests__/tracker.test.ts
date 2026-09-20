@@ -23,6 +23,25 @@ async function loadTracker() {
   return await import('../tracker');
 }
 
+/**
+ * chrome の Event を add / remove の意味論で模す。
+ *
+ * ⚠ addListener は同じ関数でも必ず積む。Chrome が同一参照を重複登録しない
+ * かどうかに実装を依存させないため、モック側では畳まない
+ * （畳むと「重ねて呼ぶとリスナーが増える」実装を見逃す）
+ */
+function makeEvent<T>(registered: T[]) {
+  return {
+    addListener: vi.fn((fn: T) => {
+      registered.push(fn);
+    }),
+    removeListener: vi.fn((fn: T) => {
+      const index = registered.indexOf(fn);
+      if (index >= 0) registered.splice(index, 1);
+    })
+  };
+}
+
 /** chrome API のグローバルモックを構築する */
 function setupChrome() {
   const listeners = {
@@ -40,21 +59,14 @@ function setupChrome() {
     tabs: {
       query: vi.fn().mockResolvedValue([{ id: 1, url: 'https://example.com' }]),
       get: vi.fn().mockResolvedValue({ id: 2, url: 'https://other.com' }),
-      onActivated: {
-        addListener: vi.fn((fn) => listeners.tabActivated.push(fn)),
-        removeListener: vi.fn()
-      },
-      onUpdated: {
-        addListener: vi.fn((fn) => listeners.tabUpdated.push(fn)),
-        removeListener: vi.fn()
-      }
+      onActivated: makeEvent(listeners.tabActivated),
+      onUpdated: makeEvent(listeners.tabUpdated)
     },
     windows: {
       WINDOW_ID_NONE: -1,
-      onFocusChanged: {
-        addListener: vi.fn((fn) => listeners.windowFocus.push(fn)),
-        removeListener: vi.fn()
-      }
+      // 既定はブラウザが前面にある状態
+      getLastFocused: vi.fn().mockResolvedValue({ id: 1, focused: true }),
+      onFocusChanged: makeEvent(listeners.windowFocus)
     }
   };
 
@@ -220,9 +232,13 @@ describe('tracker', () => {
       expect(
         harness.chromeMock.windows.onFocusChanged.addListener
       ).toHaveBeenCalled();
-      expect(harness.chromeMock.tabs.query).toHaveBeenCalledWith({
-        active: true,
-        currentWindow: true
+      // 初期化は非同期（フォーカス確認 → アクティブタブ取得）なので待つ
+      await vi.waitFor(() => {
+        expect(harness.chromeMock.windows.getLastFocused).toHaveBeenCalled();
+        expect(harness.chromeMock.tabs.query).toHaveBeenCalledWith({
+          active: true,
+          currentWindow: true
+        });
       });
     });
 
@@ -268,6 +284,37 @@ describe('tracker', () => {
       vi.mocked(setAnalytics).mockClear();
 
       // 書き出し間隔ぶん経過 → 1 回分の計測のみ（タイマーが 2 本走っていれば 2 回）
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      expect(vi.mocked(setAnalytics).mock.calls).toHaveLength(1);
+    });
+
+    it('何度 startTracking してもリスナーは 1 組しか残らない', async () => {
+      // service worker が起きるたびに呼ばれるため、重複登録すると
+      // 1 回のタブ切り替えが複数回処理される
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      for (let i = 0; i < 3; i++) {
+        startTracking();
+        await vi.advanceTimersByTimeAsync(0);
+      }
+
+      expect(harness.listeners.tabActivated).toHaveLength(1);
+      expect(harness.listeners.tabUpdated).toHaveLength(1);
+      expect(harness.listeners.windowFocus).toHaveLength(1);
+    });
+
+    it('何度 startTracking してもタイマーは 1 本しか残らない', async () => {
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      for (let i = 0; i < 3; i++) {
+        startTracking();
+        await vi.advanceTimersByTimeAsync(0);
+      }
+      vi.mocked(setAnalytics).mockClear();
+
       await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(vi.mocked(setAnalytics).mock.calls).toHaveLength(1);
@@ -466,6 +513,72 @@ describe('tracker', () => {
   });
 
   describe('ウィンドウのフォーカス', () => {
+    it('ブラウザが前面でないときは計測を開始しない', async () => {
+      // service worker は heartbeat 等で他アプリの使用中にも起こされる。
+      // そのときアクティブタブを拾うと、見ていないサイトの時間が加算される
+      vi.useFakeTimers();
+      harness.chromeMock.windows.getLastFocused.mockResolvedValue({
+        id: 1,
+        focused: false
+      });
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('ブラウザが前面でないときはアクティブタブを問い合わせない', async () => {
+      vi.useFakeTimers();
+      harness.chromeMock.windows.getLastFocused.mockResolvedValue({
+        id: 1,
+        focused: false
+      });
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(harness.chromeMock.tabs.query).not.toHaveBeenCalled();
+    });
+
+    it('ブラウザが前面なら計測を開始する', async () => {
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      expect(lastSaved().siteTime['example.com'].time).toBe(
+        TRACKING_UPDATE_INTERVAL_MS / 1000
+      );
+    });
+
+    it('前面でなくなった後に起こされても、前のドメインの時間は伸びない', async () => {
+      // 前面を離れた時点で activeDomain は消えるが、その後 service worker が
+      // 起こされて初期化を通るときに古い値へ戻さないことを確かめる
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+      harness.chromeMock.windows.getLastFocused.mockResolvedValue({
+        id: 1,
+        focused: false
+      });
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+      vi.mocked(setAnalytics).mockClear();
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
     it('フォーカスを失うと計測を停止する', async () => {
       vi.useFakeTimers();
       const { startTracking } = await loadTracker();
