@@ -117,11 +117,14 @@ YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem(
 | ------------------------------------------ | ----------------------------------------- |
 | `enabled && blockAccess`、`timeLimit` なし | 常時ブロック（`always_blocked`）          |
 | `enabled && blockAccess`、`timeLimit` あり | 超過後にブロック（`time_limit_exceeded`） |
-| `blockAccess` が無効                       | ブロックしない                            |
+| `blockAccess` が無効                       | ブロックしない（時間制限も使わない）      |
 
 - ブロックリストに同じドメインの項目があれば、そちらの設定が優先される
 - 時間制限の使用実績はホスト名ではなく `youtube.com` をキーに記録される
   （`youtubeBlockService` の `YOUTUBE_DOMAIN`）
+- 計測・超過判定・残り時間・通知は `enabled && blockAccess && timeLimit` のときだけ動く
+  （`youtubeBlockService` の `isYouTubeTimeLimitActive()`）。アクセスブロックが無効なら
+  計測も通知も行わず、コンテンツスクリプトが画面を隠すこともない（#407）
 
 ## リセットタイミング
 

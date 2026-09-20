@@ -1760,7 +1760,7 @@
     "description": "YouTubeへのアクセスブロックオプション"
   },
   "youtubeBlockAccessDescription": {
-    "message": "YouTubeへのアクセスを完全にブロックします。有効にすると、YouTube訪問時にブロックページが表示されます。",
+    "message": "YouTubeへのアクセスをブロックします。1日の制限を設定すると、上限を超えたあとにブロックします。",
     "description": "YouTubeへのアクセスブロックの説明"
   },
   "youtubeHideShorts": {

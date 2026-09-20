@@ -205,18 +205,18 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await page.close();
   });
 
-  test('YT-006: YouTube Time Limit 超過時に CSS で全コンテンツ非表示', async ({
+  test('YT-006: アクセスブロックが無効なら Time Limit 超過でも画面を隠さない', async ({
     context,
     extensionId
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    // YouTube Time Limit を設定
+    // アクセスブロックは無効のまま Time Limit だけ残っている状態（#407）
     await setSettings(page, {
       paused: false,
       youtube: makeYouTubeSettings({
         blockAccess: false,
-        hideShorts: false,
+        hideShorts: true, // コンテンツスクリプトが動いたことを確かめるための目印
         hideRecommendations: false,
         hideComments: false,
         timeLimit: {
@@ -252,17 +252,23 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     await youtubePage.waitForLoadState('domcontentloaded');
 
-    // 全コンテンツが非表示になる CSS が適用されているか確認
     // コンテンツスクリプトは storage を読んでから style を注入するため、
-    // 注入が終わるまで待つ
+    // Shorts 非表示のルールが入るまで待つ
     await expect
       .poll(() =>
         youtubePage.evaluate(() => {
           const style = document.getElementById('vision-focus-youtube-blocker');
-          return style?.textContent?.includes('display: none !important');
+          return style?.textContent?.includes('a[title="Shorts"]');
         })
       )
       .toBeTruthy();
+
+    // 上限超過でも全体を隠すルールは入らない
+    const limitExceeded = await youtubePage.evaluate(() => {
+      const style = document.getElementById('vision-focus-youtube-blocker');
+      return style?.textContent?.includes('ytd-app #content');
+    });
+    expect(limitExceeded).toBeFalsy();
 
     await youtubePage.close();
   });

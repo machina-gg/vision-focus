@@ -1760,7 +1760,7 @@
     "description": "Block access to YouTube option"
   },
   "youtubeBlockAccessDescription": {
-    "message": "Block access to YouTube entirely. When enabled, visiting YouTube will show the block page.",
+    "message": "Block access to YouTube. If a daily limit is set, access is blocked after the limit is reached.",
     "description": "Block access to YouTube description"
   },
   "youtubeHideShorts": {
