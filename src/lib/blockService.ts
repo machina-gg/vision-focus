@@ -83,6 +83,16 @@ export function isAnyScheduleActive(
 const YOUTUBE_DOMAINS = ['youtube.com', 'www.youtube.com'];
 
 /**
+ * ドメインがブロックリストのいずれかの項目に一致するか
+ *
+ * 一致する場合はブロックリスト側の設定（有効/無効・時間制限）が優先され、
+ * 仮想のブロック項目は使わない
+ */
+function isCoveredByBlockList(domain: string, settings: AppSettings): boolean {
+  return settings.blockList.some((item) => matchesDomain(domain, item));
+}
+
+/**
  * YouTube を「仮想のブロック項目」として返す
  *
  * YouTube はブロックリストに項目を持たないため、判定（`getBlockState`）と
@@ -257,6 +267,10 @@ export async function getActiveBlockedDomains(): Promise<string[]> {
 
     if (youtubeBlocked) {
       for (const domain of YOUTUBE_DOMAINS) {
+        // ブロックリストに一致する項目があれば、そちらの設定が優先される
+        // （getBlockState の Step 2 と同じ優先順位。ここで揃えないと、
+        //   開いているタブと新しい遷移で結果がずれる）
+        if (isCoveredByBlockList(domain, settings)) continue;
         if (blockedDomains.includes(domain)) continue;
         blockedDomains.push(domain);
       }

@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { invoke } from './helpers';
 
 vi.mock('~/lib/storage', () => ({
+  getSettings: vi.fn(),
   getAnalytics: vi.fn(),
   setAnalytics: vi.fn(),
   getUnblockHistory: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock('~/lib/time', () => ({
 }));
 
 import {
+  getSettings,
   getAnalytics,
   setAnalytics,
   getUnblockHistory,
@@ -54,7 +56,13 @@ import {
   hasYouTubeExceededTimeLimit
 } from '~/lib/youtubeBlockService';
 import { hasExceededTimeLimit } from '~/lib/timeLimitService';
-import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
+import {
+  DEFAULT_ANALYTICS,
+  DEFAULT_UNBLOCK_HISTORY,
+  DEFAULT_SETTINGS,
+  DEFAULT_YOUTUBE_SETTINGS
+} from '~/types/storage';
+import type { YouTubeSettings } from '~/types/storage';
 import { TRACKER_CONFIG } from '~/constants/limits';
 
 interface Response {
@@ -76,6 +84,14 @@ const RECORDED_SECONDS = Math.floor(
   TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000
 );
 
+/** 保存されている YouTube 設定を差し替える */
+function givenYouTubeSettings(overrides: Partial<YouTubeSettings> = {}) {
+  vi.mocked(getSettings).mockResolvedValue({
+    ...DEFAULT_SETTINGS,
+    youtube: { ...DEFAULT_YOUTUBE_SETTINGS, ...overrides }
+  });
+}
+
 describe('tracker-heartbeat ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -91,6 +107,11 @@ describe('tracker-heartbeat ハンドラ', () => {
     vi.mocked(findBlockItemForDomain).mockResolvedValue(null);
     vi.mocked(hasExceededTimeLimit).mockResolvedValue(false);
     vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(false);
+    givenYouTubeSettings({
+      enabled: true,
+      blockAccess: true,
+      timeLimit: { type: 'daily', limitSeconds: 60 }
+    });
   });
 
   afterEach(() => {
@@ -378,6 +399,49 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
+    it('アクセスブロックが無効なら超過しても再適用しない', async () => {
+      // 超過してもブロックされない設定なので、記録間隔ごとの
+      // ルール再構築と全タブ走査を繰り返さない
+      vi.useFakeTimers();
+      givenYouTubeSettings({
+        enabled: true,
+        blockAccess: false,
+        timeLimit: { type: 'daily', limitSeconds: 60 }
+      });
+      vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(true);
+      const handler = await loadHandler();
+
+      await invoke(handler, {
+        url: 'https://www.youtube.com/watch?v=abc',
+        status: 'active',
+        timestamp: Date.now()
+      });
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(updateBlockRules).not.toHaveBeenCalled();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
+    it('時間制限が未設定なら超過判定自体を行わない', async () => {
+      vi.useFakeTimers();
+      givenYouTubeSettings({
+        enabled: true,
+        blockAccess: true,
+        timeLimit: null
+      });
+      const handler = await loadHandler();
+
+      await invoke(handler, {
+        url: 'https://www.youtube.com/watch?v=abc',
+        status: 'active',
+        timestamp: Date.now()
+      });
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(hasYouTubeExceededTimeLimit).not.toHaveBeenCalled();
+      expect(updateBlockRules).not.toHaveBeenCalled();
     });
   });
 

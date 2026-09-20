@@ -1,6 +1,7 @@
 import type { MessageHandler } from '~/lib/messaging';
 import { extractDomain, matchesDomain } from '~/lib/domain';
 import {
+  getSettings,
   getAnalytics,
   setAnalytics,
   getUnblockHistory,
@@ -19,6 +20,7 @@ import {
 } from '~/lib/youtubeBlockService';
 import { checkYouTubeTimeLimitNotification } from '../notifications';
 import { hasExceededTimeLimit } from '~/lib/timeLimitService';
+import { getYouTubeBlockItem } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
 
@@ -147,8 +149,11 @@ async function recordTime(domain: string, seconds: number): Promise<void> {
     await checkYouTubeTimeLimitNotification();
 
     // 時間制限を超過したら、ブロックリストの項目と同じくその場でルールを更新し、
-    // 開いているタブもブロックする。ルール更新だけでは新しい遷移しか塞がらない（#392）
-    if (await hasYouTubeExceededTimeLimit()) {
+    // 開いているタブもブロックする。ルール更新だけでは新しい遷移しか塞がらない（#392）。
+    // アクセスブロックが無効なら超過してもブロックされないため、仮想のブロック項目
+    // （ブロック条件の SSOT）で先に振り分け、ルール再構築と全タブ走査を繰り返さない
+    const youtubeItem = getYouTubeBlockItem(await getSettings());
+    if (youtubeItem?.timeLimit && (await hasYouTubeExceededTimeLimit())) {
       await updateBlockRules();
       await blockExistingTabs();
     }

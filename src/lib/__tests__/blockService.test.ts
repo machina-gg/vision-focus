@@ -820,4 +820,29 @@ describe('getActiveBlockedDomains - YouTube の時間制限', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('ブロックリストに同じドメインがあれば仮想項目を使わない', async () => {
+    // getBlockState と優先順位を揃えないと、開いているタブはブロックされないのに
+    // 新しい遷移だけがブロックされる食い違いが起きる
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        youtube: youtubeSettings(),
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'youtube.com',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: true,
+            timeLimit
+          }
+        ]
+      })
+    );
+    mockCheckTimeLimitExceeded.mockReturnValue(false);
+
+    const result = await getActiveBlockedDomains();
+
+    expect(result).toEqual([]);
+  });
 });
