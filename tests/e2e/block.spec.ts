@@ -3,6 +3,7 @@ import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
 import { waitForBlockRules } from './helpers/sw';
 import {
   clearStorageFromExtension,
+  makeAnalytics,
   setStorageDataFromExtension,
   setSettingsFromExtension,
   getStorageDataFromExtension
@@ -404,10 +405,12 @@ test.describe('Block - ブロック機能', () => {
     });
 
     // Analytics データ初期化
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteBlockCounts: {}
-    });
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics()
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -429,17 +432,17 @@ test.describe('Block - ブロック機能', () => {
 
     // ブロック回数を確認
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const analytics = (await getStorageDataFromExtension(
+    const analytics = await getStorageDataFromExtension(
       context,
       extensionId,
       'analytics'
-    )) as any;
+    );
 
     const today = new Date().toISOString().slice(0, 10);
-    expect(analytics.dailyStats[today].blockCount).toBeGreaterThanOrEqual(2);
+    expect(analytics?.dailyStats[today].blockCount).toBeGreaterThanOrEqual(2);
     // サイト別の回数は siteBlockCounts[domain].count に入る
     expect(
-      analytics.siteBlockCounts[TEST_DOMAINS.example].count
+      analytics?.siteBlockCounts[TEST_DOMAINS.example].count
     ).toBeGreaterThanOrEqual(2);
 
     await blockedPage2.close();

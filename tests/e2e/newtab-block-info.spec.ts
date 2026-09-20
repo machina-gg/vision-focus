@@ -3,6 +3,8 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
+  makeAnalytics,
+  makeSiteBlockCounts,
   setStorageData,
   setSessionStorageData,
   SELECTORS
@@ -34,16 +36,14 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     const setupPage = await openNewTab(context, extensionId);
     // lastBlockedDomain は session エリアに保存される
     await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
-    await setStorageData(setupPage, 'analytics', {
-      siteBlockCounts: {
-        'example.com': {
-          domain: 'example.com',
-          count: 5,
-          lastBlockedAt: new Date().toISOString()
-        }
-      },
-      timeLimitUsage: {}
-    });
+    // 直近のブロック時刻のキーは lastBlocked（lastBlockedAt は実装に無い）
+    await setStorageData(
+      setupPage,
+      'analytics',
+      makeAnalytics({
+        siteBlockCounts: makeSiteBlockCounts([['example.com', 5]])
+      })
+    );
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);
@@ -95,16 +95,13 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     // Time Limit 超過でブロックされたドメイン情報をセットアップ
     const setupPage = await openNewTab(context, extensionId);
     await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
-    await setStorageData(setupPage, 'analytics', {
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 3,
-          lastBlockedAt: new Date().toISOString()
-        }
-      },
-      timeLimitUsage: {}
-    });
+    await setStorageData(
+      setupPage,
+      'analytics',
+      makeAnalytics({
+        siteBlockCounts: makeSiteBlockCounts([['youtube.com', 3]])
+      })
+    );
     await setupPage.close();
 
     // Time Limit 超過の reason パラメータ付きでページを開く

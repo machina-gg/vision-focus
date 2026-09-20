@@ -1,23 +1,59 @@
 import type { Page, BrowserContext } from '@playwright/test';
 import { TEST_DATA } from './constants';
 
+import type {
+  AnalyticsData,
+  AppSettings,
+  DashboardDisplaySettings,
+  DashboardPreset,
+  SiteBlockCount,
+  StorageSchema,
+  TimeLimitUsage,
+  UnblockedSite,
+  UnblockHistory,
+  VisionSettings,
+  YouTubeSettings
+} from '~/types/storage';
+
 /**
  * chrome.storage.local のテストデータ設定・取得ヘルパー
  *
- * E2Eテストで chrome.storage.local を直接操作するためのユーティリティ
+ * E2Eテストで chrome.storage.local を直接操作するためのユーティリティ。
+ *
+ * ⚠ 値は `unknown` では受けない。キーごとに実装の型（`StorageSchema`）で受ける
+ * ことで、保存形と違うキー名（`siteStats` / `unblockHistory.entries` など）を
+ * 型検査で止める。テスト側に対応表を作り直すと実装のキーが変わっても気づけない
+ * ため、キーの一覧は実装の `StorageSchema` をそのまま使う（#437）。
+ *
+ * ⚠ `supportPrompt` のように `StorageSchema` に載っていない local キーが実装に
+ * ある。必要になったら実装側の `StorageSchema` に足す（ここで補わない）。
  */
+
+/** local 領域に書けるキー（実装の `StorageSchema` が持つもの） */
+export type LocalStorageKey = keyof StorageSchema;
+
+/**
+ * session 領域に置かれる値
+ *
+ * 実装では `src/lib/storage.ts` の `SESSION_KEYS` が持つ（型としては公開されて
+ * いないため、テストから参照できる形をここに置く）。
+ */
+export interface SessionStorageSchema {
+  /** 直近でブロックされたドメイン。newtab のブロック情報表示が読む */
+  lastBlockedDomain: string;
+}
 
 /**
  * chrome.storage.local にデータをセットする
  *
  * @param page - Playwright Page オブジェクト
  * @param key - ストレージキー
- * @param value - セットする値
+ * @param value - セットする値（キーに対応する実装の型）
  */
-export async function setStorageData(
+export async function setStorageData<K extends LocalStorageKey>(
   page: Page,
-  key: string,
-  value: unknown
+  key: K,
+  value: StorageSchema[K]
 ): Promise<void> {
   // アプリは @wxt-dev/storage 経由で読み書きしており、値は生のオブジェクトの
   // まま保存される（キーは `local:` を除いた `settings` などで、接頭辞は
@@ -42,11 +78,9 @@ export async function setStorageData(
  * @param key - ストレージキー
  * @param value - セットする値
  */
-export async function setSessionStorageData(
-  page: Page,
-  key: string,
-  value: unknown
-): Promise<void> {
+export async function setSessionStorageData<
+  K extends keyof SessionStorageSchema
+>(page: Page, key: K, value: SessionStorageSchema[K]): Promise<void> {
   await page.evaluate(
     async ({ key, value }) => {
       await chrome.storage.session.set({ [key]: value });
@@ -61,13 +95,12 @@ export async function setSessionStorageData(
  * lastBlockedDomain のように、拡張機能が session 領域に置く値は
  * local を読んでも取れない。
  */
-export async function getSessionStorageData<T = unknown>(
-  page: Page,
-  key: string
-): Promise<T | null> {
+export async function getSessionStorageData<
+  K extends keyof SessionStorageSchema
+>(page: Page, key: K): Promise<SessionStorageSchema[K] | null> {
   return await page.evaluate(async (key) => {
     const result = await chrome.storage.session.get(key);
-    return (result[key] ?? null) as T;
+    return (result[key] ?? null) as SessionStorageSchema[K] | null;
   }, key);
 }
 
@@ -76,16 +109,16 @@ export async function getSessionStorageData<T = unknown>(
  *
  * @param page - Playwright Page オブジェクト
  * @param key - ストレージキー
- * @returns 取得した値
+ * @returns 取得した値（未保存なら null）
  */
-export async function getStorageData<T = unknown>(
+export async function getStorageData<K extends LocalStorageKey>(
   page: Page,
-  key: string
-): Promise<T | null> {
+  key: K
+): Promise<StorageSchema[K] | null> {
   return page.evaluate(async (key) => {
     const result = await chrome.storage.local.get(key);
     // @wxt-dev/storage は値を生のまま保存するので、読み出しも変換しない
-    return (result[key] ?? null) as T;
+    return (result[key] ?? null) as StorageSchema[K] | null;
   }, key);
 }
 
@@ -125,13 +158,13 @@ export async function clearStorageFromExtension(
  * @param context - BrowserContext
  * @param extensionId - 拡張機能ID
  * @param key - ストレージキー
- * @param value - セットする値
+ * @param value - セットする値（キーに対応する実装の型）
  */
-export async function setStorageDataFromExtension(
+export async function setStorageDataFromExtension<K extends LocalStorageKey>(
   context: BrowserContext,
   extensionId: string,
-  key: string,
-  value: unknown
+  key: K,
+  value: StorageSchema[K]
 ): Promise<void> {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
@@ -147,17 +180,17 @@ export async function setStorageDataFromExtension(
  * @param context - BrowserContext
  * @param extensionId - 拡張機能ID
  * @param key - ストレージキー
- * @returns 取得した値
+ * @returns 取得した値（未保存なら null）
  */
-export async function getStorageDataFromExtension<T = unknown>(
+export async function getStorageDataFromExtension<K extends LocalStorageKey>(
   context: BrowserContext,
   extensionId: string,
-  key: string
-): Promise<T | null> {
+  key: K
+): Promise<StorageSchema[K] | null> {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
   await page.waitForLoadState('domcontentloaded');
-  const result = await getStorageData<T>(page, key);
+  const result = await getStorageData(page, key);
   await page.close();
   return result;
 }
@@ -171,8 +204,8 @@ export async function getStorageDataFromExtension<T = unknown>(
  * @param overrides - 上書きする値
  */
 export function makeDisplaySettings(
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<DashboardDisplaySettings> = {}
+): DashboardDisplaySettings {
   return {
     goalText: 'Focus on what matters',
     goalSubText: 'Stay productive',
@@ -196,8 +229,8 @@ export function makeDisplaySettings(
 export function makePreset(
   id: string,
   name: string,
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<DashboardDisplaySettings> = {}
+): DashboardPreset {
   return {
     ...makeDisplaySettings(overrides),
     id,
@@ -207,14 +240,23 @@ export function makePreset(
 }
 
 /**
- * AppSettings の完全な形を作る
+ * VisionSettings の完全な形を作る
  *
- * 必須フィールドを欠くとアプリ側の参照が壊れる。また analyticsOptIn を
- * 落とすと Opt-In モーダルが開いてしまい、他の要素のクリックを遮る。
- * テストで settings を直接書く場合は必ずこれを使う。
+ * 既定の表示設定と同じ内容を持つプリセット 1 件を用意し、それを有効にする。
  *
  * @param overrides - 上書きする値
  */
+export function makeVision(
+  overrides: Partial<VisionSettings> = {}
+): VisionSettings {
+  return {
+    defaultSettings: makeDisplaySettings(),
+    presets: [makePreset('default', 'Default')],
+    activePresetId: 'default',
+    ...overrides
+  };
+}
+
 /**
  * settings を「欠けたフィールドのない完全な形」で書き込む
  *
@@ -225,7 +267,7 @@ export function makePreset(
  */
 export async function setSettings(
   page: Page,
-  overrides: Record<string, unknown> = {}
+  overrides: Partial<AppSettings> = {}
 ): Promise<void> {
   await setStorageData(page, 'settings', makeSettings(overrides));
 }
@@ -234,7 +276,7 @@ export async function setSettings(
 export async function setSettingsFromExtension(
   context: BrowserContext,
   extensionId: string,
-  overrides: Record<string, unknown> = {}
+  overrides: Partial<AppSettings> = {}
 ): Promise<void> {
   await setStorageDataFromExtension(
     context,
@@ -253,8 +295,8 @@ export async function setSettingsFromExtension(
  * 効かない」としか見えない。
  */
 export function makeYouTubeSettings(
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<YouTubeSettings> = {}
+): YouTubeSettings {
   return {
     enabled: true,
     blockAccess: false,
@@ -279,7 +321,7 @@ export function makeTimeLimitUsage(
   domain: string,
   used: { daily?: number } = {},
   now: Date = new Date()
-): Record<string, unknown> {
+): Record<string, TimeLimitUsage> {
   const todayKey = now.toISOString().slice(0, 10);
 
   return {
@@ -291,22 +333,26 @@ export function makeTimeLimitUsage(
   };
 }
 
+/**
+ * AppSettings の完全な形を作る
+ *
+ * 必須フィールドを欠くとアプリ側の参照が壊れる。また analyticsOptIn を
+ * 落とすと Opt-In モーダルが開いてしまい、他の要素のクリックを遮る。
+ * テストで settings を直接書く場合は必ずこれを使う。
+ *
+ * @param overrides - 上書きする値
+ */
 export function makeSettings(
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<AppSettings> = {}
+): AppSettings {
   return {
     blockList: [],
     schedules: [],
     paused: false,
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
-    youtube: {
-      enabled: false,
-      blockAccess: false,
-      hideShorts: false,
-      hideRecommendations: false,
-      hideComments: false,
-      timeLimit: null
-    },
+    // YouTube 設定の既定値はここで組み立て直さない。書き漏らすとスキーマ検証に
+    // 落ちて無言で既定値になるため、完全な形を作る 1 箇所に寄せる
+    youtube: makeYouTubeSettings({ enabled: false }),
     password: { enabled: false, passwordHash: null },
     analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
     ...overrides
@@ -322,8 +368,8 @@ export function makeSettings(
  * @param overrides - 上書きする値
  */
 export function makeAnalytics(
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<AnalyticsData> = {}
+): AnalyticsData {
   return {
     dailyStats: {},
     siteTime: {},
@@ -342,7 +388,7 @@ export function makeAnalytics(
  */
 export function makeSiteBlockCounts(
   entries: [string, number][]
-): Record<string, { domain: string; count: number; lastBlocked: string }> {
+): Record<string, SiteBlockCount> {
   const now = new Date().toISOString();
   return Object.fromEntries(
     entries.map(([domain, count]) => [
@@ -350,6 +396,40 @@ export function makeSiteBlockCounts(
       { domain, count, lastBlocked: now }
     ])
   );
+}
+
+/**
+ * 解除済みサイトの履歴を作る
+ *
+ * `tracker-heartbeat` は「解除履歴に載っているドメイン」だけを計測する
+ * （載っていなければ `recordTime` が途中で return する）。滞在時間の記録を
+ * 検証するテストは、対象ドメインをここで先に履歴へ入れておく必要がある。
+ *
+ * @param domains - 解除済みとして扱うドメイン
+ * @param overrides - 各サイトに与える上書き（滞在時間の初期値など）
+ */
+export function makeUnblockHistory(
+  domains: string[],
+  overrides: Partial<UnblockedSite> = {}
+): UnblockHistory {
+  const now = new Date().toISOString();
+
+  // タプルの型を明示する。推論に任せると値の型が union に広がり、
+  // UnblockedSite との不一致を型検査が見逃す
+  const entries: [string, UnblockedSite][] = domains.map((domain) => [
+    domain,
+    {
+      domain,
+      status: 'unblocked',
+      blockedAt: now,
+      unblockedAt: now,
+      timeAfterUnblock: 0,
+      lastActivity: null,
+      ...overrides
+    }
+  ]);
+
+  return { sites: Object.fromEntries(entries) };
 }
 
 /**
@@ -371,11 +451,11 @@ export interface TestStorageOptions {
  *
  * AppSettings の必須フィールドを欠くと、実装側で settings.blockList.length の
  * ような参照が例外になる（アプリはストレージに保存済みの値をそのまま使う）。
- * 実装のスキーマと同じ形を必ず満たすこと。
+ * 必須フィールドの充足は `makeSettings` に任せ、ここでは差分だけを与える。
  */
 export function makeTestStorage(
   options: TestStorageOptions = {}
-): Record<string, unknown> {
+): Pick<StorageSchema, 'settings'> & Partial<StorageSchema> {
   const {
     withGoal = true,
     withBlockList = false,
@@ -384,26 +464,7 @@ export function makeTestStorage(
     withSchedule = false
   } = options;
 
-  const settings: Record<string, unknown> = {
-    blockList: [],
-    schedules: [],
-    paused: false,
-    notifications: {
-      timeLimitEnabled: true,
-      timeLimitMinutes: 5
-    },
-    youtube: {
-      enabled: false,
-      blockAccess: false,
-      hideShorts: false,
-      hideRecommendations: false,
-      hideComments: false,
-      timeLimit: null
-    },
-    password: {
-      enabled: false,
-      passwordHash: null
-    },
+  const overrides: Partial<AppSettings> = {
     analyticsOptIn: withAnalyticsOptIn
       ? { enabled: true, decidedAt: new Date().toISOString() }
       : null
@@ -412,7 +473,7 @@ export function makeTestStorage(
   // パスワード保護は enabled と passwordHash の両方が必要
   // （src/hooks/usePopupActions.ts の isPasswordProtected）
   if (withPassword) {
-    settings.password = {
+    overrides.password = {
       enabled: true,
       passwordHash: TEST_DATA.password.validHash
     };
@@ -421,15 +482,14 @@ export function makeTestStorage(
   // 週間カレンダーはスケジュールが 1 件以上ないと描画されない
   // （WeeklyCalendar は schedules.length === 0 で null を返す）
   if (withSchedule) {
-    settings.schedules = [
+    overrides.schedules = [
       {
         id: 'schedule-1',
         name: 'Work Hours',
         startTime: '09:00',
         endTime: '18:00',
         days: [1, 2, 3, 4, 5],
-        enabled: true,
-        presetId: null
+        enabled: true
       }
     ];
   }
@@ -437,7 +497,7 @@ export function makeTestStorage(
   // ブロックリストは settings.blockList に保持される
   // （トップレベルの blockList キーではない）
   if (withBlockList) {
-    settings.blockList = [
+    overrides.blockList = [
       {
         id: '1',
         domain: 'example.com',
@@ -448,34 +508,15 @@ export function makeTestStorage(
     ];
   }
 
-  const data: Record<string, unknown> = { settings };
+  const data: Pick<StorageSchema, 'settings'> & Partial<StorageSchema> = {
+    settings: makeSettings(overrides)
+  };
 
   // Vision 設定（目標テキスト）。
   // DashboardDisplaySettings / DashboardPreset の全フィールドを満たすこと。
   // 特にサブテキストのキーは goalSubText（subText ではない）
   if (withGoal) {
-    const displaySettings = {
-      goalText: 'Focus on what matters',
-      goalSubText: 'Stay productive',
-      textColor: '#ffffff',
-      backgroundType: 'color' as const,
-      backgroundImage: 'default-1',
-      backgroundColor: '#1a1a2e',
-      customBackgroundData: null,
-      fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
-    };
-    data.vision = {
-      defaultSettings: displaySettings,
-      presets: [
-        {
-          ...displaySettings,
-          id: 'default',
-          name: 'Default',
-          createdAt: new Date().toISOString()
-        }
-      ],
-      activePresetId: 'default'
-    };
+    data.vision = makeVision();
   }
 
   return data;
@@ -495,7 +536,8 @@ export async function setupTestStorage(
 ): Promise<void> {
   const data = makeTestStorage(options);
 
-  for (const [key, value] of Object.entries(data)) {
-    await setStorageData(page, key, value);
+  await setStorageData(page, 'settings', data.settings);
+  if (data.vision) {
+    await setStorageData(page, 'vision', data.vision);
   }
 }

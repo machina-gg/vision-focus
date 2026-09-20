@@ -34,16 +34,33 @@ test.describe('i18n - 多言語対応', () => {
     await popupPage.close();
   });
 
-  test('I18N-003: 言語切替 UI を持たない', async ({ context, extensionId }) => {
+  test('I18N-003: ヘッダーの操作は実装どおりの 3 つだけ', async ({
+    context,
+    extensionId
+  }) => {
     await setupTestStorageViaSW(context, {});
 
     const popupPage = await openPopup(context, extensionId);
 
-    // ヘッダーは描画されているが、言語セレクタは存在しない
-    await expect(popupPage.locator(SELECTORS.header.container)).toBeVisible();
-    await expect(
-      popupPage.locator('[data-testid="language-selector"]')
-    ).toHaveCount(0);
+    // ⚠ 「言語セレクタが無い」ことを存在しないセレクタの不在で確かめない。
+    // 実装に一度も無かった要素の不在は、何を壊しても成立する。
+    // ヘッダーが実装どおりの操作だけを持つことを正面から確かめる
+    // （src/components/features/Header/Header.tsx）。言語切替が足されれば
+    // 個数が合わなくなって落ちる
+    const implementedControls = [
+      SELECTORS.header.pauseToggle,
+      SELECTORS.header.settingsButton,
+      SELECTORS.header.helpButton
+    ];
+
+    const header = popupPage.locator(SELECTORS.header.container);
+    await expect(header).toBeVisible();
+    await expect(header.locator('button')).toHaveCount(
+      implementedControls.length
+    );
+    for (const selector of implementedControls) {
+      await expect(header.locator(selector)).toBeVisible();
+    }
 
     await popupPage.close();
   });

@@ -2,6 +2,8 @@ import type { BrowserContext, Worker } from '@playwright/test';
 
 import { makeTestStorage, type TestStorageOptions } from './storage';
 
+import type { StorageSchema } from '~/types/storage';
+
 /**
  * Service Worker（background）経由の操作ヘルパー
  *
@@ -31,7 +33,7 @@ export async function getServiceWorker(
  */
 export async function setupStorageViaSW(
   context: BrowserContext,
-  data: Record<string, unknown>,
+  data: Partial<StorageSchema>,
   options: { clear?: boolean } = {}
 ): Promise<void> {
   const sw = await getServiceWorker(context);
@@ -137,16 +139,16 @@ export async function triggerTimeLimitReset(
 }
 
 /** storage の値を SW 経由で読む（アプリを開かずに読める） */
-export async function getStorageViaSW<T = unknown>(
+export async function getStorageViaSW<K extends keyof StorageSchema>(
   context: BrowserContext,
-  key: string
-): Promise<T | null> {
+  key: K
+): Promise<StorageSchema[K] | null> {
   const sw = await getServiceWorker(context);
 
   return await sw.evaluate(async (key) => {
     const result = await chrome.storage.local.get(key);
     // @wxt-dev/storage は値を生のまま保存するので、読み出しも変換しない
-    return (result[key] ?? null) as T;
+    return (result[key] ?? null) as StorageSchema[K] | null;
   }, key);
 }
 

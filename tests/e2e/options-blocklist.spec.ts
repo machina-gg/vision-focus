@@ -4,7 +4,9 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  makeAnalytics,
   makeSettings,
+  makeSiteBlockCounts,
   makeYouTubeSettings,
   TEST_DATA,
   SELECTORS,
@@ -71,10 +73,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await expect(domainItem.first()).toContainText('reddit.com');
 
     // ストレージに保存されたことを確認
-    const settings = await getStorageData<{ blockList?: unknown[] }>(
-      page,
-      'settings'
-    );
+    const settings = await getStorageData(page, 'settings');
     const blockList = settings?.blockList ?? [];
 
     expect(blockList).toEqual(
@@ -107,10 +106,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await expect(domainItem.first()).toContainText('reddit.com');
 
     // ストレージに保存されたことを確認
-    const settings = await getStorageData<{ blockList?: unknown[] }>(
-      page,
-      'settings'
-    );
+    const settings = await getStorageData(page, 'settings');
     const blockList = settings?.blockList ?? [];
 
     expect(blockList).toEqual(
@@ -227,9 +223,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{
-          blockList?: { timeLimit?: unknown }[];
-        }>(page, 'settings');
+        const settings = await getStorageData(page, 'settings');
         return settings?.blockList?.[0]?.timeLimit;
       })
       .toEqual({ type: 'daily', limitSeconds: 5 * 60 });
@@ -332,16 +326,14 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       withAnalyticsOptIn: true
     });
 
-    await setStorageData(setupPage, 'analytics', {
-      siteBlockCounts: {
-        'example.com': {
-          domain: 'example.com',
-          count: 12,
-          lastBlockedAt: new Date().toISOString()
-        }
-      },
-      timeLimitUsage: {}
-    });
+    // 直近のブロック時刻のキーは lastBlocked（lastBlockedAt は実装に無い）
+    await setStorageData(
+      setupPage,
+      'analytics',
+      makeAnalytics({
+        siteBlockCounts: makeSiteBlockCounts([['example.com', 12]])
+      })
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'blocklist');
@@ -418,9 +410,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{
-          youtube?: Record<string, unknown>;
-        }>(page, 'settings');
+        const settings = await getStorageData(page, 'settings');
         const youtube = settings?.youtube;
         return {
           enabled: youtube?.enabled,
@@ -477,9 +467,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{
-          youtube?: { timeLimit?: unknown };
-        }>(page, 'settings');
+        const settings = await getStorageData(page, 'settings');
         return settings?.youtube?.timeLimit;
       })
       .toEqual({ type: 'daily', limitSeconds: 15 * 60 });
@@ -521,9 +509,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await heading.locator('xpath=following::select[1]').selectOption('10');
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{
-          notifications?: { timeLimitMinutes?: number };
-        }>(page, 'settings');
+        const settings = await getStorageData(page, 'settings');
         return settings?.notifications?.timeLimitMinutes;
       })
       .toBe(10);
@@ -539,9 +525,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{
-          notifications?: { timeLimitEnabled?: boolean };
-        }>(page, 'settings');
+        const settings = await getStorageData(page, 'settings');
         return settings?.notifications?.timeLimitEnabled;
       })
       .toBe(false);

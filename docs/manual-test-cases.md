@@ -223,12 +223,12 @@
 
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-001: サイト別ブロック回数が記録される
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-002: Unblock History（ブロック解除サイト）が記録される
-- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-003: 解除サイトの滞在時間が 30 秒間隔の Heartbeat で記録
+- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-003: 解除サイトの滞在時間が Heartbeat で記録される
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-004: トラッキング中サイトの滞在時間が記録される
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-005: Analytics Opt-In モーダルで許可/拒否を選択できる
-- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-006: Opt-Out した場合、トラッキングが無効化される
+- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-006: Opt-Out でもブロック回数の集計は続く
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-007: Analytics データをリセットできる
-- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-010: Opt-Out 時に Unblock History も無効化される
+- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-010: Opt-Out でも解除履歴は記録される
 
 ### 手動確認項目
 
@@ -250,7 +250,7 @@
 
 - [ ] Heartbeat 送信の頻度
   - 手順: ブラウザの開発者ツールでネットワークタブを開き、サイトにアクセス
-  - 期待: Heartbeat が30秒間隔で送信される
+  - 期待: Heartbeat が `TRACKER_CONFIG.HEARTBEAT_INTERVAL_MS`（`src/constants/limits.ts`）の間隔で送信される
 
 ---
 
@@ -429,7 +429,7 @@
 
 - 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-001: ブラウザ言語が英語の場合、英語UIが表示される
 - 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-002: ブラウザ言語が日本語の場合、日本語UIが表示される
-- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-003: 言語切替 UI を持たない
+- 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-003: ヘッダーの操作は実装どおりのものだけ
 - 📎 E2E 参照: `tests/e2e/i18n.spec.ts` — I18N-004: 表示言語が全画面で統一されている
 
 ### 手動確認項目

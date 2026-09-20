@@ -120,9 +120,7 @@ test.describe('Options 画面（共通機能）', () => {
     await expect(modal).not.toBeVisible();
 
     // ストレージに保存されたことを確認
-    const settings = await getStorageData<{
-      analyticsOptIn?: { enabled: boolean };
-    }>(page, 'settings');
+    const settings = await getStorageData(page, 'settings');
 
     expect(settings?.analyticsOptIn).toBeDefined();
     expect(settings?.analyticsOptIn?.enabled).toBe(true);

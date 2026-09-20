@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures/extension';
 import { openExternalSite, openOptions, openPopup } from './helpers/pages';
 import {
+  getStorageViaSW,
   setupStorageViaSW,
   triggerBlockRuleRecompute,
   waitForBlockRules,
@@ -11,9 +12,9 @@ import {
   makeTimeLimitUsage,
   makeAnalytics,
   makeSettings,
+  makeUnblockHistory,
   setStorageDataFromExtension,
   setSettingsFromExtension,
-  getStorageDataFromExtension,
   getStorageData
 } from './helpers/storage';
 import { TEST_DATA, TEST_DOMAINS, SELECTORS } from './helpers/constants';
@@ -51,14 +52,16 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 10, // 超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        }
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage に入る
+    // （トップレベルの timeLimitUsage キーは実装に存在しない）
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 10 }) // 超過
+      })
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -102,8 +105,7 @@ test.describe('Interaction - 機能間相互作用', () => {
           enabled: true,
           days: [currentDay],
           startTime: `${String(currentHour).padStart(2, '0')}:00`,
-          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`,
-          action: 'enable'
+          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`
         }
       ]
     });
@@ -138,7 +140,7 @@ test.describe('Interaction - 機能間相互作用', () => {
           isWildcard: false,
           createdAt: new Date().toISOString(),
           enabled: true,
-          timeLimit: { type: 'daily', limitSeconds: 60 }
+          timeLimit: { type: 'daily' as const, limitSeconds: 60 }
         }
       ],
       schedules: [
@@ -148,8 +150,7 @@ test.describe('Interaction - 機能間相互作用', () => {
           enabled: true,
           days: [currentDay],
           startTime: `${String(currentHour).padStart(2, '0')}:00`,
-          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`,
-          action: 'enable'
+          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`
         }
       ]
     };
@@ -223,20 +224,21 @@ test.describe('Interaction - 機能間相互作用', () => {
           enabled: true,
           days: [currentDay],
           startTime: `${String(currentHour).padStart(2, '0')}:00`,
-          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`,
-          action: 'enable'
+          endTime: `${String(currentHour + 1).padStart(2, '0')}:00`
         }
       ]
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'timeLimitUsage', {
-      [TEST_DOMAINS.example]: {
-        daily: {
-          used: 10, // 超過
-          resetAt: new Date(Date.now() + 86400000).toISOString()
-        }
-      }
-    });
+    // 使用実績は analytics.timeLimitUsage に入る
+    // （トップレベルの timeLimitUsage キーは実装に存在しない）
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics({
+        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 10 }) // 超過
+      })
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -253,42 +255,46 @@ test.describe('Interaction - 機能間相互作用', () => {
     await unblockedPage.close();
   });
 
-  test('INT-005: Analytics Opt-Out 時に Unblock History も無効化', async ({
-    context,
-    extensionId
+  // ⚠ analyticsOptIn が止めるのは GA4 への送信だけで、手元の集計は続く
+  // （machina-gg/vision-focus#431 の判断）。解除後の滞在時間は
+  // src/background/handlers/tracker-heartbeat.ts が analyticsOptIn を
+  // 参照せずに記録する
+  test('INT-005: Analytics Opt-Out でも解除後の滞在時間は記録される', async ({
+    context
   }) => {
-    // Opt-Out 状態
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
+    // 記録は background の一定間隔のタイマーが 1 周してから入る
+    test.setTimeout(90_000);
+
+    await setupStorageViaSW(context, {
+      // Opt-Out 状態
+      settings: makeSettings({
+        paused: false,
+        analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
+      }),
+      analytics: makeAnalytics(),
+      // 解除履歴に載っているドメインだけが計測対象になる（sites は
+      // ドメインをキーにしたレコードで、entries という配列は実装に無い）
+      unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
-      entries: []
-    });
-
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteStats: {}
-    });
-
-    // 外部サイトにアクセス
     const externalPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
 
     await externalPage.waitForLoadState('domcontentloaded');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Unblock History が記録されないことを確認
-    const unblockHistory = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'unblockHistory'
-    )) as any;
-
-    expect(unblockHistory.entries.length).toBe(0);
+    // 読み出しは SW 経由で行う（拡張機能のページを開くと前面のタブが
+    // 入れ替わり、コンテンツスクリプトの heartbeat が止まる）
+    await expect
+      .poll(
+        async () => {
+          const history = await getStorageViaSW(context, 'unblockHistory');
+          return history?.sites?.[TEST_DOMAINS.example]?.timeAfterUnblock ?? 0;
+        },
+        { timeout: 60_000 }
+      )
+      .toBeGreaterThan(0);
 
     await externalPage.close();
   });
@@ -298,12 +304,14 @@ test.describe('Interaction - 機能間相互作用', () => {
     extensionId
   }) => {
     // パスワード保護を有効化
+    // ハッシュは TEST_DATA の値を使う（SHA-256("test1234")）。
+    // 入力値と対応しないハッシュを直書きすると、認証が通らないことに
+    // 気付けないまま「モーダルが出た」だけの検査になる
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       password: {
         enabled: true,
-        passwordHash:
-          '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014' // SHA-256("test1234")
+        passwordHash: TEST_DATA.password.validHash
       }
     });
 
@@ -382,10 +390,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     // 保存済みのブロックリストからも消える
     await expect
       .poll(async () => {
-        const settings = await getStorageData<{ blockList?: unknown[] }>(
-          optionsPage,
-          'settings'
-        );
+        const settings = await getStorageData(optionsPage, 'settings');
         return settings?.blockList?.length;
       })
       .toBe(0);

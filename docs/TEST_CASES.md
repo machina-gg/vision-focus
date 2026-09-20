@@ -209,16 +209,16 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 ### アナリティクス機能
 
-| ID     | シナリオ                                            | 優先度 | ステータス |
-| ------ | --------------------------------------------------- | ------ | ---------- |
-| AN-001 | サイト別ブロック回数が記録される                    | P1     | -          |
-| AN-002 | Unblock History（ブロック解除サイト）が記録される   | P1     | -          |
-| AN-003 | 解除サイトの滞在時間が 30 秒間隔の Heartbeat で記録 | P1     | -          |
-| AN-004 | トラッキング中サイトの滞在時間が記録される          | P2     | -          |
-| AN-005 | Analytics Opt-In モーダルで許可/拒否を選択できる    | P1     | -          |
-| AN-006 | Opt-Out した場合、トラッキングが無効化される        | P2     | -          |
-| AN-007 | Analytics データをリセットできる                    | P2     | -          |
-| AN-010 | Opt-Out 時に Unblock History も無効化される         | P1     | -          |
+| ID     | シナリオ                                          | 優先度 | ステータス |
+| ------ | ------------------------------------------------- | ------ | ---------- |
+| AN-001 | サイト別ブロック回数が記録される                  | P1     | -          |
+| AN-002 | Unblock History（ブロック解除サイト）が記録される | P1     | -          |
+| AN-003 | 解除サイトの滞在時間が Heartbeat で記録される     | P1     | -          |
+| AN-004 | トラッキング中サイトの滞在時間が記録される        | P2     | -          |
+| AN-005 | Analytics Opt-In モーダルで許可/拒否を選択できる  | P1     | -          |
+| AN-006 | Opt-Out でもブロック回数の集計は続く              | P2     | -          |
+| AN-007 | Analytics データをリセットできる                  | P2     | -          |
+| AN-010 | Opt-Out でも解除履歴は記録される                  | P1     | -          |
 
 ### 多言語対応
 
@@ -226,7 +226,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | -------- | ------------------------------------------------ | ------ | ---------- |
 | I18N-001 | ブラウザ言語が英語の場合、英語UIが表示される     | P1     | -          |
 | I18N-002 | ブラウザ言語が日本語の場合、日本語UIが表示される | P1     | -          |
-| I18N-003 | 言語切替 UI を持たない                           | P1     | -          |
+| I18N-003 | ヘッダーの操作は実装どおりのものだけ             | P1     | -          |
 | I18N-004 | 表示言語が全画面で統一されている                 | P1     | -          |
 
 ### データ永続化
@@ -262,6 +262,9 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 - storage の書き込みは Service Worker 経由（`tests/e2e/helpers/sw.ts`）で行う。options を開いて書くとアプリの hydration が state を書き戻して上書きしたり、UI が時間制限値をプリセットに丸めたりするため、意図した状態にならない
 - 時間制限の超過判定は `analytics` を見るが、analytics の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` / `time-limit-reset` アラーム）を即時発火させて待つ
 - fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` / `makeTimeLimitUsage()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
+- storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
+- 滞在時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に載っているドメインだけ**。履歴に無いドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
+- 「存在しない要素が無いこと」で合否を決めない。実装に一度も無かったセレクタや削除済みのセレクタの不在は、何を壊しても成立する。実装にある要素・値を正面から確かめる
 
 ### 開発支援（投げ銭）
 
@@ -281,7 +284,7 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 | INT-002 | Pause + Schedule 同時有効時、Pause が優先される           | P1     | -          |
 | INT-003 | Schedule 有効中でも Time Limit 未超過ならブロックされない | P1     | -          |
 | INT-004 | Pause + Time Limit + Schedule 同時有効時の優先順位        | P1     | -          |
-| INT-005 | Analytics Opt-Out 時に Unblock History も無効化           | P1     | -          |
+| INT-005 | Analytics Opt-Out でも解除後の滞在時間は記録される        | P1     | -          |
 | INT-006 | パスワード保護 + Pause トグル の認証フロー                | P1     | -          |
 | INT-007 | パスワード保護 + ブロック解除 の認証フロー                | P1     | -          |
 
@@ -633,28 +636,25 @@ Chrome拡張機能のE2Eテストには以下の特殊な設定が必要：
 
 ---
 
-### AN-010: Opt-Out 時に Unblock History も無効化される
+### AN-010: Opt-Out でも解除履歴は記録される
 
 **前提条件**
 
-- Analytics Opt-In が有効化されている
-- Unblock History が記録されている
+- Analytics Opt-In が拒否（`analyticsOptIn.enabled` が false）されている
+- ブロックリストに「example.com」が登録されている
+- 解除履歴が空である
 
 **手順**
 
-1. ヘルプタブを開く
-2. Analytics Opt-In を無効化
-3. 分析タブを開く
+1. オプション画面のブロックリストタブを開く
+2. 「example.com」を削除（長押しで確定）する
 
 **期待結果**
 
-- Unblock History が非表示になる
-- 新規の Unblock History が記録されない
+- 解除履歴（`unblockHistory.sites`）に「example.com」が記録される
 
-⚠ **この期待結果は実装と食い違っており、テストは未実行（`test.fixme`）にしてある。**
-`remove-block` ハンドラは `analyticsOptIn` を参照せず解除履歴を無条件で記録し、Opt-Out が止めるのは
-GA4 への外部送信だけである。期待結果を実装に合わせるのか実装を変えるのかは未決
-（machina-gg/vision-focus#431「先に判断が要るもの」2。INT-005 も同じ主題）。
+⚠ `analyticsOptIn` が止めるのは **GA4 への送信だけ**で、手元の集計（ブロック回数・使用時間・解除履歴）は
+拒否しても続く（machina-gg/vision-focus#431 の判断）。AN-006 / INT-005 も同じ主題。
 
 ---
 
@@ -740,23 +740,23 @@ GA4 への外部送信だけである。期待結果を実装に合わせるの�
 
 ---
 
-### INT-005: Analytics Opt-Out 時に Unblock History も無効化
+### INT-005: Analytics Opt-Out でも解除後の滞在時間は記録される
 
 **前提条件**
 
-- Analytics Opt-In が有効化されている
-- Unblock History が記録されている
+- Analytics Opt-In が拒否（`analyticsOptIn.enabled` が false）されている
+- 解除履歴に「example.com」が載っている（滞在時間は 0）
 
 **手順**
 
-1. ヘルプタブを開く
-2. Analytics Opt-In を無効化
-3. 分析タブを開く
+1. 「example.com」を開いたままにする
 
 **期待結果**
 
-- Unblock History セクションが非表示になる
-- 新規の Unblock が記録されない
+- 解除履歴の `timeAfterUnblock` が増える
+
+⚠ `analyticsOptIn` が止めるのは GA4 への送信だけで、手元の集計は拒否しても続く
+（machina-gg/vision-focus#431 の判断。AN-006 / AN-010 も同じ主題）。
 
 ---
 
@@ -864,13 +864,13 @@ GA4 への外部送信だけである。期待結果を実装に合わせるの�
 
 **スケジュール管理** 24. OPT-S01, OPT-S02, OPT-S03: スケジュールタブ・週間カレンダー・スケジュール追加 25. OPT-S04, OPT-S05, OPT-S06: 時間帯・曜日・プリセット連携設定 26. OPT-S07, OPT-S08, OPT-S09, OPT-S11: スケジュール編集・削除・有効/無効切り替え・視覚フィードバック 27. OPT-S13, OPT-S14: スケジュール競合検出・プリセット削除時の連動処理
 
-**Analytics 機能** 28. AN-001: サイト別ブロック回数記録 29. AN-002: Unblock History 記録 30. AN-003: 解除サイト滞在時間記録（30秒間隔 Heartbeat）31. AN-005: Analytics Opt-In モーダル 32. AN-010: Opt-Out 時の Unblock History 無効化 33. OPT-A01, OPT-A02, OPT-A03: 分析タブ・ランキング・Unblock History 表示 34. OPT-A04, OPT-A05: 解除サイト再ブロック・トラッキング停止 35. OPT-B09: ブロック回数表示（各ドメイン）
+**Analytics 機能** 28. AN-001: サイト別ブロック回数記録 29. AN-002: Unblock History 記録 30. AN-003: 解除サイト滞在時間記録（Heartbeat）31. AN-005: Analytics Opt-In モーダル 32. AN-010: Opt-Out でも解除履歴を記録 33. OPT-A01, OPT-A02, OPT-A03: 分析タブ・ランキング・Unblock History 表示 34. OPT-A04, OPT-A05: 解除サイト再ブロック・トラッキング停止 35. OPT-B09: ブロック回数表示（各ドメイン）
 
 **パスワード保護** 36. OPT-H04, OPT-H05, OPT-H06, OPT-H07: パスワード設定・変更・削除 37. POP-009: パスワード認証（Pause）
 
-**多言語対応** 38. I18N-001, I18N-002: ブラウザ言語の自動検出 39. I18N-003: 言語切替 UI を持たない 40. I18N-004: 全画面統一
+**多言語対応** 38. I18N-001, I18N-002: ブラウザ言語の自動検出 39. I18N-003: ヘッダーの操作は実装どおりのものだけ 40. I18N-004: 全画面統一
 
-**機能間相互作用** 41. INT-001, INT-002, INT-003, INT-004: Pause/Time Limit/Schedule の優先順位 42. INT-005: Analytics Opt-Out と Unblock History の連動 43. INT-006, INT-007: パスワード保護の認証フロー
+**機能間相互作用** 41. INT-001, INT-002, INT-003, INT-004: Pause/Time Limit/Schedule の優先順位 42. INT-005: Analytics Opt-Out でも滞在時間を記録 43. INT-006, INT-007: パスワード保護の認証フロー
 
 **その他主要機能** 44. POP-010, POP-011: QuickBlock 機能 45. NEW-006, NEW-007: 目標テキスト編集・保存 46. DATA-004, DATA-005, DATA-006: プリセット・スケジュール・Analytics データの永続化
 
@@ -882,7 +882,7 @@ GA4 への外部送信だけである。期待結果を実装に合わせるの�
 2. OPT-ST10, OPT-ST12, OPT-ST13, OPT-ST14, OPT-ST15: スタイル機能
 3. NEW-011: 壁紙ダウンロードボタン
 
-**Analytics 詳細機能** 8. AN-004: トラッキング中サイト滞在時間 9. AN-006, AN-007: Opt-Out・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
+**Analytics 詳細機能** 8. AN-004: トラッキング中サイト滞在時間 9. AN-006, AN-007: Opt-Out 時の集計継続・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
 
 **その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-B13: 通知設定 19. OPT-H01, OPT-H02, OPT-H03, OPT-H08, OPT-H09, OPT-H10: ヘルプタブ全般 20. DATA-003: 拡張機能再有効化後の設定保持
 

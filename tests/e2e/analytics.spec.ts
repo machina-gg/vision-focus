@@ -13,11 +13,17 @@ import {
   getStorageDataFromExtension,
   getStorageData,
   makeAnalytics,
-  makeSiteBlockCounts
+  makeSettings,
+  makeSiteBlockCounts,
+  makeUnblockHistory
 } from './helpers/storage';
+import {
+  getStorageViaSW,
+  setupStorageViaSW,
+  triggerBlockRuleRecompute,
+  waitForBlockRules
+} from './helpers/sw';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
-
-import type { AnalyticsData, UnblockHistory } from '~/types/storage';
 
 /**
  * 保存済みの analytics から、集計の入っているキーの一覧を読む
@@ -29,7 +35,7 @@ import type { AnalyticsData, UnblockHistory } from '~/types/storage';
 async function readAnalyticsKeys(
   page: Page
 ): Promise<{ dailyStats: string[]; siteBlockCounts: string[] } | null> {
-  const analytics = await getStorageData<AnalyticsData>(page, 'analytics');
+  const analytics = await getStorageData(page, 'analytics');
   if (!analytics?.dailyStats || !analytics?.siteBlockCounts) {
     return null;
   }
@@ -43,7 +49,7 @@ async function readAnalyticsKeys(
 async function readTimeAfterUnblock(
   page: Page
 ): Promise<Record<string, number> | null> {
-  const history = await getStorageData<UnblockHistory>(page, 'unblockHistory');
+  const history = await getStorageData(page, 'unblockHistory');
   if (!history?.sites) {
     return null;
   }
@@ -84,10 +90,12 @@ test.describe('Analytics - アナリティクス機能', () => {
       ]
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteStats: {}
-    });
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics()
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -103,16 +111,16 @@ test.describe('Analytics - アナリティクス機能', () => {
     }
 
     // Analytics データを確認
-    const analytics = (await getStorageDataFromExtension(
+    const analytics = await getStorageDataFromExtension(
       context,
       extensionId,
       'analytics'
-    )) as any;
+    );
 
     // サイト別の回数は siteBlockCounts[domain].count に入る
-    expect(analytics.siteBlockCounts[TEST_DOMAINS.example]).toBeDefined();
+    expect(analytics?.siteBlockCounts[TEST_DOMAINS.example]).toBeDefined();
     expect(
-      analytics.siteBlockCounts[TEST_DOMAINS.example].count
+      analytics?.siteBlockCounts[TEST_DOMAINS.example].count
     ).toBeGreaterThanOrEqual(3);
   });
 
@@ -167,44 +175,49 @@ test.describe('Analytics - アナリティクス機能', () => {
     await optionsPage.close();
   });
 
-  test('AN-003: 解除サイトの滞在時間が 30 秒間隔の Heartbeat で記録', async ({
-    context,
-    extensionId
+  test('AN-003: 解除サイトの滞在時間が Heartbeat で記録される', async ({
+    context
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
+    // 記録は background の一定間隔のタイマーが 1 周してから入るため、
+    // 既定のテスト時間では足りない
+    test.setTimeout(90_000);
+
+    // ⚠ 計測されるのは「解除履歴に載っているドメイン」だけ。履歴に無いと
+    // recordTime が途中で return するので、キー名が正しくても何も記録されない
+    // （src/background/handlers/tracker-heartbeat.ts の findUnblockedSite）
+    await setupStorageViaSW(context, {
+      settings: makeSettings({
+        paused: false,
+        analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
+      }),
+      analytics: makeAnalytics(),
+      unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteStats: {}
-    });
-
-    // 解除サイトにアクセス（ブロックリストに含まれていないサイト）
     const externalPage = await openExternalSite(
       context,
-      `https://${TEST_DOMAINS.reddit}`
+      `https://${TEST_DOMAINS.example}`
     );
 
     await externalPage.waitForLoadState('domcontentloaded');
 
-    // 30秒間待機してHeartbeatが送信されるのを待つ（テストでは短縮）
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // 固定待機ではなく保存値で待つ。読み出しは SW 経由で行う
+    // （拡張機能のページを開くと前面のタブが入れ替わり、計測が止まる）
+    await expect
+      .poll(
+        async () => {
+          const analytics = await getStorageViaSW(context, 'analytics');
+          return analytics?.siteTime?.[TEST_DOMAINS.example]?.time ?? 0;
+        },
+        { timeout: 60_000 }
+      )
+      .toBeGreaterThan(0);
 
-    // トラッキングデータを確認
-    const analytics = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics'
-    )) as any;
-
-    // Heartbeatが記録されていることを確認（時間は短いが記録されている）
-    if (analytics.siteStats[TEST_DOMAINS.reddit]) {
-      expect(
-        analytics.siteStats[TEST_DOMAINS.reddit].totalTime
-      ).toBeGreaterThan(0);
-    }
+    // 同じ経路で解除履歴の滞在時間も伸びる
+    const history = await getStorageViaSW(context, 'unblockHistory');
+    expect(
+      history?.sites?.[TEST_DOMAINS.example]?.timeAfterUnblock
+    ).toBeGreaterThan(0);
 
     await externalPage.close();
   });
@@ -218,10 +231,12 @@ test.describe('Analytics - アナリティクス機能', () => {
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteStats: {}
-    });
+    await setStorageDataFromExtension(
+      context,
+      extensionId,
+      'analytics',
+      makeAnalytics()
+    );
 
     // 外部サイトにアクセス
     const externalPage = await openExternalSite(
@@ -233,15 +248,15 @@ test.describe('Analytics - アナリティクス機能', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Analytics データを確認
-    const analytics = (await getStorageDataFromExtension(
+    const analytics = await getStorageDataFromExtension(
       context,
       extensionId,
       'analytics'
-    )) as any;
+    );
 
     // dailyStats に記録があることを確認
     const today = new Date().toISOString().slice(0, 10);
-    if (analytics.dailyStats[today]) {
+    if (analytics?.dailyStats[today]) {
       expect(analytics.dailyStats[today]).toBeDefined();
     }
 
@@ -273,50 +288,66 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     // 設定が保存されたことを確認
     await new Promise((resolve) => setTimeout(resolve, 300));
-    const settings = (await getStorageDataFromExtension(
+    const settings = await getStorageDataFromExtension(
       context,
       extensionId,
       'settings'
-    )) as any;
-    expect(settings.analyticsOptIn).toBeDefined();
-    expect(settings.analyticsOptIn.enabled).toBe(true);
+    );
+    expect(settings?.analyticsOptIn).toBeDefined();
+    expect(settings?.analyticsOptIn?.enabled).toBe(true);
 
     await optionsPage.close();
   });
 
-  test('AN-006: Opt-Out した場合、トラッキングが無効化される', async ({
-    context,
-    extensionId
-  }) => {
-    // Opt-Out 状態
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
+  // ⚠ analyticsOptIn が止めるのは GA4 への送信だけで、手元の集計は続く
+  // （src/lib/analytics.ts の isAnalyticsEnabled が塞ぐのは trackEvent /
+  //  sendDailyActive のみ。ブロック回数の記録は
+  //  src/background/listeners/navigationTracking.ts が無条件に行う）。
+  // machina-gg/vision-focus#431 でテストを実装に合わせると決めた
+  test('AN-006: Opt-Out でもブロック回数の集計は続く', async ({ context }) => {
+    await setupStorageViaSW(context, {
+      settings: makeSettings({
+        paused: false,
+        // Opt-Out 状態
+        analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },
+        blockList: [
+          {
+            id: '1',
+            domain: TEST_DOMAINS.example,
+            isWildcard: false,
+            createdAt: new Date().toISOString(),
+            enabled: true
+          }
+        ]
+      }),
+      analytics: makeAnalytics()
     });
+    await triggerBlockRuleRecompute(context);
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
-    await setStorageDataFromExtension(context, extensionId, 'analytics', {
-      dailyStats: {},
-      siteStats: {}
-    });
-
-    // 外部サイトにアクセス
-    const externalPage = await openExternalSite(
+    // ブロック対象サイトにアクセスするとブロックページへ飛ぶ
+    const blockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
-    await externalPage.waitForLoadState('domcontentloaded');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Opt-Out でもサイト別ブロック回数と日次統計は記録される
+    const today = new Date().toISOString().slice(0, 10);
+    await expect
+      .poll(async () => {
+        const analytics = await getStorageViaSW(context, 'analytics');
+        return analytics?.siteBlockCounts?.[TEST_DOMAINS.example]?.count ?? 0;
+      })
+      .toBeGreaterThan(0);
+    await expect
+      .poll(async () => {
+        const analytics = await getStorageViaSW(context, 'analytics');
+        return analytics?.dailyStats?.[today]?.blockCount ?? 0;
+      })
+      .toBeGreaterThan(0);
 
-    // Analytics データが記録されていないことを確認
-    const analytics = (await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics'
-    )) as any;
-    expect(Object.keys(analytics.dailyStats).length).toBe(0);
-
-    await externalPage.close();
+    await blockedPage.close();
   });
 
   test('AN-007: Analytics データをリセットできる', async ({
@@ -408,15 +439,11 @@ test.describe('Analytics - アナリティクス機能', () => {
   // 機能を検証していた。AN-008 は `if (queueData)` で囲まれていたため
   // 常に緑になっていた。キューイングを実装する場合はテストも作り直す。
 
-  // ⚠ AN-010 は実行しない（fixme）。
-  // 題目どおりの操作（Options のブロックリストから解除する）に書き直したが、
-  // 期待結果が実装と食い違っているため今は必ず落ちる。
   // `remove-block` ハンドラ（src/background/handlers/remove-block.ts）は
-  // analyticsOptIn を一切参照せず、解除履歴を無条件で記録する。Opt-Out が
-  // 止めるのは GA4 への外部送信だけ（src/lib/analytics.ts の isAnalyticsEnabled）。
-  // テスト名を実装に合わせるのか実装を変えるのかは未決（machina-gg/vision-focus#431
-  // 「先に判断が要るもの」2）。決まるまで、緑に見せずに未実行として残す。
-  test.fixme('AN-010: Opt-Out 時に Unblock History も無効化される', async ({
+  // analyticsOptIn を一切参照せず、解除履歴を無条件で記録する。
+  // Opt-Out が止めるのは GA4 への外部送信だけなので、解除履歴は残るのが正しい
+  // （machina-gg/vision-focus#431 の判断）
+  test('AN-010: Opt-Out でも解除履歴は記録される', async ({
     context,
     extensionId
   }) => {
@@ -453,12 +480,13 @@ test.describe('Analytics - アナリティクス機能', () => {
       0
     );
 
-    // Unblock History に記録されないことを確認
-    const history = await getStorageData<UnblockHistory>(
-      optionsPage,
-      'unblockHistory'
-    );
-    expect(Object.keys(history?.sites ?? {})).toEqual([]);
+    // 解除したドメインが履歴に残る（書き込みは非同期なので反映を待つ）
+    await expect
+      .poll(async () => {
+        const history = await getStorageData(optionsPage, 'unblockHistory');
+        return Object.keys(history?.sites ?? {});
+      })
+      .toEqual([TEST_DOMAINS.example]);
 
     await optionsPage.close();
   });
