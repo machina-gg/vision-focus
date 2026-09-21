@@ -198,13 +198,23 @@ export function BlocklistTab({
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {getMessage('blockedSites')}
         </h2>
-        {settings?.blockList.length === 0 ? (
+        {settings === undefined ? (
+          // 設定がまだ読めていない状態。未登録（0 件）の案内と取り違えないよう別の表示にする。
+          // 一覧の枠（Card）は出したままにして、読み込み完了時に画面が跳ねないようにする
+          <div
+            role="status"
+            className="flex flex-col items-center justify-center gap-2 py-8"
+          >
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-600">{getMessage('loading')}</p>
+          </div>
+        ) : settings.blockList.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             {getMessage('noBlockedSites')}
           </p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {settings?.blockList.map((item) => {
+            {settings.blockList.map((item) => {
               const domainKey = item.isWildcard
                 ? item.domain.replace('*.', '')
                 : item.domain;
