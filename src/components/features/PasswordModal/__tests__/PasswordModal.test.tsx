@@ -111,13 +111,43 @@ describe('PasswordModal', () => {
       expect(submitButton()).toBeDisabled();
     });
 
-    it('Enter キーを押しても例外にならない', () => {
-      // ボタンは未入力で止まるが Enter は止まらない。どちらが正かは
-      // 判断待ちのため（PR 本文の PM への確認事項）、ここでは
-      // 落ちないことだけを見て、現在の呼び出し有無を仕様として固定しない
-      const { input } = renderModal({ passwordInput: '' });
+    it('Enter キーを押しても onSubmit が呼ばれない', () => {
+      // 送信ボタンと同じ条件で止まることを見る。ここが緩むと、
+      // パスワード保護を付けていても空のまま照合へ進める
+      const { input, onSubmit } = renderModal({ passwordInput: '' });
 
-      expect(() => fireEvent.keyDown(input, { key: 'Enter' })).not.toThrow();
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('照合中に Enter キーを押しても onSubmit が呼ばれない', () => {
+      const { input, onSubmit } = renderModal({
+        passwordInput: '',
+        isVerifying: true
+      });
+
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('空白だけを入力したとき', () => {
+    // 空白はパスワードとして成立する文字なので、未入力とは区別して通す。
+    // 呼び出し側（src/hooks/usePasswordVerification.ts）も空文字だけを弾く
+    it('送信ボタンを押せる', () => {
+      renderModal({ passwordInput: ' ' });
+
+      expect(submitButton()).toBeEnabled();
+    });
+
+    it('Enter キーで onSubmit が呼ばれる', () => {
+      const { input, onSubmit } = renderModal({ passwordInput: ' ' });
+
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(onSubmit).toHaveBeenCalledTimes(1);
     });
   });
 
