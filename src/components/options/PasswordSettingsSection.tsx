@@ -20,6 +20,14 @@ interface PasswordSettingsSectionProps {
 
 type SettingMode = 'view' | 'set' | 'change' | 'remove';
 
+/**
+ * 新しいパスワードの保存結果。
+ *
+ * 失敗の理由を表示済みかどうかを返り値で伝える。呼び出し側が error の状態を
+ * 読んで判断すると、useCallback が閉じ込めた更新前の値を見てしまう（#454）。
+ */
+type SaveResult = 'saved' | 'failed-reported' | 'failed-unreported';
+
 export function PasswordSettingsSection({
   passwordSettings,
   onUpdate
@@ -53,15 +61,15 @@ export function PasswordSettingsSection({
 
   /** Validates new password and confirmation, then hashes and saves */
   const saveNewPassword = useCallback(
-    async (successMessageKey: string) => {
+    async (successMessageKey: string): Promise<SaveResult> => {
       const validation = validatePasswordStrength(newPassword);
       if (!validation.isValid && validation.errorKey) {
         setError(getMessage(validation.errorKey));
-        return false;
+        return 'failed-reported';
       }
       if (newPassword !== confirmPassword) {
         setError(getMessage('passwordMismatch'));
-        return false;
+        return 'failed-reported';
       }
       setIsProcessing(true);
       try {
@@ -69,9 +77,9 @@ export function PasswordSettingsSection({
         await onUpdate({ enabled: true, passwordHash: hash });
         setSuccess(getMessage(successMessageKey));
         setTimeout(resetForm, STATUS_RESET_DELAY_MS);
-        return true;
+        return 'saved';
       } catch {
-        return false;
+        return 'failed-unreported';
       } finally {
         setIsProcessing(false);
       }
@@ -98,21 +106,21 @@ export function PasswordSettingsSection({
 
   const handleSetPassword = useCallback(async () => {
     setError(null);
-    const saved = await saveNewPassword('passwordSetSuccess');
-    if (!saved && !error) {
+    const result = await saveNewPassword('passwordSetSuccess');
+    if (result === 'failed-unreported') {
       setError(getMessage('passwordSetFailed'));
     }
-  }, [saveNewPassword, error]);
+  }, [saveNewPassword]);
 
   const handleChangePassword = useCallback(async () => {
     setError(null);
     const verified = await verifyCurrentPassword();
     if (!verified) return;
-    const saved = await saveNewPassword('passwordChangedSuccess');
-    if (!saved && !error) {
+    const result = await saveNewPassword('passwordChangedSuccess');
+    if (result === 'failed-unreported') {
       setError(getMessage('passwordChangeFailed'));
     }
-  }, [verifyCurrentPassword, saveNewPassword, error]);
+  }, [verifyCurrentPassword, saveNewPassword]);
 
   const handleRemovePassword = useCallback(async () => {
     setError(null);
