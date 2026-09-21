@@ -56,6 +56,21 @@ async function getSessionId(): Promise<string> {
   return sessionId;
 }
 
+/**
+ * 計測処理を実行し、失敗しても呼び出し元へ例外を伝えない。
+ *
+ * 計測の可否を読むストレージアクセスもこの中で行う。外に出すと、
+ * 結果を捨てている呼び出し側（`void trackFeatureUse(...)` 等）で
+ * 未処理の rejection になる（machina-gg/vision-focus#469）。
+ */
+async function runSilently(task: () => Promise<void>): Promise<void> {
+  try {
+    await task();
+  } catch {
+    // 記録できないことは利用者に見せない（機能が使えないこととは別）
+  }
+}
+
 /** Check if analytics is enabled (user opted in) */
 export async function isAnalyticsEnabled(): Promise<boolean> {
   if (!GA_MEASUREMENT_ID || !GA_API_SECRET) return false;
@@ -68,10 +83,10 @@ export async function trackEvent(
   name: string,
   params: EventParams = {}
 ): Promise<void> {
-  const enabled = await isAnalyticsEnabled();
-  if (!enabled) return;
+  await runSilently(async () => {
+    const enabled = await isAnalyticsEnabled();
+    if (!enabled) return;
 
-  try {
     const [clientId, sessionId] = await Promise.all([
       getClientId(),
       getSessionId()
@@ -95,34 +110,37 @@ export async function trackEvent(
       method: 'POST',
       body: JSON.stringify(body)
     });
-  } catch {
-    // Silently ignore analytics failures — never disrupt the user
-  }
+  });
 }
+
+// 以下の公開関数は trackEvent に委譲するが、受け取る側で例外を止める
+// （委譲先が投げないことに依存しない）
 
 /** Track a feature usage event */
 export async function trackFeatureUse(feature: string): Promise<void> {
-  await trackEvent('use_feature', { feature });
+  await runSilently(() => trackEvent('use_feature', { feature }));
 }
 
 /** Track an error event */
 export async function trackError(type: string): Promise<void> {
-  await trackEvent('error', { type });
+  await runSilently(() => trackEvent('error', { type }));
 }
 
 /** Send a daily_active event (called from background alarm) */
 export async function sendDailyActive(): Promise<void> {
-  const enabled = await isAnalyticsEnabled();
-  if (!enabled) return;
+  await runSilently(async () => {
+    const enabled = await isAnalyticsEnabled();
+    if (!enabled) return;
 
-  // Check if extension context is still valid
-  if (!isExtensionContextValid()) {
-    return;
-  }
+    // Check if extension context is still valid
+    if (!isExtensionContextValid()) {
+      return;
+    }
 
-  const version = chrome.runtime.getManifest().version;
-  const language = getUILanguage();
+    const version = chrome.runtime.getManifest().version;
+    const language = getUILanguage();
 
-  // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
-  await trackEvent('daily_active', { version, language });
+    // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
+    await trackEvent('daily_active', { version, language });
+  });
 }

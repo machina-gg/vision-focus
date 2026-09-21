@@ -18,6 +18,7 @@ Vision Focus では Google Analytics 4 (GA4) の Measurement Protocol を使用�
 - **クライアントID**: `crypto.randomUUID()` で生成した匿名ID（`chrome.storage.local` に保存）
 - **セッション管理**: 30分の非アクティブでセッションリセット
 - **実装ファイル**: `src/lib/analytics.ts`
+- **失敗時の扱い**: 計測の可否を読む設定ストレージへのアクセスも含め、計測中の失敗はすべて握りつぶす。記録できないことと機能が使えないことは別であり、利用者の操作を妨げない
 - **設定**: `WXT_GA_MEASUREMENT_ID` / `WXT_GA_API_SECRET` を `.env` に定義する（`import.meta.env` 経由で参照。詳細は [README](../README.md) の「環境変数」）
 
 ---
