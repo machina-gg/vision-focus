@@ -1,11 +1,11 @@
 name: Claude Code Review
 
-# 共有リポジトリ machina-gg/agent-review の reusable workflow を呼び、GitHub Actions 上の Claude が
-# この PR をレビューする。レビュー観点と Approve の判定は agent-review 側にあり、呼び方・
-# profile の一覧・判定行の契約は agent-review の README.md が SSOT。
+# 共有リポジトリ machina-gg/trillion-game-actions の reusable workflow を呼び、GitHub Actions 上の Claude が
+# この PR をレビューする。レビュー観点と Approve の判定は trillion-game-actions 側にあり、呼び方・
+# profile の一覧・判定行の契約は trillion-game-actions の README.md が SSOT。
 #
 # ⚠ permissions は呼び出し元が宣言しないと呼び出し先で使えない（reusable workflow は呼び出し元の
-#   権限以下しか宣言できず、引き上げはできない）。下の 3 つは agent-review が Approve（reviews API）と
+#   権限以下しか宣言できず、引き上げはできない）。下の 3 つは trillion-game-actions が Approve（reviews API）と
 #   レビューコメントの投稿に使うため、ここで与える必要がある。
 
 on:
@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   review:
-    uses: machina-gg/agent-review/.github/workflows/review.yml@main
+    uses: machina-gg/trillion-game-actions/.github/workflows/review.yml@main
     with:
       profile: chrome-extension
     secrets:
