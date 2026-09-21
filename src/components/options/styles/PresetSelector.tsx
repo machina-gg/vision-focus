@@ -136,6 +136,9 @@ function PresetButtons({
             // 適用中かどうかがアイコンの有無でしか出ておらず、
             // 読み上げでは区別が付かない（machina-gg/vision-focus#466）
             data-active={String(isActive)}
+            // 選択中（いま編集しているもの）が背景色でしか出ておらず、
+            // 読み上げでは区別が付かない（machina-gg/vision-focus#475）
+            aria-pressed={isSelected}
             onClick={() => onSelectPreset(preset.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
               isSelected

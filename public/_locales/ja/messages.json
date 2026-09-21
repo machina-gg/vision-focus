@@ -737,6 +737,14 @@
     "message": "解像度を選択",
     "description": "解像度選択ラベル"
   },
+  "downloadWallpaperSuccess": {
+    "message": "壁紙をダウンロードしました。",
+    "description": "壁紙ダウンロード成功メッセージ"
+  },
+  "downloadWallpaperError": {
+    "message": "壁紙のダウンロードに失敗しました。もう一度お試しください。",
+    "description": "壁紙ダウンロード失敗メッセージ"
+  },
   "customBackground": {
     "message": "カスタム背景",
     "description": "カスタム背景セクションタイトル"

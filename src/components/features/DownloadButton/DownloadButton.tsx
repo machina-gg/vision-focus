@@ -76,6 +76,14 @@ export function DownloadButton({
     return 'bg-black/50 hover:bg-black/70';
   };
 
+  // 読み上げ用の保存結果。成否は一度きりの出来事なので、属性だけでは伝わらない
+  const statusMessage =
+    downloadStatus === 'success'
+      ? getMessage('downloadWallpaperSuccess')
+      : downloadStatus === 'error'
+        ? getMessage('downloadWallpaperError')
+        : '';
+
   return (
     <div className={`relative ${className}`}>
       {/* Main Button */}
@@ -83,6 +91,8 @@ export function DownloadButton({
         data-testid="newtab-download-button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || isDownloading}
+        data-download-status={downloadStatus}
+        data-downloading={String(isDownloading)}
         className={`
           flex items-center gap-2 px-4 py-2 rounded-lg text-white
           transition-all shadow-lg backdrop-blur-sm
@@ -99,6 +109,19 @@ export function DownloadButton({
           />
         )}
       </button>
+
+      {/*
+        保存結果の読み上げ領域。見た目は変えずに読み上げだけ行うため sr-only で置く。
+        状態が変わる前から領域を描画しておかないと読み上げられないので、待機中は空文字を入れる
+      */}
+      <span
+        role="status"
+        className="sr-only"
+        data-testid="newtab-download-status"
+        data-html2canvas-ignore="true"
+      >
+        {statusMessage}
+      </span>
 
       {/* Resolution Menu - excluded from wallpaper capture */}
       {isOpen && (

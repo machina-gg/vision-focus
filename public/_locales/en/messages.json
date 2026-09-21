@@ -737,6 +737,14 @@
     "message": "Select Resolution",
     "description": "Resolution selection label"
   },
+  "downloadWallpaperSuccess": {
+    "message": "Wallpaper downloaded.",
+    "description": "Wallpaper download success message"
+  },
+  "downloadWallpaperError": {
+    "message": "Failed to download the wallpaper. Please try again.",
+    "description": "Wallpaper download error message"
+  },
   "customBackground": {
     "message": "Custom Background",
     "description": "Custom background section title"
