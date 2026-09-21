@@ -401,9 +401,9 @@ export function makeSiteBlockCounts(
 /**
  * 解除済みサイトの履歴を作る
  *
- * `tracker-heartbeat` は「解除履歴に載っているドメイン」だけを計測する
- * （載っていなければ `recordTime` が途中で return する）。滞在時間の記録を
- * 検証するテストは、対象ドメインをここで先に履歴へ入れておく必要がある。
+ * `tracker-heartbeat` は「解除履歴に `status: 'unblocked'` で載っている
+ * ドメイン」だけを計測する（該当しなければ `recordTime` が途中で return する）。
+ * 解除後の時間の記録を検証するテストは、対象ドメインをここで先に履歴へ入れておく。
  *
  * @param domains - 解除済みとして扱うドメイン
  * @param overrides - 各サイトに与える上書き（滞在時間の初期値など）

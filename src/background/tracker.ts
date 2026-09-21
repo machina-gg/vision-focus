@@ -9,13 +9,25 @@ let activeDomain: string | null = null;
 let lastUpdateTime: number = Date.now();
 let trackingInterval: ReturnType<typeof setInterval> | null = null;
 
-// Start tracking
-export function startTracking(): void {
-  if (trackingInterval) {
-    clearInterval(trackingInterval);
-  }
+/**
+ * ブラウザのウィンドウが前面にあるか。
+ *
+ * ⚠ 記録に関わる経路はすべてこの 1 つの変数を見る（#440）。
+ * 経路ごとにフォーカスを問い合わせる形にすると、必ずどこかの経路が漏れる
+ * （heartbeat 由来の `blockExistingTabs()` が `chrome.tabs.update` を呼び、
+ * それが `tabs.onUpdated` として届く経路が実例）。
+ * 初期値は false（実状態を取りに行くまでは記録しない側に倒す）
+ */
+let isBrowserFocused = false;
 
-  // Update every second
+// Start tracking
+// ⚠ service worker が起きるたびに呼ばれる（src/background/init.ts）ので、
+// 何度呼ばれてもタイマーとリスナーが 1 組だけになるよう、先に今のぶんを畳む。
+// Chrome が同一参照のリスナーを重複登録しないかどうかに依存しない（#440）
+export function startTracking(): void {
+  stopTracking();
+
+  // 一定間隔で、前回の書き出しからの経過時間をまとめて記録する
   trackingInterval = setInterval(updateTracking, TRACKING_UPDATE_INTERVAL_MS);
 
   // Listen for tab changes
@@ -23,8 +35,8 @@ export function startTracking(): void {
   chrome.tabs.onUpdated.addListener(handleTabUpdated);
   chrome.windows.onFocusChanged.addListener(handleWindowFocusChanged);
 
-  // Initialize with current tab
-  initializeCurrentTab();
+  // Initialize with current focus state and tab
+  void initializeFocusAndTab();
 }
 
 // Stop tracking
@@ -34,18 +46,66 @@ export function stopTracking(): void {
     trackingInterval = null;
   }
 
+  // 実状態を取り直すまでは記録しない側に倒す
+  isBrowserFocused = false;
+
   chrome.tabs.onActivated.removeListener(handleTabActivated);
   chrome.tabs.onUpdated.removeListener(handleTabUpdated);
   chrome.windows.onFocusChanged.removeListener(handleWindowFocusChanged);
 }
 
+/**
+ * 計測対象を消す。
+ *
+ * ⚠ `activeTabId` も一緒に消す。これを残すと、前面でない間に届いた
+ * `tabs.onUpdated`（heartbeat 由来の `blockExistingTabs()` による
+ * ブロック画面へのリダイレクト等）が「アクティブタブの URL 変更」として
+ * 通り、見ていない時間が加算され続ける（#440）
+ */
+function clearTrackingTarget(): void {
+  activeTabId = null;
+  activeDomain = null;
+}
+
+/**
+ * フォーカス状態と計測対象を chrome へ問い合わせて初期化する。
+ *
+ * ⚠ service worker が起きるたびに通る。起動直後はフォーカスのイベントが
+ * 来ないため、ここで一度だけ実状態を取りに行く（#440）
+ */
+async function initializeFocusAndTab(): Promise<void> {
+  try {
+    const lastFocused = await chrome.windows.getLastFocused();
+    isBrowserFocused = lastFocused.focused === true;
+  } catch {
+    // 問い合わせに失敗したら記録しない側に倒す
+    isBrowserFocused = false;
+  }
+
+  await initializeCurrentTab();
+}
+
 // Initialize with current active tab
 async function initializeCurrentTab(): Promise<void> {
+  if (!isBrowserFocused) {
+    clearTrackingTarget();
+    return;
+  }
+
   try {
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
     });
+
+    // ⚠ await の間にフォーカスが落ちていることがある。代入の直前に確かめ直す。
+    // 入口の判定だけだと、一度消した計測対象が遅れて解決した結果で復活し、
+    // 前面に戻ったあとに不在期間まで加算される（#440）
+    if (!isBrowserFocused) {
+      clearTrackingTarget();
+      return;
+    }
+
     if (tab?.id && tab?.url) {
       activeTabId = tab.id;
       activeDomain = extractDomain(tab.url);
@@ -65,16 +125,32 @@ async function handleTabActivated(
   // Save time for previous tab
   await saveElapsedTime();
 
+  // ⚠ 前面でないときは計測対象にしない（#440）
+  if (!isBrowserFocused) {
+    clearTrackingTarget();
+    return;
+  }
+
   // Update to new tab
   activeTabId = activeInfo.tabId;
 
+  let domain: string | null = null;
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
-    activeDomain = tab.url ? extractDomain(tab.url) : null;
+    domain = tab.url ? extractDomain(tab.url) : null;
   } catch {
-    activeDomain = null;
+    domain = null;
   }
 
+  // ⚠ await の間にフォーカスが落ちていることがある。代入の直前に確かめ直す。
+  // 入口の判定だけだと、一度消した計測対象が遅れて解決した結果で復活し、
+  // 前面に戻ったあとに不在期間まで加算される（#440）
+  if (!isBrowserFocused) {
+    clearTrackingTarget();
+    return;
+  }
+
+  activeDomain = domain;
   lastUpdateTime = Date.now();
 }
 
@@ -90,6 +166,12 @@ async function handleTabUpdated(
   // Save time for previous domain
   await saveElapsedTime();
 
+  // ⚠ 前面でないときは計測対象にしない（#440）
+  if (!isBrowserFocused) {
+    clearTrackingTarget();
+    return;
+  }
+
   // Update to new domain
   activeDomain = extractDomain(changeInfo.url);
   lastUpdateTime = Date.now();
@@ -101,10 +183,13 @@ async function handleWindowFocusChanged(windowId: number): Promise<void> {
 
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
     // Browser lost focus, save time
+    // ⚠ 先に書き出してから状態を落とす（前面だった間の時間は残す）
     await saveElapsedTime();
-    activeDomain = null;
+    isBrowserFocused = false;
+    clearTrackingTarget();
   } else {
     // Browser gained focus, get current tab
+    isBrowserFocused = true;
     await initializeCurrentTab();
   }
 }
@@ -118,9 +203,11 @@ function isContextValid(): boolean {
   }
 }
 
-// Update tracking (called every second)
+// Update tracking (called on every TRACKING_UPDATE_INTERVAL_MS tick)
 async function updateTracking(): Promise<void> {
-  if (!activeDomain || !isContextValid()) return;
+  // ⚠ 最後の歯止め。イベントの取りこぼしや、ハンドラが await している最中の
+  // フォーカス喪失で計測対象が残っても、前面でない間は記録しない（#440）
+  if (!isBrowserFocused || !activeDomain || !isContextValid()) return;
 
   const now = Date.now();
   const elapsed = Math.floor((now - lastUpdateTime) / 1000);
@@ -156,6 +243,8 @@ async function saveElapsedTime(): Promise<void> {
 }
 
 // Record time for a domain
+// 使用時間（siteTime）と日次集計（dailyStats）を書くのはこの関数だけ。
+// heartbeat 側からも書くと同じ滞在時間が二重に加算される（#440）
 async function recordTime(domain: string, seconds: number): Promise<void> {
   if (seconds <= 0) return;
 

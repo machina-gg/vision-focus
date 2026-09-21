@@ -34,8 +34,15 @@ export const STORAGE_SETTLE_DELAY_MS = 100;
 /** Timeout to mark storage as loaded for first-time users (ms) */
 export const STORAGE_LOADED_TIMEOUT_MS = 100;
 
-/** Background tracker update interval — once per second (ms) */
-export const TRACKING_UPDATE_INTERVAL_MS = 1_000;
+/**
+ * Background tracker update interval (ms)
+ *
+ * 加算する秒数は前回書き出しからの経過時間の引き算で求めるため、
+ * この間隔を変えても記録される合計時間は変わらない（まとめて 1 回で書く）。
+ * ⚠ 短くすると集計データ全体の読み書きがその頻度で走り、
+ * Service Worker のアイドル停止も妨げる（#440）
+ */
+export const TRACKING_UPDATE_INTERVAL_MS = 15_000;
 
 /** Timeout threshold for stale heartbeat entries (ms) */
 export const STALE_ENTRY_TIMEOUT_MS = 60 * 1_000;

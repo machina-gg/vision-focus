@@ -181,8 +181,8 @@ test.describe('Analytics - アナリティクス機能', () => {
     // 既定のテスト時間では足りない
     test.setTimeout(90_000);
 
-    // ⚠ 計測されるのは「解除履歴に載っているドメイン」だけ。履歴に無いと
-    // recordTime が途中で return するので、キー名が正しくても何も記録されない
+    // ⚠ 解除後の時間が記録されるのは「解除履歴に status: 'unblocked' で
+    // 載っているドメイン」だけ。該当しないと recordTime が途中で return する
     // （src/background/handlers/tracker-heartbeat.ts の findUnblockedSite）
     await setupStorageViaSW(context, {
       settings: makeSettings({
@@ -200,12 +200,9 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     await externalPage.waitForLoadState('domcontentloaded');
 
-    // ⚠ 待つ対象は timeAfterUnblock にする。`analytics.siteTime` を書く経路は
-    // 2 つあり（heartbeat 側の recordTime と、アクティブタブを 1 秒ごとに
-    // 記録する src/background/tracker.ts の recordTime）、後者は解除履歴と
-    // 無関係にどのサイトでも動く。siteTime で待つと 1〜2 秒で満たされて
-    // 先へ進み、heartbeat のタイマーが 1 周する前に読んでしまう
-    // （run 35523350131 で 3.1 秒で 0 を読んで失敗）。
+    // ⚠ 待つ対象は timeAfterUnblock にする。`analytics.siteTime` を書くのは
+    // src/background/tracker.ts だけで、解除履歴と無関係にどのサイトでも動く。
+    // siteTime で待つと heartbeat が動いていなくても満たされてしまう。
     // timeAfterUnblock を増やすのは heartbeat 側の recordTime だけ。
     // 読み出しは SW 経由で行う（拡張機能のページを開くと前面のタブが
     // 入れ替わり、コンテンツスクリプトの heartbeat が止まる）
@@ -219,13 +216,12 @@ test.describe('Analytics - アナリティクス機能', () => {
       )
       .toBeGreaterThan(0);
 
-    // 滞在時間は analytics.siteTime にも入る（キー名が siteStats のままなら
-    // ここで undefined になる）。⚠ この値は上記 2 経路のどちらでも増えるため、
-    // heartbeat が動いたことの根拠は timeAfterUnblock の方である
-    const analytics = await getStorageViaSW(context, 'analytics');
-    expect(analytics?.siteTime?.[TEST_DOMAINS.example]?.time).toBeGreaterThan(
-      0
-    );
+    // ⚠ ここで analytics.siteTime を見ない。書くのは src/background/tracker.ts
+    // の別タイマーで、ウィンドウが前面のときだけ動く。この E2E は 3 並列の
+    // Chromium を xvfb 上で動かすため、どのウィンドウが前面かを制御できない。
+    // 本テストの対象は heartbeat の経路（timeAfterUnblock）であり、
+    // 二重計上がないことと siteTime の書き込みは単体テストで検査している
+    // （src/background/__tests__/time-tracking-single-writer.test.ts）
 
     await externalPage.close();
   });

@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   setupAlarmHandlers: vi.fn(),
   setupNavigationTracking: vi.fn(),
   createAlarms: vi.fn(),
-  registerMessageHandlers: vi.fn()
+  registerMessageHandlers: vi.fn(),
+  startTracking: vi.fn()
 }));
 
 vi.mock('../handlers', () => ({
@@ -34,6 +35,10 @@ vi.mock('../listeners/navigationTracking', () => ({
   setupNavigationTracking: mocks.setupNavigationTracking
 }));
 
+vi.mock('../tracker', () => ({
+  startTracking: mocks.startTracking
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -50,5 +55,16 @@ describe('initBackground', () => {
     expect(mocks.setupNavigationTracking).toHaveBeenCalledOnce();
     expect(mocks.registerMessageHandlers).toHaveBeenCalledOnce();
     expect(mocks.createAlarms).toHaveBeenCalledOnce();
+  });
+
+  it('滞在時間の計測を開始する', async () => {
+    // ⚠ エントリは service worker の起動のたびに評価される。ここで開始しないと、
+    // onInstalled / onStartup でしか始まらず、最初のアイドル停止以降は
+    // ブラウザを再起動するまで計測が動かない（#440）
+    const { initBackground } = await import('../init');
+
+    initBackground();
+
+    expect(mocks.startTracking).toHaveBeenCalledOnce();
   });
 });
