@@ -545,6 +545,90 @@ describe('shouldTrackBlockForDomain', () => {
     const result = await shouldTrackBlockForDomain('youtube.com');
     expect(result).toBe(false);
   });
+
+  // 記録はブロック判定そのものを見る（machina-gg/vision-focus#448）。
+  // 記録側が時間制限を持っていないと、超過前の遷移までブロック回数に加算され、
+  // 利用者が見る「〜回ブロックしました」と統計が実際より多くなる
+  it('時間制限が超過していなければfalse', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'youtube.com',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: true,
+            timeLimit: { type: 'daily', limitSeconds: 3600 }
+          }
+        ]
+      })
+    );
+    mockHasExceededTimeLimit.mockResolvedValue(false);
+    mockGetRemainingTime.mockResolvedValue(1800);
+    const result = await shouldTrackBlockForDomain('youtube.com');
+    expect(result).toBe(false);
+  });
+
+  it('時間制限を超過していればtrue', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'youtube.com',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: true,
+            timeLimit: { type: 'daily', limitSeconds: 3600 }
+          }
+        ]
+      })
+    );
+    mockHasExceededTimeLimit.mockResolvedValue(true);
+    const result = await shouldTrackBlockForDomain('youtube.com');
+    expect(result).toBe(true);
+  });
+
+  it('時間制限の無い項目は超過判定を経ずにtrue', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [
+          {
+            id: 'b1',
+            domain: 'twitch.tv',
+            isWildcard: false,
+            createdAt: '2024-01-01T00:00:00Z',
+            enabled: true
+          }
+        ]
+      })
+    );
+    const result = await shouldTrackBlockForDomain('www.twitch.tv');
+    expect(result).toBe(true);
+    expect(mockHasExceededTimeLimit).not.toHaveBeenCalled();
+  });
+
+  // 仮想項目の使用実績はホスト名ではなく項目のドメインで引く（#392）。
+  // 記録側が判定を通ることで、この読み替えも 1 箇所で済む
+  it('YouTube の仮想項目でも時間制限が超過していなければfalse', async () => {
+    mockGetSettings.mockResolvedValue(
+      createSettings({
+        blockList: [],
+        youtube: youtubeSettings({
+          timeLimit: { type: 'daily', limitSeconds: 3600 }
+        })
+      })
+    );
+    mockHasExceededTimeLimit.mockResolvedValue(false);
+    mockGetRemainingTime.mockResolvedValue(1800);
+    const result = await shouldTrackBlockForDomain('m.youtube.com');
+    expect(result).toBe(false);
+    expect(mockHasExceededTimeLimit).toHaveBeenCalledWith(
+      YOUTUBE_DOMAIN,
+      expect.objectContaining({ domain: YOUTUBE_DOMAIN })
+    );
+  });
 });
 
 describe('getActiveBlockedDomains', () => {

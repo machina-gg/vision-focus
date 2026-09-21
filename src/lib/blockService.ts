@@ -169,6 +169,23 @@ export async function findMatchingBlockItem(
  * Determine the block state for a URL
  * This is the main entry point for block state determination
  *
+ * 判定の本体は `getBlockStateForDomain`（URL からドメインを取り出すだけ）
+ */
+export async function getBlockState(url: string): Promise<BlockState> {
+  const domain = extractDomain(url);
+  if (!domain) return { blocked: false, reason: null };
+
+  return getBlockStateForDomain(domain);
+}
+
+/**
+ * Determine the block state for a domain
+ *
+ * ⚠ ブロック判定はこの関数だけが持つ。判定（`getBlockState`）も
+ * 記録（`shouldTrackBlockForDomain`）もここを通り、記録側は結果の `blocked` を見る。
+ * 同じ条件を 2 箇所に書くと片方だけが条件を取りこぼし、ブロックされていないのに
+ * ブロック回数が増える（machina-gg/vision-focus#448）
+ *
  * Flow (see BLOCK_STATE_MACHINE.md):
  * 1. Check global pause
  * 2. Find matching block item (ブロックリスト → YouTube の仮想ブロック項目)
@@ -176,19 +193,19 @@ export async function findMatchingBlockItem(
  * 4. Check schedules
  * 5. Check time limits
  */
-export async function getBlockState(url: string): Promise<BlockState> {
-  const domain = extractDomain(url);
-  if (!domain) return { blocked: false, reason: null };
-
-  const settings = await getSettings();
+export async function getBlockStateForDomain(
+  domain: string,
+  settings?: AppSettings
+): Promise<BlockState> {
+  const s = settings ?? (await getSettings());
 
   // Step 1: Check global pause
-  if (settings.paused) {
+  if (s.paused) {
     return { blocked: false, reason: null };
   }
 
   // Step 2: Find matching block item（ブロックリスト → YouTube の仮想ブロック項目）
-  const matched = await findMatchingBlockItem(domain, settings);
+  const matched = await findMatchingBlockItem(domain, s);
   if (!matched) {
     return { blocked: false, reason: null };
   }
@@ -200,7 +217,7 @@ export async function getBlockState(url: string): Promise<BlockState> {
   }
 
   // Step 4: Check schedules
-  if (!isAnyScheduleActive(settings.schedules)) {
+  if (!isAnyScheduleActive(s.schedules)) {
     return { blocked: false, reason: null };
   }
 
@@ -235,38 +252,15 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
 
 /**
  * Check if a domain should be tracked for block count
- * This validates all conditions: enabled, schedule, etc.
  *
- * 照合は `getBlockState` と同じ `findMatchingBlockItem` を通すため、
- * ブロックリストに項目を持たない YouTube も記録対象になる（#351）
+ * 記録するかどうかは「ブロックされたかどうか」と同じ。条件を並べ直さず
+ * `getBlockStateForDomain` の結論をそのまま使う（machina-gg/vision-focus#448）
  */
 export async function shouldTrackBlockForDomain(
   domain: string
 ): Promise<boolean> {
-  const settings = await getSettings();
-
-  // Check global pause
-  if (settings.paused) {
-    return false;
-  }
-
-  // Find matching block item（ブロックリスト → YouTube の仮想ブロック項目）
-  const matched = await findMatchingBlockItem(domain, settings);
-  if (!matched) {
-    return false;
-  }
-
-  // Check if enabled
-  if (!matched.item.enabled) {
-    return false;
-  }
-
-  // Check schedules
-  if (!isAnyScheduleActive(settings.schedules)) {
-    return false;
-  }
-
-  return true;
+  const state = await getBlockStateForDomain(domain);
+  return state.blocked;
 }
 
 /**
