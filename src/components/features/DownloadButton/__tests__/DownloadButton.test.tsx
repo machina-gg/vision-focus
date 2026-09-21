@@ -9,9 +9,10 @@ import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 /**
  * DownloadButton の表示分岐とコールバックの検査
  *
- * 壁紙の保存は成否が画面のアイコンでしか分からないため、成功・失敗の
- * どちらでも表示が切り替わること、保存に渡る引数（解像度・品質）が
- * 選んだ選択肢どおりであることを確かめる。
+ * 壁紙の保存は成否がアイコンの差し替えでしか出ていなかったため、状態を表す
+ * 属性（data-download-status / data-downloading）と読み上げ領域を足してから、
+ * 成功・失敗のどちらでもそれらが切り替わることを確かめる。
+ * 保存に渡る引数（解像度・品質）が選んだ選択肢どおりであることも見る。
  *
  * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
  * （src/lib/i18n.ts）。文言の検査はキー名で行う。
@@ -45,8 +46,10 @@ function emptyRef(): React.RefObject<HTMLElement> {
   return { current: null } as React.RefObject<HTMLElement>;
 }
 
+const downloadButton = () => screen.getByTestId('newtab-download-button');
+
 function openMenu() {
-  fireEvent.click(screen.getByTestId('newtab-download-button'));
+  fireEvent.click(downloadButton());
 }
 
 beforeEach(() => {
@@ -148,6 +151,31 @@ describe('DownloadButton', () => {
       expect(screen.queryByText('selectResolution')).not.toBeInTheDocument();
     });
 
+    it('保存が終わるまでは保存中の状態になり、ボタンを押せない', async () => {
+      // 保存の途中で止めた状態を見るため、解決しない Promise を返す
+      let finish = () => {};
+      wallpaper.downloadWallpaper.mockReturnValue(
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        })
+      );
+      render(<DownloadButton targetRef={refWithElement()} />);
+
+      openMenu();
+      await act(async () => {
+        fireEvent.click(screen.getByText('Full HD'));
+      });
+
+      expect(downloadButton()).toHaveAttribute('data-downloading', 'true');
+      expect(downloadButton()).toBeDisabled();
+
+      await act(async () => {
+        finish();
+      });
+
+      expect(downloadButton()).toHaveAttribute('data-downloading', 'false');
+    });
+
     it('保存対象が未描画なら保存せず、利用実績も記録しない', async () => {
       render(<DownloadButton targetRef={emptyRef()} />);
 
@@ -162,44 +190,101 @@ describe('DownloadButton', () => {
   });
 
   describe('保存結果の表示', () => {
-    // 成功・失敗はアイコンでしか区別できないため、lucide が付ける
-    // クラス名（lucide-<アイコン名>）で判別する
-    it('成功するとチェックのアイコンに変わる', async () => {
-      const { container } = render(
-        <DownloadButton targetRef={refWithElement()} />
-      );
+    // 成否はアイコンの差し替えでしか出ていなかったため data-download-status を
+    // 足してから、その値で検査する（アイコンのクラス名は見ない）
+    it('成功すると状態が成功になる', async () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
 
       openMenu();
       await act(async () => {
         fireEvent.click(screen.getByText('Full HD'));
       });
 
-      expect(container.querySelector('.lucide-check')).not.toBeNull();
-      expect(container.querySelector('.lucide-chevron-down')).toBeNull();
+      expect(downloadButton()).toHaveAttribute(
+        'data-download-status',
+        'success'
+      );
     });
 
-    it('失敗すると × のアイコンに変わる', async () => {
+    it('失敗すると状態が失敗になり、利用実績も記録しない', async () => {
       wallpaper.downloadWallpaper.mockRejectedValue(new Error('canvas error'));
-      const { container } = render(
-        <DownloadButton targetRef={refWithElement()} />
-      );
+      render(<DownloadButton targetRef={refWithElement()} />);
 
       openMenu();
       await act(async () => {
         fireEvent.click(screen.getByText('Full HD'));
       });
 
-      expect(container.querySelector('.lucide-x')).not.toBeNull();
+      expect(downloadButton()).toHaveAttribute('data-download-status', 'error');
       expect(analytics.trackFeatureUse).not.toHaveBeenCalled();
     });
 
-    it('保存前はダウンロードのアイコンを出す', () => {
-      const { container } = render(
-        <DownloadButton targetRef={refWithElement()} />
-      );
+    it('保存前の状態は待機中で、保存中でもない', () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
 
-      expect(container.querySelector('.lucide-download')).not.toBeNull();
-      expect(container.querySelector('.lucide-check')).toBeNull();
+      expect(downloadButton()).toHaveAttribute('data-download-status', 'idle');
+      expect(downloadButton()).toHaveAttribute('data-downloading', 'false');
+    });
+  });
+
+  describe('保存結果の読み上げ', () => {
+    // 成否は一度きりの出来事なので、属性だけでは読み上げ利用者に伝わらない。
+    // 読み上げ領域（role="status"）に文言が出ることを見る
+    it('待機中は読み上げ領域を空のまま置いておく', () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
+
+      const status = screen.getByTestId('newtab-download-status');
+      expect(status).toHaveAttribute('role', 'status');
+      expect(status).toHaveTextContent('');
+    });
+
+    it('成功すると成功の文言を読み上げ領域に出す', async () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
+
+      openMenu();
+      await act(async () => {
+        fireEvent.click(screen.getByText('Full HD'));
+      });
+
+      expect(screen.getByTestId('newtab-download-status')).toHaveTextContent(
+        'downloadWallpaperSuccess'
+      );
+    });
+
+    it('失敗すると失敗の文言を読み上げ領域に出す', async () => {
+      wallpaper.downloadWallpaper.mockRejectedValue(new Error('canvas error'));
+      render(<DownloadButton targetRef={refWithElement()} />);
+
+      openMenu();
+      await act(async () => {
+        fireEvent.click(screen.getByText('Full HD'));
+      });
+
+      expect(screen.getByTestId('newtab-download-status')).toHaveTextContent(
+        'downloadWallpaperError'
+      );
+    });
+
+    it('保存対象が未描画なら結果の文言は出さない', async () => {
+      render(<DownloadButton targetRef={emptyRef()} />);
+
+      openMenu();
+      await act(async () => {
+        fireEvent.click(screen.getByText('Full HD'));
+      });
+
+      expect(screen.getByTestId('newtab-download-status')).toHaveTextContent(
+        ''
+      );
+    });
+
+    it('読み上げ領域は壁紙の撮影から除外する', () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
+
+      expect(screen.getByTestId('newtab-download-status')).toHaveAttribute(
+        'data-html2canvas-ignore',
+        'true'
+      );
     });
   });
 
@@ -212,23 +297,26 @@ describe('DownloadButton', () => {
       vi.useRealTimers();
     });
 
-    it('一定時間たつとダウンロードのアイコンへ戻る', async () => {
-      const { container } = render(
-        <DownloadButton targetRef={refWithElement()} />
-      );
+    it('一定時間たつと待機中へ戻り、結果の文言も消える', async () => {
+      render(<DownloadButton targetRef={refWithElement()} />);
 
       openMenu();
       await act(async () => {
         fireEvent.click(screen.getByText('Full HD'));
       });
-      expect(container.querySelector('.lucide-check')).not.toBeNull();
+      expect(downloadButton()).toHaveAttribute(
+        'data-download-status',
+        'success'
+      );
 
       await act(async () => {
         vi.advanceTimersByTime(STATUS_RESET_DELAY_MS);
       });
 
-      expect(container.querySelector('.lucide-check')).toBeNull();
-      expect(container.querySelector('.lucide-download')).not.toBeNull();
+      expect(downloadButton()).toHaveAttribute('data-download-status', 'idle');
+      expect(screen.getByTestId('newtab-download-status')).toHaveTextContent(
+        ''
+      );
     });
   });
 });

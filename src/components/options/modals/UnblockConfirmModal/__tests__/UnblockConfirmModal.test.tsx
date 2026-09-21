@@ -12,6 +12,9 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  * ブロック解除・削除は取り消せないため、長押しを最後まで続けたときだけ
  * onConfirm が呼ばれることを確かめる。途中で指を離した・領域から出た場合に
  * 解除されてしまうと、意図しない解除が起きる。
+ *
+ * 解除と削除の区別は説明文に出ているため、説明文で検査する
+ * （アイコンのクラス名は見ない）。
  */
 
 // 置換値（ドメイン名・スタイル名）が描画結果に現れるよう chrome.i18n を差し替える
@@ -65,20 +68,26 @@ describe('UnblockConfirmModal', () => {
   });
 
   describe('説明文', () => {
-    it('解除のときは解除の説明をドメイン名つきで出す', () => {
+    it('解除のときは解除の説明をドメイン名つきで出し、削除の説明は出さない', () => {
       renderModal({ action: 'toggle' });
 
       expect(
         screen.getByText('unblockConfirmDescription(example.com)')
       ).toBeInTheDocument();
+      expect(
+        screen.queryByText('deleteBlockConfirmDescription(example.com)')
+      ).not.toBeInTheDocument();
     });
 
-    it('削除のときは削除の説明をドメイン名つきで出す', () => {
+    it('削除のときは削除の説明をドメイン名つきで出し、解除の説明は出さない', () => {
       renderModal({ action: 'delete' });
 
       expect(
         screen.getByText('deleteBlockConfirmDescription(example.com)')
       ).toBeInTheDocument();
+      expect(
+        screen.queryByText('unblockConfirmDescription(example.com)')
+      ).not.toBeInTheDocument();
     });
 
     it('適用中のスタイル名を併記する', () => {
@@ -95,21 +104,6 @@ describe('UnblockConfirmModal', () => {
       expect(
         screen.getByText('unblockConfirmBlockStyle()')
       ).toBeInTheDocument();
-    });
-
-    // 解除と削除はアイコンでしか区別できないため、lucide が付ける
-    // クラス名（lucide-<アイコン名>）で判別する
-    it('削除のときはゴミ箱のアイコンを使う', () => {
-      const { container } = renderModal({ action: 'delete' });
-
-      expect(container.querySelector('.lucide-trash2')).not.toBeNull();
-    });
-
-    it('解除のときは盾のアイコンを使う', () => {
-      const { container } = renderModal({ action: 'toggle' });
-
-      expect(container.querySelector('.lucide-shield-off')).not.toBeNull();
-      expect(container.querySelector('.lucide-trash2')).toBeNull();
     });
   });
 

@@ -20,6 +20,8 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  *
  * 適用中かどうかはアイコンの有無でしか出ていなかったため data-active を
  * 足してから、その値で検査する（アイコンのクラス名は見ない）。
+ * 選択中（いま編集しているもの）は背景色でしか出ていなかったため
+ * aria-pressed を足してから、その値で検査する（強調のクラス名は見ない）。
  *
  * 状態は usePresets が持つため、戻り値ごと差し替える
  * （実体は chrome.storage を読みに行き、テストから値を決められない）。
@@ -162,6 +164,51 @@ describe('PresetSelector', () => {
         'data-active',
         'false'
       );
+    });
+
+    it('選択中のスタイルにだけ押下状態を付ける', () => {
+      renderSelector({
+        draftPresets: [presetOf('p1', '朝'), presetOf('p2', '夜')],
+        selectedPresetId: 'p2'
+      });
+
+      const buttons = screen.getAllByTestId('style-preset-button');
+      expect(
+        buttons.map((button) => button.getAttribute('aria-pressed'))
+      ).toEqual(['false', 'true']);
+    });
+
+    it('どのスタイルも選択していなければ押下状態は付かない', () => {
+      renderSelector({
+        draftPresets: [presetOf('p1', '朝'), presetOf('p2', '夜')],
+        selectedPresetId: null
+      });
+
+      const buttons = screen.getAllByTestId('style-preset-button');
+      expect(
+        buttons.map((button) => button.getAttribute('aria-pressed'))
+      ).toEqual(['false', 'false']);
+    });
+
+    it('適用中と選択中は別々に出る', () => {
+      renderSelector(
+        {
+          draftPresets: [presetOf('p1', '朝'), presetOf('p2', '夜')],
+          selectedPresetId: 'p2'
+        },
+        visionWith('p1')
+      );
+
+      const buttons = screen.getAllByTestId('style-preset-button');
+      expect(
+        buttons.map((button) => ({
+          active: button.getAttribute('data-active'),
+          pressed: button.getAttribute('aria-pressed')
+        }))
+      ).toEqual([
+        { active: 'true', pressed: 'false' },
+        { active: 'false', pressed: 'true' }
+      ]);
     });
   });
 
