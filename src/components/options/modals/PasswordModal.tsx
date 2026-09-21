@@ -36,7 +36,14 @@ export function PasswordModal({
     }
   }, [isOpen]);
 
+  // 送信できるかどうかの判定はここ 1 つだけを使う。
+  // ボタンの無効化と Enter キーが別々の条件を持つと、片方だけが未入力を
+  // 通してしまうずれが再発する（machina-gg/vision-focus#465）
+  const canSubmit = !isVerifying && password !== '';
+
   const handleSubmit = useCallback(async () => {
+    // 受け取る側の検査。canSubmit（押せるかどうか）とは役割が別で、
+    // 送信の経路が増えても空のまま照合へ進ませない
     if (!password) {
       setError(getMessage('passwordRequired'));
       return;
@@ -63,11 +70,11 @@ export function PasswordModal({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !isVerifying) {
+      if (e.key === 'Enter' && canSubmit) {
         handleSubmit();
       }
     },
-    [handleSubmit, isVerifying]
+    [handleSubmit, canSubmit]
   );
 
   return (
@@ -125,7 +132,7 @@ export function PasswordModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isVerifying || !password}
+            disabled={!canSubmit}
             className="flex-1"
             data-testid="password-modal-confirm"
           >
