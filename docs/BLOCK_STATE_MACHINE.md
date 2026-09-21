@@ -43,9 +43,14 @@ flowchart TD
 ```
 
 「ブロックリスト → YouTube の仮想ブロック項目」の 2 段の照合は
-`findMatchingBlockItem()` に閉じている。判定（`getBlockState()`）と
-記録（`shouldTrackBlockForDomain()`）は必ずこの関数を通る。片方だけが優先順位を
-持っていると、ブロックはされるのに記録されないドメインが生まれる。
+`findMatchingBlockItem()` に閉じている。
+
+このフロー自体を持つのは `getBlockStateForDomain()` だけである。
+URL 起点の判定（`getBlockState()`）は URL からドメインを取り出して渡すだけ、
+記録（`shouldTrackBlockForDomain()`）は返ってきた `blocked` をそのまま使う。
+同じ条件をもう 1 箇所に並べると片方だけが条件を取りこぼし、
+ブロックはされるのに記録されないドメインや、ブロックされていないのに
+ブロック回数が増えるドメインが生まれる。
 
 ## 状態遷移図
 
@@ -155,6 +160,10 @@ YouTube はブロックリストに項目を持たない。`getYouTubeBlockItem(
 - 後者は元ドメインの `webNavigation.onBeforeNavigate` を起こさないため、
   記録を遷移イベント側だけに置くと記録が残らず、帯が出ない
 - 記録はリダイレクトより先に行う（ブロック画面が読み出す時点で値が無いと帯が出ない）
+- **記録はブロックが成立したときだけ残る。** 遷移イベント側は
+  `shouldTrackBlockForDomain()`（＝上のフローの結論）で確かめてから記録する。
+  時間制限つきのサイトは上限に達するまで遷移しても通るため、ここで記録すると
+  「〜回ブロックしました」と統計が実際より多くなる
 
 ### `newtab.html` は web accessible でなければならない
 

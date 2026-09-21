@@ -26,7 +26,8 @@ import { getTodayKey } from '~/lib/time';
  * ブロックが成立したドメインを記録する
  *
  * ⚠ 呼び出し側がブロック成立を確認してから呼ぶこと。
- * 本関数はブロックすべきかどうかの判定（一時停止・有効/無効・スケジュール）を行わない
+ * 本関数はブロックすべきかどうかを判定しない（判定は `blockService` の
+ * `getBlockStateForDomain()` が一手に持つ）
  */
 export async function recordBlockedDomain(domain: string): Promise<void> {
   // サイト別のブロック回数
