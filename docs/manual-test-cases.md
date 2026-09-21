@@ -182,7 +182,7 @@
 - 📎 E2E 参照: `tests/e2e/newtab-settings.spec.ts` — NEW-005: 設定アイコンクリックでオプション画面が開く
 - 📎 E2E 参照: `tests/e2e/newtab-goal-edit.spec.ts` — NEW-006: 目標テキストをダブルクリックで編集モードになる
 - 📎 E2E 参照: `tests/e2e/newtab-goal-edit.spec.ts` — NEW-007: 編集した目標がEnterキーで保存される
-- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-008: プリセット未設定時、シンプルなブロックページUIが表示
+- 📎 E2E 参照: `tests/e2e/newtab-display.spec.ts` — NEW-008: プリセット未設定時も通常のダッシュボードとスタイル作成CTAが表示
 - 📎 E2E 参照: `tests/e2e/newtab-block-info.spec.ts` — NEW-009: ブロックされたサイトから遷移時、ブロック情報が表示される
 - 📎 E2E 参照: `tests/e2e/newtab-block-info.spec.ts` — NEW-010: ブロックサイトリストが表示される
 - 📎 E2E 参照: `tests/e2e/newtab-settings.spec.ts` — NEW-011: 壁紙ダウンロードボタンが表示される

@@ -87,7 +87,7 @@ test.describe('NewTab 画面 - 基本表示', () => {
     await page.close();
   });
 
-  test('NEW-008: プリセット未設定時、シンプルなブロックページUIが表示', async ({
+  test('NEW-008: プリセット未設定時も通常のダッシュボードとスタイル作成CTAが表示', async ({
     context,
     extensionId
   }) => {
@@ -111,10 +111,10 @@ test.describe('NewTab 画面 - 基本表示', () => {
 
     const page = await openNewTab(context, extensionId);
 
-    // VisionFocus タイトルが表示される
-    await expect(page.locator(SELECTORS.newtab.appTitle)).toBeVisible();
+    // プリセットの有無で画面は分かれない。目標欄まで通常どおり描かれる
+    await expect(page.locator(SELECTORS.newtab.goalText)).toBeVisible();
 
-    // セットアップCTAが表示される
+    // セットアップCTAが表示される（プリセットが 1 件も無いときだけ）
     await expect(page.locator(SELECTORS.newtab.setupCta)).toBeVisible();
 
     await page.close();
