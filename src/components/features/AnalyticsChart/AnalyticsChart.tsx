@@ -162,6 +162,11 @@ export function AnalyticsChart({
       {/* Chart Type Selector */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
         <button
+          // 選択中かどうかを背景色でしか表していなかったため、押下状態を持たせる。
+          // disabled は包む div の pointer-events だけではキーボード操作を止められない
+          // （machina-gg/vision-focus#455）
+          aria-pressed={chartType === 'daily'}
+          disabled={disabled}
           onClick={() => setChartType('daily')}
           className={`
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
@@ -176,6 +181,8 @@ export function AnalyticsChart({
           {getMessage('chartTypeDaily')}
         </button>
         <button
+          aria-pressed={chartType === 'bySite'}
+          disabled={disabled}
           onClick={() => setChartType('bySite')}
           className={`
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
@@ -190,6 +197,8 @@ export function AnalyticsChart({
           {getMessage('chartTypeBySite')}
         </button>
         <button
+          aria-pressed={chartType === 'cumulative'}
+          disabled={disabled}
           onClick={() => setChartType('cumulative')}
           className={`
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors

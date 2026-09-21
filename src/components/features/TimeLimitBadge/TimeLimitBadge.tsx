@@ -49,6 +49,9 @@ export function TimeLimitBadge({
       <span
         data-testid="time-limit-badge"
         data-state="remaining"
+        // 省スペース表示では残りわずかが背景色にしか出ないため、属性でも持たせる
+        // （machina-gg/vision-focus#455）
+        data-low={String(isLow)}
         className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
       >
         <Clock className="w-3 h-3" />
@@ -61,6 +64,7 @@ export function TimeLimitBadge({
     <span
       data-testid="time-limit-badge"
       data-state="remaining"
+      data-low={String(isLow)}
       className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
     >
       {isLow ? (
