@@ -4,7 +4,6 @@ export * from './FontPicker';
 export * from './GoalCard';
 export * from './Header';
 export * from './ImageUploader';
-export * from './PasswordModal';
 export * from './QuickBlockButton';
 export * from './ReportCard';
 export * from './StatsCard';
