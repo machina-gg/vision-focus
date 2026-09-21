@@ -108,7 +108,7 @@ pnpm test:coverage
 - 集計対象は `src/**`（story・テストコード・型定義のみのファイルは除外）
 - 閾値を下回ると失敗する。CI の `coverage` ジョブでも同じチェックが走る
 - 詳細な HTML レポートは `coverage/index.html` に出力される
-- 閾値は退行防止のための下限値。テスト追加に合わせて `vitest.config.ts` で段階的に引き上げる
+- 閾値（`vitest.config.ts`）は退行防止のための下限値。テストを増やした PR では引き上げず、引き上げは別途判断する（[docs/COMPONENT_TESTING.md](./docs/COMPONENT_TESTING.md)「カバレッジ」）
 
 **E2E テストの前提条件:**
 

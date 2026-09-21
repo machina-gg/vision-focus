@@ -29,8 +29,8 @@ export default defineConfig({
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       // 現状値を下回らないラインを下限とする（退行防止が目的）。
-      // src/components が未テストのため低い水準から始め、
-      // テスト追加に合わせて段階的に引き上げる
+      // テストを増やした PR では引き上げず、引き上げは別途判断する
+      // （docs/COMPONENT_TESTING.md「カバレッジ」）
       thresholds: {
         statements: 34,
         branches: 83,
