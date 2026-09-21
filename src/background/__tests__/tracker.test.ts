@@ -849,6 +849,74 @@ describe('tracker', () => {
       }).toEqual({ seconds: 0, domains: [] });
     });
 
+    it('前面状態の問い合わせの解決が遅れても、待っている間のフォーカス喪失を上書きしない', async () => {
+      // 起動直後の初期化（chrome.windows.getLastFocused）を待っている間に
+      // ブラウザが前面でなくなる経路。問い合わせの結果（古い値）で上書きすると、
+      // 次にフォーカスが変化するまで記録が止まらない（#460）
+      vi.useFakeTimers();
+      let resolveLastFocused: (
+        window: chrome.windows.Window
+      ) => void = () => {};
+      harness.chromeMock.windows.getLastFocused.mockReturnValueOnce(
+        new Promise<chrome.windows.Window>((resolve) => {
+          resolveLastFocused = resolve;
+        })
+      );
+      const { startTracking } = await loadTracker();
+
+      // (1) 起動時の初期化が chrome.windows.getLastFocused の解決待ちで止まる
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (2) 待っている間にブラウザが前面でなくなる
+      await harness.listeners.windowFocus[0](-1);
+
+      // (3) 遅れて「前面だった」という古い結果が戻る
+      resolveLastFocused({ id: 1, focused: true } as chrome.windows.Window);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (4) 前面でない間に時間が流れる
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      // 記録された時間と記録先のドメインを同時に見る
+      // （前面状態だけを見ると、計測対象が復活する退行を取り逃がす）
+      expect({
+        seconds: totalRecordedSeconds(),
+        domains: recordedDomains()
+      }).toEqual({ seconds: 0, domains: [] });
+    });
+
+    it('前面状態の問い合わせを待っている間にフォーカスが戻っても、計測対象を取り直さない', async () => {
+      // 上と対の経路。古い結果を捨てたあと、計測対象を設定し直すのは
+      // 前面状態を更新したイベント側の仕事で、初期化側は何もしない（#460）
+      vi.useFakeTimers();
+      let resolveLastFocused: (
+        window: chrome.windows.Window
+      ) => void = () => {};
+      harness.chromeMock.windows.getLastFocused.mockReturnValueOnce(
+        new Promise<chrome.windows.Window>((resolve) => {
+          resolveLastFocused = resolve;
+        })
+      );
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // 待っている間にフォーカスが戻り、イベント側が計測対象を設定する
+      await harness.listeners.windowFocus[0](1);
+      harness.chromeMock.tabs.query.mockClear();
+
+      // 遅れて「前面でなかった」という古い結果が戻る
+      resolveLastFocused({ id: 1, focused: false } as chrome.windows.Window);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // 古い結果で計測が止められていないこと（問い合わせも重ねて行わないこと）
+      expect(harness.chromeMock.tabs.query).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+      expect(recordedDomains()).toEqual(['example.com']);
+    });
+
     it('フォーカスを失うと計測対象のタブも忘れる', async () => {
       // activeTabId が残ると、前面でない間の tabs.onUpdated が
       // 「アクティブタブの URL 変更」として通ってしまう

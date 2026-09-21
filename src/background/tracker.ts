@@ -20,6 +20,22 @@ let trackingInterval: ReturnType<typeof setInterval> | null = null;
  */
 let isBrowserFocused = false;
 
+/**
+ * 前面状態が更新された回数（通し番号）。
+ *
+ * ⚠ `initializeFocusAndTab()` が「問い合わせを待っている間にフォーカスの
+ * イベントが入ったか」を知るためだけの番号（#460）。
+ * あそこは前面状態を設定する側なので、代入の直前に値を確かめ直す形では
+ * 検出できない（確かめる対象が、これから書き込もうとしている値そのものになる）
+ */
+let focusStateGeneration = 0;
+
+/** 前面状態を更新する。更新のたびに通し番号を 1 つ進める */
+function setBrowserFocused(focused: boolean): void {
+  isBrowserFocused = focused;
+  focusStateGeneration += 1;
+}
+
 // Start tracking
 // ⚠ service worker が起きるたびに呼ばれる（src/background/init.ts）ので、
 // 何度呼ばれてもタイマーとリスナーが 1 組だけになるよう、先に今のぶんを畳む。
@@ -47,7 +63,7 @@ export function stopTracking(): void {
   }
 
   // 実状態を取り直すまでは記録しない側に倒す
-  isBrowserFocused = false;
+  setBrowserFocused(false);
 
   chrome.tabs.onActivated.removeListener(handleTabActivated);
   chrome.tabs.onUpdated.removeListener(handleTabUpdated);
@@ -74,13 +90,26 @@ function clearTrackingTarget(): void {
  * 来ないため、ここで一度だけ実状態を取りに行く（#440）
  */
 async function initializeFocusAndTab(): Promise<void> {
+  // ⚠ 問い合わせる前に通し番号を控える（#460）
+  const generationAtRequest = focusStateGeneration;
+
+  let focused: boolean;
   try {
     const lastFocused = await chrome.windows.getLastFocused();
-    isBrowserFocused = lastFocused.focused === true;
+    focused = lastFocused.focused === true;
   } catch {
     // 問い合わせに失敗したら記録しない側に倒す
-    isBrowserFocused = false;
+    focused = false;
   }
+
+  // ⚠ 待っている間にフォーカスのイベントが入っていたら、問い合わせの結果を捨てる。
+  // イベントで入った値のほうが新しく、ここで上書きすると次にフォーカスが
+  // 変化するまで「前面である」という古い判断が残り続ける（#460）。
+  // 計測対象は、前面状態を更新したイベント側（`handleWindowFocusChanged()`）が
+  // 既に設定し直しているので、ここでは何もしない
+  if (focusStateGeneration !== generationAtRequest) return;
+
+  setBrowserFocused(focused);
 
   await initializeCurrentTab();
 }
@@ -185,11 +214,11 @@ async function handleWindowFocusChanged(windowId: number): Promise<void> {
     // Browser lost focus, save time
     // ⚠ 先に書き出してから状態を落とす（前面だった間の時間は残す）
     await saveElapsedTime();
-    isBrowserFocused = false;
+    setBrowserFocused(false);
     clearTrackingTarget();
   } else {
     // Browser gained focus, get current tab
-    isBrowserFocused = true;
+    setBrowserFocused(true);
     await initializeCurrentTab();
   }
 }
