@@ -13,8 +13,8 @@ import { FONT_CATEGORIES, type FontSettings } from '~/types/font';
  * カテゴリを変えると先頭のフォントが自動で選ばれるため、onChange に渡る設定が
  * 他の項目（サイズ・太さ）を保ったままかまで見る。
  *
- * ⚠ 選択中のボタンの強調は枠線と背景色のクラス名でしか表現されていないため
- * 検査しない（machina-gg/vision-focus#455）。プレビューは装飾ではなく
+ * 選択中のボタンは aria-pressed を持つため、強調のクラス名ではなく押下状態で
+ * 確かめる（machina-gg/vision-focus#455）。プレビューは装飾ではなく
  * 「選んだ値がどう見えるか」そのものなので、インラインの style を確かめる。
  */
 
@@ -43,6 +43,13 @@ function renderPicker(
 
 const buttonTexts = (testId: string) =>
   screen.getAllByTestId(testId).map((el) => el.textContent);
+
+/** 押下状態になっているボタンの文言（選択中の印） */
+const pressedTexts = (testId: string) =>
+  screen
+    .getAllByTestId(testId)
+    .filter((el) => el.getAttribute('aria-pressed') === 'true')
+    .map((el) => el.textContent);
 
 /** 名前でボタンを押す（カテゴリ名・フォント名・サイズ名・太さ名） */
 const clickButton = (name: string) =>
@@ -213,6 +220,69 @@ describe('FontPicker', () => {
         size: 'sm',
         weight: 'semibold'
       });
+    });
+  });
+
+  describe('選択中の印', () => {
+    it('渡されたフォントが属するカテゴリだけが押下状態になる', () => {
+      renderPicker(settingsOf({ family: 'playfair' }));
+
+      expect(pressedTexts('font-category-button')).toEqual(['Elegant']);
+    });
+
+    it('カテゴリを変えると押下状態が移る', () => {
+      renderPicker();
+
+      clickButton('Japanese');
+
+      expect(pressedTexts('font-category-button')).toEqual(['Japanese']);
+    });
+
+    it('渡されたフォント・大きさ・太さだけが押下状態になる', () => {
+      renderPicker(
+        settingsOf({ family: 'inter', size: 'xl', weight: 'normal' })
+      );
+
+      expect(pressedTexts('font-family-button')).toEqual(['Inter']);
+      expect(pressedTexts('font-size-button')).toEqual(['Extra Large']);
+      expect(pressedTexts('font-weight-button')).toEqual(['Normal']);
+    });
+  });
+
+  describe('disabled のとき', () => {
+    it('すべての選択ボタンを押せなくする', () => {
+      renderPicker(settingsOf(), { disabled: true });
+
+      const testIds = [
+        'font-category-button',
+        'font-family-button',
+        'font-size-button',
+        'font-weight-button'
+      ];
+      testIds.forEach((testId) => {
+        screen.getAllByTestId(testId).forEach((button) => {
+          expect(button).toBeDisabled();
+        });
+      });
+    });
+
+    it('キーボードから届いても設定は書き換わらない', () => {
+      const { onChange } = renderPicker(settingsOf(), { disabled: true });
+
+      // ⚠ 包む div の pointer-events はマウスしか止めない。
+      // 無効の属性が無いと、この押下で設定が書き換わる
+      clickButton('Large');
+      clickButton('Japanese');
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('disabled を渡さなければ押せる', () => {
+      const { onChange } = renderPicker();
+
+      clickButton('Large');
+
+      expect(onChange).toHaveBeenCalledTimes(1);
     });
   });
 });

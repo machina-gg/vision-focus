@@ -9,8 +9,8 @@ import { Card } from '../Card';
  * Card の「押せるかどうか」の出し分けと属性の受け渡しの検査
  *
  * onClick を渡したときだけ role と tabIndex が付き、キーボードと支援技術から
- * 操作対象として見える。variant / padding / className は装飾のクラス名にしか
- * 出ないため検査しない（machina-gg/vision-focus#455）。
+ * 操作対象として見える。variant / padding はクラス名のほかに data-* 属性としても
+ * 持つので、クラス名ではなく属性で確かめる（machina-gg/vision-focus#455）。
  */
 
 describe('Card', () => {
@@ -62,6 +62,48 @@ describe('Card', () => {
 
       expect(onClick).toHaveBeenCalledTimes(1);
     });
+  });
+
+  describe('見た目の指定', () => {
+    it('既定は default / 余白 md', () => {
+      render(<Card data-testid="card">中身</Card>);
+
+      const card = screen.getByTestId('card');
+      expect(card).toHaveAttribute('data-variant', 'default');
+      expect(card).toHaveAttribute('data-padding', 'md');
+    });
+
+    it.each(['default', 'outlined', 'elevated'] as const)(
+      '渡した種類 %s を属性に出す',
+      (variant) => {
+        render(
+          <Card variant={variant} data-testid="card">
+            中身
+          </Card>
+        );
+
+        expect(screen.getByTestId('card')).toHaveAttribute(
+          'data-variant',
+          variant
+        );
+      }
+    );
+
+    it.each(['none', 'sm', 'md', 'lg'] as const)(
+      '渡した余白の大きさ %s を属性に出す',
+      (padding) => {
+        render(
+          <Card padding={padding} data-testid="card">
+            中身
+          </Card>
+        );
+
+        expect(screen.getByTestId('card')).toHaveAttribute(
+          'data-padding',
+          padding
+        );
+      }
+    );
   });
 
   describe('その他の属性', () => {
