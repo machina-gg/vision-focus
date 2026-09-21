@@ -156,114 +156,8 @@ export function NewtabApp() {
     );
   }
 
-  // Simple block page UI (when no presets are configured)
-  if (!hasPresets) {
-    return (
-      <div
-        ref={containerRef}
-        className="newtab-container relative flex flex-col items-center justify-center"
-        style={{ backgroundColor: '#1a1a2e' }}
-        data-testid="newtab-container"
-      >
-        {/* Content */}
-        <div className="relative z-10 w-full max-w-md px-8 text-center">
-          {/* Block Icon */}
-          <div className="mb-6">
-            <div className="w-24 h-24 mx-auto bg-danger-500/20 rounded-full flex items-center justify-center">
-              <ShieldX className="w-12 h-12 text-danger-400" />
-            </div>
-          </div>
-
-          {/* Block Message */}
-          {blockedInfo ? (
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-2">
-                {blockReason === 'time_limit_exceeded'
-                  ? getMessage('timeLimitReached')
-                  : getMessage('siteBlocked')}
-              </h1>
-              <p className="text-gray-300 mb-4">{blockedInfo.domain}</p>
-              {blockReason === 'time_limit_exceeded' ? (
-                <p className="text-warning-300 text-sm">
-                  {getMessage(
-                    'timeLimitReachedDescription',
-                    blockedInfo.domain
-                  )}
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  <p className="text-danger-300 text-sm">
-                    {getMessage('blockedTimes', blockedInfo.count.toString())}
-                  </p>
-                  {blockedInfo.wastedTime > 0 && (
-                    <p className="text-danger-200 text-sm">
-                      {getMessage(
-                        'wastedTime',
-                        formatTimeLocalized(blockedInfo.wastedTime)
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="mb-8">
-              <h1
-                className="text-2xl font-bold text-white mb-2"
-                data-testid="newtab-app-title"
-              >
-                VisionFocus
-              </h1>
-              <p className="text-gray-400">{getMessage('rememberGoal')}</p>
-            </div>
-          )}
-
-          {/* Mini Stats */}
-          <MiniStats
-            blockCount={stats.blockCount}
-            blockingDays={blockingDays}
-            onAnalyticsClick={handleAnalyticsClick}
-          />
-
-          {/* Blocked Sites List */}
-          <BlockedSitesList
-            blockList={settings?.blockList || []}
-            blockCounts={analytics?.siteBlockCounts || {}}
-          />
-
-          {/* Setup CTA */}
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-gray-400 text-sm mb-3">
-              {getMessage('noPresetsDescription')}
-            </p>
-            <button
-              data-testid="newtab-setup-cta"
-              onClick={handleSettingsClick}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-info-600 hover:bg-info-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              {getMessage('createFirstPreset')}
-            </button>
-          </div>
-        </div>
-
-        {/* Settings Button - excluded from wallpaper capture */}
-        <div
-          className="absolute bottom-6 right-6"
-          data-html2canvas-ignore="true"
-        >
-          <button
-            onClick={handleSettingsClick}
-            className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Full dashboard UI (when presets are configured)
+  // ブロック画面はこの 1 つだけ。スタイル未設定でも同じ画面を描き、
+  // スタイル作成の案内だけを出し分ける（machina-gg/vision-focus#449）
   return (
     <div
       ref={containerRef}
@@ -360,6 +254,26 @@ export function NewtabApp() {
           blockList={settings?.blockList || []}
           blockCounts={analytics?.siteBlockCounts || {}}
         />
+
+        {/* Setup CTA - スタイルが 1 つも無いときだけ出す。壁紙には写さない */}
+        {!hasPresets && (
+          <div
+            className="mt-8 pt-6 border-t border-white/10"
+            data-html2canvas-ignore="true"
+          >
+            <p className="text-gray-300 text-sm mb-3 drop-shadow">
+              {getMessage('noPresetsDescription')}
+            </p>
+            <button
+              data-testid="newtab-setup-cta"
+              onClick={handleSettingsClick}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-info-600 hover:bg-info-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              {getMessage('createFirstPreset')}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Controls - excluded from wallpaper capture */}

@@ -366,11 +366,7 @@ test.describe('Block - ブロック機能', () => {
     await rulesPage.close();
   });
 
-  // 実装が動いていないため保留（#351）。
-  // DNR のリダイレクトとブロック回数の加算は動くが、
-  // chrome.storage.session の lastBlockedDomain が空のままで、
-  // 情報バナー（newtab-block-info）が一度も表示されない。
-  test.fixme('BLOCK-009: ブロック時にリダイレクト先でブロック元ドメインが表示される', async ({
+  test('BLOCK-009: ブロック時にリダイレクト先でブロック元ドメインが表示される', async ({
     context,
     extensionId
   }) => {

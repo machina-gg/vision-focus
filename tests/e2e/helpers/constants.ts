@@ -96,7 +96,6 @@ export const SELECTORS = {
       blockCount: '[data-testid="newtab-block-count"]',
       blockingDays: '[data-testid="newtab-blocking-days"]'
     },
-    appTitle: '[data-testid="newtab-app-title"]',
     setupCta: '[data-testid="newtab-setup-cta"]',
     downloadButton: '[data-testid="newtab-download-button"]',
     settingsButton: '[data-testid="newtab-settings-button"]'
