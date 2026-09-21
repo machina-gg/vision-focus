@@ -46,7 +46,9 @@ function renderSection(passwordSettings: PasswordSettings = DISABLED) {
   return { onUpdate, ...result };
 }
 
-const fields = () => screen.getAllByTestId('password-field');
+// 目印は欄ごとに別の値（password-field-current / -new / -confirm）になったので
+// 前方一致でまとめて取る（machina-gg/vision-focus#468）
+const fields = () => screen.getAllByTestId(/^password-field-/);
 const submit = () => screen.getByTestId('password-form-submit');
 
 /** n 番目のパスワード欄へ入力する */
@@ -257,7 +259,7 @@ describe('PasswordSettingsSection', () => {
       expect(
         screen.getByText('passwordProtectionDisabled')
       ).toBeInTheDocument();
-      expect(screen.queryByTestId('password-field')).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId(/^password-field-/)).toHaveLength(0);
     });
 
     it('キャンセル後に入力し直すと前の入力は残っていない', () => {
@@ -484,7 +486,7 @@ describe('PasswordSettingsSection', () => {
         vi.advanceTimersByTime(STATUS_RESET_DELAY_MS);
       });
 
-      expect(screen.queryByTestId('password-field')).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId(/^password-field-/)).toHaveLength(0);
       expect(screen.getByTestId('password-enable-toggle')).toBeInTheDocument();
     });
   });

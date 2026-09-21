@@ -212,6 +212,7 @@ export function PasswordSettingsSection({
           </div>
           <div className="space-y-3">
             <PasswordField
+              fieldId="password-field-new"
               label={getMessage('newPassword')}
               value={newPassword}
               onChange={setNewPassword}
@@ -220,6 +221,7 @@ export function PasswordSettingsSection({
               placeholder={getMessage('passwordPlaceholder')}
             />
             <PasswordField
+              fieldId="password-field-confirm"
               label={getMessage('confirmPassword')}
               value={confirmPassword}
               onChange={setConfirmPassword}
@@ -243,6 +245,7 @@ export function PasswordSettingsSection({
         <div className="space-y-4">
           <div className="space-y-3">
             <PasswordField
+              fieldId="password-field-current"
               label={getMessage('currentPassword')}
               value={currentPassword}
               onChange={setCurrentPassword}
@@ -251,6 +254,7 @@ export function PasswordSettingsSection({
               placeholder={getMessage('currentPasswordPlaceholder')}
             />
             <PasswordField
+              fieldId="password-field-new"
               label={getMessage('newPassword')}
               value={newPassword}
               onChange={setNewPassword}
@@ -259,6 +263,7 @@ export function PasswordSettingsSection({
               placeholder={getMessage('passwordPlaceholder')}
             />
             <PasswordField
+              fieldId="password-field-confirm"
               label={getMessage('confirmPassword')}
               value={confirmPassword}
               onChange={setConfirmPassword}
@@ -291,6 +296,7 @@ export function PasswordSettingsSection({
             </p>
           </div>
           <PasswordField
+            fieldId="password-field-current"
             label={getMessage('currentPassword')}
             value={currentPassword}
             onChange={setCurrentPassword}
