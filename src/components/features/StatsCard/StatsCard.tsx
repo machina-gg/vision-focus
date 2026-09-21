@@ -37,7 +37,7 @@ export function StatsCard({
   const styles = typeStyles[type];
 
   return (
-    <div className={`${styles.bg} rounded-xl p-4`}>
+    <div data-type={type} className={`${styles.bg} rounded-xl p-4`}>
       <div className="flex items-center gap-2 mb-2">
         {icon && <span className={styles.icon}>{icon}</span>}
         <span className="text-xs font-medium text-gray-500">{label}</span>

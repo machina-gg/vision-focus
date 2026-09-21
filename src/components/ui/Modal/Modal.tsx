@@ -40,6 +40,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
+        data-size={size}
         className={`
           relative w-full mx-4
           bg-white rounded-2xl shadow-xl

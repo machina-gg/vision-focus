@@ -135,6 +135,9 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           <div className="flex gap-2">
             <button
               data-testid="style-bg-type-image"
+              aria-pressed={
+                (draftDisplaySettings.backgroundType || 'image') === 'image'
+              }
               onClick={() => handleBackgroundTypeChange('image')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 (draftDisplaySettings.backgroundType || 'image') === 'image'
@@ -146,6 +149,7 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
             </button>
             <button
               data-testid="style-bg-type-color"
+              aria-pressed={draftDisplaySettings.backgroundType === 'color'}
               onClick={() => handleBackgroundTypeChange('color')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 draftDisplaySettings.backgroundType === 'color'
@@ -165,6 +169,7 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
               <button
                 key={bg.id}
                 data-testid="style-bg-option"
+                aria-pressed={draftDisplaySettings.backgroundImage === bg.id}
                 onClick={() => handleBackgroundChange(bg.id)}
                 className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-colors ${
                   draftDisplaySettings.backgroundImage === bg.id
