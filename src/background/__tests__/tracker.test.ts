@@ -80,6 +80,12 @@ function lastSaved(): AnalyticsData {
   return calls[calls.length - 1][0];
 }
 
+/** setAnalytics が一度も呼ばれていなければ null を返す */
+function lastSavedOrNull(): AnalyticsData | null {
+  const calls = vi.mocked(setAnalytics).mock.calls;
+  return calls.length > 0 ? calls[calls.length - 1][0] : null;
+}
+
 let harness: ReturnType<typeof setupChrome>;
 
 beforeEach(() => {
@@ -577,6 +583,180 @@ describe('tracker', () => {
       await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
 
       expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('前面でなくなった後のタブ URL 変更では計測を再開しない', async () => {
+      // レビューが示した経路（#440 / PR #451）:
+      // フォーカス喪失 → heartbeat が時間制限超過を検知 → blockExistingTabs() が
+      // chrome.tabs.update でブロック画面へ飛ばす → tabs.onUpdated が発火。
+      // ここでフォーカスを見ないと、見ていない時間が加算され続ける
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // ブラウザが前面でなくなる
+      await harness.listeners.windowFocus[0](-1);
+      vi.mocked(setAnalytics).mockClear();
+
+      // ブロック画面へのリダイレクトが、直前までアクティブだったタブに届く
+      await harness.listeners.tabUpdated[0](
+        1,
+        {
+          url: 'chrome-extension://abcdef/blocked.html'
+        } as chrome.tabs.TabChangeInfo,
+        {} as chrome.tabs.Tab
+      );
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('前面でなくなった後のタブ切り替えでは計測を再開しない', async () => {
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      await harness.listeners.windowFocus[0](-1);
+      vi.mocked(setAnalytics).mockClear();
+
+      await harness.listeners.tabActivated[0]({
+        tabId: 2,
+        windowId: 1
+      } as chrome.tabs.TabActiveInfo);
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('タブ切り替えの処理中にフォーカスを失っても計測しない', async () => {
+      // ハンドラが chrome.tabs.get を待っている間にフォーカスが落ちると、
+      // 入口の判定を通った後に activeDomain が設定される。
+      // updateTracking 側の歯止めだけがこれを止める
+      vi.useFakeTimers();
+      let resolveGet: (tab: chrome.tabs.Tab) => void = () => {};
+      harness.chromeMock.tabs.get.mockReturnValue(
+        new Promise<chrome.tabs.Tab>((resolve) => {
+          resolveGet = resolve;
+        })
+      );
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // タブ切り替えを始める（chrome.tabs.get の解決待ちで止まる）
+      const activated = harness.listeners.tabActivated[0]({
+        tabId: 2,
+        windowId: 1
+      } as chrome.tabs.TabActiveInfo);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // 待っている間にブラウザが前面でなくなる
+      await harness.listeners.windowFocus[0](-1);
+
+      // タブ取得が解決し、activeDomain が設定される
+      resolveGet({ id: 2, url: 'https://other.com' } as chrome.tabs.Tab);
+      await activated;
+      vi.mocked(setAnalytics).mockClear();
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('前面でない間のタブ切り替えは、前面復帰後の記録に混ざらない', async () => {
+      // 前面に戻ったときアクティブタブの URL が取れないと（chrome:// 等）、
+      // initializeCurrentTab は activeDomain と lastUpdateTime を据え置く。
+      // 前面でない間に入口の判定を抜けていると、不在中の時間が
+      // そのまま加算されてしまう（updateTracking の歯止めでは止まらない）
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      await harness.listeners.windowFocus[0](-1);
+      await harness.listeners.tabActivated[0]({
+        tabId: 2,
+        windowId: 1
+      } as chrome.tabs.TabActiveInfo);
+
+      // 見ていない時間が流れる
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      // 前面に戻るが、アクティブタブの URL は取れない
+      harness.chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: undefined }
+      ]);
+      await harness.listeners.windowFocus[0](1);
+      vi.mocked(setAnalytics).mockClear();
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('前面でない間の URL 変更は、前面復帰後の記録に混ざらない', async () => {
+      // 上と同じ形で、tabs.onUpdated 側を検査する。
+      // 前面復帰後は updateTracking の歯止めが効かないため、
+      // 入口（activeTabId のクリアと handleTabUpdated の判定）だけが止められる
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      await harness.listeners.windowFocus[0](-1);
+
+      // ブロック画面へのリダイレクトが、直前までアクティブだったタブに届く
+      await harness.listeners.tabUpdated[0](
+        1,
+        {
+          url: 'chrome-extension://abcdef/blocked.html'
+        } as chrome.tabs.TabChangeInfo,
+        {} as chrome.tabs.Tab
+      );
+
+      // 見ていない時間が流れる
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      // 前面に戻るが、アクティブタブの URL は取れない
+      harness.chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: undefined }
+      ]);
+      await harness.listeners.windowFocus[0](1);
+      vi.mocked(setAnalytics).mockClear();
+
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('フォーカスを失うと計測対象のタブも忘れる', async () => {
+      // activeTabId が残ると、前面でない間の tabs.onUpdated が
+      // 「アクティブタブの URL 変更」として通ってしまう
+      vi.useFakeTimers();
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+      await harness.listeners.windowFocus[0](-1);
+
+      // 前面に戻さないまま、同じタブの URL 変更を流す
+      await harness.listeners.tabUpdated[0](
+        1,
+        { url: 'https://changed.com/page' } as chrome.tabs.TabChangeInfo,
+        {} as chrome.tabs.Tab
+      );
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      expect(lastSavedOrNull()?.siteTime['changed.com']).toBeUndefined();
     });
 
     it('フォーカスを失うと計測を停止する', async () => {
