@@ -155,6 +155,20 @@
     "message": "ブロック中のサイト",
     "description": "ブロックリスト見出し"
   },
+  "showMoreBlockedSites": {
+    "message": "他 $COUNT$ 件を表示",
+    "description": "新規タブでブロック中のサイトの表示上限を外すボタン",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "showLessBlockedSites": {
+    "message": "表示を減らす",
+    "description": "新規タブでブロック中のサイトの表示上限を戻すボタン"
+  },
   "noBlockedSites": {
     "message": "ブロックしているサイトはありません。上のフィールドにドメインを追加してください。",
     "description": "空のブロックリストメッセージ"

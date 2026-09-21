@@ -16,6 +16,8 @@ export function BlockedSitesList({
   maxVisible = 5
 }: BlockedSitesListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  // 「もっと見る」で上限を外したかどうか
+  const [showsAll, setShowsAll] = useState(false);
 
   // Filter to only show enabled blocked sites
   const enabledBlockList = blockList.filter((item) => item.enabled !== false);
@@ -24,16 +26,28 @@ export function BlockedSitesList({
     return null;
   }
 
-  const visibleSites = isExpanded
+  // 上限は展開したときにも効かせる。外れるのは「もっと見る」を押したときだけ
+  // （一覧が縦に伸びると、新規タブの主役である目標が画面の外へ押し出されるため）
+  const visibleSites = showsAll
     ? enabledBlockList
     : enabledBlockList.slice(0, maxVisible);
+  const hiddenCount = enabledBlockList.length - visibleSites.length;
   const hasMore = enabledBlockList.length > maxVisible;
+
+  const handleToggleList = () => {
+    // 畳むときは「もっと見る」も戻す。次に開いたときにも上限が効くようにするため
+    if (isExpanded) {
+      setShowsAll(false);
+    }
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <div className="w-full max-w-md mx-auto mt-8">
       <button
         data-testid="newtab-blocked-sites-toggle"
-        onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+        onClick={handleToggleList}
         className="w-full flex items-center justify-between px-5 py-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl border border-white/10 transition-all duration-200"
       >
         <div className="flex items-center gap-3">
@@ -44,12 +58,11 @@ export function BlockedSitesList({
             {getMessage('blockedSites')} ({enabledBlockList.length})
           </span>
         </div>
-        {hasMore &&
-          (isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-white/60" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-white/60" />
-          ))}
+        {isExpanded ? (
+          <ChevronUp className="w-5 h-5 text-white/60" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-white/60" />
+        )}
       </button>
 
       {isExpanded && (
@@ -80,6 +93,19 @@ export function BlockedSitesList({
               );
             })}
           </ul>
+
+          {hasMore && (
+            <button
+              data-testid="newtab-blocked-sites-show-more"
+              aria-expanded={showsAll}
+              onClick={() => setShowsAll(!showsAll)}
+              className="w-full px-5 py-2.5 text-xs font-medium text-white/60 hover:text-white/90 hover:bg-white/5 border-t border-white/5 transition-colors"
+            >
+              {showsAll
+                ? getMessage('showLessBlockedSites')
+                : getMessage('showMoreBlockedSites', hiddenCount.toString())}
+            </button>
+          )}
         </div>
       )}
     </div>
