@@ -17,6 +17,13 @@ interface PasswordFieldProps {
   show: boolean;
   onToggleShow: () => void;
   placeholder: string;
+  /**
+   * 入力欄でのキー操作。確認ボタン以外に Enter でも送信する呼び出し側が使う
+   * （machina-gg/vision-focus#476）
+   */
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  /** 開いた直後にこの欄へ入力できる状態にするか（ダイアログの中で使う） */
+  autoFocus?: boolean;
 }
 
 /** Reusable password input field with visibility toggle */
@@ -27,7 +34,9 @@ export function PasswordField({
   onChange,
   show,
   onToggleShow,
-  placeholder
+  placeholder,
+  onKeyDown,
+  autoFocus
 }: PasswordFieldProps) {
   return (
     <div>
@@ -46,8 +55,10 @@ export function PasswordField({
           type={show ? 'text' : 'password'}
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           className="pr-10"
+          autoFocus={autoFocus}
         />
         <button
           type="button"

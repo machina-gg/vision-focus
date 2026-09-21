@@ -223,4 +223,36 @@ describe('PasswordField', () => {
       expect(onChange).toHaveBeenCalledWith('');
     });
   });
+
+  describe('呼び出し側に委ねる操作', () => {
+    it('キー操作を渡すと、押されたキーがそのまま届く', () => {
+      // ダイアログでの Enter 送信はこの経路に乗る
+      // （machina-gg/vision-focus#476）
+      const onKeyDown = vi.fn();
+      renderField({ onKeyDown });
+
+      fireEvent.keyDown(field(), { key: 'Enter' });
+
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(onKeyDown.mock.calls[0][0]).toMatchObject({ key: 'Enter' });
+    });
+
+    it('キー操作を渡さなくても例外にならない', () => {
+      renderField();
+
+      expect(() => fireEvent.keyDown(field(), { key: 'Enter' })).not.toThrow();
+    });
+
+    it('autoFocus を渡すとその欄に入力できる状態で開く', () => {
+      renderField({ autoFocus: true });
+
+      expect(field()).toHaveFocus();
+    });
+
+    it('autoFocus を渡さなければ勝手に焦点を奪わない', () => {
+      renderField();
+
+      expect(field()).not.toHaveFocus();
+    });
+  });
 });

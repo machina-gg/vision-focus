@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
-import { Modal, Button, Input } from '~/components/ui';
+import { Modal, Button } from '~/components/ui';
+import { PasswordField } from '~/components/options/password';
 import { getMessage } from '~/lib/i18n';
 import { verifyPassword } from '~/lib/password';
 
@@ -93,31 +94,22 @@ export function PasswordModal({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            {getMessage('enterPassword')}
-          </label>
-          <div className="relative">
-            <Input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={setPassword}
-              onKeyDown={handleKeyDown}
-              placeholder={getMessage('passwordPlaceholder')}
-              className="pr-10"
-              autoFocus
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
-          </div>
+          {/*
+            入力欄は共通の部品に寄せる。ラベルと入力欄の結び付き、表示切り替え
+            ボタンの名前がこれで他のパスワード欄と揃う
+            （machina-gg/vision-focus#468 / #476）
+          */}
+          <PasswordField
+            fieldId="password-field-verify"
+            label={getMessage('enterPassword')}
+            value={password}
+            onChange={setPassword}
+            show={showPassword}
+            onToggleShow={() => setShowPassword(!showPassword)}
+            placeholder={getMessage('passwordPlaceholder')}
+            onKeyDown={handleKeyDown}
+            autoFocus
+          />
           {error && <p className="text-sm text-danger-600">{error}</p>}
         </div>
 

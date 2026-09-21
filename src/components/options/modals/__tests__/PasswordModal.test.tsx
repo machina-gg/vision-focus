@@ -14,6 +14,10 @@ import { PasswordModal } from '../PasswordModal';
  *
  * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
  * （src/lib/i18n.ts）。文言の検査はキー名で行う。
+ *
+ * 入力欄はラベルの文言から引く。伏せ字で中身が見えないため、ラベルと
+ * 結び付いていないと何を入力する欄か読み上げでも分からない
+ * （machina-gg/vision-focus#468 / #476）。
  */
 
 const password = vi.hoisted(() => ({
@@ -41,7 +45,11 @@ function renderModal(
   return { onClose, onSuccess, ...result };
 }
 
-const field = () => screen.getByPlaceholderText('passwordPlaceholder');
+/** 入力欄はラベルの文言から引く（結び付きが切れたらここで落ちる） */
+const field = () => screen.getByLabelText('enterPassword');
+
+/** 表示切り替えは名前で引く（アイコンだけのボタンに付けた aria-label） */
+const toggleButton = () => screen.getByRole('button', { name: 'showPassword' });
 
 function type(value: string) {
   fireEvent.change(field(), { target: { value } });
@@ -105,6 +113,13 @@ describe('PasswordModal', () => {
   });
 
   describe('入力', () => {
+    it('入力欄をラベルの文言から特定できる', () => {
+      renderModal();
+
+      // ラベルが指しているのは伏せ字の入力欄そのもの
+      expect(field()).toBe(screen.getByPlaceholderText('passwordPlaceholder'));
+    });
+
     it('未入力のあいだ確認ボタンは押せない', () => {
       renderModal();
 
@@ -126,15 +141,23 @@ describe('PasswordModal', () => {
     });
 
     it('表示ボタンを押すと入力値が見えるようになる', () => {
-      const { container } = renderModal();
+      renderModal();
 
-      // 表示切り替えは入力欄の隣のアイコンボタン（ラベルを持たない）
-      const toggleButton = container.querySelector(
-        '.relative > button'
-      ) as HTMLElement;
-      fireEvent.click(toggleButton);
+      fireEvent.click(toggleButton());
 
       expect(field()).toHaveAttribute('type', 'text');
+    });
+
+    it('表示中は切り替えボタンの名前が「隠す」に変わる', () => {
+      renderModal();
+
+      fireEvent.click(toggleButton());
+
+      // 表示中かどうかが目のアイコンの差だけで表されていると、
+      // 読み上げでは今どちらの状態か分からない（#455 / #476）
+      expect(
+        screen.getByRole('button', { name: 'hidePassword' })
+      ).toBeInTheDocument();
     });
   });
 
