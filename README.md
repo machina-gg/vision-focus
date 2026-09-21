@@ -94,6 +94,11 @@ Claude Code で以下のスラッシュコマンドが使用可能です：
 | `pnpm test:e2e`        | Playwright で E2E テスト（ヘッドレス）       |
 | `pnpm test:e2e:headed` | E2E をブラウザ表示付きで実行（デバッグ用）   |
 
+**コンポーネントテスト:**
+
+React コンポーネントの単体テストは、何を検査し何を検査しないかを
+[docs/COMPONENT_TESTING.md](./docs/COMPONENT_TESTING.md) に定める（置き場所・スナップショットを取らない理由を含む）。
+
 **カバレッジ:**
 
 ```bash
@@ -123,18 +128,19 @@ pnpm test:e2e
 
 ## Documentation
 
-| ファイル                        | 内容                 | 作成タイミング          |
-| ------------------------------- | -------------------- | ----------------------- |
-| docs/INPUT.md                   | 要件ヒアリングシート | 最初に記載              |
-| docs/PRD.md                     | 要件定義書           | `/project:requirements` |
-| docs/DESIGN.md                  | 設計書               | `/project:design`       |
-| docs/SCREEN.md                  | 画面設計             | `/project:design`       |
-| docs/COMPONENT.md               | コンポーネント設計   | `/project:design`       |
-| docs/DESIGN_CONCEPT.md          | デザインコンセプト   | `/project:prototype`    |
-| docs/TEST_CASES.md              | E2Eテストケース      | `/project:test-design`  |
-| docs/ANALYTICS.md               | GA4計測ドキュメント  | 随時更新                |
-| reports/COMPETITIVE_ANALYSIS.md | 競合調査レポート     | `/project:requirements` |
-| GitHub Issues                   | タスク・進捗管理     | 随時更新                |
+| ファイル                        | 内容                     | 作成タイミング          |
+| ------------------------------- | ------------------------ | ----------------------- |
+| docs/INPUT.md                   | 要件ヒアリングシート     | 最初に記載              |
+| docs/PRD.md                     | 要件定義書               | `/project:requirements` |
+| docs/DESIGN.md                  | 設計書                   | `/project:design`       |
+| docs/SCREEN.md                  | 画面設計                 | `/project:design`       |
+| docs/COMPONENT.md               | コンポーネント設計       | `/project:design`       |
+| docs/DESIGN_CONCEPT.md          | デザインコンセプト       | `/project:prototype`    |
+| docs/TEST_CASES.md              | E2Eテストケース          | `/project:test-design`  |
+| docs/COMPONENT_TESTING.md       | コンポーネントテスト方針 | 随時更新                |
+| docs/ANALYTICS.md               | GA4計測ドキュメント      | 随時更新                |
+| reports/COMPETITIVE_ANALYSIS.md | 競合調査レポート         | `/project:requirements` |
+| GitHub Issues                   | タスク・進捗管理         | 随時更新                |
 
 ### reports/COMPETITIVE_ANALYSIS.md（競合調査レポート）
 
@@ -182,6 +188,12 @@ pnpm test:e2e
 - テストケース一覧
 - 優先度（P0/P1/P2）
 - テストシナリオ詳細
+
+### docs/COMPONENT_TESTING.md（コンポーネントテスト方針）
+
+- 何を確かめ、何を確かめないか
+- テストの置き場所
+- 壊したら落ちることの確かめ方
 
 ### GitHub Issues（タスク・進捗管理）
 
