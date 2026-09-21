@@ -1925,6 +1925,14 @@
     "message": "Confirm your password",
     "description": "Confirm password placeholder"
   },
+  "showPassword": {
+    "message": "Show password",
+    "description": "Accessible name for the password visibility toggle when the password is hidden"
+  },
+  "hidePassword": {
+    "message": "Hide password",
+    "description": "Accessible name for the password visibility toggle when the password is shown"
+  },
   "passwordRequired": {
     "message": "Password Required",
     "description": "Password required title"

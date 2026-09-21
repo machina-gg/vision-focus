@@ -2,6 +2,7 @@ import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Input } from '~/components/ui';
+import { getMessage } from '~/lib/i18n';
 
 interface PasswordFieldProps {
   label: string;
@@ -37,6 +38,12 @@ export function PasswordField({
         />
         <button
           type="button"
+          // アイコンだけのボタンなので名前を属性で持たせる。表示中かどうかも
+          // 目のアイコンの差でしか出ておらず、読み上げでは区別が付かない
+          // （machina-gg/vision-focus#455）
+          aria-label={
+            show ? getMessage('hidePassword') : getMessage('showPassword')
+          }
           onClick={onToggleShow}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
         >

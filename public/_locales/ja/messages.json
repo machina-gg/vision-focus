@@ -1925,6 +1925,14 @@
     "message": "パスワードを再入力",
     "description": "パスワード確認プレースホルダー"
   },
+  "showPassword": {
+    "message": "パスワードを表示",
+    "description": "パスワード表示切り替えボタンの名前（非表示のとき）"
+  },
+  "hidePassword": {
+    "message": "パスワードを隠す",
+    "description": "パスワード表示切り替えボタンの名前（表示中のとき）"
+  },
   "passwordRequired": {
     "message": "パスワードが必要です",
     "description": "パスワード必須タイトル"

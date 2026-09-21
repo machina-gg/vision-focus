@@ -26,6 +26,9 @@ export function Badge({ variant = 'default', children }: BadgeProps) {
         text-xs font-medium rounded-full
         ${variantStyles[variant]}
       `}
+      // 見た目の種類を属性としても持たせる。装飾のクラス名にしか出ていないと、
+      // 支援技術にもテストにも種類が伝わらない（machina-gg/vision-focus#455）
+      data-variant={variant}
     >
       {children}
     </span>

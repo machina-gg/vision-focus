@@ -1,0 +1,123 @@
+import React from 'react';
+
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+import { RankedList } from '../RankedList';
+
+/**
+ * RankedList の空表示・件数の上限・値の単位の検査
+ *
+ * 0 件のときだけ別の経路（案内文）に落ちる。件数は上位 3 件までで、
+ * 4 件目以降が出ないことが要点。値は時間として秒から整形する場合と、
+ * 回数としてそのまま出す場合があり、この読み替えを見る。
+ *
+ * 背景色・文字色は装飾として受け取るだけなので検査しない。
+ */
+
+const itemsOf = (entries: [string, number][]) =>
+  entries.map(([domain, value]) => ({ domain, value }));
+
+function renderList(
+  items: { domain: string; value: number }[],
+  valueType: 'time' | 'count' = 'count'
+) {
+  return render(
+    <RankedList
+      items={items}
+      valueType={valueType}
+      bgColor="bg-gray-50"
+      textColor="text-gray-800"
+    />
+  );
+}
+
+describe('RankedList', () => {
+  describe('0 件のとき', () => {
+    it('データ無しの案内だけを出す', () => {
+      renderList([]);
+
+      expect(screen.getByText('noData')).toBeInTheDocument();
+      expect(screen.queryByText('1')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('件数', () => {
+    it('3 件までは全部出す', () => {
+      renderList(
+        itemsOf([
+          ['a.example', 1],
+          ['b.example', 2],
+          ['c.example', 3]
+        ])
+      );
+
+      expect(screen.getByText('a.example')).toBeInTheDocument();
+      expect(screen.getByText('b.example')).toBeInTheDocument();
+      expect(screen.getByText('c.example')).toBeInTheDocument();
+    });
+
+    it('4 件目以降は出さない', () => {
+      renderList(
+        itemsOf([
+          ['a.example', 1],
+          ['b.example', 2],
+          ['c.example', 3],
+          ['d.example', 4]
+        ])
+      );
+
+      expect(screen.queryByText('d.example')).not.toBeInTheDocument();
+    });
+
+    it('渡された順のまま順位の番号を振る（並べ替えはしない）', () => {
+      const { container } = renderList(
+        itemsOf([
+          ['first.example', 11],
+          ['second.example', 99]
+        ])
+      );
+
+      const text = container.textContent ?? '';
+      expect(text.indexOf('first.example')).toBeLessThan(
+        text.indexOf('second.example')
+      );
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
+    });
+  });
+
+  describe('値の単位', () => {
+    it('回数のときは数値をそのまま出す', () => {
+      renderList(itemsOf([['a.example', 90]]), 'count');
+
+      expect(screen.getByText('90')).toBeInTheDocument();
+    });
+
+    it('時間のときは秒を読める形に整形して出す', () => {
+      renderList(itemsOf([['a.example', 90]]), 'time');
+
+      expect(screen.getByText('1m')).toBeInTheDocument();
+      expect(screen.queryByText('90')).not.toBeInTheDocument();
+    });
+
+    it('時間が 1 分未満のときは秒で出す', () => {
+      renderList(itemsOf([['a.example', 45]]), 'time');
+
+      expect(screen.getByText('45s')).toBeInTheDocument();
+    });
+
+    it('時間が 1 時間以上のときは時間と分で出す', () => {
+      renderList(itemsOf([['a.example', 3720]]), 'time');
+
+      expect(screen.getByText('1h 2m')).toBeInTheDocument();
+    });
+
+    it('値が 0 でも案内文には落ちず、0 として出す', () => {
+      renderList(itemsOf([['a.example', 0]]), 'count');
+
+      expect(screen.queryByText('noData')).not.toBeInTheDocument();
+      expect(screen.getByText('0')).toBeInTheDocument();
+    });
+  });
+});

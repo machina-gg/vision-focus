@@ -86,6 +86,9 @@ export function SchedulesTab({
                     {DAY_KEYS.map((day, idx) => (
                       <span
                         key={day}
+                        // 有効な曜日かどうかが背景色の差でしか出ておらず、
+                        // 読み上げでは区別が付かない（machina-gg/vision-focus#455）
+                        data-active={String(schedule.days.includes(idx))}
                         className={`text-xs px-1.5 py-0.5 rounded ${
                           schedule.days.includes(idx)
                             ? 'bg-info-100 text-info-700'
