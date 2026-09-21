@@ -216,15 +216,61 @@ describe('PasswordModal', () => {
       expect(password.verifyPassword).not.toHaveBeenCalled();
     });
 
-    it('未入力のまま Enter を押すと入力を促し、照合はしない', async () => {
+    it('未入力のまま Enter を押しても照合しない', async () => {
+      // 確認ボタンと同じ条件で止まる。ここが緩むと、パスワード保護を
+      // 付けていても空のまま照合へ進める（#465）。
+      // 見出しの既定文言と区別するため title を渡して描画する
       renderModal({ title: '解除の確認' });
 
       await act(async () => {
         fireEvent.keyDown(field(), { key: 'Enter' });
       });
 
-      expect(screen.getByText('passwordRequired')).toBeInTheDocument();
       expect(password.verifyPassword).not.toHaveBeenCalled();
+      // 押せない操作なので、エラー文言も出さずに何も起きない
+      expect(screen.queryByText('passwordRequired')).not.toBeInTheDocument();
+    });
+
+    it('未入力かつ照合中に Enter を押しても照合しない', async () => {
+      // 照合中は入力欄を空にできないため、1 度照合を走らせて
+      // 解決させないまま、その最中の Enter を見る
+      let resolveVerify: (value: boolean) => void = () => undefined;
+      password.verifyPassword.mockReturnValue(
+        new Promise<boolean>((resolve) => {
+          resolveVerify = resolve;
+        })
+      );
+      renderModal();
+
+      type('secret');
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('password-modal-confirm'));
+      });
+      expect(password.verifyPassword).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        fireEvent.keyDown(field(), { key: 'Enter' });
+      });
+
+      expect(password.verifyPassword).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveVerify(true);
+      });
+    });
+
+    it('空白だけでも確認ボタンを押せ、Enter で照合する', async () => {
+      // 空白はパスワードとして成立する文字なので、未入力とは区別して通す
+      renderModal();
+
+      type(' ');
+      expect(screen.getByTestId('password-modal-confirm')).toBeEnabled();
+
+      await act(async () => {
+        fireEvent.keyDown(field(), { key: 'Enter' });
+      });
+
+      expect(password.verifyPassword).toHaveBeenCalledWith(' ', 'stored-hash');
     });
 
     it('照合中は確認ボタンが待機表示になり、押せない', async () => {
