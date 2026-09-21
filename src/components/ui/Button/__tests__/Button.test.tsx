@@ -6,11 +6,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { Button } from '../Button';
 
 /**
- * Button の「押せるかどうか」の出し分けと属性の受け渡しの検査
+ * Button の「押せるかどうか」の出し分けと、見た目の指定の受け渡しの検査
  *
  * loading は見た目のスピナーだけでなく disabled にも効くため、押せなくなることで
- * 検査できる。variant / size / fullWidth / className は装飾のクラス名にしか
- * 出ないため検査しない（machina-gg/vision-focus#455）。
+ * 検査できる。variant / size / fullWidth / loading はクラス名のほかに
+ * data-* 属性としても持つので、クラス名ではなく属性で確かめる
+ * （machina-gg/vision-focus#455）。
  */
 
 describe('Button', () => {
@@ -90,6 +91,85 @@ describe('Button', () => {
       );
 
       expect(screen.getByRole('button', { name: '保存する' })).toBeEnabled();
+    });
+  });
+
+  describe('見た目の指定', () => {
+    it('既定は primary / md / 幅いっぱいでない / 読み込み中でない', () => {
+      render(<Button data-testid="button">保存する</Button>);
+
+      const button = screen.getByTestId('button');
+      expect(button).toHaveAttribute('data-variant', 'primary');
+      expect(button).toHaveAttribute('data-size', 'md');
+      expect(button).toHaveAttribute('data-full-width', 'false');
+      expect(button).toHaveAttribute('data-loading', 'false');
+    });
+
+    it.each(['primary', 'secondary', 'danger', 'ghost'] as const)(
+      '渡した種類 %s を属性に出す',
+      (variant) => {
+        render(
+          <Button variant={variant} data-testid="button">
+            保存する
+          </Button>
+        );
+
+        expect(screen.getByTestId('button')).toHaveAttribute(
+          'data-variant',
+          variant
+        );
+      }
+    );
+
+    it.each(['sm', 'md', 'lg'] as const)(
+      '渡した大きさ %s を属性に出す',
+      (size) => {
+        render(
+          <Button size={size} data-testid="button">
+            保存する
+          </Button>
+        );
+
+        expect(screen.getByTestId('button')).toHaveAttribute('data-size', size);
+      }
+    );
+
+    it('幅いっぱいの指定を属性に出す', () => {
+      render(
+        <Button fullWidth data-testid="button">
+          保存する
+        </Button>
+      );
+
+      expect(screen.getByTestId('button')).toHaveAttribute(
+        'data-full-width',
+        'true'
+      );
+    });
+
+    it('読み込み中の指定を属性に出す', () => {
+      render(
+        <Button loading data-testid="button">
+          保存する
+        </Button>
+      );
+
+      expect(screen.getByTestId('button')).toHaveAttribute(
+        'data-loading',
+        'true'
+      );
+    });
+
+    it('disabled で押せなくなっても読み込み中とは区別できる', () => {
+      render(
+        <Button disabled data-testid="button">
+          保存する
+        </Button>
+      );
+
+      const button = screen.getByTestId('button');
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute('data-loading', 'false');
     });
   });
 

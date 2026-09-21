@@ -91,6 +91,13 @@ function renderChart(
 const switchTo = (messageKey: string) =>
   fireEvent.click(screen.getByRole('button', { name: messageKey }));
 
+/** 押下状態になっているボタンの文言（選択中の印） */
+const pressedTexts = () =>
+  screen
+    .getAllByRole('button')
+    .filter((el) => el.getAttribute('aria-pressed') === 'true')
+    .map((el) => el.textContent);
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
@@ -145,6 +152,20 @@ describe('AnalyticsChart', () => {
       switchTo('chartTypeCumulative');
 
       expect(screen.getByTestId('cumulative-chart')).toBeInTheDocument();
+    });
+
+    it('最初は日次のボタンだけが押下状態になる', () => {
+      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+
+      expect(pressedTexts()).toEqual(['chartTypeDaily']);
+    });
+
+    it('切り替えると押下状態も移る', () => {
+      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+
+      switchTo('chartTypeCumulative');
+
+      expect(pressedTexts()).toEqual(['chartTypeCumulative']);
     });
 
     it('日次へ戻せる', () => {
@@ -336,6 +357,35 @@ describe('AnalyticsChart', () => {
       switchTo('chartTypeCumulative');
 
       expect(screen.getByTestId('cumulative-chart')).toHaveTextContent('[]');
+    });
+  });
+
+  describe('disabled のとき', () => {
+    it('切り替えのボタンをすべて押せなくする', () => {
+      renderChart(DEFAULT_ANALYTICS, historyOf([]), true);
+
+      screen.getAllByRole('button').forEach((button) => {
+        expect(button).toBeDisabled();
+      });
+    });
+
+    it('キーボードから届いてもグラフは切り替わらない', () => {
+      renderChart(DEFAULT_ANALYTICS, historyOf([]), true);
+
+      // ⚠ 包む div の pointer-events はマウスしか止めない。
+      // 無効の属性が無いと、この押下でグラフが切り替わる
+      switchTo('chartTypeBySite');
+
+      expect(screen.getByTestId('daily-chart')).toBeInTheDocument();
+      expect(screen.queryByTestId('by-site-chart')).not.toBeInTheDocument();
+    });
+
+    it('disabled を渡さなければ押せる', () => {
+      renderChart(DEFAULT_ANALYTICS, historyOf([]), false);
+
+      screen.getAllByRole('button').forEach((button) => {
+        expect(button).toBeEnabled();
+      });
     });
   });
 });

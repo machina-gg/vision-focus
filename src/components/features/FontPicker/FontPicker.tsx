@@ -142,6 +142,11 @@ export function FontPicker({
               <button
                 key={categoryKey}
                 data-testid="font-category-button"
+                // 選択中かどうかを枠線と背景色でしか表していなかったため、押下状態を持たせる。
+                // disabled は包む div の pointer-events だけではキーボード操作を止められない
+                // （machina-gg/vision-focus#455）
+                aria-pressed={selectedCategory === categoryKey}
+                disabled={disabled}
                 onClick={() => handleCategoryChange(categoryKey)}
                 className={`
                   px-3 py-1.5 text-sm rounded-lg border transition-colors
@@ -169,6 +174,8 @@ export function FontPicker({
             <button
               key={font.family}
               data-testid="font-family-button"
+              aria-pressed={value.family === font.family}
+              disabled={disabled}
               onClick={() => handleChange({ family: font.family })}
               className={`
                 px-3 py-2 text-sm rounded-lg border transition-colors text-left
@@ -196,6 +203,8 @@ export function FontPicker({
             <button
               key={size.value}
               data-testid="font-size-button"
+              aria-pressed={value.size === size.value}
+              disabled={disabled}
               onClick={() => handleChange({ size: size.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
@@ -222,6 +231,8 @@ export function FontPicker({
             <button
               key={weight.value}
               data-testid="font-weight-button"
+              aria-pressed={value.weight === weight.value}
+              disabled={disabled}
               onClick={() => handleChange({ weight: weight.value })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors

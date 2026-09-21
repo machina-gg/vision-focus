@@ -611,6 +611,22 @@
     "message": "Not enough data for report",
     "description": "No report data message"
   },
+  "previousWeek": {
+    "message": "Previous week",
+    "description": "Accessible name for the button that moves to the previous week"
+  },
+  "nextWeek": {
+    "message": "Next week",
+    "description": "Accessible name for the button that moves to the next week"
+  },
+  "previousMonth": {
+    "message": "Previous month",
+    "description": "Accessible name for the button that moves to the previous month"
+  },
+  "nextMonth": {
+    "message": "Next month",
+    "description": "Accessible name for the button that moves to the next month"
+  },
   "improving": {
     "message": "Improving",
     "description": "Improving trend label"

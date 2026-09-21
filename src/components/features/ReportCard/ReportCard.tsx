@@ -55,7 +55,14 @@ export function WeeklyReportCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onPrevious}>
+          {/* アイコンだけで名前が無いと読み上げでどちらのボタンか分からない
+              （machina-gg/vision-focus#455） */}
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={getMessage('previousWeek')}
+            onClick={onPrevious}
+          >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm text-gray-600 min-w-[120px] text-center">
@@ -64,6 +71,7 @@ export function WeeklyReportCard({
           <Button
             variant="ghost"
             size="sm"
+            aria-label={getMessage('nextWeek')}
             onClick={onNext}
             disabled={!canGoNext}
           >
@@ -166,7 +174,12 @@ export function MonthlyReportCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onPrevious}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={getMessage('previousMonth')}
+            onClick={onPrevious}
+          >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm text-gray-600 min-w-[120px] text-center">
@@ -175,6 +188,7 @@ export function MonthlyReportCard({
           <Button
             variant="ghost"
             size="sm"
+            aria-label={getMessage('nextMonth')}
             onClick={onNext}
             disabled={!canGoNext}
           >

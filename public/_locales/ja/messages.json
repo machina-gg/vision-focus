@@ -611,6 +611,22 @@
     "message": "レポート用のデータが不足しています",
     "description": "レポートデータなしメッセージ"
   },
+  "previousWeek": {
+    "message": "前の週",
+    "description": "前の週へ移動するボタンの読み上げ用の名前"
+  },
+  "nextWeek": {
+    "message": "次の週",
+    "description": "次の週へ移動するボタンの読み上げ用の名前"
+  },
+  "previousMonth": {
+    "message": "前の月",
+    "description": "前の月へ移動するボタンの読み上げ用の名前"
+  },
+  "nextMonth": {
+    "message": "次の月",
+    "description": "次の月へ移動するボタンの読み上げ用の名前"
+  },
   "improving": {
     "message": "改善中",
     "description": "改善トレンドラベル"

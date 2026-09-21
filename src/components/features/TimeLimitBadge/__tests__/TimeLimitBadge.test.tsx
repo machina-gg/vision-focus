@@ -14,8 +14,8 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  * 状態は data-state と文言のキー（timeLimitReached / timeLimitWarning /
  * timeLimitRemaining）で区別できるため、色のクラス名は見ない。
  *
- * ⚠ compact のときだけは、残りわずかかどうかが背景色でしか表現されていないため
- * 検査していない（machina-gg/vision-focus#455）。
+ * compact では文言が警告に切り替わらないため、残りわずかかどうかは data-low で
+ * 確かめる（machina-gg/vision-focus#455）。
  */
 
 // 残り時間の表記が文言に入るため、置換値の見える chrome.i18n を差し込む
@@ -92,6 +92,19 @@ describe('TimeLimitBadge', () => {
       );
     });
 
+    it('警告の文言と data-low の示す状態が一致する', () => {
+      render(
+        <TimeLimitBadge
+          remainingSeconds={1000 * THRESHOLD}
+          limitSeconds={1000}
+        />
+      );
+
+      const badge = screen.getByTestId('time-limit-badge');
+      expect(badge).toHaveTextContent('timeLimitWarning(3m)');
+      expect(badge).toHaveAttribute('data-low', 'true');
+    });
+
     it('showWarning が偽なら残りわずかでも通常の文言にする', () => {
       render(
         <TimeLimitBadge
@@ -125,6 +138,52 @@ describe('TimeLimitBadge', () => {
       expect(badge).toHaveAttribute('data-state', 'remaining');
       expect(badge).toHaveTextContent('timeLimitRemaining(10 min)');
       expect(badge).not.toHaveTextContent('perDay');
+    });
+
+    it(`残りが上限の ${THRESHOLD * 100}% 以下なら残りわずかと示す`, () => {
+      render(
+        <TimeLimitBadge
+          remainingSeconds={1000 * THRESHOLD}
+          limitSeconds={1000}
+          compact
+        />
+      );
+
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-low',
+        'true'
+      );
+    });
+
+    it(`残りが上限の ${THRESHOLD * 100}% を超えていれば残りわずかとは示さない`, () => {
+      render(
+        <TimeLimitBadge
+          remainingSeconds={1000 * THRESHOLD + 1}
+          limitSeconds={1000}
+          compact
+        />
+      );
+
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-low',
+        'false'
+      );
+    });
+
+    it('showWarning が偽なら compact でも残りわずかとは示さない', () => {
+      render(
+        <TimeLimitBadge
+          remainingSeconds={1}
+          limitSeconds={1000}
+          showWarning={false}
+          compact
+        />
+      );
+
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-low',
+        'false'
+      );
     });
 
     it('残り時間が尽きていれば compact でも超過の表示にする', () => {

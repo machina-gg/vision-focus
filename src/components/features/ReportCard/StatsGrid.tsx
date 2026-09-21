@@ -29,23 +29,38 @@ function formatChangePercent(value: number | null): string {
 }
 
 /**
- * 変化率の色を決定
- * ネガティブ（無駄時間が減少）= 緑、ポジティブ（増加）= 赤
+ * 変化が良い方向か悪い方向かを決定
+ *
+ * 無駄時間の増減なので、減少（負）が改善、増加（正）が悪化にあたる。
+ * 色とアイコンの出し分けはこの向きから導くため、判定はここ 1 箇所に置く。
  */
-function getChangeColor(value: number | null) {
-  if (value === null)
+type ChangeDirection = 'improved' | 'worsened' | 'unchanged' | 'unknown';
+
+function getChangeDirection(value: number | null): ChangeDirection {
+  if (value === null) return 'unknown';
+  if (value < 0) return 'improved';
+  if (value > 0) return 'worsened';
+  return 'unchanged';
+}
+
+/**
+ * 変化の向きから色を決定
+ * 改善（無駄時間が減少）= 緑、悪化（増加）= 赤
+ */
+function getChangeColor(direction: ChangeDirection) {
+  if (direction === 'unknown')
     return {
       bg: 'bg-gray-50',
       text: 'text-gray-600',
       label: 'text-gray-500'
     };
-  if (value < 0)
+  if (direction === 'improved')
     return {
       bg: 'bg-success-50',
       text: 'text-success-700',
       label: 'text-success-600'
     };
-  if (value > 0)
+  if (direction === 'worsened')
     return {
       bg: 'bg-danger-50',
       text: 'text-danger-700',
@@ -64,7 +79,8 @@ export function StatsGrid({
   unblockCount,
   wasteTimeChangePercent
 }: StatsGridProps) {
-  const changeColors = getChangeColor(wasteTimeChangePercent);
+  const changeDirection = getChangeDirection(wasteTimeChangePercent);
+  const changeColors = getChangeColor(changeDirection);
 
   return (
     <div className="grid grid-cols-4 gap-4">
@@ -77,13 +93,19 @@ export function StatsGrid({
         </p>
         <p className="text-xs text-danger-600">{getMessage('wasteTime')}</p>
       </div>
-      <div className={`text-center p-3 ${changeColors.bg} rounded-lg`}>
+      <div
+        data-testid="waste-time-change"
+        // 良い方向か悪い方向かが色とアイコンにしか出ないため、属性でも持たせる
+        // （machina-gg/vision-focus#455）
+        data-change-direction={changeDirection}
+        className={`text-center p-3 ${changeColors.bg} rounded-lg`}
+      >
         <div
           className={`flex items-center justify-center gap-1 ${changeColors.label} mb-1`}
         >
-          {wasteTimeChangePercent !== null && wasteTimeChangePercent < 0 ? (
+          {changeDirection === 'improved' ? (
             <TrendingDown className="w-4 h-4" />
-          ) : wasteTimeChangePercent !== null && wasteTimeChangePercent > 0 ? (
+          ) : changeDirection === 'worsened' ? (
             <TrendingUp className="w-4 h-4" />
           ) : (
             <Minus className="w-4 h-4" />

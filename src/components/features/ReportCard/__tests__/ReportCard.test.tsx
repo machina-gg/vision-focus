@@ -87,10 +87,11 @@ const monthlyReportOf = (
 /**
  * 期間を移動するボタン
  *
- * どちらもアイコンだけで名前を持たないため、描画順で取る
- * （0 = 前の期間へ、1 = 次の期間へ）
+ * アイコンだけのボタンにも読み上げ用の名前が付いたため、描画順ではなく名前で取る
+ * （machina-gg/vision-focus#455）。テスト環境の getMessage は文言のキーを返す
  */
-const navButtons = () => screen.getAllByRole('button');
+const navButton = (messageKey: string) =>
+  screen.getByRole('button', { name: messageKey });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -216,10 +217,17 @@ describe('WeeklyReportCard', () => {
   });
 
   describe('期間の移動', () => {
+    it('前後のボタンに読み上げ用の名前が付く', () => {
+      renderCard(weeklyReportOf());
+
+      expect(navButton('previousWeek')).toBeInTheDocument();
+      expect(navButton('nextWeek')).toBeInTheDocument();
+    });
+
     it('前の週のボタンで onPrevious が呼ばれる', () => {
       const { onPrevious } = renderCard(weeklyReportOf());
 
-      fireEvent.click(navButtons()[0]);
+      fireEvent.click(navButton('previousWeek'));
 
       expect(onPrevious).toHaveBeenCalledTimes(1);
     });
@@ -227,7 +235,7 @@ describe('WeeklyReportCard', () => {
     it('次の週へ進めるときはボタンが効く', () => {
       const { onNext } = renderCard(weeklyReportOf(), { canGoNext: true });
 
-      const next = navButtons()[1];
+      const next = navButton('nextWeek');
       expect(next).toBeEnabled();
 
       fireEvent.click(next);
@@ -238,7 +246,7 @@ describe('WeeklyReportCard', () => {
     it('次の週へ進めないときはボタンを押せない', () => {
       const { onNext } = renderCard(weeklyReportOf(), { canGoNext: false });
 
-      const next = navButtons()[1];
+      const next = navButton('nextWeek');
       expect(next).toBeDisabled();
 
       fireEvent.click(next);
@@ -249,7 +257,7 @@ describe('WeeklyReportCard', () => {
     it('レポートが無くても前の週へは戻れる', () => {
       const { onPrevious } = renderCard(null);
 
-      fireEvent.click(navButtons()[0]);
+      fireEvent.click(navButton('previousWeek'));
 
       expect(onPrevious).toHaveBeenCalledTimes(1);
     });
@@ -341,10 +349,17 @@ describe('MonthlyReportCard', () => {
   });
 
   describe('期間の移動', () => {
+    it('前後のボタンに読み上げ用の名前が付く', () => {
+      renderCard(monthlyReportOf());
+
+      expect(navButton('previousMonth')).toBeInTheDocument();
+      expect(navButton('nextMonth')).toBeInTheDocument();
+    });
+
     it('前の月のボタンで onPrevious が呼ばれる', () => {
       const { onPrevious } = renderCard(monthlyReportOf());
 
-      fireEvent.click(navButtons()[0]);
+      fireEvent.click(navButton('previousMonth'));
 
       expect(onPrevious).toHaveBeenCalledTimes(1);
     });
@@ -352,7 +367,7 @@ describe('MonthlyReportCard', () => {
     it('次の月へ進めないときはボタンを押せない', () => {
       const { onNext } = renderCard(monthlyReportOf(), { canGoNext: false });
 
-      fireEvent.click(navButtons()[1]);
+      fireEvent.click(navButton('nextMonth'));
 
       expect(onNext).not.toHaveBeenCalled();
     });
@@ -360,7 +375,7 @@ describe('MonthlyReportCard', () => {
     it('次の月へ進めるときは onNext が呼ばれる', () => {
       const { onNext } = renderCard(monthlyReportOf(), { canGoNext: true });
 
-      fireEvent.click(navButtons()[1]);
+      fireEvent.click(navButton('nextMonth'));
 
       expect(onNext).toHaveBeenCalledTimes(1);
     });
