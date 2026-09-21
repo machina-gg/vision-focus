@@ -86,6 +86,21 @@ function lastSavedOrNull(): AnalyticsData | null {
   return calls.length > 0 ? calls[calls.length - 1][0] : null;
 }
 
+/** 最後に保存された siteTime の合計秒数（未保存なら 0） */
+function totalRecordedSeconds(): number {
+  const saved = lastSavedOrNull();
+  if (!saved) return 0;
+  return Object.values(saved.siteTime).reduce(
+    (sum, site) => sum + site.time,
+    0
+  );
+}
+
+/** 最後に保存された siteTime のドメイン一覧（未保存なら空） */
+function recordedDomains(): string[] {
+  return Object.keys(lastSavedOrNull()?.siteTime ?? {});
+}
+
 let harness: ReturnType<typeof setupChrome>;
 
 beforeEach(() => {
@@ -736,6 +751,102 @@ describe('tracker', () => {
       await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
 
       expect(setAnalytics).not.toHaveBeenCalled();
+    });
+
+    it('タブ取得の解決が遅れても、失ったフォーカスの期間は記録されない', async () => {
+      // レビューが示した経路（PR #451）:
+      // (1) handleTabActivated が入口の判定を通り chrome.tabs.get を待つ
+      // (2) 待っている間にフォーカスが落ち、計測対象が消える
+      // (3) 解決した結果で activeDomain が復活する（再確認が無いと起きる）
+      // (4) 前面でない間は updateTracking の歯止めで記録されない
+      // (5) 前面に戻ってもアクティブタブの URL が取れないと上書きされない
+      // (6) 次のティックで、不在期間まで含めて誤ったドメインに記録される
+      vi.useFakeTimers();
+      let resolveGet: (tab: chrome.tabs.Tab) => void = () => {};
+      harness.chromeMock.tabs.get.mockReturnValue(
+        new Promise<chrome.tabs.Tab>((resolve) => {
+          resolveGet = resolve;
+        })
+      );
+      const { startTracking } = await loadTracker();
+
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (1) タブ切り替えを始める（chrome.tabs.get の解決待ちで止まる）
+      const activated = harness.listeners.tabActivated[0]({
+        tabId: 2,
+        windowId: 1
+      } as chrome.tabs.TabActiveInfo);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (2) 待っている間にブラウザが前面でなくなる
+      await harness.listeners.windowFocus[0](-1);
+
+      // (3) 遅れて解決する
+      resolveGet({ id: 2, url: 'https://other.com' } as chrome.tabs.Tab);
+      await activated;
+
+      // (4) 前面でない間に時間が流れる
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      // (5) 前面に戻るが、アクティブタブの URL は取れない
+      harness.chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: undefined }
+      ]);
+      await harness.listeners.windowFocus[0](1);
+
+      // (6) 次のティック
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      // 記録された時間と記録先のドメインを同時に見る
+      // （どちらが壊れても失敗時の差分に両方出る）
+      expect({
+        seconds: totalRecordedSeconds(),
+        domains: recordedDomains()
+      }).toEqual({ seconds: 0, domains: [] });
+    });
+
+    it('アクティブタブ取得の解決が遅れても、失ったフォーカスの期間は記録されない', async () => {
+      // 上と同じ経路を initializeCurrentTab（chrome.tabs.query）側で再現する
+      vi.useFakeTimers();
+      let resolveQuery: (tabs: chrome.tabs.Tab[]) => void = () => {};
+      harness.chromeMock.tabs.query
+        .mockReturnValueOnce(
+          new Promise<chrome.tabs.Tab[]>((resolve) => {
+            resolveQuery = resolve;
+          })
+        )
+        // 前面に戻ったときはアクティブタブの URL が取れない
+        .mockResolvedValue([{ id: 1, url: undefined }]);
+      const { startTracking } = await loadTracker();
+
+      // (1) 起動時の初期化が chrome.tabs.query の解決待ちで止まる
+      startTracking();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (2) 待っている間にブラウザが前面でなくなる
+      await harness.listeners.windowFocus[0](-1);
+
+      // (3) 遅れて解決する
+      resolveQuery([{ id: 5, url: 'https://leak.com' } as chrome.tabs.Tab]);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // (4) 前面でない間に時間が流れる
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS * 3);
+
+      // (5) 前面に戻る（URL が取れないので上書きされない）
+      await harness.listeners.windowFocus[0](1);
+
+      // (6) 次のティック
+      await vi.advanceTimersByTimeAsync(TRACKING_UPDATE_INTERVAL_MS);
+
+      // 記録された時間と記録先のドメインを同時に見る
+      // （どちらが壊れても失敗時の差分に両方出る）
+      expect({
+        seconds: totalRecordedSeconds(),
+        domains: recordedDomains()
+      }).toEqual({ seconds: 0, domains: [] });
     });
 
     it('フォーカスを失うと計測対象のタブも忘れる', async () => {

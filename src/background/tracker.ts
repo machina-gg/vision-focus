@@ -97,6 +97,15 @@ async function initializeCurrentTab(): Promise<void> {
       active: true,
       currentWindow: true
     });
+
+    // ⚠ await の間にフォーカスが落ちていることがある。代入の直前に確かめ直す。
+    // 入口の判定だけだと、一度消した計測対象が遅れて解決した結果で復活し、
+    // 前面に戻ったあとに不在期間まで加算される（#440）
+    if (!isBrowserFocused) {
+      clearTrackingTarget();
+      return;
+    }
+
     if (tab?.id && tab?.url) {
       activeTabId = tab.id;
       activeDomain = extractDomain(tab.url);
@@ -125,13 +134,23 @@ async function handleTabActivated(
   // Update to new tab
   activeTabId = activeInfo.tabId;
 
+  let domain: string | null = null;
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
-    activeDomain = tab.url ? extractDomain(tab.url) : null;
+    domain = tab.url ? extractDomain(tab.url) : null;
   } catch {
-    activeDomain = null;
+    domain = null;
   }
 
+  // ⚠ await の間にフォーカスが落ちていることがある。代入の直前に確かめ直す。
+  // 入口の判定だけだと、一度消した計測対象が遅れて解決した結果で復活し、
+  // 前面に戻ったあとに不在期間まで加算される（#440）
+  if (!isBrowserFocused) {
+    clearTrackingTarget();
+    return;
+  }
+
+  activeDomain = domain;
   lastUpdateTime = Date.now();
 }
 
