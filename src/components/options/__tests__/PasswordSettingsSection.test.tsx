@@ -75,10 +75,6 @@ async function clickSubmit() {
   });
 }
 
-/** エラー表示の有無（文言そのものは実装側の分岐に委ねる） */
-const hasErrorMessage = (container: HTMLElement): boolean =>
-  container.querySelector('.text-danger-600') !== null;
-
 beforeEach(() => {
   password.hashPassword.mockReset().mockResolvedValue('new-hash');
   password.verifyPassword.mockReset().mockResolvedValue(true);
@@ -178,27 +174,26 @@ describe('PasswordSettingsSection', () => {
       expect(screen.getByText('passwordSetSuccess')).toBeInTheDocument();
     });
 
-    it('強度が足りなければ保存しない', async () => {
+    it('条件を満たさなければ、その理由を出して保存しない', async () => {
       password.validatePasswordStrength.mockReturnValue({
         isValid: false,
         errorKey: 'passwordTooShort'
       });
-      const { onUpdate, container } = renderSection(DISABLED);
+      const { onUpdate } = renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'ab');
       fill(1, 'ab');
       await clickSubmit();
 
-      // どの文言を出すかは実装側の分岐に委ねる。ここでは保存へ進まないことと
-      // 何らかのエラーが出ることだけを見る
       expect(onUpdate).not.toHaveBeenCalled();
       expect(password.hashPassword).not.toHaveBeenCalled();
-      expect(hasErrorMessage(container)).toBe(true);
+      expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
+      expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
     });
 
-    it('確認が一致しなければ保存しない', async () => {
-      const { onUpdate, container } = renderSection(DISABLED);
+    it('確認が一致しなければ、一致しないことを出して保存しない', async () => {
+      const { onUpdate } = renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'secret');
@@ -207,12 +202,13 @@ describe('PasswordSettingsSection', () => {
 
       expect(onUpdate).not.toHaveBeenCalled();
       expect(password.hashPassword).not.toHaveBeenCalled();
-      expect(hasErrorMessage(container)).toBe(true);
+      expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
+      expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
     });
 
-    it('保存が失敗したら成功表示を出さない', async () => {
+    it('理由の分からない失敗のときだけ汎用の文言を出す', async () => {
       const onUpdate = vi.fn().mockRejectedValue(new Error('storage error'));
-      const { container } = render(
+      render(
         <PasswordSettingsSection
           passwordSettings={DISABLED}
           onUpdate={onUpdate}
@@ -225,7 +221,31 @@ describe('PasswordSettingsSection', () => {
       await clickSubmit();
 
       expect(screen.queryByText('passwordSetSuccess')).not.toBeInTheDocument();
-      expect(hasErrorMessage(container)).toBe(true);
+      expect(screen.getByText('passwordSetFailed')).toBeInTheDocument();
+    });
+
+    // 直前の失敗が残した状態で理由の出し分けが変わらないことを見る
+    // （更新前の値で判定する形に戻すと 2 回目だけ結果が変わる）
+    it('続けて失敗しても毎回その理由を出す', async () => {
+      const { onUpdate } = renderSection(DISABLED);
+
+      enterSetMode();
+      fill(0, 'secret');
+      fill(1, 'other');
+      await clickSubmit();
+      expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
+
+      password.validatePasswordStrength.mockReturnValue({
+        isValid: false,
+        errorKey: 'passwordTooShort'
+      });
+      fill(0, 'ab');
+      fill(1, 'ab');
+      await clickSubmit();
+
+      expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
+      expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
+      expect(onUpdate).not.toHaveBeenCalled();
     });
 
     it('キャンセルすると表示モードへ戻る', () => {
@@ -300,6 +320,63 @@ describe('PasswordSettingsSection', () => {
 
       expect(screen.getByText('currentPasswordIncorrect')).toBeInTheDocument();
       expect(onUpdate).not.toHaveBeenCalled();
+    });
+
+    it('条件を満たさなければ、その理由を出して保存しない', async () => {
+      password.validatePasswordStrength.mockReturnValue({
+        isValid: false,
+        errorKey: 'passwordTooShort'
+      });
+      const { onUpdate } = renderSection(ENABLED);
+
+      enterChangeMode();
+      fill(0, 'current');
+      fill(1, 'ab');
+      fill(2, 'ab');
+      await clickSubmit();
+
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
+      expect(
+        screen.queryByText('passwordChangeFailed')
+      ).not.toBeInTheDocument();
+    });
+
+    it('確認が一致しなければ、一致しないことを出して保存しない', async () => {
+      const { onUpdate } = renderSection(ENABLED);
+
+      enterChangeMode();
+      fill(0, 'current');
+      fill(1, 'secret');
+      fill(2, 'other');
+      await clickSubmit();
+
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
+      expect(
+        screen.queryByText('passwordChangeFailed')
+      ).not.toBeInTheDocument();
+    });
+
+    it('理由の分からない失敗のときだけ汎用の文言を出す', async () => {
+      const onUpdate = vi.fn().mockRejectedValue(new Error('storage error'));
+      render(
+        <PasswordSettingsSection
+          passwordSettings={ENABLED}
+          onUpdate={onUpdate}
+        />
+      );
+
+      enterChangeMode();
+      fill(0, 'current');
+      fill(1, 'secret');
+      fill(2, 'secret');
+      await clickSubmit();
+
+      expect(
+        screen.queryByText('passwordChangedSuccess')
+      ).not.toBeInTheDocument();
+      expect(screen.getByText('passwordChangeFailed')).toBeInTheDocument();
     });
 
     it('照合を通れば新しいハッシュで保存し、成功を伝える', async () => {
