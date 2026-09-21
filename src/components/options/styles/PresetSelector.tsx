@@ -133,6 +133,9 @@ function PresetButtons({
           <button
             key={preset.id}
             data-testid="style-preset-button"
+            // 適用中かどうかがアイコンの有無でしか出ておらず、
+            // 読み上げでは区別が付かない（machina-gg/vision-focus#466）
+            data-active={String(isActive)}
             onClick={() => onSelectPreset(preset.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
               isSelected

@@ -18,6 +18,9 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  * 保存ボタンは「目標が空」「名前が空」「変更が無い」のいずれでも押せない
  * 決まりなので、それぞれの境界を個別に見る。
  *
+ * 適用中かどうかはアイコンの有無でしか出ていなかったため data-active を
+ * 足してから、その値で検査する（アイコンのクラス名は見ない）。
+ *
  * 状態は usePresets が持つため、戻り値ごと差し替える
  * （実体は chrome.storage を読みに行き、テストから値を決められない）。
  */
@@ -129,25 +132,36 @@ describe('PresetSelector', () => {
     });
 
     it('適用中のスタイルにだけ印を付ける', () => {
-      const { container } = renderSelector(
+      renderSelector(
         { draftPresets: [presetOf('p1', '朝'), presetOf('p2', '夜')] },
         visionWith('p1')
       );
 
-      // 適用中の印はアイコンでしか表せないため、lucide のクラス名で数える
       const buttons = screen.getAllByTestId('style-preset-button');
-      expect(buttons[0].querySelector('.lucide-check')).not.toBeNull();
-      expect(buttons[1].querySelector('.lucide-check')).toBeNull();
-      expect(container.querySelectorAll('.lucide-check')).toHaveLength(1);
+      expect(
+        buttons.map((button) => button.getAttribute('data-active'))
+      ).toEqual(['true', 'false']);
+    });
+
+    it('どのスタイルも適用されていなければ印は付かない', () => {
+      renderSelector(
+        { draftPresets: [presetOf('p1', '朝'), presetOf('p2', '夜')] },
+        visionWith(null)
+      );
+
+      const buttons = screen.getAllByTestId('style-preset-button');
+      expect(
+        buttons.map((button) => button.getAttribute('data-active'))
+      ).toEqual(['false', 'false']);
     });
 
     it('vision が未取得なら適用中の印は付かない', () => {
-      const { container } = renderSelector(
-        { draftPresets: [presetOf('p1', '朝')] },
-        undefined
-      );
+      renderSelector({ draftPresets: [presetOf('p1', '朝')] }, undefined);
 
-      expect(container.querySelectorAll('.lucide-check')).toHaveLength(0);
+      expect(screen.getByTestId('style-preset-button')).toHaveAttribute(
+        'data-active',
+        'false'
+      );
     });
   });
 

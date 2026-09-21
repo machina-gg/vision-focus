@@ -69,7 +69,7 @@ src/components/options/
 - 例: `<Button data-variant="ghost" data-size="sm" data-loading="false">`
 
 ⚠ アイコンを `lucide-<アイコン名>` で特定するのは要素の特定であって状態の検査ではない。
-ただし「適用中の印をアイコンでしか表していない」ように、**状態をアイコンに寄せたまま残っている箇所がある**
+ただし**状態をアイコンに寄せたまま残っている箇所がある**
 （測り方: `git grep -n "lucide-" -- 'src/**/__tests__/**'`）。その画面を触るときに上の表へ揃える。
 
 ## 書き方の決まり
