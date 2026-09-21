@@ -25,6 +25,9 @@ const mockIsExtensionContextValid = vi.mocked(isExtensionContextValid);
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
+  // GA 設定の stub は各テストで行うため、ここで必ず戻す
+  // （残ると既定では無効な計測が有効なまま次のテストへ漏れる）
+  vi.unstubAllEnvs();
 
   // chrome API モック
   (globalThis as Record<string, unknown>).chrome = {
@@ -51,6 +54,7 @@ beforeEach(() => {
 // NOTE: analytics.ts はモジュールトップレベルで process.env を読むため、
 // GA_MEASUREMENT_ID / GA_API_SECRET が空文字の場合 isAnalyticsEnabled は常に false を返す。
 // そのため、イベント送信系のテストは isAnalyticsEnabled の内部動作に焦点を当てる。
+// 設定の読み取りまで進む経路を試すテストは、下の importWithGaConfigured() を使う。
 
 describe('isAnalyticsEnabled', () => {
   it('analyticsOptIn が未設定の場合は false を返す', async () => {
@@ -125,5 +129,92 @@ describe('sendDailyActive', () => {
     mockIsExtensionContextValid.mockReturnValue(false);
     await sendDailyActive();
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * GA 設定がある状態で analytics を読み込む。
+ *
+ * 設定が空だと isAnalyticsEnabled が設定ストレージを読む前に false を返すため、
+ * ストレージ読み取りの失敗を試すテストではここを通す。
+ */
+async function importWithGaConfigured() {
+  vi.stubEnv('WXT_GA_MEASUREMENT_ID', 'test-measurement-id');
+  vi.stubEnv('WXT_GA_API_SECRET', 'test-api-secret');
+  return import('~/lib/analytics');
+}
+
+describe('ストレージ読み取りが失敗したとき（machina-gg/vision-focus#469）', () => {
+  beforeEach(() => {
+    // 計測の可否を読む段階で失敗させる
+    mockGetSettings.mockRejectedValue(new Error('storage unavailable'));
+  });
+
+  it('trackEvent は例外を外へ出さず、送信もしない', async () => {
+    const { trackEvent } = await importWithGaConfigured();
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    await expect(trackEvent('test_event')).resolves.toBeUndefined();
+
+    expect(fetch).not.toHaveBeenCalled();
+    // 記録できないことは利用者に見せない
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('trackFeatureUse は例外を外へ出さず、送信もしない', async () => {
+    const { trackFeatureUse } = await importWithGaConfigured();
+
+    await expect(trackFeatureUse('support_open')).resolves.toBeUndefined();
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('trackError は例外を外へ出さない', async () => {
+    const { trackError } = await importWithGaConfigured();
+
+    await expect(trackError('storage_error')).resolves.toBeUndefined();
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('sendDailyActive は例外を外へ出さない', async () => {
+    const { sendDailyActive } = await importWithGaConfigured();
+
+    await expect(sendDailyActive()).resolves.toBeUndefined();
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('結果を捨てる呼び出し方でも未処理の rejection にならない', async () => {
+    const { trackFeatureUse } = await importWithGaConfigured();
+    const rejections: unknown[] = [];
+    const onRejection = (reason: unknown) => rejections.push(reason);
+    process.on('unhandledRejection', onRejection);
+
+    // 呼び出し側（SupportSection 等）と同じく戻り値を捨てる
+    void trackFeatureUse('support_open');
+    // マイクロタスクを消化してから未処理の rejection を確認する
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    process.off('unhandledRejection', onRejection);
+    expect(rejections).toEqual([]);
+  });
+});
+
+describe('送信が失敗したとき', () => {
+  it('trackEvent は例外を外へ出さない', async () => {
+    const { trackEvent } = await importWithGaConfigured();
+    mockGetSettings.mockResolvedValue({
+      ...DEFAULT_SETTINGS,
+      analyticsOptIn: { enabled: true, decidedAt: '2024-01-01T00:00:00Z' }
+    });
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')));
+
+    await expect(trackEvent('test_event')).resolves.toBeUndefined();
+
+    expect(fetch).toHaveBeenCalled();
   });
 });
