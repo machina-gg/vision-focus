@@ -11,7 +11,8 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  * BlockedSitesList の表示件数と開閉の検査
  *
  * 無効なサイトを除いて 0 件になったら何も描画しないこと、折りたたみ時は
- * 一覧を出さないこと、展開しても maxVisible 件までしか出さないことを確かめる。
+ * 一覧を出さないこと、展開しても maxVisible 件までしか出さず、超える分は
+ * 「もっと見る」で開くことを確かめる（machina-gg/vision-focus#457）。
  * ブロック回数は 0 回のときに出さない分岐があるため、境界（0 回・未記録）を含める。
  */
 
@@ -36,9 +37,31 @@ const countsOf = (
     ])
   );
 
-/** 開閉ボタンを押して一覧を開く */
+/** 開閉ボタンを押して一覧を開く（もう一度押すと閉じる） */
 function expand() {
   fireEvent.click(screen.getByTestId('newtab-blocked-sites-toggle'));
+}
+
+/** 「もっと見る」ボタン（上限を超える分が無ければ描画されない） */
+function showMoreButton() {
+  return screen.queryByTestId('newtab-blocked-sites-show-more');
+}
+
+/** 「もっと見る」を押して上限を外す（もう一度押すと上限に戻る） */
+function clickShowMore() {
+  fireEvent.click(screen.getByTestId('newtab-blocked-sites-show-more'));
+}
+
+/** 今表示されているドメインの一覧 */
+function visibleDomains() {
+  return screen
+    .queryAllByTestId('newtab-blocked-site-domain')
+    .map((el) => el.textContent);
+}
+
+/** domain が site0..siteN-1 の有効なブロック項目を n 件作る */
+function itemsOf(n: number): BlockItem[] {
+  return Array.from({ length: n }, (_, i) => itemOf(`site${i}.example`));
 }
 
 describe('BlockedSitesList', () => {
@@ -92,6 +115,17 @@ describe('BlockedSitesList', () => {
         screen.queryByTestId('newtab-blocked-site-domain')
       ).not.toBeInTheDocument();
     });
+
+    it('開閉ボタンが未展開であることを属性で示す', () => {
+      render(
+        <BlockedSitesList blockList={[itemOf('a.example')]} blockCounts={{}} />
+      );
+
+      expect(screen.getByTestId('newtab-blocked-sites-toggle')).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
+    });
   });
 
   describe('展開したとき', () => {
@@ -111,6 +145,19 @@ describe('BlockedSitesList', () => {
       expect(domains).toEqual(['a.example']);
     });
 
+    it('開閉ボタンが展開中であることを属性で示す', () => {
+      render(
+        <BlockedSitesList blockList={[itemOf('a.example')]} blockCounts={{}} />
+      );
+
+      expand();
+
+      expect(screen.getByTestId('newtab-blocked-sites-toggle')).toHaveAttribute(
+        'aria-expanded',
+        'true'
+      );
+    });
+
     it('もう一度押すと閉じる', () => {
       render(
         <BlockedSitesList blockList={[itemOf('a.example')]} blockCounts={{}} />
@@ -124,17 +171,10 @@ describe('BlockedSitesList', () => {
       ).not.toBeInTheDocument();
     });
 
-    // ⚠ maxVisible が一覧の件数を絞るかは検査しない。
-    // 実装では折りたたみ時にだけ slice しており、折りたたみ時は一覧自体を
-    // 描画しないため、maxVisible は表示件数に効いていない。
-    // 意図した挙動かは PM の判断待ちのため、現在の件数を仕様として固定せず、
-    // 「例外にならず一覧が出る」ことだけを確かめる。
-    it('件数が maxVisible を超えていても例外にならず一覧を出す', () => {
+    it('件数が maxVisible を超えていても maxVisible 件までしか並べない', () => {
       render(
         <BlockedSitesList
-          blockList={Array.from({ length: 7 }, (_, i) =>
-            itemOf(`site${i}.example`)
-          )}
+          blockList={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -142,10 +182,7 @@ describe('BlockedSitesList', () => {
 
       expand();
 
-      expect(
-        screen.getAllByTestId('newtab-blocked-site-domain').length
-      ).toBeGreaterThan(0);
-      expect(screen.getByText('site0.example')).toBeInTheDocument();
+      expect(visibleDomains()).toEqual(['site0.example', 'site1.example']);
     });
 
     it('maxVisible が 0 でも例外にならない', () => {
@@ -162,6 +199,91 @@ describe('BlockedSitesList', () => {
       expect(
         screen.getByTestId('newtab-blocked-sites-toggle')
       ).toHaveTextContent('blockedSites (1)');
+    });
+  });
+
+  describe('「もっと見る」', () => {
+    it('maxVisible を超える分が残っているなら、残りの件数を添えて出す', () => {
+      render(
+        <BlockedSitesList
+          blockList={itemsOf(7)}
+          blockCounts={{}}
+          maxVisible={2}
+        />
+      );
+
+      expand();
+
+      expect(showMoreButton()).toHaveTextContent('showMoreBlockedSites(5)');
+      expect(showMoreButton()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('押すと残りが出る', () => {
+      render(
+        <BlockedSitesList
+          blockList={itemsOf(7)}
+          blockCounts={{}}
+          maxVisible={2}
+        />
+      );
+
+      expand();
+      clickShowMore();
+
+      expect(visibleDomains()).toHaveLength(7);
+      expect(screen.getByText('site6.example')).toBeInTheDocument();
+      expect(showMoreButton()).toHaveAttribute('aria-expanded', 'true');
+      expect(showMoreButton()).toHaveTextContent('showLessBlockedSites');
+    });
+
+    it('残りを出したあとにもう一度押すと上限に戻る', () => {
+      render(
+        <BlockedSitesList
+          blockList={itemsOf(7)}
+          blockCounts={{}}
+          maxVisible={2}
+        />
+      );
+
+      expand();
+      clickShowMore();
+      clickShowMore();
+
+      expect(visibleDomains()).toEqual(['site0.example', 'site1.example']);
+      expect(showMoreButton()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('件数が maxVisible 以下なら出さない', () => {
+      render(
+        <BlockedSitesList
+          blockList={itemsOf(5)}
+          blockCounts={{}}
+          maxVisible={5}
+        />
+      );
+
+      expand();
+
+      expect(visibleDomains()).toHaveLength(5);
+      expect(showMoreButton()).not.toBeInTheDocument();
+    });
+
+    it('一覧を畳んで開き直すと上限が効いた状態に戻る', () => {
+      render(
+        <BlockedSitesList
+          blockList={itemsOf(7)}
+          blockCounts={{}}
+          maxVisible={2}
+        />
+      );
+
+      expand();
+      clickShowMore();
+      expand(); // 畳む
+      expand(); // 開き直す
+
+      expect(visibleDomains()).toEqual(['site0.example', 'site1.example']);
+      expect(showMoreButton()).toHaveAttribute('aria-expanded', 'false');
     });
   });
 

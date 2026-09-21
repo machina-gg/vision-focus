@@ -155,6 +155,20 @@
     "message": "Blocked Sites",
     "description": "Blocked sites list heading"
   },
+  "showMoreBlockedSites": {
+    "message": "Show $COUNT$ more",
+    "description": "Button that lifts the blocked sites display limit on the new tab",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "showLessBlockedSites": {
+    "message": "Show less",
+    "description": "Button that restores the blocked sites display limit on the new tab"
+  },
   "noBlockedSites": {
     "message": "No sites blocked yet. Add a domain above to get started.",
     "description": "Empty block list message"
