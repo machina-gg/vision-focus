@@ -28,6 +28,7 @@ export function SupportButton({
     <button
       type="button"
       data-testid="support-button"
+      data-size={size}
       onClick={onClick}
       style={{ backgroundColor: BUY_ME_A_COFFEE_BRAND_COLOR }}
       className={`inline-flex items-center gap-2 rounded-lg font-semibold text-gray-900 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-premium-500 ${sizeStyles} ${className}`}

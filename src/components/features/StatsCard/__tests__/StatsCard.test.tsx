@@ -11,8 +11,8 @@ import { StatsCard } from '../StatsCard';
  * 集計が無い期間では value に空文字や 0 表記が渡る。欄ごと消えたり
  * 例外になったりしないことを見る。
  *
- * type（waste / invest / block / neutral）の違いは配色のクラス名にしか
- * 出ないため検査しない。
+ * type（waste / invest / block / neutral）は data-type で確かめる
+ * （COMPONENT_TESTING.md「状態は属性で表す」。配色のクラス名は見ない）。
  */
 
 describe('StatsCard', () => {
@@ -67,8 +67,16 @@ describe('StatsCard', () => {
   });
 
   describe('type を渡したとき', () => {
-    it('どの type でもラベルと値は同じように出る', () => {
-      // 配色の違いはクラス名にしか出ないため、出る内容が変わらないことだけを見る
+    it('指定しないときは neutral として扱う', () => {
+      render(<StatsCard label="ブロック数" value="3" />);
+
+      expect(screen.getByText('3').parentElement).toHaveAttribute(
+        'data-type',
+        'neutral'
+      );
+    });
+
+    it('渡した type を属性に出し、ラベルと値は変わらない', () => {
       for (const type of ['waste', 'invest', 'block', 'neutral'] as const) {
         const { unmount } = render(
           <StatsCard
@@ -78,8 +86,11 @@ describe('StatsCard', () => {
           />
         );
 
+        expect(screen.getByText(`値-${type}`).parentElement).toHaveAttribute(
+          'data-type',
+          type
+        );
         expect(screen.getByText(`ラベル-${type}`)).toBeInTheDocument();
-        expect(screen.getByText(`値-${type}`)).toBeInTheDocument();
         unmount();
       }
     });

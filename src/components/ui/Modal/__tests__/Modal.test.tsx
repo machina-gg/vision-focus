@@ -10,7 +10,8 @@ import { Modal } from '../Modal';
  *
  * 閉じているときは中身を一切出さない（閉じたはずのフォームが背後に
  * 残らない）ことと、閉じる手段（見出しの × ・背景）がどれも onClose を
- * 呼ぶことを見る。size は max-width のクラス名にしか出ないため検査しない。
+ * 呼ぶことを見る。大きさは data-size で確かめる（COMPONENT_TESTING.md
+ * 「状態は属性で表す」。クラス名は見ない）。
  */
 
 describe('Modal', () => {
@@ -39,6 +40,29 @@ describe('Modal', () => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-modal', 'true');
       expect(screen.getByText('本文')).toBeInTheDocument();
+    });
+
+    it('大きさを指定しないときは md として扱う', () => {
+      render(
+        <Modal isOpen onClose={vi.fn()}>
+          <p>本文</p>
+        </Modal>
+      );
+
+      expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'md');
+    });
+
+    it('指定した大きさを属性に出す', () => {
+      for (const size of ['sm', 'md', 'lg'] as const) {
+        const { unmount } = render(
+          <Modal isOpen onClose={vi.fn()} size={size}>
+            <p>本文</p>
+          </Modal>
+        );
+
+        expect(screen.getByRole('dialog')).toHaveAttribute('data-size', size);
+        unmount();
+      }
     });
 
     it('背景をクリックすると onClose が呼ばれる', () => {

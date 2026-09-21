@@ -22,7 +22,8 @@ import { DEFAULT_FONT_SETTINGS } from '~/types/font';
  *
  * 状態は usePresets が持つため戻り値ごと差し替える
  * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- * 選択中の背景・種別ボタンの強調はクラス名にしか出ないため検査しない。
+ * 選択中の背景・種別ボタンの強調は aria-pressed で確かめる
+ * （COMPONENT_TESTING.md「状態は属性で表す」。クラス名は見ない）。
  */
 
 // 背景画像の URL は chrome.runtime.getURL を経由する（テスト環境には無い）
@@ -253,6 +254,33 @@ describe('DisplaySettingsForm', () => {
       expect(screen.queryByPlaceholderText('#1a1a2e')).not.toBeInTheDocument();
     });
 
+    it('画像の種別ボタンだけが選択中として示される', () => {
+      renderForm({
+        draftDisplaySettings: displayWith({ backgroundType: 'image' })
+      });
+
+      expect(screen.getByTestId('style-bg-type-image')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByTestId('style-bg-type-color')).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+    });
+
+    it('選択中の背景画像だけが選択中として示される', () => {
+      renderForm({
+        draftDisplaySettings: displayWith({ backgroundImage: 'default-3' })
+      });
+
+      const pressed = screen
+        .getAllByTestId('style-bg-option')
+        .filter((button) => button.getAttribute('aria-pressed') === 'true');
+      expect(pressed).toHaveLength(1);
+      expect(pressed[0]).toContainElement(screen.getByAltText('Mountain1'));
+    });
+
     it('背景を選ぶとその ID で handleBackgroundChange が呼ばれる', () => {
       const { presets } = renderForm();
 
@@ -286,6 +314,20 @@ describe('DisplaySettingsForm', () => {
       );
       expect(screen.queryByPlaceholderText('#1a1a2e')).not.toBeInTheDocument();
     });
+
+    it('画像の種別ボタンが選択中として示される', () => {
+      // 古い保存データには backgroundType が無い
+      renderForm({
+        draftDisplaySettings: displayWith({
+          backgroundType: undefined as unknown as 'image'
+        })
+      });
+
+      expect(screen.getByTestId('style-bg-type-image')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    });
   });
 
   describe('背景の種類が色のとき', () => {
@@ -299,6 +341,21 @@ describe('DisplaySettingsForm', () => {
 
       expect(screen.queryAllByTestId('style-bg-option')).toHaveLength(0);
       expect(screen.getByPlaceholderText('#1a1a2e')).toHaveValue('#112233');
+    });
+
+    it('色の種別ボタンだけが選択中として示される', () => {
+      renderForm({
+        draftDisplaySettings: displayWith({ backgroundType: 'color' })
+      });
+
+      expect(screen.getByTestId('style-bg-type-color')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByTestId('style-bg-type-image')).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
 
     it('色を変えると選んだ色で handleBackgroundColorChange が呼ばれる', () => {
