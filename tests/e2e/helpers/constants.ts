@@ -211,7 +211,12 @@ export const SELECTORS = {
     passwordSection: '[data-testid="help-password-section"]',
     // パスワード保護はボタンではなくトグルで有効化する
     passwordEnableToggle: '[data-testid="password-enable-toggle"]',
-    passwordField: '[data-testid="password-field"]',
+    // パスワード欄の目印は欄ごとに別の値になっている。数・表示の確認は前方一致で
+    // まとめて指し、入力は下の 3 つで欄を名指しする（machina-gg/vision-focus#468）
+    passwordField: '[data-testid^="password-field-"]',
+    passwordFieldCurrent: '[data-testid="password-field-current"]',
+    passwordFieldNew: '[data-testid="password-field-new"]',
+    passwordFieldConfirm: '[data-testid="password-field-confirm"]',
     passwordChangeButton: '[data-testid="password-change-button"]',
     passwordFormSubmit: '[data-testid="password-form-submit"]',
     passwordFormCancel: '[data-testid="password-form-cancel"]',

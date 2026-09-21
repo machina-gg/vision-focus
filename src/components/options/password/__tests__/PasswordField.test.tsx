@@ -12,6 +12,10 @@ import { PasswordField } from '../PasswordField';
  * 切り替えボタンに aria-label を足してから検査する
  * （COMPONENT_TESTING.md「状態は属性で表す」）。伏せ字そのものは
  * input の type に出るので、そちらも合わせて見る。
+ *
+ * ラベルと入力欄の結び付きも見る。伏せ字で中身が見えないため、
+ * 結び付いていないとどの欄を触っているか読み上げでも画面でも分からない
+ * （machina-gg/vision-focus#468）。
  */
 
 function renderField(
@@ -21,6 +25,7 @@ function renderField(
   const onToggleShow = vi.fn();
   const result = render(
     <PasswordField
+      fieldId="password-field-new"
       label="新しいパスワード"
       value=""
       onChange={onChange}
@@ -33,10 +38,119 @@ function renderField(
   return { ...result, onChange, onToggleShow };
 }
 
-/** 入力欄は label と結び付いていないため testid で取る（PM への確認事項に記載） */
-const field = () => screen.getByTestId('password-field');
+/** 入力欄はラベルの文言から引く（結び付きが切れたらここで落ちる） */
+const field = () => screen.getByLabelText('新しいパスワード');
+
+/** パスワード変更フォームと同じ 3 欄のラベル（現在 / 新規 / 確認） */
+const CHANGE_FORM_LABELS = {
+  current: '現在のパスワード',
+  new: '新しいパスワード',
+  confirm: '確認用パスワード'
+};
+
+/** 変更フォームと同じく 3 欄を同時に描画する */
+function renderChangeFormFields() {
+  return render(
+    <>
+      <PasswordField
+        fieldId="password-field-current"
+        label={CHANGE_FORM_LABELS.current}
+        value="current-value"
+        onChange={vi.fn()}
+        show={false}
+        onToggleShow={vi.fn()}
+        placeholder="現在のパスワード"
+      />
+      <PasswordField
+        fieldId="password-field-new"
+        label={CHANGE_FORM_LABELS.new}
+        value="new-value"
+        onChange={vi.fn()}
+        show={false}
+        onToggleShow={vi.fn()}
+        placeholder="新しいパスワード"
+      />
+      <PasswordField
+        fieldId="password-field-confirm"
+        label={CHANGE_FORM_LABELS.confirm}
+        value="confirm-value"
+        onChange={vi.fn()}
+        show={false}
+        onToggleShow={vi.fn()}
+        placeholder="確認用パスワード"
+      />
+    </>
+  );
+}
 
 describe('PasswordField', () => {
+  describe('ラベルとの結び付き', () => {
+    it('ラベルの文言から入力欄を引ける', () => {
+      renderField({ label: '現在のパスワード' });
+
+      expect(screen.getByLabelText('現在のパスワード')).toHaveAttribute(
+        'type',
+        'password'
+      );
+    });
+
+    it('渡した識別子が入力欄の id になる', () => {
+      renderField({ fieldId: 'password-field-current' });
+
+      expect(field()).toHaveAttribute('id', 'password-field-current');
+    });
+
+    it('再描画しても識別子は変わらない', () => {
+      const { rerender } = renderField({ value: '' });
+      const before = field().id;
+
+      rerender(
+        <PasswordField
+          fieldId="password-field-new"
+          label="新しいパスワード"
+          value="secret"
+          onChange={vi.fn()}
+          show={false}
+          onToggleShow={vi.fn()}
+          placeholder="パスワードを入力"
+        />
+      );
+
+      expect(field().id).toBe(before);
+    });
+
+    it('テスト用の目印は渡した識別子になる', () => {
+      renderField({ fieldId: 'password-field-confirm' });
+
+      expect(screen.getByTestId('password-field-confirm')).toBe(field());
+    });
+
+    it('3 つ並べても、それぞれ自分のラベルの文言から特定できる', () => {
+      renderChangeFormFields();
+
+      expect(screen.getByLabelText(CHANGE_FORM_LABELS.current)).toHaveValue(
+        'current-value'
+      );
+      expect(screen.getByLabelText(CHANGE_FORM_LABELS.new)).toHaveValue(
+        'new-value'
+      );
+      expect(screen.getByLabelText(CHANGE_FORM_LABELS.confirm)).toHaveValue(
+        'confirm-value'
+      );
+    });
+
+    it('3 つ並べたとき、テスト用の目印は欄ごとに別の値になる', () => {
+      renderChangeFormFields();
+
+      const testIds = Object.values(CHANGE_FORM_LABELS).map((label) =>
+        screen.getByLabelText(label).getAttribute('data-testid')
+      );
+
+      expect(testIds.every((testId) => testId !== null)).toBe(true);
+      expect(new Set(testIds).size).toBe(testIds.length);
+    });
+  });
+
   describe('表示', () => {
     it('渡したラベルとプレースホルダーを出す', () => {
       renderField();

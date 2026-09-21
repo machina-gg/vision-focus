@@ -114,9 +114,9 @@ test.describe('Options - Help Tab', () => {
     const fields = page.locator(SELECTORS.help.passwordField);
     await expect(fields.first()).toBeVisible();
 
-    // 新しいパスワードと確認用パスワードを入力
-    await fields.nth(0).fill('test1234');
-    await fields.nth(1).fill('test1234');
+    // 新しいパスワードと確認用パスワードを入力（欄は目印で名指しする）
+    await page.locator(SELECTORS.help.passwordFieldNew).fill('test1234');
+    await page.locator(SELECTORS.help.passwordFieldConfirm).fill('test1234');
 
     // 送信する
     await page.locator(SELECTORS.help.passwordFormSubmit).click();
@@ -157,9 +157,11 @@ test.describe('Options - Help Tab', () => {
     // 現在 / 新規 / 確認の 3 フィールドを入力する
     const fields = page.locator(SELECTORS.help.passwordField);
     await expect(fields).toHaveCount(3);
-    await fields.nth(0).fill(TEST_DATA.password.valid);
-    await fields.nth(1).fill('newpass1234');
-    await fields.nth(2).fill('newpass1234');
+    await page
+      .locator(SELECTORS.help.passwordFieldCurrent)
+      .fill(TEST_DATA.password.valid);
+    await page.locator(SELECTORS.help.passwordFieldNew).fill('newpass1234');
+    await page.locator(SELECTORS.help.passwordFieldConfirm).fill('newpass1234');
 
     // 送信する
     await page.locator(SELECTORS.help.passwordFormSubmit).click();
@@ -195,7 +197,9 @@ test.describe('Options - Help Tab', () => {
     // 解除確認のためのパスワード入力を求められる
     const fields = page.locator(SELECTORS.help.passwordField);
     await expect(fields.first()).toBeVisible();
-    await fields.first().fill(TEST_DATA.password.valid);
+    await page
+      .locator(SELECTORS.help.passwordFieldCurrent)
+      .fill(TEST_DATA.password.valid);
     await page.locator(SELECTORS.help.passwordFormSubmit).click();
 
     // 保護が解除される
