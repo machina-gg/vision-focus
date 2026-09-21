@@ -15,6 +15,10 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
  * 確認を経ずに解除してはいけない。ここでは確認前にコールバックが
  * 呼ばれないことまで確かめる。
  *
+ * 一覧は「未取得」「0 件」「1 件以上」の 3 状態を取る。未取得と 0 件が
+ * 同じ表示になると登録済みのサイトが消えたように見えるため、別の表示に
+ * なることまで検査する（machina-gg/vision-focus#446）。
+ *
  * 設定は SettingsContext から来るため、Context ごと差し替える
  * （実体は chrome.storage を読みに行き、テストから値を決められない）。
  */
@@ -82,21 +86,34 @@ beforeEach(() => {
 
 describe('BlocklistTab', () => {
   describe('ブロック一覧の表示', () => {
-    it('設定が未取得でも例外にならず、一覧は空になる', () => {
+    it('設定が未取得なら読み込み中であることを表示する', () => {
       setSettings(undefined);
 
       renderTab();
 
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText('loading')).toBeInTheDocument();
       expect(screen.getByText('addSiteToBlock')).toBeInTheDocument();
       expect(screen.queryAllByTestId('blocklist-item')).toHaveLength(0);
     });
 
-    it('ブロック対象が 0 件なら未登録の案内を表示する', () => {
+    // 未取得のまま未登録の案内を出すと、登録済みのサイトが消えたように見える
+    it('設定が未取得なら未登録の案内は表示しない', () => {
+      setSettings(undefined);
+
+      renderTab();
+
+      expect(screen.queryByText('noBlockedSites')).not.toBeInTheDocument();
+    });
+
+    it('ブロック対象が 0 件なら未登録の案内を表示し、読み込み中は表示しない', () => {
       setSettings({ blockList: [] });
 
       renderTab();
 
       expect(screen.getByText('noBlockedSites')).toBeInTheDocument();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(screen.queryByText('loading')).not.toBeInTheDocument();
     });
 
     it('ブロック対象の件数ぶん項目を表示する', () => {
@@ -111,6 +128,7 @@ describe('BlocklistTab', () => {
 
       expect(screen.getAllByTestId('blocklist-item')).toHaveLength(2);
       expect(screen.queryByText('noBlockedSites')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
       expect(screen.getByText('a.example')).toBeInTheDocument();
     });
   });
