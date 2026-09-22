@@ -20,13 +20,7 @@
   - WXT の場合: `src/entrypoints/` 配下のエントリ（`background.ts`, `*.content.ts`, 各画面の `main.tsx`）
 - PRD.md の無断変更（確認必須）
 - テストなしでの複雑なロジック実装
-- Git コマンドの `&&` 連結（権限パターンがマッチしなくなるため、個別に実行すること）
-- `#` を含むブランチ名を引用符なしで使用（シェルがコメントと解釈するため、必ず引用符で囲むこと）
-  - ❌ `git checkout feature/#17`
-  - ✅ `git checkout "feature/#17"`
-- 複数行コミットメッセージを `-m` オプションで直接指定（権限パターンがマッチしなくなるため、`-F` オプションでファイルから読み込むこと）
-  - ❌ `git commit -m "$(cat <<'EOF' ... EOF)"`
-  - ✅ `git commit -F .claude/tmp/commit-msg.txt`
+- commit / push は HQ の git ラッパー経由で行い、素の `git add` / `git commit` / `git push` を書かない
 
 ---
 
@@ -34,39 +28,18 @@
 
 作業開始時に以下を確認：
 
-| ファイル          | 存在する場合 | 存在しない場合                 |
-| ----------------- | ------------ | ------------------------------ |
-| docs/PRD.md       | 内容を把握   | `/project:requirements` を促す |
-| docs/DESIGN.md    | 内容を把握   | `/project:design` を促す       |
-| docs/openapi.yaml | 内容を把握   | 必要に応じて作成               |
-| src/              | 実装を継続   | 初回実装時に環境構築           |
+| ファイル          | 存在する場合 | 存在しない場合               |
+| ----------------- | ------------ | ---------------------------- |
+| docs/PRD.md       | 内容を把握   | HQ の product 系スキルで作る |
+| docs/DESIGN.md    | 内容を把握   | HQ の product 系スキルで作る |
+| docs/openapi.yaml | 内容を把握   | 必要に応じて作成             |
+| src/              | 実装を継続   | 初回実装時に環境構築         |
+
+Issue → worktree → PR → レビュー → マージの流れと委譲手順は machina-gg/trillion-game の `.claude/skills/delegate-task/SKILL.md` が SSOT。
 
 ---
 
-## 3. コマンド一覧
-
-以下のスラッシュコマンドが使用可能です：
-
-| コマンド                         | 説明                                       |
-| -------------------------------- | ------------------------------------------ |
-| `/project:requirements`          | 要件定義を行う                             |
-| `/project:design`                | 設計を行う                                 |
-| `/project:api`                   | API設計を行う                              |
-| `/project:setup`                 | 環境構築を行う                             |
-| `/project:prototype`             | プロトタイプ実装（デザインコンセプト確定） |
-| `/project:test-design`           | E2Eテスト設計を行う                        |
-| `/project:implement <Issue番号>` | 本実装を行う（複数指定で並行開発）         |
-| `/project:status`                | 現在の状況を確認                           |
-| `/project:review`                | コードレビューと修正                       |
-| `/project:deploy`                | デプロイを行う                             |
-| `/project:cleanup`               | マージ済みブランチと worktree をクリーンアップ |
-| `/project:update`                | vibe-coding-utils を最新化                 |
-
-詳細は `.claude/commands/` 配下の各ファイルを参照。
-
----
-
-## 4. 命名規則
+## 3. 命名規則
 
 | 対象           | 規則             | 例               |
 | -------------- | ---------------- | ---------------- |
@@ -78,7 +51,7 @@
 
 ---
 
-## 5. コーディング規約
+## 4. コーディング規約
 
 ### 基本ルール
 
@@ -103,25 +76,7 @@
 
 ---
 
-## 6. ドキュメントテンプレート
-
-テンプレートは `.claude/vibe-coding-utils/templates/` に配置されています。
-
-| テンプレート                                                                             | 用途               |
-| ---------------------------------------------------------------------------------------- | ------------------ |
-| [COMPETITIVE_ANALYSIS.md](./.claude/vibe-coding-utils/templates/COMPETITIVE_ANALYSIS.md) | 競合調査レポート   |
-| [PRD.md](./.claude/vibe-coding-utils/templates/PRD.md)                                   | 要件定義書         |
-| [DESIGN.md](./.claude/vibe-coding-utils/templates/DESIGN.md)                             | 設計書             |
-| [SCREEN.md](./.claude/vibe-coding-utils/templates/SCREEN.md)                             | 画面設計           |
-| [COMPONENT.md](./.claude/vibe-coding-utils/templates/COMPONENT.md)                       | コンポーネント設計 |
-| [DATA_MODEL.md](./.claude/vibe-coding-utils/templates/DATA_MODEL.md)                     | データモデル       |
-| [TEST_CASES.md](./.claude/vibe-coding-utils/templates/TEST_CASES.md)                     | E2Eテストケース    |
-| [DESIGN_CONCEPT.md](./.claude/vibe-coding-utils/templates/DESIGN_CONCEPT.md)             | デザインコンセプト |
-| [openapi.yaml](./.claude/vibe-coding-utils/templates/openapi.yaml)                       | API定義            |
-
----
-
-## 7. SSOT（Single Source of Truth）
+## 5. SSOT（Single Source of Truth）
 
 各情報の正式な管理場所：
 
@@ -135,10 +90,9 @@
 | 画面設計         | docs/SCREEN.md     | -                   |
 | 実装状況         | GitHub Issues      | PRDにはチェック不要 |
 
-
 ---
 
-## 8. 技術スタック
+## 6. 技術スタック
 
 ### 共通（全プロジェクト）
 
@@ -155,23 +109,23 @@
 
 ### フレームワーク
 
-| フレームワーク | パッケージ管理 | 用途     |
-| -------------- | -------------- | -------- |
+| フレームワーク | パッケージ管理 | 用途       |
+| -------------- | -------------- | ---------- |
 | WXT            | pnpm           | Chrome拡張 |
 
 ### プロジェクトに応じて追加
 
-| カテゴリ         | 選択肢                                                      |
-| ---------------- | ----------------------------------------------------------- |
-| データストレージ | Chrome Storage API / Supabase                               |
-| UIコンポーネント | shadcn/ui                                                   |
-| アイコン         | Lucide                                                      |
-| フォーム         | React Hook Form                                             |
-| データフェッチ   | SWR / TanStack Query                                        |
+| カテゴリ         | 選択肢                        |
+| ---------------- | ----------------------------- |
+| データストレージ | Chrome Storage API / Supabase |
+| UIコンポーネント | shadcn/ui                     |
+| アイコン         | Lucide                        |
+| フォーム         | React Hook Form               |
+| データフェッチ   | SWR / TanStack Query          |
 
 ---
 
-## 9. ディレクトリ構成
+## 7. ディレクトリ構成
 
 ### WXT（Chrome拡張）プロジェクト
 
@@ -189,7 +143,7 @@
 │   ├── lib/                # ユーティリティ関数
 │   ├── types/              # 型定義
 │   ├── constants/          # 定数
-│   ├── stories/            # Storybook のストーリー
+│   ├── stories/            # 画面単位の Storybook のストーリー（コンポーネント単位は各コンポーネントと同居）
 │   ├── styles/             # グローバルCSS
 │   └── assets/             # バンドルに含める画像（`?inline` で import）
 ├── public/                 # 出力へそのままコピーされる静的ファイル（_locales / icon / 背景画像）
@@ -206,13 +160,10 @@
 
 ---
 
-## 10. 参照ドキュメント
+## 8. 参照ドキュメント
 
 - [README](./README.md)
-- [開発フロー](./.claude/vibe-coding-utils/docs/shared/DEVELOPMENT_FLOW.md)
-- [GitHub MCP 設定](./.claude/vibe-coding-utils/docs/shared/SETUP_GITHUB_MCP.md)
-- [権限設定](./.claude/vibe-coding-utils/docs/shared/SETUP_PERMISSIONS.md)
 
-### 環境構築手順（/project:setup 時に参照）
+### 環境構築手順
 
 - [WXT 公式ドキュメント](https://wxt.dev/)（ビルド設定は `wxt.config.ts`）

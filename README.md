@@ -40,47 +40,11 @@ VisionFocusは、非AIによる爆速な動作と月額$1.99という競合最�
 1. このテンプレートから新規リポジトリを作成
 2. clone して Claude Code で開く
 3. `docs/INPUT.md` に作りたいものを記載
-4. `/project:requirements` で要件定義
-5. `/project:design` で設計
-6. `/project:prototype` でプロトタイプ実装・デザイン確認
-7. `/project:test-design` でE2Eテスト設計
-8. `/project:implement` で本実装
-9. `/project:deploy` でデプロイ
-
-## Workflow
-
-👉 [開発フロー図](./docs/DEVELOPMENT_FLOW.md)
-
-| #   | フェーズ     | コマンド                | 成果物                                       |
-| --- | ------------ | ----------------------- | -------------------------------------------- |
-| 1   | 要件定義     | `/project:requirements` | docs/PRD.md, reports/COMPETITIVE_ANALYSIS.md |
-| 2   | 設計         | `/project:design`       | docs/DESIGN.md, SCREEN.md, GitHub Issues     |
-| 3   | API設計      | `/project:api`          | docs/openapi.yaml                            |
-| 4   | プロトタイプ | `/project:prototype`    | src/components/, Storybook, TOP画面          |
-| 5   | 本実装       | `/project:implement`    | src/, Issue更新                              |
-| 6   | 繰り返し     | `/project:continue`     | -                                            |
-| 7   | デプロイ     | `/project:deploy`       | 本番環境                                     |
-| 8   | 改善         | `/project:improvements` | docs/IMPROVEMENTS.md, GitHub Issues          |
-
-## Commands
-
-Claude Code で以下のスラッシュコマンドが使用可能です：
-
-| コマンド                         | 説明                               | 成果物                                                                |
-| -------------------------------- | ---------------------------------- | --------------------------------------------------------------------- |
-| `/project:requirements`          | 要件定義を行う                     | docs/PRD.md, reports/COMPETITIVE_ANALYSIS.md                          |
-| `/project:design`                | 設計を行う                         | docs/DESIGN.md, SCREEN.md, COMPONENT.md, DATA_MODEL.md, GitHub Issues |
-| `/project:api`                   | API設計を行う                      | docs/openapi.yaml                                                     |
-| `/project:prototype`             | プロトタイプ実装（デザイン確認用） | src/components/, Storybook, TOP画面                                   |
-| `/project:implement <Issue番号>` | 本実装を行う（複数指定で並行開発） | src/, PR                                                              |
-| `/project:continue`              | 進捗確認・作業再開                 | -                                                                     |
-| `/project:review`                | コードレビューと修正               | -                                                                     |
-| `/project:deploy`                | デプロイを行う                     | 本番環境, Analytics設定                                               |
-| `/project:improvements`          | 改善リスト作成・Issue一括登録      | docs/IMPROVEMENTS.md, GitHub Issues                                   |
+4. Issue → worktree → PR → レビュー → マージの流れと委譲手順は machina-gg/trillion-game の `.claude/skills/delegate-task/SKILL.md` が SSOT
 
 ## npm Scripts
 
-環境構築後（`/project:setup` 実行後）に使用可能：
+`pnpm install` 後に使用可能：
 
 | コマンド               | 説明                                         |
 | ---------------------- | -------------------------------------------- |
@@ -128,19 +92,19 @@ pnpm test:e2e
 
 ## Documentation
 
-| ファイル                        | 内容                     | 作成タイミング          |
-| ------------------------------- | ------------------------ | ----------------------- |
-| docs/INPUT.md                   | 要件ヒアリングシート     | 最初に記載              |
-| docs/PRD.md                     | 要件定義書               | `/project:requirements` |
-| docs/DESIGN.md                  | 設計書                   | `/project:design`       |
-| docs/SCREEN.md                  | 画面設計                 | `/project:design`       |
-| docs/COMPONENT.md               | コンポーネント設計       | `/project:design`       |
-| docs/DESIGN_CONCEPT.md          | デザインコンセプト       | `/project:prototype`    |
-| docs/TEST_CASES.md              | E2Eテストケース          | `/project:test-design`  |
-| docs/COMPONENT_TESTING.md       | コンポーネントテスト方針 | 随時更新                |
-| docs/ANALYTICS.md               | GA4計測ドキュメント      | 随時更新                |
-| reports/COMPETITIVE_ANALYSIS.md | 競合調査レポート         | `/project:requirements` |
-| GitHub Issues                   | タスク・進捗管理         | 随時更新                |
+| ファイル                        | 内容                     |
+| ------------------------------- | ------------------------ |
+| docs/INPUT.md                   | 要件ヒアリングシート     |
+| docs/PRD.md                     | 要件定義書               |
+| docs/DESIGN.md                  | 設計書                   |
+| docs/SCREEN.md                  | 画面設計                 |
+| docs/COMPONENT.md               | コンポーネント設計       |
+| docs/DESIGN_CONCEPT.md          | デザインコンセプト       |
+| docs/TEST_CASES.md              | E2Eテストケース          |
+| docs/COMPONENT_TESTING.md       | コンポーネントテスト方針 |
+| docs/ANALYTICS.md               | GA4計測ドキュメント      |
+| reports/COMPETITIVE_ANALYSIS.md | 競合調査レポート         |
+| GitHub Issues                   | タスク・進捗管理         |
 
 ### reports/COMPETITIVE_ANALYSIS.md（競合調査レポート）
 
