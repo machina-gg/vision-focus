@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { getVision, settingsItem, visionItem } from '~/lib/storage';
@@ -266,13 +266,29 @@ export function usePresets({
     []
   );
 
+  // 保存後フィードバックを消すタイマーの ID。アンマウント後に発火すると
+  // 片付け済みの画面へ dispatch してしまうため、止められるように保持する（#480）
+  const savedFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const clearSavedFeedbackTimer = useCallback(() => {
+    if (savedFeedbackTimerRef.current === null) return;
+    clearTimeout(savedFeedbackTimerRef.current);
+    savedFeedbackTimerRef.current = null;
+  }, []);
+
+  useEffect(() => clearSavedFeedbackTimer, [clearSavedFeedbackTimer]);
+
   const showSavedFeedback = useCallback(() => {
     dispatch({ type: 'SET_VISION_SAVED', saved: true });
-    setTimeout(
-      () => dispatch({ type: 'SET_VISION_SAVED', saved: false }),
-      SAVED_FEEDBACK_MS
-    );
-  }, []);
+    // 連続保存で古いタイマーが残ると、後から張った表示を先に消してしまう
+    clearSavedFeedbackTimer();
+    savedFeedbackTimerRef.current = setTimeout(() => {
+      savedFeedbackTimerRef.current = null;
+      dispatch({ type: 'SET_VISION_SAVED', saved: false });
+    }, SAVED_FEEDBACK_MS);
+  }, [clearSavedFeedbackTimer]);
 
   const handleSelectPreset = useCallback(
     (presetId: string) => {
