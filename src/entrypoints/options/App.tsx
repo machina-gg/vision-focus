@@ -211,6 +211,7 @@ function OptionsAppContent() {
         onFormChange={schedules.setScheduleForm}
         onSave={schedules.handleSaveSchedule}
         vision={vision}
+        error={schedules.scheduleError}
       />
       {/* Analytics Opt-In Modal (shown once on first visit if not yet decided) */}
       <AnalyticsOptInModal

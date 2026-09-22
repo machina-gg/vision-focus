@@ -439,6 +439,7 @@ function useSchedules(props: {
   editingSchedule: Schedule | null;
   scheduleForm: ScheduleFormData;
   setScheduleForm: (form: ScheduleFormData) => void;
+  scheduleError: string | null;
   openAddSchedule: () => void;
   openEditSchedule: (schedule: Schedule) => void;
   handleSaveSchedule: () => void;
@@ -452,6 +453,7 @@ function useSchedules(props: {
 - スケジュールの追加・編集・削除
 - 有効/無効の切り替え
 - スタイル連携（presetId）
+- 保存時の重複チェック（`findOverlappingSchedule`。重なる場合は保存せず `scheduleError` を返す）
 
 ---
 

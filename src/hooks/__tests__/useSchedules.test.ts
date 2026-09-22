@@ -21,10 +21,6 @@ vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
 }));
 
-vi.mock('~/lib/time', () => ({
-  normalizeEndTime: vi.fn((time: string) => (time === '00:00' ? '24:00' : time))
-}));
-
 import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { getSettings, settingsItem } from '~/lib/storage';
@@ -342,7 +338,8 @@ describe('useSchedules', () => {
           name: 'All Day',
           startTime: '00:00',
           endTime: '00:00',
-          days: [0, 1, 2, 3, 4, 5, 6],
+          // 既存（月〜金）と曜日を重ねない。ここで見るのは終了時刻の正規化
+          days: [0, 6],
           presetId: ''
         });
       });
@@ -353,6 +350,198 @@ describe('useSchedules', () => {
 
       const savedSchedule = vi.mocked(settingsItem.setValue).mock.calls[0][0];
       expect(savedSchedule.schedules[1].endTime).toBe('24:00');
+    });
+
+    describe('既存のスケジュールと時間帯が重なるとき', () => {
+      it('保存せずエラーを返し、モーダルを開いたままにする', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        );
+
+        act(() => {
+          result.current.openAddSchedule();
+          result.current.setScheduleForm({
+            name: 'Overlapping',
+            startTime: '10:00',
+            endTime: '13:00',
+            days: [1],
+            presetId: ''
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(settingsItem.setValue).not.toHaveBeenCalled();
+        expect(mockSetSettings).not.toHaveBeenCalled();
+        expect(trackFeatureUse).not.toHaveBeenCalled();
+        expect(result.current.scheduleError).toBe('scheduleOverlapError');
+        expect(result.current.showScheduleModal).toBe(true);
+      });
+
+      it('無効な既存スケジュールとも重なりとみなす', async () => {
+        const disabledSettings: AppSettings = {
+          ...mockSettings,
+          schedules: [{ ...mockSchedule, enabled: false }]
+        };
+
+        const { result } = renderHook(() =>
+          useSchedules({
+            settings: disabledSettings,
+            setSettings: mockSetSettings
+          })
+        );
+
+        act(() => {
+          result.current.openAddSchedule();
+          result.current.setScheduleForm({
+            name: 'Overlapping',
+            startTime: '10:00',
+            endTime: '13:00',
+            days: [1],
+            presetId: ''
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(settingsItem.setValue).not.toHaveBeenCalled();
+        expect(result.current.scheduleError).toBe('scheduleOverlapError');
+      });
+
+      it('フォームを変更するとエラーが消える', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        );
+
+        act(() => {
+          result.current.openAddSchedule();
+          result.current.setScheduleForm({
+            name: 'Overlapping',
+            startTime: '10:00',
+            endTime: '13:00',
+            days: [1],
+            presetId: ''
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(result.current.scheduleError).toBe('scheduleOverlapError');
+
+        act(() => {
+          result.current.setScheduleForm({
+            ...result.current.scheduleForm,
+            days: [0]
+          });
+        });
+
+        expect(result.current.scheduleError).toBeNull();
+      });
+
+      it('重なりを解消すれば保存できる', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        );
+
+        act(() => {
+          result.current.openAddSchedule();
+          result.current.setScheduleForm({
+            name: 'Overlapping',
+            startTime: '10:00',
+            endTime: '13:00',
+            days: [1],
+            presetId: ''
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        // 既存（月〜金 09:00-17:00）と接するだけの時間帯に直す
+        act(() => {
+          result.current.setScheduleForm({
+            ...result.current.scheduleForm,
+            startTime: '17:00',
+            endTime: '19:00'
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(settingsItem.setValue).toHaveBeenCalledTimes(1);
+        expect(result.current.scheduleError).toBeNull();
+        expect(result.current.showScheduleModal).toBe(false);
+      });
+
+      it('編集時は自分自身を重なりとみなさない', async () => {
+        const { result } = renderHook(() =>
+          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        );
+
+        act(() => {
+          result.current.openEditSchedule(mockSchedule);
+          result.current.setScheduleForm({
+            name: 'Work Hours',
+            startTime: '09:00',
+            endTime: '17:00',
+            days: [1, 2, 3, 4, 5],
+            presetId: 'preset-1'
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(settingsItem.setValue).toHaveBeenCalledTimes(1);
+        expect(result.current.scheduleError).toBeNull();
+      });
+
+      it('編集時、自分以外と重なれば保存しない', async () => {
+        const otherSchedule: Schedule = {
+          id: 'schedule-2',
+          name: 'Evening',
+          startTime: '18:00',
+          endTime: '22:00',
+          days: [1],
+          enabled: true
+        };
+        const twoSchedules: AppSettings = {
+          ...mockSettings,
+          schedules: [mockSchedule, otherSchedule]
+        };
+
+        const { result } = renderHook(() =>
+          useSchedules({ settings: twoSchedules, setSettings: mockSetSettings })
+        );
+
+        act(() => {
+          result.current.openEditSchedule(mockSchedule);
+          result.current.setScheduleForm({
+            name: 'Work Hours',
+            startTime: '09:00',
+            endTime: '19:00',
+            days: [1],
+            presetId: 'preset-1'
+          });
+        });
+
+        await act(async () => {
+          await result.current.handleSaveSchedule();
+        });
+
+        expect(settingsItem.setValue).not.toHaveBeenCalled();
+        expect(result.current.scheduleError).toBe('scheduleOverlapError');
+      });
     });
   });
 
