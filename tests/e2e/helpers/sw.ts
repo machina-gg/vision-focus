@@ -165,3 +165,38 @@ export async function setupTestStorageViaSW(
   const { clear, ...storageOptions } = options;
   await setupStorageViaSW(context, makeTestStorage(storageOptions), { clear });
 }
+
+/** ウィンドウ 1 件分の前面判定に関わる状態 */
+export type WindowFocusState = {
+  id: number | undefined;
+  focused: boolean;
+  state: chrome.windows.windowStateEnum | undefined;
+};
+
+/**
+ * ウィンドウの前面判定状態を SW 経由で読む（実測のみ・副作用なし）
+ *
+ * `chrome.windows.update` 等は呼ばない。読むだけなので、3 並列で動く
+ * 他のテストのウィンドウ状態に影響しない。
+ */
+export async function getWindowFocusStateViaSW(
+  context: BrowserContext
+): Promise<{ lastFocused: WindowFocusState; all: WindowFocusState[] }> {
+  const sw = await getServiceWorker(context);
+
+  return await sw.evaluate(async () => {
+    const toState = (w: chrome.windows.Window) => ({
+      id: w.id,
+      focused: w.focused,
+      state: w.state
+    });
+
+    const lastFocused = await chrome.windows.getLastFocused();
+    const all = await chrome.windows.getAll();
+
+    return {
+      lastFocused: toState(lastFocused),
+      all: all.map(toState)
+    };
+  });
+}
