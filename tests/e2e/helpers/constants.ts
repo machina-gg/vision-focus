@@ -250,7 +250,7 @@ export const UI_TEXT = {
     long: (count: number) => `You've blocked this site ${count} times`
   },
   // newtab のミニ統計カード（blockedForDays）。単位が付くため数値だけの
-  // 一致にしない（machina-gg/vision-focus#501）
+  // 一致にしない
   blockingDays: (count: number) => `${count} days`,
   newtab: {
     download: 'Download',
