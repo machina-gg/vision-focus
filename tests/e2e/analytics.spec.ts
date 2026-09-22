@@ -19,6 +19,7 @@ import {
 } from './helpers/storage';
 import {
   getStorageViaSW,
+  getWindowFocusStateViaSW,
   setupStorageViaSW,
   triggerBlockRuleRecompute,
   waitForBlockRules
@@ -230,6 +231,10 @@ test.describe('Analytics - アナリティクス機能', () => {
     context,
     extensionId
   }) => {
+    // 記録は TRACKING_UPDATE_INTERVAL_MS（15 秒）間隔のタイマーが
+    // 1 周してから入るため、既定のテスト時間では足りない
+    test.setTimeout(60_000);
+
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
@@ -242,6 +247,12 @@ test.describe('Analytics - アナリティクス機能', () => {
       makeAnalytics()
     );
 
+    // ⚠ siteTime を書く記録経路はブラウザのウィンドウが前面にあることが
+    // 前提（src/background/tracker.ts の isBrowserFocused）。落ちたときに
+    // 「環境でフォーカスが取れなかった」と分かるよう、記録を待つ前に確かめる
+    const focusState = await getWindowFocusStateViaSW(context);
+    expect(focusState.lastFocused.focused).toBe(true);
+
     // 外部サイトにアクセス
     const externalPage = await openExternalSite(
       context,
@@ -250,28 +261,21 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     await externalPage.waitForLoadState('domcontentloaded');
 
-    // ⚠ この固定待機は残している。このテストは記録の経路を通っておらず、
-    //    待ち先にできる「狙った経路だけが書く値」が無いため。
-    //    tracker-heartbeat は解除履歴に載っているドメインだけを計測するので
-    //    （src/background/handlers/tracker-heartbeat.ts）、この前提では
-    //    何秒待っても dailyStats には何も入らない。下の判定も if で
-    //    囲まれており、実質的に何も検査していない。
-    //    同じ観点は AN-003 と INT-005 が実際の経路を通して検証している。
-    //    本テストを書き直すか削除するかは仕様の判断が要るため #441 で報告する
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Analytics データを確認
-    const analytics = await getStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics'
-    );
-
-    // dailyStats に記録があることを確認
-    const today = new Date().toISOString().slice(0, 10);
-    if (analytics?.dailyStats[today]) {
-      expect(analytics.dailyStats[today]).toBeDefined();
-    }
+    // analytics.siteTime を書くのは src/background/tracker.ts の
+    // recordTime だけ。15 秒間隔のタイマーが 1 回まわるまで待つ
+    await expect
+      .poll(
+        async () => {
+          const analytics = await getStorageDataFromExtension(
+            context,
+            extensionId,
+            'analytics'
+          );
+          return analytics?.siteTime[TEST_DOMAINS.example]?.time ?? 0;
+        },
+        { timeout: 30_000 }
+      )
+      .toBeGreaterThan(0);
 
     await externalPage.close();
   });
