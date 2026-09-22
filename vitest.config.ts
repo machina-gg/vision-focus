@@ -11,10 +11,12 @@ export default defineConfig({
     exclude: ['tests/e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
-      // src 配下のみを集計対象にする。
+      // src 配下のソースのみを集計対象にする。
       // include を指定しないと storybook-static/ や build/ のビルド成果物まで
-      // 集計に含まれ、カバレッジの数値が実態を表さなくなる
-      include: ['src/**'],
+      // 集計に含まれ、カバレッジの数値が実態を表さなくなる。
+      // ⚠ 拡張子を明示するのは vitest 4 で coverage.extensions が廃止されたため。
+      //   `src/**` だけだと index.html まで解析対象になり、パースエラーになる
+      include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.stories.tsx',
         'src/**/__tests__/**',
@@ -25,7 +27,12 @@ export default defineConfig({
         'src/types/report.ts',
         'src/types/storageSchemas.ts',
         // re-export のみのファイル（ロジックを持たず、実体は src/lib 側でテスト済み）
-        'src/background/time-limit.ts'
+        'src/background/time-limit.ts',
+        // WXT のエントリポイント。ビルド時の仮想モジュール `#imports` に依存しており
+        // vitest からは読み込めない（src/background/init.ts の説明を参照）。
+        // vitest 4 の AST ベース解析は未変換の TS をパースできずエラーを出して自動除外するので、
+        // 計測できないことを設定側で明示する（中身は init.ts 側でテストしている）
+        'src/entrypoints/*.ts'
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       // 現状値を下回らないラインを下限とする（退行防止が目的）。
