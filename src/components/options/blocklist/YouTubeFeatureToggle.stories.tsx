@@ -1,0 +1,46 @@
+import React from 'react';
+import { PlaySquare } from 'lucide-react';
+
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
+
+const meta = {
+  title: 'Options/Blocklist/YouTubeFeatureToggle',
+  component: YouTubeFeatureToggle,
+  parameters: {
+    layout: 'padded'
+  },
+  tags: ['autodocs'],
+  args: {
+    icon: <PlaySquare className="w-4 h-4" />,
+    title: 'Shorts を非表示にする',
+    description: 'ホームと検索から Shorts の棚を隠します',
+    onChange: () => {}
+  }
+} satisfies Meta<typeof YouTubeFeatureToggle>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+// オンの場合
+export const Checked: Story = {
+  args: {
+    checked: true
+  }
+};
+
+// オフの場合
+export const Unchecked: Story = {
+  args: {
+    checked: false
+  }
+};
+
+// 無効化されている場合（親機能がオフのとき）
+export const Disabled: Story = {
+  args: {
+    checked: false,
+    disabled: true
+  }
+};
