@@ -1,5 +1,9 @@
 name: Security
 
+# pnpm の版は package.json の packageManager が唯一の指定元（#470）。
+# ⚠ pnpm/action-setup の version 入力をここに書き戻さないこと。packageManager と
+#   完全一致しない限り "Multiple versions of pnpm specified" で全ジョブが落ちる。
+
 # セキュリティ専用の CI ワークフロー。既存の ci.yml とは分離する。
 # ブロッキングジョブ（audit / secret scan / manifest 権限差分）は PR を止める。
 # 非ブロッキングジョブ（CodeQL / 週次 audit）は informational のみで PR をブロックしない。
@@ -28,8 +32,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -72,8 +74,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -125,8 +125,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v7

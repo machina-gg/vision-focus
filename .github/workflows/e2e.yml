@@ -1,5 +1,9 @@
 name: E2E Tests
 
+# pnpm の版は package.json の packageManager が唯一の指定元（#470）。
+# ⚠ pnpm/action-setup の version 入力をここに書き戻さないこと。packageManager と
+#   完全一致しない限り "Multiple versions of pnpm specified" で全ジョブが落ちる。
+
 # PR ごとには実行しない。
 # 拡張機能の E2E は headless 非対応で 3 並列の Chromium を立てるため重く、
 # PR のリードタイムを損なう（CI 全体 約40秒 → 数分）。
@@ -30,8 +34,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
