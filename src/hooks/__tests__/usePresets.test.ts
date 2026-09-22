@@ -469,6 +469,69 @@ describe('usePresets', () => {
     });
   });
 
+  // アンマウント後にフィードバックのタイマーが残ると、片付け済みの環境へ
+  // dispatch してテスト実行後に `window is not defined` が出る（#480）
+  describe('保存後フィードバックのタイマー', () => {
+    // 上の vi.mock で STATUS_RESET_DELAY_MS に差し替えている値
+    const SAVED_FEEDBACK_MS = 1000;
+
+    // 初期化を待ってから 1 回保存し、フィードバックのタイマーを張らせる
+    const renderAndSave = async () => {
+      const rendered = renderUsePresets(mockVision);
+      const { result } = rendered;
+
+      await vi.waitFor(() => {
+        if (result.current.selectedPresetId !== 'preset-1') {
+          throw new Error('Not ready');
+        }
+      });
+
+      act(() => {
+        result.current.handleGoalTextChange('Updated Goal');
+      });
+
+      await act(async () => {
+        await result.current.handleSaveSelectedPreset();
+      });
+
+      return rendered;
+    };
+
+    it('アンマウントするとタイマーが止まり、進めても状態が変わらない', async () => {
+      vi.useFakeTimers();
+
+      const { result, unmount } = await renderAndSave();
+      expect(result.current.visionSaved).toBe(true);
+      expect(vi.getTimerCount()).toBe(1);
+
+      unmount();
+
+      // クリーンアップで止まるので、進めても発火する対象が残っていない
+      expect(vi.getTimerCount()).toBe(0);
+      act(() => {
+        vi.advanceTimersByTime(SAVED_FEEDBACK_MS);
+      });
+      expect(vi.getTimerCount()).toBe(0);
+
+      vi.useRealTimers();
+    });
+
+    it('続けて保存しても、残るタイマーは最後の 1 本だけ', async () => {
+      vi.useFakeTimers();
+
+      const { result } = await renderAndSave();
+      expect(vi.getTimerCount()).toBe(1);
+
+      await act(async () => {
+        await result.current.handleSaveSelectedPreset();
+      });
+
+      expect(vi.getTimerCount()).toBe(1);
+
+      vi.useRealTimers();
+    });
+  });
+
   describe('handleApplyPreset', () => {
     it('選択中のプリセットをアクティブに設定', async () => {
       const { result } = renderUsePresets(mockVision);
