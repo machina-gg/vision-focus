@@ -80,9 +80,10 @@ test.describe('NewTab 画面 - 統計カード', () => {
     const blockingDaysCard = page.locator('text=/Blocking Days|ブロック日数/i');
     await expect(blockingDaysCard.first()).toBeVisible();
 
-    // 日数が表示される（10日以上）
+    // 日数が表示される（10日前に登録したので 10）
     const daysCount = page.locator(SELECTORS.newtab.miniStats.blockingDays);
     await expect(daysCount.first()).toBeVisible();
+    await expect(daysCount.first()).toHaveText('10');
 
     await page.close();
   });
