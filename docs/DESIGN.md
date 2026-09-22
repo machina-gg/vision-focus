@@ -63,7 +63,6 @@ vision-focus/
 │   ├── lib/                  # ユーティリティ
 │   ├── constants/            # 定数定義
 │   ├── types/                # 型定義
-│   ├── stories/              # Storybook のストーリー
 │   ├── styles/               # グローバルCSS
 │   └── assets/               # バンドルに含める画像（`?inline` で import）
 ├── public/                   # 出力へそのままコピーされる静的ファイル
