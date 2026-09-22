@@ -21,6 +21,12 @@ interface AnalyticsTabProps {
   onStopTracking: (domain: string) => void;
   onRefresh: () => Promise<void>;
   onAddSite: (domain: string) => void;
+  /** 支援誘導を出すか */
+  isSupportPromptVisible: boolean;
+  /** 支援ページを開く */
+  onSupport: () => Promise<void>;
+  /** 支援誘導を閉じる */
+  onDismissSupport: () => Promise<void>;
 }
 
 export function AnalyticsTab({
@@ -30,7 +36,10 @@ export function AnalyticsTab({
   onReset,
   onStopTracking,
   onRefresh,
-  onAddSite
+  onAddSite,
+  isSupportPromptVisible,
+  onSupport,
+  onDismissSupport
 }: AnalyticsTabProps) {
   const { settings } = useSettings();
   const [newSiteDomain, setNewSiteDomain] = useState('');
@@ -90,7 +99,12 @@ export function AnalyticsTab({
         onStopTracking={onStopTracking}
       />
 
-      <AnalyticsDateFilter analyticsData={analyticsData} />
+      <AnalyticsDateFilter
+        analyticsData={analyticsData}
+        isSupportPromptVisible={isSupportPromptVisible}
+        onSupport={onSupport}
+        onDismissSupport={onDismissSupport}
+      />
     </div>
   );
 }

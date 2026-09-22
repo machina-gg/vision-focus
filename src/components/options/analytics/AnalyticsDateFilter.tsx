@@ -12,10 +12,19 @@ import type { AnalyticsData } from '~/types/storage';
 
 interface AnalyticsDateFilterProps {
   analyticsData: AnalyticsData;
+  /** 支援誘導を出すか */
+  isSupportPromptVisible: boolean;
+  /** 支援ページを開く */
+  onSupport: () => Promise<void>;
+  /** 支援誘導を閉じる */
+  onDismissSupport: () => Promise<void>;
 }
 
 export function AnalyticsDateFilter({
-  analyticsData
+  analyticsData,
+  isSupportPromptVisible,
+  onSupport,
+  onDismissSupport
 }: AnalyticsDateFilterProps) {
   const [weeklyOffset, setWeeklyOffset] = useState(0);
   const [monthlyOffset, setMonthlyOffset] = useState(0);
@@ -69,8 +78,10 @@ export function AnalyticsDateFilter({
         />
       </div>
 
-      {/* 価値を実感した直後に控えめに支援を案内する（30日に1回まで） */}
-      <SupportPrompt />
+      {/* 価値を実感した直後に控えめに支援を案内する */}
+      {isSupportPromptVisible && (
+        <SupportPrompt onSupport={onSupport} onDismiss={onDismissSupport} />
+      )}
     </Card>
   );
 }

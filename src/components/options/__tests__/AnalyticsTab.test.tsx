@@ -41,9 +41,29 @@ vi.mock('../analytics', () => ({
       {Object.keys(props.unblockHistory.sites).join(',')}
     </div>
   ),
-  AnalyticsDateFilter: (props: { analyticsData: { dailyStats: object } }) => (
+  AnalyticsDateFilter: (props: {
+    analyticsData: { dailyStats: object };
+    isSupportPromptVisible: boolean;
+    onSupport: () => Promise<void>;
+    onDismissSupport: () => Promise<void>;
+  }) => (
     <div data-testid="date-filter">
       {Object.keys(props.analyticsData.dailyStats).join(',')}
+      <span data-testid="date-filter-support-visible">
+        {String(props.isSupportPromptVisible)}
+      </span>
+      <button
+        data-testid="date-filter-support"
+        onClick={() => void props.onSupport()}
+      >
+        支援する
+      </button>
+      <button
+        data-testid="date-filter-dismiss-support"
+        onClick={() => void props.onDismissSupport()}
+      >
+        支援の案内を閉じる
+      </button>
     </div>
   )
 }));
@@ -56,13 +76,16 @@ function renderTab(props: Partial<TabProps> = {}) {
     onReset: vi.fn(),
     onStopTracking: vi.fn(),
     onRefresh: vi.fn(async () => undefined),
-    onAddSite: vi.fn()
+    onAddSite: vi.fn(),
+    onSupport: vi.fn(async () => undefined),
+    onDismissSupport: vi.fn(async () => undefined)
   };
 
   render(
     <AnalyticsTab
       unblockHistory={DEFAULT_UNBLOCK_HISTORY}
       analyticsData={DEFAULT_ANALYTICS}
+      isSupportPromptVisible={false}
       {...handlers}
       {...props}
     />
@@ -213,6 +236,24 @@ describe('AnalyticsTab', () => {
       renderTab();
 
       expect(screen.getByTestId('export-bar')).toHaveTextContent('true');
+    });
+
+    it('支援の案内を出すかどうかを期間の絞り込みへ渡す', () => {
+      renderTab({ isSupportPromptVisible: true });
+
+      expect(
+        screen.getByTestId('date-filter-support-visible')
+      ).toHaveTextContent('true');
+    });
+
+    it('支援と閉じるの操作を親へそのまま返す', () => {
+      const { onSupport, onDismissSupport } = renderTab();
+
+      fireEvent.click(screen.getByTestId('date-filter-support'));
+      fireEvent.click(screen.getByTestId('date-filter-dismiss-support'));
+
+      expect(onSupport).toHaveBeenCalledTimes(1);
+      expect(onDismissSupport).toHaveBeenCalledTimes(1);
     });
   });
 });

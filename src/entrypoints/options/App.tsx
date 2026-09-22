@@ -20,6 +20,7 @@ import {
   useAnalytics,
   useBlocklist,
   useSchedules,
+  useSupportPrompt,
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
@@ -49,6 +50,7 @@ function OptionsAppContent() {
   const blocklist = useBlocklist({ settings, setSettings });
   const schedules = useSchedules({ settings, setSettings });
   const { handleYouTubeChange } = useYouTubeSettings({ settings, setSettings });
+  const supportPrompt = useSupportPrompt();
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
@@ -175,6 +177,9 @@ function OptionsAppContent() {
             onStopTracking={analytics.handleStopTracking}
             onRefresh={analytics.handleRefreshAnalytics}
             onAddSite={analytics.handleAddSiteToTrack}
+            isSupportPromptVisible={supportPrompt.isVisible}
+            onSupport={supportPrompt.handleSupport}
+            onDismissSupport={supportPrompt.handleDismiss}
           />
         )}
 
