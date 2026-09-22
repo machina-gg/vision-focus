@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Spend your time on what matters - A productivity Chrome extension",
   "author": "machina-gg",
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev": "wxt",
     "build": "wxt build",

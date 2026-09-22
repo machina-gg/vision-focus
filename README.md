@@ -229,6 +229,9 @@ pnpm test:e2e
    npm install -g pnpm
    ```
 
+   使用する版は `package.json` の `packageManager` が持つ。CI（`pnpm/action-setup`）も
+   同じ値を読むため、版の指定元はこの 1 箇所だけである。
+
 3. **Claude Code** をインストール
 
    ```bash

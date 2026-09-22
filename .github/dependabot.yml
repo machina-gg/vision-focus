@@ -4,6 +4,7 @@
 # Dependabot の "npm" エコシステムは pnpm-lock.yaml も対象にするため、ここでは "npm" を指定する。
 # （未使用の package-lock.json は Issue #373 で削除済み。再びコミットしないこと）
 # major（破壊的変更）は Dependabot に上げさせず、Issue を立てて計画的に上げる（#360 の形）。
+# 0.x のパッケージでは minor も同じ扱いにする（下の ignore を参照。#470）。
 version: 2
 updates:
   - package-ecosystem: 'npm'
@@ -30,6 +31,23 @@ updates:
       - dependency-name: '*'
         update-types:
           - 'version-update:semver-major'
+      # ここから下は 0.x のパッケージ。major と同じく Dependabot には上げさせず、
+      # Issue を立てて計画的に上げる。0.x の慣習では真ん中の数字が破壊的変更を運ぶが、
+      # semver の判定では「minor」に分類されるため、上の major 除外の網から漏れる（#470）。
+      # ⚠ 一律の semver-minor 除外はしない（0.x 以外の minor は今までどおり自動 PR を作る）。
+      # ⚠ Dependabot に「0.x なら」という条件は書けないため、対象は名指しで列挙するしかない。
+      #    依存を足したとき・0.x を卒業したときは、次のコマンドで洗い出して過不足を直す:
+      #      jq -r '(.dependencies + .devDependencies) | to_entries[]
+      #             | select(.value | test("^\\^?0\\.")) | .key' package.json
+      - dependency-name: 'lucide-react'
+        update-types:
+          - 'version-update:semver-minor'
+      - dependency-name: '@types/chrome'
+        update-types:
+          - 'version-update:semver-minor'
+      - dependency-name: 'wxt'
+        update-types:
+          - 'version-update:semver-minor'
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore'
