@@ -95,13 +95,29 @@ type Story = StoryObj<typeof meta>;
 // 週次・月次データがある場合
 export const WithData: Story = {
   args: {
-    analyticsData: mockAnalytics
+    analyticsData: mockAnalytics,
+    isSupportPromptVisible: true,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
   }
 };
 
 // データが無い場合
 export const Empty: Story = {
   args: {
-    analyticsData: emptyAnalytics
+    analyticsData: emptyAnalytics,
+    isSupportPromptVisible: true,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
+  }
+};
+
+// 支援の案内を出さない場合
+export const WithoutSupportPrompt: Story = {
+  args: {
+    analyticsData: mockAnalytics,
+    isSupportPromptVisible: false,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
   }
 };

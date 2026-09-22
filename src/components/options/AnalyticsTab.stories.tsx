@@ -140,7 +140,10 @@ export const FreeTier: Story = {
     onReset: () => alert('Reset analytics'),
     onStopTracking: (domain) => alert(`Stop tracking: ${domain}`),
     onRefresh: async () => alert('Refresh'),
-    onAddSite: (domain) => alert(`Add site: ${domain}`)
+    onAddSite: (domain) => alert(`Add site: ${domain}`),
+    isSupportPromptVisible: true,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
   }
 };
 
@@ -152,7 +155,10 @@ export const Premium: Story = {
     onReset: () => alert('Reset analytics'),
     onStopTracking: (domain) => alert(`Stop tracking: ${domain}`),
     onRefresh: async () => alert('Refresh'),
-    onAddSite: (domain) => alert(`Add site: ${domain}`)
+    onAddSite: (domain) => alert(`Add site: ${domain}`),
+    isSupportPromptVisible: true,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
   }
 };
 
@@ -171,6 +177,9 @@ export const Empty: Story = {
     onReset: () => {},
     onStopTracking: () => {},
     onRefresh: async () => {},
-    onAddSite: () => {}
+    onAddSite: () => {},
+    isSupportPromptVisible: false,
+    onSupport: async () => {},
+    onDismissSupport: async () => {}
   }
 };
