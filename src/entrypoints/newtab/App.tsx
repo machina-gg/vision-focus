@@ -10,7 +10,8 @@ import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
-import { NEWTAB_STATS_POLLING_MS, MS_PER_DAY } from '~/constants/intervals';
+import { NEWTAB_STATS_POLLING_MS } from '~/constants/intervals';
+import { calculateBlockingDays } from '~/lib/blockingDays';
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
   useBackgroundPreload,
@@ -84,21 +85,7 @@ export function NewtabApp() {
   const blockingDays = useMemo(() => {
     if (!blockedInfo?.domain || !settings?.blockList) return null;
 
-    const blockItem = settings.blockList.find(
-      (item) =>
-        item.domain === blockedInfo.domain ||
-        (item.isWildcard &&
-          blockedInfo.domain.endsWith(item.domain.replace('*.', '.')))
-    );
-
-    if (!blockItem?.createdAt) return null;
-
-    const createdDate = new Date(blockItem.createdAt);
-    const now = new Date();
-    const diffTime = now.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffTime / MS_PER_DAY);
-
-    return Math.max(1, diffDays);
+    return calculateBlockingDays(blockedInfo.domain, settings.blockList);
   }, [blockedInfo?.domain, settings?.blockList]);
 
   const handleAnalyticsClick = useCallback(() => {
