@@ -1,10 +1,12 @@
 import { test, expect } from './fixtures/extension';
 import {
   openOptions,
+  openNewTab,
   setupTestStorage,
   clearStorage,
   setStorageData,
   makeDisplaySettings,
+  makeVision,
   makePreset,
   makeSettings,
   SELECTORS
@@ -359,8 +361,29 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // このテストは実際の時刻判定が必要なため、スケジュール設定の保存を確認するのみ
+    // 現在時刻を含む窓を作り、スケジュールの時間帯内であることを保証する
+    // （夜またぎは扱わず、23 時台だけ終了時刻を 00:00 にする）
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentDay = now.getDay();
+    const startTime = `${String(currentHour).padStart(2, '0')}:00`;
+    const endTime =
+      currentHour === 23
+        ? '00:00'
+        : `${String(currentHour + 1).padStart(2, '0')}:00`;
+
     const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'vision',
+      makeVision({
+        presets: [
+          makePreset('default', 'Default', { goalText: 'Default Goal' }),
+          makePreset('work', 'Work', { goalText: 'Work Mode Goal' })
+        ],
+        activePresetId: 'default'
+      })
+    );
     await setStorageData(
       setupPage,
       'settings',
@@ -369,10 +392,10 @@ test.describe('Options - Schedule Tab', () => {
           {
             id: 'schedule1',
             name: 'Auto Apply',
-            startTime: '09:00',
-            endTime: '17:00',
-            days: [1, 2, 3, 4, 5], // 平日
-            presetId: 'default',
+            startTime,
+            endTime,
+            days: [currentDay],
+            presetId: 'work',
             enabled: true
           }
         ]
@@ -380,21 +403,39 @@ test.describe('Options - Schedule Tab', () => {
     );
     await setupPage.close();
 
-    const page = await openOptions(context, extensionId, 'schedules');
-
-    // スケジュールが設定されていることを確認
-    const scheduleItem = page
-      .locator(SELECTORS.schedules.scheduleItem)
-      .filter({ hasText: 'Auto Apply' });
-    await expect(scheduleItem).toBeVisible();
-
-    // プリセット情報が表示される
-    const presetLabel = scheduleItem.locator(
-      SELECTORS.schedules.scheduleItemPreset
+    // 時間帯内: スケジュールのプリセットが自動適用される
+    const activePage = await openNewTab(context, extensionId);
+    await expect(activePage.locator(SELECTORS.newtab.goalText)).toContainText(
+      'Work Mode Goal'
     );
-    await expect(presetLabel).toBeVisible();
+    await activePage.close();
 
-    await page.close();
+    // スケジュールを無効化すると、時間外と同じ扱いになり activePresetId に戻る
+    const disablePage = await openOptions(context, extensionId);
+    await setStorageData(
+      disablePage,
+      'settings',
+      makeSettings({
+        schedules: [
+          {
+            id: 'schedule1',
+            name: 'Auto Apply',
+            startTime,
+            endTime,
+            days: [currentDay],
+            presetId: 'work',
+            enabled: false
+          }
+        ]
+      })
+    );
+    await disablePage.close();
+
+    const inactivePage = await openNewTab(context, extensionId);
+    await expect(inactivePage.locator(SELECTORS.newtab.goalText)).toContainText(
+      'Default Goal'
+    );
+    await inactivePage.close();
   });
 
   test('OPT-S11: 無効なスケジュールは半透明・取り消し線で表示される', async ({
