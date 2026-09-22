@@ -249,6 +249,9 @@ export const UI_TEXT = {
     /** newtab のブロック情報バナー（blockedTimes） */
     long: (count: number) => `You've blocked this site ${count} times`
   },
+  // newtab のミニ統計カード（blockedForDays）。単位が付くため数値だけの
+  // 一致にしない（machina-gg/vision-focus#501）
+  blockingDays: (count: number) => `${count} days`,
   newtab: {
     download: 'Download',
     downloadWallpaper: 'Download Wallpaper'
