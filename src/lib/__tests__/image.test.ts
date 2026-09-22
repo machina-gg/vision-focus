@@ -140,7 +140,11 @@ describe('compressImage', () => {
       onerror: (() => void) | null;
     };
 
-    global.Image = vi.fn(() => mockImage) as unknown as typeof Image;
+    // ⚠ vitest 4 以降、`new` 付きで呼ばれたモックはコンストラクタとして実行される。
+    //   アロー関数はコンストラクタになれないため function 宣言で書く
+    global.Image = vi.fn(function () {
+      return mockImage;
+    }) as unknown as typeof Image;
 
     // Mock FileReader
     const mockFileReader = {
@@ -162,9 +166,9 @@ describe('compressImage', () => {
       })
     };
 
-    global.FileReader = vi.fn(
-      () => mockFileReader
-    ) as unknown as typeof FileReader;
+    global.FileReader = vi.fn(function () {
+      return mockFileReader;
+    }) as unknown as typeof FileReader;
 
     // Trigger image onload after src is set
     Object.defineProperty(mockImage, 'src', {

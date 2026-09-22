@@ -89,14 +89,19 @@ describe('export utilities', () => {
     // Mock URL APIs
     mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
     mockRevokeObjectURL = vi.fn();
-    global.URL.createObjectURL = mockCreateObjectURL;
-    global.URL.revokeObjectURL = mockRevokeObjectURL;
+    // ⚠ vitest 4 の `vi.fn()` の戻り型はコンストラクタ型を含むため、関数型の
+    //   プロパティへそのままは代入できない（他の DOM モックと同じ形にそろえる）
+    global.URL.createObjectURL =
+      mockCreateObjectURL as unknown as typeof URL.createObjectURL;
+    global.URL.revokeObjectURL =
+      mockRevokeObjectURL as unknown as typeof URL.revokeObjectURL;
 
     // Mock Blob
-    global.Blob = vi.fn((content, options) => ({
-      content,
-      options
-    })) as unknown as typeof Blob;
+    // ⚠ vitest 4 以降、`new` 付きで呼ばれたモックはコンストラクタとして実行される。
+    //   アロー関数はコンストラクタになれないため function 宣言で書く
+    global.Blob = vi.fn(function (content, options) {
+      return { content, options };
+    }) as unknown as typeof Blob;
 
     // Mock Date for consistent filename
     vi.useFakeTimers();
