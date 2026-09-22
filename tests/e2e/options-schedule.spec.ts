@@ -93,12 +93,13 @@ test.describe('Options - Schedule Tab', () => {
     await nameInput.fill('Morning Focus');
 
     // 開始時刻を設定
+    // beforeEach の seed（Work Hours 09:00〜18:00・平日）と重ならない時間帯にする
     const startTime = modal.locator(SELECTORS.schedules.startTimeInput);
-    await startTime.fill('09:00');
+    await startTime.fill('19:00');
 
     // 終了時刻を設定
     const endTime = modal.locator(SELECTORS.schedules.endTimeInput);
-    await endTime.fill('12:00');
+    await endTime.fill('21:00');
 
     // 曜日を選択（月曜）
     // 曜日は checkbox ではなくトグルボタンなので click で切り替える
