@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
+import { getMessage } from '~/lib/i18n';
+import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
 import { getSettings, settingsItem } from '~/lib/storage';
 import { normalizeEndTime } from '~/lib/time';
 import type { AppSettings, Schedule } from '~/types/storage';
@@ -33,6 +35,7 @@ interface UseSchedulesReturn {
   editingSchedule: Schedule | null;
   scheduleForm: ScheduleFormData;
   setScheduleForm: (form: ScheduleFormData) => void;
+  scheduleError: string | null;
   handleSaveSchedule: () => Promise<void>;
   handleDeleteSchedule: (id: string) => Promise<void>;
   handleToggleSchedule: (id: string, enabled: boolean) => Promise<void>;
@@ -46,9 +49,16 @@ export function useSchedules({
 }: UseSchedulesOptions): UseSchedulesReturn {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-  const [scheduleForm, setScheduleForm] = useState<ScheduleFormData>(
+  const [scheduleForm, setScheduleFormState] = useState<ScheduleFormData>(
     DEFAULT_SCHEDULE_FORM
   );
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+
+  // 入力が変わった時点でエラーを消す。直した内容と古いエラーが並ばないようにする
+  const setScheduleForm = useCallback((form: ScheduleFormData) => {
+    setScheduleFormState(form);
+    setScheduleError(null);
+  }, []);
 
   const handleSaveSchedule = useCallback(async () => {
     if (!settings || !scheduleForm.name.trim()) return;
@@ -62,6 +72,17 @@ export function useSchedules({
       enabled: true,
       presetId: scheduleForm.presetId || undefined
     };
+
+    // 重なった時間帯はどのプリセットが効くか画面から分からないため、保存の時点で弾く
+    const overlapping = findOverlappingSchedule(
+      newSchedule,
+      settings.schedules,
+      editingSchedule?.id
+    );
+    if (overlapping) {
+      setScheduleError(getMessage('scheduleOverlapError'));
+      return;
+    }
 
     const updatedSchedules = editingSchedule
       ? settings.schedules.map((s) =>
@@ -80,7 +101,7 @@ export function useSchedules({
     setShowScheduleModal(false);
     setEditingSchedule(null);
     setScheduleForm(DEFAULT_SCHEDULE_FORM);
-  }, [settings, setSettings, scheduleForm, editingSchedule]);
+  }, [settings, setSettings, scheduleForm, setScheduleForm, editingSchedule]);
 
   const handleDeleteSchedule = useCallback(
     async (id: string) => {
@@ -120,23 +141,26 @@ export function useSchedules({
     [settings, setSettings]
   );
 
-  const openEditSchedule = useCallback((schedule: Schedule) => {
-    setEditingSchedule(schedule);
-    setScheduleForm({
-      name: schedule.name,
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
-      days: schedule.days,
-      presetId: schedule.presetId || ''
-    });
-    setShowScheduleModal(true);
-  }, []);
+  const openEditSchedule = useCallback(
+    (schedule: Schedule) => {
+      setEditingSchedule(schedule);
+      setScheduleForm({
+        name: schedule.name,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        days: schedule.days,
+        presetId: schedule.presetId || ''
+      });
+      setShowScheduleModal(true);
+    },
+    [setScheduleForm]
+  );
 
   const openAddSchedule = useCallback(() => {
     setEditingSchedule(null);
     setScheduleForm(DEFAULT_SCHEDULE_FORM);
     setShowScheduleModal(true);
-  }, []);
+  }, [setScheduleForm]);
 
   return {
     showScheduleModal,
@@ -144,6 +168,7 @@ export function useSchedules({
     editingSchedule,
     scheduleForm,
     setScheduleForm,
+    scheduleError,
     handleSaveSchedule,
     handleDeleteSchedule,
     handleToggleSchedule,

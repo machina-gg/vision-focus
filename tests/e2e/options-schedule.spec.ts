@@ -9,7 +9,9 @@ import {
   makeVision,
   makePreset,
   makeSettings,
-  SELECTORS
+  getStorageData,
+  SELECTORS,
+  UI_TEXT
 } from './helpers';
 
 /**
@@ -518,15 +520,7 @@ test.describe('Options - Schedule Tab', () => {
     await page.close();
   });
 
-  // 実装に重複の検証が無いため保留（#441 で判明）。
-  // useSchedules の handleSaveSchedule は既存のスケジュールと突き合わせずに
-  // 保存し、モーダルを閉じる。重複を伝える文言も messages.json に無い
-  // （ヘルプは「重複しないようにする」ことをユーザーの責任として書いている）。
-  // 従来は「エラーが出る or モーダルが開いたまま」の OR 判定で、保存直後の
-  // 一瞬だけモーダルが残っていることに依存して通っていた（報告された flaky の
-  // 構造的な説明）。重複を弾くのか許すのかは仕様の判断が要るため、
-  // 決まるまで実行しない。
-  test.fixme('OPT-S13: 重複スケジュール（同時刻・同曜日）が設定された場合にエラー表示', async ({
+  test('OPT-S13: 重複スケジュール（同時刻・同曜日）が設定された場合にエラー表示', async ({
     context,
     extensionId
   }) => {
@@ -562,25 +556,34 @@ test.describe('Options - Schedule Tab', () => {
     const nameInput = modal.locator(SELECTORS.schedules.scheduleNameInput);
     await nameInput.fill('Duplicate Schedule');
 
-    // 同じ時間帯を設定
+    // 既存（月曜 09:00-12:00）と重なる時間帯を設定
     const startTime = modal.locator(SELECTORS.schedules.startTimeInput);
-    await startTime.fill('09:00');
+    await startTime.fill('10:00');
     const endTime = modal.locator(SELECTORS.schedules.endTimeInput);
-    await endTime.fill('12:00');
+    await endTime.fill('13:00');
 
-    // 同じ曜日（月曜）を選択
+    // 既定の曜日（月〜金）から月曜だけを残す
     // 曜日は checkbox ではなくトグルボタンなので click で切り替える
-    const dayCheckboxes = modal.locator(SELECTORS.schedules.dayCheckbox);
-    await dayCheckboxes.nth(1).click();
+    const dayButtons = modal.locator(SELECTORS.schedules.dayCheckbox);
+    for (const day of [2, 3, 4, 5]) {
+      await dayButtons.nth(day).click();
+    }
+    await expect(dayButtons.nth(1)).toHaveAttribute('aria-pressed', 'true');
 
     // 保存ボタンをクリック
     const saveButton = modal.locator(SELECTORS.schedules.saveScheduleButton);
     await saveButton.click();
 
-    // 重複を伝えるエラーが表示され、モーダルは閉じない。
-    // ⚠ 実装されたら、ここの文言は messages.json の実際のキーに差し替える
-    await expect(modal.locator('text=/重複|Overlap|Conflict/i')).toBeVisible();
+    // 重複を伝えるエラーが表示され、モーダルは閉じない
+    const error = modal.locator(SELECTORS.schedules.scheduleError);
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText(UI_TEXT.schedules.overlapError);
     await expect(modal).toBeVisible();
+
+    // 保存されていない（既存の 1 件のまま）
+    const settings = await getStorageData(page, 'settings');
+    expect(settings?.schedules).toHaveLength(1);
+    expect(settings?.schedules[0].id).toBe('schedule1');
 
     await page.close();
   });

@@ -260,6 +260,32 @@ describe('ScheduleModal', () => {
     });
   });
 
+  describe('エラー表示', () => {
+    it('エラーが無いときは何も出さない', () => {
+      renderModal();
+
+      expect(screen.queryByTestId('schedule-error')).toBeNull();
+    });
+
+    it('エラーを渡すと文言を出す', () => {
+      renderModal({ error: '既存のスケジュールと重複しています。' });
+
+      expect(screen.getByTestId('schedule-error')).toHaveTextContent(
+        '既存のスケジュールと重複しています。'
+      );
+    });
+
+    it('エラーがあっても保存ボタンは押せる（直してから再度保存できる）', () => {
+      const { onSave } = renderModal({ error: '重複' });
+
+      const save = screen.getByTestId('schedule-save-button');
+      expect(save).not.toBeDisabled();
+
+      fireEvent.click(save);
+      expect(onSave).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('保存', () => {
     it('名前が入っていれば保存できる', () => {
       const { onSave } = renderModal();

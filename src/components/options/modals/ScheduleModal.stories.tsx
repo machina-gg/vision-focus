@@ -80,6 +80,20 @@ export const EditExisting: Story = {
   }
 };
 
+// 重複などで保存できなかった状態（エラー表示あり）
+export const WithError: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    editingSchedule: null,
+    scheduleForm: filledForm,
+    onFormChange: () => {},
+    onSave: () => {},
+    vision: mockVision,
+    error: '既存のスケジュールと重複しています。'
+  }
+};
+
 // 適用できるプリセットが無い状態
 export const NoPresets: Story = {
   args: {

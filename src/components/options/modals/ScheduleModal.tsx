@@ -15,6 +15,8 @@ interface ScheduleModalProps {
   onFormChange: (form: ScheduleFormData) => void;
   onSave: () => void;
   vision: VisionSettings | undefined;
+  /** 保存できなかった理由（重複など）。入力を変えると親が消す */
+  error?: string | null;
 }
 
 export function ScheduleModal({
@@ -24,7 +26,8 @@ export function ScheduleModal({
   scheduleForm,
   onFormChange,
   onSave,
-  vision
+  vision,
+  error
 }: ScheduleModalProps) {
   const toggleDay = (day: number) => {
     const newDays = scheduleForm.days.includes(day)
@@ -137,6 +140,12 @@ export function ScheduleModal({
             {getMessage('schedulePresetDescription')}
           </p>
         </div>
+
+        {error && (
+          <p className="text-sm text-danger-600" data-testid="schedule-error">
+            {error}
+          </p>
+        )}
 
         <div className="flex justify-end gap-2 pt-4">
           <Button

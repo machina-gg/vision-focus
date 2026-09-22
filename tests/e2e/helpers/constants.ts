@@ -179,6 +179,7 @@ export const SELECTORS = {
     presetSelect: '[data-testid="schedule-preset-select"]',
     saveScheduleButton: '[data-testid="schedule-save-button"]',
     cancelScheduleButton: '[data-testid="schedule-cancel-button"]',
+    scheduleError: '[data-testid="schedule-error"]',
     noSchedules: 'text=/スケジュールがありません|No schedules/i'
   },
 
@@ -260,6 +261,10 @@ export const UI_TEXT = {
     // 選択中のプリセットが適用済みなら Active の表示、未適用なら Apply ボタン
     activePreset: 'Active',
     applyPreset: 'Apply'
+  },
+  schedules: {
+    // 保存時に既存と時間帯が重なっていたときのエラー（scheduleOverlapError）
+    overlapError: 'This time range overlaps with an existing schedule.'
   },
   help: {
     // 「はじめに」に並ぶ手順の見出し（HelpGettingStarted）。

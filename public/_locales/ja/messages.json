@@ -189,6 +189,10 @@
     "message": "スケジュール名",
     "description": "スケジュール名ラベル"
   },
+  "scheduleOverlapError": {
+    "message": "既存のスケジュールと重複しています。",
+    "description": "スケジュール重複エラー"
+  },
   "startTime": {
     "message": "開始時刻",
     "description": "開始時刻ラベル"

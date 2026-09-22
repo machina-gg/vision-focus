@@ -189,6 +189,10 @@
     "message": "Schedule Name",
     "description": "Schedule name label"
   },
+  "scheduleOverlapError": {
+    "message": "This time range overlaps with an existing schedule.",
+    "description": "Schedule overlap error"
+  },
   "startTime": {
     "message": "Start Time",
     "description": "Start time label"
