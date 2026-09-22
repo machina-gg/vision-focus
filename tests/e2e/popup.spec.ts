@@ -2,14 +2,15 @@ import { test, expect } from './fixtures/extension';
 import {
   openPopup,
   openOptions,
+  openExternalSite,
   setupTestStorage,
   clearStorage,
   setStorageData,
   setSettings,
-  setSessionStorageData,
   getStorageData,
   SELECTORS,
-  TEST_DATA
+  TEST_DATA,
+  TEST_DOMAINS
 } from './helpers';
 
 /**
@@ -253,29 +254,33 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  // このテストは現在のハーネスでは成立しない。
-  // 実装は chrome.tabs.query({ active: true }) で現在のタブを判定するが、
-  // E2E では popup.html を「タブとして」開くため、popup 自身が
-  // アクティブタブになり、外部サイトのドメインを取得できない。
-  // 実際の拡張機能ではポップアップはタブではないため、この状況は起きない。
-  // ハーネス側でポップアップを非タブとして開けるようになったら有効化する。
-  test.fixme('POP-010: クイックブロックボタンに現在のドメインが表示される', async ({
+  test('POP-010: クイックブロックボタンに現在のドメインが表示される', async ({
     context,
     extensionId
   }) => {
     // 外部サイトを開いてからポップアップを開く
-    const externalPage = await context.newPage();
-    await externalPage.goto('https://example.com');
-    await externalPage.waitForLoadState('domcontentloaded');
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.example}`
+    );
+    const popupPage = await openPopup(context, extensionId);
 
-    const page = await openPopup(context, extensionId);
+    // ポップアップを開いた時点ではポップアップ自身がアクティブタブに
+    // なってしまうため、サイトのタブをアクティブに戻してから
+    // ポップアップを reload してドメイン取得をやり直させる
+    await sitePage.bringToFront();
+    await popupPage.reload();
+    await popupPage.waitForLoadState('domcontentloaded');
 
-    // QuickBlock の入力フィールドに example.com が自動入力される
-    const input = page.locator(SELECTORS.quickBlock.input);
-    await expect(input).toHaveValue('example.com');
+    // QuickBlock の入力フィールドに example.com が自動入力される。
+    // reload で拾えなくても 10 秒ポーリングで拾えるよう timeout を長めに取る
+    const input = popupPage.locator(SELECTORS.quickBlock.input);
+    await expect(input).toHaveValue(TEST_DOMAINS.example, {
+      timeout: 15_000
+    });
 
-    await page.close();
-    await externalPage.close();
+    await popupPage.close();
+    await sitePage.close();
   });
 
   test('POP-011: クイックブロッククリックでサイトがブロックリストに追加される', async ({
@@ -348,9 +353,7 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  // POP-010 と同じ理由（アクティブタブ依存）で現在のハーネスでは成立しない。
-  // 残り時間バッジは現在のタブのドメインに対して表示されるため。
-  test.fixme('POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される', async ({
+  test('POP-014: Time Limit 設定中のサイトで残り時間バッジが表示される', async ({
     context,
     extensionId
   }) => {
@@ -361,7 +364,7 @@ test.describe('Popup 画面', () => {
       blockList: [
         {
           id: '1',
-          domain: 'youtube.com',
+          domain: TEST_DOMAINS.example,
           isWildcard: false,
           createdAt: new Date().toISOString(),
           enabled: true,
@@ -383,34 +386,35 @@ test.describe('Popup 画面', () => {
       siteBlockCounts: {},
       siteUnblockCounts: {},
       timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
+        [TEST_DOMAINS.example]: {
+          domain: TEST_DOMAINS.example,
           dailyUsedSeconds: 1200, // 20分使用済み
           lastDailyReset: new Date().toISOString().split('T')[0]
         }
       }
     });
-
-    // 最後にブロックされたドメインとして youtube.com をセット
-    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
     await setupPage.close();
 
-    // YouTube タブを開いてからポップアップを開く（実際のシナリオを再現）
-    const youtubePage = await context.newPage();
-    await youtubePage.goto('https://youtube.com');
+    // 外部サイトを開いてからポップアップを開く
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.example}`
+    );
+    const popupPage = await openPopup(context, extensionId);
 
-    const page = await openPopup(context, extensionId);
+    // サイトのタブをアクティブに戻してからポップアップを reload し、
+    // ドメイン取得をやり直させる
+    await sitePage.bringToFront();
+    await popupPage.reload();
+    await popupPage.waitForLoadState('domcontentloaded');
 
-    // Time Limit バッジが表示される
-    const timeLimitBadge = page
-      .locator('span.inline-flex.items-center.gap-1')
-      .filter({ hasText: /残り|Remaining/i });
-    await expect(timeLimitBadge).toBeVisible();
+    // Time Limit バッジが表示される。
+    // reload で拾えなくても 10 秒ポーリングで拾えるよう timeout を長めに取る
+    await expect(
+      popupPage.locator('[data-testid="time-limit-badge"]')
+    ).toBeVisible({ timeout: 15_000 });
 
-    // 残り時間が約10分であることを確認（柔軟な正規表現）
-    await expect(timeLimitBadge).toContainText(/10m|10分|10 min/i);
-
-    await page.close();
-    await youtubePage.close();
+    await popupPage.close();
+    await sitePage.close();
   });
 });

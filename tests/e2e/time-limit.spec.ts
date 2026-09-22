@@ -77,8 +77,9 @@ test.describe('TimeLimit - Time Limit 機能', () => {
   // 通さず、ルールの再計算もしていなかったため「ブロックされない」が
   // 常に成立していた。同じ観点は TL-009 で実際の経路を通して検証している。
 
-  test.fixme('TL-006: 残り時間がポップアップで表示される', async ({
-    context
+  test('TL-006: 残り時間がポップアップで表示される', async ({
+    context,
+    extensionId
   }) => {
     await setupStorageViaSW(context, {
       settings: makeSettings({
@@ -100,11 +101,27 @@ test.describe('TimeLimit - Time Limit 機能', () => {
       })
     });
 
-    const popupPage = await openPopup(context, '');
+    // 外部サイトを開いてからポップアップを開く
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.example}`
+    );
+    const popupPage = await openPopup(context, extensionId);
+
+    // ポップアップを開いた時点ではポップアップ自身がアクティブタブに
+    // なってしまうため、サイトのタブをアクティブに戻してから
+    // ポップアップを reload してドメイン取得をやり直させる
+    await sitePage.bringToFront();
+    await popupPage.reload();
+    await popupPage.waitForLoadState('domcontentloaded');
+
+    // reload で拾えなくても 10 秒ポーリングで拾えるよう timeout を長めに取る
     await expect(
       popupPage.locator('[data-testid="time-limit-badge"]')
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
+
     await popupPage.close();
+    await sitePage.close();
   });
 
   test('TL-007: Time Limit の残り時間がブロックリストに表示される', async ({
