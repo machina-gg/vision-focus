@@ -5,6 +5,13 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+    # ラベルの付与・削除で CI を再実行できるようにするため labeled / unlabeled を入れる（#481）。
+    # ⚠ .github/workflows/claude-review.yml は同じ 2 つを意図的に除いている（ラベル操作で
+    #   LLM レビューまで再走させないため）。両者の差は入れ忘れでも消し忘れでもなく、
+    #   「CI は安全に再実行できる／レビューは再走させない」という意図の違いである。
+    # 既定のタイプ（opened / synchronize / reopened）は types を書いた時点で自動では付かないため必ず併記する。
+    # edited は入れない（本文の編集で CI を再走させる必要はない）。
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 jobs:
   # 並列実行: Lint チェック
