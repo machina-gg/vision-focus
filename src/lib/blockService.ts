@@ -15,7 +15,7 @@ import type { BlockRule, SiteKey, TrackedSites } from '~/types/site';
 export type { BlockReason, BlockState } from '~/lib/blockRule';
 
 /** evaluateBlock が見るブロック設定 */
-export type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
+type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
 
 /** 1 件の登録（ブロック設定を持つ追跡中のサイト）の判定結果 */
 export interface SiteBlockStatus {

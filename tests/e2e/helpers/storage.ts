@@ -50,15 +50,6 @@ export async function setSessionStorageData<
   );
 }
 
-export async function getSessionStorageData<
-  K extends keyof SessionStorageSchema
->(page: Page, key: K): Promise<SessionStorageSchema[K] | null> {
-  return await page.evaluate(async (key) => {
-    const result = await chrome.storage.session.get(key);
-    return (result[key] ?? null) as SessionStorageSchema[K] | null;
-  }, key);
-}
-
 export async function getStorageData<K extends LocalStorageKey>(
   page: Page,
   key: K
@@ -97,19 +88,6 @@ export async function setStorageDataFromExtension<K extends LocalStorageKey>(
   await page.waitForLoadState('domcontentloaded');
   await setStorageData(page, key, value);
   await page.close();
-}
-
-export async function getStorageDataFromExtension<K extends LocalStorageKey>(
-  context: BrowserContext,
-  extensionId: string,
-  key: K
-): Promise<StorageSchema[K] | null> {
-  const page = await context.newPage();
-  await page.goto(`chrome-extension://${extensionId}/options.html`);
-  await page.waitForLoadState('domcontentloaded');
-  const result = await getStorageData(page, key);
-  await page.close();
-  return result;
 }
 
 export function makeDisplaySettings(
