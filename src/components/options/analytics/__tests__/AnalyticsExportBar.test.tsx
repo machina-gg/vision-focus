@@ -10,8 +10,7 @@ import {
 } from '~/constants/intervals';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import { DEFAULT_SETTINGS } from '~/types/storage';
-import type { AppSettings, BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
 /**
  * AnalyticsExportBar の表示分岐とコールバックの検査
@@ -56,19 +55,14 @@ vi.mock('~/components/features', () => ({
   AnalyticsChart: () => <div data-testid="analytics-chart" />
 }));
 
-const blockItem = (domain: string): BlockItem => ({
-  id: domain,
-  domain,
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled: true,
-  timeLimit: null
-});
-
-const settingsWithBlockList = (domains: string[]): AppSettings => ({
-  ...DEFAULT_SETTINGS,
-  blockList: domains.map(blockItem)
-});
+const blockListOf = (domains: string[]): BlockListRow[] =>
+  domains.map((domain) => ({
+    id: domain,
+    domain,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    enabled: true,
+    timeLimit: null
+  }));
 
 const row = (values: Partial<DailySiteActivity>): DailySiteActivity => ({
   seconds: 0,
@@ -90,7 +84,7 @@ function renderBar(
   const onReset = vi.fn();
   const result = render(
     <AnalyticsExportBar
-      settings={null}
+      blockRows={[]}
       activity={{}}
       sites={[]}
       onRefresh={onRefresh}
@@ -132,7 +126,7 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('ブロックリストだけでも書き出しボタンは押せる', () => {
-      renderBar({ settings: settingsWithBlockList(['example.com']) });
+      renderBar({ blockRows: blockListOf(['example.com']) });
 
       expect(screen.getByTestId('analytics-export-button')).toBeEnabled();
     });
@@ -156,7 +150,7 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('ブロックリストが空配列ならデータ無しとして扱う', () => {
-      renderBar({ settings: settingsWithBlockList([]) });
+      renderBar({ blockRows: blockListOf([]) });
 
       expect(screen.getByTestId('analytics-export-button')).toBeDisabled();
     });
@@ -164,7 +158,7 @@ describe('AnalyticsExportBar', () => {
 
   describe('書き出しメニュー', () => {
     it('データを持たない項目は押せない', () => {
-      renderBar({ settings: settingsWithBlockList(['example.com']) });
+      renderBar({ blockRows: blockListOf(['example.com']) });
 
       openExportMenu();
 
@@ -177,20 +171,18 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('ブロックリストを書き出すと一覧が渡り、利用実績を記録する', () => {
-      const settings = settingsWithBlockList(['example.com']);
-      renderBar({ settings });
+      const blockRows = blockListOf(['example.com']);
+      renderBar({ blockRows });
 
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-blocklist'));
 
-      expect(exportLib.exportBlockList).toHaveBeenCalledWith(
-        settings.blockList
-      );
+      expect(exportLib.exportBlockList).toHaveBeenCalledWith(blockRows);
       expect(analytics.trackFeatureUse).toHaveBeenCalledWith('csv_export');
     });
 
     it('書き出すとメニューは閉じる', () => {
-      renderBar({ settings: settingsWithBlockList(['example.com']) });
+      renderBar({ blockRows: blockListOf(['example.com']) });
 
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-blocklist'));
@@ -239,7 +231,7 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('もう一度押すとメニューは閉じる', () => {
-      renderBar({ settings: settingsWithBlockList(['example.com']) });
+      renderBar({ blockRows: blockListOf(['example.com']) });
 
       openExportMenu();
       openExportMenu();

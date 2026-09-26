@@ -5,7 +5,7 @@
  * DOM にも chrome API にも触れない純粋関数なので、単体テストで固定できる。
  */
 
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeFeatures } from '~/types/site';
 import { getMessage } from '~/lib/i18n';
 
 // CSS selectors for YouTube elements
@@ -37,14 +37,16 @@ export const YOUTUBE_SELECTORS = {
 } as const;
 
 /**
- * 現在の設定から非表示用の CSS を生成する
+ * youtube.com の YouTube 機能から非表示用の CSS を生成する（null = 機能を使わない）
  *
- * ⚠ `blockAccess` は見ない。アクセスブロックに 1 日の制限を併用していると
- * 上限までは YouTube を開けるため、ブロック ON でも非表示は効いている必要がある
- * （リダイレクトされるページでは CSS が効く前に遷移するので害は無い。#422）
+ * ⚠ アクセスブロック（youtube.com の `block`）は見ない。アクセスブロックに 1 日の制限を
+ * 併用していると上限までは YouTube を開けるため、ブロック ON でも非表示は効いている必要がある
+ * （リダイレクトされるページでは CSS が効く前に遷移するので害は無い）
  */
-export function generateYouTubeHideCSS(settings: YouTubeSettings): string {
-  if (!settings.enabled) {
+export function generateYouTubeHideCSS(
+  settings: YouTubeFeatures | null
+): string {
+  if (!settings) {
     return '';
   }
 

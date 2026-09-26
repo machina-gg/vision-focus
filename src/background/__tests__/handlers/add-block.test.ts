@@ -1,12 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
+import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn(),
-  getUnblockHistory: vi.fn(),
-  setUnblockHistory: vi.fn()
+vi.mock('~/lib/siteService', () => ({
+  addBlock: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
@@ -14,183 +12,82 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import {
-  getSettings,
-  setSettings,
-  getUnblockHistory,
-  setUnblockHistory
-} from '~/lib/storage';
+import { addBlock } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { addBlockHandler as handler } from '../../handlers/add-block';
-import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 interface Response {
   success: boolean;
   error?: string;
 }
 
+stubI18nWithSubstitutions();
+
 describe('add-block ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSettings).mockResolvedValue({
-      ...DEFAULT_SETTINGS,
-      blockList: []
-    });
-    vi.mocked(getUnblockHistory).mockResolvedValue({
-      ...DEFAULT_UNBLOCK_HISTORY,
-      sites: {}
+    vi.mocked(addBlock).mockResolvedValue({
+      site: 'example.com',
+      rejection: null
     });
   });
 
-  describe('入力検証', () => {
-    it('domain が空なら失敗する', async () => {
-      const result = await invoke<Response>(handler, { domain: '' });
+  it('domain が空なら失敗し、追跡中のサイトを変えない', async () => {
+    const result = await invoke<Response>(handler, { domain: '' });
 
-      expect(result).toEqual({
-        success: false,
-        error: 'Domain is required'
-      });
-      expect(setSettings).not.toHaveBeenCalled();
-    });
-
-    it('不正なドメイン形式なら失敗する', async () => {
-      const result = await invoke<Response>(handler, {
-        domain: 'not a valid domain!!'
-      });
-
-      expect(result?.success).toBe(false);
-      expect(result?.error).toBe('Invalid domain format');
-      expect(setSettings).not.toHaveBeenCalled();
-    });
-
-    it('既に登録済みのドメインなら失敗する', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [
-          {
-            id: 'existing',
-            domain: 'example.com',
-            isWildcard: false,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            enabled: true
-          }
-        ]
-      });
-
-      const result = await invoke<Response>(handler, {
-        domain: 'example.com'
-      });
-
-      expect(result?.success).toBe(false);
-      expect(result?.error).toBe('Domain already in block list');
-      expect(setSettings).not.toHaveBeenCalled();
-    });
-
-    it('重複判定は大文字小文字を区別しない', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [
-          {
-            id: 'existing',
-            domain: 'example.com',
-            isWildcard: false,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            enabled: true
-          }
-        ]
-      });
-
-      const result = await invoke<Response>(handler, {
-        domain: 'EXAMPLE.COM'
-      });
-
-      expect(result?.error).toBe('Domain already in block list');
-    });
+    expect(result).toEqual({ success: false, error: 'Domain is required' });
+    expect(addBlock).not.toHaveBeenCalled();
   });
 
-  describe('追加成功時', () => {
-    it('ブロックリストに追加して成功を返す', async () => {
-      const result = await invoke<Response>(handler, {
-        domain: 'example.com'
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          blockList: [
-            expect.objectContaining({
-              domain: 'example.com',
-              isWildcard: false,
-              enabled: true
-            })
-          ]
-        })
-      );
+  it('入力をそのまま追跡中のサイトへの追加に渡し、ルールを作り直して既存タブをブロックする', async () => {
+    const result = await invoke<Response>(handler, {
+      domain: 'https://www.example.com/'
     });
 
-    it('ワイルドカード指定を解釈する', async () => {
-      await invoke(handler, { domain: '*.example.com' });
-
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          blockList: [expect.objectContaining({ isWildcard: true })]
-        })
-      );
-    });
-
-    it('ブロックルールを更新し既存タブをブロックする', async () => {
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(updateBlockRules).toHaveBeenCalledOnce();
-      expect(blockExistingTabs).toHaveBeenCalledOnce();
-    });
-
-    it('新規ドメインの追跡履歴を作成する', async () => {
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              domain: 'example.com',
-              status: 'blocked',
-              unblockedAt: null,
-              timeAfterUnblock: 0
-            })
-          })
-        })
-      );
-    });
-
-    it('再ブロック時は既存の履歴を blocked に戻し計測をリセットする', async () => {
-      vi.mocked(getUnblockHistory).mockResolvedValue({
-        ...DEFAULT_UNBLOCK_HISTORY,
-        sites: {
-          'example.com': {
-            domain: 'example.com',
-            status: 'unblocked',
-            blockedAt: '2026-01-01T00:00:00.000Z',
-            unblockedAt: '2026-01-02T00:00:00.000Z',
-            timeAfterUnblock: 3600,
-            lastActivity: '2026-01-02T01:00:00.000Z'
-          }
-        }
-      });
-
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              status: 'blocked',
-              unblockedAt: null,
-              timeAfterUnblock: 0,
-              lastActivity: null
-            })
-          })
-        })
-      );
-    });
+    expect(result).toEqual({ success: true });
+    expect(addBlock).toHaveBeenCalledWith(
+      'https://www.example.com/',
+      expect.any(Date)
+    );
+    expect(updateBlockRules).toHaveBeenCalledOnce();
+    expect(blockExistingTabs).toHaveBeenCalledOnce();
   });
+
+  it.each([
+    ['形式の誤り', { reason: 'invalid' as const }, 'Invalid domain format'],
+    [
+      '既にブロックリストにある',
+      { reason: 'duplicate' as const },
+      'Domain already in block list'
+    ],
+    [
+      '追跡中のサイトのサブドメイン',
+      {
+        reason: 'nested' as const,
+        nested: { site: 'youtube.com', relation: 'ancestor' as const }
+      },
+      'siteErrorInsideTrackedSite(m.youtube.com,youtube.com)'
+    ],
+    [
+      '追跡中のサイトの親ドメイン',
+      {
+        reason: 'nested' as const,
+        nested: { site: 'mail.google.com', relation: 'descendant' as const }
+      },
+      'siteErrorContainsTrackedSite(m.youtube.com,mail.google.com)'
+    ]
+  ])(
+    '%s なら理由を返し、ルールを作り直さない',
+    async (_label, rejection, error) => {
+      vi.mocked(addBlock).mockResolvedValue({ site: null, rejection });
+
+      const result = await invoke<Response>(handler, {
+        domain: 'm.youtube.com'
+      });
+
+      expect(result).toEqual({ success: false, error });
+      expect(updateBlockRules).not.toHaveBeenCalled();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    }
+  );
 });

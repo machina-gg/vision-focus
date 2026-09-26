@@ -31,48 +31,57 @@ const TimeLimitSchema = z.object({
 });
 
 export const UpdateTimeLimitBodySchema = z.object({
-  id: z.string().min(1),
+  domain: z.string().min(1),
   timeLimit: TimeLimitSchema.nullable()
 });
 
 export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 
-// Schema for YouTubeSettings validation (used in youtube.ts content script)
-// 非 strict な z.object なので、廃止したキーが保存済みデータに残っていても
-// parse は落ちずに無視される。そのため設定削除時の移行処理は持たない（#393）
-export const YouTubeSettingsSchema = z.object({
+// YouTube の節が扱う値（非表示機能とアクセスブロックをまとめた、画面の今の形）。
+// 保存形は youtube.com の追跡中のサイトで、変換は update-youtube-settings ハンドラが行う
+export const YouTubeSectionValueSchema = z.object({
   enabled: z.boolean(),
-  blockAccess: z.boolean().optional().default(false),
+  blockAccess: z.boolean(),
   hideShorts: z.boolean(),
   hideRecommendations: z.boolean(),
   hideComments: z.boolean(),
   hideHomeFeed: z.boolean(),
-  timeLimit: TimeLimitSchema.nullable().optional()
+  timeLimit: TimeLimitSchema.nullable()
 });
 
 // Schema for update-youtube-settings message handler
 // YouTube 設定は background 経由で保存する（保存と同時に既存タブのブロックを行うため）
 export const UpdateYouTubeSettingsBodySchema = z.object({
-  youtube: YouTubeSettingsSchema
+  youtube: YouTubeSectionValueSchema
 });
 
 export type UpdateYouTubeSettingsBody = z.infer<
   typeof UpdateYouTubeSettingsBodySchema
 >;
 
+// 追跡中のサイトの保存形（設定ファイルの取り込みとインポートのメッセージで検証に使う）
+export const BlockRuleSchema = z.object({
+  enabled: z.boolean(),
+  addedAt: z.string(),
+  timeLimit: TimeLimitSchema.nullable()
+});
+
+export const YouTubeFeaturesSchema = z.object({
+  hideShorts: z.boolean(),
+  hideRecommendations: z.boolean(),
+  hideComments: z.boolean(),
+  hideHomeFeed: z.boolean()
+});
+
+export const TrackedSiteSchema = z.object({
+  domain: z.string(),
+  trackedAt: z.string(),
+  block: BlockRuleSchema.nullable(),
+  youtube: YouTubeFeaturesSchema.nullable()
+});
+
 // Schemas for import-settings message handler
 // 設定のインポートは background 経由で保存する（保存と同時に既存タブのブロックを行うため）
-
-// 保存済みデータには enabled を持たない項目が残りうるため、欠けていれば有効として扱う
-// （設定ファイル側の検証（settingsExport.ts）と同じ既定値）
-const BlockItemSchema = z.object({
-  id: z.string(),
-  domain: z.string(),
-  isWildcard: z.boolean(),
-  createdAt: z.string(),
-  enabled: z.boolean().optional().default(true),
-  timeLimit: TimeLimitSchema.nullable().optional()
-});
 
 const ScheduleSchema = z.object({
   id: z.string(),
@@ -91,18 +100,26 @@ const NotificationSettingsSchema = z.object({
   timeLimitMinutes: z.literal([1, 3, 5, 10])
 });
 
-// 画面側が applyImportedSettings で組み立てた「適用後の設定」を受け取る。
-// ⚠ 未知のキーを残す z.looseObject を使う（AppSettings に項目が増えたとき、
+// 画面側が applyImportedSettings で組み立てた「適用後の設定」と、取り込む追跡中のサイトを受け取る。
+// ⚠ 設定は未知のキーを残す z.looseObject を使う（AppSettings に項目が増えたとき、
 //    検証の取りこぼしで保存から抜け落ちないようにするため）。
-// 検証するのはブロック判定に使う項目で、古い保存データで欠けていても受け付ける
+// 追跡中のサイトは既存とのマージ（入れ子の拒否を含む）を background が行う
 export const ImportSettingsBodySchema = z.object({
   settings: z.looseObject({
-    blockList: z.array(BlockItemSchema),
     schedules: z.array(ScheduleSchema),
-    paused: z.boolean().optional(),
-    notifications: NotificationSettingsSchema.optional(),
-    youtube: YouTubeSettingsSchema.optional()
-  })
+    paused: z.boolean(),
+    notifications: NotificationSettingsSchema
+  }),
+  sites: z.array(TrackedSiteSchema)
 });
 
 export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
+
+// サイトキー 1 つを宛先にするメッセージ（remove-block / stop-tracking）
+export const SiteBodySchema = z.object({
+  domain: z.string().min(1).max(253)
+});
+
+export const ToggleBlockBodySchema = SiteBodySchema.extend({
+  enabled: z.boolean()
+});

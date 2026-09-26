@@ -17,6 +17,8 @@ import {
 import type {
   AddBlockRequest,
   AddBlockResponse,
+  AddTrackedSiteRequest,
+  AddTrackedSiteResponse,
   GetRemainingTimeRequest,
   GetRemainingTimeResponse,
   ImportSettingsRequest,
@@ -24,6 +26,8 @@ import type {
   RemoveBlockRequest,
   RemoveBlockResponse,
   ResetActivityResponse,
+  StopTrackingRequest,
+  StopTrackingResponse,
   ToggleBlockRequest,
   ToggleBlockResponse,
   TogglePauseRequest,
@@ -44,10 +48,12 @@ import type {
  */
 export interface ProtocolMap {
   'add-block'(data: AddBlockRequest): AddBlockResponse;
+  'add-tracked-site'(data: AddTrackedSiteRequest): AddTrackedSiteResponse;
   'get-remaining-time'(data: GetRemainingTimeRequest): GetRemainingTimeResponse;
   'import-settings'(data: ImportSettingsRequest): ImportSettingsResponse;
   'remove-block'(data: RemoveBlockRequest): RemoveBlockResponse;
   'reset-activity'(): ResetActivityResponse;
+  'stop-tracking'(data: StopTrackingRequest): StopTrackingResponse;
   'toggle-block'(data: ToggleBlockRequest): ToggleBlockResponse;
   'toggle-pause'(data: TogglePauseRequest): TogglePauseResponse;
   'tracker-heartbeat'(data: TrackerHeartbeatRequest): TrackerHeartbeatResponse;

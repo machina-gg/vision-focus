@@ -2,7 +2,7 @@
  * Settings Export/Import utilities
  *
  * Exports and imports user settings including:
- * - Block list
+ * - Tracked sites（ブロック設定・時間制限・YouTube 機能を含む）
  * - Schedules
  * - Presets (with optional custom background images)
  *
@@ -11,10 +11,11 @@
 
 import * as z from 'zod';
 
+import { TrackedSiteSchema } from '~/types/messageSchemas';
+import type { TrackedSites } from '~/types/site';
 import type {
   AppSettings,
   VisionSettings,
-  BlockItem,
   Schedule,
   DashboardPreset,
   NotificationSettings,
@@ -22,12 +23,14 @@ import type {
 } from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
+  DEFAULT_SITES,
   DEFAULT_VISION,
   UNBLOCK_HOLD_SECONDS_OPTIONS
 } from '~/types/storage';
 
-// Export data version for future compatibility
-const EXPORT_VERSION = 1;
+// 形式の版。保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む
+// （旧い形式の読み替えは持たない）
+export const EXPORT_VERSION = 2;
 
 // Maximum file size for import (5MB)
 const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
@@ -42,7 +45,7 @@ export interface ExportedSettings {
   version: number;
   exportedAt: string;
   data: {
-    blockList: BlockItem[];
+    sites: TrackedSites;
     schedules: Schedule[];
     presets: DashboardPreset[];
     defaultDisplaySettings: VisionSettings['defaultSettings'];
@@ -82,20 +85,6 @@ const displaySettingsSchema = z.object({
   fontSettings: fontSettingsSchema
 });
 
-const timeLimitSchema = z.object({
-  type: z.literal('daily'),
-  limitSeconds: z.number()
-});
-
-const blockItemSchema = z.object({
-  id: z.string(),
-  domain: z.string(),
-  isWildcard: z.boolean(),
-  createdAt: z.string(),
-  enabled: z.boolean().optional().default(true),
-  timeLimit: timeLimitSchema.nullable().optional()
-});
-
 const scheduleSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -129,10 +118,10 @@ const unblockConfirmSettingsSchema = z.object({
 });
 
 const exportDataSchema = z.object({
-  version: z.number(),
+  version: z.number().int().min(EXPORT_VERSION),
   exportedAt: z.string(),
   data: z.object({
-    blockList: z.array(blockItemSchema),
+    sites: z.record(z.string(), TrackedSiteSchema),
     schedules: z.array(scheduleSchema),
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
@@ -170,13 +159,14 @@ function getDateString(): string {
  */
 export function exportSettings(
   settings: AppSettings,
-  vision: VisionSettings
+  vision: VisionSettings,
+  sites: TrackedSites
 ): { data: ExportedSettings; isLarge: boolean } {
   const exportData: ExportedSettings = {
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     data: {
-      blockList: settings.blockList,
+      sites,
       schedules: settings.schedules,
       presets: vision.presets,
       defaultDisplaySettings: vision.defaultSettings,
@@ -291,22 +281,14 @@ export function readFileAsString(file: File): Promise<string> {
 
 /**
  * Apply imported settings
- * Returns the new settings and vision objects
+ * Returns the new settings and vision objects.
+ * 追跡中のサイトのマージは background（import-settings ハンドラ）が行うので、ここでは扱わない
  */
 export function applyImportedSettings(
   data: ExportedSettings['data'],
   currentSettings: AppSettings,
   currentVision: VisionSettings
 ): { settings: AppSettings; vision: VisionSettings } {
-  // Merge block lists (avoid duplicates by domain)
-  const existingDomains = new Set(
-    currentSettings.blockList.map((b) => b.domain)
-  );
-  const newBlockItems = data.blockList.filter(
-    (b) => !existingDomains.has(b.domain)
-  );
-  const mergedBlockList = [...currentSettings.blockList, ...newBlockItems];
-
   // Merge schedules (avoid duplicates by id)
   const existingScheduleIds = new Set(
     currentSettings.schedules.map((s) => s.id)
@@ -323,7 +305,6 @@ export function applyImportedSettings(
 
   const newSettings: AppSettings = {
     ...currentSettings,
-    blockList: mergedBlockList,
     schedules: mergedSchedules,
     notifications: data.notifications,
     unblockConfirm: data.unblockConfirm
@@ -347,7 +328,7 @@ export function createDefaultExportData(): ExportedSettings {
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     data: {
-      blockList: DEFAULT_SETTINGS.blockList,
+      sites: DEFAULT_SITES,
       schedules: DEFAULT_SETTINGS.schedules,
       presets: DEFAULT_VISION.presets,
       defaultDisplaySettings: DEFAULT_VISION.defaultSettings,

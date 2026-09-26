@@ -10,10 +10,11 @@ import {
   clearStorageFromExtension,
   setStorageDataFromExtension,
   setSettingsFromExtension,
+  setSitesFromExtension,
   getStorageData,
   makeActivity,
-  makeSettings,
-  makeUnblockHistory
+  makeAppSettings,
+  makeSites
 } from './helpers/storage';
 import {
   getStorageViaSW,
@@ -53,17 +54,11 @@ test.describe('Analytics - アナリティクス機能', () => {
   }) => {
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
@@ -87,28 +82,17 @@ test.describe('Analytics - アナリティクス機能', () => {
     expect(await todayBlocks()).toBeGreaterThanOrEqual(3);
   });
 
-  test('AN-002: Unblock History（ブロック解除サイト）が記録される', async ({
+  test('AN-002: ブロックリストから外したサイトは追跡中に残る', async ({
     context,
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
-
-    // 解除履歴はドメインをキーにした sites に入る
-    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
-      sites: {}
-    });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
 
@@ -122,18 +106,14 @@ test.describe('Analytics - アナリティクス機能', () => {
       0
     );
 
-    // 解除したドメインが履歴に記録される
+    // 解除したサイトはブロック設定だけが外れ、追跡中のサイトに残る
     await expect
       .poll(async () => {
-        const history = (await getStorageData(
-          optionsPage,
-          'unblockHistory'
-        )) as {
-          sites?: Record<string, unknown>;
-        } | null;
-        return Object.keys(history?.sites ?? {});
+        const sites = await getStorageData(optionsPage, 'sites');
+        const site = sites?.[TEST_DOMAINS.example];
+        return site ? { tracked: true, block: site.block } : null;
       })
-      .toContain(TEST_DOMAINS.example);
+      .toEqual({ tracked: true, block: null });
 
     await optionsPage.close();
   });
@@ -145,13 +125,13 @@ test.describe('Analytics - アナリティクス機能', () => {
     // 既定のテスト時間では足りない
     test.setTimeout(90_000);
 
-    // 記録されるのは追跡中のサイト（解除履歴・ブロックリスト・YouTube 機能）だけ
+    // 記録されるのは追跡中のサイト（sites）だけ。ここでは追跡だけのサイトにする
     await setupStorageViaSW(context, {
-      settings: makeSettings({
+      settings: makeAppSettings({
         paused: false,
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       }),
-      unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
+      sites: makeSites([{ domain: TEST_DOMAINS.example }])
     });
 
     const externalPage = await openExternalSite(
@@ -182,11 +162,11 @@ test.describe('Analytics - アナリティクス機能', () => {
     test.setTimeout(90_000);
 
     await setupStorageViaSW(context, {
-      settings: makeSettings({
+      settings: makeAppSettings({
         paused: false,
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       }),
-      unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
+      sites: makeSites([{ domain: TEST_DOMAINS.example }])
     });
 
     // ホスト名は www. 付き。記録はホスト名ではなく追跡中のサイトキーに引き直される
@@ -255,20 +235,12 @@ test.describe('Analytics - アナリティクス機能', () => {
   // machina-gg/vision-focus#431 でテストを実装に合わせると決めた
   test('AN-006: Opt-Out でもブロック回数の集計は続く', async ({ context }) => {
     await setupStorageViaSW(context, {
-      settings: makeSettings({
+      settings: makeAppSettings({
         paused: false,
         // Opt-Out 状態
-        analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true
-          }
-        ]
-      })
+        analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
+      }),
+      sites: makeSites([{ domain: TEST_DOMAINS.example, block: {} }])
     });
     await triggerBlockRuleRecompute(context);
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
@@ -312,13 +284,10 @@ test.describe('Analytics - アナリティクス機能', () => {
       ])
     );
 
-    // 追跡中のサイトの一覧（解除履歴）はリセットしても残る
-    await setStorageDataFromExtension(
-      context,
-      extensionId,
-      'unblockHistory',
-      makeUnblockHistory([TEST_DOMAINS.reddit])
-    );
+    // 追跡中のサイトの一覧はリセットしても残る
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.reddit }
+    ]);
 
     // Options ページを開く
     const optionsPage = await openOptions(context, extensionId, 'analytics');
@@ -346,10 +315,9 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     // 追跡中のサイトの一覧は残る
     await expect
-      .poll(async () => {
-        const history = await getStorageData(optionsPage, 'unblockHistory');
-        return Object.keys(history?.sites ?? {});
-      })
+      .poll(async () =>
+        Object.keys((await getStorageData(optionsPage, 'sites')) ?? {})
+      )
       .toEqual([TEST_DOMAINS.reddit]);
 
     await optionsPage.close();
@@ -361,32 +329,21 @@ test.describe('Analytics - アナリティクス機能', () => {
   // 常に緑になっていた。キューイングを実装する場合はテストも作り直す。
 
   // `remove-block` ハンドラ（src/background/handlers/remove-block.ts）は
-  // analyticsOptIn を一切参照せず、解除履歴を無条件で記録する。
-  // Opt-Out が止めるのは GA4 への外部送信だけなので、解除履歴は残るのが正しい
+  // analyticsOptIn を一切参照せず、追跡を続けて解除を無条件で記録する。
+  // Opt-Out が止めるのは GA4 への外部送信だけなので、追跡と解除の記録は残るのが正しい
   // （machina-gg/vision-focus#431 の判断）
-  test('AN-010: Opt-Out でも解除履歴は記録される', async ({
+  test('AN-010: Opt-Out でも解除したサイトの追跡と解除の記録は残る', async ({
     context,
     extensionId
   }) => {
     // Opt-Out 状態
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
-      analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() },
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
-
-    // 解除履歴はドメインをキーにした sites に入る（entries という配列は無い）
-    await setStorageDataFromExtension(context, extensionId, 'unblockHistory', {
-      sites: {}
-    });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // Options ページでブロック解除する。
     // 解除ボタンは文言を持たず Trash2 アイコンだけなので testid で指す
@@ -401,13 +358,13 @@ test.describe('Analytics - アナリティクス機能', () => {
       0
     );
 
-    // 解除したドメインが履歴に残る（書き込みは非同期なので反映を待つ）
+    // 解除したサイトは追跡中に残る（書き込みは非同期なので反映を待つ）
     await expect
       .poll(async () => {
-        const history = await getStorageData(optionsPage, 'unblockHistory');
-        return Object.keys(history?.sites ?? {});
+        const sites = await getStorageData(optionsPage, 'sites');
+        return sites?.[TEST_DOMAINS.example]?.block ?? 'missing';
       })
-      .toEqual([TEST_DOMAINS.example]);
+      .toBeNull();
 
     // 解除の回数も事実の表に残る
     await expect

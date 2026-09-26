@@ -10,7 +10,10 @@ import {
   SettingsTab,
   HelpTab
 } from '~/components/options';
-import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
+import { SettingsProvider } from '~/contexts/SettingsContext';
+import { useStorageItem } from '~/hooks';
+import { selectBlockList, selectYouTubeSection } from '~/lib/siteSelectors';
+import { sitesItem } from '~/lib/storage';
 
 import '~/styles/globals.css';
 
@@ -29,7 +32,7 @@ interface OptionsDemoProps {
 
 function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
-  const { settings } = useSettings();
+  const [trackedSites] = useStorageItem(sitesItem);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -44,7 +47,8 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             onToggleDomain={() => {}}
             onUpdateTimeLimit={() => {}}
             activity={{}}
-            youtube={settings.youtube}
+            blockRows={selectBlockList(trackedSites)}
+            youtube={selectYouTubeSection(trackedSites)}
             onYouTubeChange={() => {}}
           />
         );

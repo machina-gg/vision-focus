@@ -4,35 +4,30 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { TrackedSitesSection } from '../TrackedSitesSection';
-import type { TrackedSite, UnblockHistory } from '~/types/analytics';
+import type { TrackedSiteListRow } from '~/lib/siteSelectors';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
  * TrackedSitesSection の件数集計と並び順の検査
  *
  * 追跡が 0 件のときにセクションごと消えること（見出しだけが残らないこと）と、
- * ブロック中が解除済みより先に来ること、同じ状態の中では最後の活動が新しい順に
+ * ブロック中が解除中より先に来ること、同じ状態の中では最近ブロックした順に
  * 並ぶことを見る。並びは textContent 上の位置で確かめ、段組みのクラス名は見ない。
  */
 
 // 追跡件数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
-const siteOf = (
+const rowOf = (
   domain: string,
-  status: TrackedSite['status'],
-  times: { blockedAt: string; lastActivity?: string | null }
-): TrackedSite => ({
+  isBlocked: boolean,
+  blockedAt: string | null = null
+): TrackedSiteListRow => ({
   domain,
-  status,
-  blockedAt: times.blockedAt,
-  unblockedAt: status === 'unblocked' ? times.blockedAt : null,
-  timeAfterUnblock: 0,
-  lastActivity: times.lastActivity ?? null
-});
-
-const historyOf = (sites: TrackedSite[]): UnblockHistory => ({
-  sites: Object.fromEntries(sites.map((site) => [site.domain, site]))
+  isBlocked,
+  blockedAt,
+  canReblock: blockedAt === null,
+  canStopTracking: blockedAt === null
 });
 
 /** textContent 上での出現位置（並び順の確認に使う） */
@@ -40,82 +35,38 @@ const positionOf = (container: HTMLElement, text: string) =>
   (container.textContent ?? '').indexOf(text);
 
 describe('TrackedSitesSection', () => {
-  describe('追跡が無いとき', () => {
-    it('セクションごと描画しない', () => {
-      const { container } = render(
-        <TrackedSitesSection unblockHistory={historyOf([])} />
-      );
+  it('追跡が無ければセクションごと描画しない', () => {
+    const { container } = render(<TrackedSitesSection rows={[]} />);
 
-      expect(container).toBeEmptyDOMElement();
-    });
+    expect(container).toBeEmptyDOMElement();
   });
 
   describe('件数', () => {
-    it('追跡中の総数を見出し脇に出す', () => {
+    it('追跡中の総数と、ブロック中・解除中の内訳を出す', () => {
       render(
         <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('a.example', 'blocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            }),
-            siteOf('b.example', 'unblocked', {
-              blockedAt: '2026-03-02T00:00:00.000Z'
-            })
-          ])}
+          rows={[
+            rowOf('a.example', true, '2026-03-01T00:00:00.000Z'),
+            rowOf('b.example', true, '2026-03-02T00:00:00.000Z'),
+            rowOf('c.example', false)
+          ]}
         />
       );
 
-      expect(screen.getByText('trackedSitesCount(2)')).toBeInTheDocument();
-    });
-
-    it('ブロック中と解除済みをそれぞれ数えて出す', () => {
-      render(
-        <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('a.example', 'blocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            }),
-            siteOf('b.example', 'blocked', {
-              blockedAt: '2026-03-02T00:00:00.000Z'
-            }),
-            siteOf('c.example', 'unblocked', {
-              blockedAt: '2026-03-03T00:00:00.000Z'
-            })
-          ])}
-        />
-      );
-
+      expect(screen.getByText('trackedSitesCount(3)')).toBeInTheDocument();
       expect(screen.getByText('statusBlocked: 2')).toBeInTheDocument();
       expect(screen.getByText('statusUnblocked: 1')).toBeInTheDocument();
-    });
-
-    it('すべて解除済みならブロック中は 0 と出す', () => {
-      render(
-        <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('a.example', 'unblocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            })
-          ])}
-        />
-      );
-
-      expect(screen.getByText('statusBlocked: 0')).toBeInTheDocument();
     });
   });
 
   describe('並び順', () => {
-    it('ブロック中を解除済みより先に並べる', () => {
+    it('ブロック中を解除中より先に並べる', () => {
       const { container } = render(
         <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('unblocked.example', 'unblocked', {
-              blockedAt: '2026-03-09T00:00:00.000Z'
-            }),
-            siteOf('blocked.example', 'blocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            })
-          ])}
+          rows={[
+            rowOf('unblocked.example', false),
+            rowOf('blocked.example', true, '2026-03-01T00:00:00.000Z')
+          ]}
         />
       );
 
@@ -124,19 +75,13 @@ describe('TrackedSitesSection', () => {
       );
     });
 
-    it('同じ状態の中では最後の活動が新しいものを先に並べる', () => {
+    it('同じ状態の中では最近ブロックしたものを先に並べる', () => {
       const { container } = render(
         <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('old.example', 'blocked', {
-              blockedAt: '2026-01-01T00:00:00.000Z',
-              lastActivity: '2026-03-01T00:00:00.000Z'
-            }),
-            siteOf('new.example', 'blocked', {
-              blockedAt: '2026-01-01T00:00:00.000Z',
-              lastActivity: '2026-03-09T00:00:00.000Z'
-            })
-          ])}
+          rows={[
+            rowOf('old.example', true, '2026-03-01T00:00:00.000Z'),
+            rowOf('new.example', true, '2026-03-05T00:00:00.000Z')
+          ]}
         />
       );
 
@@ -144,47 +89,21 @@ describe('TrackedSitesSection', () => {
         positionOf(container, 'old.example')
       );
     });
-
-    it('最後の活動が無いサイトはブロックした時刻で並べる', () => {
-      const { container } = render(
-        <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('older.example', 'blocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            }),
-            siteOf('newer.example', 'blocked', {
-              blockedAt: '2026-03-09T00:00:00.000Z'
-            })
-          ])}
-        />
-      );
-
-      expect(positionOf(container, 'newer.example')).toBeLessThan(
-        positionOf(container, 'older.example')
-      );
-    });
   });
 
-  describe('一覧', () => {
-    it('サイトごとに状態のラベルを出す', () => {
-      render(
-        <TrackedSitesSection
-          unblockHistory={historyOf([
-            siteOf('a.example', 'blocked', {
-              blockedAt: '2026-03-01T00:00:00.000Z'
-            }),
-            siteOf('b.example', 'unblocked', {
-              blockedAt: '2026-03-02T00:00:00.000Z'
-            })
-          ])}
-        />
-      );
+  it('サイトごとに状態のラベルを出す', () => {
+    render(
+      <TrackedSitesSection
+        rows={[
+          rowOf('a.example', true, '2026-03-01T00:00:00.000Z'),
+          rowOf('b.example', false)
+        ]}
+      />
+    );
 
-      // サマリー側は「statusBlocked: 1」なので、完全一致するのは一覧のラベルだけ
-      expect(screen.getAllByText('statusBlocked')).toHaveLength(1);
-      expect(screen.getAllByText('statusUnblocked')).toHaveLength(1);
-      expect(screen.getByText('a.example')).toBeInTheDocument();
-      expect(screen.getByText('b.example')).toBeInTheDocument();
-    });
+    expect(screen.getAllByText('statusBlocked')).toHaveLength(1);
+    expect(screen.getAllByText('statusUnblocked')).toHaveLength(1);
+    expect(screen.getByText('a.example')).toBeInTheDocument();
+    expect(screen.getByText('b.example')).toBeInTheDocument();
   });
 });

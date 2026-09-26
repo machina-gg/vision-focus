@@ -1,10 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import type { AppSettings } from '~/types/storage';
+import type { TrackedSites } from '~/types/site';
+import { blockedSite, sitesOf } from '~/test/sites';
 
-type WatchCallback = (
-  newValue: AppSettings | undefined,
-  oldValue?: AppSettings
+type WatchCallback<T> = (
+  newValue: T | undefined,
+  oldValue?: T
 ) => Promise<void>;
 
 /**
@@ -12,19 +14,21 @@ type WatchCallback = (
  * hoisted な共有スパイを使って呼び出し記録の同一性を保つ。
  */
 const mocks = vi.hoisted(() => ({
-  watch: vi.fn(),
+  watchSettings: vi.fn(),
+  watchSites: vi.fn(),
   updateBlockRules: vi.fn()
 }));
 
 vi.mock('~/lib/storage', () => ({
-  settingsItem: { watch: mocks.watch }
+  settingsItem: { watch: mocks.watchSettings },
+  sitesItem: { watch: mocks.watchSites }
 }));
 
 vi.mock('../../blocker', () => ({
   updateBlockRules: mocks.updateBlockRules
 }));
 
-import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
 
 async function load() {
   vi.resetModules();
@@ -34,19 +38,13 @@ async function load() {
   setupSettingsWatcher();
 
   return {
-    watch: mocks.watch,
-    watcher: mocks.watch.mock.calls[0][0] as WatchCallback,
+    settingsWatcher: mocks.watchSettings.mock
+      .calls[0][0] as WatchCallback<AppSettings>,
+    sitesWatcher: mocks.watchSites.mock
+      .calls[0][0] as WatchCallback<TrackedSites>,
     updateBlockRules: mocks.updateBlockRules
   };
 }
-
-const blockItem = (id: string, enabled: boolean) => ({
-  id,
-  domain: `${id}.com`,
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled
-});
 
 const settings = (overrides: Partial<AppSettings> = {}): AppSettings => ({
   ...DEFAULT_SETTINGS,
@@ -59,54 +57,57 @@ beforeEach(() => {
 });
 
 describe('setupSettingsWatcher', () => {
-  it('settings の変更を監視する', async () => {
-    const { watch } = await load();
+  it('全体の設定と追跡中のサイトの変更を監視する', async () => {
+    await load();
 
-    expect(watch).toHaveBeenCalledWith(expect.any(Function));
+    expect(mocks.watchSettings).toHaveBeenCalledWith(expect.any(Function));
+    expect(mocks.watchSites).toHaveBeenCalledWith(expect.any(Function));
   });
 
-  it('変更時にブロックルールを更新する', async () => {
-    const { watcher, updateBlockRules } = await load();
+  it('settings の変更時にブロックルールを更新する', async () => {
+    const { settingsWatcher, updateBlockRules } = await load();
 
-    await watcher(settings());
+    await settingsWatcher(settings({ paused: true }));
+
+    expect(updateBlockRules).toHaveBeenCalledOnce();
+  });
+
+  it('sites の変更時にブロックルールを更新する', async () => {
+    const { sitesWatcher, updateBlockRules } = await load();
+
+    await sitesWatcher(sitesOf(blockedSite('a.com')));
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
   it('newValue が無い場合は何もしない', async () => {
-    const { watcher, updateBlockRules } = await load();
+    const { settingsWatcher, sitesWatcher, updateBlockRules } = await load();
 
-    await watcher(undefined);
+    await settingsWatcher(undefined);
+    await sitesWatcher(undefined);
 
     expect(updateBlockRules).not.toHaveBeenCalled();
   });
 
   it('変更のたびにブロックルールを更新する（前回状態を持たない）', async () => {
-    const { watcher, updateBlockRules } = await load();
+    const { sitesWatcher, updateBlockRules } = await load();
 
-    await watcher(settings({ blockList: [blockItem('a', true)] }));
-    await watcher(settings({ blockList: [blockItem('a', false)] }));
+    await sitesWatcher(sitesOf(blockedSite('a.com')));
+    await sitesWatcher(sitesOf(blockedSite('a.com', { enabled: false })));
 
     expect(updateBlockRules).toHaveBeenCalledTimes(2);
   });
 
   it('ブロックを有効化する変更でも既存タブには手を出さない（各メッセージハンドラの担当）', async () => {
     // blocker のモックに blockExistingTabs を持たせていないため、
-    // watcher がこれを呼べばここで参照エラーになる（#392）
-    const { watcher, updateBlockRules } = await load();
+    // watcher がこれを呼べばここで参照エラーになる
+    const { settingsWatcher, sitesWatcher, updateBlockRules } = await load();
 
-    await watcher(
-      settings({
-        paused: false,
-        blockList: [blockItem('a', true)],
-        youtube: {
-          ...DEFAULT_YOUTUBE_SETTINGS,
-          enabled: true,
-          blockAccess: true
-        }
-      })
+    await settingsWatcher(settings({ paused: false }));
+    await sitesWatcher(
+      sitesOf(blockedSite('a.com'), blockedSite('youtube.com'))
     );
 
-    expect(updateBlockRules).toHaveBeenCalledOnce();
+    expect(updateBlockRules).toHaveBeenCalledTimes(2);
   });
 });

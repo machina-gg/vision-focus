@@ -10,13 +10,13 @@ import {
 } from '../useActivityStats';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import type { AppSettings, BlockItem, UnblockHistory } from '~/types/storage';
+import { DEFAULT_ACTIVITY, DEFAULT_SITES } from '~/types/storage';
 import {
-  DEFAULT_ACTIVITY,
-  DEFAULT_SETTINGS,
-  DEFAULT_UNBLOCK_HISTORY,
-  DEFAULT_YOUTUBE_SETTINGS
-} from '~/types/storage';
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 
 /**
  * 画面が activity から数値を出すときの組み立ての検査。
@@ -31,8 +31,7 @@ const storedValues = vi.hoisted(() => ({
 // 実物の項目は chrome.storage を読むため、キーで値を返すだけの形に差し替える
 vi.mock('~/lib/storage', () => ({
   activityItem: { key: 'local:activity' },
-  settingsItem: { key: 'local:settings' },
-  unblockHistoryItem: { key: 'local:unblockHistory' }
+  sitesItem: { key: 'local:sites' }
 }));
 
 vi.mock('../useStorageItem', () => ({
@@ -54,16 +53,6 @@ function daysBefore(n: number): string {
 
 function row(overrides: Partial<DailySiteActivity> = {}): DailySiteActivity {
   return { seconds: 0, blocks: 0, unblocks: 0, ...overrides };
-}
-
-function blockItem(domain: string): BlockItem {
-  return {
-    id: `id-${domain}`,
-    domain,
-    isWildcard: domain.startsWith('*.'),
-    createdAt: '2026-01-01T00:00:00.000Z',
-    enabled: true
-  };
 }
 
 describe('retentionRange', () => {
@@ -142,7 +131,7 @@ describe('blockedHostTotals', () => {
 });
 
 describe('blockCountsByDomain', () => {
-  it('項目の表記のまま引けるよう、キーは項目の domain で値は正規化したサイトの回数', () => {
+  it('キーは項目の domain（サイトキー）で、値は保持期間全体のブロック回数', () => {
     const log: ActivityLog = {
       [TODAY]: { 'example.com': row({ blocks: 1 }) },
       [daysBefore(10)]: { 'example.com': row({ blocks: 2 }) },
@@ -152,40 +141,25 @@ describe('blockCountsByDomain', () => {
     expect(
       blockCountsByDomain(
         log,
-        [blockItem('*.example.com'), blockItem('x.com')],
+        [{ domain: 'example.com' }, { domain: 'x.com' }],
         NOW
       )
-    ).toEqual({ '*.example.com': 3, 'x.com': 0 });
+    ).toEqual({ 'example.com': 3, 'x.com': 0 });
   });
 });
 
 describe('useActivitySources', () => {
-  it('保存値の activity と、設定・解除履歴から作った追跡中のサイトを返す', () => {
+  it('保存値の activity と、追跡中のサイトのキーを返す（ブロック設定の有無を問わない）', () => {
     const activity: ActivityLog = {
       [TODAY]: { 'x.com': row({ blocks: 1 }) }
     };
-    const settings: AppSettings = {
-      ...DEFAULT_SETTINGS,
-      blockList: [blockItem('www.x.com')],
-      youtube: { ...DEFAULT_YOUTUBE_SETTINGS, enabled: true }
-    };
-    const history: UnblockHistory = {
-      ...DEFAULT_UNBLOCK_HISTORY,
-      sites: {
-        'reddit.com': {
-          domain: 'reddit.com',
-          status: 'unblocked',
-          blockedAt: '2026-01-01T00:00:00.000Z',
-          unblockedAt: '2026-01-02T00:00:00.000Z',
-          timeAfterUnblock: 0,
-          lastActivity: null
-        }
-      }
-    };
     storedValues.values = {
       'local:activity': activity,
-      'local:settings': settings,
-      'local:unblockHistory': history
+      'local:sites': sitesOf(
+        blockedSite('x.com'),
+        trackedSite('reddit.com'),
+        trackedSite('youtube.com', { youtube: youtubeFeatures() })
+      )
     };
 
     const { result } = renderHook(() => useActivitySources());
@@ -201,8 +175,7 @@ describe('useActivitySources', () => {
   it('何も保存されていなければ activity は空で、追跡中のサイトも無い', () => {
     storedValues.values = {
       'local:activity': DEFAULT_ACTIVITY,
-      'local:settings': DEFAULT_SETTINGS,
-      'local:unblockHistory': DEFAULT_UNBLOCK_HISTORY
+      'local:sites': DEFAULT_SITES
     };
 
     const { result } = renderHook(() => useActivitySources());

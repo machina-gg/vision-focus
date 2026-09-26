@@ -7,14 +7,12 @@ import { invoke } from './helpers';
  * 消したかどうかは呼び出しの有無ではなく保存された値で見る
  */
 const store = vi.hoisted(() => ({
-  activity: undefined as unknown,
-  unblockHistory: undefined as unknown
+  activity: undefined as unknown
 }));
 
 vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  getUnblockHistory: vi.fn(async () => structuredClone(store.unblockHistory)),
-  setUnblockHistory: vi.fn(),
+  getSites: vi.fn(),
+  sitesItem: { setValue: vi.fn() },
   activityItem: {
     getValue: vi.fn(async () => structuredClone(store.activity ?? {})),
     setValue: vi.fn(async (value: unknown) => {
@@ -30,25 +28,11 @@ vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn()
 }));
 
-import { setUnblockHistory } from '~/lib/storage';
+import { sitesItem } from '~/lib/storage';
 import { updateBlockRules } from '../../blocker';
 import { resetActivityHandler as handler } from '../../handlers/reset-activity';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
-import type { UnblockHistory } from '~/types/storage';
-
-const history: UnblockHistory = {
-  sites: {
-    'example.com': {
-      domain: 'example.com',
-      status: 'unblocked',
-      blockedAt: '2026-01-01T00:00:00.000Z',
-      unblockedAt: '2026-01-02T00:00:00.000Z',
-      timeAfterUnblock: 0,
-      lastActivity: null
-    }
-  }
-};
 
 /** 今日と過去の日の行を用意する */
 function givenActivity() {
@@ -64,7 +48,6 @@ describe('reset-activity ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     store.activity = undefined;
-    store.unblockHistory = structuredClone(history);
   });
 
   it('今日の分も含めて事実をすべて消す', async () => {
@@ -84,13 +67,12 @@ describe('reset-activity ハンドラ', () => {
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  it('追跡中のサイトの一覧（解除履歴）は消さない', async () => {
+  it('追跡中のサイトの一覧は消さない', async () => {
     givenActivity();
 
     await invoke(handler, undefined);
 
-    expect(setUnblockHistory).not.toHaveBeenCalled();
-    expect(store.unblockHistory).toEqual(history);
+    expect(sitesItem.setValue).not.toHaveBeenCalled();
   });
 
   it('記録が無くても成功する', async () => {

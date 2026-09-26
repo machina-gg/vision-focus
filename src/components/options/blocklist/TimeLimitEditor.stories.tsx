@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
-const baseItem: BlockItem = {
+const baseItem: BlockListRow = {
   id: '1',
   domain: 'twitter.com',
-  isWildcard: false,
   createdAt: '2026-02-01T10:00:00Z',
   enabled: true,
   timeLimit: null

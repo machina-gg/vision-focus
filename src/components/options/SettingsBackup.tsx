@@ -21,7 +21,7 @@ import {
   validateImportedData,
   applyImportedSettings
 } from '~/lib/settingsExport';
-import { getSettings, getVision, setVision } from '~/lib/storage';
+import { getSettings, getSites, getVision, setVision } from '~/lib/storage';
 
 interface SettingsBackupProps {
   onSettingsChange?: () => void;
@@ -48,11 +48,12 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
     setExportWarning(null);
 
     try {
-      const [settings, vision] = await Promise.all([
+      const [settings, vision, sites] = await Promise.all([
         getSettings(),
-        getVision()
+        getVision(),
+        getSites()
       ]);
-      const { data, isLarge } = exportSettings(settings, vision);
+      const { data, isLarge } = exportSettings(settings, vision, sites);
 
       if (isLarge) {
         setExportWarning(getMessage('exportLargeWarning'));
@@ -105,8 +106,9 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         return;
       }
 
-      if (result.warnings) {
-        setImportWarnings(result.warnings.map((w) => getMessage(w)));
+      const warnings = (result.warnings ?? []).map((w) => getMessage(w));
+      if (warnings.length > 0) {
+        setImportWarnings(warnings);
       }
 
       // Apply imported settings
@@ -122,10 +124,11 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
       const { settings: newSettings, vision: newVision } =
         applyImportedSettings(result.data, currentSettings, currentVision);
 
-      // 設定の保存は background に任せる。保存とブロックルールの更新、開いている
-      // タブのブロックまでを一続きで処理させるため（#396）
+      // 設定と追跡中のサイトの保存は background に任せる。保存とブロックルールの更新、
+      // 開いているタブのブロックまでを一続きで処理させるため
       const response = await sendMessage('import-settings', {
-        settings: newSettings
+        settings: newSettings,
+        sites: Object.values(result.data.sites)
       });
 
       // 保存に失敗したときは成功表示を出さない（スタイルも書き換えない）
@@ -136,6 +139,14 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
 
       // スタイルはブロック判定に関わらないため、画面側から保存する
       await setVision(newVision);
+
+      // 既存のサイトと入れ子になって取り込まなかったサイトを警告に足す
+      const skipped = (response.skipped ?? []).map(({ domain, conflict }) =>
+        getMessage('importWarningNestedSite', [domain, conflict])
+      );
+      if (skipped.length > 0) {
+        setImportWarnings([...warnings, ...skipped]);
+      }
 
       setImportStatus('success');
       setImportMessage(getMessage('importSuccessWithMerge'));

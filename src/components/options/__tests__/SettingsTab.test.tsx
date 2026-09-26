@@ -8,7 +8,6 @@ import {
   DEFAULT_PASSWORD_SETTINGS,
   DEFAULT_SETTINGS,
   type AppSettings,
-  type BlockItem,
   type PasswordSettings
 } from '~/types/storage';
 
@@ -83,15 +82,6 @@ const handlers = () => ({
   onSettingsChange: vi.fn()
 });
 
-const blockItem = (timeLimit: BlockItem['timeLimit']): BlockItem => ({
-  id: '1',
-  domain: 'example.com',
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled: true,
-  timeLimit
-});
-
 beforeEach(() => {
   received.password = undefined;
   received.privacy = undefined;
@@ -120,11 +110,8 @@ describe('SettingsTab', () => {
   });
 
   describe('通知設定', () => {
-    it('時間制限つきのサイトが無くても出す', () => {
-      context.settings = {
-        ...DEFAULT_SETTINGS,
-        blockList: [blockItem(null)]
-      };
+    it('時間制限つきのサイトの有無にかかわらず出す（全体の設定だけを見る）', () => {
+      context.settings = { ...DEFAULT_SETTINGS };
 
       render(<SettingsTab {...handlers()} />);
 
@@ -132,17 +119,6 @@ describe('SettingsTab', () => {
       expect(
         screen.getByText('notificationSettingsDescription')
       ).toBeInTheDocument();
-    });
-
-    it('時間制限つきのサイトがあっても出す', () => {
-      context.settings = {
-        ...DEFAULT_SETTINGS,
-        blockList: [blockItem({ type: 'daily', limitSeconds: 1800 })]
-      };
-
-      render(<SettingsTab {...handlers()} />);
-
-      expect(screen.getByText('notificationSettings')).toBeInTheDocument();
     });
   });
 

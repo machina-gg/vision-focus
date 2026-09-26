@@ -15,19 +15,19 @@ import { Card, Toggle, Select, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeSectionValue } from '~/lib/siteSelectors';
 
 interface YouTubeSectionProps {
-  youtube: YouTubeSettings;
-  onYouTubeChange: (youtube: YouTubeSettings) => void;
+  youtube: YouTubeSectionValue;
+  onYouTubeChange: (youtube: YouTubeSectionValue) => void;
   /** ブロックを弱める操作を確認に回す。確認が通るまで設定は変えない */
   onRequestUnblock: (request: UnblockRequest) => void;
 }
 
 // OFF にするとブロックが弱まるトグル。ここに無いトグルは確認なしで切り替える
-const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSettings> = new Set([
+const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSectionValue> = new Set([
   'enabled',
   'blockAccess'
 ]);
@@ -105,7 +105,7 @@ export function YouTubeSection({
     (selectedType !== 'always' && minutes !== currentMinutes);
 
   const handleToggle = useCallback(
-    (key: keyof YouTubeSettings) => (checked: boolean) => {
+    (key: keyof YouTubeSectionValue) => (checked: boolean) => {
       if (!checked && UNBLOCK_GUARDED_KEYS.has(key)) {
         // トグルは制御コンポーネントなので、確認が通るまで onYouTubeChange を
         // 呼ばなければキャンセル時に元の表示のまま残る

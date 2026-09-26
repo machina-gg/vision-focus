@@ -8,12 +8,11 @@ import {
   secondsSinceUnblock,
   totalSecondsSinceUnblock
 } from '~/lib/activityStats';
-import { normalizeSiteKey } from '~/lib/siteKey';
 import { formatTime, toDateKey } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import type { ActivityLog, DateKey } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
-import type { UnblockHistory, UnblockedSite } from '~/types/storage';
+import type { TrackedSiteListRow } from '~/lib/siteSelectors';
 
 const DAYS_PER_WEEK = 7;
 const DAYS_PER_MONTH = 30;
@@ -40,8 +39,8 @@ function formatRelativeDate(date: DateKey, today: DateKey): string {
 /** 一覧の 1 行（追跡中のサイト 1 つ） */
 interface TrackedSiteRow {
   site: SiteKey;
-  /** 解除履歴の行。ブロック中かどうか・ブロック開始日・操作の宛先はここから取る */
-  entry: UnblockedSite | null;
+  /** 追跡中のサイトの設定から作った行。ブロック中かどうか・ブロック開始日・できる操作 */
+  entry: TrackedSiteListRow | null;
   isBlocked: boolean;
   unblockedOn: DateKey | null;
   secondsSinceUnblock: number;
@@ -52,8 +51,8 @@ interface AnalyticsSummaryProps {
   activity: ActivityLog;
   /** 母集団（追跡中のサイト）。一覧の行はこの集合 */
   sites: readonly SiteKey[];
-  /** ブロック中かどうか・ブロック開始日・再ブロックと追跡停止の宛先 */
-  unblockHistory: UnblockHistory;
+  /** ブロック中かどうか・ブロック開始日・再ブロックと追跡停止ができるか */
+  trackedSiteRows: TrackedSiteListRow[];
   onReblock: (domain: string) => void;
   onStopTracking: (domain: string) => void;
 }
@@ -61,27 +60,23 @@ interface AnalyticsSummaryProps {
 export function AnalyticsSummary({
   activity,
   sites,
-  unblockHistory,
+  trackedSiteRows,
   onReblock,
   onStopTracking
 }: AnalyticsSummaryProps) {
   const today = toDateKey(new Date());
 
   const allTrackedSites = useMemo(() => {
-    // 解除履歴のキーは登録時の表記のままなので、母集団と同じサイトキーに引き直して結ぶ
-    const entries = new Map<SiteKey, UnblockedSite>();
-    for (const entry of Object.values(unblockHistory.sites)) {
-      const key = normalizeSiteKey(entry.domain);
-      if (!entries.has(key)) entries.set(key, entry);
-    }
+    const entries = new Map<SiteKey, TrackedSiteListRow>(
+      trackedSiteRows.map((row) => [row.domain, row])
+    );
 
     const rows: TrackedSiteRow[] = sites.map((site) => {
       const entry = entries.get(site) ?? null;
       return {
         site,
         entry,
-        // 解除履歴に無いサイトはブロックリストか YouTube 機能から来ている（= ブロック中）
-        isBlocked: entry === null || entry.status === 'blocked',
+        isBlocked: entry?.isBlocked ?? false,
         unblockedOn: lastUnblockedOn(activity, site),
         secondsSinceUnblock: secondsSinceUnblock(activity, site, today)
       };
@@ -92,11 +87,11 @@ export function AnalyticsSummary({
       if (a.isBlocked !== b.isBlocked) return a.isBlocked ? -1 : 1;
       // 同じステータス内では最近ブロックしたものを先に
       const byBlockedAt =
-        (b.entry ? new Date(b.entry.blockedAt).getTime() : 0) -
-        (a.entry ? new Date(a.entry.blockedAt).getTime() : 0);
+        (b.entry?.blockedAt ? new Date(b.entry.blockedAt).getTime() : 0) -
+        (a.entry?.blockedAt ? new Date(a.entry.blockedAt).getTime() : 0);
       return byBlockedAt || a.site.localeCompare(b.site);
     });
-  }, [activity, sites, unblockHistory.sites, today]);
+  }, [activity, sites, trackedSiteRows, today]);
 
   // 解除済みサイトのリスト（浪費時間表示用）
   const unblockedSites = useMemo(() => {
@@ -213,7 +208,7 @@ function TrackedSiteItem({
               {getMessage(isBlocked ? 'statusBlocked' : 'statusUnblocked')}
             </span>
           </div>
-          {entry && (
+          {entry?.blockedAt && (
             <p className="text-sm text-gray-500 mt-1">
               {getMessage('blockedSince')}:{' '}
               {formatRelativeDate(toDateKey(new Date(entry.blockedAt)), today)}
@@ -237,29 +232,33 @@ function TrackedSiteItem({
           )}
         </div>
 
-        {/* アクションボタン（解除済みサイトのみ）。宛先は解除履歴に登録された表記 */}
-        {!isBlocked && entry && (
+        {/* アクションボタン（ブロック設定を持たないサイトのみ）。宛先はサイトキー */}
+        {!isBlocked && entry && (entry.canReblock || entry.canStopTracking) && (
           <div className="flex items-center gap-2">
-            <Button
-              data-testid="analytics-reblock-button"
-              variant="secondary"
-              size="sm"
-              onClick={() => onReblock(entry.domain)}
-              className="flex items-center gap-1.5"
-            >
-              <RefreshCw className="w-4 h-4" />
-              {getMessage('reblock')}
-            </Button>
-            <Button
-              data-testid="analytics-stop-tracking-button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onStopTracking(entry.domain)}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700"
-            >
-              <EyeOff className="w-4 h-4" />
-              {getMessage('stopTracking')}
-            </Button>
+            {entry.canReblock && (
+              <Button
+                data-testid="analytics-reblock-button"
+                variant="secondary"
+                size="sm"
+                onClick={() => onReblock(entry.domain)}
+                className="flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {getMessage('reblock')}
+              </Button>
+            )}
+            {entry.canStopTracking && (
+              <Button
+                data-testid="analytics-stop-tracking-button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onStopTracking(entry.domain)}
+                className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700"
+              >
+                <EyeOff className="w-4 h-4" />
+                {getMessage('stopTracking')}
+              </Button>
+            )}
           </div>
         )}
       </div>

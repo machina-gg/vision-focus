@@ -1,20 +1,20 @@
 import { MS_PER_DAY } from '~/constants/intervals';
-import { matchesDomain } from '~/lib/domain';
-import type { BlockItem } from '~/types/storage';
+import { resolveSiteKey } from '~/lib/siteKey';
+import type { TrackedSites } from '~/types/site';
 
-// 遮られたドメインが何日ブロックリストに載っているかを求める。
-// 項目の照合はブロッカーと同じ matchesDomain を使う（サブドメイン・ワイルドカードも同じ規則で拾う）
+// 遮られたホスト名が何日ブロックリストに載っているかを求める。
+// ホスト名は判定・記録と同じ `resolveSiteKey` で追跡中のサイトに引き直す
+// （www. / m. 付きのサブドメインも、ブロックを掛けたサイトの日数になる）
 export function calculateBlockingDays(
-  domain: string,
-  blockList: BlockItem[],
+  hostname: string,
+  sites: TrackedSites,
   now: Date = new Date()
 ): number | null {
-  const blockItem = blockList.find((item) => matchesDomain(domain, item));
+  const site = resolveSiteKey(hostname, Object.keys(sites));
+  const block = site === null ? null : sites[site].block;
+  if (!block) return null;
 
-  if (!blockItem?.createdAt) return null;
-
-  const createdDate = new Date(blockItem.createdAt);
-  const diffTime = now.getTime() - createdDate.getTime();
+  const diffTime = now.getTime() - new Date(block.addedAt).getTime();
   const diffDays = Math.floor(diffTime / MS_PER_DAY);
 
   return Math.max(1, diffDays);

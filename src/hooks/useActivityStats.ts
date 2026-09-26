@@ -8,13 +8,12 @@ import {
   type ActivityTotals,
   type TodaySummary
 } from '~/lib/activityStats';
-import { normalizeSiteKey, resolveSiteKey } from '~/lib/siteKey';
+import { resolveSiteKey } from '~/lib/siteKey';
 import { trackedSiteKeys } from '~/lib/siteService';
-import { activityItem, settingsItem, unblockHistoryItem } from '~/lib/storage';
+import { activityItem, sitesItem } from '~/lib/storage';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DateRange } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
-import type { BlockItem } from '~/types/storage';
 
 import { useStorageItem } from './useStorageItem';
 
@@ -69,18 +68,17 @@ export function blockedHostTotals(
   return siteTotals(activity, site, retentionRange(now));
 }
 
-/** ブロックリストの項目ごとの、保持期間全体のブロック回数（キーは項目の domain） */
+/** ブロックリストの項目ごとの、保持期間全体のブロック回数（キーは項目の domain = サイトキー） */
 export function blockCountsByDomain(
   activity: ActivityLog,
-  blockList: readonly BlockItem[],
+  blockRows: readonly { domain: SiteKey }[],
   now: Date
 ): Record<string, number> {
   const range = retentionRange(now);
   return Object.fromEntries(
-    blockList.map((item) => [
+    blockRows.map((item) => [
       item.domain,
-      // 項目の表記（`*.` / `www.` 付き）のままでは事実の行のキーと一致しない
-      siteTotals(activity, normalizeSiteKey(item.domain), range).blocks
+      siteTotals(activity, item.domain, range).blocks
     ])
   );
 }
@@ -91,11 +89,7 @@ export function blockCountsByDomain(
  */
 export function useActivitySources(): ActivitySources {
   const [activity] = useStorageItem(activityItem);
-  const [settings] = useStorageItem(settingsItem);
-  const [history] = useStorageItem(unblockHistoryItem);
-  const sites = useMemo(
-    () => trackedSiteKeys(settings, history),
-    [settings, history]
-  );
+  const [trackedSites] = useStorageItem(sitesItem);
+  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
   return { activity, sites };
 }

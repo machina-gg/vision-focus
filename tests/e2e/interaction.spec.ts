@@ -10,10 +10,11 @@ import {
 import {
   clearStorageFromExtension,
   makeActivity,
-  makeSettings,
-  makeUnblockHistory,
+  makeAppSettings,
+  makeSites,
   setStorageDataFromExtension,
   setSettingsFromExtension,
+  setSitesFromExtension,
   getStorageData
 } from './helpers/storage';
 import { TEST_DATA, TEST_DOMAINS, SELECTORS } from './helpers/constants';
@@ -35,21 +36,14 @@ test.describe('Interaction - 機能間相互作用', () => {
   }) => {
     // Pause 有効 + Time Limit 超過
     await setSettingsFromExtension(context, extensionId, {
-      paused: true, // Pause 有効
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true,
-          timeLimit: {
-            type: 'daily',
-            limitSeconds: 1
-          }
-        }
-      ]
+      paused: true // Pause 有効
     });
+    await setSitesFromExtension(context, extensionId, [
+      {
+        domain: TEST_DOMAINS.example,
+        block: { timeLimit: { type: 'daily', limitSeconds: 1 } }
+      }
+    ]);
 
     // 使用実績は activity の今日の行（サイトキーごとの表示秒数）に入る
     await setStorageDataFromExtension(
@@ -88,15 +82,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     // Pause 有効 + Schedule でブロック有効化時間帯
     await setSettingsFromExtension(context, extensionId, {
       paused: true, // Pause 有効
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ],
       schedules: [
         {
           id: 'schedule1',
@@ -108,6 +93,9 @@ test.describe('Interaction - 機能間相互作用', () => {
         }
       ]
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // 実装と同じ経路（check-schedule アラーム）で再計算させ、
     // Pause 中はルールが 1 件も作られないことを確かめる
@@ -134,17 +122,13 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
+    const sites = makeSites([
+      {
+        domain: TEST_DOMAINS.example,
+        block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+      }
+    ]);
     const settings = {
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true,
-          timeLimit: { type: 'daily' as const, limitSeconds: 60 }
-        }
-      ],
       schedules: [
         {
           id: 'schedule1',
@@ -159,7 +143,8 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     // 未超過（30秒 / 上限60秒）。スケジュールは有効時間帯
     await setupStorageViaSW(context, {
-      settings: makeSettings(settings),
+      settings: makeAppSettings(settings),
+      sites,
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 30 }]])
     });
     await triggerBlockRuleRecompute(context);
@@ -177,7 +162,8 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     // 超過させると、同じ設定でブロックされる
     await setupStorageViaSW(context, {
-      settings: makeSettings(settings),
+      settings: makeAppSettings(settings),
+      sites,
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
     });
     await triggerBlockRuleRecompute(context);
@@ -202,19 +188,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     // Pause 有効 + Time Limit 超過 + Schedule 有効
     await setSettingsFromExtension(context, extensionId, {
       paused: true, // Pause が最優先
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true,
-          timeLimit: {
-            type: 'daily',
-            limitSeconds: 1
-          }
-        }
-      ],
       schedules: [
         {
           id: 'schedule1',
@@ -226,6 +199,12 @@ test.describe('Interaction - 機能間相互作用', () => {
         }
       ]
     });
+    await setSitesFromExtension(context, extensionId, [
+      {
+        domain: TEST_DOMAINS.example,
+        block: { timeLimit: { type: 'daily', limitSeconds: 1 } }
+      }
+    ]);
 
     // 使用実績は activity の今日の行（サイトキーごとの表示秒数）に入る
     await setStorageDataFromExtension(
@@ -265,13 +244,12 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     await setupStorageViaSW(context, {
       // Opt-Out 状態
-      settings: makeSettings({
+      settings: makeAppSettings({
         paused: false,
         analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
       }),
-      // 追跡中のサイトだけが記録の対象になる（解除履歴の sites は
-      // ドメインをキーにしたレコードで、entries という配列は実装に無い）
-      unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
+      // 追跡中のサイトだけが記録の対象になる。ブロックリストから外した（追跡だけの）サイト
+      sites: makeSites([{ domain: TEST_DOMAINS.example }])
     });
 
     const externalPage = await openExternalSite(
@@ -343,17 +321,11 @@ test.describe('Interaction - 機能間相互作用', () => {
       password: {
         enabled: true,
         passwordHash: TEST_DATA.password.validHash
-      },
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      }
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // ブロック解除は Options のブロックリストで行う。
     // newtab には解除の UI が無い（src/entrypoints/newtab/ に解除の導線は無く、
@@ -384,13 +356,13 @@ test.describe('Interaction - 機能間相互作用', () => {
       0
     );
 
-    // 保存済みのブロックリストからも消える
+    // 保存済みのサイトからもブロック設定が消える（追跡は続く）
     await expect
       .poll(async () => {
-        const settings = await getStorageData(optionsPage, 'settings');
-        return settings?.blockList?.length;
+        const sites = await getStorageData(optionsPage, 'sites');
+        return sites?.[TEST_DOMAINS.example]?.block ?? 'missing';
       })
-      .toBe(0);
+      .toBeNull();
 
     await optionsPage.close();
   });

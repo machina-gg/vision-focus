@@ -2,9 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn()
+vi.mock('~/lib/siteService', () => ({
+  setBlockEnabled: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
@@ -20,129 +19,95 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
-import { getSettings, setSettings } from '~/lib/storage';
+import { setBlockEnabled } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
 import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { BlockRule } from '~/types/site';
 
 interface Response {
   success: boolean;
   error?: string;
 }
 
-const blockItem = {
-  id: 'item-1',
-  domain: 'example.com',
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled: true
-};
+/** 切り替える前のブロック設定 */
+const before = (enabled: boolean): BlockRule => ({
+  enabled,
+  addedAt: '2026-01-01T00:00:00.000Z',
+  timeLimit: null
+});
 
 describe('toggle-block ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSettings).mockResolvedValue({
-      ...DEFAULT_SETTINGS,
-      blockList: [{ ...blockItem }]
-    });
+    vi.mocked(setBlockEnabled).mockResolvedValue(before(true));
   });
 
   describe('入力検証', () => {
     it.each([
-      ['id が空文字', { id: '', enabled: true }],
-      ['id が 100 文字超', { id: 'a'.repeat(101), enabled: true }]
-    ])('%s なら Invalid id を返す', async (_label, body) => {
+      ['domain が空文字', { domain: '', enabled: true }],
+      ['domain が長すぎる', { domain: 'a'.repeat(254), enabled: true }],
+      ['enabled が boolean でない', { domain: 'example.com', enabled: 'true' }]
+    ])('%s なら失敗し、何も変えない', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
-      expect(result).toEqual({ success: false, error: 'Invalid id' });
-      expect(setSettings).not.toHaveBeenCalled();
+      expect(result).toEqual({ success: false, error: 'Invalid request body' });
+      expect(setBlockEnabled).not.toHaveBeenCalled();
     });
 
-    it('enabled が boolean でないなら Invalid enabled value を返す', async () => {
-      const result = await invoke<Response>(handler, {
-        id: 'item-1',
-        enabled: 'true'
-      });
+    it('ブロック設定を持たないサイトなら Item not found を返す', async () => {
+      vi.mocked(setBlockEnabled).mockResolvedValue(null);
 
-      expect(result).toEqual({
-        success: false,
-        error: 'Invalid enabled value'
-      });
-      expect(setSettings).not.toHaveBeenCalled();
-    });
-
-    it('存在しない id なら Item not found を返す', async () => {
       const result = await invoke<Response>(handler, {
-        id: 'not-exists',
+        domain: 'not-exists.com',
         enabled: true
       });
 
       expect(result).toEqual({ success: false, error: 'Item not found' });
-      expect(setSettings).not.toHaveBeenCalled();
+      expect(updateBlockRules).not.toHaveBeenCalled();
     });
   });
 
   describe('有効化（再ブロック）', () => {
     beforeEach(() => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [{ ...blockItem, enabled: false }]
-      });
+      vi.mocked(setBlockEnabled).mockResolvedValue(before(false));
     });
 
-    it('enabled を true にして保存しルールを更新する', async () => {
+    it('block.enabled を true にしてルールを更新し、既存タブをブロックする', async () => {
       const result = await invoke<Response>(handler, {
-        id: 'item-1',
+        domain: 'example.com',
         enabled: true
       });
 
       expect(result).toEqual({ success: true });
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          blockList: [expect.objectContaining({ enabled: true })]
-        })
-      );
+      expect(setBlockEnabled).toHaveBeenCalledWith('example.com', true);
       expect(updateBlockRules).toHaveBeenCalledOnce();
-    });
-
-    it('既存タブをブロックする', async () => {
-      await invoke(handler, { id: 'item-1', enabled: true });
-
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
 
-    it('解除として送信しない', async () => {
-      await invoke(handler, { id: 'item-1', enabled: true });
+    it('解除として送信も記録もしない', async () => {
+      await invoke(handler, { domain: 'example.com', enabled: true });
 
       expect(trackEvent).not.toHaveBeenCalled();
+      expect(recordActivity).not.toHaveBeenCalled();
     });
   });
 
   describe('無効化（ブロック解除）', () => {
-    it('enabled を false にして保存する', async () => {
+    it('block.enabled を false にし、既存タブのブロックは行わない', async () => {
       const result = await invoke<Response>(handler, {
-        id: 'item-1',
+        domain: 'example.com',
         enabled: false
       });
 
       expect(result).toEqual({ success: true });
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          blockList: [expect.objectContaining({ enabled: false })]
-        })
-      );
-    });
-
-    it('既存タブのブロックは行わない', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
-
+      expect(setBlockEnabled).toHaveBeenCalledWith('example.com', false);
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
 
     it('GA4 へはドメインをハッシュ化して送信する（生ドメインを送らない）', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
+      await invoke(handler, { domain: 'example.com', enabled: false });
 
       expect(trackEvent).toHaveBeenCalledWith('block_unblock', {
         domain_hashed: expect.any(String)
@@ -153,11 +118,9 @@ describe('toggle-block ハンドラ', () => {
       };
       expect(payload.domain_hashed).not.toContain('example.com');
     });
-  });
 
-  describe('事実の表（activity）への解除の記録', () => {
-    it('トグル OFF で 1 回の解除を記録する', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
+    it('効いていたブロックを外したら 1 回の解除を記録する', async () => {
+      await invoke(handler, { domain: 'example.com', enabled: false });
 
       expect(recordActivity).toHaveBeenCalledOnce();
       expect(recordActivity).toHaveBeenCalledWith({
@@ -167,28 +130,13 @@ describe('toggle-block ハンドラ', () => {
       });
     });
 
-    it('ワイルドカード表記の項目はサイトキーに正規化して記録する', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [{ ...blockItem, domain: '*.Example.com', isWildcard: true }]
-      });
+    it('既に無効なブロックを OFF にしても解除は数えない', async () => {
+      vi.mocked(setBlockEnabled).mockResolvedValue(before(false));
 
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(recordActivity).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: 'unblock', site: 'example.com' })
-      );
-    });
-
-    it('トグル ON では記録しない', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [{ ...blockItem, enabled: false }]
-      });
-
-      await invoke(handler, { id: 'item-1', enabled: true });
+      await invoke(handler, { domain: 'example.com', enabled: false });
 
       expect(recordActivity).not.toHaveBeenCalled();
+      expect(trackEvent).not.toHaveBeenCalled();
     });
   });
 });

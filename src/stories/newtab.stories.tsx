@@ -4,15 +4,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GoalDisplay, MiniStats, BlockedSitesList } from '~/components/newtab';
 import { DownloadButton } from '~/components/features';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
 import '~/styles/globals.css';
 
-const mockBlockList: BlockItem[] = [
+const mockBlockList: BlockListRow[] = [
   {
     id: '1',
     domain: 'twitter.com',
-    isWildcard: false,
     createdAt: '2026-02-01T10:00:00Z',
     enabled: true,
     timeLimit: null
@@ -20,7 +19,6 @@ const mockBlockList: BlockItem[] = [
   {
     id: '2',
     domain: 'youtube.com',
-    isWildcard: false,
     createdAt: '2026-02-02T14:30:00Z',
     enabled: true,
     timeLimit: null
@@ -28,7 +26,6 @@ const mockBlockList: BlockItem[] = [
   {
     id: '3',
     domain: 'reddit.com',
-    isWildcard: false,
     createdAt: '2026-02-03T09:15:00Z',
     enabled: true,
     timeLimit: null
@@ -80,7 +77,7 @@ function NewtabDemo() {
 
         {/* Blocked Sites List */}
         <BlockedSitesList
-          blockList={mockBlockList}
+          blockRows={mockBlockList}
           blockCounts={mockBlockCounts}
           maxVisible={5}
         />
@@ -188,7 +185,7 @@ const FullFeaturedWrapper = () => {
           onAnalyticsClick={() => alert('Open analytics')}
         />
         <BlockedSitesList
-          blockList={mockBlockList}
+          blockRows={mockBlockList}
           blockCounts={mockBlockCounts}
           maxVisible={5}
         />

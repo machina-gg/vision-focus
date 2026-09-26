@@ -2,15 +2,18 @@
 // All types are organized by domain and re-exported here for convenience
 
 // Analytics types
+export { type AnalyticsOptIn } from './analytics';
+
+// Site types（追跡中のサイトとサイトごとの設定）
 export {
+  type SiteKey,
   type TimeLimitType,
   type TimeLimit,
   type TrackedSite,
-  type UnblockedSite,
-  type UnblockHistory,
-  type AnalyticsOptIn,
-  DEFAULT_UNBLOCK_HISTORY
-} from './analytics';
+  type TrackedSites,
+  type BlockRule,
+  type YouTubeFeatures
+} from './site';
 
 // Vision/Dashboard types
 export {
@@ -47,11 +50,15 @@ export { type WeeklyReport, type MonthlyReport } from './report';
 export {
   type AddBlockRequest,
   type AddBlockResponse,
+  type AddTrackedSiteRequest,
+  type AddTrackedSiteResponse,
   type RemoveBlockRequest,
   type RemoveBlockResponse,
   type GetRemainingTimeRequest,
   type GetRemainingTimeResponse,
   type ResetActivityResponse,
+  type StopTrackingRequest,
+  type StopTrackingResponse,
   type ToggleBlockRequest,
   type ToggleBlockResponse,
   type TogglePauseRequest,
@@ -66,20 +73,18 @@ export {
 
 // Storage types (AppSettings and related)
 export {
-  type BlockItem,
   type Schedule,
   type SupportedLanguage,
   type NotificationMinutes,
   type NotificationSettings,
-  type YouTubeSettings,
   type PasswordSettings,
   type AppSettings,
   type SupportPromptState,
   type StorageSchema,
   DEFAULT_NOTIFICATION_SETTINGS,
-  DEFAULT_YOUTUBE_SETTINGS,
   DEFAULT_PASSWORD_SETTINGS,
   DEFAULT_SUPPORT_PROMPT_STATE,
   DEFAULT_SETTINGS,
+  DEFAULT_SITES,
   DEFAULT_STORAGE
 } from './storage';

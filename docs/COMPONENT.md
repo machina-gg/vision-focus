@@ -240,12 +240,11 @@ graph TD
 
 **Props**
 
-| Prop       | 型           | デフォルト | 説明                   |
-| ---------- | ------------ | ---------- | ---------------------- |
-| domain     | `string`     | -          | ドメイン名             |
-| isWildcard | `boolean`    | `false`    | ワイルドカードかどうか |
-| onEdit     | `() => void` | -          | 編集ハンドラ           |
-| onDelete   | `() => void` | -          | 削除ハンドラ           |
+| Prop     | 型           | デフォルト | 説明         |
+| -------- | ------------ | ---------- | ------------ |
+| domain   | `string`     | -          | サイトキー   |
+| onEdit   | `() => void` | -          | 編集ハンドラ |
+| onDelete | `() => void` | -          | 削除ハンドラ |
 
 ---
 
@@ -482,16 +481,13 @@ function usePresets(props: {
 
 ### useAnalytics
 
-分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）と、一覧が使う解除履歴の読み出し。
-数値は返さない（分析タブの数値は `useActivitySources` の `activity` から導出する）。
-リセット（`handleResetAnalytics`）は `reset-activity` メッセージで background に依頼する（事実の表を書けるのは background だけ）。
+分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）。
+値は返さない（一覧の行は `sites` から、数値は `useActivitySources` の `activity` から画面が導出する）。
+どの操作もメッセージ（`add-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
+（追跡中のサイトと事実の表を書けるのは background だけ）。
 
 ```typescript
-function useAnalytics(options: {
-  setSettings: (settings: AppSettings) => void;
-}): {
-  unblockHistory: UnblockHistory;
-  reloadAnalyticsData: () => Promise<void>;
+function useAnalytics(): {
   handleReblock: (domain: string) => Promise<void>;
   handleResetAnalytics: () => Promise<void>;
   handleStopTracking: (domain: string) => Promise<void>;
@@ -521,19 +517,16 @@ function useActivitySources(): {
 YouTube 設定の保存フック。
 
 ```typescript
-function useYouTubeSettings(props: {
-  settings: AppSettings | undefined;
-  setSettings: (settings: AppSettings) => void;
-}): {
-  handleYouTubeChange: (youtube: YouTubeSettings) => Promise<void>;
+function useYouTubeSettings(): {
+  handleYouTubeChange: (youtube: YouTubeSectionValue) => Promise<void>;
 };
 ```
 
 **機能**
 
-- 保存は background の `update-youtube-settings` ハンドラが行い、画面側は保存後の設定を読み直して反映する
-- ハンドラ側でブロックルールの更新と既存タブのブロックまで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
-- YouTube ブロックの有効・無効の切り替えを追跡履歴に記録する
+- 保存は background の `update-youtube-settings` ハンドラが `sites['youtube.com']` に行い、画面は `sites` の監視で表示を追従させる
+- ハンドラ側でブロックルールの更新・既存タブのブロック・解除の記録まで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
+- `YouTubeSectionValue` は画面が今受け取っている形を `src/lib/siteSelectors.ts`（一時）が組み立てたもの
 
 ---
 
@@ -570,16 +563,9 @@ interface UnblockRequest {
 
 ## 5. 型定義
 
-### BlockItem
+### TrackedSite
 
-```typescript
-interface BlockItem {
-  id: string;
-  domain: string; // ドメイン（ワイルドカード可）
-  isWildcard: boolean; // ワイルドカードかどうか
-  createdAt: string; // 作成日時
-}
-```
+追跡中のサイトとサイトごとの設定（ブロック設定・YouTube 機能）。定義と各フィールドの意味は [DATA_MODEL.md](./DATA_MODEL.md) の TrackedSite。
 
 ### Schedule
 

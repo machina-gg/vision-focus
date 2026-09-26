@@ -58,8 +58,7 @@ import {
   updateSettings,
   getVision,
   setVision,
-  getUnblockHistory,
-  setUnblockHistory,
+  getSites,
   getAllStorage,
   clearAllStorage,
   setLastBlockedDomain,
@@ -73,7 +72,7 @@ import {
   DEFAULT_ACTIVITY,
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
-  DEFAULT_UNBLOCK_HISTORY,
+  DEFAULT_SITES,
   DEFAULT_SUPPORT_PROMPT_STATE
 } from '~/types/storage';
 
@@ -93,19 +92,17 @@ describe('保存形式', () => {
 
   it('旧形式（JSON 文字列）が残っていても初期値を返す', async () => {
     // 実キーは変わらないため、旧実装が書いた JSON 文字列が同じキーに残りうる。
-    // そのまま返すと settings.blockList などの参照が壊れる
+    // そのまま返すと settings.schedules などの参照が壊れる
     fakeChrome.localData.settings = JSON.stringify({
       ...DEFAULT_SETTINGS,
       paused: true
     });
     fakeChrome.localData.vision = JSON.stringify(DEFAULT_VISION);
-    fakeChrome.localData.unblockHistory = JSON.stringify(
-      DEFAULT_UNBLOCK_HISTORY
-    );
+    fakeChrome.localData.sites = JSON.stringify({});
 
     expect(await getSettings()).toEqual(DEFAULT_SETTINGS);
     expect(await getVision()).toEqual(DEFAULT_VISION);
-    expect(await getUnblockHistory()).toEqual(DEFAULT_UNBLOCK_HISTORY);
+    expect(await getSites()).toEqual(DEFAULT_SITES);
     // 未保存判定でも旧形式は「保存されていない」として扱う
     expect(await hasStoredVision()).toBe(false);
   });
@@ -164,19 +161,22 @@ describe('setVision', () => {
   });
 });
 
-describe('getUnblockHistory', () => {
-  it('データがない場合はデフォルトを返す', async () => {
-    const result = await getUnblockHistory();
-    expect(result).toEqual(DEFAULT_UNBLOCK_HISTORY);
+describe('getSites', () => {
+  it('データがない場合は空（追跡中のサイトなし）を返す', async () => {
+    expect(await getSites()).toEqual(DEFAULT_SITES);
   });
-});
 
-describe('setUnblockHistory', () => {
-  it('アンブロック履歴を保存する', async () => {
-    await setUnblockHistory(DEFAULT_UNBLOCK_HISTORY);
-    expect(fakeChrome.localData.unblockHistory).toEqual(
-      DEFAULT_UNBLOCK_HISTORY
-    );
+  it('保存済みのサイトを返す', async () => {
+    const sites = {
+      'x.com': {
+        domain: 'x.com',
+        trackedAt: '2024-01-01T00:00:00.000Z',
+        block: null,
+        youtube: null
+      }
+    };
+    fakeChrome.localData.sites = sites;
+    expect(await getSites()).toEqual(sites);
   });
 });
 
@@ -185,7 +185,7 @@ describe('getAllStorage', () => {
     const result = await getAllStorage();
     expect(result.settings).toEqual(DEFAULT_SETTINGS);
     expect(result.vision).toEqual(DEFAULT_VISION);
-    expect(result.unblockHistory).toEqual(DEFAULT_UNBLOCK_HISTORY);
+    expect(result.sites).toEqual(DEFAULT_SITES);
     expect(result.activity).toEqual(DEFAULT_ACTIVITY);
   });
 });
@@ -194,7 +194,7 @@ describe('clearAllStorage', () => {
   it('全ストレージキーを削除する', async () => {
     fakeChrome.localData.settings = DEFAULT_SETTINGS;
     fakeChrome.localData.vision = DEFAULT_VISION;
-    fakeChrome.localData.unblockHistory = DEFAULT_UNBLOCK_HISTORY;
+    fakeChrome.localData.sites = {};
     fakeChrome.localData.activity = {
       '2024-06-12': { 'youtube.com': { seconds: 60, blocks: 1, unblocks: 0 } }
     };

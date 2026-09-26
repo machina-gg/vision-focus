@@ -10,10 +10,12 @@ vi.mock('~/lib/messaging', () => ({
 
 import { registerMessageHandlers } from '../../handlers';
 import { addBlockHandler } from '../../handlers/add-block';
+import { addTrackedSiteHandler } from '../../handlers/add-tracked-site';
 import { getRemainingTimeHandler } from '../../handlers/get-remaining-time';
 import { importSettingsHandler } from '../../handlers/import-settings';
 import { removeBlockHandler } from '../../handlers/remove-block';
 import { resetActivityHandler } from '../../handlers/reset-activity';
+import { stopTrackingHandler } from '../../handlers/stop-tracking';
 import { toggleBlockHandler } from '../../handlers/toggle-block';
 import { togglePauseHandler } from '../../handlers/toggle-pause';
 import { trackerHeartbeatHandler } from '../../handlers/tracker-heartbeat';
@@ -26,10 +28,12 @@ import { updateYouTubeSettingsHandler } from '../../handlers/update-youtube-sett
  */
 const expected = [
   ['add-block', addBlockHandler],
+  ['add-tracked-site', addTrackedSiteHandler],
   ['get-remaining-time', getRemainingTimeHandler],
   ['import-settings', importSettingsHandler],
   ['remove-block', removeBlockHandler],
   ['reset-activity', resetActivityHandler],
+  ['stop-tracking', stopTrackingHandler],
   ['toggle-block', toggleBlockHandler],
   ['toggle-pause', togglePauseHandler],
   ['tracker-heartbeat', trackerHeartbeatHandler],

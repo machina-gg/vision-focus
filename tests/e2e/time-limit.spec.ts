@@ -1,9 +1,10 @@
 import { test, expect } from './fixtures/extension';
 import { openExternalSite, openOptions, openPopup } from './helpers/pages';
 import {
-  makeSettings,
+  makeAppSettings,
   makeActivity,
-  clearStorageFromExtension
+  clearStorageFromExtension,
+  makeSites
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 import {
@@ -32,18 +33,13 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     // options を開いて書くと、アプリが state を書き戻して上書きしたり、
     // 時間制限値をプリセットに丸めたりするため、意図した状態にならない
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          }
-        ]
-      }),
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        }
+      ]),
       activity: makeActivity([
         [TEST_DOMAINS.example, { seconds: 100 }] // 60秒を超過
       ])
@@ -76,18 +72,13 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     extensionId
   }) => {
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          }
-        ]
-      }),
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        }
+      ]),
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 30 }]])
     });
 
@@ -121,18 +112,13 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     // 使用状況は Analytics タブではなく、ブロックリストの各項目に
     // 残り時間バッジとして出る（src/components/options/blocklist/TimeLimitEditor.tsx）
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 300 }
-          }
-        ]
-      }),
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 300 } }
+        }
+      ]),
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 60 }]])
     });
 
@@ -149,19 +135,15 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context
   }) => {
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        paused: true, // Pause が最優先
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          }
-        ]
+      settings: makeAppSettings({
+        paused: true // Pause が最優先
       }),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        }
+      ]),
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
     });
 
@@ -185,27 +167,14 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     // 前日（ローカル日付）の行だけが上限を超えている状態を作る。
     // 使用量は今日の行だけを読むので、リセット処理を経ずに今日は 0 秒になる
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          },
-          // 再計算が走ったことの目印。これが無いとルールが 0 件のままになり、
-          // 「今日は超過していないから載らない」と「まだ再計算されていない」を区別できない
-          {
-            id: '2',
-            domain: TEST_DOMAINS.reddit,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true
-          }
-        ]
-      }),
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        },
+        { domain: TEST_DOMAINS.reddit, block: {} }
+      ]),
       // 3 つ目の要素は「何日前の行か」
       activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }, 1]])
     });
@@ -229,26 +198,17 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     context
   }) => {
     await setupStorageViaSW(context, {
-      settings: makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: TEST_DOMAINS.example,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 60 }
-          },
-          {
-            id: '2',
-            domain: TEST_DOMAINS.reddit,
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 300 }
-          }
-        ]
-      }),
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        },
+        {
+          domain: TEST_DOMAINS.reddit,
+          block: { timeLimit: { type: 'daily', limitSeconds: 300 } }
+        }
+      ]),
       // example.com は超過（70/60）、reddit.com は未超過（10/300）
       activity: makeActivity([
         [TEST_DOMAINS.example, { seconds: 70 }],

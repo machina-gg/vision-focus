@@ -1,9 +1,9 @@
 import type { MessageHandler } from '~/lib/messaging';
-import { getSettings, setSettings } from '~/lib/storage';
+import { setTimeLimit } from '~/lib/siteService';
 import { updateBlockRules } from '../blocker';
 import { UpdateTimeLimitBodySchema } from '~/types/messageSchemas';
 
-// Message handler for updating time limit for a blocked site
+// ブロック設定を持つサイトの時間制限を変える（domain はサイトキー）
 export const updateTimeLimitHandler: MessageHandler<
   'update-time-limit'
 > = async ({ data }) => {
@@ -13,20 +13,13 @@ export const updateTimeLimitHandler: MessageHandler<
     return { success: false, error: 'Invalid request body' };
   }
 
-  const { id, timeLimit } = parsed.data;
+  const { domain, timeLimit } = parsed.data;
 
   try {
-    const settings = await getSettings();
-    const itemIndex = settings.blockList.findIndex((item) => item.id === id);
-
-    if (itemIndex === -1) {
+    const updated = await setTimeLimit(domain, timeLimit);
+    if (!updated) {
       return { success: false, error: 'Block item not found' };
     }
-
-    // Update the time limit
-    settings.blockList[itemIndex].timeLimit = timeLimit;
-
-    await setSettings(settings);
 
     // Update block rules (sites with time limits are handled differently)
     await updateBlockRules();

@@ -34,28 +34,23 @@ export async function updateBlockRules(): Promise<void> {
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
   const removeRuleIds = existingRules.map((rule) => rule.id);
 
-  // Create new rules
+  // サイトキーは `*.` / `www.` を除いて正規化済みなので、そのまま `||キー` にする
+  // （本体とすべてのサブドメインを止める。判定の `resolveSiteKey` と同じ範囲）
   const addRules: chrome.declarativeNetRequest.Rule[] = domainsToBlock.map(
-    (domain, index) => {
-      // Handle wildcard domains
-      const isWildcard = domain.startsWith('*.');
-      const baseDomain = isWildcard ? domain.replace('*.', '') : domain;
-
-      return {
-        id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
-        priority: 1,
-        action: {
-          type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-          redirect: {
-            extensionPath: '/newtab.html'
-          }
-        },
-        condition: {
-          urlFilter: isWildcard ? `||${baseDomain}` : `||${domain}`,
-          resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME]
+    (domain, index) => ({
+      id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
+      priority: 1,
+      action: {
+        type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+        redirect: {
+          extensionPath: '/newtab.html'
         }
-      };
-    }
+      },
+      condition: {
+        urlFilter: `||${domain}`,
+        resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME]
+      }
+    })
   );
 
   // Update rules

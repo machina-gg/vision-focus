@@ -3,10 +3,9 @@ import { Plus } from 'lucide-react';
 
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import { useSettings } from '~/contexts/SettingsContext';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
-import type { UnblockHistory } from '~/types/storage';
+import type { BlockListRow, TrackedSiteListRow } from '~/lib/siteSelectors';
 
 import {
   AnalyticsExportBar,
@@ -20,8 +19,10 @@ interface AnalyticsTabProps {
   activity: ActivityLog;
   /** 母集団（追跡中のサイト）。タブ内のどの数値もこの集合だけを数える */
   sites: readonly SiteKey[];
-  /** 追跡中サイト一覧のブロック状態・ブロック開始日・操作の宛先 */
-  unblockHistory: UnblockHistory;
+  /** ブロックリスト（CSV の出力元） */
+  blockRows: BlockListRow[];
+  /** 追跡中サイト一覧のブロック状態・ブロック開始日・できる操作 */
+  trackedSiteRows: TrackedSiteListRow[];
   onReblock: (domain: string) => void;
   onReset: () => void;
   onStopTracking: (domain: string) => void;
@@ -38,7 +39,8 @@ interface AnalyticsTabProps {
 export function AnalyticsTab({
   activity,
   sites,
-  unblockHistory,
+  blockRows,
+  trackedSiteRows,
   onReblock,
   onReset,
   onStopTracking,
@@ -48,7 +50,6 @@ export function AnalyticsTab({
   onSupport,
   onDismissSupport
 }: AnalyticsTabProps) {
-  const { settings } = useSettings();
   const [newSiteDomain, setNewSiteDomain] = useState('');
 
   const handleAddSite = () => {
@@ -61,7 +62,7 @@ export function AnalyticsTab({
   return (
     <div className="space-y-6">
       <AnalyticsExportBar
-        settings={settings}
+        blockRows={blockRows}
         activity={activity}
         sites={sites}
         onRefresh={onRefresh}
@@ -103,7 +104,7 @@ export function AnalyticsTab({
       <AnalyticsSummary
         activity={activity}
         sites={sites}
-        unblockHistory={unblockHistory}
+        trackedSiteRows={trackedSiteRows}
         onReblock={onReblock}
         onStopTracking={onStopTracking}
       />

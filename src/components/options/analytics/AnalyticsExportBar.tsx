@@ -35,10 +35,11 @@ import {
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
-import type { AppSettings } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
 interface AnalyticsExportBarProps {
-  settings: AppSettings | null;
+  /** ブロックリスト（CSV の出力元） */
+  blockRows: BlockListRow[];
   /** 事実の表 */
   activity: ActivityLog;
   /** 母集団（追跡中のサイト） */
@@ -48,7 +49,7 @@ interface AnalyticsExportBarProps {
 }
 
 export function AnalyticsExportBar({
-  settings,
+  blockRows,
   activity,
   sites,
   onRefresh,
@@ -80,7 +81,7 @@ export function AnalyticsExportBar({
     };
   }, [activity, sites]);
 
-  const hasBlockList = (settings?.blockList?.length ?? 0) > 0;
+  const hasBlockList = blockRows.length > 0;
   const hasBlockCounts = totals.blocks > 0;
   const hasDailyStats =
     totals.seconds > 0 || totals.blocks > 0 || totals.unblocks > 0;
@@ -89,10 +90,8 @@ export function AnalyticsExportBar({
     hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData;
 
   const handleExportBlockList = () => {
-    if (settings?.blockList) {
-      exportBlockList(settings.blockList);
-      trackFeatureUse('csv_export');
-    }
+    exportBlockList(blockRows);
+    trackFeatureUse('csv_export');
     setShowExportMenu(false);
   };
 

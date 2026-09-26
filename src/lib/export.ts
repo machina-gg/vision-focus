@@ -2,7 +2,7 @@
  * CSV Export utilities
  */
 
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 import {
   dailySeries,
   lastActiveOn,
@@ -69,11 +69,10 @@ function formatDateKey(date: DateKey | null): string {
 /**
  * Export block list to CSV
  */
-export function exportBlockList(blockList: BlockItem[]): void {
-  const headers = ['Domain', 'Wildcard', 'Added Date'];
-  const rows = blockList.map((item) => [
+export function exportBlockList(blockRows: readonly BlockListRow[]): void {
+  const headers = ['Domain', 'Added Date'];
+  const rows = blockRows.map((item) => [
     item.domain,
-    item.isWildcard ? 'Yes' : 'No',
     new Date(item.createdAt).toLocaleDateString()
   ]);
 

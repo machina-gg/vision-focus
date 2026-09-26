@@ -4,10 +4,11 @@ import { Trash2, Shield } from 'lucide-react';
 import { Button, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockItem, TimeLimit } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TimeLimit } from '~/types/storage';
 
 interface DomainListItemProps {
-  item: BlockItem;
+  item: BlockListRow;
   blockCount: number;
   /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   usedSeconds: number;
@@ -39,13 +40,6 @@ export function DomainListItem({
               data-testid="blocklist-item-domain"
               className={`font-medium ${item.enabled ? 'text-gray-900' : 'text-gray-400'}`}
             >
-              {item.isWildcard && (
-                <span
-                  className={item.enabled ? 'text-info-600' : 'text-info-300'}
-                >
-                  *.
-                </span>
-              )}
               {item.domain}
             </p>
             <p className="text-xs text-gray-500">

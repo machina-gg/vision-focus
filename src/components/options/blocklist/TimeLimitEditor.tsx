@@ -5,14 +5,15 @@ import { Select, Button } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import type { BlockItem, TimeLimit } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TimeLimit } from '~/types/storage';
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
 type LimitTypeOption = 'always' | 'daily';
 
 interface TimeLimitEditorProps {
-  item: BlockItem;
+  item: BlockListRow;
   onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
   /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   usedSeconds: number;

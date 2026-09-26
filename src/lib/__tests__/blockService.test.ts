@@ -1,8 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// storage モジュールをモック（事実の表はテストごとに差し替える）
+// storage モジュールをモック（全体の設定・追跡中のサイト・事実の表はテストごとに差し替える）
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
+  getSites: vi.fn(),
   activityItem: { getValue: vi.fn() }
 }));
 
@@ -12,7 +13,7 @@ vi.mock('~/lib/time', async (importOriginal) => ({
   isWithinSchedule: vi.fn()
 }));
 
-import { getSettings, activityItem } from '~/lib/storage';
+import { getSettings, getSites, activityItem } from '~/lib/storage';
 import { isWithinSchedule, toDateKey } from '~/lib/time';
 import {
   isAnyScheduleActive,
@@ -25,17 +26,20 @@ import {
   shouldTrackBlockForDomain,
   getActiveBlockedDomains
 } from '~/lib/blockService';
-import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
-import type {
-  AppSettings,
-  BlockItem,
-  Schedule,
-  YouTubeSettings
-} from '~/types/storage';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import {
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
+import type { AppSettings, Schedule } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
-import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
+import type { BlockRule, TrackedSite } from '~/types/site';
+import { DEFAULT_SETTINGS } from '~/types/storage';
 
 const mockGetSettings = vi.mocked(getSettings);
+const mockGetSites = vi.mocked(getSites);
 const mockGetActivity = vi.mocked(activityItem.getValue);
 const mockIsWithinSchedule = vi.mocked(isWithinSchedule);
 
@@ -45,42 +49,38 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockIsWithinSchedule.mockReturnValue(true);
   mockGetActivity.mockResolvedValue({});
+  mockGetSites.mockResolvedValue({});
+  mockGetSettings.mockResolvedValue(DEFAULT_SETTINGS);
 });
 
-// テスト用の設定を生成して保存値にする
-function givenSettings(overrides: Partial<AppSettings> = {}): void {
-  mockGetSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, ...overrides });
+/** 判定の入力（全体の設定の差分と追跡中のサイト） */
+interface Given {
+  settings?: Partial<AppSettings>;
+  sites?: TrackedSite[];
 }
 
-function item(overrides: Partial<BlockItem> = {}): BlockItem {
-  return {
-    id: '1',
-    domain: 'example.com',
-    isWildcard: false,
-    createdAt: '2024-01-01T00:00:00Z',
-    enabled: true,
-    timeLimit: null,
-    ...overrides
-  };
+function given({ settings = {}, sites = [] }: Given): void {
+  mockGetSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, ...settings });
+  mockGetSites.mockResolvedValue(sitesOf(...sites));
 }
 
-function limitedItem(overrides: Partial<BlockItem> = {}): BlockItem {
-  return item({
+// 有効な常時ブロックのサイト
+function site(
+  domain = 'example.com',
+  block: Partial<BlockRule> = {}
+): TrackedSite {
+  return blockedSite(domain, block);
+}
+
+// 1 日の上限つきのサイト
+function limitedSite(
+  domain = 'example.com',
+  block: Partial<BlockRule> = {}
+): TrackedSite {
+  return blockedSite(domain, {
     timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS },
-    ...overrides
+    ...block
   });
-}
-
-// アクセスブロックを有効にした YouTube 設定を生成
-function youtubeSettings(
-  overrides: Partial<YouTubeSettings> = {}
-): YouTubeSettings {
-  return {
-    ...DEFAULT_YOUTUBE_SETTINGS,
-    enabled: true,
-    blockAccess: true,
-    ...overrides
-  };
 }
 
 /** 指定日の行にサイトごとの表示秒数を入れる（既定は今日のローカル日付） */
@@ -89,8 +89,8 @@ function givenSeconds(
   date: Date = new Date()
 ): void {
   const row = Object.fromEntries(
-    Object.entries(seconds).map(([site, s]) => [
-      site,
+    Object.entries(seconds).map(([key, s]) => [
+      key,
       { seconds: s, blocks: 0, unblocks: 0 }
     ])
   );
@@ -166,9 +166,9 @@ describe('isBlockingWindowOpen（ブロックが効く時間帯か）', () => {
 
   it('全部無効のスケジュールがあっても常時ブロックの項目はブロックする', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    givenSettings({
-      blockList: [item()],
-      schedules: [schedule({ enabled: false })]
+    given({
+      settings: { schedules: [schedule({ enabled: false })] },
+      sites: [site()]
     });
 
     expect(await getBlockState('https://example.com')).toEqual({
@@ -186,46 +186,52 @@ describe('getBlockState', () => {
   });
 
   it('一時停止中はブロックしない', async () => {
-    givenSettings({ paused: true, blockList: [item()] });
+    given({ settings: { paused: true }, sites: [site()] });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('ブロックリストにないURLはブロックしない', async () => {
-    givenSettings({ blockList: [item()] });
+  it('追跡中のサイトに無いURLはブロックしない', async () => {
+    given({ sites: [site()] });
     const result = await getBlockState('https://google.com');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('無効化されたアイテムはブロックしない', async () => {
-    givenSettings({ blockList: [item({ enabled: false })] });
+  it('追跡だけのサイト（ブロック設定なし）はブロックしない', async () => {
+    given({ sites: [trackedSite('example.com')] });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('スケジュール外では常時ブロックの項目もブロックしない', async () => {
+  it('無効化されたブロック設定はブロックしない', async () => {
+    given({ sites: [site('example.com', { enabled: false })] });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: false, reason: null });
+  });
+
+  it('スケジュール外では常時ブロックのサイトもブロックしない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    givenSettings({ blockList: [item()], schedules: OUT_OF_SCHEDULE });
+    given({ settings: { schedules: OUT_OF_SCHEDULE }, sites: [site()] });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('スケジュール外では上限を超えていてもブロックせず、残り時間も返さない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    givenSettings({ blockList: [limitedItem()], schedules: OUT_OF_SCHEDULE });
+    given({ settings: { schedules: OUT_OF_SCHEDULE }, sites: [limitedSite()] });
     givenSeconds({ 'example.com': LIMIT_SECONDS * 2 });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('タイムリミットなしの場合は常にブロック', async () => {
-    givenSettings({ blockList: [item()] });
+    given({ sites: [site()] });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
   });
 
   it('今日の表示秒数が上限に達したらブロック', async () => {
-    givenSettings({ blockList: [limitedItem()] });
+    given({ sites: [limitedSite()] });
     givenSeconds({ 'example.com': LIMIT_SECONDS });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({
@@ -236,7 +242,7 @@ describe('getBlockState', () => {
   });
 
   it('上限未満ならブロックせず残り時間を返す', async () => {
-    givenSettings({ blockList: [limitedItem()] });
+    given({ sites: [limitedSite()] });
     givenSeconds({ 'example.com': 600 });
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({
@@ -249,7 +255,7 @@ describe('getBlockState', () => {
   it('前日（ローカル日付）の行は今日の使用量に数えない', async () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    givenSettings({ blockList: [limitedItem()] });
+    given({ sites: [limitedSite()] });
     givenSeconds({ 'example.com': LIMIT_SECONDS * 2 }, yesterday);
     const result = await getBlockState('https://example.com');
     expect(result).toEqual({
@@ -262,44 +268,17 @@ describe('getBlockState', () => {
   it.each(['www.example.com', 'm.example.com', 'example.com'])(
     'ホスト名 %s の使用量はサイトキー example.com の行で引く',
     async (host) => {
-      givenSettings({ blockList: [limitedItem()] });
+      given({ sites: [limitedSite()] });
       givenSeconds({ 'example.com': LIMIT_SECONDS });
       const result = await getBlockState(`https://${host}/page`);
       expect(result.reason).toBe('time_limit_exceeded');
     }
   );
 
-  it('ワイルドカード・www. 付きで登録した項目も同じサイトキーで判定する', async () => {
-    givenSettings({
-      blockList: [
-        limitedItem({ domain: '*.example.com', isWildcard: true }),
-        limitedItem({ id: '2', domain: 'www.reddit.com' })
-      ]
-    });
-    givenSeconds({ 'example.com': LIMIT_SECONDS, 'reddit.com': LIMIT_SECONDS });
-
-    expect((await getBlockState('https://example.com')).blocked).toBe(true);
-    expect((await getBlockState('https://m.reddit.com')).blocked).toBe(true);
-  });
-
-  it('同じサイトキーの項目が複数あれば、どれかがブロックならブロックする', async () => {
-    givenSettings({
-      blockList: [
-        item({ domain: 'reddit.com', enabled: false }),
-        item({ id: '2', domain: 'www.reddit.com', enabled: true })
-      ]
-    });
-    const result = await getBlockState('https://www.reddit.com');
-    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
-    expect(await getActiveBlockedDomains()).toEqual(['reddit.com']);
-  });
-
-  it('親の登録がブロックしていれば、子の登録が無効でもサブドメインをブロックする', async () => {
-    givenSettings({
-      blockList: [
-        item({ domain: 'google.com' }),
-        item({ id: '2', domain: 'mail.google.com', enabled: false })
-      ]
+  // 追跡中のサイト同士は追加時に入れ子を拒否するが、崩れた保存値でも判定とルールを揃える
+  it('保存値が入れ子でも、親がブロックしていれば子が無効でもサブドメインをブロックする', async () => {
+    given({
+      sites: [site('google.com'), site('mail.google.com', { enabled: false })]
     });
     expect(await getBlockState('https://mail.google.com')).toEqual({
       blocked: true,
@@ -307,24 +286,19 @@ describe('getBlockState', () => {
     });
   });
 
-  it('子の登録だけがブロックなら、親のホスト名はブロックしない', async () => {
-    givenSettings({
-      blockList: [
-        item({ domain: 'google.com', enabled: false }),
-        item({ id: '2', domain: 'mail.google.com' })
-      ]
+  it('保存値が入れ子で子だけがブロックなら、親のホスト名はブロックしない', async () => {
+    given({
+      sites: [site('google.com', { enabled: false }), site('mail.google.com')]
     });
     expect((await getBlockState('https://google.com')).blocked).toBe(false);
     expect((await getBlockState('https://mail.google.com')).blocked).toBe(true);
   });
 
   it('覆う登録がどれもブロックでなければ、残り秒数がいちばん少ない制限の値を返す', async () => {
-    givenSettings({
-      blockList: [
-        limitedItem({ domain: 'google.com' }),
-        limitedItem({
-          id: '2',
-          domain: 'mail.google.com',
+    given({
+      sites: [
+        limitedSite('google.com'),
+        limitedSite('mail.google.com', {
           timeLimit: { type: 'daily', limitSeconds: 600 }
         })
       ]
@@ -340,7 +314,7 @@ describe('getBlockState', () => {
 
 describe('getSiteBlockStatus', () => {
   it('サイトキー・ブロック設定・判定結果を返す', async () => {
-    givenSettings({ blockList: [limitedItem({ domain: 'www.example.com' })] });
+    given({ sites: [limitedSite()] });
     givenSeconds({ 'example.com': 100 });
 
     expect(await getSiteBlockStatus('m.example.com')).toEqual({
@@ -358,12 +332,12 @@ describe('getSiteBlockStatus', () => {
   });
 
   it('ブロック設定の無いホスト名は null', async () => {
-    givenSettings({ blockList: [item()] });
+    given({ sites: [site(), trackedSite('google.com')] });
     expect(await getSiteBlockStatus('google.com')).toBeNull();
   });
 
   it('複数のホスト名は同じサイトを 1 件にまとめる', async () => {
-    givenSettings({ blockList: [item()] });
+    given({ sites: [site()] });
     const statuses = await getSiteBlockStatuses([
       'www.example.com',
       'example.com',
@@ -371,12 +345,13 @@ describe('getSiteBlockStatus', () => {
     ]);
     expect(statuses.map((s) => s.site)).toEqual(['example.com']);
     expect(mockGetSettings).toHaveBeenCalledOnce();
+    expect(mockGetSites).toHaveBeenCalledOnce();
   });
 });
 
 describe('shouldBlockUrl', () => {
   it('getBlockStateの結果のblocked値を返す', async () => {
-    givenSettings({ blockList: [item()] });
+    given({ sites: [site()] });
     expect(await shouldBlockUrl('https://example.com')).toBe(true);
     expect(await shouldBlockUrl('https://google.com')).toBe(false);
   });
@@ -386,49 +361,46 @@ describe('shouldTrackBlockForDomain', () => {
   // ブロックされたかどうかと記録するかどうかは同じ結論にする。
   // 揃っていないと、ブロックはされるのに記録されない・記録だけ増えるドメインが出る
   it.each([
-    ['一時停止中', { paused: true, blockList: [item()] }, false],
-    ['ブロックリストにない', { blockList: [] }, false],
-    ['無効なアイテム', { blockList: [item({ enabled: false })] }, false],
-    ['有効な常時ブロック', { blockList: [item()] }, true],
-    ['時間制限の上限未満', { blockList: [limitedItem()] }, false]
-  ] satisfies [string, Partial<AppSettings>, boolean][])(
+    ['一時停止中', { settings: { paused: true }, sites: [site()] }, false],
+    ['追跡中のサイトにない', { sites: [] }, false],
+    [
+      '無効なブロック設定',
+      { sites: [site('example.com', { enabled: false })] },
+      false
+    ],
+    ['有効な常時ブロック', { sites: [site()] }, true],
+    ['時間制限の上限未満', { sites: [limitedSite()] }, false]
+  ] satisfies [string, Given, boolean][])(
     '%s',
-    async (_label, settings, expected) => {
-      givenSettings(settings);
+    async (_label, input, expected) => {
+      given(input);
       expect(await shouldTrackBlockForDomain('example.com')).toBe(expected);
     }
   );
-
-  it('ブロックリストに無くても YouTube のアクセスブロックが有効ならtrue', async () => {
-    givenSettings({ youtube: youtubeSettings() });
-    expect(await shouldTrackBlockForDomain('www.youtube.com')).toBe(true);
-  });
 });
 
-describe('YouTube（旧保存形から組み立てたブロック設定）', () => {
-  it('アクセスブロックが有効ならブロックする', async () => {
-    givenSettings({ youtube: youtubeSettings() });
+describe('YouTube（youtube.com も普通の追跡中のサイト）', () => {
+  it('youtube.com のブロック設定が有効ならサブドメインもブロックする', async () => {
+    given({
+      sites: [site(YOUTUBE_DOMAIN, {}), trackedSite('other.com')]
+    });
     const result = await getBlockState('https://www.youtube.com/watch?v=abc');
     expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
   });
 
-  it('アクセスブロックが無効ならブロックしない', async () => {
-    givenSettings({ youtube: youtubeSettings({ blockAccess: false }) });
-    const result = await getBlockState('https://www.youtube.com/');
-    expect(result).toEqual({ blocked: false, reason: null });
-  });
-
-  it('YouTube 自体が無効ならブロックしない', async () => {
-    givenSettings({ youtube: youtubeSettings({ enabled: false }) });
+  it('YouTube 機能だけ（ブロック設定なし）ならブロックしない', async () => {
+    given({
+      sites: [trackedSite(YOUTUBE_DOMAIN, { youtube: youtubeFeatures() })]
+    });
     const result = await getBlockState('https://www.youtube.com/');
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('時間制限は youtube.com の今日の行で判定する', async () => {
-    givenSettings({
-      youtube: youtubeSettings({
-        timeLimit: { type: 'daily', limitSeconds: 60 }
-      })
+    given({
+      sites: [
+        site(YOUTUBE_DOMAIN, { timeLimit: { type: 'daily', limitSeconds: 60 } })
+      ]
     });
     givenSeconds({ [YOUTUBE_DOMAIN]: 30 });
     expect(await getBlockState('https://m.youtube.com/')).toEqual({
@@ -444,46 +416,34 @@ describe('YouTube（旧保存形から組み立てたブロック設定）', () 
       remainingSeconds: 0
     });
   });
-
-  it('ブロックリストの youtube.com が無効でも、YouTube のアクセスブロックが有効ならブロックする', async () => {
-    // 覆う登録のどれかがブロックならブロック（YouTube の設定も 1 件の登録として数える）
-    givenSettings({
-      blockList: [item({ domain: 'www.youtube.com', enabled: false })],
-      youtube: youtubeSettings()
-    });
-    const result = await getBlockState('https://www.youtube.com/');
-    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
-    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
-  });
 });
 
 describe('getActiveBlockedDomains', () => {
   it('一時停止中は空配列を返す', async () => {
-    givenSettings({
-      paused: true,
-      blockList: [item()],
-      youtube: youtubeSettings()
+    given({
+      settings: { paused: true },
+      sites: [site(), site(YOUTUBE_DOMAIN)]
     });
     expect(await getActiveBlockedDomains()).toEqual([]);
   });
 
-  it('スケジュール外では常時ブロックの項目もブロックしない', async () => {
+  it('スケジュール外では常時ブロックのサイトもブロックしない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    givenSettings({
-      blockList: [item()],
-      schedules: OUT_OF_SCHEDULE,
-      youtube: youtubeSettings()
+    given({
+      settings: { schedules: OUT_OF_SCHEDULE },
+      sites: [site(), site(YOUTUBE_DOMAIN)]
     });
     expect(await getActiveBlockedDomains()).toEqual([]);
   });
 
-  it('常時ブロックと上限に達した項目だけを含め、上限未満・無効な項目は含めない', async () => {
-    givenSettings({
-      blockList: [
-        item({ id: '1', domain: 'always.com' }),
-        limitedItem({ id: '2', domain: 'exceeded.com' }),
-        limitedItem({ id: '3', domain: 'under.com' }),
-        item({ id: '4', domain: 'disabled.com', enabled: false })
+  it('常時ブロックと上限に達したサイトだけを含め、上限未満・無効・追跡だけのサイトは含めない', async () => {
+    given({
+      sites: [
+        site('always.com'),
+        limitedSite('exceeded.com'),
+        limitedSite('under.com'),
+        site('disabled.com', { enabled: false }),
+        trackedSite('tracked.com')
       ]
     });
     givenSeconds({ 'exceeded.com': LIMIT_SECONDS, 'under.com': 10 });
@@ -494,34 +454,8 @@ describe('getActiveBlockedDomains', () => {
     ]);
   });
 
-  it('ワイルドカード・www. 付きの項目はサイトキーで返す', async () => {
-    givenSettings({
-      blockList: [
-        item({ id: '1', domain: '*.example.com', isWildcard: true }),
-        item({ id: '2', domain: 'www.reddit.com' })
-      ]
-    });
-    expect(await getActiveBlockedDomains()).toEqual([
-      'example.com',
-      'reddit.com'
-    ]);
-  });
-
-  it('YouTube のアクセスブロックが有効なら youtube.com を含める', async () => {
-    givenSettings({ youtube: youtubeSettings() });
-    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
-  });
-
-  it('YouTube の時間制限は上限に達してから含める', async () => {
-    givenSettings({
-      youtube: youtubeSettings({
-        timeLimit: { type: 'daily', limitSeconds: 60 }
-      })
-    });
-    givenSeconds({ [YOUTUBE_DOMAIN]: 59 });
-    expect(await getActiveBlockedDomains()).toEqual([]);
-
-    givenSeconds({ [YOUTUBE_DOMAIN]: 60 });
+  it('youtube.com のブロック設定も他のサイトと同じく含める', async () => {
+    given({ sites: [site(YOUTUBE_DOMAIN)] });
     expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
   });
 });
@@ -539,84 +473,57 @@ describe('判定とルール生成の一致', () => {
     return ruleDomains.some((key) => host === key || host.endsWith(`.${key}`));
   }
 
-  const cases: [
-    string,
-    Partial<AppSettings>,
-    Record<string, number>,
-    boolean
-  ][] = [
-    ['常時ブロック', { blockList: [item()] }, {}, false],
+  const cases: [string, Given, Record<string, number>, boolean][] = [
+    ['常時ブロック', { sites: [site()] }, {}, false],
     [
       'スケジュール外の常時ブロック',
-      { blockList: [item()], schedules: OUT_OF_SCHEDULE },
+      { settings: { schedules: OUT_OF_SCHEDULE }, sites: [site()] },
       {},
       true
     ],
     [
       '上限に達した時間制限',
-      { blockList: [limitedItem({ domain: 'www.example.com' })] },
+      { sites: [limitedSite()] },
       { [PARENT]: LIMIT_SECONDS },
       false
     ],
-    [
-      '上限未満の時間制限',
-      { blockList: [limitedItem()] },
-      { [PARENT]: 1 },
-      false
-    ],
+    ['上限未満の時間制限', { sites: [limitedSite()] }, { [PARENT]: 1 }, false],
     [
       'スケジュール外で上限に達した時間制限',
-      { blockList: [limitedItem()], schedules: OUT_OF_SCHEDULE },
+      { settings: { schedules: OUT_OF_SCHEDULE }, sites: [limitedSite()] },
       { [PARENT]: LIMIT_SECONDS },
       true
     ],
-    ['一時停止中', { paused: true, blockList: [item()] }, {}, false],
+    ['一時停止中', { settings: { paused: true }, sites: [site()] }, {}, false],
     [
-      '親ブロック + 子無効',
-      {
-        blockList: [item(), item({ id: '2', domain: CHILD, enabled: false })]
-      },
+      '入れ子の保存値: 親ブロック + 子無効',
+      { sites: [site(), site(CHILD, { enabled: false })] },
       {},
       false
     ],
     [
-      '親無効 + 子ブロック',
-      {
-        blockList: [item({ enabled: false }), item({ id: '2', domain: CHILD })]
-      },
+      '入れ子の保存値: 親無効 + 子ブロック',
+      { sites: [site(PARENT, { enabled: false }), site(CHILD)] },
       {},
       false
     ],
     [
-      '親に時間制限（上限未満）+ 子常時',
-      { blockList: [limitedItem(), item({ id: '2', domain: CHILD })] },
+      '入れ子の保存値: 親に時間制限（上限未満）+ 子常時',
+      { sites: [limitedSite(), site(CHILD)] },
       { [PARENT]: 1 },
       false
     ],
     [
-      '親に時間制限（上限到達）+ 子に時間制限（上限未満）',
-      {
-        blockList: [limitedItem(), limitedItem({ id: '2', domain: CHILD })]
-      },
+      '入れ子の保存値: 親に時間制限（上限到達）+ 子に時間制限（上限未満）',
+      { sites: [limitedSite(), limitedSite(CHILD)] },
       { [PARENT]: LIMIT_SECONDS, [CHILD]: 1 },
-      false
-    ],
-    [
-      '同じサイトキーの重複登録（無効 + 有効）',
-      {
-        blockList: [
-          item({ enabled: false }),
-          item({ id: '2', domain: `www.${PARENT}` })
-        ]
-      },
-      {},
       false
     ]
   ];
 
-  it.each(cases)('%s', async (_label, settings, seconds, outOfSchedule) => {
+  it.each(cases)('%s', async (_label, input, seconds, outOfSchedule) => {
     mockIsWithinSchedule.mockReturnValue(!outOfSchedule);
-    givenSettings(settings);
+    given(input);
     givenSeconds(seconds);
 
     const ruleDomains = await getActiveBlockedDomains();

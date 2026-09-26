@@ -4,7 +4,8 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { TimeLimitEditor } from '../TimeLimitEditor';
-import type { BlockItem, TimeLimit } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TimeLimit } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -18,10 +19,9 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // 置換値（制限分数・残り時間）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-const baseItem: BlockItem = {
+const baseItem: BlockListRow = {
   id: 'item-1',
   domain: 'example.com',
-  isWildcard: false,
   createdAt: '2026-01-01T00:00:00Z',
   enabled: true,
   timeLimit: null

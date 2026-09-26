@@ -105,7 +105,7 @@
     "message": "Customize",
     "description": "Customize settings tab"
   },
-  "blockList": {
+  "blocklistTab": {
     "message": "Block List",
     "description": "Block list tab"
   },
@@ -2202,5 +2202,47 @@
   "supportPromptDismiss": {
     "message": "Dismiss",
     "description": "Dismiss button of the support prompt"
+  },
+  "siteErrorInsideTrackedSite": {
+    "message": "$DOMAIN$ can't be added because it is part of $SITE$, which is already tracked",
+    "description": "Error when the domain is a subdomain of a tracked site",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "siteErrorContainsTrackedSite": {
+    "message": "$DOMAIN$ can't be added because it contains $SITE$, which is already tracked",
+    "description": "Error when the domain is a parent of a tracked site",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "importWarningNestedSite": {
+    "message": "$DOMAIN$ was not imported because it overlaps with $SITE$",
+    "description": "Import warning: skipped a site nested with a tracked site",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
   }
 }

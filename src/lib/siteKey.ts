@@ -1,5 +1,8 @@
 import type { SiteKey } from '~/types/site';
 
+/** YouTube のサイトキー。YouTube 固有の非表示機能はこのキーのサイトだけが持てる */
+export const YOUTUBE_DOMAIN: SiteKey = 'youtube.com';
+
 const WILDCARD_PREFIX = '*.';
 const WWW_PREFIX = 'www.';
 
@@ -42,4 +45,27 @@ export function resolveSiteKey(
     }
   }
   return best;
+}
+
+/** 入れ子になる既存のサイト。`relation` は既存のサイトから見た関係 */
+export interface NestedSite {
+  site: SiteKey;
+  relation: 'ancestor' | 'descendant';
+}
+
+/**
+ * `key` を追加すると入れ子になる既存のサイトを返す（無ければ null。同じキーは入れ子に数えない）。
+ * サイト同士を入れ子にすると 1 つのホスト名が 2 つのサイトに属し、滞在時間・時間制限の
+ * 使用量が片方にしか数えられない（子を登録すれば親の時間制限を回避できる）ため、追加時に拒否する
+ */
+export function findNestedSite(
+  key: SiteKey,
+  sites: readonly SiteKey[]
+): NestedSite | null {
+  for (const site of sites) {
+    if (!site || site === key) continue;
+    if (key.endsWith(`.${site}`)) return { site, relation: 'ancestor' };
+    if (site.endsWith(`.${key}`)) return { site, relation: 'descendant' };
+  }
+  return null;
 }

@@ -7,8 +7,16 @@ import {
   validateImportedData,
   applyImportedSettings,
   createDefaultExportData,
+  EXPORT_VERSION,
   type ExportedSettings
 } from '~/lib/settingsExport';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import {
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 import type { AppSettings, VisionSettings } from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
@@ -23,10 +31,10 @@ function createValidExportData(
   overrides: Partial<ExportedSettings['data']> = {}
 ): ExportedSettings {
   return {
-    version: 1,
+    version: EXPORT_VERSION,
     exportedAt: '2024-06-12T00:00:00Z',
     data: {
-      blockList: [],
+      sites: {},
       schedules: [],
       presets: [],
       defaultDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
@@ -48,13 +56,9 @@ describe('calculateExportSize', () => {
   it('データが大きいほどサイズも大きい', () => {
     const small = createValidExportData();
     const large = createValidExportData({
-      blockList: Array.from({ length: 100 }, (_, i) => ({
-        id: `id-${i}`,
-        domain: `site${i}.com`,
-        isWildcard: false,
-        createdAt: '2024-01-01T00:00:00Z',
-        enabled: true
-      }))
+      sites: sitesOf(
+        ...Array.from({ length: 100 }, (_, i) => blockedSite(`site${i}.com`))
+      )
     });
     expect(calculateExportSize(large)).toBeGreaterThan(
       calculateExportSize(small)
@@ -100,26 +104,17 @@ describe('exportSettings', () => {
   it('デフォルト設定からエクスポートデータを生成する', () => {
     const settings: AppSettings = DEFAULT_SETTINGS;
     const vision: VisionSettings = DEFAULT_VISION;
-    const { data, isLarge } = exportSettings(settings, vision);
-    expect(data.version).toBe(1);
+    const { data, isLarge } = exportSettings(settings, vision, {});
+    expect(data.version).toBe(EXPORT_VERSION);
     expect(data.exportedAt).toBeTruthy();
-    expect(data.data.blockList).toEqual([]);
+    expect(data.data.sites).toEqual({});
     expect(data.data.schedules).toEqual([]);
     expect(isLarge).toBe(false);
   });
 
-  it('ブロックリストとスケジュールが含まれる', () => {
+  it('追跡中のサイトとスケジュールが含まれる', () => {
     const settings: AppSettings = {
       ...DEFAULT_SETTINGS,
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ],
       schedules: [
         {
           id: 's1',
@@ -132,8 +127,9 @@ describe('exportSettings', () => {
       ]
     };
     const vision: VisionSettings = DEFAULT_VISION;
-    const { data } = exportSettings(settings, vision);
-    expect(data.data.blockList).toHaveLength(1);
+    const sites = sitesOf(blockedSite('youtube.com'), trackedSite('x.com'));
+    const { data } = exportSettings(settings, vision, sites);
+    expect(data.data.sites).toEqual(sites);
     expect(data.data.schedules).toHaveLength(1);
   });
 });
@@ -163,6 +159,41 @@ describe('validateImportedData', () => {
     const result = validateImportedData(JSON.stringify({ foo: 'bar' }));
     expect(result.success).toBe(false);
     expect(result.error).toBe('importErrorInvalidFormat');
+  });
+
+  it('旧版（追跡中のサイトを持たない形）のファイルは形式エラーで拒む', () => {
+    // 旧い形式の読み替えは持たない。旧版はブロックリストを配列で持ち、sites が無い
+    const old = {
+      version: 1,
+      exportedAt: '2024-06-12T00:00:00Z',
+      data: {
+        ...createValidExportData().data,
+        sites: undefined,
+        blockItems: [{ id: 'b1', domain: 'youtube.com' }]
+      }
+    };
+    const result = validateImportedData(JSON.stringify(old));
+    expect(result).toEqual({
+      success: false,
+      error: 'importErrorInvalidFormat'
+    });
+  });
+
+  it('sites を持っていても版が古ければ形式エラーで拒む', () => {
+    const data = { ...createValidExportData(), version: EXPORT_VERSION - 1 };
+    expect(validateImportedData(JSON.stringify(data)).success).toBe(false);
+  });
+
+  it('追跡中のサイトの形が崩れていれば形式エラーで拒む', () => {
+    const data = createValidExportData();
+    const broken = {
+      ...data,
+      data: {
+        ...data.data,
+        sites: { 'x.com': { domain: 'x.com', trackedAt: 'x', block: null } }
+      }
+    };
+    expect(validateImportedData(JSON.stringify(broken)).success).toBe(false);
   });
 
   it('新しいバージョンの場合に警告を含む', () => {
@@ -225,49 +256,6 @@ describe('validateImportedData', () => {
 });
 
 describe('applyImportedSettings', () => {
-  it('ブロックリストをマージし、重複ドメインを除外する', () => {
-    const importData = createValidExportData({
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        },
-        {
-          id: 'b2',
-          domain: 'twitter.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ]
-    }).data;
-
-    const currentSettings: AppSettings = {
-      ...DEFAULT_SETTINGS,
-      blockList: [
-        {
-          id: 'existing',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ]
-    };
-
-    const { settings } = applyImportedSettings(
-      importData,
-      currentSettings,
-      DEFAULT_VISION
-    );
-    // youtube.comは既存にあるので追加されない、twitter.comだけ追加
-    expect(settings.blockList).toHaveLength(2);
-    expect(settings.blockList.map((b) => b.domain)).toContain('twitter.com');
-  });
-
   it('スケジュールをマージし、重複IDを除外する', () => {
     const importData = createValidExportData({
       schedules: [
@@ -373,9 +361,9 @@ describe('applyImportedSettings', () => {
 describe('createDefaultExportData', () => {
   it('デフォルトのエクスポートデータを生成する', () => {
     const data = createDefaultExportData();
-    expect(data.version).toBe(1);
+    expect(data.version).toBe(EXPORT_VERSION);
     expect(data.exportedAt).toBeTruthy();
-    expect(data.data.blockList).toEqual([]);
+    expect(data.data.sites).toEqual({});
     expect(data.data.schedules).toEqual([]);
     expect(data.data.presets).toEqual([]);
     expect(data.data.activePresetId).toBeNull();
@@ -391,7 +379,7 @@ describe('長押しの秒数のエクスポート・インポート', () => {
   };
 
   it('書き出して読み戻すと同じ秒数が適用される', () => {
-    const { data } = exportSettings(settingsWith30s, DEFAULT_VISION);
+    const { data } = exportSettings(settingsWith30s, DEFAULT_VISION, {});
     expect(data.data.unblockConfirm).toEqual({ holdSeconds: 30 });
 
     const imported = validateImportedData(JSON.stringify(data));
@@ -446,4 +434,27 @@ describe('必須項目（notifications / unblockConfirm）が無いファイル�
       expect(result.error).toBe('importErrorInvalidFormat');
     }
   );
+});
+
+describe('追跡中のサイトのエクスポート・インポート', () => {
+  it('書き出して読み戻すと同じ追跡中のサイトが得られる', () => {
+    const sites = sitesOf(
+      blockedSite('x.com', {
+        enabled: false,
+        timeLimit: { type: 'daily', limitSeconds: 600 }
+      }),
+      trackedSite('news.example.org'),
+      blockedSite(
+        YOUTUBE_DOMAIN,
+        {},
+        { youtube: youtubeFeatures({ hideShorts: true }) }
+      )
+    );
+    const { data } = exportSettings(DEFAULT_SETTINGS, DEFAULT_VISION, sites);
+
+    const imported = validateImportedData(JSON.stringify(data));
+
+    expect(imported.success).toBe(true);
+    expect(imported.data?.sites).toEqual(sites);
+  });
 });

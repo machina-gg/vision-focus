@@ -75,12 +75,13 @@ describe('toggle-pause ハンドラ', () => {
   it('他の設定値を壊さない', async () => {
     const settings = {
       ...DEFAULT_SETTINGS,
-      blockList: [
+      schedules: [
         {
-          id: 'a',
-          domain: 'example.com',
-          isWildcard: false,
-          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 's1',
+          name: 'Work',
+          startTime: '09:00',
+          endTime: '17:00',
+          days: [1],
           enabled: true
         }
       ]
@@ -92,7 +93,7 @@ describe('toggle-pause ハンドラ', () => {
     expect(setSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         paused: true,
-        blockList: settings.blockList
+        schedules: settings.schedules
       })
     );
   });

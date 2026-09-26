@@ -26,11 +26,7 @@ export { type WeeklyReport, type MonthlyReport } from './report';
 export {
   type TimeLimitType,
   type TimeLimit,
-  type TrackedSite,
-  type UnblockedSite,
-  type UnblockHistory,
-  type AnalyticsOptIn,
-  DEFAULT_UNBLOCK_HISTORY
+  type AnalyticsOptIn
 } from './analytics';
 
 // Re-export from vision.ts for backwards compatibility
@@ -43,22 +39,10 @@ export {
 } from './vision';
 
 // Import types needed for this file
-import type { TimeLimit } from './analytics';
 import type { VisionSettings } from './vision';
-import type { UnblockHistory } from './analytics';
-import { DEFAULT_UNBLOCK_HISTORY } from './analytics';
 import { DEFAULT_VISION } from './vision';
 import type { ActivityLog } from './activity';
-
-// Block list item
-export interface BlockItem {
-  id: string;
-  domain: string;
-  isWildcard: boolean;
-  createdAt: string;
-  enabled: boolean; // Whether blocking is active for this item (default: true)
-  timeLimit?: TimeLimit | null; // If null/undefined, site is always blocked when enabled
-}
+import type { TrackedSites } from './site';
 
 // Schedule for time-based blocking
 export interface Schedule {
@@ -84,17 +68,6 @@ export interface NotificationSettings {
   timeLimitMinutes: NotificationMinutes; // Minutes before limit to notify (1, 3, 5, 10)
 }
 
-// YouTube in-app blocking settings
-export interface YouTubeSettings {
-  enabled: boolean; // Master switch for YouTube blocking features
-  blockAccess: boolean; // Block access to YouTube entirely (redirects to block page)
-  hideShorts: boolean; // Hide Shorts shelf and tab
-  hideRecommendations: boolean; // Hide recommended videos on home and watch pages
-  hideComments: boolean; // Hide comment section
-  hideHomeFeed: boolean; // Hide home feed (show only search)
-  timeLimit?: TimeLimit | null; // Optional time limit for YouTube usage
-}
-
 // Password protection settings for unblock operations
 export interface PasswordSettings {
   enabled: boolean; // Whether password protection is enabled
@@ -114,12 +87,11 @@ export interface UnblockConfirmSettings {
   holdSeconds: UnblockHoldSeconds;
 }
 
+// 全サイトに共通の設定。サイトごとの設定（ブロック・時間制限・YouTube 機能）は `sites` が持つ
 export interface AppSettings {
-  blockList: BlockItem[];
   schedules: Schedule[];
   paused: boolean; // Global pause for all blocking
   notifications: NotificationSettings; // Notification preferences
-  youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
   unblockConfirm: UnblockConfirmSettings; // ブロック解除の長押し確認の設定
   analyticsOptIn?: import('./analytics').AnalyticsOptIn | null; // null = not yet decided (show modal)
@@ -138,7 +110,7 @@ export interface SupportPromptState {
 export interface StorageSchema {
   settings: AppSettings;
   vision: VisionSettings;
-  unblockHistory: UnblockHistory;
+  sites: TrackedSites;
   activity: ActivityLog;
 }
 
@@ -146,17 +118,6 @@ export interface StorageSchema {
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   timeLimitEnabled: true, // Enabled by default
   timeLimitMinutes: 5 // Notify 5 minutes before limit
-};
-
-// Default YouTube settings
-export const DEFAULT_YOUTUBE_SETTINGS: YouTubeSettings = {
-  enabled: false, // Disabled by default
-  blockAccess: false, // Do not block access by default
-  hideShorts: false,
-  hideRecommendations: false,
-  hideComments: false,
-  hideHomeFeed: false,
-  timeLimit: null
 };
 
 // Default password settings
@@ -177,14 +138,16 @@ export const DEFAULT_SUPPORT_PROMPT_STATE: SupportPromptState = {
 
 // Default values
 export const DEFAULT_SETTINGS: AppSettings = {
-  blockList: [],
   schedules: [],
   paused: false,
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
-  youtube: DEFAULT_YOUTUBE_SETTINGS,
   password: DEFAULT_PASSWORD_SETTINGS,
   unblockConfirm: DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 };
+
+// 追跡中のサイトの初期状態（まだ何も追跡していない）。
+// 書き手は読み出した値を複製してから書き換えるので、この値そのものは変更されない
+export const DEFAULT_SITES: TrackedSites = {};
 
 // 事実の表の初期状態（まだ何も記録していない）。
 // 書き手は読み出した値を複製してから書き換えるので、この値そのものは変更されない
@@ -193,6 +156,6 @@ export const DEFAULT_ACTIVITY: ActivityLog = {};
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
-  unblockHistory: DEFAULT_UNBLOCK_HISTORY,
+  sites: DEFAULT_SITES,
   activity: DEFAULT_ACTIVITY
 };

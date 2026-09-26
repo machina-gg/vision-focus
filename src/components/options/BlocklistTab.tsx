@@ -12,9 +12,9 @@ import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import { blockCountsByDomain } from '~/hooks/useActivityStats';
 import { secondsOnDay } from '~/lib/activityStats';
-import { normalizeSiteKey } from '~/lib/siteKey';
 import { toDateKey } from '~/lib/time';
-import type { TimeLimit, YouTubeSettings } from '~/types/storage';
+import type { BlockListRow, YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { TimeLimit } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
 
 interface BlocklistTabProps {
@@ -27,8 +27,10 @@ interface BlocklistTabProps {
   onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
   /** 事実の表。ブロック回数と時間制限の今日の使用量をここから導出する */
   activity: ActivityLog;
-  youtube: YouTubeSettings;
-  onYouTubeChange: (youtube: YouTubeSettings) => void;
+  /** ブロックリストの行（追跡中のサイトのうちブロック設定を持つもの） */
+  blockRows: BlockListRow[];
+  youtube: YouTubeSectionValue;
+  onYouTubeChange: (youtube: YouTubeSectionValue) => void;
 }
 
 export function BlocklistTab({
@@ -40,6 +42,7 @@ export function BlocklistTab({
   onToggleDomain,
   onUpdateTimeLimit,
   activity,
+  blockRows,
   youtube,
   onYouTubeChange
 }: BlocklistTabProps) {
@@ -52,15 +55,11 @@ export function BlocklistTab({
   const { requestUnblock } = unblockGuard;
   const now = new Date();
   const today = toDateKey(now);
-  const blockCounts = blockCountsByDomain(
-    activity,
-    settings?.blockList ?? [],
-    now
-  );
+  const blockCounts = blockCountsByDomain(activity, blockRows, now);
 
   const handleRemoveClick = useCallback(
     (id: string) => {
-      const item = settings?.blockList.find((b) => b.id === id);
+      const item = blockRows.find((b) => b.id === id);
       if (!item) return;
       requestUnblock({
         domain: item.domain,
@@ -69,7 +68,7 @@ export function BlocklistTab({
         onConfirm: () => onRemoveDomain(id)
       });
     },
-    [requestUnblock, onRemoveDomain, settings?.blockList]
+    [requestUnblock, onRemoveDomain, blockRows]
   );
 
   // ブロックを弱める向き（無効化）だけ確認を通す。有効化は即時に反映する
@@ -79,7 +78,7 @@ export function BlocklistTab({
         onToggleDomain(id, enabled);
         return;
       }
-      const item = settings?.blockList.find((b) => b.id === id);
+      const item = blockRows.find((b) => b.id === id);
       if (!item) return;
       requestUnblock({
         domain: item.domain,
@@ -88,7 +87,7 @@ export function BlocklistTab({
         onConfirm: () => onToggleDomain(id, false)
       });
     },
-    [requestUnblock, onToggleDomain, settings?.blockList]
+    [requestUnblock, onToggleDomain, blockRows]
   );
 
   return (
@@ -134,23 +133,18 @@ export function BlocklistTab({
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-gray-600">{getMessage('loading')}</p>
           </div>
-        ) : settings.blockList.length === 0 ? (
+        ) : blockRows.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             {getMessage('noBlockedSites')}
           </p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {settings.blockList.map((item) => (
+            {blockRows.map((item) => (
               <DomainListItem
                 key={item.id}
                 item={item}
                 blockCount={blockCounts[item.domain] ?? 0}
-                // 判定と同じサイトキーで引く（ワイルドカード・www. 付きでも同じ行になる）
-                usedSeconds={secondsOnDay(
-                  activity,
-                  normalizeSiteKey(item.domain),
-                  today
-                )}
+                usedSeconds={secondsOnDay(activity, item.domain, today)}
                 onToggle={handleToggleClick}
                 onRemove={handleRemoveClick}
                 onUpdateTimeLimit={onUpdateTimeLimit}

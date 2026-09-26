@@ -1,105 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  matchesDomain,
   extractDomain,
-  isDomainBlocked,
   parseDomainInput,
   isValidDomain,
   generateId
 } from '~/lib/domain';
-import type { BlockItem } from '~/types/storage';
-
-function makeBlockItem(domain: string, isWildcard: boolean): BlockItem {
-  return {
-    id: 'test-id',
-    domain,
-    isWildcard,
-    createdAt: '2024-01-01T00:00:00Z',
-    enabled: true
-  };
-}
-
-describe('matchesDomain', () => {
-  describe('exact (non-wildcard) domains', () => {
-    it('matches exact domain', () => {
-      const item = makeBlockItem('youtube.com', false);
-      expect(matchesDomain('youtube.com', item)).toBe(true);
-    });
-
-    it('matches subdomain of the blocked domain', () => {
-      const item = makeBlockItem('youtube.com', false);
-      expect(matchesDomain('www.youtube.com', item)).toBe(true);
-    });
-
-    it('matches nested subdomain', () => {
-      const item = makeBlockItem('youtube.com', false);
-      expect(matchesDomain('m.youtube.com', item)).toBe(true);
-    });
-
-    it('does not match unrelated domain with same suffix', () => {
-      const item = makeBlockItem('youtube.com', false);
-      expect(matchesDomain('notyoutube.com', item)).toBe(false);
-    });
-
-    it('does not match a different domain entirely', () => {
-      const item = makeBlockItem('youtube.com', false);
-      expect(matchesDomain('reddit.com', item)).toBe(false);
-    });
-
-    it('matches case-insensitively', () => {
-      const item = makeBlockItem('YouTube.com', false);
-      expect(matchesDomain('WWW.YOUTUBE.COM', item)).toBe(true);
-    });
-
-    it('www.youtube.com does not match youtube.com tab', () => {
-      const item = makeBlockItem('www.youtube.com', false);
-      expect(matchesDomain('youtube.com', item)).toBe(false);
-    });
-
-    it('www.youtube.com matches www.youtube.com exactly', () => {
-      const item = makeBlockItem('www.youtube.com', false);
-      expect(matchesDomain('www.youtube.com', item)).toBe(true);
-    });
-
-    it('matches deeply nested subdomains', () => {
-      const item = makeBlockItem('example.com', false);
-      expect(matchesDomain('a.b.c.d.example.com', item)).toBe(true);
-    });
-
-    it('handles empty domain gracefully', () => {
-      const item = makeBlockItem('example.com', false);
-      expect(matchesDomain('', item)).toBe(false);
-    });
-  });
-
-  describe('wildcard domains', () => {
-    it('matches subdomain', () => {
-      const item = makeBlockItem('*.youtube.com', true);
-      expect(matchesDomain('www.youtube.com', item)).toBe(true);
-    });
-
-    it('matches base domain', () => {
-      const item = makeBlockItem('*.youtube.com', true);
-      expect(matchesDomain('youtube.com', item)).toBe(true);
-    });
-
-    it('matches nested subdomain', () => {
-      const item = makeBlockItem('*.youtube.com', true);
-      expect(matchesDomain('sub.www.youtube.com', item)).toBe(true);
-    });
-
-    it('does not match unrelated domain', () => {
-      const item = makeBlockItem('*.youtube.com', true);
-      expect(matchesDomain('notyoutube.com', item)).toBe(false);
-    });
-
-    it('handles mixed case in wildcard pattern', () => {
-      const item = makeBlockItem('*.Example.COM', true);
-      expect(matchesDomain('www.example.com', item)).toBe(true);
-    });
-  });
-});
 
 describe('extractDomain', () => {
   it('extracts hostname from HTTPS URL', () => {
@@ -136,41 +42,6 @@ describe('extractDomain', () => {
 
   it('returns null for URL without protocol', () => {
     expect(extractDomain('example.com')).toBeNull();
-  });
-});
-
-describe('isDomainBlocked', () => {
-  it('returns true when domain matches any item in blocklist', () => {
-    const blockList = [
-      makeBlockItem('youtube.com', false),
-      makeBlockItem('reddit.com', false)
-    ];
-    expect(isDomainBlocked('www.youtube.com', blockList)).toBe(true);
-  });
-
-  it('returns false when domain does not match any item', () => {
-    const blockList = [
-      makeBlockItem('youtube.com', false),
-      makeBlockItem('reddit.com', false)
-    ];
-    expect(isDomainBlocked('twitter.com', blockList)).toBe(false);
-  });
-
-  it('returns false for empty blocklist', () => {
-    expect(isDomainBlocked('youtube.com', [])).toBe(false);
-  });
-
-  it('matches wildcard patterns in blocklist', () => {
-    const blockList = [makeBlockItem('*.example.com', true)];
-    expect(isDomainBlocked('sub.example.com', blockList)).toBe(true);
-  });
-
-  it('returns true on first match (short-circuits)', () => {
-    const blockList = [
-      makeBlockItem('youtube.com', false),
-      makeBlockItem('*.example.com', true)
-    ];
-    expect(isDomainBlocked('youtube.com', blockList)).toBe(true);
   });
 });
 

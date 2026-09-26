@@ -12,20 +12,19 @@ import {
 import { parseDateKey } from '~/lib/activityStats';
 import { formatTime } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
-// Mock helper to create BlockItem
+// ブロックリストの行を作る
 function makeBlockItem(
   domain: string,
-  isWildcard: boolean,
   createdAt: string = '2024-01-15T10:00:00Z'
-): BlockItem {
+): BlockListRow {
   return {
-    id: `id-${domain}`,
+    id: domain,
     domain,
-    isWildcard,
     createdAt,
-    enabled: true
+    enabled: true,
+    timeLimit: null
   };
 }
 
@@ -86,12 +85,12 @@ describe('export utilities', () => {
 
   describe('exportBlockList', () => {
     it('CSVに正しくエクスポートされる（基本ケース）', () => {
-      const blockList: BlockItem[] = [
-        makeBlockItem('youtube.com', false, '2024-01-15T10:00:00Z'),
-        makeBlockItem('*.twitter.com', true, '2024-01-14T09:00:00Z')
+      const blockRows: BlockListRow[] = [
+        makeBlockItem('youtube.com', '2024-01-15T10:00:00Z'),
+        makeBlockItem('twitter.com', '2024-01-14T09:00:00Z')
       ];
 
-      exportBlockList(blockList);
+      exportBlockList(blockRows);
 
       expect(mockCreateElement).toHaveBeenCalledWith('a');
       expect(mockClick).toHaveBeenCalled();
@@ -100,82 +99,72 @@ describe('export utilities', () => {
     });
 
     it('空配列の場合でもエラーなく実行される', () => {
-      const blockList: BlockItem[] = [];
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      const blockRows: BlockListRow[] = [];
+      expect(() => exportBlockList(blockRows)).not.toThrow();
     });
 
     it('単一要素でも正しくエクスポートされる', () => {
-      const blockList: BlockItem[] = [
-        makeBlockItem('reddit.com', false, '2024-01-10T15:30:00Z')
+      const blockRows: BlockListRow[] = [
+        makeBlockItem('reddit.com', '2024-01-10T15:30:00Z')
       ];
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      expect(() => exportBlockList(blockRows)).not.toThrow();
       expect(mockClick).toHaveBeenCalled();
     });
 
     it('ドメイン名にカンマが含まれる場合に正しくエスケープされる', () => {
       // This is an edge case - domains shouldn't have commas, but the CSV escaping should handle it
-      const blockList: BlockItem[] = [
-        makeBlockItem('example,test.com', false, '2024-01-15T10:00:00Z')
+      const blockRows: BlockListRow[] = [
+        makeBlockItem('example,test.com', '2024-01-15T10:00:00Z')
       ];
-      expect(() => exportBlockList(blockList)).not.toThrow();
-    });
-
-    it('Wildcard/Non-wildcardが正しく"Yes"/"No"に変換される', () => {
-      const blockList: BlockItem[] = [
-        makeBlockItem('example.com', false),
-        makeBlockItem('*.test.com', true)
-      ];
-      // We can't easily test the CSV content without inspecting Blob,
-      // but we can ensure it doesn't throw
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      expect(() => exportBlockList(blockRows)).not.toThrow();
     });
   });
 
   describe('CSV escaping', () => {
     it('カンマを含む文字列が正しくエスケープされる', () => {
-      const blockList: BlockItem[] = [
+      const blockRows: BlockListRow[] = [
         {
           id: 'test',
           domain: 'example,test.com',
-          isWildcard: false,
           createdAt: '2024-01-15T10:00:00Z',
-          enabled: true
+          enabled: true,
+          timeLimit: null
         }
       ];
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      expect(() => exportBlockList(blockRows)).not.toThrow();
     });
 
     it('ダブルクォートを含む文字列が正しくエスケープされる', () => {
-      const blockList: BlockItem[] = [
+      const blockRows: BlockListRow[] = [
         {
           id: 'test',
           domain: 'example"test.com',
-          isWildcard: false,
           createdAt: '2024-01-15T10:00:00Z',
-          enabled: true
+          enabled: true,
+          timeLimit: null
         }
       ];
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      expect(() => exportBlockList(blockRows)).not.toThrow();
     });
 
     it('改行を含む文字列が正しくエスケープされる', () => {
-      const blockList: BlockItem[] = [
+      const blockRows: BlockListRow[] = [
         {
           id: 'test',
           domain: 'example\ntest.com',
-          isWildcard: false,
           createdAt: '2024-01-15T10:00:00Z',
-          enabled: true
+          enabled: true,
+          timeLimit: null
         }
       ];
-      expect(() => exportBlockList(blockList)).not.toThrow();
+      expect(() => exportBlockList(blockRows)).not.toThrow();
     });
   });
 
   describe('filename generation', () => {
     it('ファイル名に正しい日付が含まれる', () => {
-      const blockList: BlockItem[] = [makeBlockItem('youtube.com', false)];
-      exportBlockList(blockList);
+      const blockRows: BlockListRow[] = [makeBlockItem('youtube.com')];
+      exportBlockList(blockRows);
 
       // Check that createElement was called with 'a'
       expect(mockCreateElement).toHaveBeenCalledWith('a');
@@ -187,8 +176,8 @@ describe('export utilities', () => {
 
   describe('BOM for Excel compatibility', () => {
     it('CSVファイルにBOMが含まれる（Excel日本語互換性）', () => {
-      const blockList: BlockItem[] = [makeBlockItem('youtube.com', false)];
-      exportBlockList(blockList);
+      const blockRows: BlockListRow[] = [makeBlockItem('youtube.com')];
+      exportBlockList(blockRows);
 
       // Verify Blob was created (BOM is added in downloadCSV)
       expect(global.Blob).toHaveBeenCalled();

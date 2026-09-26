@@ -8,13 +8,13 @@ import { openOptionsPage } from '~/lib/chromeApi';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { ActivityLog } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
+import type { SiteKey, TrackedSites } from '~/types/site';
 import type {
   AppSettings,
-  BlockItem,
   DashboardPreset,
   VisionSettings
 } from '~/types/storage';
+import { blockedSite, sitesOf } from '~/test/sites';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS } from '~/types/storage';
 
 /**
@@ -38,7 +38,7 @@ vi.mock('~/lib/storage', () => ({
   visionItem: { key: 'local:vision' },
   settingsItem: { key: 'local:settings' },
   activityItem: { key: 'local:activity' },
-  unblockHistoryItem: { key: 'local:unblockHistory' },
+  sitesItem: { key: 'local:sites' },
   hasStoredVision: async () => true,
   getLastBlockedDomain: async () => storageState.blockedDomain,
   clearLastBlockedDomain: async () => undefined
@@ -124,27 +124,20 @@ function row(
   return { seconds: 0, blocks: 0, unblocks: 0, ...overrides };
 }
 
-function blockItem(domain: string): BlockItem {
-  return {
-    id: `id-${domain}`,
-    domain,
-    isWildcard: false,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    enabled: true
-  };
-}
-
 function renderApp(
   options: {
     vision?: VisionSettings;
     settings?: AppSettings;
+    /** 追跡中のサイトの設定（ブロック中のサイト一覧・ブロック日数の出どころ） */
+    trackedSites?: TrackedSites;
     activity?: ActivityLog;
     sites?: SiteKey[];
   } = {}
 ) {
   hooksState.values = {
     'local:vision': options.vision,
-    'local:settings': options.settings
+    'local:settings': options.settings,
+    'local:sites': options.trackedSites ?? {}
   };
   hooksState.activity = options.activity ?? {};
   hooksState.sites = options.sites ?? [];
@@ -331,13 +324,11 @@ describe('数値は activity から導出する', () => {
     expect(banner).not.toHaveTextContent('wastedTime(');
   });
 
-  it('ブロック中のサイト一覧の回数は、項目の表記を正規化したサイトの保持期間全体の合計', async () => {
+  it('ブロック中のサイト一覧の回数は、サイトの保持期間全体の合計', async () => {
     renderApp({
       vision,
-      settings: {
-        ...DEFAULT_SETTINGS,
-        blockList: [blockItem('*.example.com')]
-      },
+      settings: DEFAULT_SETTINGS,
+      trackedSites: sitesOf(blockedSite('example.com')),
       activity: {
         [TODAY]: { 'example.com': row({ blocks: 1 }) },
         [daysAgo(30)]: { 'example.com': row({ blocks: 4 }) }

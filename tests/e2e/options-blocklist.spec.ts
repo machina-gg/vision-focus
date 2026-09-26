@@ -5,8 +5,8 @@ import {
   clearStorage,
   setStorageData,
   makeActivity,
-  makeSettings,
-  makeYouTubeSettings,
+  makeAppSettings,
+  makeSites,
   TEST_DATA,
   SELECTORS,
   UI_TEXT,
@@ -71,18 +71,13 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     const domainItem = page.locator(SELECTORS.options.itemDomain);
     await expect(domainItem.first()).toContainText('reddit.com');
 
-    // ストレージに保存されたことを確認
-    const settings = await getStorageData(page, 'settings');
-    const blockList = settings?.blockList ?? [];
-
-    expect(blockList).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          domain: 'reddit.com',
-          enabled: true
-        })
-      ])
-    );
+    // 追跡中のサイトに有効なブロック設定として保存されたことを確認する
+    await expect
+      .poll(async () => {
+        const sites = await getStorageData(page, 'sites');
+        return sites?.['reddit.com']?.block?.enabled ?? null;
+      })
+      .toBe(true);
 
     await page.close();
   });
@@ -100,23 +95,16 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // 追加ボタンをクリック
     await page.locator(SELECTORS.options.addButton).click();
 
-    // ブロックリストに追加されたことを確認（*. は別要素で描画される）
+    // ブロックリストに追加されたことを確認（*. を除いたサイトキーで表示される）
     const domainItem = page.locator(SELECTORS.options.itemDomain);
-    await expect(domainItem.first()).toContainText('reddit.com');
+    await expect(domainItem.first()).toHaveText('reddit.com');
 
-    // ストレージに保存されたことを確認
-    const settings = await getStorageData(page, 'settings');
-    const blockList = settings?.blockList ?? [];
-
-    expect(blockList).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          domain: '*.reddit.com',
-          isWildcard: true,
-          enabled: true
-        })
-      ])
-    );
+    // *. を除いたサイトキーで保存される（*.reddit.com と reddit.com は同じ範囲を止める）
+    await expect
+      .poll(async () =>
+        Object.keys((await getStorageData(page, 'sites')) ?? {})
+      )
+      .toEqual(['reddit.com']);
 
     await page.close();
   });
@@ -222,8 +210,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        return settings?.blockList?.[0]?.timeLimit;
+        const sites = await getStorageData(page, 'sites');
+        return sites?.['example.com']?.block?.timeLimit;
       })
       .toEqual({ type: 'daily', limitSeconds: 5 * 60 });
 
@@ -366,15 +354,10 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     context,
     extensionId
   }) => {
-    // YouTube 設定はフィールドが欠けているとスキーマ検証に落ち、保存されない
-    // （UpdateYouTubeSettingsBodySchema の hideHomeFeed は必須）。
-    // 完全な形を書く makeYouTubeSettings を使う
+    // YouTube 機能は youtube.com の追跡中のサイトが持つ。無効な状態（サイトなし）から始める
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(
-      setupPage,
-      'settings',
-      makeSettings({ youtube: makeYouTubeSettings({ enabled: false }) })
-    );
+    await setStorageData(setupPage, 'settings', makeAppSettings());
+    await setStorageData(setupPage, 'sites', makeSites([]));
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'blocklist');
@@ -414,10 +397,10 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        const youtube = settings?.youtube;
+        const sites = await getStorageData(page, 'sites');
+        const youtube = sites?.['youtube.com']?.youtube;
         return {
-          enabled: youtube?.enabled,
+          enabled: youtube != null,
           hideShorts: youtube?.hideShorts,
           hideRecommendations: youtube?.hideRecommendations,
           hideComments: youtube?.hideComments
@@ -440,12 +423,11 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // Time Limit の設定欄は「YouTube ブロック有効 + アクセスブロック有効」の
     // ときだけ描画される（src/components/options/blocklist/YouTubeSection.tsx）
     const setupPage = await openOptions(context, extensionId);
+    await setStorageData(setupPage, 'settings', makeAppSettings());
     await setStorageData(
       setupPage,
-      'settings',
-      makeSettings({
-        youtube: makeYouTubeSettings({ enabled: true, blockAccess: true })
-      })
+      'sites',
+      makeSites([{ domain: 'youtube.com', block: {}, youtube: {} }])
     );
     await setupPage.close();
 
@@ -471,8 +453,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
 
     await expect
       .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        return settings?.youtube?.timeLimit;
+        const sites = await getStorageData(page, 'sites');
+        return sites?.['youtube.com']?.block?.timeLimit;
       })
       .toEqual({ type: 'daily', limitSeconds: 15 * 60 });
 
