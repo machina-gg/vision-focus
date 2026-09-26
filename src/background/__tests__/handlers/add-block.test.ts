@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
-import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 vi.mock('~/lib/siteService', () => ({
   addBlock: vi.fn()
@@ -12,16 +11,15 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { addBlock } from '~/lib/siteService';
+import { addBlock, type AddSiteRejection } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { addBlockHandler as handler } from '../../handlers/add-block';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
-
-stubI18nWithSubstitutions();
 
 describe('add-block ハンドラ', () => {
   beforeEach(() => {
@@ -35,7 +33,10 @@ describe('add-block ハンドラ', () => {
   it('domain が空なら失敗し、追跡中のサイトを変えない', async () => {
     const result = await invoke<Response>(handler, { domain: '' });
 
-    expect(result).toEqual({ success: false, error: 'Domain is required' });
+    expect(result).toEqual({
+      success: false,
+      error: { code: 'invalid-request' }
+    });
     expect(addBlock).not.toHaveBeenCalled();
   });
 
@@ -54,11 +55,11 @@ describe('add-block ハンドラ', () => {
   });
 
   it.each([
-    ['形式の誤り', { reason: 'invalid' as const }, 'Invalid domain format'],
+    ['形式の誤り', { reason: 'invalid' as const }, { code: 'invalid-domain' }],
     [
       '既にブロックリストにある',
       { reason: 'duplicate' as const },
-      'Domain already in block list'
+      { code: 'already-blocked' }
     ],
     [
       '追跡中のサイトのサブドメイン',
@@ -66,7 +67,11 @@ describe('add-block ハンドラ', () => {
         reason: 'nested' as const,
         nested: { site: 'youtube.com', relation: 'ancestor' as const }
       },
-      'siteErrorInsideTrackedSite(m.youtube.com,youtube.com)'
+      {
+        code: 'nested-site',
+        domain: 'm.youtube.com',
+        nested: { site: 'youtube.com', relation: 'ancestor' }
+      }
     ],
     [
       '追跡中のサイトの親ドメイン',
@@ -74,9 +79,13 @@ describe('add-block ハンドラ', () => {
         reason: 'nested' as const,
         nested: { site: 'mail.google.com', relation: 'descendant' as const }
       },
-      'siteErrorContainsTrackedSite(m.youtube.com,mail.google.com)'
+      {
+        code: 'nested-site',
+        domain: 'm.youtube.com',
+        nested: { site: 'mail.google.com', relation: 'descendant' }
+      }
     ]
-  ])(
+  ] satisfies [string, AddSiteRejection, MessageError][])(
     '%s なら理由を返し、ルールを作り直さない',
     async (_label, rejection, error) => {
       vi.mocked(addBlock).mockResolvedValue({ site: null, rejection });

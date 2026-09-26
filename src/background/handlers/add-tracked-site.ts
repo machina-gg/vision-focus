@@ -7,14 +7,14 @@ export const addTrackedSiteHandler: MessageHandler<
 > = async ({ data }) => {
   const domain = data?.domain;
   if (!domain || typeof domain !== 'string') {
-    return { success: false, error: 'Domain is required' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   const result = await addTrackedSite(domain, new Date());
   if (result.rejection !== null) {
     return {
       success: false,
-      error: addSiteError(domain, result.rejection, 'Site already tracked')
+      error: addSiteError(domain, result.rejection, 'already-tracked')
     };
   }
   return { success: true };

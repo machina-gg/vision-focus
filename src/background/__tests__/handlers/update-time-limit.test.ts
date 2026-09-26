@@ -13,10 +13,11 @@ vi.mock('../../blocker', () => ({
 import { setTimeLimit } from '~/lib/siteService';
 import { updateBlockRules } from '../../blocker';
 import { updateTimeLimitHandler as handler } from '../../handlers/update-time-limit';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 describe('update-time-limit ハンドラ', () => {
@@ -48,18 +49,18 @@ describe('update-time-limit ハンドラ', () => {
           timeLimit: { type: 'weekly', limitSeconds: 60 }
         }
       ]
-    ])('%s なら Invalid request body を返す', async (_label, body) => {
+    ])('%s なら invalid-request を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
       expect(result).toEqual({
         success: false,
-        error: 'Invalid request body'
+        error: { code: 'invalid-request' }
       });
       expect(setTimeLimit).not.toHaveBeenCalled();
     });
   });
 
-  it('ブロック設定を持たないサイトなら Block item not found を返す', async () => {
+  it('ブロック設定を持たないサイトなら block-not-found を返す', async () => {
     vi.mocked(setTimeLimit).mockResolvedValue(false);
 
     const result = await invoke<Response>(handler, {
@@ -69,7 +70,7 @@ describe('update-time-limit ハンドラ', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Block item not found'
+      error: { code: 'block-not-found' }
     });
     expect(updateBlockRules).not.toHaveBeenCalled();
   });
@@ -107,7 +108,7 @@ describe('update-time-limit ハンドラ', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Failed to update time limit'
+      error: { code: 'save-failed' }
     });
   });
 });

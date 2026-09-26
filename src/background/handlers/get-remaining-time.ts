@@ -36,7 +36,7 @@ export const getRemainingTimeHandler: MessageHandler<
   const parsed = GetRemainingTimeBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    return { success: false, error: 'Invalid URL' };
+    return { success: false, error: { code: 'invalid-url' } };
   }
 
   const info = await getTimeLimitInfo(parsed.data.url);

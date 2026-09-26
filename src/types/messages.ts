@@ -3,7 +3,20 @@ import type {
   TrackerHeartbeatBody,
   UpdateTimeLimitBody
 } from './messageSchemas';
+import type { NestedSite } from '~/lib/siteKey';
 import type { TimeLimitType } from './site';
+
+/** background が画面へ返す失敗の種類。文言は画面が messageErrorText で i18n にする */
+export type MessageError =
+  | { code: 'invalid-request' }
+  | { code: 'invalid-url' }
+  | { code: 'invalid-domain' }
+  | { code: 'already-blocked' }
+  | { code: 'already-tracked' }
+  | { code: 'nested-site'; domain: string; nested: NestedSite }
+  | { code: 'block-not-found' }
+  | { code: 'site-in-use' }
+  | { code: 'save-failed' };
 
 export interface AddBlockRequest {
   domain: string;
@@ -11,7 +24,7 @@ export interface AddBlockRequest {
 
 export interface AddBlockResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export interface AddTrackedSiteRequest {
@@ -20,7 +33,7 @@ export interface AddTrackedSiteRequest {
 
 export interface AddTrackedSiteResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export interface RemoveBlockRequest {
@@ -46,7 +59,7 @@ export interface GetRemainingTimeResponse {
   success: boolean;
   /** null = 開いているページのサイトに有効なブロック設定が無い */
   data?: TimeLimitInfo | null;
-  error?: string;
+  error?: MessageError;
 }
 
 export interface ImportSettingsRequest {
@@ -64,7 +77,7 @@ interface SkippedNestedSite {
 
 export interface ImportSettingsResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
   skipped?: SkippedNestedSite[];
 }
 
@@ -78,7 +91,7 @@ export interface StopTrackingRequest {
 
 export interface StopTrackingResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export interface ToggleBlockRequest {
@@ -88,7 +101,7 @@ export interface ToggleBlockRequest {
 
 export interface ToggleBlockResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export interface TogglePauseRequest {
@@ -104,14 +117,14 @@ export type TrackerHeartbeatRequest = TrackerHeartbeatBody;
 
 export interface TrackerHeartbeatResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export type UpdateTimeLimitRequest = UpdateTimeLimitBody;
 
 export interface UpdateTimeLimitResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 export type UpdateYouTubeSettingsRequest =
@@ -119,5 +132,5 @@ export type UpdateYouTubeSettingsRequest =
 
 export interface UpdateYouTubeSettingsResponse {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }

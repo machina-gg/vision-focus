@@ -4,13 +4,37 @@ import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 import { trackFeatureUse, trackError } from '~/lib/analytics';
 import { getMessage } from '~/lib/i18n';
-import { compressImage, validateImageFile } from '~/lib/image';
+import { IMAGE_LIMITS } from '~/constants/limits';
+import {
+  compressImage,
+  ImageError,
+  validateImageFile,
+  type ImageErrorCode
+} from '~/lib/image';
 
 export interface ImageUploaderProps {
   value: string | null;
   onChange: (dataUrl: string | null) => void;
   maxSizeMB?: number;
   disabled?: boolean;
+}
+
+const BYTES_PER_MB = 1024 * 1024;
+
+function imageErrorText(code: ImageErrorCode, maxSizeMB: number): string {
+  switch (code) {
+    case 'unsupported-type':
+      return getMessage('imageErrorUnsupportedType');
+    case 'file-too-large':
+      return getMessage(
+        'imageErrorTooLarge',
+        String(IMAGE_LIMITS.MAX_FILE_SIZE / BYTES_PER_MB)
+      );
+    case 'not-compressible':
+      return getMessage('imageErrorNotCompressible', String(maxSizeMB));
+    case 'process-failed':
+      return getMessage('imageErrorProcessFailed');
+  }
 }
 
 export function ImageUploader({
@@ -28,9 +52,9 @@ export function ImageUploader({
     async (file: File) => {
       setError(null);
 
-      const validation = validateImageFile(file);
-      if (!validation.valid) {
-        setError(validation.error || 'Invalid file');
+      const invalid = validateImageFile(file);
+      if (invalid) {
+        setError(imageErrorText(invalid, maxSizeMB));
         return;
       }
 
@@ -42,7 +66,10 @@ export function ImageUploader({
       } catch (err) {
         trackError('image_upload_failed');
         setError(
-          err instanceof Error ? err.message : 'Failed to process image'
+          imageErrorText(
+            err instanceof ImageError ? err.code : 'process-failed',
+            maxSizeMB
+          )
         );
       } finally {
         setIsProcessing(false);

@@ -16,6 +16,7 @@ vi.mock('~/lib/storage', () => ({
 
 import { sendMessage } from '~/lib/messaging';
 import { activityItem, sitesItem } from '~/lib/storage';
+import { stubI18nWithLocale } from '~/test/i18n';
 
 // 追跡中のサイト・事実の表を画面から書くと、background の直列化を外れて変更が消える
 describe('useAnalytics', () => {
@@ -91,6 +92,8 @@ describe('useAnalytics', () => {
   });
 
   describe('handleAddSiteToTrack', () => {
+    stubI18nWithLocale('ja');
+
     it('追跡の追加を依頼し、成功したら true を返して理由を空にする', async () => {
       const { result } = renderHook(() => useAnalytics());
       let added = false;
@@ -104,10 +107,14 @@ describe('useAnalytics', () => {
       expect(result.current.addSiteError).toBe('');
     });
 
-    it('拒否されたらハンドラの理由を addSiteError に出して false を返す', async () => {
+    it('拒否されたらハンドラの理由を日本語で addSiteError に出して false を返す', async () => {
       vi.mocked(sendMessage).mockResolvedValue({
         success: false,
-        error: 'm.x.com は追跡中の x.com に含まれるため追加できません'
+        error: {
+          code: 'nested-site',
+          domain: 'm.x.com',
+          nested: { site: 'x.com', relation: 'ancestor' }
+        }
       });
       const { result } = renderHook(() => useAnalytics());
       let added = true;
@@ -134,7 +141,9 @@ describe('useAnalytics', () => {
         added = await result.current.handleAddSiteToTrack('x.com');
       });
       expect(added).toBe(false);
-      expect(result.current.addSiteError).not.toBe('');
+      expect(result.current.addSiteError).toBe(
+        '操作できませんでした。もう一度お試しください'
+      );
     });
   });
 

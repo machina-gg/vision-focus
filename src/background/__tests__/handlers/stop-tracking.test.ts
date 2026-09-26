@@ -13,10 +13,11 @@ vi.mock('~/lib/activityService', () => ({
 import { stopTracking } from '~/lib/siteService';
 import { purgeSite } from '~/lib/activityService';
 import { stopTrackingHandler as handler } from '../../handlers/stop-tracking';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 describe('stop-tracking ハンドラ', () => {
@@ -58,7 +59,7 @@ describe('stop-tracking ハンドラ', () => {
 
     const result = await invoke<Response>(handler, { domain: 'x.com' });
 
-    expect(result).toEqual({ success: false, error: 'Site is still blocked' });
+    expect(result).toEqual({ success: false, error: { code: 'site-in-use' } });
     expect(purgeSite).not.toHaveBeenCalled();
   });
 });

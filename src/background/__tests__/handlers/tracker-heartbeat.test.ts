@@ -40,10 +40,11 @@ import type { AppSettings } from '~/types/storage';
 import type { BlockRule, TrackedSite } from '~/types/site';
 import { blockedSite, sitesOf } from '~/test/sites';
 import { TRACKER_CONFIG } from '~/constants/limits';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 // ハンドラはモジュールレベルに状態を持つため、テストごとに読み込み直す
@@ -115,18 +116,18 @@ describe('tracker-heartbeat ハンドラ', () => {
         'timestamp が負数',
         { url: 'https://example.com', status: 'active', timestamp: -1 }
       ]
-    ])('%s なら Invalid request body を返す', async (_label, body) => {
+    ])('%s なら invalid-request を返す', async (_label, body) => {
       const handler = await loadHandler();
 
       const result = await invoke<Response>(handler, body);
 
       expect(result).toEqual({
         success: false,
-        error: 'Invalid request body'
+        error: { code: 'invalid-request' }
       });
     });
 
-    it('ドメインを抽出できない URL なら Invalid URL を返す', async () => {
+    it('ドメインを抽出できない URL なら invalid-url を返す', async () => {
       const handler = await loadHandler();
 
       const result = await invoke<Response>(handler, {
@@ -134,7 +135,10 @@ describe('tracker-heartbeat ハンドラ', () => {
         status: 'active'
       });
 
-      expect(result).toEqual({ success: false, error: 'Invalid URL' });
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'invalid-url' }
+      });
     });
   });
 

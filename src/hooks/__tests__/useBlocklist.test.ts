@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useBlocklist } from '~/hooks/useBlocklist';
 import type { AppSettings, TimeLimit } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
+import { stubI18nWithLocale } from '~/test/i18n';
 
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
@@ -27,6 +28,8 @@ import { trackFeatureUse } from '~/lib/analytics';
 import { settingsItem, sitesItem } from '~/lib/storage';
 
 describe('useBlocklist', () => {
+  stubI18nWithLocale('ja');
+
   const mockSetSettings = vi.fn();
 
   const mockSettings: AppSettings = { ...DEFAULT_SETTINGS };
@@ -95,10 +98,14 @@ describe('useBlocklist', () => {
       expect(sitesItem.setValue).not.toHaveBeenCalled();
     });
 
-    it('background が拒否した理由（形式・重複・入れ子）をそのままエラーに出す', async () => {
+    it('background が拒否した理由を日本語の文言にしてエラーに出す', async () => {
       vi.mocked(sendMessage).mockResolvedValue({
         success: false,
-        error: 'siteErrorInsideTrackedSite'
+        error: {
+          code: 'nested-site',
+          domain: 'm.youtube.com',
+          nested: { site: 'youtube.com', relation: 'ancestor' }
+        }
       });
       const { result } = render();
 
@@ -109,7 +116,9 @@ describe('useBlocklist', () => {
         await result.current.handleAddDomain();
       });
 
-      expect(result.current.blockError).toBe('siteErrorInsideTrackedSite');
+      expect(result.current.blockError).toBe(
+        'm.youtube.com は追跡中の youtube.com に含まれるため追加できません'
+      );
       expect(result.current.newDomain).toBe('m.youtube.com');
     });
 
@@ -124,7 +133,9 @@ describe('useBlocklist', () => {
         await result.current.handleAddDomain();
       });
 
-      expect(result.current.blockError).toBe('Failed to add domain');
+      expect(result.current.blockError).toBe(
+        '操作できませんでした。もう一度お試しください'
+      );
     });
 
     it('背景スクリプトが例外を投げた場合、エラーメッセージを設定', async () => {
@@ -138,7 +149,9 @@ describe('useBlocklist', () => {
         await result.current.handleAddDomain();
       });
 
-      expect(result.current.blockError).toBe('Failed to add domain');
+      expect(result.current.blockError).toBe(
+        '操作できませんでした。もう一度お試しください'
+      );
     });
   });
 

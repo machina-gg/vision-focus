@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import type { AppSettings } from '~/types/storage';
@@ -52,7 +53,7 @@ export function usePopupActions({
         if (response.success) {
           clearDomain();
         } else {
-          alert(response.error || 'Failed to add block');
+          alert(messageErrorText(response.error));
         }
       } catch {
         // Silently handle error

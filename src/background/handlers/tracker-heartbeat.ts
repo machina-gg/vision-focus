@@ -85,14 +85,14 @@ export const trackerHeartbeatHandler: MessageHandler<
   const parsed = TrackerHeartbeatBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   const { url, status, timestamp } = parsed.data;
 
   const domain = extractDomain(url);
   if (!domain) {
-    return { success: false, error: 'Invalid URL' };
+    return { success: false, error: { code: 'invalid-url' } };
   }
 
   const pageKey = domain;

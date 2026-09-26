@@ -2248,5 +2248,61 @@
         "example": "youtube.com"
       }
     }
+  },
+  "siteErrorInvalidDomain": {
+    "message": "ドメインの形式が正しくありません",
+    "description": "サイト追加エラー: ドメインの形式の誤り"
+  },
+  "siteErrorAlreadyBlocked": {
+    "message": "このサイトは既にブロックリストにあります",
+    "description": "サイト追加エラー: 既にブロックリストにある"
+  },
+  "siteErrorAlreadyTracked": {
+    "message": "このサイトは既に追跡中です",
+    "description": "サイト追加エラー: 既に追跡中"
+  },
+  "siteErrorBlockNotFound": {
+    "message": "このサイトのブロック設定が見つかりません",
+    "description": "サイト操作エラー: ブロック設定が無い"
+  },
+  "siteErrorInUse": {
+    "message": "ブロック設定か YouTube の機能が残っているため、追跡を止められません",
+    "description": "追跡停止エラー: ブロック設定か YouTube の機能が残っている"
+  },
+  "errorSaveFailed": {
+    "message": "保存できませんでした。もう一度お試しください",
+    "description": "保存の失敗"
+  },
+  "errorOperationFailed": {
+    "message": "操作できませんでした。もう一度お試しください",
+    "description": "理由の分からない操作の失敗"
+  },
+  "imageErrorUnsupportedType": {
+    "message": "対応していない形式です。JPEG、PNG、WebP を使ってください",
+    "description": "画像エラー: 対応していない形式"
+  },
+  "imageErrorTooLarge": {
+    "message": "ファイルサイズが大きすぎます（最大 $SIZE$MB）",
+    "description": "画像エラー: ファイルが上限を超える",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "imageErrorNotCompressible": {
+    "message": "画像を $SIZE$MB 以下に圧縮できませんでした。小さい画像を使ってください",
+    "description": "画像エラー: 圧縮しても上限に収まらない",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "imageErrorProcessFailed": {
+    "message": "画像を読み込めませんでした",
+    "description": "画像エラー: 読み込み・変換の失敗"
   }
 }

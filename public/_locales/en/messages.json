@@ -2248,5 +2248,61 @@
         "example": "youtube.com"
       }
     }
+  },
+  "siteErrorInvalidDomain": {
+    "message": "Invalid domain format",
+    "description": "Add site error: malformed domain"
+  },
+  "siteErrorAlreadyBlocked": {
+    "message": "This site is already in the block list",
+    "description": "Add site error: already in the block list"
+  },
+  "siteErrorAlreadyTracked": {
+    "message": "This site is already tracked",
+    "description": "Add site error: already tracked"
+  },
+  "siteErrorBlockNotFound": {
+    "message": "No block setting was found for this site",
+    "description": "Site error: no block setting"
+  },
+  "siteErrorInUse": {
+    "message": "Tracking can't be stopped while a block or YouTube feature is set",
+    "description": "Stop tracking error: a block or YouTube feature remains"
+  },
+  "errorSaveFailed": {
+    "message": "Could not save. Please try again.",
+    "description": "Save failed"
+  },
+  "errorOperationFailed": {
+    "message": "Something went wrong. Please try again.",
+    "description": "Operation failed for an unknown reason"
+  },
+  "imageErrorUnsupportedType": {
+    "message": "Unsupported file type. Please use JPEG, PNG, or WebP.",
+    "description": "Image error: unsupported type"
+  },
+  "imageErrorTooLarge": {
+    "message": "File too large. Maximum size is $SIZE$MB.",
+    "description": "Image error: file exceeds the limit",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "imageErrorNotCompressible": {
+    "message": "Unable to compress image below $SIZE$MB. Try a smaller image.",
+    "description": "Image error: cannot fit within the limit",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "imageErrorProcessFailed": {
+    "message": "Failed to process image",
+    "description": "Image error: failed to load or convert"
   }
 }

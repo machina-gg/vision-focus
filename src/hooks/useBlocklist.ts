@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { settingsItem } from '~/lib/storage';
@@ -51,10 +52,10 @@ export function useBlocklist({
         setNewDomain('');
         setBlockError('');
       } else {
-        setBlockError(response.error || 'Failed to add domain');
+        setBlockError(messageErrorText(response.error));
       }
     } catch {
-      setBlockError('Failed to add domain');
+      setBlockError(messageErrorText(undefined));
     }
   }, [newDomain]);
 

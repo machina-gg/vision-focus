@@ -21,34 +21,31 @@ describe('validateImageFile', () => {
   it('有効なJPEG画像を受け入れる', () => {
     const file = createMockFile('image/jpeg', 1024 * 1024);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(true);
-    expect(result.error).toBeUndefined();
+    expect(result).toBeNull();
   });
 
   it('有効なPNG画像を受け入れる', () => {
     const file = createMockFile('image/png', 1024 * 1024);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('有効なWebP画像を受け入れる', () => {
     const file = createMockFile('image/webp', 1024 * 1024);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('サポートされていないファイル形式を拒否する', () => {
     const file = createMockFile('image/gif', 1024 * 1024);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('Unsupported file type');
+    expect(result).toBe('unsupported-type');
   });
 
   it('テキストファイルを拒否する', () => {
     const file = createMockFile('text/plain', 1024);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('Unsupported file type');
+    expect(result).toBe('unsupported-type');
   });
 
   it('最大ファイルサイズを超えるファイルを拒否する', () => {
@@ -57,33 +54,30 @@ describe('validateImageFile', () => {
       IMAGE_LIMITS.MAX_FILE_SIZE + 1024
     );
     const result = validateImageFile(file);
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('File too large');
-    expect(result.error).toContain('5MB'); // MAX_FILE_SIZE is 5MB
+    expect(result).toBe('file-too-large');
   });
 
   it('ファイルが提供されない場合にエラーを返す', () => {
     const result = validateImageFile(null as unknown as File);
-    expect(result.valid).toBe(false);
-    expect(result.error).toBe('No file provided');
+    expect(result).toBe('process-failed');
   });
 
   it('境界値: 最大ファイルサイズちょうどのファイルを受け入れる', () => {
     const file = createMockFile('image/jpeg', IMAGE_LIMITS.MAX_FILE_SIZE);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('境界値: 1バイトオーバーのファイルを拒否する', () => {
     const file = createMockFile('image/jpeg', IMAGE_LIMITS.MAX_FILE_SIZE + 1);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(false);
+    expect(result).toBe('file-too-large');
   });
 
   it('0バイトのファイルを受け入れる（形式が正しい場合）', () => {
     const file = createMockFile('image/jpeg', 0);
     const result = validateImageFile(file);
-    expect(result.valid).toBe(true);
+    expect(result).toBeNull();
   });
 });
 
@@ -187,7 +181,9 @@ describe('compressImage', () => {
   it('無効なファイルを拒否する', async () => {
     const file = createMockFile('text/plain', 1024);
 
-    await expect(compressImage(file)).rejects.toThrow('Unsupported file type');
+    await expect(compressImage(file)).rejects.toMatchObject({
+      code: 'unsupported-type'
+    });
   });
 
   it('最大サイズを超えるファイルを拒否する', async () => {
@@ -196,7 +192,9 @@ describe('compressImage', () => {
       IMAGE_LIMITS.MAX_FILE_SIZE + 1024
     );
 
-    await expect(compressImage(file)).rejects.toThrow('File too large');
+    await expect(compressImage(file)).rejects.toMatchObject({
+      code: 'file-too-large'
+    });
   });
 
   it('画像の読み込み失敗時にエラーをスローする', async () => {
@@ -210,16 +208,18 @@ describe('compressImage', () => {
       }
     });
 
-    await expect(compressImage(file)).rejects.toThrow('Failed to load image');
+    await expect(compressImage(file)).rejects.toMatchObject({
+      code: 'process-failed'
+    });
   });
 
   it('canvas contextの取得失敗時にエラーをスローする', async () => {
     const file = createMockFile('image/jpeg', 1024 * 1024);
     mockCanvas.getContext = vi.fn(() => null);
 
-    await expect(compressImage(file)).rejects.toThrow(
-      'Failed to get canvas context'
-    );
+    await expect(compressImage(file)).rejects.toMatchObject({
+      code: 'process-failed'
+    });
   });
 
   it('カスタム最大サイズでの圧縮', async () => {
@@ -236,9 +236,9 @@ describe('compressImage', () => {
     const largeData = 'data:image/jpeg;base64,' + 'x'.repeat(10 * 1024 * 1024);
     mockCanvas.toDataURL = vi.fn(() => largeData);
 
-    await expect(compressImage(file, 0.5)).rejects.toThrow(
-      'Unable to compress image below'
-    );
+    await expect(compressImage(file, 0.5)).rejects.toMatchObject({
+      code: 'not-compressible'
+    });
   });
 
   it('アスペクト比を維持して最大幅に収める', async () => {

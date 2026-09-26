@@ -3,6 +3,9 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { ImageError } from '~/lib/image';
+import { stubI18nWithLocale } from '~/test/i18n';
+
 import { ImageUploader } from '../ImageUploader';
 
 const image = vi.hoisted(() => ({
@@ -15,7 +18,8 @@ const analytics = vi.hoisted(() => ({
   trackError: vi.fn()
 }));
 
-vi.mock('~/lib/image', () => ({
+vi.mock('~/lib/image', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/lib/image')>()),
   validateImageFile: image.validateImageFile,
   compressImage: image.compressImage
 }));
@@ -38,7 +42,7 @@ async function selectFile(file: File = pngFile()) {
 }
 
 beforeEach(() => {
-  image.validateImageFile.mockReset().mockReturnValue({ valid: true });
+  image.validateImageFile.mockReset().mockReturnValue(null);
   image.compressImage.mockReset().mockResolvedValue('data:image/png;base64,ok');
   analytics.trackFeatureUse.mockReset();
   analytics.trackError.mockReset();
@@ -224,65 +228,79 @@ describe('ImageUploader', () => {
   });
 
   describe('取り込みの失敗', () => {
-    it('検証で弾かれたら理由を表示し、保存しない', async () => {
-      image.validateImageFile.mockReturnValue({
-        valid: false,
-        error: 'Unsupported file type.'
-      });
+    stubI18nWithLocale('ja');
+
+    it('検証で弾かれたら理由を日本語で表示し、保存しない', async () => {
+      image.validateImageFile.mockReturnValue('unsupported-type');
       const onChange = vi.fn();
       render(<ImageUploader value={null} onChange={onChange} />);
 
       await selectFile();
 
-      expect(screen.getByText('Unsupported file type.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          '対応していない形式です。JPEG、PNG、WebP を使ってください'
+        )
+      ).toBeInTheDocument();
       expect(image.compressImage).not.toHaveBeenCalled();
       expect(onChange).not.toHaveBeenCalled();
     });
 
-    it('検証が理由を返さなければ既定の文言を出す', async () => {
-      image.validateImageFile.mockReturnValue({ valid: false });
+    it('大きすぎるファイルは上限の MB を添えて表示する', async () => {
+      image.validateImageFile.mockReturnValue('file-too-large');
       render(<ImageUploader value={null} onChange={vi.fn()} />);
 
       await selectFile();
 
-      expect(screen.getByText('Invalid file')).toBeInTheDocument();
+      expect(
+        screen.getByText('ファイルサイズが大きすぎます（最大 5MB）')
+      ).toBeInTheDocument();
     });
 
-    it('圧縮が失敗したら理由を表示し、失敗を記録する', async () => {
-      image.compressImage.mockRejectedValue(new Error('too large'));
+    it('圧縮しても収まらなければ、指定した上限の MB を添えて表示し、失敗を記録する', async () => {
+      image.compressImage.mockRejectedValue(new ImageError('not-compressible'));
       const onChange = vi.fn();
-      render(<ImageUploader value={null} onChange={onChange} />);
+      render(<ImageUploader value={null} onChange={onChange} maxSizeMB={2} />);
 
       await selectFile();
 
-      expect(screen.getByText('too large')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          '画像を 2MB 以下に圧縮できませんでした。小さい画像を使ってください'
+        )
+      ).toBeInTheDocument();
       expect(analytics.trackError).toHaveBeenCalledWith('image_upload_failed');
       expect(onChange).not.toHaveBeenCalled();
     });
 
-    it('理由が Error でなければ既定の文言を出す', async () => {
+    it('理由の分からない失敗は読み込めなかったと表示する', async () => {
       image.compressImage.mockRejectedValue('boom');
       render(<ImageUploader value={null} onChange={vi.fn()} />);
 
       await selectFile();
 
-      expect(screen.getByText('Failed to process image')).toBeInTheDocument();
+      expect(
+        screen.getByText('画像を読み込めませんでした')
+      ).toBeInTheDocument();
     });
 
     it('選び直すとエラー表示は消える', async () => {
-      image.validateImageFile.mockReturnValue({
-        valid: false,
-        error: 'Unsupported file type.'
-      });
+      image.validateImageFile.mockReturnValue('unsupported-type');
       render(<ImageUploader value={null} onChange={vi.fn()} />);
       await selectFile();
-      expect(screen.getByText('Unsupported file type.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          '対応していない形式です。JPEG、PNG、WebP を使ってください'
+        )
+      ).toBeInTheDocument();
 
-      image.validateImageFile.mockReturnValue({ valid: true });
+      image.validateImageFile.mockReturnValue(null);
       await selectFile();
 
       expect(
-        screen.queryByText('Unsupported file type.')
+        screen.queryByText(
+          '対応していない形式です。JPEG、PNG、WebP を使ってください'
+        )
       ).not.toBeInTheDocument();
     });
   });

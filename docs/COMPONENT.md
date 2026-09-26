@@ -500,7 +500,7 @@ function useAnalytics(): {
 
 - `handleReblock`: ブロック設定が無ければ `add-block`、無効なら `toggle-block`（ON）。ブロック中なら何もしない
 - `handleStopTracking`: `stop-tracking` を依頼するだけ（ブロック設定か YouTube 機能を持つサイトは background が拒否する。ブロック設定を消すのはブロックリストタブの確認つきの経路だけ）
-- `handleAddSiteToTrack`: 追加できたら true。拒否されたらハンドラの `error` を `addSiteError` に入れて false
+- `handleAddSiteToTrack`: 追加できたら true。拒否されたらハンドラの `error`（失敗の種類）を `messageErrorText` で文言にして `addSiteError` に入れ、false
 
 ---
 

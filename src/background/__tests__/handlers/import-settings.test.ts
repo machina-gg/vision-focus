@@ -28,10 +28,11 @@ import { importSettingsHandler as handler } from '../../handlers/import-settings
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 import type { AppSettings } from '~/types/storage';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
   skipped?: { domain: string; conflict: string }[];
 }
 
@@ -79,12 +80,12 @@ describe('import-settings ハンドラ', () => {
         'paused が boolean でない',
         { settings: { ...settings, paused: 'yes' }, sites: [] }
       ]
-    ])('%s なら Invalid request body を返す', async (_label, body) => {
+    ])('%s なら invalid-request を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
       expect(result).toEqual({
         success: false,
-        error: 'Invalid request body'
+        error: { code: 'invalid-request' }
       });
       expect(setSettings).not.toHaveBeenCalled();
       expect(importSites).not.toHaveBeenCalled();
@@ -221,7 +222,7 @@ describe('import-settings ハンドラ', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Failed to import settings'
+      error: { code: 'save-failed' }
     });
     expect(blockExistingTabs).not.toHaveBeenCalled();
   });
@@ -237,7 +238,7 @@ describe('import-settings ハンドラ', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Failed to import settings'
+      error: { code: 'save-failed' }
     });
     expect(blockExistingTabs).not.toHaveBeenCalled();
   });

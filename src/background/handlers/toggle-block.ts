@@ -10,13 +10,13 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
 }) => {
   const parsed = ToggleBlockBodySchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
   const { domain, enabled } = parsed.data;
 
   const before = await setBlockEnabled(domain, enabled);
   if (!before) {
-    return { success: false, error: 'Item not found' };
+    return { success: false, error: { code: 'block-not-found' } };
   }
 
   await updateBlockRules();
