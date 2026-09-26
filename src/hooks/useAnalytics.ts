@@ -14,6 +14,7 @@ interface UseAnalyticsReturn {
 
 const ADD_SITE_FAILED = 'Failed to add site';
 
+/** 分析タブの操作（再ブロック・記録のリセット・追跡の停止・追跡サイトの追加）を background へ依頼する */
 export function useAnalytics(): UseAnalyticsReturn {
   const [addSiteError, setAddSiteError] = useState('');
 

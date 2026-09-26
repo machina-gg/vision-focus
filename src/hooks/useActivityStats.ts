@@ -17,20 +17,23 @@ import type { SiteKey } from '~/types/site';
 
 import { useStorageItem } from './useStorageItem';
 
+/** 活動統計の導出に使う入力（事実の表と、その母集団である追跡中のサイト） */
 export interface ActivitySources {
   activity: ActivityLog;
   sites: SiteKey[];
 }
 
 export interface TodayStats extends TodaySummary {
+  /** 今日いちばんブロックされたサイトの今日のブロック回数。該当なしなら 0 */
   topBlockedCount: number;
 }
 
-// daily-cleanup は「今日 - 保持日数」の日自身を残すので、今日を含めて保持日数 + 1 日
+/** 保持期間全体の日付範囲。daily-cleanup は「今日 - 保持日数」の日自身を残すので、今日を含めて保持日数 + 1 日 */
 export function retentionRange(now: Date): DateRange {
   return lastNDaysRange(now, MAX_HISTORY_DAYS_FALLBACK + 1);
 }
 
+/** 今日（ローカル日付）の合計と、今日いちばんブロックされたサイト・その回数を返す */
 export function todayStats(
   activity: ActivityLog,
   sites: readonly SiteKey[],
@@ -46,6 +49,7 @@ export function todayStats(
   return { ...summary, topBlockedCount };
 }
 
+/** ホスト名が属する追跡中のサイトの、保持期間全体の合計を返す。どのサイトにも属さなければすべて 0 */
 export function blockedHostTotals(
   activity: ActivityLog,
   sites: readonly SiteKey[],
@@ -57,6 +61,7 @@ export function blockedHostTotals(
   return siteTotals(activity, site, retentionRange(now));
 }
 
+/** ブロックリストの項目ごとの、保持期間全体のブロック回数を返す（キーは項目の domain） */
 export function blockCountsByDomain(
   activity: ActivityLog,
   blockRows: readonly { domain: SiteKey }[],
@@ -71,6 +76,7 @@ export function blockCountsByDomain(
   );
 }
 
+/** 事実の表と追跡中のサイトを保存値から読み、変更に追従する */
 export function useActivitySources(): ActivitySources {
   const [activity] = useStorageItem(activityItem);
   const [trackedSites] = useStorageItem(sitesItem);

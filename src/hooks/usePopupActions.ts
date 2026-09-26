@@ -20,6 +20,7 @@ interface UsePopupActionsReturn {
   isPasswordProtected: boolean;
 }
 
+/** ポップアップのページ遷移・ブロック追加・一時停止切り替えの操作と、パスワード保護の有無を提供する */
 export function usePopupActions({
   settings,
   clearDomain

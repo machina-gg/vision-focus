@@ -19,6 +19,7 @@ interface UseResolvedPresetReturn {
   timeTick: number;
 }
 
+/** ダッシュボードに今表示する表示設定を返す（時間内のスケジュールのスタイル > 適用中のスタイル > 既定。タブの再表示で判定し直す） */
 export function useResolvedPreset({
   vision,
   settings

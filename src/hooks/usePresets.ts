@@ -23,25 +23,38 @@ interface UsePresetsOptions {
 }
 
 export interface UsePresetsReturn {
+  /** 選択中のスタイルの、保存前の表示設定 */
   draftDisplaySettings: DashboardDisplaySettings;
   draftPresets: DashboardPreset[];
+  /** 選択中のスタイルの ID。スタイルが無い・選択中のものを削除したときは null */
   selectedPresetId: string | null;
+  /** 選択中のスタイルの、保存前の名前 */
   editingPresetName: string;
+  /** 選択中のスタイルに保存していない変更があるか */
   isDirty: boolean;
+  /** 保存完了の表示中か（一定時間で false に戻る） */
   visionSaved: boolean;
   showSavePresetModal: boolean;
+  /** 新規作成モーダルに入力中の名前 */
   presetName: string;
+  /** 削除の確認待ちになっているスタイルの ID。確認待ちが無ければ null */
   deleteTargetPresetId: string | null;
+  /** 確認待ちのスタイルを参照しているスケジュールの件数 */
   deleteTargetScheduleCount: number;
   setShowSavePresetModal: (show: boolean) => void;
   setPresetName: (name: string) => void;
   handleSelectPreset: (presetId: string) => void;
   handlePresetNameChange: (name: string) => void;
+  /** スケジュールが参照していれば確認待ちにし、参照が無ければすぐ削除する */
   handleRequestDeletePreset: (id: string) => Promise<void>;
+  /** 確認待ちのスタイルを削除し、参照していたスケジュールから外す */
   handleConfirmDeletePreset: () => Promise<void>;
   handleCancelDeletePreset: () => void;
+  /** 下書きを選択中のスタイルへ保存する。目標文か名前が空なら何もしない */
   handleSaveSelectedPreset: () => Promise<void>;
+  /** 選択中のスタイルをダッシュボードに表示するスタイルにする */
   handleApplyPreset: () => Promise<void>;
+  /** presetName の名前で既定の表示設定のスタイルを作り、選択する */
   handleCreatePreset: () => Promise<void>;
   handleGoalTextChange: (text: string) => void;
   handleGoalSubTextChange: (text: string) => void;
@@ -179,6 +192,7 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
 
 const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
+/** スタイル編集画面の下書きと、スタイルの選択・保存・適用・作成・削除の操作を提供する */
 export function usePresets({
   vision,
   setVision,

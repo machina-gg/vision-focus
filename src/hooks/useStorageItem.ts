@@ -4,11 +4,12 @@ import type { WxtStorageItem } from '@wxt-dev/storage';
 
 import { objectOrFallback } from '~/lib/storedValue';
 
-/** `undefined` を渡すと直近の値をそのまま保存し直す */
+/** 保存して state も更新する。値か更新関数を受け、`undefined` なら直近の値をそのまま保存し直す */
 export type StorageItemSetter<T> = (
   value: T | undefined | ((previous: T) => T)
 ) => Promise<void>;
 
+/** ストレージ項目を React の state として読み書きする（初期値は fallback。保存値の変更に追従する） */
 export function useStorageItem<T, M extends Record<string, unknown>>(
   item: WxtStorageItem<T, M>
 ): [T, StorageItemSetter<T>] {

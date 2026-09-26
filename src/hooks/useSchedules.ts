@@ -8,11 +8,16 @@ import { getSettings, settingsItem } from '~/lib/storage';
 import { normalizeEndTime } from '~/lib/time';
 import type { AppSettings, Schedule } from '~/types/storage';
 
+/** スケジュール編集モーダルの入力値 */
 export interface ScheduleFormData {
   name: string;
+  /** HH:mm */
   startTime: string;
+  /** HH:mm。00:00 は保存時に 24:00（その日の終わり）へ直す */
   endTime: string;
+  /** 曜日（0 = 日曜 … 6 = 土曜） */
   days: number[];
+  /** 空文字 = スタイルを指定しない */
   presetId: string;
 }
 
@@ -43,6 +48,7 @@ interface UseSchedulesReturn {
   openAddSchedule: () => void;
 }
 
+/** スケジュール画面の編集モーダルの状態と、保存（重なりの検査つき）・削除・有効切り替えの操作を提供する */
 export function useSchedules({
   settings,
   setSettings

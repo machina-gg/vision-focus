@@ -6,9 +6,12 @@ export const GetRemainingTimeBodySchema = z.object({
 
 export type GetRemainingTimeBody = z.infer<typeof GetRemainingTimeBodySchema>;
 
+/** 開いているページの表示状態の通知。滞在時間の記録に使う */
 export const TrackerHeartbeatBodySchema = z.object({
   url: z.string().min(1).max(2048),
+  /** active = 表示された / inactive = 隠れた / heartbeat = 表示中の定期通知 */
   status: z.enum(['active', 'inactive', 'heartbeat']),
+  /** 送信時刻（epoch ms）。省略時は受信時刻 */
   timestamp: z.number().finite().nonnegative().optional()
 });
 
@@ -26,8 +29,11 @@ export const UpdateTimeLimitBodySchema = z.object({
 
 export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 
+/** YouTube 設定画面の入力値（youtube.com のブロックと非表示機能をまとめて保存する） */
 export const YouTubeSettingsInputSchema = z.object({
+  /** false = 非表示機能もブロックも使わない（他の項目は無視される） */
   enabled: z.boolean(),
+  /** youtube.com そのものをブロックするか */
   blockAccess: z.boolean(),
   hideShorts: z.boolean(),
   hideRecommendations: z.boolean(),
@@ -82,7 +88,7 @@ const NotificationSettingsSchema = z.object({
   timeLimitMinutes: z.literal([1, 3, 5, 10])
 });
 
-// 未知のキーを落とすと、AppSettings に項目が増えたとき保存から抜け落ちるため looseObject にする
+/** 設定の取り込みの本文。未知のキーを落とすと AppSettings に項目が増えたとき保存から抜け落ちるため、settings は looseObject にする */
 export const ImportSettingsBodySchema = z.object({
   settings: z.looseObject({
     schedules: z.array(ScheduleSchema),
@@ -94,6 +100,7 @@ export const ImportSettingsBodySchema = z.object({
 
 export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
 
+/** domain だけを持つメッセージ本文（ドメイン名の長さの上限 253 文字まで） */
 export const SiteBodySchema = z.object({
   domain: z.string().min(1).max(253)
 });

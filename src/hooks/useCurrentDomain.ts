@@ -8,11 +8,15 @@ import { extractDomain } from '~/lib/domain';
 import type { TimeLimitInfo } from '~/types/messages';
 
 export interface UseCurrentDomainReturn {
+  /** アクティブなタブのドメイン。取得できなければ undefined */
   currentDomain: string | undefined;
+  /** そのドメインの時間制限。取得できるまでは null */
   timeLimitInfo: TimeLimitInfo | null;
+  /** currentDomain を undefined に戻す（次のポーリングで再取得される） */
   clearDomain: () => void;
 }
 
+/** アクティブなタブのドメインとその時間制限を定期的に取得する */
 export function useCurrentDomain(): UseCurrentDomainReturn {
   const [currentDomain, setCurrentDomain] = useState<string | undefined>();
   const [timeLimitInfo, setTimeLimitInfo] = useState<TimeLimitInfo | null>(

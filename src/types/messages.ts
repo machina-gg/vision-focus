@@ -32,8 +32,10 @@ export interface RemoveBlockResponse {
   success: boolean;
 }
 
+/** 開いているページのサイトの時間制限（ポップアップの残り時間表示が読む） */
 export interface TimeLimitInfo {
   hasTimeLimit: boolean;
+  /** 今日の残り秒数（超過後は 0）。時間制限が無い・一時停止中・スケジュール外なら null */
   remainingSeconds: number | null;
   limitType: TimeLimitType | null;
   limitSeconds: number | null;
@@ -44,6 +46,7 @@ export type GetRemainingTimeRequest =
 
 export interface GetRemainingTimeResponse {
   success: boolean;
+  /** null = 開いているページのサイトに有効なブロック設定が無い */
   data?: TimeLimitInfo | null;
   error?: string;
 }
@@ -53,8 +56,11 @@ export interface ImportSettingsRequest {
   sites: import('./site').TrackedSite[];
 }
 
+/** 既存のサイトと入れ子になるため取り込まなかったサイト */
 export interface SkippedNestedSite {
+  /** ファイルに書かれていた表記 */
   domain: string;
+  /** 入れ子の相手（既存か、先に取り込んだサイト） */
   conflict: import('./site').SiteKey;
 }
 

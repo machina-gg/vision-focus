@@ -31,6 +31,7 @@ interface UseBackgroundPreloadReturn {
   fontStyle: React.CSSProperties;
 }
 
+/** ダッシュボードの背景画像とフォントを先読みし、表示してよいかの状態と適用するスタイルを返す */
 export function useBackgroundPreload({
   displaySettings
 }: UseBackgroundPreloadOptions): UseBackgroundPreloadReturn {
