@@ -57,14 +57,21 @@ async function runSilently(task: () => Promise<void>): Promise<void> {
   }
 }
 
-/** 計測 ID がビルドに埋め込まれていて、利用者が計測に同意しているか */
+/**
+ * 計測 ID がビルドに埋め込まれていて、利用者が計測に同意しているか
+ * @returns 計測してよいなら true
+ */
 export async function isAnalyticsEnabled(): Promise<boolean> {
   if (!GA_MEASUREMENT_ID || !GA_API_SECRET) return false;
   const settings = await getSettings();
   return settings.analyticsOptIn?.enabled === true;
 }
 
-/** GA4 にイベントを送る（同意が無ければ送らず、失敗しても投げない） */
+/**
+ * GA4 にイベントを送る（同意が無ければ送らず、失敗しても投げない）
+ * @param name GA4 のイベント名
+ * @param params イベントに付けるパラメータ（個人データを入れない）
+ */
 export async function trackEvent(
   name: string,
   params: EventParams = {}
@@ -99,12 +106,18 @@ export async function trackEvent(
   });
 }
 
-/** 機能の利用を use_feature イベントとして送る */
+/**
+ * 機能の利用を use_feature イベントとして送る
+ * @param feature 使われた機能の名前
+ */
 export async function trackFeatureUse(feature: string): Promise<void> {
   await runSilently(() => trackEvent('use_feature', { feature }));
 }
 
-/** エラーの種類を error イベントとして送る */
+/**
+ * エラーの種類を error イベントとして送る
+ * @param type エラーの種類の名前
+ */
 export async function trackError(type: string): Promise<void> {
   await runSilently(() => trackEvent('error', { type }));
 }

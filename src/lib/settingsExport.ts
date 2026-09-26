@@ -17,7 +17,7 @@ import {
   UNBLOCK_HOLD_SECONDS_OPTIONS
 } from '~/types/storage';
 
-// 保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む
+/** 設定ファイルの形式の版。保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む */
 export const EXPORT_VERSION = 2;
 
 const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
@@ -26,24 +26,38 @@ const LARGE_EXPORT_WARNING_SIZE = 1 * 1024 * 1024;
 
 /** 設定ファイル（JSON）の形 */
 export interface ExportedSettings {
+  /** 書き出したときの形式の版（EXPORT_VERSION） */
   version: number;
+  /** 書き出した時刻（ISO8601） */
   exportedAt: string;
+  /** 設定の中身 */
   data: {
+    /** 追跡中のサイト */
     sites: TrackedSites;
+    /** ブロックが効く時間帯 */
     schedules: Schedule[];
+    /** ダッシュボードのスタイル */
     presets: DashboardPreset[];
+    /** スタイルを適用していないときの表示設定 */
     defaultDisplaySettings: VisionSettings['defaultSettings'];
+    /** 適用中のスタイルの ID（null = defaultDisplaySettings を使う） */
     activePresetId: string | null;
+    /** 時間制限の残り時間が少なくなったときの通知の設定 */
     notifications: NotificationSettings;
+    /** ブロック解除の長押し確認の設定 */
     unblockConfirm: UnblockConfirmSettings;
   };
 }
 
 /** validateImportedData の結果。error と warnings は i18n のキー */
 export interface ImportResult {
+  /** 取り込める中身なら true */
   success: boolean;
+  /** 取り込めない理由の i18n のキー（success が false のときだけ） */
   error?: string;
+  /** 取り込めるが知らせることの i18n のキー（無ければ無い） */
   warnings?: string[];
+  /** 検証し、参照先の無いプリセット ID を外した中身（success が true のときだけ） */
   data?: ExportedSettings['data'];
 }
 
@@ -108,12 +122,20 @@ const exportDataSchema = z.object({
   })
 });
 
-/** 設定ファイルにしたときのバイト数 */
+/**
+ * 設定ファイルにしたときのバイト数
+ * @param data 設定ファイルの中身
+ * @returns 整形しない JSON にしたときの UTF-8 のバイト数
+ */
 export function calculateExportSize(data: ExportedSettings): number {
   return new Blob([JSON.stringify(data)]).size;
 }
 
-/** 設定ファイルが大きすぎる警告を出す大きさを超えるか */
+/**
+ * 設定ファイルが大きすぎる警告を出す大きさを超えるか
+ * @param data 設定ファイルの中身
+ * @returns 警告を出すなら true
+ */
 export function hasLargeCustomBackgrounds(data: ExportedSettings): boolean {
   const size = calculateExportSize(data);
   return size > LARGE_EXPORT_WARNING_SIZE;
@@ -124,7 +146,13 @@ function getDateString(): string {
   return now.toISOString().split('T')[0];
 }
 
-/** 今の設定から設定ファイルの中身を作る（isLarge は大きすぎる警告を出すか） */
+/**
+ * 今の設定から設定ファイルの中身を作る（isLarge は大きすぎる警告を出すか）
+ * @param settings 今のアプリの設定
+ * @param vision 今のダッシュボードの表示設定
+ * @param sites 今の追跡中のサイト
+ * @returns data は設定ファイルの中身、isLarge は大きすぎる警告を出すなら true
+ */
 export function exportSettings(
   settings: AppSettings,
   vision: VisionSettings,
@@ -149,7 +177,10 @@ export function exportSettings(
   return { data: exportData, isLarge };
 }
 
-/** 設定ファイルを JSON でダウンロードする */
+/**
+ * 設定ファイルを JSON でダウンロードする
+ * @param data 設定ファイルの中身
+ */
 export function downloadSettings(data: ExportedSettings): void {
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -165,7 +196,11 @@ export function downloadSettings(data: ExportedSettings): void {
   URL.revokeObjectURL(url);
 }
 
-/** 取り込む JSON を検証し、参照先の無いプリセット ID を外した中身を返す */
+/**
+ * 取り込む JSON を検証し、参照先の無いプリセット ID を外した中身を返す
+ * @param jsonString 設定ファイルの中身の文字列
+ * @returns 検証の結果（大きすぎる・JSON でない・形が違う・版が古いなら success が false）
+ */
 export function validateImportedData(jsonString: string): ImportResult {
   if (jsonString.length > MAX_IMPORT_SIZE) {
     return {
@@ -225,6 +260,11 @@ export function validateImportedData(jsonString: string): ImportResult {
   };
 }
 
+/**
+ * ファイルを文字列として読む
+ * @param file 読むファイル
+ * @returns ファイルの中身（読めなければ reject）
+ */
 export function readFileAsString(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -234,7 +274,13 @@ export function readFileAsString(file: File): Promise<string> {
   });
 }
 
-/** 取り込んだ設定を今の設定に重ねる（スケジュール・プリセットは無いものだけ足し、他は上書き。追跡中のサイトは扱わない） */
+/**
+ * 取り込んだ設定を今の設定に重ねる（スケジュール・プリセットは無いものだけ足し、他は上書き。追跡中のサイトは扱わない）
+ * @param data 取り込む設定ファイルの中身
+ * @param currentSettings 今のアプリの設定
+ * @param currentVision 今のダッシュボードの表示設定
+ * @returns 重ねた後のアプリの設定と表示設定（引数は書き換えない）
+ */
 export function applyImportedSettings(
   data: ExportedSettings['data'],
   currentSettings: AppSettings,
@@ -269,7 +315,10 @@ export function applyImportedSettings(
   return { settings: newSettings, vision: newVision };
 }
 
-/** 既定値だけで作った設定ファイルの中身 */
+/**
+ * 既定値だけで作った設定ファイルの中身
+ * @returns 既定値の設定ファイルの中身（exportedAt は今の時刻）
+ */
 export function createDefaultExportData(): ExportedSettings {
   return {
     version: EXPORT_VERSION,

@@ -6,6 +6,10 @@ import {
 import { supportPromptItem } from './storage';
 import { objectOrFallback } from './storedValue';
 
+/**
+ * 支援誘導の表示状態を読む
+ * @returns 保存済みの状態（未保存か壊れていれば既定値）
+ */
 export async function getSupportPromptState(): Promise<SupportPromptState> {
   return objectOrFallback(
     await supportPromptItem.getValue(),
@@ -19,7 +23,9 @@ async function setSupportPromptState(state: SupportPromptState): Promise<void> {
 
 /**
  * 支援誘導を出すか（支援ページを開いたことがあれば出さず、閉じてから一定時間は出さない）
+ * @param state 支援誘導の表示状態
  * @param now エポックからのミリ秒
+ * @returns 出すなら true
  */
 export function shouldShowSupportPrompt(
   state: SupportPromptState,

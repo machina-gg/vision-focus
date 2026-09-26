@@ -23,7 +23,11 @@ export const YOUTUBE_SELECTORS = {
   secondaryInner: '#secondary-inner'
 } as const;
 
-/** YouTube 機能の設定から、注入する非表示用の CSS を作る（null なら空文字） */
+/**
+ * YouTube 機能の設定から、注入する非表示用の CSS を作る（null なら空文字）
+ * @param settings youtube.com の非表示機能の設定（null = 使わない）
+ * @returns 有効な機能ぶんの CSS（どれも無効なら空文字）
+ */
 // アクセスブロック（block）は見ない。1 日の制限つきブロックでは上限まで YouTube を開けるため、ブロック中でも非表示を効かせる
 export function generateYouTubeHideCSS(
   settings: YouTubeFeatures | null

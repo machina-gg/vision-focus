@@ -79,7 +79,14 @@ function changePercent(current: number, previous: number): number | null {
   return ((current - previous) / previous) * PERCENT;
 }
 
-/** 週次レポート。weekOffset は 0 = 今週、-1 = 先週で、過去の週に記録が無ければ null */
+/**
+ * 週次レポート。weekOffset は 0 = 今週、-1 = 先週で、過去の週に記録が無ければ null
+ * @param log 活動の記録
+ * @param sites 集計の対象にするサイトキー
+ * @param weekOffset 今週からずらす週数（負で過去）
+ * @param now 今週を決める基準の時刻
+ * @returns 週次レポート（過去の週で表示秒数もブロック回数も 0 なら null。今週は 0 でも返す）
+ */
 export function generateWeeklyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -104,7 +111,14 @@ export function generateWeeklyReport(
   };
 }
 
-/** 月次レポート。monthOffset は 0 = 今月、-1 = 先月で、過去の月に記録が無ければ null */
+/**
+ * 月次レポート。monthOffset は 0 = 今月、-1 = 先月で、過去の月に記録が無ければ null
+ * @param log 活動の記録
+ * @param sites 集計の対象にするサイトキー
+ * @param monthOffset 今月からずらす月数（負で過去）
+ * @param now 今月を決める基準の時刻
+ * @returns 月次レポート（過去の月で表示秒数もブロック回数も 0 なら null。今月は 0 でも返す）
+ */
 export function generateMonthlyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -131,7 +145,12 @@ export function generateMonthlyReport(
   };
 }
 
-/** 日付キー 2 つを週の範囲の表示（例: "Jun 10 - 16" / "Jun 24 - Jul 7"）にする */
+/**
+ * 日付キー 2 つを週の範囲の表示（例: "Jun 10 - 16" / "Jun 24 - Jul 7"）にする
+ * @param weekStart 週の最初の日の日付キー
+ * @param weekEnd 週の最後の日の日付キー
+ * @returns ブラウザのロケールの月の略称を使った表示（同じ月なら月を 1 回だけ書く）
+ */
 export function formatWeekRange(weekStart: string, weekEnd: string): string {
   const start = parseDateKey(weekStart);
   const end = parseDateKey(weekEnd);
@@ -144,7 +163,11 @@ export function formatWeekRange(weekStart: string, weekEnd: string): string {
   return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}`;
 }
 
-/** YYYY-MM を表示用の月（例: "June 2024"）にする */
+/**
+ * YYYY-MM を表示用の月（例: "June 2024"）にする
+ * @param monthKey YYYY-MM の形の月
+ * @returns ブラウザのロケールの年と月の表示
+ */
 export function formatMonth(monthKey: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);

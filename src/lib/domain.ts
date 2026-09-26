@@ -1,4 +1,8 @@
-/** URL のホスト名（URL として読めなければ null） */
+/**
+ * URL のホスト名（URL として読めなければ null）
+ * @param url ホスト名を取り出す URL
+ * @returns ホスト名
+ */
 export function extractDomain(url: string): string | null {
   try {
     const urlObj = new URL(url);
@@ -8,7 +12,11 @@ export function extractDomain(url: string): string | null {
   }
 }
 
-/** 入力からスキームとパスを外して小文字のドメインにし、先頭が *. かを返す */
+/**
+ * 入力からスキームとパスを外して小文字のドメインにし、先頭が *. かを返す
+ * @param input 利用者が入力したドメインか URL
+ * @returns domain は整えたドメイン（*. は残す）、isWildcard は先頭が *. なら true
+ */
 export function parseDomainInput(input: string): {
   domain: string;
   isWildcard: boolean;
@@ -22,7 +30,11 @@ export function parseDomainInput(input: string): {
   return { domain, isWildcard };
 }
 
-/** ドメインとして正しい形か（先頭の *. は許す。ラベルは 2 つ以上、TLD は英字のみ） */
+/**
+ * ドメインとして正しい形か（先頭の *. は許す。ラベルは 2 つ以上、TLD は英字のみ）
+ * @param domain 確かめるドメイン
+ * @returns 正しい形なら true
+ */
 export function isValidDomain(domain: string): boolean {
   const cleanDomain = domain.replace(/^\*\./, '');
 
@@ -45,7 +57,10 @@ export function isValidDomain(domain: string): boolean {
   return true;
 }
 
-/** ランダムな 32 桁の 16 進文字列の ID */
+/**
+ * ランダムな 32 桁の 16 進文字列の ID を作る
+ * @returns 16 バイトの乱数を 16 進にした文字列
+ */
 export function generateId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);

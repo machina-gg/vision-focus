@@ -5,8 +5,11 @@ const MINUTES_PER_DAY = 24 * 60;
 
 /** 重複を調べる時間帯。保存前のフォームも渡せるよう id と enabled を持たない */
 export interface ScheduleTimeSpan {
+  /** 開始時刻（"HH:MM"） */
   startTime: string;
+  /** 終了時刻（"HH:MM"。開始以前なら日をまたぐ。"00:00" はその日の終わり） */
   endTime: string;
+  /** 曜日（0 = 日曜。Date#getDay と同じ） */
   days: number[];
 }
 
@@ -36,7 +39,10 @@ function overlaps(a: MinuteRange, b: MinuteRange): boolean {
 
 /**
  * 曜日を共有し時間帯が交差する既存のスケジュールを返す（無効なものも対象。無ければ null）
+ * @param candidate 追加・編集しようとしている時間帯
+ * @param schedules 既存のスケジュール
  * @param excludeId 編集中のスケジュール自身を除くための id
+ * @returns 最初に見つかった重なるスケジュール（無ければ null）
  */
 export function findOverlappingSchedule(
   candidate: ScheduleTimeSpan,

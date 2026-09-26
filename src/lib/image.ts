@@ -6,13 +6,21 @@ export type ImageErrorCode =
 
 /** 画像の検証・変換の失敗。code で理由を持つ */
 export class ImageError extends Error {
+  /**
+   * 理由を持つ失敗を作る（message にも code を入れる）
+   * @param code 失敗の理由
+   */
   constructor(readonly code: ImageErrorCode) {
     super(code);
     this.name = 'ImageError';
   }
 }
 
-/** 背景画像として使える形式・サイズかを確かめ、使えなければ理由を返す（使えるなら null） */
+/**
+ * 背景画像として使える形式・サイズかを確かめ、使えなければ理由を返す（使えるなら null）
+ * @param file 確かめるファイル
+ * @returns 使えない理由（使えるなら null）
+ */
 export function validateImageFile(file: File): ImageErrorCode | null {
   if (!file) {
     return 'process-failed';
@@ -70,7 +78,12 @@ function calculateDimensions(
   return { width: Math.round(newWidth), height: Math.round(newHeight) };
 }
 
-/** 画像を上限の縦横に縮めて JPEG の data URL にする（失敗は ImageError で投げる） */
+/**
+ * 画像を上限の縦横に縮めて JPEG の data URL にする（失敗は ImageError で投げる）
+ * @param file 縮める画像ファイル
+ * @param maxSizeMB data URL の文字数の上限（MB 単位。1 文字 1 バイトとして数える）
+ * @returns JPEG の data URL
+ */
 export async function compressImage(
   file: File,
   maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
@@ -117,7 +130,11 @@ export async function compressImage(
   return dataUrl;
 }
 
-/** data URL の中身のバイト数（base64 を復号した後の大きさ） */
+/**
+ * data URL の中身のバイト数（base64 を復号した後の大きさ）
+ * @param dataUrl base64 の data URL
+ * @returns 復号後のバイト数（カンマの後ろが無ければ 0）
+ */
 export function getBase64Size(dataUrl: string): number {
   const base64 = dataUrl.split(',')[1];
   if (!base64) return 0;
@@ -126,7 +143,11 @@ export function getBase64Size(dataUrl: string): number {
   return Math.floor((base64.length * 3) / 4) - padding;
 }
 
-/** バイト数を B / KB / MB の表示にする */
+/**
+ * バイト数を B / KB / MB の表示にする
+ * @param bytes バイト数
+ * @returns "512 B" / "1.5 KB" / "2.0 MB" の形（KB と MB は小数 1 桁）
+ */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

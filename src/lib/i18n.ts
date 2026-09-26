@@ -2,7 +2,10 @@
 
 import type { SupportedLanguage } from '~/types/storage';
 
-/** ブラウザの UI 言語を対応言語（ja / en）に絞って返す。日付・数値の整形用で、文言の解決は getMessage で行う */
+/**
+ * ブラウザの UI 言語を対応言語（ja / en）に絞って返す。日付・数値の整形用で、文言の解決は getMessage で行う
+ * @returns UI 言語が ja で始まれば 'ja'、それ以外と取得できないときは 'en'
+ */
 export function getUILanguage(): SupportedLanguage {
   try {
     return chrome.i18n.getUILanguage().startsWith('ja') ? 'ja' : 'en';
@@ -13,7 +16,9 @@ export function getUILanguage(): SupportedLanguage {
 
 /**
  * messages.json の翻訳文を返す（辞書に無ければキーをそのまま返す）
+ * @param messageName messages.json のキー
  * @param substitutions プレースホルダ（$1〜$9）に入れる値
+ * @returns 翻訳文（辞書に無いか取得できなければ messageName）
  */
 export function getMessage(
   messageName: string,

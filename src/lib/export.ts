@@ -50,7 +50,11 @@ function formatDateKey(date: DateKey | null): string {
   return date === null ? '-' : parseDateKey(date).toLocaleDateString();
 }
 
-/** ブロックリスト CSV の行（ドメイン・追加日）。並びは blockListSites と同じ */
+/**
+ * ブロックリスト CSV の行（ドメイン・追加日）。並びは blockListSites と同じ
+ * @param sites 追跡中のサイト
+ * @returns CSV の行（追加日はブラウザのロケールの日付表示）
+ */
 export function blockListRows(sites: TrackedSites): string[][] {
   return blockListSites(sites).map((site) => [
     site.domain,
@@ -58,14 +62,23 @@ export function blockListRows(sites: TrackedSites): string[][] {
   ]);
 }
 
-/** ブロックリストを CSV でダウンロードする */
+/**
+ * ブロックリストを CSV でダウンロードする
+ * @param sites 追跡中のサイト
+ */
 export function exportBlockList(sites: TrackedSites): void {
   const headers = ['Domain', 'Added Date'];
   const csv = toCSV(headers, blockListRows(sites));
   downloadCSV(`visionfocus-blocklist-${getDateString()}.csv`, csv);
 }
 
-/** サイト別ブロック回数 CSV の行（ドメイン・回数・最後にブロックした日）。多い順で、0 回のサイトは含めない */
+/**
+ * サイト別ブロック回数 CSV の行（ドメイン・回数・最後にブロックした日）。多い順で、0 回のサイトは含めない
+ * @param log 活動の記録
+ * @param sites 対象にするサイトキー
+ * @param range 数える期間（両端を含む）
+ * @returns CSV の行（最後にブロックした日は期間に関係なく全記録から求め、無ければ "-"）
+ */
 export function blockCountRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -80,7 +93,12 @@ export function blockCountRows(
   );
 }
 
-/** 期間内のサイト別ブロック回数を CSV でダウンロードする */
+/**
+ * 期間内のサイト別ブロック回数を CSV でダウンロードする
+ * @param log 活動の記録
+ * @param sites 対象にするサイトキー
+ * @param range 数える期間（両端を含む）
+ */
 export function exportSiteBlockCounts(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -91,7 +109,13 @@ export function exportSiteBlockCounts(
   downloadCSV(`visionfocus-block-counts-${getDateString()}.csv`, csv);
 }
 
-/** 日別統計 CSV の行（日付・浪費時間・ブロック回数）。新しい日から並べ、記録が 0 の日は含めない */
+/**
+ * 日別統計 CSV の行（日付・浪費時間・ブロック回数）。新しい日から並べ、記録が 0 の日は含めない
+ * @param log 活動の記録
+ * @param sites 集計の対象にするサイトキー
+ * @param range 集計する期間（両端を含む）
+ * @returns CSV の行（日付は YYYY-MM-DD、浪費時間は formatTime の形）
+ */
 export function dailyActivityRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -103,7 +127,12 @@ export function dailyActivityRows(
     .map((day) => [day.date, formatTime(day.seconds), String(day.blocks)]);
 }
 
-/** 期間内の日別統計を CSV でダウンロードする */
+/**
+ * 期間内の日別統計を CSV でダウンロードする
+ * @param log 活動の記録
+ * @param sites 集計の対象にするサイトキー
+ * @param range 集計する期間（両端を含む）
+ */
 export function exportDailyActivity(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -114,7 +143,13 @@ export function exportDailyActivity(
   downloadCSV(`visionfocus-daily-stats-${getDateString()}.csv`, csv);
 }
 
-/** 解除したサイト CSV の行（ドメイン・解除日・解除後の時間・最終表示日）。解除後の時間の多い順で、解除したことが無いサイトは含めない */
+/**
+ * 解除したサイト CSV の行（ドメイン・解除日・解除後の時間・最終表示日）。解除後の時間の多い順で、解除したことが無いサイトは含めない
+ * @param log 活動の記録
+ * @param sites 対象にするサイトキー
+ * @param today 解除後の時間を数える終わりの日（ローカル日付）
+ * @returns CSV の行（同じ時間ならドメイン順）
+ */
 export function unblockedSiteRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -136,7 +171,12 @@ export function unblockedSiteRows(
     ]);
 }
 
-/** 解除したサイトごとの解除後の時間を CSV でダウンロードする */
+/**
+ * 解除したサイトごとの解除後の時間を CSV でダウンロードする
+ * @param log 活動の記録
+ * @param sites 対象にするサイトキー
+ * @param today 解除後の時間を数える終わりの日（ローカル日付）
+ */
 export function exportUnblockedSiteTimes(
   log: ActivityLog,
   sites: readonly SiteKey[],
