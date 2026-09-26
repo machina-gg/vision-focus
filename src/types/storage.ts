@@ -128,8 +128,7 @@ export interface AppSettings {
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
-  // この項目を持たない保存データがあるため、読み出しは src/lib/unblockConfirm.ts を通す
-  unblockConfirm: UnblockConfirmSettings;
+  unblockConfirm: UnblockConfirmSettings; // ブロック解除の長押し確認の設定
   analyticsOptIn?: import('./analytics').AnalyticsOptIn | null; // null = not yet decided (show modal)
 }
 

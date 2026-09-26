@@ -32,6 +32,7 @@ function createValidExportData(
       defaultDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
       activePresetId: null,
       notifications: DEFAULT_NOTIFICATION_SETTINGS,
+      unblockConfirm: DEFAULT_UNBLOCK_CONFIRM_SETTINGS,
       ...overrides
     }
   };
@@ -382,8 +383,8 @@ describe('createDefaultExportData', () => {
 });
 
 describe('長押しの秒数のエクスポート・インポート', () => {
-  // 書き出したファイルを読み戻したとき、秒数が変わらないこと。
-  // 選べない値のファイルは形式エラーで拒み、秒数の項目が無い古いファイルは既定値に倒す
+  // 書き出したファイルを読み戻したとき、秒数が変わらないこと。選べない値・項目が
+  // 無いファイルはどちらも形式エラーで拒む（既定値への読み替えはしない）
   const settingsWith30s: AppSettings = {
     ...DEFAULT_SETTINGS,
     unblockConfirm: { holdSeconds: 30 }
@@ -402,17 +403,6 @@ describe('長押しの秒数のエクスポート・インポート', () => {
       DEFAULT_VISION
     );
     expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
-  });
-
-  it('秒数の項目を持たない保存データからは既定の秒数を書き出す', () => {
-    const { unblockConfirm: _omitted, ...legacy } = DEFAULT_SETTINGS;
-
-    const { data } = exportSettings(
-      legacy as unknown as AppSettings,
-      DEFAULT_VISION
-    );
-
-    expect(data.data.unblockConfirm).toEqual(DEFAULT_UNBLOCK_CONFIRM_SETTINGS);
   });
 
   it.each([5, 10, 30, 60])('%i 秒は受け付ける', (holdSeconds) => {
@@ -440,16 +430,20 @@ describe('長押しの秒数のエクスポート・インポート', () => {
       expect(result.error).toBe('importErrorInvalidFormat');
     }
   );
+});
 
-  it('秒数の項目が無いファイルを読み込むと既定の秒数になる', () => {
-    const importData = createValidExportData().data;
+describe('必須項目（notifications / unblockConfirm）が無いファイルの取り込み', () => {
+  // どちらも必須項目なので、欠けたファイルは既定値へ読み替えず形式エラーで拒む
+  it.each(['notifications', 'unblockConfirm'] as const)(
+    '%s を持たないファイルは形式エラーで拒む',
+    (key) => {
+      const full = createValidExportData();
+      const { [key]: _omitted, ...data } = full.data;
 
-    const { settings } = applyImportedSettings(
-      importData,
-      settingsWith30s,
-      DEFAULT_VISION
-    );
+      const result = validateImportedData(JSON.stringify({ ...full, data }));
 
-    expect(settings.unblockConfirm).toEqual(DEFAULT_UNBLOCK_CONFIRM_SETTINGS);
-  });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('importErrorInvalidFormat');
+    }
+  );
 });

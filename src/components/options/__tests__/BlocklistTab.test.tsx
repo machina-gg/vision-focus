@@ -42,7 +42,7 @@ vi.mock('~/contexts/SettingsContext', () => ({
   })
 }));
 
-// 設定に長押し秒数が無ければ既定値で確認が走る
+// setSettings が DEFAULT_SETTINGS を土台にするため、確認は既定の秒数で走る
 const DEFAULT_HOLD_MS = DEFAULT_UNBLOCK_CONFIRM_SETTINGS.holdSeconds * 1000;
 
 /**
