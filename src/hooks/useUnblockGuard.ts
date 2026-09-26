@@ -8,14 +8,17 @@ export type UnblockAction = 'toggle' | 'delete';
 
 /** ブロックを弱める操作 1 件ぶんの依頼（確認モーダルに出す情報と、確認後に実行する処理） */
 export interface UnblockRequest {
+  /** 対象のサイトのドメイン（確認モーダルに出す） */
   domain: string;
   /** ブロック方式の表示に使う。null・undefined = 常時ブロック */
   timeLimit: TimeLimit | null | undefined;
+  /** 確認モーダルの文言の種別 */
   action: UnblockAction;
   /** 確認が通ったときにだけ呼ばれる */
   onConfirm: () => void;
 }
 
+/** 確認待ちの依頼（依頼に、確認モーダルに出すラベルを足したもの） */
 export interface PendingUnblock extends UnblockRequest {
   /** 確認モーダルに出すブロック方式のラベル */
   blockStyle: string;
@@ -28,7 +31,12 @@ function getBlockStyleLabel(timeLimit: TimeLimit | null | undefined): string {
   return getMessage(timeLimit ? 'dailyLimit' : 'alwaysBlocked');
 }
 
-/** ブロックを弱める操作を、パスワード保護中はパスワード入力、それ以外は長押し確認を通してから実行させる */
+/**
+ * ブロックを弱める操作を、パスワード保護中はパスワード入力、それ以外は長押し確認を通してから実行させる
+ * @param isPasswordProtected true ならパスワード入力、false なら長押し確認を求める
+ * @returns pending（確認待ちの依頼。無ければ null）・isPasswordModalOpen / isConfirmModalOpen（どちらのモーダルを開くか）・
+ *   requestUnblock（依頼を確認待ちにする）・confirm（確認待ちの onConfirm を呼ぶ）・close（確認待ちを片付ける）
+ */
 export function useUnblockGuard(isPasswordProtected: boolean) {
   const [pending, setPending] = useState<PendingUnblock | null>(null);
   const [mode, setMode] = useState<GuardMode | null>(null);

@@ -20,7 +20,9 @@ export interface ReportTopSites {
 
 /** 月曜〜日曜の 1 週間のレポート */
 export interface WeeklyReport extends ReportTopSites {
+  /** 週の最初の日（月曜） */
   weekStart: DateKey;
+  /** 週の最後の日（日曜） */
   weekEnd: DateKey;
   /** 週の合計（seconds が浪費時間） */
   totals: ActivityTotals;
@@ -28,6 +30,7 @@ export interface WeeklyReport extends ReportTopSites {
   dailyBreakdown: DailyPoint[];
   /** 前週比（%）。前週が 0 なら null */
   wasteTimeChangePercent: number | null;
+  /** 週の前半と後半の浪費時間の比較 */
   trend: ReportTrend;
 }
 
@@ -43,8 +46,10 @@ export interface MonthlyReport extends ReportTopSites {
   month: string;
   /** 月の合計（seconds が浪費時間） */
   totals: ActivityTotals;
+  /** 月に含まれる週ごとの合計（古い順） */
   weeklyBreakdown: WeeklyPoint[];
   /** 前月比（%）。前月が 0 なら null */
   wasteTimeChangePercent: number | null;
+  /** 月の前半と後半の浪費時間の比較 */
   trend: ReportTrend;
 }

@@ -9,6 +9,7 @@ import {
   shouldShowSupportPrompt
 } from '~/lib/supportPrompt';
 
+/** useSupportPrompt が返す値 */
 export interface UseSupportPromptReturn {
   /** 支援誘導を表示するか（判定が終わるまでは false） */
   isVisible: boolean;
@@ -18,7 +19,10 @@ export interface UseSupportPromptReturn {
   handleDismiss: () => Promise<void>;
 }
 
-/** 分析タブの支援誘導を表示するかの判定と、支援・閉じる操作を提供する */
+/**
+ * 分析タブの支援誘導を表示するかの判定と、支援・閉じる操作を提供する
+ * @returns 表示するかと、支援・閉じる操作
+ */
 export function useSupportPrompt(): UseSupportPromptReturn {
   const [isVisible, setIsVisible] = useState(false);
 

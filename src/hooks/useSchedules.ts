@@ -10,6 +10,7 @@ import type { AppSettings, Schedule } from '~/types/storage';
 
 /** スケジュール編集モーダルの入力値 */
 export interface ScheduleFormData {
+  /** スケジュールの名前。空白だけなら保存しない */
   name: string;
   /** HH:mm */
   startTime: string;
@@ -30,25 +31,44 @@ const DEFAULT_SCHEDULE_FORM: ScheduleFormData = {
 };
 
 interface UseSchedulesOptions {
+  /** 今のアプリ設定。読み込み前は undefined（操作は何もしない） */
   settings: AppSettings | undefined;
+  /** 保存したあと画面側のアプリ設定を差し替える */
   setSettings: (settings: AppSettings) => void;
 }
 
 interface UseSchedulesReturn {
+  /** 編集モーダルを表示中か */
   showScheduleModal: boolean;
+  /** 編集モーダルを開閉する */
   setShowScheduleModal: (show: boolean) => void;
+  /** 編集中のスケジュール。新規作成中なら null */
   editingSchedule: Schedule | null;
+  /** 編集モーダルの入力値 */
   scheduleForm: ScheduleFormData;
+  /** 編集モーダルの入力値を変える（失敗の文言は消える） */
   setScheduleForm: (form: ScheduleFormData) => void;
+  /** 保存に失敗したときの文言。失敗していなければ null */
   scheduleError: string | null;
+  /** 入力値を保存する。他のスケジュールと重なるなら保存せず scheduleError に文言を入れる */
   handleSaveSchedule: () => Promise<void>;
+  /** id のスケジュールを消す */
   handleDeleteSchedule: (id: string) => Promise<void>;
+  /** id のスケジュールの有効・無効を切り替える。一時停止中に有効にしたら一時停止も解く */
   handleToggleSchedule: (id: string, enabled: boolean) => Promise<void>;
+  /** schedule の値を入力値にして編集モーダルを開く */
   openEditSchedule: (schedule: Schedule) => void;
+  /** 既定の入力値で新規作成の編集モーダルを開く */
   openAddSchedule: () => void;
 }
 
-/** スケジュール画面の編集モーダルの状態と、保存（重なりの検査つき）・削除・有効切り替えの操作を提供する */
+/**
+ * スケジュール画面の編集モーダルの状態と、保存（重なりの検査つき）・削除・有効切り替えの操作を提供する
+ * @param options フックの入力（下記の項目）
+ * @param options.settings 今のアプリ設定。読み込み前は undefined
+ * @param options.setSettings 保存したあと画面側のアプリ設定を差し替える関数
+ * @returns 編集モーダルの状態と各操作
+ */
 export function useSchedules({
   settings,
   setSettings

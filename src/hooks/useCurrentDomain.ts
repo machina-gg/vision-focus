@@ -7,6 +7,7 @@ import { getActiveTab } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
 import type { TimeLimitInfo } from '~/types/messages';
 
+/** useCurrentDomain が返す値 */
 export interface UseCurrentDomainReturn {
   /** アクティブなタブのドメイン。取得できなければ undefined */
   currentDomain: string | undefined;
@@ -16,7 +17,10 @@ export interface UseCurrentDomainReturn {
   clearDomain: () => void;
 }
 
-/** アクティブなタブのドメインとその時間制限を定期的に取得する */
+/**
+ * アクティブなタブのドメインとその時間制限を定期的に取得する
+ * @returns アクティブなタブのドメイン・その時間制限と、ドメインを消す操作
+ */
 export function useCurrentDomain(): UseCurrentDomainReturn {
   const [currentDomain, setCurrentDomain] = useState<string | undefined>();
   const [timeLimitInfo, setTimeLimitInfo] = useState<TimeLimitInfo | null>(

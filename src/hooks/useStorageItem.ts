@@ -9,7 +9,11 @@ export type StorageItemSetter<T> = (
   value: T | undefined | ((previous: T) => T)
 ) => Promise<void>;
 
-/** ストレージ項目を React の state として読み書きする（初期値は fallback。保存値の変更に追従する） */
+/**
+ * ストレージ項目を React の state として読み書きする（初期値は fallback。保存値の変更に追従する）
+ * @param item 読み書きするストレージ項目
+ * @returns [今の値, 保存して state も更新する関数]。値は読み込み前・保存値が壊れているときは fallback
+ */
 export function useStorageItem<T, M extends Record<string, unknown>>(
   item: WxtStorageItem<T, M>
 ): [T, StorageItemSetter<T>] {

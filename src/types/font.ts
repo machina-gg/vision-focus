@@ -25,17 +25,25 @@ export type FontFamily =
 export type FontCategory =
   'system' | 'modern' | 'elegant' | 'impact' | 'handwriting' | 'japanese';
 
+/** 目標文の文字サイズの段階（sm が最小、xl が最大） */
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
+
+/** 目標文の文字の太さの段階（normal が最も細く、bold が最も太い） */
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 
 /** ダッシュボードの目標文のフォント */
 export interface FontSettings {
+  /** 使うフォント */
   family: FontFamily;
+  /** 文字サイズの段階 */
   size: FontSize;
+  /** 文字の太さの段階 */
   weight: FontWeight;
 }
 
+/** フォント 1 つぶんの定義（表示名・CSS の値・読み込み先） */
 export interface FontDefinition {
+  /** このフォントの ID */
   family: FontFamily;
   /** 画面に出す表示名 */
   name: string;
@@ -45,7 +53,7 @@ export interface FontDefinition {
   googleFont?: string;
 }
 
-/** フォント選択画面に並べる分類ごとのフォント一覧。フォントの定義の置き場はここだけ */
+/** フォント選択画面に並べる分類ごとのフォント一覧（name は分類の表示名）。フォントの定義の置き場はここだけ */
 export const FONT_CATEGORIES: Record<
   FontCategory,
   { name: string; fonts: FontDefinition[] }
@@ -201,7 +209,11 @@ export const FONT_CATEGORIES: Record<
   }
 };
 
-/** family の定義を返す。見つからなければシステムフォントの定義 */
+/**
+ * family の定義を返す。見つからなければシステムフォントの定義
+ * @param family 探すフォントの ID
+ * @returns family に一致するフォントの定義。無ければシステムフォントの定義
+ */
 export function getFontDefinition(family: FontFamily): FontDefinition {
   for (const category of Object.values(FONT_CATEGORIES)) {
     const font = category.fonts.find((f) => f.family === family);
@@ -210,7 +222,11 @@ export function getFontDefinition(family: FontFamily): FontDefinition {
   return FONT_CATEGORIES.system.fonts[0];
 }
 
-/** family が属する分類を返す。見つからなければ 'system' */
+/**
+ * family が属する分類を返す。見つからなければ 'system'
+ * @param family 分類を調べるフォントの ID
+ * @returns family を含む分類。どの分類にも無ければ 'system'
+ */
 export function getFontCategory(family: FontFamily): FontCategory {
   for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
     if (category.fonts.some((f) => f.family === family)) {
@@ -220,6 +236,7 @@ export function getFontCategory(family: FontFamily): FontCategory {
   return 'system';
 }
 
+/** 目標文のフォントの既定値（システムフォント・md・bold） */
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
   family: 'system',
   size: 'md',

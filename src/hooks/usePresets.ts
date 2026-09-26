@@ -16,15 +16,21 @@ import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
 interface UsePresetsOptions {
+  /** 保存済みのダッシュボードの設定。読み込み前は undefined */
   vision: VisionSettings | undefined;
+  /** 保存したあと画面側のダッシュボードの設定を差し替える */
   setVision: (vision: VisionSettings) => void;
+  /** 今のアプリ設定（スケジュールの参照の確認に使う）。読み込み前は undefined */
   settings: AppSettings | undefined;
+  /** スケジュールの参照を外したあと画面側のアプリ設定を差し替える */
   setSettings: (settings: AppSettings) => void;
 }
 
+/** usePresets が返す値 */
 export interface UsePresetsReturn {
   /** 選択中のスタイルの、保存前の表示設定 */
   draftDisplaySettings: DashboardDisplaySettings;
+  /** 画面に並べるスタイルの一覧（保存した操作は即座に反映される） */
   draftPresets: DashboardPreset[];
   /** 選択中のスタイルの ID。スタイルが無い・選択中のものを削除したときは null */
   selectedPresetId: string | null;
@@ -34,6 +40,7 @@ export interface UsePresetsReturn {
   isDirty: boolean;
   /** 保存完了の表示中か（一定時間で false に戻る） */
   visionSaved: boolean;
+  /** 新規作成モーダルを表示中か */
   showSavePresetModal: boolean;
   /** 新規作成モーダルに入力中の名前 */
   presetName: string;
@@ -41,14 +48,19 @@ export interface UsePresetsReturn {
   deleteTargetPresetId: string | null;
   /** 確認待ちのスタイルを参照しているスケジュールの件数 */
   deleteTargetScheduleCount: number;
+  /** 新規作成モーダルを開閉する */
   setShowSavePresetModal: (show: boolean) => void;
+  /** 新規作成モーダルの名前の入力を変える */
   setPresetName: (name: string) => void;
+  /** presetId のスタイルを選択し、下書きをその表示設定にする（保存していない変更は捨てる） */
   handleSelectPreset: (presetId: string) => void;
+  /** 選択中のスタイルの名前の下書きを変える */
   handlePresetNameChange: (name: string) => void;
   /** スケジュールが参照していれば確認待ちにし、参照が無ければすぐ削除する */
   handleRequestDeletePreset: (id: string) => Promise<void>;
   /** 確認待ちのスタイルを削除し、参照していたスケジュールから外す */
   handleConfirmDeletePreset: () => Promise<void>;
+  /** 削除の確認待ちを取り消す */
   handleCancelDeletePreset: () => void;
   /** 下書きを選択中のスタイルへ保存する。目標文か名前が空なら何もしない */
   handleSaveSelectedPreset: () => Promise<void>;
@@ -56,13 +68,21 @@ export interface UsePresetsReturn {
   handleApplyPreset: () => Promise<void>;
   /** presetName の名前で既定の表示設定のスタイルを作り、選択する */
   handleCreatePreset: () => Promise<void>;
+  /** 下書きの目標文を変える */
   handleGoalTextChange: (text: string) => void;
+  /** 下書きの補足の文を変える */
   handleGoalSubTextChange: (text: string) => void;
+  /** 下書きの文字色（CSS の色の値）を変える */
   handleTextColorChange: (color: string) => void;
+  /** 下書きの背景の種類（画像 / 単色）を変える */
   handleBackgroundTypeChange: (type: 'image' | 'color') => void;
+  /** 下書きの同梱の背景画像を bgId に変える */
   handleBackgroundChange: (bgId: string) => void;
+  /** 下書きの単色の背景（CSS の色の値）を変える */
   handleBackgroundColorChange: (color: string) => void;
+  /** 下書きの利用者の背景画像（data URL）を変える。null = 使わない */
   handleCustomBackgroundChange: (dataUrl: string | null) => void;
+  /** 下書きの目標文のフォントを変える */
   handleFontSettingsChange: (fontSettings: FontSettings) => void;
 }
 
@@ -192,7 +212,15 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
 
 const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
-/** スタイル編集画面の下書きと、スタイルの選択・保存・適用・作成・削除の操作を提供する */
+/**
+ * スタイル編集画面の下書きと、スタイルの選択・保存・適用・作成・削除の操作を提供する
+ * @param options フックの入力（下記の項目）
+ * @param options.vision 保存済みのダッシュボードの設定。読み込み前は undefined
+ * @param options.setVision 保存したあと画面側のダッシュボードの設定を差し替える関数
+ * @param options.settings 今のアプリ設定。読み込み前は undefined
+ * @param options.setSettings スケジュールの参照を外したあと画面側のアプリ設定を差し替える関数
+ * @returns 下書きの状態と、スタイルと下書きへの各操作
+ */
 export function usePresets({
   vision,
   setVision,
