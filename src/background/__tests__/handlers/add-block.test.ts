@@ -6,9 +6,7 @@ vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   setSettings: vi.fn(),
   getUnblockHistory: vi.fn(),
-  setUnblockHistory: vi.fn(),
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn()
+  setUnblockHistory: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
@@ -20,17 +18,11 @@ import {
   getSettings,
   setSettings,
   getUnblockHistory,
-  setUnblockHistory,
-  getAnalytics,
-  setAnalytics
+  setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { addBlockHandler as handler } from '../../handlers/add-block';
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_ANALYTICS,
-  DEFAULT_UNBLOCK_HISTORY
-} from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 interface Response {
   success: boolean;
@@ -47,11 +39,6 @@ describe('add-block ハンドラ', () => {
     vi.mocked(getUnblockHistory).mockResolvedValue({
       ...DEFAULT_UNBLOCK_HISTORY,
       sites: {}
-    });
-    vi.mocked(getAnalytics).mockResolvedValue({
-      ...DEFAULT_ANALYTICS,
-      siteTime: {},
-      siteCategories: {}
     });
   });
 
@@ -200,53 +187,6 @@ describe('add-block ハンドラ', () => {
               unblockedAt: null,
               timeAfterUnblock: 0,
               lastActivity: null
-            })
-          })
-        })
-      );
-    });
-
-    it('新規ドメインを waste カテゴリで分析に登録する', async () => {
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          siteTime: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              domain: 'example.com',
-              time: 0,
-              category: 'waste'
-            })
-          }),
-          siteCategories: expect.objectContaining({
-            'example.com': 'waste'
-          })
-        })
-      );
-    });
-
-    it('既存の計測時間は保持しカテゴリのみ waste に変更する', async () => {
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        siteTime: {
-          'example.com': {
-            domain: 'example.com',
-            time: 1200,
-            category: 'neutral',
-            lastUpdated: '2026-01-01T00:00:00.000Z'
-          }
-        },
-        siteCategories: {}
-      });
-
-      await invoke(handler, { domain: 'example.com' });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          siteTime: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              time: 1200,
-              category: 'waste'
             })
           })
         })

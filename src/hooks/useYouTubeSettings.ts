@@ -6,10 +6,7 @@ import {
   getUnblockHistory,
   unblockHistoryItem
 } from '~/lib/storage';
-import {
-  YOUTUBE_DOMAIN,
-  incrementYouTubeBlockCount
-} from '~/lib/youtubeBlockService';
+import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 import type {
   AppSettings,
   TrackedSite,
@@ -56,7 +53,6 @@ export function useYouTubeSettings({
 
         // YouTube ブロックの有効・無効の切り替えを追跡履歴に記録する
         if (!prevEnabled && newEnabled) {
-          await incrementYouTubeBlockCount();
           await markYouTubeBlocked();
         } else if (prevEnabled && !newEnabled) {
           await markYouTubeUnblocked();

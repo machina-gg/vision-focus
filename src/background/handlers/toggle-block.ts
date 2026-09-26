@@ -1,14 +1,7 @@
 import type { MessageHandler } from '~/lib/messaging';
-import {
-  getSettings,
-  setSettings,
-  getAnalytics,
-  setAnalytics
-} from '~/lib/storage';
+import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
-import { getTodayKey } from '~/lib/time';
 import { trackEvent } from '~/lib/analytics';
-import type { DailyStat, SiteUnblockCount } from '~/types/storage';
 import { recordActivity } from '~/lib/activityService';
 import { normalizeSiteKey } from '~/lib/siteKey';
 
@@ -48,8 +41,8 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   if (enabled) {
     await blockExistingTabs();
   } else {
-    // If disabling (unblocking), record unblock count
-    await incrementUnblockCount(domain);
+    // 解除を利用統計に送り、事実の表に 1 回として残す
+    await trackUnblockEvent(domain);
     await recordActivity({
       kind: 'unblock',
       site: normalizeSiteKey(domain),
@@ -60,35 +53,8 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   return { success: true };
 };
 
-// Increment unblock count for a domain
-async function incrementUnblockCount(domain: string): Promise<void> {
-  const analytics = await getAnalytics();
-  const todayKey = getTodayKey();
-  const now = new Date().toISOString();
-
-  // Update site unblock count
-  const existing = analytics.siteUnblockCounts[domain];
-  const updatedUnblockCount: SiteUnblockCount = {
-    domain,
-    count: (existing?.count ?? 0) + 1,
-    lastUnblocked: now
-  };
-  analytics.siteUnblockCounts[domain] = updatedUnblockCount;
-
-  // Update daily stats
-  const existingDailyStat = analytics.dailyStats[todayKey];
-  const updatedDailyStat: DailyStat = {
-    date: todayKey,
-    wasteTime: existingDailyStat?.wasteTime || 0,
-    investTime: existingDailyStat?.investTime || 0,
-    blockCount: existingDailyStat?.blockCount || 0,
-    unblockCount: (existingDailyStat?.unblockCount || 0) + 1
-  };
-  analytics.dailyStats[todayKey] = updatedDailyStat;
-
-  await setAnalytics(analytics);
-
-  // Send GA4 event if analytics opt-in is enabled
+// 利用統計（GA4。オプトイン時のみ送信）に解除を送る
+async function trackUnblockEvent(domain: string): Promise<void> {
   await trackEvent('block_unblock', {
     domain_hashed: hashDomain(domain) // Send hashed domain to avoid leaking user data
   });

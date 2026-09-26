@@ -24,7 +24,7 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
 
   // Check if extension context is still valid
   if (!isContextValid()) {
-    stopTracking();
+    stopHeartbeat();
     return;
   }
 
@@ -36,14 +36,14 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
     });
   } catch {
     // Extension context likely invalidated, stop tracking
-    stopTracking();
+    stopHeartbeat();
   }
 }
 
 // Handle visibility change
 function handleVisibilityChange() {
   if (isStopped || !isContextValid()) {
-    stopTracking();
+    stopHeartbeat();
     return;
   }
 
@@ -56,8 +56,8 @@ function handleVisibilityChange() {
   }
 }
 
-// Start tracking
-function startTracking() {
+// 表示中のページから heartbeat を送り始める
+function startHeartbeat() {
   // Listen for visibility changes
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -65,7 +65,7 @@ function startTracking() {
   heartbeatInterval = setInterval(() => {
     // Stop if context invalidated
     if (!isContextValid()) {
-      stopTracking();
+      stopHeartbeat();
       return;
     }
 
@@ -81,8 +81,8 @@ function startTracking() {
   }
 }
 
-// Stop tracking
-function stopTracking() {
+// heartbeat を止める
+function stopHeartbeat() {
   if (isStopped) return;
   isStopped = true;
 
@@ -98,7 +98,7 @@ function stopTracking() {
 
 // Handle page unload
 function handleUnload() {
-  stopTracking();
+  stopHeartbeat();
 }
 
 // Initialize
@@ -112,7 +112,7 @@ function init() {
     return;
   }
 
-  startTracking();
+  startHeartbeat();
 
   // Clean up on page hide (replaces deprecated unload event)
   // pagehide is the modern replacement that works with bfcache

@@ -37,34 +37,6 @@ export const UpdateTimeLimitBodySchema = z.object({
 
 export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 
-// Schema for AnalyticsData validation (used in youtube.ts content script)
-const DailyStatSchema = z.object({
-  date: z.string(),
-  wasteTime: z.number(),
-  investTime: z.number(),
-  blockCount: z.number()
-});
-
-const SiteTimeSchema = z.object({
-  domain: z.string(),
-  time: z.number(),
-  category: z.enum(['waste', 'invest', 'neutral']),
-  lastUpdated: z.string()
-});
-
-const SiteBlockCountSchema = z.object({
-  domain: z.string(),
-  count: z.number(),
-  lastBlocked: z.string()
-});
-
-export const AnalyticsDataSchema = z.object({
-  dailyStats: z.record(z.string(), DailyStatSchema),
-  siteTime: z.record(z.string(), SiteTimeSchema),
-  siteCategories: z.record(z.string(), z.enum(['waste', 'invest', 'neutral'])),
-  siteBlockCounts: z.record(z.string(), SiteBlockCountSchema)
-});
-
 // Schema for YouTubeSettings validation (used in youtube.ts content script)
 // 非 strict な z.object なので、廃止したキーが保存済みデータに残っていても
 // parse は落ちずに無視される。そのため設定削除時の移行処理は持たない（#393）

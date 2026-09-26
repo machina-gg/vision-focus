@@ -1,47 +1,7 @@
 // Analytics-related type definitions
 
-// Daily statistics
-export interface DailyStat {
-  date: string; // YYYY-MM-DD
-  wasteTime: number; // seconds
-  investTime: number; // seconds
-  blockCount: number;
-  unblockCount: number; // Number of times sites were unblocked (toggle OFF)
-}
-
-// Site time tracking
-export interface SiteTime {
-  domain: string;
-  time: number; // seconds
-  category: 'waste' | 'invest' | 'neutral';
-  lastUpdated: string;
-}
-
-// Site block count tracking (independent of blockList)
-export interface SiteBlockCount {
-  domain: string;
-  count: number; // cumulative block count
-  lastBlocked: string; // ISO8601 timestamp
-}
-
-// Site unblock count tracking (parallel to SiteBlockCount)
-export interface SiteUnblockCount {
-  domain: string;
-  count: number; // cumulative unblock count
-  lastUnblocked: string; // ISO8601 timestamp
-}
-
 // 実体は site.ts。既存の import 元（~/types/analytics / ~/types/storage）を保つための再エクスポート
 export type { TimeLimitType, TimeLimit } from './site';
-
-// Analytics data
-export interface AnalyticsData {
-  dailyStats: Record<string, DailyStat>; // key: YYYY-MM-DD
-  siteTime: Record<string, SiteTime>; // key: domain
-  siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
-  siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
-  siteUnblockCounts: Record<string, SiteUnblockCount>; // key: domain (tracks unblock toggle-off actions)
-}
 
 // Tracked site - tracks sites from when they are blocked
 export interface TrackedSite {
@@ -68,14 +28,6 @@ export interface AnalyticsOptIn {
 }
 
 // Default values
-export const DEFAULT_ANALYTICS: AnalyticsData = {
-  dailyStats: {},
-  siteTime: {},
-  siteCategories: {},
-  siteBlockCounts: {},
-  siteUnblockCounts: {}
-};
-
 export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {
   sites: {}
 };

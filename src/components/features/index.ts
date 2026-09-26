@@ -6,6 +6,5 @@ export * from './Header';
 export * from './ImageUploader';
 export * from './QuickBlockButton';
 export * from './ReportCard';
-export * from './StatsCard';
 export * from './Support';
 export * from './TimeLimitBadge';

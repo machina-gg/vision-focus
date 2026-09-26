@@ -8,8 +8,6 @@ import {
   setStorageData,
   makeSettings,
   makeActivity,
-  makeAnalytics,
-  makeSiteBlockCounts,
   makeUnblockHistory,
   getStorageData,
   SELECTORS,
@@ -28,23 +26,16 @@ import { formatTime } from '~/lib/time';
  */
 
 /**
- * 保存済みの analytics から siteBlockCounts のキー一覧を読む
- *
- * 保存キーは 'analytics' で、その直下が AnalyticsData（`analyticsData` という
- * ラッパーは存在しない）。siteBlockCounts はドメインをキーとするオブジェクトなので
- * 件数は `Object.keys` で数える。
+ * 保存済みの事実の表（activity）から、行のあるサイトキーの一覧を読む（日付をまたいで重複なし）
  *
  * ⚠ 読めなかったときに空の値へフォールバックしない。フォールバックすると
  * キー名を間違えたままでも「0 件」を返し、リセットの検査が素通りする（#411）。
- * 読めなかったことが分かる null を返し、呼び出し側のアサーションで落とす。
+ * 消えている（未保存）ことが分かる null を返し、呼び出し側のアサーションで見分ける。
  */
-async function readSiteBlockCountKeys(page: Page): Promise<string[] | null> {
-  const analytics = await getStorageData(page, 'analytics');
-  const siteBlockCounts = analytics?.siteBlockCounts;
-  if (!siteBlockCounts || typeof siteBlockCounts !== 'object') {
-    return null;
-  }
-  return Object.keys(siteBlockCounts);
+async function readActivitySiteKeys(page: Page): Promise<string[] | null> {
+  const log = await getStorageData(page, 'activity');
+  if (!log) return null;
+  return [...new Set(Object.values(log).flatMap((row) => Object.keys(row)))];
 }
 
 /**
@@ -400,17 +391,20 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の分析データを追加
+    // テスト用の事実を追加する（今日と過去の日。リセットは今日の分も含めて全部消す）
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([
-          ['youtube.com', 10],
-          ['reddit.com', 5]
-        ])
-      })
+      'unblockHistory',
+      makeUnblockHistory(['youtube.com', 'reddit.com'])
+    );
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['youtube.com', { blocks: 10 }, 0],
+        ['reddit.com', { blocks: 5 }, 3]
+      ])
     );
     await setupPage.close();
 
@@ -418,7 +412,7 @@ test.describe('Options - Analytics Tab', () => {
 
     // リセット前に集計が入っていることを確かめる。
     // 空の状態から空を見ても「リセットされた」ことにはならない（#411）
-    expect(await readSiteBlockCountKeys(page)).toEqual(
+    expect(await readActivitySiteKeys(page)).toEqual(
       expect.arrayContaining(['youtube.com', 'reddit.com'])
     );
 
@@ -438,9 +432,8 @@ test.describe('Options - Analytics Tab', () => {
     await expect(resetConfirmButton).toBeVisible();
     await resetConfirmButton.click();
 
-    // 保存済みの集計が空になる。
-    // 書き込みは非同期なので、反映されるまで待つ
-    await expect.poll(() => readSiteBlockCountKeys(page)).toEqual([]);
+    // 事実の表が消える。消すのは background なので、反映されるまで待つ
+    await expect.poll(() => readActivitySiteKeys(page)).toBeNull();
 
     await page.close();
   });

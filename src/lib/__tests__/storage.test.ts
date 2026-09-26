@@ -58,15 +58,10 @@ import {
   updateSettings,
   getVision,
   setVision,
-  getAnalytics,
-  setAnalytics,
   getUnblockHistory,
   setUnblockHistory,
   getAllStorage,
   clearAllStorage,
-  incrementSiteBlockCount,
-  getSiteBlockCount,
-  getAllSiteBlockCounts,
   setLastBlockedDomain,
   getLastBlockedDomain,
   clearLastBlockedDomain,
@@ -75,9 +70,9 @@ import {
   supportPromptItem
 } from '~/lib/storage';
 import {
+  DEFAULT_ACTIVITY,
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
-  DEFAULT_ANALYTICS,
   DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_SUPPORT_PROMPT_STATE
 } from '~/types/storage';
@@ -104,14 +99,12 @@ describe('保存形式', () => {
       paused: true
     });
     fakeChrome.localData.vision = JSON.stringify(DEFAULT_VISION);
-    fakeChrome.localData.analytics = JSON.stringify(DEFAULT_ANALYTICS);
     fakeChrome.localData.unblockHistory = JSON.stringify(
       DEFAULT_UNBLOCK_HISTORY
     );
 
     expect(await getSettings()).toEqual(DEFAULT_SETTINGS);
     expect(await getVision()).toEqual(DEFAULT_VISION);
-    expect(await getAnalytics()).toEqual(DEFAULT_ANALYTICS);
     expect(await getUnblockHistory()).toEqual(DEFAULT_UNBLOCK_HISTORY);
     // 未保存判定でも旧形式は「保存されていない」として扱う
     expect(await hasStoredVision()).toBe(false);
@@ -171,37 +164,6 @@ describe('setVision', () => {
   });
 });
 
-describe('getAnalytics', () => {
-  it('データがある場合はそれを返す', async () => {
-    fakeChrome.localData.analytics = {
-      ...DEFAULT_ANALYTICS,
-      dailyStats: {
-        '2024-06-12': {
-          date: '2024-06-12',
-          wasteTime: 100,
-          investTime: 0,
-          blockCount: 5,
-          unblockCount: 0
-        }
-      }
-    };
-    const result = await getAnalytics();
-    expect(result.dailyStats['2024-06-12'].wasteTime).toBe(100);
-  });
-
-  it('データがない場合はデフォルトを返す', async () => {
-    const result = await getAnalytics();
-    expect(result).toEqual(DEFAULT_ANALYTICS);
-  });
-});
-
-describe('setAnalytics', () => {
-  it('アナリティクスデータを保存する', async () => {
-    await setAnalytics(DEFAULT_ANALYTICS);
-    expect(fakeChrome.localData.analytics).toEqual(DEFAULT_ANALYTICS);
-  });
-});
-
 describe('getUnblockHistory', () => {
   it('データがない場合はデフォルトを返す', async () => {
     const result = await getUnblockHistory();
@@ -223,8 +185,8 @@ describe('getAllStorage', () => {
     const result = await getAllStorage();
     expect(result.settings).toEqual(DEFAULT_SETTINGS);
     expect(result.vision).toEqual(DEFAULT_VISION);
-    expect(result.analytics).toEqual(DEFAULT_ANALYTICS);
     expect(result.unblockHistory).toEqual(DEFAULT_UNBLOCK_HISTORY);
+    expect(result.activity).toEqual(DEFAULT_ACTIVITY);
   });
 });
 
@@ -232,68 +194,14 @@ describe('clearAllStorage', () => {
   it('全ストレージキーを削除する', async () => {
     fakeChrome.localData.settings = DEFAULT_SETTINGS;
     fakeChrome.localData.vision = DEFAULT_VISION;
-    fakeChrome.localData.analytics = DEFAULT_ANALYTICS;
     fakeChrome.localData.unblockHistory = DEFAULT_UNBLOCK_HISTORY;
+    fakeChrome.localData.activity = {
+      '2024-06-12': { 'youtube.com': { seconds: 60, blocks: 1, unblocks: 0 } }
+    };
 
     await clearAllStorage();
 
     expect(fakeChrome.localData).toEqual({});
-  });
-});
-
-describe('incrementSiteBlockCount', () => {
-  it('新規ドメインのカウントを1にする', async () => {
-    await incrementSiteBlockCount('youtube.com');
-    expect(await getSiteBlockCount('youtube.com')).toBe(1);
-  });
-
-  it('既存ドメインのカウントをインクリメントする', async () => {
-    fakeChrome.localData.analytics = {
-      ...DEFAULT_ANALYTICS,
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 5,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    };
-
-    await incrementSiteBlockCount('youtube.com');
-
-    expect(await getSiteBlockCount('youtube.com')).toBe(6);
-  });
-});
-
-describe('getSiteBlockCount', () => {
-  it('存在しないドメインは0を返す', async () => {
-    fakeChrome.localData.analytics = DEFAULT_ANALYTICS;
-    expect(await getSiteBlockCount('youtube.com')).toBe(0);
-  });
-});
-
-describe('getAllSiteBlockCounts', () => {
-  it('カウント降順でソートして返す', async () => {
-    fakeChrome.localData.analytics = {
-      ...DEFAULT_ANALYTICS,
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 5,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        },
-        'twitter.com': {
-          domain: 'twitter.com',
-          count: 10,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    };
-
-    const counts = await getAllSiteBlockCounts();
-
-    expect(counts[0].domain).toBe('twitter.com');
-    expect(counts[1].domain).toBe('youtube.com');
   });
 });
 

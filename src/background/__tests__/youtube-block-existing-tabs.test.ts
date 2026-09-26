@@ -14,10 +14,7 @@ vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   activityItem: { getValue: vi.fn() },
   setSettings: vi.fn(),
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn(),
   // blockExistingTabs はリダイレクト前にブロックを記録する（#351）
-  incrementSiteBlockCount: vi.fn(),
   setLastBlockedDomain: vi.fn()
 }));
 
@@ -34,19 +31,14 @@ vi.mock('~/lib/activityService', () => ({
 import {
   getSettings,
   setSettings,
-  getAnalytics,
   activityItem,
-  incrementSiteBlockCount,
   setLastBlockedDomain
 } from '~/lib/storage';
+import { recordHostActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
 import { invoke } from './handlers/helpers';
 import { toDateKey } from '~/lib/time';
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_ANALYTICS,
-  DEFAULT_YOUTUBE_SETTINGS
-} from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 import type { AppSettings, YouTubeSettings, TimeLimit } from '~/types/storage';
 
 const YOUTUBE_TAB = { id: 1, url: 'https://www.youtube.com/watch?v=abc' };
@@ -117,7 +109,6 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
   beforeEach(() => {
     vi.clearAllMocks();
     chromeMock = setupChrome();
-    vi.mocked(getAnalytics).mockResolvedValue(DEFAULT_ANALYTICS);
     vi.mocked(activityItem.getValue).mockResolvedValue({});
     givenStoredSettings({ enabled: true, blockAccess: false });
   });
@@ -136,7 +127,10 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     await turnOnBlockAccess();
 
     expect(setLastBlockedDomain).toHaveBeenCalledWith('www.youtube.com');
-    expect(incrementSiteBlockCount).toHaveBeenCalledWith('www.youtube.com');
+    expect(recordHostActivity).toHaveBeenCalledWith(
+      ['www.youtube.com'],
+      expect.any(Function)
+    );
   });
 
   it('置き換えないタブのブロックは記録しない', async () => {
@@ -145,7 +139,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
 
     expect(setLastBlockedDomain).not.toHaveBeenCalled();
-    expect(incrementSiteBlockCount).not.toHaveBeenCalled();
+    expect(recordHostActivity).not.toHaveBeenCalled();
   });
 
   it('YouTube 以外のタブは置き換えない', async () => {

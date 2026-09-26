@@ -25,8 +25,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 vi.mock('~/lib/youtubeBlockService', () => ({
-  YOUTUBE_DOMAIN: 'youtube.com',
-  incrementYouTubeBlockCount: vi.fn()
+  YOUTUBE_DOMAIN: 'youtube.com'
 }));
 
 import { sendMessage } from '~/lib/messaging';
@@ -36,7 +35,6 @@ import {
   settingsItem,
   unblockHistoryItem
 } from '~/lib/storage';
-import { incrementYouTubeBlockCount } from '~/lib/youtubeBlockService';
 
 const youtube = (
   overrides: Partial<YouTubeSettings> = {}
@@ -151,7 +149,6 @@ describe('useYouTubeSettings', () => {
         await result.current.handleYouTubeChange(youtube({ enabled: true }));
       });
 
-      expect(incrementYouTubeBlockCount).toHaveBeenCalledOnce();
       expect(unblockHistoryItem.setValue).toHaveBeenCalledWith(
         expect.objectContaining({
           sites: expect.objectContaining({
@@ -173,7 +170,6 @@ describe('useYouTubeSettings', () => {
         await result.current.handleYouTubeChange(youtube({ enabled: false }));
       });
 
-      expect(incrementYouTubeBlockCount).not.toHaveBeenCalled();
       expect(unblockHistoryItem.setValue).toHaveBeenCalledWith(
         expect.objectContaining({
           sites: expect.objectContaining({
@@ -197,7 +193,6 @@ describe('useYouTubeSettings', () => {
         );
       });
 
-      expect(incrementYouTubeBlockCount).not.toHaveBeenCalled();
       expect(unblockHistoryItem.setValue).not.toHaveBeenCalled();
     });
   });

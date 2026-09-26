@@ -2,14 +2,12 @@ import { test, expect } from './fixtures/extension';
 import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
 import {
   getBlockRuleFilters,
-  getStorageViaSW,
+  getTodayActivityViaSW,
   waitForBlockRules,
   waitForNoBlockRules
 } from './helpers/sw';
 import {
   clearStorageFromExtension,
-  makeAnalytics,
-  setStorageDataFromExtension,
   setSettingsFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
@@ -422,33 +420,20 @@ test.describe('Block - ブロック機能', () => {
       ]
     });
 
-    // Analytics データ初期化
-    await setStorageDataFromExtension(
-      context,
-      extensionId,
-      'analytics',
-      makeAnalytics()
-    );
-
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // 記録は background が非同期に書くため、読み出しは SW 経由で待つ。
     // この値を増やすのはブロックされたナビゲーションだけ
     // （src/background/listeners/navigationTracking.ts）
-    const siteBlockCount = async () => {
-      const analytics = await getStorageViaSW(context, 'analytics');
-      return analytics?.siteBlockCounts[TEST_DOMAINS.example]?.count ?? 0;
-    };
+    const todayBlocks = async () =>
+      (await getTodayActivityViaSW(context, TEST_DOMAINS.example))?.blocks ?? 0;
 
-    // ブロック対象サイトに2回アクセス。
-    // ⚠ 1 回目の記録を待ってから 2 回目に進む。記録は読み出してから書き戻す
-    //    ため、重なると片方の加算が消える
     const blockedPage1 = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
     await blockedPage1.waitForURL(`**newtab.html**`, { timeout: 10000 });
-    await expect.poll(siteBlockCount).toBeGreaterThanOrEqual(1);
+    await expect.poll(todayBlocks).toBeGreaterThanOrEqual(1);
     await blockedPage1.close();
 
     const blockedPage2 = await openExternalSite(
@@ -457,18 +442,8 @@ test.describe('Block - ブロック機能', () => {
     );
     await blockedPage2.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
-    // サイト別の回数は siteBlockCounts[domain].count に入る
-    await expect.poll(siteBlockCount).toBeGreaterThanOrEqual(2);
-
-    // 日次の集計にも同じ回数が入る。
-    // サイト別の回数より後に書かれるため、これも待つ
-    const today = new Date().toISOString().slice(0, 10);
-    await expect
-      .poll(async () => {
-        const analytics = await getStorageViaSW(context, 'analytics');
-        return analytics?.dailyStats[today]?.blockCount ?? 0;
-      })
-      .toBeGreaterThanOrEqual(2);
+    // ブロック回数は事実の表の今日の行（サイトキーごとの blocks）に入る
+    await expect.poll(todayBlocks).toBeGreaterThanOrEqual(2);
 
     await blockedPage2.close();
   });

@@ -2,10 +2,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import {
   exportBlockList,
-  exportBlockCounts,
-  exportDailyStats,
-  exportUnblockedSites,
-  exportAllData,
   blockCountRows,
   dailyActivityRows,
   unblockedSiteRows,
@@ -16,13 +12,7 @@ import {
 import { parseDateKey } from '~/lib/activityStats';
 import { formatTime } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
-import type {
-  BlockItem,
-  AnalyticsData,
-  UnblockHistory,
-  DailyStat,
-  SiteBlockCount
-} from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 
 // Mock helper to create BlockItem
 function makeBlockItem(
@@ -36,34 +26,6 @@ function makeBlockItem(
     isWildcard,
     createdAt,
     enabled: true
-  };
-}
-
-// Mock helper to create DailyStat
-function makeDailyStat(
-  wasteTime: number,
-  blockCount: number,
-  unblockCount: number = 0
-): DailyStat {
-  return {
-    date: '2024-01-15',
-    wasteTime,
-    investTime: 0,
-    blockCount,
-    unblockCount
-  };
-}
-
-// Mock helper to create SiteBlockCount
-function makeSiteBlockCount(
-  domain: string,
-  count: number,
-  lastBlocked: string
-): SiteBlockCount {
-  return {
-    domain,
-    count,
-    lastBlocked
   };
 }
 
@@ -166,270 +128,6 @@ describe('export utilities', () => {
       // We can't easily test the CSV content without inspecting Blob,
       // but we can ensure it doesn't throw
       expect(() => exportBlockList(blockList)).not.toThrow();
-    });
-  });
-
-  describe('exportBlockCounts', () => {
-    it('サイトブロック回数がCSVに正しくエクスポートされる', () => {
-      const siteBlockCounts: Record<string, SiteBlockCount> = {
-        'youtube.com': makeSiteBlockCount(
-          'youtube.com',
-          150,
-          '2024-01-15T11:00:00Z'
-        ),
-        'twitter.com': makeSiteBlockCount(
-          'twitter.com',
-          75,
-          '2024-01-14T10:00:00Z'
-        )
-      };
-
-      exportBlockCounts(siteBlockCounts);
-
-      expect(mockClick).toHaveBeenCalled();
-      expect(mockCreateObjectURL).toHaveBeenCalled();
-      expect(mockRevokeObjectURL).toHaveBeenCalled();
-    });
-
-    it('空オブジェクトでもエラーなく実行される', () => {
-      const siteBlockCounts = {};
-      expect(() => exportBlockCounts(siteBlockCounts)).not.toThrow();
-    });
-
-    it('lastBlockedがnullの場合に"-"で表示される', () => {
-      const siteBlockCounts: Record<string, SiteBlockCount> = {
-        'example.com': {
-          domain: 'example.com',
-          count: 10,
-          lastBlocked: null as unknown as string // Force null for testing
-        }
-      };
-      expect(() => exportBlockCounts(siteBlockCounts)).not.toThrow();
-    });
-
-    it('ブロック回数が降順にソートされる', () => {
-      const siteBlockCounts: Record<string, SiteBlockCount> = {
-        a: makeSiteBlockCount('a.com', 5, '2024-01-15T10:00:00Z'),
-        b: makeSiteBlockCount('b.com', 100, '2024-01-15T10:00:00Z'),
-        c: makeSiteBlockCount('c.com', 50, '2024-01-15T10:00:00Z')
-      };
-      // Should be sorted: b (100), c (50), a (5)
-      expect(() => exportBlockCounts(siteBlockCounts)).not.toThrow();
-    });
-  });
-
-  describe('exportDailyStats', () => {
-    it('日次統計がCSVに正しくエクスポートされる', () => {
-      const dailyStats: Record<string, DailyStat> = {
-        '2024-01-15': makeDailyStat(3600, 10, 2),
-        '2024-01-14': makeDailyStat(1800, 5, 1)
-      };
-
-      exportDailyStats(dailyStats);
-
-      expect(mockClick).toHaveBeenCalled();
-      expect(mockCreateObjectURL).toHaveBeenCalled();
-    });
-
-    it('空オブジェクトでもエラーなく実行される', () => {
-      const dailyStats = {};
-      expect(() => exportDailyStats(dailyStats)).not.toThrow();
-    });
-
-    it('日付が降順にソートされる', () => {
-      const dailyStats: Record<string, DailyStat> = {
-        '2024-01-10': makeDailyStat(100, 1),
-        '2024-01-15': makeDailyStat(200, 2),
-        '2024-01-12': makeDailyStat(150, 3)
-      };
-      // Should be sorted: 2024-01-15, 2024-01-12, 2024-01-10
-      expect(() => exportDailyStats(dailyStats)).not.toThrow();
-    });
-
-    it('時間が正しくフォーマットされる（formatTimeを使用）', () => {
-      const dailyStats: Record<string, DailyStat> = {
-        '2024-01-15': makeDailyStat(3665, 5) // 1h 1m 5s
-      };
-      expect(() => exportDailyStats(dailyStats)).not.toThrow();
-    });
-  });
-
-  describe('exportUnblockedSites', () => {
-    it('ブロック解除サイトの時間追跡がCSVに正しくエクスポートされる', () => {
-      const unblockHistory: UnblockHistory = {
-        sites: {
-          'youtube.com': {
-            domain: 'youtube.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T12:00:00Z',
-            timeAfterUnblock: 7200, // 2 hours
-            lastActivity: '2024-01-15T10:00:00Z'
-          },
-          'twitter.com': {
-            domain: 'twitter.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-05T00:00:00Z',
-            unblockedAt: '2024-01-12T08:00:00Z',
-            timeAfterUnblock: 1800, // 30 minutes
-            lastActivity: null
-          }
-        }
-      };
-
-      exportUnblockedSites(unblockHistory);
-
-      expect(mockClick).toHaveBeenCalled();
-      expect(mockCreateObjectURL).toHaveBeenCalled();
-    });
-
-    it('空のunblockHistoryでもエラーなく実行される', () => {
-      const unblockHistory: UnblockHistory = { sites: {} };
-      expect(() => exportUnblockedSites(unblockHistory)).not.toThrow();
-    });
-
-    it('lastActivityがnullの場合に"-"で表示される', () => {
-      const unblockHistory: UnblockHistory = {
-        sites: {
-          'example.com': {
-            domain: 'example.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T00:00:00Z',
-            timeAfterUnblock: 100,
-            lastActivity: null
-          }
-        }
-      };
-      expect(() => exportUnblockedSites(unblockHistory)).not.toThrow();
-    });
-
-    it('timeAfterUnblockの降順にソートされる', () => {
-      const unblockHistory: UnblockHistory = {
-        sites: {
-          a: {
-            domain: 'a.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T00:00:00Z',
-            timeAfterUnblock: 100,
-            lastActivity: null
-          },
-          b: {
-            domain: 'b.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T00:00:00Z',
-            timeAfterUnblock: 500,
-            lastActivity: null
-          },
-          c: {
-            domain: 'c.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T00:00:00Z',
-            timeAfterUnblock: 300,
-            lastActivity: null
-          }
-        }
-      };
-      // Should be sorted: b (500), c (300), a (100)
-      expect(() => exportUnblockedSites(unblockHistory)).not.toThrow();
-    });
-  });
-
-  describe('exportAllData', () => {
-    it('全データをまとめてエクスポートする（非Premium）', () => {
-      const blockList: BlockItem[] = [makeBlockItem('youtube.com', false)];
-      const analyticsData: AnalyticsData = {
-        dailyStats: { '2024-01-15': makeDailyStat(1800, 5) },
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {
-          'youtube.com': makeSiteBlockCount(
-            'youtube.com',
-            10,
-            '2024-01-15T10:00:00Z'
-          )
-        },
-        siteUnblockCounts: {}
-      };
-      const unblockHistory: UnblockHistory = { sites: {} };
-
-      exportAllData(blockList, analyticsData, unblockHistory);
-
-      // Should call exportBlockList, exportBlockCounts, exportDailyStats
-      // but NOT exportUnblockedSites (isPremium = false)
-      expect(mockClick).toHaveBeenCalled();
-    });
-
-    it('全データをまとめてエクスポートする（Premium）', () => {
-      const blockList: BlockItem[] = [makeBlockItem('youtube.com', false)];
-      const analyticsData: AnalyticsData = {
-        dailyStats: { '2024-01-15': makeDailyStat(1800, 5) },
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {
-          'youtube.com': makeSiteBlockCount(
-            'youtube.com',
-            10,
-            '2024-01-15T10:00:00Z'
-          )
-        },
-        siteUnblockCounts: {}
-      };
-      const unblockHistory: UnblockHistory = {
-        sites: {
-          'youtube.com': {
-            domain: 'youtube.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-01-10T00:00:00Z',
-            timeAfterUnblock: 3600,
-            lastActivity: null
-          }
-        }
-      };
-
-      exportAllData(blockList, analyticsData, unblockHistory);
-
-      // Should call all export functions including exportUnblockedSites
-      expect(mockClick).toHaveBeenCalled();
-    });
-
-    it('空データでもエラーなく実行される', () => {
-      const blockList: BlockItem[] = [];
-      const analyticsData: AnalyticsData = {
-        dailyStats: {},
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {},
-        siteUnblockCounts: {}
-      };
-      const unblockHistory: UnblockHistory = { sites: {} };
-
-      expect(() =>
-        exportAllData(blockList, analyticsData, unblockHistory)
-      ).not.toThrow();
-      // No clicks should happen since all data is empty
-      expect(mockClick).not.toHaveBeenCalled();
-    });
-
-    it('blockListが空でも他のデータがあればエクスポートされる', () => {
-      const blockList: BlockItem[] = [];
-      const analyticsData: AnalyticsData = {
-        dailyStats: { '2024-01-15': makeDailyStat(1800, 5) },
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {},
-        siteUnblockCounts: {}
-      };
-      const unblockHistory: UnblockHistory = { sites: {} };
-
-      exportAllData(blockList, analyticsData, unblockHistory);
-
-      // Should still export dailyStats
-      expect(mockClick).toHaveBeenCalled();
     });
   });
 
@@ -558,7 +256,7 @@ describe('export utilities', () => {
       expect(unblockedSiteRows(log, [], '2024-01-15')).toEqual([]);
     });
 
-    it('ダウンロードの列見出しは既存の CSV と同じ', () => {
+    it('ダウンロードする CSV に列見出しを付ける', () => {
       exportSiteBlockCounts(log, sites, range);
       exportDailyActivity(log, sites, range);
       exportUnblockedSiteTimes(log, sites, '2024-01-15');

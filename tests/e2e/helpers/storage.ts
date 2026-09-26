@@ -6,11 +6,9 @@ import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 
 import type {
-  AnalyticsData,
   AppSettings,
   DashboardDisplaySettings,
   DashboardPreset,
-  SiteBlockCount,
   StorageSchema,
   UnblockedSite,
   UnblockHistory,
@@ -340,44 +338,6 @@ export function makeSettings(
 }
 
 /**
- * AnalyticsData の完全な形を作る
- *
- * 保存キーは 'analytics'（'analyticsData' ではない）。また各集計は
- * ドメインをキーとするレコードで、配列ではない。
- *
- * @param overrides - 上書きする値
- */
-export function makeAnalytics(
-  overrides: Partial<AnalyticsData> = {}
-): AnalyticsData {
-  return {
-    dailyStats: {},
-    siteTime: {},
-    siteCategories: {},
-    siteBlockCounts: {},
-    siteUnblockCounts: {},
-    ...overrides
-  };
-}
-
-/**
- * サイト別ブロック回数のレコードを作る
- *
- * @param entries - [ドメイン, 回数] の配列
- */
-export function makeSiteBlockCounts(
-  entries: [string, number][]
-): Record<string, SiteBlockCount> {
-  const now = new Date().toISOString();
-  return Object.fromEntries(
-    entries.map(([domain, count]) => [
-      domain,
-      { domain, count, lastBlocked: now }
-    ])
-  );
-}
-
-/**
  * 事実の表（`activity`）を作る
  *
  * 画面の数値は追跡中のサイト（ブロックリスト・解除履歴・YouTube 機能）の行だけから
@@ -407,9 +367,9 @@ export function makeActivity(
 /**
  * 解除済みサイトの履歴を作る
  *
- * `tracker-heartbeat` は「解除履歴に `status: 'unblocked'` で載っている
- * ドメイン」だけを計測する（該当しなければ `recordTime` が途中で return する）。
- * 解除後の時間の記録を検証するテストは、対象ドメインをここで先に履歴へ入れておく。
+ * 解除履歴のキーは追跡中のサイトの集合に入り、事実の表（`activity`）はその集合の
+ * サイトしか記録しない。滞在・ブロック・解除の記録を検証するテストは、
+ * 対象ドメインをここ（かブロックリスト）へ先に入れておく。
  *
  * @param domains - 解除済みとして扱うドメイン
  * @param overrides - 各サイトに与える上書き（滞在時間の初期値など）

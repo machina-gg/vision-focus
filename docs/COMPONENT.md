@@ -22,9 +22,7 @@
 | ------------------- | ------- | ----------------------------------------------------------------------- |
 | Header              | layout  | ヘッダー（ロゴ + ナビ）                                                 |
 | GoalCard            | feature | 目標表示カード                                                          |
-| StatsCard           | feature | 統計表示カード                                                          |
 | BlockListItem       | feature | ブロックリスト項目                                                      |
-| SiteTimeChart       | feature | サイト利用時間グラフ                                                    |
 | ChallengeModal      | feature | 解除チャレンジモーダル                                                  |
 | LockdownButton      | feature | ロックダウンモードボタン                                                |
 | QuickBlockButton    | feature | クイックブロックボタン                                                  |
@@ -86,7 +84,6 @@ graph TD
         PA[PopupApp]
         PA --> PH[Header]
         PA --> GC[GoalCard]
-        PA --> SC1[StatsCard]
         PA --> LB[LockdownButton]
         PA --> QB[QuickBlockButton]
     end
@@ -95,7 +92,6 @@ graph TD
         NA[NewtabApp]
         NA --> BG[BackgroundImage]
         NA --> GT[GoalText]
-        NA --> SC2[StatsCard]
         NA --> NH[Header]
     end
 
@@ -117,7 +113,6 @@ graph TD
         TB --> AT[AnalyticsTab]
 
         BLT --> BLI[BlockListItem]
-        AT --> STC[SiteTimeChart]
     end
 
     subgraph "共通UI"
@@ -239,27 +234,6 @@ graph TD
 
 ---
 
-### StatsCard
-
-統計情報を表示するカード。
-
-**Props**
-
-| Prop  | 型                                            | デフォルト  | 説明                     |
-| ----- | --------------------------------------------- | ----------- | ------------------------ |
-| label | `string`                                      | -           | ラベル（例: "浪費時間"） |
-| value | `string`                                      | -           | 値（例: "1h 23m"）       |
-| type  | `'waste' \| 'invest' \| 'block' \| 'neutral'` | `'neutral'` | タイプ（色分け用）       |
-| icon  | `ReactNode`                                   | -           | アイコン                 |
-
-**使用例**
-
-```tsx
-<StatsCard label="浪費時間" value="1h 23m" type="waste" />
-```
-
----
-
 ### BlockListItem
 
 ブロックリストの1項目を表示。
@@ -312,23 +286,6 @@ graph TD
 
 - 有効化時は確認モーダルを表示
 - 有効中はアイコンとラベルが変化
-
----
-
-### SiteTimeChart
-
-サイト利用時間の棒グラフ。
-
-**Props**
-
-| Prop   | 型                             | デフォルト | 説明           |
-| ------ | ------------------------------ | ---------- | -------------- |
-| data   | `DailyStat[]`                  | -          | 日別統計データ |
-| period | `'today' \| 'week' \| 'month'` | `'week'`   | 表示期間       |
-
-**使用ライブラリ**
-
-軽量なグラフライブラリ（Chart.js または自前のSVG）を使用。Chrome拡張のサイズ制約を考慮。
 
 ---
 
@@ -527,6 +484,7 @@ function usePresets(props: {
 
 分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）と、一覧が使う解除履歴の読み出し。
 数値は返さない（分析タブの数値は `useActivitySources` の `activity` から導出する）。
+リセット（`handleResetAnalytics`）は `reset-activity` メッセージで background に依頼する（事実の表を書けるのは background だけ）。
 
 ```typescript
 function useAnalytics(options: {
@@ -699,25 +657,4 @@ const FEATURE_LIMITS = {
   // UI の都合による上限（課金の線引きではない）
   maxPresets: 10
 };
-```
-
-### DailyStat
-
-```typescript
-interface DailyStat {
-  date: string; // YYYY-MM-DD
-  wasteTime: number; // 浪費時間（秒）
-  investTime: number; // 投資時間（秒）
-  blockCount: number; // ブロック回数
-}
-```
-
-### SiteTime
-
-```typescript
-interface SiteTime {
-  domain: string; // ドメイン
-  time: number; // 滞在時間（秒）
-  category: 'waste' | 'invest' | 'neutral';
-}
 ```

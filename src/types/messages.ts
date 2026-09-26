@@ -37,18 +37,6 @@ export interface RemoveBlockResponse {
   success: boolean;
 }
 
-// Get Stats（引数を取らないため Request 型は持たない）
-export interface GetStatsResponse {
-  wasteTime: number;
-  investTime: number;
-  blockCount: number;
-  unblockCount: number;
-  topBlockedSite: {
-    domain: string;
-    count: number;
-  } | null;
-}
-
 /**
  * 開いているページのサイトの時間制限（ポップアップの残り時間バッジが読む）。
  * 残り時間は判定（`evaluateBlock`）の値なので、一時停止中・スケジュール外は null になる
@@ -83,15 +71,9 @@ export interface ImportSettingsResponse {
   error?: string;
 }
 
-// Set Site Category
-export interface SetSiteCategoryRequest {
-  domain: string;
-  category: 'waste' | 'invest' | 'neutral';
-}
-
-export interface SetSiteCategoryResponse {
+// Reset Activity（引数を取らないため Request 型は持たない）
+export interface ResetActivityResponse {
   success: boolean;
-  error?: string;
 }
 
 // Toggle Block
