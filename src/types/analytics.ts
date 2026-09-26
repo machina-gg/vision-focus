@@ -31,15 +31,8 @@ export interface SiteUnblockCount {
   lastUnblocked: string; // ISO8601 timestamp
 }
 
-// Time limit configuration for a site
-// 時間制限は「1 日の制限」のみ（型として残すのは、制限の種類が増えたときに
-// 追加する場所を 1 箇所に保つため）
-export type TimeLimitType = 'daily';
-
-export interface TimeLimit {
-  type: TimeLimitType;
-  limitSeconds: number; // Limit in seconds (e.g., 1800 = 30 minutes)
-}
+// 実体は site.ts。既存の import 元（~/types/analytics / ~/types/storage）を保つための再エクスポート
+export type { TimeLimitType, TimeLimit } from './site';
 
 // Time limit usage tracking for a domain
 export interface TimeLimitUsage {
