@@ -19,6 +19,7 @@ import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { getYouTubeBlockItem } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
+import { recordHostActivity } from '~/lib/activityService';
 
 // Track active pages and their last heartbeat
 interface ActivePage {
@@ -39,6 +40,8 @@ function ensureRecordingTimer() {
 
   recordingTimer = setInterval(async () => {
     const now = Date.now();
+    const seconds = Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000);
+    const visibleHosts: string[] = [];
 
     // Record time for all active pages
     for (const [_key, page] of activePages.entries()) {
@@ -50,10 +53,8 @@ function ensureRecordingTimer() {
         timeSinceHeartbeat <= TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS
       ) {
         // Record 5 seconds of time for this page
-        await recordTime(
-          page.domain,
-          Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000)
-        );
+        await recordTime(page.domain, seconds);
+        visibleHosts.push(page.domain);
       } else if (timeSinceHeartbeat > TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS) {
         // Page is stale, mark as inactive
         page.isActive = false;
@@ -72,6 +73,16 @@ function ensureRecordingTimer() {
       clearInterval(recordingTimer);
       recordingTimer = null;
     }
+
+    // 表示中のページの滞在を、追跡中のサイトごとに 1 回分記録する
+    // （同じサイトの別ホストを同時に表示していても 1 回分。解除中かどうかでは絞らない）
+    const at = new Date();
+    await recordHostActivity(visibleHosts, (site) => ({
+      kind: 'stay',
+      site,
+      seconds,
+      at
+    }));
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 }
 

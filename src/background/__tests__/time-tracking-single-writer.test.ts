@@ -51,6 +51,12 @@ vi.mock('~/lib/time', () => ({
   getTodayKey: vi.fn(() => '2026-08-11')
 }));
 
+// 事実の表（activity）への記録はこの検査の対象外（旧データの記録者が 1 本であることを見る）
+vi.mock('~/lib/activityService', () => ({
+  recordActivity: vi.fn(),
+  recordHostActivity: vi.fn()
+}));
+
 import {
   getSettings,
   getAnalytics,

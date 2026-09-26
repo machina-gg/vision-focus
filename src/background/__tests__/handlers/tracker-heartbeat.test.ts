@@ -2,12 +2,25 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { invoke } from './helpers';
 
+/**
+ * 事実の表（activity）はインメモリの実体に差し替え、書き手（activityService）は実物を通す。
+ * 書き手は追跡中の集合に無いキーを捨てるので、呼び出しの有無ではなく保存された値を見る
+ */
+const activityStore = vi.hoisted(() => ({ value: undefined as unknown }));
+
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   getAnalytics: vi.fn(),
   setAnalytics: vi.fn(),
   getUnblockHistory: vi.fn(),
-  setUnblockHistory: vi.fn()
+  setUnblockHistory: vi.fn(),
+  activityItem: {
+    getValue: vi.fn(async () => structuredClone(activityStore.value ?? {})),
+    setValue: vi.fn(async (value: unknown) => {
+      activityStore.value = structuredClone(value);
+    }),
+    removeValue: vi.fn()
+  }
 }));
 
 vi.mock('../../time-limit', () => ({
@@ -34,8 +47,13 @@ vi.mock('~/lib/timeLimitService', () => ({
   hasExceededTimeLimit: vi.fn()
 }));
 
-vi.mock('~/lib/time', () => ({
+vi.mock('~/lib/time', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/lib/time')>()),
   getTodayKey: vi.fn(() => '2026-08-11')
+}));
+
+vi.mock('~/lib/siteService', () => ({
+  getTrackedSiteKeys: vi.fn()
 }));
 
 import {
@@ -56,6 +74,9 @@ import {
   hasYouTubeExceededTimeLimit
 } from '~/lib/youtubeBlockService';
 import { hasExceededTimeLimit } from '~/lib/timeLimitService';
+import { getTrackedSiteKeys } from '~/lib/siteService';
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog } from '~/types/activity';
 import {
   DEFAULT_ANALYTICS,
   DEFAULT_UNBLOCK_HISTORY,
@@ -126,6 +147,8 @@ describe('tracker-heartbeat ハンドラ', () => {
     vi.mocked(findBlockItemForDomain).mockResolvedValue(null);
     vi.mocked(hasExceededTimeLimit).mockResolvedValue(false);
     vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(false);
+    vi.mocked(getTrackedSiteKeys).mockResolvedValue([]);
+    activityStore.value = undefined;
     givenYouTubeSettings({
       enabled: true,
       blockAccess: true,
@@ -601,6 +624,141 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       expect(setUnblockHistory).not.toHaveBeenCalled();
       expect(setAnalytics).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('事実の表（activity）への滞在の記録', () => {
+    /** 今日の行に記録された滞在秒数（サイトごと）。記録が無ければ空 */
+    function todaySeconds(): Record<string, number> {
+      const log = (activityStore.value ?? {}) as ActivityLog;
+      const row = log[toDateKey(new Date())] ?? {};
+      return Object.fromEntries(
+        Object.entries(row).map(([site, activity]) => [site, activity.seconds])
+      );
+    }
+
+    async function showPages(urls: string[]) {
+      const handler = await loadHandler();
+      for (const url of urls) {
+        await invoke(handler, { url, status: 'active', timestamp: Date.now() });
+      }
+      return handler;
+    }
+
+    it('追跡中のサイトを表示している間、記録間隔ごとに滞在を記録する', async () => {
+      vi.useFakeTimers();
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
+      await showPages(['https://example.com/page']);
+
+      await vi.advanceTimersByTimeAsync(
+        TRACKER_CONFIG.RECORDING_INTERVAL_MS * 2
+      );
+
+      expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS * 2 });
+    });
+
+    it('解除中かどうかでは絞らない（ブロック中の追跡サイトも記録する）', async () => {
+      vi.useFakeTimers();
+      givenUnblockHistory({ status: 'blocked', timeAfterUnblock: 0 });
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
+      await showPages(['https://example.com']);
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
+      // 旧データ（解除後の時間）は従来どおり解除中のサイトだけ
+      expect(setUnblockHistory).not.toHaveBeenCalled();
+    });
+
+    it('同じサイトを別ホストで同時に表示していても 1 回分にする', async () => {
+      vi.useFakeTimers();
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
+      await showPages([
+        'https://www.youtube.com/watch?v=a',
+        'https://m.youtube.com/watch?v=b',
+        'https://youtube.com/'
+      ]);
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(todaySeconds()).toEqual({ 'youtube.com': RECORDED_SECONDS });
+    });
+
+    it('別々のサイトを同時に表示していれば、それぞれ 1 回分を記録する', async () => {
+      vi.useFakeTimers();
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com', 'x.com']);
+      await showPages(['https://www.youtube.com/', 'https://x.com/home']);
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(todaySeconds()).toEqual({
+        'youtube.com': RECORDED_SECONDS,
+        'x.com': RECORDED_SECONDS
+      });
+    });
+
+    it('追跡中のサイトに属さないページは記録しない', async () => {
+      vi.useFakeTimers();
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
+      await showPages(['https://example.com/']);
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(activityStore.value).toBeUndefined();
+    });
+
+    it('表示されなくなったページは記録しない', async () => {
+      vi.useFakeTimers();
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
+      const handler = await showPages(['https://example.com/']);
+      await invoke(handler, {
+        url: 'https://example.com/',
+        status: 'inactive'
+      });
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(getTrackedSiteKeys).not.toHaveBeenCalled();
+      expect(activityStore.value).toBeUndefined();
+    });
+
+    it('旧データ（解除後の時間）への書き込みも続ける', async () => {
+      vi.useFakeTimers();
+      givenUnblockHistory({ status: 'unblocked', timeAfterUnblock: 100 });
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
+      await showPages(['https://example.com/']);
+
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+
+      expect(setUnblockHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sites: expect.objectContaining({
+            'example.com': expect.objectContaining({
+              timeAfterUnblock: 100 + RECORDED_SECONDS
+            })
+          })
+        })
+      );
+      expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
+    });
+
+    it('記録に失敗しても次の記録間隔の計測は続く', async () => {
+      vi.useFakeTimers();
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      vi.mocked(getTrackedSiteKeys)
+        .mockRejectedValueOnce(new Error('読み出し失敗'))
+        .mockResolvedValue(['example.com']);
+      await showPages(['https://example.com/']);
+
+      await vi.advanceTimersByTimeAsync(
+        TRACKER_CONFIG.RECORDING_INTERVAL_MS * 2
+      );
+
+      expect(consoleError).toHaveBeenCalledOnce();
+      expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
+      consoleError.mockRestore();
     });
   });
 });

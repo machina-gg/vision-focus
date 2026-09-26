@@ -12,6 +12,7 @@ chrome.storage.local に保存するデータ構造の設計。
 | `local:vision`         | `vision`                    | VisionSettings     | ダッシュボード設定（プリセット含む）                   |
 | `local:analytics`      | `analytics`                 | AnalyticsData      | 分析データ（滞在時間、統計）                           |
 | `local:unblockHistory` | `unblockHistory`            | UnblockHistory     | 一時解除の履歴                                         |
+| `local:activity`       | `activity`                  | ActivityLog        | 日 × サイトの事実（滞在秒数・ブロック回数・解除回数）  |
 | `local:supportPrompt`  | `supportPrompt`             | SupportPromptState | 支援誘導の表示状態（閉じた時刻・支援ページを開いたか） |
 
 `local:` は保存領域（local / session / sync / managed）を選ぶための接頭辞で、chrome.storage.local 上の実キーには含まれない。
@@ -142,6 +143,24 @@ DashboardDisplaySettings を継承し、以下を追加：
 | domain     | string | ドメイン名     |
 | totalTime  | number | 合計時間（秒） |
 | lastVisit  | string | 最終訪問日時   |
+
+### ActivityLog（日 × サイトの事実）
+
+`Record<DateKey, Record<SiteKey, DailySiteActivity>>`（型: `src/types/activity.ts`）。
+
+- **日付キー（DateKey）**: ローカル時刻の `YYYY-MM-DD`。端末のローカル時刻の 0 時で日が変わる（実装: `src/lib/time.ts` の `toDateKey`）
+- **サイトキー（SiteKey）**: 小文字にし、先頭の `*.` と `www.` を除いたドメイン。ホスト名はキーと一致するか `.キー` で終わるとき、そのサイトに属する（実装: `src/lib/siteKey.ts`）
+- **記録対象は追跡中のサイトだけ**。追跡中のサイトの集合は `src/lib/siteService.ts` の `getTrackedSiteKeys` が作る（解除履歴のキー・ブロックリストのドメイン・YouTube 機能が有効なら `youtube.com`）
+- **書き手は `src/lib/activityService.ts` だけ**（background から呼ぶ）。加算・削除のすべてを 1 本の待ち行列で直列化する
+- 保持期間を超えた日の行は `daily-cleanup` アラームが消す（保持日数は下記「機能上限」）
+
+### DailySiteActivity（1 日・1 サイトぶんの事実）
+
+| フィールド | 型     | 説明                                                                                                                                                                                                      | 記録する契機                                                                             |
+| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| seconds    | number | ページが表示されていた秒数                                                                                                                                                                                | heartbeat（同じサイトを複数タブで同時に表示していても 1 回分。解除中かどうかで絞らない） |
+| blocks     | number | ブロックが成立した回数                                                                                                                                                                                    | `recordBlockedDomain`（遷移イベントと既存タブのブロックの合流点）                        |
+| unblocks   | number | 利用者の操作でブロックが効かなくなった回数（ブロックリストのトグル OFF・有効な項目のブロックリストからの削除・効いていた YouTube のアクセスブロックを外す操作。効いていないブロックを外す操作は数えない） | `toggle-block` / `remove-block` / `update-youtube-settings` の各ハンドラ                 |
 
 ### SupportPromptState（支援誘導の表示状態）
 

@@ -13,6 +13,10 @@ vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn()
 }));
 
+vi.mock('~/lib/activityService', () => ({
+  recordActivity: vi.fn()
+}));
+
 import {
   getSettings,
   setSettings,
@@ -20,6 +24,7 @@ import {
   setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules } from '../../blocker';
+import { recordActivity } from '~/lib/activityService';
 import { removeBlockHandler as handler } from '../../handlers/remove-block';
 import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
@@ -161,6 +166,60 @@ describe('remove-block ハンドラ', () => {
           })
         })
       );
+    });
+  });
+
+  describe('事実の表（activity）への解除の記録', () => {
+    it('ブロックリストからの削除で 1 回の解除を記録する', async () => {
+      await invoke(handler, { id: 'item-1' });
+
+      expect(recordActivity).toHaveBeenCalledOnce();
+      expect(recordActivity).toHaveBeenCalledWith({
+        kind: 'unblock',
+        site: 'example.com',
+        at: expect.any(Date)
+      });
+    });
+
+    it('解除履歴を書いてから記録する（削除したサイトを追跡中として扱えるように）', async () => {
+      await invoke(handler, { id: 'item-1' });
+
+      expect(
+        vi.mocked(setUnblockHistory).mock.invocationCallOrder[0]
+      ).toBeLessThan(vi.mocked(recordActivity).mock.invocationCallOrder[0]);
+    });
+
+    it('www 付きの項目はサイトキーに正規化して記録する', async () => {
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [{ ...blockItem, domain: 'www.example.com' }]
+      });
+
+      await invoke(handler, { id: 'item-1' });
+
+      expect(recordActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'unblock', site: 'example.com' })
+      );
+    });
+
+    it('無効化済みの項目の削除は記録しない（効いていないブロックを外しても解除ではない）', async () => {
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [{ ...blockItem, enabled: false }]
+      });
+
+      await invoke(handler, { id: 'item-1' });
+
+      expect(setSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ blockList: [] })
+      );
+      expect(recordActivity).not.toHaveBeenCalled();
+    });
+
+    it('該当項目が無ければ記録しない', async () => {
+      await invoke(handler, { id: 'not-exists' });
+
+      expect(recordActivity).not.toHaveBeenCalled();
     });
   });
 });

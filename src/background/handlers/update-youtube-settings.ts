@@ -2,6 +2,8 @@ import type { MessageHandler } from '~/lib/messaging';
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
+import { recordActivity } from '~/lib/activityService';
+import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 
 /**
  * YouTube 設定を保存するメッセージハンドラ。
@@ -33,6 +35,19 @@ export const updateYouTubeSettingsHandler: MessageHandler<
       settings.youtube?.enabled && settings.youtube?.blockAccess
     );
     const blocksAccess = youtube.enabled && youtube.blockAccess;
+
+    // アクセスブロックが効かなくなる操作を 1 回の解除として記録する
+    // （機能全体の無効化でアクセスブロックが外れる場合も含む）。
+    // ⚠ 保存より先に記録する。追跡中の集合は YouTube 機能が有効かどうかで youtube.com を
+    // 含めるため、機能ごと無効にした設定を保存した後では youtube.com が集合から外れ、
+    // 書き手に捨てられる
+    if (wasBlockingAccess && !blocksAccess) {
+      await recordActivity({
+        kind: 'unblock',
+        site: YOUTUBE_DOMAIN,
+        at: new Date()
+      });
+    }
 
     await setSettings({ ...settings, youtube });
 

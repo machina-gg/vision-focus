@@ -3,6 +3,7 @@ import { storage as extensionStorage } from '@wxt-dev/storage';
 import { isStoredObject, objectOrFallback } from './storedValue';
 
 import {
+  DEFAULT_ACTIVITY,
   DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
   DEFAULT_SUPPORT_PROMPT_STATE,
@@ -15,6 +16,7 @@ import {
   type UnblockHistory,
   type VisionSettings
 } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
 
 /**
  * ストレージ項目の定義。local 領域のキーはこの一覧だけが持つ。
@@ -45,6 +47,15 @@ export const analyticsItem = extensionStorage.defineItem<AnalyticsData>(
 export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
   'local:unblockHistory',
   { fallback: DEFAULT_UNBLOCK_HISTORY }
+);
+
+/**
+ * 日 × サイトの事実。書くのは `src/lib/activityService.ts` だけ
+ * （読む → 足す → 書くを 1 本の待ち行列で直列化しているため、他から書くと加算が消える）
+ */
+export const activityItem = extensionStorage.defineItem<ActivityLog>(
+  'local:activity',
+  { fallback: DEFAULT_ACTIVITY }
 );
 
 export const supportPromptItem =
@@ -122,14 +133,22 @@ export async function setUnblockHistory(
 
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, analytics, unblockHistory] = await Promise.all([
-    getSettings(),
-    getVision(),
-    getAnalytics(),
-    getUnblockHistory()
-  ]);
+  const [settings, vision, analytics, unblockHistory, activity] =
+    await Promise.all([
+      getSettings(),
+      getVision(),
+      getAnalytics(),
+      getUnblockHistory(),
+      activityItem.getValue()
+    ]);
 
-  return { settings, vision, analytics, unblockHistory };
+  return {
+    settings,
+    vision,
+    analytics,
+    unblockHistory,
+    activity: objectOrFallback(activity, DEFAULT_ACTIVITY)
+  };
 }
 
 // Clear all storage (for debugging)
@@ -138,7 +157,8 @@ export async function clearAllStorage(): Promise<void> {
     settingsItem.removeValue(),
     visionItem.removeValue(),
     analyticsItem.removeValue(),
-    unblockHistoryItem.removeValue()
+    unblockHistoryItem.removeValue(),
+    activityItem.removeValue()
   ]);
 }
 

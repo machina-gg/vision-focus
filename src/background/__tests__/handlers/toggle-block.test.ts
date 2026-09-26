@@ -22,6 +22,10 @@ vi.mock('~/lib/analytics', () => ({
   trackEvent: vi.fn()
 }));
 
+vi.mock('~/lib/activityService', () => ({
+  recordActivity: vi.fn()
+}));
+
 import {
   getSettings,
   setSettings,
@@ -30,6 +34,7 @@ import {
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
+import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
 import { DEFAULT_SETTINGS, DEFAULT_ANALYTICS } from '~/types/storage';
 
@@ -253,6 +258,49 @@ describe('toggle-block ハンドラ', () => {
         domain_hashed: string;
       };
       expect(payload.domain_hashed).not.toContain('example.com');
+    });
+  });
+
+  describe('事実の表（activity）への解除の記録', () => {
+    it('トグル OFF で 1 回の解除を記録する', async () => {
+      await invoke(handler, { id: 'item-1', enabled: false });
+
+      expect(recordActivity).toHaveBeenCalledOnce();
+      expect(recordActivity).toHaveBeenCalledWith({
+        kind: 'unblock',
+        site: 'example.com',
+        at: expect.any(Date)
+      });
+    });
+
+    it('ワイルドカード表記の項目はサイトキーに正規化して記録する', async () => {
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [{ ...blockItem, domain: '*.Example.com', isWildcard: true }]
+      });
+
+      await invoke(handler, { id: 'item-1', enabled: false });
+
+      expect(recordActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'unblock', site: 'example.com' })
+      );
+    });
+
+    it('トグル ON では記録しない', async () => {
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [{ ...blockItem, enabled: false }]
+      });
+
+      await invoke(handler, { id: 'item-1', enabled: true });
+
+      expect(recordActivity).not.toHaveBeenCalled();
+    });
+
+    it('旧データの解除カウントも従来どおり増やす', async () => {
+      await invoke(handler, { id: 'item-1', enabled: false });
+
+      expect(setAnalytics).toHaveBeenCalledOnce();
     });
   });
 });
