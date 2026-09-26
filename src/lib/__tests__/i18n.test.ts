@@ -2,8 +2,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { getMessage, getUILanguage } from '~/lib/i18n';
 
-// chrome.i18n をモックする（辞書の解決は Chrome 側の責務なので、
-// ここで検証するのは「chrome.i18n へどう渡し、戻り値をどう扱うか」だけ）
 const mockChromeI18n = {
   getUILanguage: vi.fn(),
   getMessage: vi.fn()

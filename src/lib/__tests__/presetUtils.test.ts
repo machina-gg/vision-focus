@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import type { DashboardPreset } from '~/types/storage';
 
-// テスト用プリセット
 const mockPreset: DashboardPreset = {
   id: 'p1',
   name: 'Test Preset',
@@ -39,7 +38,6 @@ describe('presetToDisplaySettings', () => {
     expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
   });
 
-  // 全機能を全ユーザーに開放したため、カスタム背景は常にそのまま引き継がれる
   it('カスタム背景をそのまま引き継ぐ', () => {
     const result = presetToDisplaySettings(mockPreset);
     expect(result.customBackgroundData).toBe('data:image/png;base64,custom');

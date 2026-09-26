@@ -5,15 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { SupportPrompt } from '../SupportPrompt';
 
-/**
- * SupportPrompt の見た目と、押したときに呼ばれるものの検査
- *
- * 出すかどうかは親（AnalyticsDateFilter）が決めるので、ここでは
- * 渡した操作がそのまま呼ばれることと、控えめな見せ方を保つことだけを見る。
- *
- * 閉じるボタンはアイコンだけなので aria-label で取る。
- */
-
 const onSupport = vi.fn(async () => undefined);
 const onDismiss = vi.fn(async () => undefined);
 

@@ -9,8 +9,7 @@ import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 
 describe('YouTubeFeaturesSchema', () => {
   it('知らないキーが混ざっていても parse に成功し、そのキーは落ちる', () => {
-    // content script は youtube.com の YouTube 機能をこの検証に通す。
-    // 落ちると機能を使わない扱いになり、非表示が無音で効かなくなる
+    // content script は youtube.com の YouTube 機能をこの検証に通すため、落ちると非表示が無音で効かなくなる
     const stored = {
       ...youtubeFeatures({ hideRecommendations: true }),
       removedSettingKey: true

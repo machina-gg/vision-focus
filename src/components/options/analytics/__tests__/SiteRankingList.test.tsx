@@ -9,19 +9,8 @@ import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * SiteRankingList の並び替え・件数の上限・解除回数の出し分けの検査
- *
- * 数値は activity のブロック回数・解除回数を、保持期間全体・追跡中のサイトで数えたもの。
- * 集計が空のときにセクションごと消えること（見出しだけが残らないこと）と、
- * ブロック回数の多い順に 10 件までであることを見る。
- * 解除回数は 0 のとき出さない分岐があるため、境界として 0 と 1 を含める。
- */
-
-// ブロック回数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
-/** 今日の行にブロック回数・解除回数を置き、置いたサイトを母集団にする */
 const propsOf = (
   blockCounts: Record<string, number>,
   unblockCounts: Record<string, number> = {}
@@ -46,7 +35,6 @@ const propsOf = (
   };
 };
 
-/** textContent 上での出現位置（並び順の確認に使う） */
 const positionOf = (container: HTMLElement, text: string) =>
   (container.textContent ?? '').indexOf(text);
 

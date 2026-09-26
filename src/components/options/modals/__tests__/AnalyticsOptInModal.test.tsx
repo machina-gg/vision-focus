@@ -7,17 +7,6 @@ import { AnalyticsOptInModal } from '../AnalyticsOptInModal';
 import type { AnalyticsOptIn } from '~/types/analytics';
 import type { AppSettings } from '~/types/storage';
 
-/**
- * AnalyticsOptInModal の「まだ決めていないときだけ出す」判定の検査
- *
- * 未設定（undefined）と未決定（null）は別の値だが、どちらも「聞いていない」
- * として同じ扱いになる。許可・拒否のどちらかを選んだ後に聞き直さないことが
- * 要点なので、enabled が false の場合も出ないことを含める。
- *
- * 設定は SettingsContext から来るため Context ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- */
-
 const settingsState = vi.hoisted(() => ({
   settings: undefined as AppSettings | undefined
 }));
@@ -31,7 +20,6 @@ vi.mock('~/contexts/SettingsContext', () => ({
   })
 }));
 
-/** 検査に使うキーだけを持つ設定（他のキーは表示に関わらない） */
 const settingsOf = (
   analyticsOptIn: AnalyticsOptIn | null | undefined
 ): AppSettings => ({ analyticsOptIn }) as AppSettings;

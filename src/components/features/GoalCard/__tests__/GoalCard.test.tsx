@@ -5,20 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { GoalCard } from '../GoalCard';
 
-/**
- * GoalCard の表示分岐とコールバックの検査
- *
- * 過去の不具合（machina-gg/vision-focus#279 / #301）は目標未設定時に
- * 空欄が表示されるもので、E2E は目標を設定してから確認するため
- * 未設定の経路を踏んでいなかった。空文字と空白のみの両方を確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
-// 編集ボタンはアイコンのみでアクセシブルな名前を持たない。
-// カード自体も onClick を渡すと role="button" になるため、
-// 実体が <button> 要素である編集ボタンだけを DOM から直接引く。
 function editButtonOf(container: HTMLElement): HTMLElement {
   const button = container.querySelector('button');
   if (!button) throw new Error('編集ボタンが見つからない');

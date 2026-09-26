@@ -7,20 +7,6 @@ import { PasswordSettingsSection } from '../PasswordSettingsSection';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type { PasswordSettings } from '~/types/storage';
 
-/**
- * PasswordSettingsSection の表示分岐とコールバックの検査
- *
- * 表示 / 設定 / 変更 / 解除の 4 つの状態があり、どこで何が出るかが
- * そのまま「保護がかかっているか」の判断材料になる。保存に渡る値
- * （enabled と passwordHash の組み合わせ）と、現在のパスワードの照合に
- * 失敗したときに保存へ進まないことを確かめる。
- *
- * ハッシュ化と照合は外部（~/lib/password）に任せているので差し替える。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
 const password = vi.hoisted(() => ({
   hashPassword: vi.fn(),
   verifyPassword: vi.fn(),
@@ -48,27 +34,21 @@ function renderSection(passwordSettings: PasswordSettings = DISABLED) {
   return { onUpdate, ...result };
 }
 
-// 目印は欄ごとに別の値（password-field-current / -new / -confirm）になったので
-// 前方一致でまとめて取る（machina-gg/vision-focus#468）
 const fields = () => screen.getAllByTestId(/^password-field-/);
 const submit = () => screen.getByTestId('password-form-submit');
 
-/** n 番目のパスワード欄へ入力する */
 function fill(index: number, value: string) {
   fireEvent.change(fields()[index], { target: { value } });
 }
 
-/** 設定モードへ移る（保護が無効な状態からトグルを入れる） */
 function enterSetMode() {
   fireEvent.click(screen.getByTestId('password-enable-toggle'));
 }
 
-/** 変更モードへ移る（保護が有効な状態から変更ボタンを押す） */
 function enterChangeMode() {
   fireEvent.click(screen.getByTestId('password-change-button'));
 }
 
-/** 解除モードへ移る（保護が有効な状態からトグルを切る） */
 function enterRemoveMode() {
   fireEvent.click(screen.getByTestId('password-enable-toggle'));
 }
@@ -230,8 +210,6 @@ describe('PasswordSettingsSection', () => {
       expect(screen.getByText('passwordSetFailed')).toBeInTheDocument();
     });
 
-    // 直前の失敗が残した状態で理由の出し分けが変わらないことを見る
-    // （更新前の値で判定する形に戻すと 2 回目だけ結果が変わる）
     it('続けて失敗しても毎回その理由を出す', async () => {
       const { onUpdate } = renderSection(DISABLED);
 
@@ -499,8 +477,6 @@ describe('PasswordSettingsSection', () => {
     });
   });
   describe('長押しの秒数との並び', () => {
-    // 長押しの秒数とパスワード保護は排他。保護中に秒数が選べると、
-    // 変えても効かない設定を触らせることになる
     it('パスワード保護が無効なら秒数を選べる', () => {
       renderSection(DISABLED);
 

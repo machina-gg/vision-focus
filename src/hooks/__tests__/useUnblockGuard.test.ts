@@ -4,16 +4,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 
-/**
- * useUnblockGuard の振り分けと実行タイミングの検査
- *
- * ブロックを弱める操作は、確認が通るまで実行してはいけない。
- * ここでは「どちらのモーダルが開くか」と「onConfirm が呼ばれるのは
- * confirm の時だけか」を確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す。
- */
-
 function requestOf(overrides: Partial<UnblockRequest> = {}): UnblockRequest {
   return {
     domain: 'example.com',

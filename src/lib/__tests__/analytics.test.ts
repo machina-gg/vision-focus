@@ -1,16 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// storage モジュールをモック
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn()
 }));
 
-// i18n モジュールをモック
 vi.mock('~/lib/i18n', () => ({
   getUILanguage: vi.fn(() => 'en')
 }));
 
-// chromeApi モジュールをモック
 vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
@@ -25,11 +22,9 @@ const mockIsExtensionContextValid = vi.mocked(isExtensionContextValid);
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
-  // GA 設定の stub は各テストで行うため、ここで必ず戻す
-  // （残ると既定では無効な計測が有効なまま次のテストへ漏れる）
+  // GA 設定の stub が残ると、既定では無効な計測が有効なまま次のテストへ漏れる
   vi.unstubAllEnvs();
 
-  // chrome API モック
   (globalThis as Record<string, unknown>).chrome = {
     storage: {
       local: {
@@ -43,7 +38,6 @@ beforeEach(() => {
     }
   };
 
-  // fetch モック
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({}));
   vi.stubGlobal('crypto', {
     ...crypto,
@@ -51,14 +45,10 @@ beforeEach(() => {
   });
 });
 
-// NOTE: analytics.ts はモジュールトップレベルで process.env を読むため、
-// GA_MEASUREMENT_ID / GA_API_SECRET が空文字の場合 isAnalyticsEnabled は常に false を返す。
-// そのため、イベント送信系のテストは isAnalyticsEnabled の内部動作に焦点を当てる。
-// 設定の読み取りまで進む経路を試すテストは、下の importWithGaConfigured() を使う。
+// analytics.ts はトップレベルで process.env を読むため、GA 設定が空なら isAnalyticsEnabled は常に false になる
 
 describe('isAnalyticsEnabled', () => {
   it('analyticsOptIn が未設定の場合は false を返す', async () => {
-    // process.env が空のため GA_MEASUREMENT_ID が空 → 常に false
     const { isAnalyticsEnabled } = await import('~/lib/analytics');
     mockGetSettings.mockResolvedValue(DEFAULT_SETTINGS);
     const result = await isAnalyticsEnabled();
@@ -71,7 +61,6 @@ describe('isAnalyticsEnabled', () => {
       ...DEFAULT_SETTINGS,
       analyticsOptIn: { enabled: true, decidedAt: '2024-01-01T00:00:00Z' }
     });
-    // GA_MEASUREMENT_ID が空なので false
     const result = await isAnalyticsEnabled();
     expect(result).toBe(false);
   });
@@ -120,8 +109,7 @@ describe('sendDailyActive', () => {
 
   it('拡張コンテキストが無効な場合は送信しない', async () => {
     const { sendDailyActive } = await import('~/lib/analytics');
-    // isAnalyticsEnabled 自体が false（GA env 空）なので、
-    // コンテキストチェック前に早期リターン
+    // GA 設定が空で isAnalyticsEnabled が false のため、コンテキストの判定より前に返る
     mockGetSettings.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       analyticsOptIn: { enabled: true, decidedAt: '2024-01-01T00:00:00Z' }
@@ -132,12 +120,6 @@ describe('sendDailyActive', () => {
   });
 });
 
-/**
- * GA 設定がある状態で analytics を読み込む。
- *
- * 設定が空だと isAnalyticsEnabled が設定ストレージを読む前に false を返すため、
- * ストレージ読み取りの失敗を試すテストではここを通す。
- */
 async function importWithGaConfigured() {
   vi.stubEnv('WXT_GA_MEASUREMENT_ID', 'test-measurement-id');
   vi.stubEnv('WXT_GA_API_SECRET', 'test-api-secret');
@@ -146,7 +128,6 @@ async function importWithGaConfigured() {
 
 describe('ストレージ読み取りが失敗したとき（machina-gg/vision-focus#469）', () => {
   beforeEach(() => {
-    // 計測の可否を読む段階で失敗させる
     mockGetSettings.mockRejectedValue(new Error('storage unavailable'));
   });
 
@@ -194,9 +175,7 @@ describe('ストレージ読み取りが失敗したとき（machina-gg/vision-f
     const onRejection = (reason: unknown) => rejections.push(reason);
     process.on('unhandledRejection', onRejection);
 
-    // 呼び出し側（SupportSection 等）と同じく戻り値を捨てる
     void trackFeatureUse('support_open');
-    // マイクロタスクを消化してから未処理の rejection を確認する
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     process.off('unhandledRejection', onRejection);

@@ -1,13 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// storage モジュールをモック（全体の設定・追跡中のサイト・事実の表はテストごとに差し替える）
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   getSites: vi.fn(),
   activityItem: { getValue: vi.fn() }
 }));
 
-// スケジュールの内外だけを差し替え、日付キー（toDateKey）は実物を使う
 vi.mock('~/lib/time', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/lib/time')>()),
   isWithinSchedule: vi.fn()
@@ -53,7 +51,6 @@ beforeEach(() => {
   mockGetSettings.mockResolvedValue(DEFAULT_SETTINGS);
 });
 
-/** 判定の入力（全体の設定の差分と追跡中のサイト） */
 interface Given {
   settings?: Partial<AppSettings>;
   sites?: TrackedSite[];
@@ -64,7 +61,6 @@ function given({ settings = {}, sites = [] }: Given): void {
   mockGetSites.mockResolvedValue(sitesOf(...sites));
 }
 
-// 有効な常時ブロックのサイト
 function site(
   domain = 'example.com',
   block: Partial<BlockRule> = {}
@@ -72,7 +68,6 @@ function site(
   return blockedSite(domain, block);
 }
 
-// 1 日の上限つきのサイト
 function limitedSite(
   domain = 'example.com',
   block: Partial<BlockRule> = {}
@@ -83,7 +78,6 @@ function limitedSite(
   });
 }
 
-/** 指定日の行にサイトごとの表示秒数を入れる（既定は今日のローカル日付） */
 function givenSeconds(
   seconds: Record<string, number>,
   date: Date = new Date()
@@ -98,7 +92,6 @@ function givenSeconds(
   mockGetActivity.mockResolvedValue(log);
 }
 
-// スケジュール外を再現するための、常に「有効だが時間外」のスケジュール
 const OUT_OF_SCHEDULE: Schedule[] = [
   {
     id: 's1',
@@ -140,7 +133,7 @@ describe('isAnyScheduleActive（有効かつ範囲内のスケジュールがあ
 
 describe('isBlockingWindowOpen（ブロックが効く時間帯か）', () => {
   it.each([
-    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、ここで落ちないことを保証する
+    // 設定が欠けているとブロックルールの再計算が丸ごと止まる
     ['未設定なら常に効く', undefined, false, true],
     ['スケジュールが無ければ常に効く', [], false, true],
     [
@@ -275,7 +268,6 @@ describe('getBlockState', () => {
     }
   );
 
-  // 追跡中のサイト同士は追加時に入れ子を拒否するが、崩れた保存値でも判定とルールを揃える
   it('保存値が入れ子でも、親がブロックしていれば子が無効でもサブドメインをブロックする', async () => {
     given({
       sites: [site('google.com'), site('mail.google.com', { enabled: false })]
@@ -358,8 +350,6 @@ describe('shouldBlockUrl', () => {
 });
 
 describe('shouldTrackBlockForDomain', () => {
-  // ブロックされたかどうかと記録するかどうかは同じ結論にする。
-  // 揃っていないと、ブロックはされるのに記録されない・記録だけ増えるドメインが出る
   it.each([
     ['一時停止中', { settings: { paused: true }, sites: [site()] }, false],
     ['追跡中のサイトにない', { sites: [] }, false],
@@ -461,14 +451,10 @@ describe('getActiveBlockedDomains', () => {
 });
 
 describe('判定とルール生成の一致', () => {
-  // 開いているページの判定（getBlockStateForDomain）と新しい遷移を止めるルール
-  // （getActiveBlockedDomains の各キーの `||キー`）は同じ入力で同じ結論にする。
-  // どちらかが条件や範囲を独自に持つと、開いているタブと新しい遷移で結果がずれる
   const PARENT = 'example.com';
   const CHILD = 'mail.example.com';
   const HOSTS = [PARENT, `www.${PARENT}`, CHILD, `a.${CHILD}`, 'other.test'];
 
-  /** ルールの集合がホスト名を `||キー` の範囲で覆うか */
   function ruleCovers(ruleDomains: readonly string[], host: string): boolean {
     return ruleDomains.some((key) => host === key || host.endsWith(`.${key}`));
   }

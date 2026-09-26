@@ -5,7 +5,6 @@ import { usePopupActions } from '~/hooks/usePopupActions';
 import type { AppSettings } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
-// 依存モジュールをモック
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
 }));
@@ -87,7 +86,6 @@ describe('usePopupActions', () => {
         success: false,
         error: 'Error'
       });
-      // alertをモック
       vi.stubGlobal('alert', vi.fn());
       const { result } = renderHook(() => usePopupActions(defaultProps));
       await act(async () => {

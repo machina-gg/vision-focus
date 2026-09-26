@@ -26,7 +26,7 @@ describe('formatTime', () => {
   it('formats minutes only (no hours)', () => {
     expect(formatTime(60)).toBe('1m');
     expect(formatTime(120)).toBe('2m');
-    expect(formatTime(3540)).toBe('59m'); // 59 minutes
+    expect(formatTime(3540)).toBe('59m');
   });
 
   it('formats hours and minutes', () => {
@@ -289,7 +289,6 @@ describe('normalizeEndTime', () => {
 });
 
 describe('isWithinSchedule', () => {
-  // Helper to create test date at specific day/time
   const mockDate = (dayOfWeek: number, hours: number, minutes: number) => {
     const date = new Date();
     const currentDay = date.getDay();

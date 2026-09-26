@@ -7,17 +7,7 @@ import { WeeklyCalendar } from '../WeeklyCalendar';
 import type { Schedule, VisionSettings } from '~/types/storage';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 
-/**
- * WeeklyCalendar の表示分岐とコールバックの検査
- *
- * スケジュールが 0 件のときに何も描画しないこと、指定した曜日にだけ
- * ブロックが出ること、終了時刻 "00:00"（＝翌 0 時）が 1 日の終わりとして
- * 扱われることを確かめる。スタイル（プリセット）名は vision 側にしか無いため、
- * vision が未取得・参照先が消えている経路も含める。
- */
-
-// 「今日」の列と現在時刻の線は実行時の日時で変わるため、基準時刻を固定する。
-// ローカル時刻で組み立てて、タイムゾーンによらず 2026-03-01（日）12:00 にする
+// ローカル時刻で組み立て、タイムゾーンによらず 2026-03-01（日）12:00 にする
 const NOW = new Date(2026, 2, 1, 12, 0, 0);
 const SUNDAY_INDEX = 0;
 
@@ -43,10 +33,7 @@ const visionWithPreset = (id: string, name: string): VisionSettings => ({
   ]
 });
 
-/**
- * ブロックの title 属性は改行区切りだが、getByTitle は空白を詰めてから
- * 比較する（Testing Library の既定の正規化）。検索語も同じ形で組み立てる
- */
+// getByTitle は空白を詰めてから比較するため、改行区切りの title を空白で組み立てる
 const blockTitle = (...lines: string[]): string => lines.join(' ');
 
 function renderCalendar(
@@ -214,7 +201,6 @@ describe('WeeklyCalendar', () => {
         scheduleOf({ name: '', days: [] })
       ]);
 
-      // 凡例は Card 直下の最後のブロックに並ぶ
       const legend = container.querySelector('.mt-4.flex.flex-wrap');
       expect(legend?.children).toHaveLength(1);
     });

@@ -11,19 +11,7 @@ import {
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 import { blockedSite, sitesOf } from '~/test/sites';
 
-// 取り込むファイルの追跡中のサイト（検証済みの値）
 const IMPORTED_SITES = sitesOf(blockedSite('example.com'));
-
-/**
- * SettingsBackup の表示分岐とコールバックの検査
- *
- * インポートは「読み込み → 検証 → background への保存 → スタイルの保存」と
- * 段階があり、途中で失敗したときに成功表示を出したりスタイルだけ書き換えたり
- * してはいけない（#396）。各段階の失敗で何が出て、何が呼ばれないかを確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
 
 const settingsExport = vi.hoisted(() => ({
   exportSettings: vi.fn(),
@@ -54,7 +42,6 @@ const jsonFile = () =>
 const exportButton = () => screen.getByTestId('settings-export-button');
 const importInput = () => screen.getByTestId('settings-import-input');
 
-/** ファイル選択欄からバックアップファイルを選ぶ */
 async function importFile(file: File = jsonFile()) {
   await act(async () => {
     fireEvent.change(importInput(), { target: { files: [file] } });

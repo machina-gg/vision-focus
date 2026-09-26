@@ -6,15 +6,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { UnblockHoldSecondsField } from '../UnblockHoldSecondsField';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * 長押しの秒数の選択欄の検査
- *
- * 選んだ秒数がそのまま保存に渡ること、パスワード保護中は選べず理由の
- * 注記が出ることを確かめる。注記が無いと「秒数を変えたのに長押しが出ない」
- * 理由が分からなくなる。
- */
-
-// 選択肢の秒数が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
 function renderField(

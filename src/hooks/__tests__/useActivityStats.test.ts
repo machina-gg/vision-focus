@@ -18,17 +18,10 @@ import {
   youtubeFeatures
 } from '~/test/sites';
 
-/**
- * 画面が activity から数値を出すときの組み立ての検査。
- * 集計そのもの（sumRange / rankSites など）は activityStats の単体テストが見るので、
- * ここでは「どの期間・どの母集団・どのキーで引くか」を見る
- */
-
 const storedValues = vi.hoisted(() => ({
   values: {} as Record<string, unknown>
 }));
 
-// 実物の項目は chrome.storage を読むため、キーで値を返すだけの形に差し替える
 vi.mock('~/lib/storage', () => ({
   activityItem: { key: 'local:activity' },
   sitesItem: { key: 'local:sites' }

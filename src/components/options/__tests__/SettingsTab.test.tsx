@@ -11,14 +11,6 @@ import {
   type PasswordSettings
 } from '~/types/storage';
 
-/**
- * SettingsTab が並べるカードの順と、子へ渡す値の検査
- *
- * カードの中身はそれぞれのコンポーネントの責務なので、通知設定以外は差し替えて
- * 「出るか」「何が渡るか」だけを見る。通知設定は時間制限つきサイトの有無で
- * 出し分けないことを確かめるため実体のまま描画する。
- */
-
 const received = vi.hoisted(() => ({
   password: undefined as
     | {

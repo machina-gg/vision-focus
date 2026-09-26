@@ -23,27 +23,10 @@ import {
   youtubeFeatures
 } from '~/test/sites';
 
-/**
- * BlocklistTab の表示分岐とコールバックの検査
- *
- * ブロック解除は「パスワード保護の有無」で経路が分かれ、どちらでも
- * 確認を経ずに解除してはいけない。ここでは確認前にコールバックが
- * 呼ばれないことまで確かめる。
- *
- * 一覧は「未取得」「0 件」「1 件以上」の 3 状態を取る。未取得と 0 件が
- * 同じ表示になると登録済みのサイトが消えたように見えるため、別の表示に
- * なることまで検査する（machina-gg/vision-focus#446）。
- *
- * 設定は SettingsContext から来るため、Context ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- */
-
-// 置換値（解除確認のドメイン名）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
 const contextState = vi.hoisted(() => ({
   settings: undefined as unknown,
-  // 追跡中のサイトは props で渡る
   sites: [] as unknown[]
 }));
 
@@ -59,12 +42,6 @@ vi.mock('~/contexts/SettingsContext', () => ({
 // setSettings が DEFAULT_SETTINGS を土台にするため、確認は既定の秒数で走る
 const DEFAULT_HOLD_MS = DEFAULT_UNBLOCK_CONFIRM_SETTINGS.holdSeconds * 1000;
 
-/**
- * 見出しの文言から、それに対応するトグルを引く
- *
- * YouTube のトグルには data-testid が無いため、見出しの要素から祖先をたどり
- * 最初に見つかったトグルを返す（見出しに最も近いものが対応するトグル）。
- */
 function switchNear(text: string): HTMLElement {
   let node: HTMLElement | null = screen.getByText(text);
   while (node) {
@@ -75,7 +52,6 @@ function switchNear(text: string): HTMLElement {
   throw new Error(`${text} に対応するトグルが見つからない`);
 }
 
-/** ブロック設定を持つサイト（既定は example.com の有効な常時ブロック） */
 const itemOf = (
   overrides: { domain?: string; enabled?: boolean; timeLimit?: TimeLimit } = {}
 ): TrackedSite => {
@@ -93,7 +69,6 @@ const YOUTUBE_OFF: YouTubeSettingsInput = {
   timeLimit: null
 };
 
-/** 全体の設定（Context）と追跡中のサイト（props）を用意する。undefined は設定が未取得 */
 function setSettings(
   overrides: (Partial<AppSettings> & { sites?: TrackedSite[] }) | undefined
 ) {
@@ -109,7 +84,6 @@ function setSettings(
 
 type TabProps = Parameters<typeof BlocklistTab>[0];
 
-/** `youtube` は youtube.com のサイト（追跡中のサイトに足して渡す） */
 function renderTab({
   youtube,
   ...props
@@ -155,7 +129,6 @@ describe('BlocklistTab', () => {
       expect(screen.queryAllByTestId('blocklist-item')).toHaveLength(0);
     });
 
-    // 未取得のまま未登録の案内を出すと、登録済みのサイトが消えたように見える
     it('設定が未取得なら未登録の案内は表示しない', () => {
       setSettings(undefined);
 
@@ -192,7 +165,6 @@ describe('BlocklistTab', () => {
   });
 
   describe('事実の表（activity）からの導出', () => {
-    /** 日付 × サイトの行を作る（既定は今日のローカル日付） */
     function logOf(
       rows: Record<string, { seconds?: number; blocks?: number }>,
       date: Date = new Date()
@@ -430,8 +402,6 @@ describe('BlocklistTab', () => {
     });
   });
 
-  // YouTube の操作そのものは YouTubeSection のテストが担う。
-  // ここでは props が子まで届くことだけを確かめる
   describe('YouTube 設定の受け渡し', () => {
     it('youtube.com のサイトが子に渡る', () => {
       renderTab({
@@ -441,7 +411,6 @@ describe('BlocklistTab', () => {
       expect(screen.getByText('youtubeBlockAccess')).toBeInTheDocument();
     });
 
-    // youtube.com の設定は YouTube の節だけが担当する（一覧にも出すと 2 箇所から変えられる）
     it('ブロック設定を持つ youtube.com は「ブロック中のサイト」一覧に出さない', () => {
       setSettings({ sites: [itemOf({ domain: 'a.example' })] });
 
@@ -461,9 +430,7 @@ describe('BlocklistTab', () => {
     });
   });
 
-  // YouTube を弱める操作も、ブロックリストと同じ確認の経路を通ることを確かめる
   describe('YouTube のブロックを弱める操作', () => {
-    // YouTube 機能とアクセスブロック（有効）を持つ youtube.com と、そのとき節が送る値
     const youtubeOn = blockedSite(
       YOUTUBE_DOMAIN,
       {},

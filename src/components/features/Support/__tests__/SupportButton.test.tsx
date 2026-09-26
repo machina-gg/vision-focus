@@ -5,17 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { SupportButton } from '../SupportButton';
 
-/**
- * SupportButton の役割と、押したときに呼ばれるものの検査
- *
- * Manifest V3 はリモートコードの実行を禁じており、外部ホストの画像も
- * ネットワークアクセスになる。ボタンが外部資源を読み込まないことを
- * 検査に含める（公式ウィジェットへ戻す変更が黙って通らないようにする）。
- *
- * 大きさは data-size で確かめる（COMPONENT_TESTING.md「状態は属性で表す」。
- * クラス名は見ない）。
- */
-
+// Manifest V3 はリモートコードの実行を禁じ、外部ホストの画像もネットワークアクセスになるため、外部資源を読み込まないことを見る
 describe('SupportButton', () => {
   it('支援を促す文言のボタンを出す', () => {
     render(<SupportButton onClick={vi.fn()} />);

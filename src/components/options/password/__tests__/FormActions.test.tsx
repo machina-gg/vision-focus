@@ -5,15 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { FormActions } from '../FormActions';
 
-/**
- * FormActions のボタンの出し分けと、押したときに呼ばれるものの検査
- *
- * 送信ボタンは「処理中」と「押せない」が別々の props で来る。
- * パスワードの設定・変更・削除で共用されるため、処理中の二重送信が
- * 止まっていることと、削除のときだけ見た目の種類が変わることを見る
- * （種類は Button の data-variant に出る。クラス名は見ない）。
- */
-
 function renderActions(
   overrides: Partial<React.ComponentProps<typeof FormActions>> = {}
 ) {

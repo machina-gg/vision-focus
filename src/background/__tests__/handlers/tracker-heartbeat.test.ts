@@ -2,10 +2,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-/**
- * 事実の表（activity）はインメモリの実体に差し替え、書き手（activityService）は実物を通す。
- * 書き手は追跡中の集合に無いキーを捨てるので、呼び出しの有無ではなく保存された値を見る
- */
 const activityStore = vi.hoisted(() => ({ value: undefined as unknown }));
 
 vi.mock('~/lib/storage', () => ({
@@ -50,10 +46,7 @@ interface Response {
   error?: string;
 }
 
-/**
- * ハンドラはモジュールレベルに activePages / recordingTimer の状態を持つため、
- * テストごとに resetModules して読み込み直す。
- */
+// ハンドラはモジュールレベルに状態を持つため、テストごとに読み込み直す
 async function loadHandler() {
   vi.resetModules();
   const mod = await import('../../handlers/tracker-heartbeat');
@@ -64,7 +57,6 @@ const RECORDED_SECONDS = Math.floor(
   TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000
 );
 
-/** 全体の設定と追跡中のサイトを差し替える */
 function given(sites: TrackedSite[], settings: Partial<AppSettings> = {}) {
   vi.mocked(getSettings).mockResolvedValue({
     ...DEFAULT_SETTINGS,
@@ -73,14 +65,12 @@ function given(sites: TrackedSite[], settings: Partial<AppSettings> = {}) {
   vi.mocked(getSites).mockResolvedValue(sitesOf(...sites));
 }
 
-/** youtube.com のブロック設定を差し替える（null = ブロックしない） */
 function givenYouTubeBlock(block: Partial<BlockRule> | null) {
   given(block ? [blockedSite('youtube.com', block)] : []);
 }
 
 const LIMIT_SECONDS = 1800;
 
-/** example.com を時間制限つきでブロックリストに入れ、追跡中にする */
 function givenTimeLimitedExample(overrides: Partial<AppSettings> = {}) {
   given(
     [
@@ -93,7 +83,6 @@ function givenTimeLimitedExample(overrides: Partial<AppSettings> = {}) {
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
 }
 
-/** 今日（ローカル日付）の行にサイトの滞在秒数を入れておく */
 function givenTodaySeconds(site: string, seconds: number) {
   const log: ActivityLog = {
     [toDateKey(new Date())]: { [site]: { seconds, blocks: 0, unblocks: 0 } }
@@ -242,7 +231,6 @@ describe('tracker-heartbeat ハンドラ', () => {
         timestamp: Date.now()
       });
 
-      // ハートビートのタイムアウトを超えて放置する
       await vi.advanceTimersByTimeAsync(
         TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS +
           TRACKER_CONFIG.RECORDING_INTERVAL_MS
@@ -275,7 +263,6 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       await showExampleFor();
 
-      // www. 付きのホストでもサイトキーで引く
       expect(checkTimeLimitNotification).toHaveBeenCalledWith({
         site: 'example.com',
         rule: {
@@ -379,8 +366,6 @@ describe('tracker-heartbeat ハンドラ', () => {
     });
 
     it('アクセスブロックしない（ブロック設定なし）なら上限を超えても通知もルール更新もしない', async () => {
-      // 超過してもブロックされない設定なので、記録間隔ごとの
-      // ルール再構築と全タブ走査を繰り返さない
       vi.useFakeTimers();
       givenYouTubeBlock(null);
       givenTodaySeconds('youtube.com', 600);
@@ -394,7 +379,6 @@ describe('tracker-heartbeat ハンドラ', () => {
   });
 
   describe('事実の表（activity）への滞在の記録', () => {
-    /** 今日の行に記録された滞在秒数（サイトごと）。記録が無ければ空 */
     function todaySeconds(): Record<string, number> {
       const log = (activityStore.value ?? {}) as ActivityLog;
       const row = log[toDateKey(new Date())] ?? {};

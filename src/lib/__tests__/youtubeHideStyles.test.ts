@@ -15,8 +15,7 @@ describe('generateYouTubeHideCSS', () => {
     expect(generateYouTubeHideCSS(youtubeFeatures())).toBe('');
   });
 
-  // アクセスブロックに 1 日の制限を併用していると上限までは YouTube を開けるため、
-  // 非表示の CSS はアクセスブロック（youtube.com の block）を見ずに生成する
+  // 1 日の制限を併用すると上限までは YouTube を開けるため、非表示の CSS はアクセスブロックを見ずに生成する
   it('すべての項目をオンにすると各セレクタを含める', () => {
     const css = generateYouTubeHideCSS(
       youtubeFeatures({

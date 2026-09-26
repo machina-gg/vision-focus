@@ -15,7 +15,6 @@ import {
 } from '~/types/storage';
 import { DEFAULT_FONT_SETTINGS } from '~/types/font';
 
-// Mock dependencies
 vi.mock('~/lib/analytics', () => ({
   trackFeatureUse: vi.fn()
 }));
@@ -58,7 +57,6 @@ describe('usePresets', () => {
   const mockSetVision = vi.fn();
   const mockSetSettings = vi.fn();
 
-  // スタイルを参照しているスケジュール（#333 の対象）
   const makeSchedule = (overrides: Partial<Schedule> = {}): Schedule => ({
     id: 'schedule-1',
     name: 'Weekday Focus',
@@ -112,7 +110,6 @@ describe('usePresets', () => {
     vi.mocked(getVision).mockResolvedValue(mockVision);
     vi.mocked(visionItem.setValue).mockResolvedValue(undefined);
     vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-    // crypto.randomUUID のモック
     vi.stubGlobal('crypto', {
       ...global.crypto,
       randomUUID: vi.fn(() => 'new-preset-id')
@@ -438,7 +435,6 @@ describe('usePresets', () => {
 
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -469,13 +465,11 @@ describe('usePresets', () => {
     });
   });
 
-  // アンマウント後にフィードバックのタイマーが残ると、片付け済みの環境へ
-  // dispatch してテスト実行後に `window is not defined` が出る（#480）
+  // アンマウント後にタイマーが残ると、片付け済みの環境へ dispatch してテスト実行後に `window is not defined` が出る
   describe('保存後フィードバックのタイマー', () => {
     // 上の vi.mock で STATUS_RESET_DELAY_MS に差し替えている値
     const SAVED_FEEDBACK_MS = 1000;
 
-    // 初期化を待ってから 1 回保存し、フィードバックのタイマーを張らせる
     const renderAndSave = async () => {
       const rendered = renderUsePresets(mockVision);
       const { result } = rendered;
@@ -506,7 +500,6 @@ describe('usePresets', () => {
 
       unmount();
 
-      // クリーンアップで止まるので、進めても発火する対象が残っていない
       expect(vi.getTimerCount()).toBe(0);
       act(() => {
         vi.advanceTimersByTime(SAVED_FEEDBACK_MS);
@@ -536,7 +529,6 @@ describe('usePresets', () => {
     it('選択中のプリセットをアクティブに設定', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -563,7 +555,6 @@ describe('usePresets', () => {
 
       const { result } = renderUsePresets(visionWithoutPresets);
 
-      // 初期化が完了するまで待つ（非同期初期化がある）
       await vi.waitFor(() => {
         if (result.current.draftPresets.length !== 0) {
           throw new Error('Not ready');
@@ -580,7 +571,6 @@ describe('usePresets', () => {
     it('visionがundefinedの場合、何もしない', async () => {
       const { result } = renderUsePresets(undefined);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.draftPresets.length !== 0) {
           throw new Error('Not ready');
@@ -599,7 +589,6 @@ describe('usePresets', () => {
     it('新しいプリセットを作成', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -629,7 +618,6 @@ describe('usePresets', () => {
     it('プリセット名が空の場合、何もしない', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -652,7 +640,6 @@ describe('usePresets', () => {
     it('プリセットを削除', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -696,7 +683,6 @@ describe('usePresets', () => {
 
       const { result } = renderUsePresets(visionWithMultiplePresets);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -713,7 +699,6 @@ describe('usePresets', () => {
     it('activePresetIdを削除した場合、nullにリセット', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -781,7 +766,6 @@ describe('usePresets', () => {
 
       expect(result.current.deleteTargetPresetId).toBe('preset-1');
       expect(result.current.deleteTargetScheduleCount).toBe(2);
-      // 確認の段階では何も保存しない
       expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(visionItem.setValue).not.toHaveBeenCalled();
     });
@@ -873,7 +857,6 @@ describe('usePresets', () => {
     it('setShowSavePresetModal でモーダルの表示状態を切り替え', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');
@@ -892,7 +875,6 @@ describe('usePresets', () => {
     it('setPresetName でプリセット名を設定', async () => {
       const { result } = renderUsePresets(mockVision);
 
-      // 初期化が完了するまで待つ
       await vi.waitFor(() => {
         if (result.current.selectedPresetId !== 'preset-1') {
           throw new Error('Not ready');

@@ -9,7 +9,6 @@ import {
   DEFAULT_DISPLAY_SETTINGS
 } from '~/types/storage';
 
-// presetUtils モジュールをモック
 vi.mock('~/lib/presetUtils', () => ({
   presetToDisplaySettings: vi.fn((preset, isPremium) => ({
     goalText: preset.goalText,
@@ -23,7 +22,6 @@ vi.mock('~/lib/presetUtils', () => ({
   }))
 }));
 
-// time モジュールをモック
 vi.mock('~/lib/time', () => ({
   isWithinSchedule: vi.fn(() => false)
 }));
@@ -37,7 +35,6 @@ beforeEach(() => {
   mockIsWithinSchedule.mockReturnValue(false);
 });
 
-// テスト用のプリセット付きビジョン設定
 const presetVision: VisionSettings = {
   ...DEFAULT_VISION,
   presets: [
@@ -148,11 +145,9 @@ describe('useResolvedPreset', () => {
           settings: DEFAULT_SETTINGS
         })
       );
-      // 最初のプリセットはフリーティアで使える
       expect(result.current.displaySettings.goalText).toBe('Focus on work');
     });
 
-    // 全機能を全ユーザーに開放したため、カスタム背景は常に適用される
     it('カスタム背景をそのまま適用する', () => {
       const vision: VisionSettings = {
         ...DEFAULT_VISION,

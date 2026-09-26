@@ -1,15 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-/**
- * 解除の 3 経路（トグル OFF・ブロックリストからの削除・YouTube のアクセスブロック OFF）で、
- * 事実の表（activity）に `unblock` が実際に保存されることを確かめる。
- *
- * ハンドラ単体のテストは記録の入口（`recordActivity`）をモックするため「呼ばれたか」までしか
- * 見られない。書き手は追跡中の集合に無いキーの出来事を捨てるので、呼んだ時点の保存値に
- * よっては黙って消える。ここでは書き手と追跡中のサイト（`siteService`）を実物のまま通し、
- * 保存領域だけをインメモリの実体に差し替えて、保存された値そのものを見る。
- */
-
+// ハンドラ単体のテストは recordActivity をモックし、書き手は追跡中に無いキーを黙って捨てるため、ここでは書き手と siteService を実物のまま通して保存値を見る
 const store = vi.hoisted(() => ({
   sites: undefined as unknown,
   activity: undefined as unknown,
@@ -78,11 +69,9 @@ const youtube = (
   ...overrides
 });
 
-/** YouTube 機能とアクセスブロックが両方有効な youtube.com */
 const blockingYouTube = () =>
   blockedSite('youtube.com', {}, { youtube: youtubeFeatures() });
 
-/** 今日の行に記録された解除回数（行が無ければ undefined） */
 function todayUnblocks(site: string): number | undefined {
   const log = store.activity as ActivityLog | undefined;
   return log?.[toDateKey(new Date())]?.[site]?.unblocks;

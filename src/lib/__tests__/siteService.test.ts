@@ -1,13 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * chrome.storage のモック。
- *
- * @wxt-dev/storage は読み込み時に `globalThis.chrome` を掴むため、import より前に用意する。
- * local 領域は値を実際に保持し、get / set を 1 tick 遅らせる。
- * 遅らせないと「読む → 変える → 書く」の間に別の書き込みが割り込む状況が作れず、
- * 直列化を外しても検査が落ちない
- */
+// @wxt-dev/storage は読み込み時に globalThis.chrome を掴むため、import より前に用意する。
+// get / set を 1 tick 遅らせないと書き込みの割り込みが作れず、直列化を外しても検査が落ちない
 const fakeChrome = vi.hoisted(() => {
   const localData: Record<string, unknown> = {};
   const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));

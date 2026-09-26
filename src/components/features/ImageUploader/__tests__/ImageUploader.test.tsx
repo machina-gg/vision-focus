@@ -5,17 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ImageUploader } from '../ImageUploader';
 
-/**
- * ImageUploader の表示分岐とコールバックの検査
- *
- * 画像が未設定・設定済み・処理中・エラーで見せるものが入れ替わるため、
- * それぞれで何が出るかを確かめる。検証と圧縮は外部（~/lib/image）に任せて
- * いるので、失敗したときに保存（onChange）へ進まないことまで見る。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
 const image = vi.hoisted(() => ({
   validateImageFile: vi.fn(),
   compressImage: vi.fn()
@@ -42,7 +31,6 @@ const pngFile = () =>
 const dropzone = () => screen.getByTestId('style-bg-upload-dropzone');
 const fileInput = () => screen.getByTestId('style-bg-upload');
 
-/** ファイル選択欄からファイルを選ぶ */
 async function selectFile(file: File = pngFile()) {
   await act(async () => {
     fireEvent.change(fileInput(), { target: { files: [file] } });

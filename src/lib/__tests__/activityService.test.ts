@@ -1,13 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * chrome.storage のモック。
- *
- * @wxt-dev/storage は読み込み時に `globalThis.chrome` を掴むため、import より前に用意する。
- * local 領域は値を実際に保持し、get / set を 1 tick 遅らせる。
- * 遅らせないと「読む → 足す → 書く」の間に別の書き込みが割り込む状況が作れず、
- * 直列化を外しても検査が落ちない
- */
+// @wxt-dev/storage は読み込み時に globalThis.chrome を掴むため、import より前に用意する。
+// get / set を 1 tick 遅らせないと書き込みの割り込みが作れず、直列化を外しても検査が落ちない
 const fakeChrome = vi.hoisted(() => {
   const localData: Record<string, unknown> = {};
   const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -65,7 +59,6 @@ import { getTrackedSiteKeys } from '~/lib/siteService';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 
-/** ローカル時刻で日付を作る（toDateKey がローカル日付で行を決めるため） */
 const localDate = (y: number, m: number, d: number, h = 12) =>
   new Date(y, m - 1, d, h, 0, 0);
 

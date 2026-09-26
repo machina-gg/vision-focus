@@ -1,9 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * initBackground は各リスナーの登録関数を呼ぶだけなので、
- * 依存をすべてモックして「1 回ずつ呼ばれること」を検証する。
- */
 const mocks = vi.hoisted(() => ({
   setupSettingsWatcher: vi.fn(),
   setupLifecycleHandlers: vi.fn(),
@@ -53,8 +49,7 @@ describe('initBackground', () => {
   });
 
   it('前面のウィンドウ・タブを見る計測は始めない', async () => {
-    // 滞在時間は表示中のページの heartbeat だけで数える。
-    // ウィンドウ・タブの切り替えを購読する計測が加わると、同じ時間が二重に数えられる
+    // 滞在時間は heartbeat だけで数える。切り替えを購読する計測が加わると同じ時間が二重に数えられる
     const addListener = vi.fn();
     (globalThis as Record<string, unknown>).chrome = {
       tabs: {

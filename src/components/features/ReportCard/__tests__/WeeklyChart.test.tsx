@@ -5,17 +5,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { WeeklyChart } from '../WeeklyChart';
 
-/**
- * WeeklyChart が組み立てるグラフ用データと単位の切り替えの検査
- *
- * 秒で持っている無駄時間を分へ丸め、一番多い日が 2 時間以上なら時間表示へ
- * 切り替える。曜日ラベルと日別ブロック数は別々の配列から来るため、
- * 長さが揃っていないときの埋め方（フォールバック）も見る。
- *
- * グラフ本体は recharts に任せており jsdom では寸法が 0 で描画されないため、
- * 受け取った props を読める形に差し替えて「何を渡したか」を見る。
- */
-
 const chart = vi.hoisted(() => ({
   data: [] as { day: string; wasteTime: number; blockCount: number }[],
   wasteTickFormatter: undefined as ((value: number) => string) | undefined,
@@ -61,7 +50,6 @@ vi.mock('recharts', () => ({
   Line: () => null
 }));
 
-/** 秒で持つ無駄時間から dailyBreakdown を作る */
 const breakdownOf = (wasteSeconds: number[]) =>
   wasteSeconds.map((wasteTime) => ({ wasteTime, blockCount: 0 }));
 

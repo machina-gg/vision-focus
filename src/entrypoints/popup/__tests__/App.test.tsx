@@ -9,12 +9,6 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 
-/**
- * ポップアップの「今日のサマリー」が activity の導出を表示することの検査。
- * 事実と追跡中のサイトは入力だけを差し替え、導出（todayStats）は実体を通す
- */
-
-// 件数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
 const sourcesState = vi.hoisted(() => ({
@@ -22,7 +16,6 @@ const sourcesState = vi.hoisted(() => ({
   sites: [] as SiteKey[]
 }));
 
-// 設定は chrome.storage から読むため、既定値を返す形に差し替える
 vi.mock('~/contexts/SettingsContext', async () => {
   const { DEFAULT_SETTINGS: settings } = await import('~/types/storage');
   return {
@@ -42,7 +35,6 @@ vi.mock('~/lib/storage', () => ({
   settingsItem: { key: 'local:settings' }
 }));
 
-// 現在のタブ・操作系は拡張機能 API に触れるため、サマリーの検査に要らない形へ差し替える
 vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
   return {

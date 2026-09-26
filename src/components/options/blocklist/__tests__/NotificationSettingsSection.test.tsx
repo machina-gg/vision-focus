@@ -7,15 +7,6 @@ import { NotificationSettingsSection } from '../NotificationSettingsSection';
 import type { NotificationSettings } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * NotificationSettingsSection の表示条件と保存内容の検査
- *
- * 時間制限つきのサイトの有無によらず常に出すこと、設定が未保存のときの
- * 既定値（有効・5 分）、および操作で onUpdate に渡る設定の中身を確かめる。
- * 分数は数値で保存する必要があるため、文字列のまま渡っていないかまで見る。
- */
-
-// 選択肢の分数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
 function renderSection(notifications: NotificationSettings | undefined) {
@@ -29,7 +20,6 @@ function renderSection(notifications: NotificationSettings | undefined) {
   return { onUpdate, ...result };
 }
 
-/** 分数の選択欄（Select が描画する select 要素） */
 const minutesSelect = () => screen.getByRole('combobox');
 
 describe('NotificationSettingsSection', () => {

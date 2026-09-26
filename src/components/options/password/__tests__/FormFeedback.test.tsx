@@ -5,14 +5,6 @@ import { describe, it, expect } from 'vitest';
 
 import { FormFeedback } from '../FormFeedback';
 
-/**
- * FormFeedback の出し分けの検査
- *
- * 未設定（null）・空文字のときに何も出ないことを主に見る。
- * パスワード画面は「前回の結果が残ったまま次の操作に入る」と誤解を生むため、
- * 消したつもりの文言が残らないことが要点になる。
- */
-
 describe('FormFeedback', () => {
   describe('どちらも無いとき', () => {
     it('error も success も null なら何も描画しない', () => {

@@ -5,16 +5,6 @@ import { describe, it, expect } from 'vitest';
 
 import { RankedList } from '../RankedList';
 
-/**
- * RankedList の空表示・件数の上限・値の単位の検査
- *
- * 0 件のときだけ別の経路（案内文）に落ちる。件数は上位 3 件までで、
- * 4 件目以降が出ないことが要点。値は時間として秒から整形する場合と、
- * 回数としてそのまま出す場合があり、この読み替えを見る。
- *
- * 背景色・文字色は装飾として受け取るだけなので検査しない。
- */
-
 const itemsOf = (entries: [string, number][]) =>
   entries.map(([domain, value]) => ({ domain, value }));
 

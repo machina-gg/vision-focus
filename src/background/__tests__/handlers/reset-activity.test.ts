@@ -2,10 +2,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-/**
- * 事実の表はインメモリの実体に差し替え、書き手（activityService）は実物を通す。
- * 消したかどうかは呼び出しの有無ではなく保存された値で見る
- */
 const store = vi.hoisted(() => ({
   activity: undefined as unknown
 }));
@@ -34,7 +30,6 @@ import { resetActivityHandler as handler } from '../../handlers/reset-activity';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 
-/** 今日と過去の日の行を用意する */
 function givenActivity() {
   const today = toDateKey(new Date());
   const log: ActivityLog = {

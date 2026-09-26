@@ -7,21 +7,8 @@ import { TimeLimitBadge } from '../TimeLimitBadge';
 import { TIME_LIMIT_CONFIG } from '~/constants/limits';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * TimeLimitBadge の状態ごとの表示の検査
- *
- * 超過・残りわずか・通常の 3 状態を、残り時間と上限の境界値で確かめる。
- * 状態は data-state と文言のキー（timeLimitReached / timeLimitWarning /
- * timeLimitRemaining）で区別できるため、色のクラス名は見ない。
- *
- * compact では文言が警告に切り替わらないため、残りわずかかどうかは data-low で
- * 確かめる（machina-gg/vision-focus#455）。
- */
-
-// 残り時間の表記が文言に入るため、置換値の見える chrome.i18n を差し込む
 stubI18nWithSubstitutions();
 
-/** 警告に入る境界の比率（0.2 = 残り 20% 以下） */
 const THRESHOLD = TIME_LIMIT_CONFIG.WARNING_THRESHOLD;
 
 describe('TimeLimitBadge', () => {

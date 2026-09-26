@@ -5,13 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Toggle } from '../Toggle';
 
-/**
- * Toggle の表示分岐とコールバックの検査
- *
- * 一時停止・YouTube 設定・パスワード保護といった「効いているか」が
- * 見た目だけで判断される場所で使われるため、checked の値が
- * aria-checked に出ていることと、押したときに反転した値が渡ることを確かめる。
- */
 describe('Toggle', () => {
   describe('状態の表示', () => {
     it('checked が true なら aria-checked も true になる', () => {

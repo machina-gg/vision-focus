@@ -123,12 +123,8 @@ describe('isStaticManifest', () => {
 });
 
 describe('CLI として起動したとき', () => {
-  // tsx は package.json に "type": "module" が無いと .ts を CJS として変換するため、
-  // スクリプト本体に top-level await があると起動時点で必ず落ちる（#417）。
-  // 純粋関数のテストでは検知できないので、実際に起動して結果を確かめる
-  //
-  // パス解決に new URL(..., import.meta.url) は使わない。Vite がアセット URL の
-  // 参照として書き換えてしまい、テスト実行時に file スキームでなくなる
+  // tsx は "type": "module" が無いと .ts を CJS に変換し、top-level await で起動時に落ちるため実際に起動して確かめる
+  // new URL(..., import.meta.url) は Vite がアセット参照として書き換え file スキームでなくなるため使わない
   const repoRoot = path.resolve(__dirname, '../..');
   const scriptPath = path.resolve(
     __dirname,
@@ -137,14 +133,12 @@ describe('CLI として起動したとき', () => {
   const fixturesDir = path.resolve(__dirname, 'fixtures');
   const fixture = (name: string) => path.join(fixturesDir, name);
 
-  /** スクリプトを子プロセスで起動し、終了コードと出力を返す */
   function runScript(...args: string[]): {
     status: number;
     stdout: string;
     stderr: string;
   } {
     try {
-      // CI の `pnpm exec tsx <script>` と同じ tsx のローダを使う
       const stdout = execFileSync(
         process.execPath,
         ['--import', 'tsx', scriptPath, ...args],
@@ -158,7 +152,6 @@ describe('CLI として起動したとき', () => {
         stderr?: string;
       };
       return {
-        // シグナル終了など終了コードを取れない場合は別の値にして取り違えを防ぐ
         status: typeof failure.status === 'number' ? failure.status : -1,
         stdout: failure.stdout ?? '',
         stderr: failure.stderr ?? ''

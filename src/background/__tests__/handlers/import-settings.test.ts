@@ -35,7 +35,6 @@ interface Response {
   skipped?: { domain: string; conflict: string }[];
 }
 
-/** 画面側が applyImportedSettings で組み立てた「適用後の設定」に相当する値 */
 const importedSettings = (
   overrides: Partial<AppSettings> = {}
 ): AppSettings => ({
@@ -43,14 +42,8 @@ const importedSettings = (
   ...overrides
 });
 
-/**
- * 保存前後のブロック対象を決める。
- *
- * ハンドラは getActiveBlockedDomains() を保存前・保存後の順で呼ぶ
- */
 function givenBlockedDomains(before: string[], after: string[]) {
   vi.mocked(getActiveBlockedDomains)
-    // 既に積んである戻り値（beforeEach の既定）を捨ててから積み直す
     .mockReset()
     .mockResolvedValueOnce(before)
     .mockResolvedValueOnce(after);

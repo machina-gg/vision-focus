@@ -3,12 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { usePasswordVerification } from '~/hooks/usePasswordVerification';
 
-// password モジュールをモック
 vi.mock('~/lib/password', () => ({
   verifyPassword: vi.fn()
 }));
 
-// i18n モジュールをモック
 vi.mock('~/lib/i18n', () => ({
   getMessage: vi.fn((key: string) => key)
 }));
@@ -77,7 +75,6 @@ describe('usePasswordVerification', () => {
       const { result } = renderHook(() =>
         usePasswordVerification({ passwordHash, onSuccess: mockOnSuccess })
       );
-      // パスワードを入力してからopenModal
       act(() => {
         result.current.setPasswordInput('test');
       });

@@ -17,7 +17,6 @@ import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
-// ブロック設定を持つサイトだけの保存形を作る
 function blockSitesOf(
   ...entries: [domain: string, addedAt?: string][]
 ): TrackedSites {
@@ -29,7 +28,6 @@ function blockSitesOf(
 }
 
 describe('export utilities', () => {
-  // Mock DOM APIs
   let mockCreateElement: ReturnType<typeof vi.fn>;
   let mockAppendChild: ReturnType<typeof vi.fn>;
   let mockRemoveChild: ReturnType<typeof vi.fn>;
@@ -38,7 +36,6 @@ describe('export utilities', () => {
   let mockRevokeObjectURL: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    // Mock document.createElement
     mockClick = vi.fn();
     const mockLink = {
       href: '',
@@ -56,24 +53,18 @@ describe('export utilities', () => {
     global.document.body.removeChild =
       mockRemoveChild as unknown as typeof document.body.removeChild;
 
-    // Mock URL APIs
     mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
     mockRevokeObjectURL = vi.fn();
-    // ⚠ vitest 4 の `vi.fn()` の戻り型はコンストラクタ型を含むため、関数型の
-    //   プロパティへそのままは代入できない（他の DOM モックと同じ形にそろえる）
     global.URL.createObjectURL =
       mockCreateObjectURL as unknown as typeof URL.createObjectURL;
     global.URL.revokeObjectURL =
       mockRevokeObjectURL as unknown as typeof URL.revokeObjectURL;
 
-    // Mock Blob
-    // ⚠ vitest 4 以降、`new` 付きで呼ばれたモックはコンストラクタとして実行される。
-    //   アロー関数はコンストラクタになれないため function 宣言で書く
+    // vitest 4 は new 付きで呼ばれたモックをコンストラクタとして実行するため、アロー関数でなく function 宣言で書く
     global.Blob = vi.fn(function (content, options) {
       return { content, options };
     }) as unknown as typeof Blob;
 
-    // Mock Date for consistent filename
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
   });
@@ -109,7 +100,7 @@ describe('export utilities', () => {
     });
 
     it('ドメイン名にカンマが含まれる場合に正しくエスケープされる', () => {
-      // This is an edge case - domains shouldn't have commas, but the CSV escaping should handle it
+      // Domains shouldn't have commas, but the CSV escaping should handle it
       const sites = blockSitesOf(['example,test.com']);
       expect(() => exportBlockList(sites)).not.toThrow();
     });
@@ -158,11 +149,7 @@ describe('export utilities', () => {
     it('ファイル名に正しい日付が含まれる', () => {
       exportBlockList(blockSitesOf(['reddit.com']));
 
-      // Check that createElement was called with 'a'
       expect(mockCreateElement).toHaveBeenCalledWith('a');
-      // The download attribute should contain '2024-01-15' (mocked date)
-      // We can't directly inspect the link object easily in this setup,
-      // but we verified the function runs without errors
     });
   });
 
@@ -170,12 +157,10 @@ describe('export utilities', () => {
     it('CSVファイルにBOMが含まれる（Excel日本語互換性）', () => {
       exportBlockList(blockSitesOf(['reddit.com']));
 
-      // Verify Blob was created (BOM is added in downloadCSV)
       expect(global.Blob).toHaveBeenCalled();
       const blobCall = (global.Blob as unknown as ReturnType<typeof vi.fn>).mock
         .calls[0];
       const content = blobCall[0][0];
-      // BOM is '\uFEFF', should be prepended
       expect(content.startsWith('\uFEFF')).toBe(true);
     });
   });

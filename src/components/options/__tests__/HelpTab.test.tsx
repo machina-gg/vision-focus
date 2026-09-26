@@ -5,17 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { HelpTab } from '../HelpTab';
 
-/**
- * HelpTab が並べる節の検査
- *
- * ヘルプは読むものだけを置き、値を変える項目（ブロック解除の保護・通知・
- * データとプライバシー・バックアップ）は設定タブに置く。ここに戻ってくると
- * 同じ設定が 2 箇所に出るので、出ないことまで確かめる。
- *
- * 各節の中身はそれぞれのコンポーネントの責務なので、ここでは差し替えて
- * 「出るか」だけを見る。
- */
-
 vi.mock('~/components/options/HelpGettingStarted', () => ({
   HelpGettingStarted: () => <div data-testid="help-getting-started" />
 }));

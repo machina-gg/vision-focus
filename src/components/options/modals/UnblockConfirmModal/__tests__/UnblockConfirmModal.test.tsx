@@ -6,21 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { UnblockConfirmModal } from '../UnblockConfirmModal';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * UnblockConfirmModal の表示分岐とコールバックの検査
- *
- * ブロック解除・削除は取り消せないため、長押しを最後まで続けたときだけ
- * onConfirm が呼ばれることを確かめる。途中で指を離した・領域から出た場合に
- * 解除されてしまうと、意図しない解除が起きる。
- *
- * 解除と削除の区別は説明文に出ているため、説明文で検査する
- * （アイコンのクラス名は見ない）。
- */
-
-// 置換値（ドメイン名・スタイル名）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-// 既定の秒数で描画し、既存の検査はこの長さを前提にする
+// 既定の秒数。既存の検査はこの長さを前提にする
 const HOLD_SECONDS = 5;
 const HOLD_DURATION_MS = HOLD_SECONDS * 1000;
 
@@ -186,9 +174,7 @@ describe('UnblockConfirmModal', () => {
   });
 
   describe('長押しの完了', () => {
-    // 進捗は requestAnimationFrame（約 16ms 刻み）で進むため、ちょうど
-    // HOLD_DURATION_MS だけ進めると最後のフレームが 5000ms に届かない。
-    // 完了を見る検査では 1 フレーム分を余分に進める
+    // 進捗は requestAnimationFrame（約 16ms 刻み）で進み、ちょうどの時間では最後のフレームが届かないため 1 フレーム分余分に進める
     const PAST_HOLD_MS = HOLD_DURATION_MS + 100;
 
     it('最後まで押し続けると onConfirm と onClose が呼ばれる', () => {
@@ -216,8 +202,6 @@ describe('UnblockConfirmModal', () => {
   });
 
   describe('長押しの秒数', () => {
-    // 秒数を既定から変えたとき、確定までの時間・残り秒数・説明文のどれもが
-    // その値に従うこと。どれかが既定のままだと、表示と実際の必要時間が食い違う
     const LONG_HOLD_SECONDS = 30;
     const LONG_HOLD_MS = LONG_HOLD_SECONDS * 1000;
 
@@ -233,8 +217,7 @@ describe('UnblockConfirmModal', () => {
       renderModal({ holdSeconds: LONG_HOLD_SECONDS });
 
       fireEvent.pointerDown(holdButton());
-      // 残り 10.5 秒の時点で見る。進捗は約 16ms 刻みで進むため、整数秒の
-      // 境目を避けて切り上げの結果が 1 つに決まる時刻を選ぶ
+      // 進捗は約 16ms 刻みのため、整数秒の境目を避けて切り上げの結果が 1 つに決まる時刻（残り 10.5 秒）で見る
       act(() => {
         vi.advanceTimersByTime(19500);
       });

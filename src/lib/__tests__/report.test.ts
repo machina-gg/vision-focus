@@ -9,13 +9,6 @@ import {
 } from '~/lib/report';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 
-/**
- * 週次・月次レポートは、合計・日別（週別）・トップ・前期比をすべて
- * 同じ期間・同じ母集団（追跡中のサイト）の activity から出す。
- * 日付はローカル日付なので、TZ=Asia/Tokyo と TZ=America/Los_Angeles の両方で通ることを前提に、
- * 基準時刻はローカル時刻（new Date(年, 月, 日, 時)）で組む
- */
-
 function row(seconds: number, blocks = 0, unblocks = 0): DailySiteActivity {
   return { seconds, blocks, unblocks };
 }
@@ -46,7 +39,6 @@ const log: ActivityLog = {
 
 const sum = (values: number[]) => values.reduce((acc, v) => acc + v, 0);
 
-/** レポートがあることを確かめてから返す（null なら失敗させる） */
 function present<T>(report: T | null): T {
   expect(report).not.toBeNull();
   if (report === null) throw new Error('report is null');

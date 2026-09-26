@@ -2,11 +2,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { sendMessage, onMessage, removeAllListeners } from '~/lib/messaging';
 
-/**
- * ProtocolMap の型は tsc が検査するため、ここでは実行時の配線
- * （chrome.runtime の API に乗っているか）だけを確かめる
- */
-
 interface RuntimeMessage {
   type: string;
   data: unknown;

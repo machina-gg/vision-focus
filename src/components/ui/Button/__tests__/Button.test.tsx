@@ -5,15 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Button } from '../Button';
 
-/**
- * Button の「押せるかどうか」の出し分けと、見た目の指定の受け渡しの検査
- *
- * loading は見た目のスピナーだけでなく disabled にも効くため、押せなくなることで
- * 検査できる。variant / size / fullWidth / loading はクラス名のほかに
- * data-* 属性としても持つので、クラス名ではなく属性で確かめる
- * （machina-gg/vision-focus#455）。
- */
-
 describe('Button', () => {
   describe('表示', () => {
     it('渡した子要素をボタンの名前として描画する', () => {

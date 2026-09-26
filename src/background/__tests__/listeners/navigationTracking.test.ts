@@ -12,7 +12,6 @@ import { recordBlockedDomain } from '~/lib/blockRecordService';
 import { shouldTrackBlockForDomain } from '~/lib/blockService';
 import { setupNavigationTracking } from '../../listeners/navigationTracking';
 
-/** webNavigation リスナーを捕捉できる chrome モックを構築する */
 function setupChrome() {
   let handler:
     | ((

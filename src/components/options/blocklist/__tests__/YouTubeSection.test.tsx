@@ -10,7 +10,6 @@ import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { BlockRule, TrackedSite, YouTubeFeatures } from '~/types/site';
 
-// youtube.com が無いときに節が送る値（すべて OFF）
 const YOUTUBE_OFF: YouTubeSettingsInput = {
   enabled: false,
   blockAccess: false,
@@ -21,23 +20,6 @@ const YOUTUBE_OFF: YouTubeSettingsInput = {
   timeLimit: null
 };
 
-/**
- * YouTubeSection の表示分岐とコールバックの検査
- *
- * 過去の不具合（machina-gg/vision-focus#422）は YouTube の非表示設定が
- * 効かないもので、親へ返す設定オブジェクトの中身が要点になる。
- * ここでは「どのトグルを押すと、どのキーが何に変わって返るか」まで確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
-/**
- * 見出しの文言から、それに対応するトグルを引く
- *
- * 各トグルには data-testid が無いため、見出しの要素から祖先をたどり
- * 最初に見つかったトグルを返す（見出しに最も近いものが対応するトグル）。
- */
 function switchNear(text: string): HTMLElement {
   let node: HTMLElement | null = screen.getByText(text);
   while (node) {
@@ -48,10 +30,6 @@ function switchNear(text: string): HTMLElement {
   throw new Error(`${text} に対応するトグルが見つからない`);
 }
 
-/**
- * 節が表示する値（`settings`）から youtube.com のサイトを組み立てる。
- * enabled なら YouTube 機能を持ち、blockAccess ならブロック設定（有効）を持つ
- */
 function siteOf(youtube: Partial<YouTubeSettingsInput>): TrackedSite | null {
   const settings = { ...YOUTUBE_OFF, ...youtube };
   if (!settings.enabled) return null;
@@ -90,7 +68,6 @@ function renderSection(
   return { settings, ...renderSite(siteOf(youtube), onYouTubeChange) };
 }
 
-/** 確認に回された依頼を 1 件取り出す（呼ばれていなければ失敗させる） */
 function onlyRequest(
   onRequestUnblock: ReturnType<typeof renderSection>['onRequestUnblock']
 ): UnblockRequest {
@@ -99,7 +76,6 @@ function onlyRequest(
 }
 
 describe('YouTubeSection', () => {
-  // 保存形（youtube.com のサイト）から節の表示と送る値を作る部分
   describe('youtube.com のサイトの見せ方', () => {
     it('youtube.com が無ければすべて OFF', () => {
       renderSite(null);
@@ -275,7 +251,6 @@ describe('YouTubeSection', () => {
     });
   });
 
-  // OFF にするとブロックが弱まる 2 つのトグルは、確認が通るまで設定を変えない
   describe('ブロックを弱める操作の確認', () => {
     it('主トグルを OFF にすると確認に回り、まだ設定を変えない', () => {
       const { onYouTubeChange, onRequestUnblock } = renderSection({
@@ -347,7 +322,6 @@ describe('YouTubeSection', () => {
       });
     });
 
-    // ブロック方式の表示は時間制限の有無で決まるため、時間制限をそのまま渡す
     it('時間制限があれば依頼にその時間制限が載る', () => {
       const timeLimit = { type: 'daily' as const, limitSeconds: 30 * 60 };
       const { onRequestUnblock } = renderSection({

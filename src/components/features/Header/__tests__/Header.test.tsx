@@ -5,13 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Header } from '../Header';
 
-/**
- * Header の表示分岐とコールバックの検査
- *
- * 過去の不具合（machina-gg/vision-focus#277 / #369）はロゴが表示されないもので、
- * E2E では「ロゴの img が存在する」までしか見ていなかった。ここでは src に
- * 実体（データ URL）が入っていることまで確かめる。
- */
 describe('Header', () => {
   describe('ロゴとバージョン', () => {
     it('ロゴ画像がデータ URL 付きで表示される', () => {
@@ -19,7 +12,6 @@ describe('Header', () => {
 
       const logo = screen.getByTestId('app-logo');
       expect(logo).toHaveAttribute('alt', 'VisionFocus');
-      // src が空・undefined だとロゴが出ない（#277 / #369）
       expect(logo.getAttribute('src')).toMatch(/^data:image\//);
     });
 

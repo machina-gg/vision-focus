@@ -5,15 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Modal } from '../Modal';
 
-/**
- * Modal の開閉と、見出しの有無で変わる描画の検査
- *
- * 閉じているときは中身を一切出さない（閉じたはずのフォームが背後に
- * 残らない）ことと、閉じる手段（見出しの × ・背景）がどれも onClose を
- * 呼ぶことを見る。大きさは data-size で確かめる（COMPONENT_TESTING.md
- * 「状態は属性で表す」。クラス名は見ない）。
- */
-
 describe('Modal', () => {
   describe('閉じているとき', () => {
     it('中身を描画しない', () => {

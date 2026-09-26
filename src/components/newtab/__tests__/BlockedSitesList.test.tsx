@@ -9,44 +9,29 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import type { TrackedSite, TrackedSites } from '~/types/site';
 
-/**
- * BlockedSitesList の表示件数と開閉の検査
- *
- * 無効なサイトを除いて 0 件になったら何も描画しないこと、折りたたみ時は
- * 一覧を出さないこと、展開しても maxVisible 件までしか出さず、超える分は
- * 「もっと見る」で開くことを確かめる（machina-gg/vision-focus#457）。
- * ブロック回数は 0 回のときに出さない分岐があるため、境界（0 回・未記録）を含める。
- */
-
-// ブロック回数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
 const itemOf = (domain: string, enabled = true): TrackedSite =>
   blockedSite(domain, { enabled });
 
-/** 開閉ボタンを押して一覧を開く（もう一度押すと閉じる） */
 function expand() {
   fireEvent.click(screen.getByTestId('newtab-blocked-sites-toggle'));
 }
 
-/** 「もっと見る」ボタン（上限を超える分が無ければ描画されない） */
 function showMoreButton() {
   return screen.queryByTestId('newtab-blocked-sites-show-more');
 }
 
-/** 「もっと見る」を押して上限を外す（もう一度押すと上限に戻る） */
 function clickShowMore() {
   fireEvent.click(screen.getByTestId('newtab-blocked-sites-show-more'));
 }
 
-/** 今表示されているドメインの一覧 */
 function visibleDomains() {
   return screen
     .queryAllByTestId('newtab-blocked-site-domain')
     .map((el) => el.textContent);
 }
 
-/** domain が site0..siteN-1 の有効なブロック項目を n 件作る */
 function itemsOf(n: number): TrackedSites {
   return sitesOf(
     ...Array.from({ length: n }, (_, i) => itemOf(`site${i}.example`))

@@ -5,14 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Card } from '../Card';
 
-/**
- * Card の「押せるかどうか」の出し分けと属性の受け渡しの検査
- *
- * onClick を渡したときだけ role と tabIndex が付き、キーボードと支援技術から
- * 操作対象として見える。variant / padding はクラス名のほかに data-* 属性としても
- * 持つので、クラス名ではなく属性で確かめる（machina-gg/vision-focus#455）。
- */
-
 describe('Card', () => {
   describe('子要素', () => {
     it('渡した子要素をそのまま描画する', () => {

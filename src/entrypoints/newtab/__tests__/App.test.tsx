@@ -17,23 +17,12 @@ import type {
 import { blockedSite, sitesOf } from '~/test/sites';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS } from '~/types/storage';
 
-/**
- * 新規タブ（ブロック画面）の出し分けの検査
- *
- * ブロック画面は 1 つだけで、スタイル（プリセット）の有無で別画面に
- * 分岐しない（machina-gg/vision-focus#449）。スタイルが 1 つも無くても
- * ブロックの説明と目印が出ること、スタイル作成の案内だけが出し分けられる
- * ことを見る。段組み・配色のクラス名は検査しない。
- */
-
-// 置換値（ドメイン名・件数）が描画に出ているかを見るため
 stubI18nWithSubstitutions();
 
 const storageState = vi.hoisted(() => ({
   blockedDomain: null as string | null
 }));
 
-// ストレージの実体は chrome.storage を読みに行くため、値をテストから決められない
 vi.mock('~/lib/storage', () => ({
   visionItem: { key: 'local:vision' },
   settingsItem: { key: 'local:settings' },
@@ -44,7 +33,6 @@ vi.mock('~/lib/storage', () => ({
   clearLastBlockedDomain: async () => undefined
 }));
 
-// 設定画面を開くのは拡張機能 API の責務（E2E で見る）
 vi.mock('~/lib/chromeApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/lib/chromeApi')>();
   return {
@@ -54,7 +42,6 @@ vi.mock('~/lib/chromeApi', async (importOriginal) => {
   };
 });
 
-// 背景画像の URL は chrome.runtime.getURL を経由する（テスト環境には無い）
 vi.mock('~/constants/backgrounds', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('~/constants/backgrounds')>();
@@ -70,10 +57,7 @@ const hooksState = vi.hoisted(() => ({
   sites: [] as SiteKey[]
 }));
 
-// 表示の出し分けは vision / settings の中身で決まるため、値を差し替える。
-// useResolvedPreset と useBackgroundPreload は実体のまま使う
-// （スタイル不在で既定値へ落ちることが検査対象のため）。
-// 事実と追跡中のサイトは入力だけを差し替え、導出（todayStats など）は実体を通す
+// useResolvedPreset / useBackgroundPreload と導出は実体を通す（既定値への落ち方と導出が検査対象）
 vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
   return {
@@ -89,12 +73,7 @@ vi.mock('~/hooks', async (importOriginal) => {
   };
 });
 
-/**
- * 背景画像の読み込みが完了する Image のスタブ
- *
- * jsdom は画像を取得しないため onload / onerror がどちらも発火せず、
- * 実体のままでは背景の読み込み待ち（空のコンテナ）から先へ進まない。
- */
+// jsdom は画像を取得せず onload / onerror が発火しないため、読み込みを即座に完了させる
 class ImmediateImage {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
@@ -128,7 +107,6 @@ function renderApp(
   options: {
     vision?: VisionSettings;
     settings?: AppSettings;
-    /** 追跡中のサイトの設定（ブロック中のサイト一覧・ブロック日数の出どころ） */
     trackedSites?: TrackedSites;
     activity?: ActivityLog;
     sites?: SiteKey[];
@@ -352,8 +330,7 @@ describe('壁紙のダウンロードボタン', () => {
       }
     });
 
-    // 準備完了後の画面が出た時点で、同じ描画の中にボタンがあること。
-    // findBy で待つと、無関係な再描画が起きたときだけ出る実装でも通ってしまう
+    // ボタンを findBy で待つと、無関係な再描画でだけ出る実装でも通るため getBy で見る
     await screen.findByTestId('newtab-setup-cta');
     expect(screen.getByTestId('newtab-download-button')).toBeInTheDocument();
   });

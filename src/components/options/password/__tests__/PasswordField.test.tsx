@@ -5,19 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { PasswordField } from '../PasswordField';
 
-/**
- * PasswordField の伏せ字の切り替えと、入力で渡る値の検査
- *
- * 表示中かどうかは目のアイコンの差でしか出ていなかったため、
- * 切り替えボタンに aria-label を足してから検査する
- * （COMPONENT_TESTING.md「状態は属性で表す」）。伏せ字そのものは
- * input の type に出るので、そちらも合わせて見る。
- *
- * ラベルと入力欄の結び付きも見る。伏せ字で中身が見えないため、
- * 結び付いていないとどの欄を触っているか読み上げでも画面でも分からない
- * （machina-gg/vision-focus#468）。
- */
-
 function renderField(
   overrides: Partial<React.ComponentProps<typeof PasswordField>> = {}
 ) {
@@ -38,17 +25,14 @@ function renderField(
   return { ...result, onChange, onToggleShow };
 }
 
-/** 入力欄はラベルの文言から引く（結び付きが切れたらここで落ちる） */
 const field = () => screen.getByLabelText('新しいパスワード');
 
-/** パスワード変更フォームと同じ 3 欄のラベル（現在 / 新規 / 確認） */
 const CHANGE_FORM_LABELS = {
   current: '現在のパスワード',
   new: '新しいパスワード',
   confirm: '確認用パスワード'
 };
 
-/** 変更フォームと同じく 3 欄を同時に描画する */
 function renderChangeFormFields() {
   return render(
     <>
@@ -226,8 +210,6 @@ describe('PasswordField', () => {
 
   describe('呼び出し側に委ねる操作', () => {
     it('キー操作を渡すと、押されたキーがそのまま届く', () => {
-      // ダイアログでの Enter 送信はこの経路に乗る
-      // （machina-gg/vision-focus#476）
       const onKeyDown = vi.fn();
       renderField({ onKeyDown });
 
