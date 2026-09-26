@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useYouTubeSettings } from '~/hooks/useYouTubeSettings';
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
@@ -16,7 +16,7 @@ vi.mock('~/lib/storage', () => ({
 import { sendMessage } from '~/lib/messaging';
 import { settingsItem, sitesItem } from '~/lib/storage';
 
-const value: YouTubeSectionValue = {
+const value: YouTubeSettingsInput = {
   enabled: true,
   blockAccess: true,
   hideShorts: true,

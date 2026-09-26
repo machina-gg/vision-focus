@@ -2,7 +2,7 @@
  * CSV Export utilities
  */
 
-import type { BlockListRow } from '~/lib/siteSelectors';
+import { blockListSites } from '~/lib/blockList';
 import {
   dailySeries,
   lastActiveOn,
@@ -13,7 +13,7 @@ import {
   secondsSinceUnblock
 } from '~/lib/activityStats';
 import type { ActivityLog, DateKey, DateRange } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
+import type { SiteKey, TrackedSites } from '~/types/site';
 import { formatTime, toDateKey } from './time';
 
 /**
@@ -67,16 +67,19 @@ function formatDateKey(date: DateKey | null): string {
 }
 
 /**
- * Export block list to CSV
+ * ブロックリストの CSV の行（画面の「ブロック中のサイト」一覧と同じサイト・同じ順。無効にしたサイトも含める）
  */
-export function exportBlockList(blockRows: readonly BlockListRow[]): void {
-  const headers = ['Domain', 'Added Date'];
-  const rows = blockRows.map((item) => [
-    item.domain,
-    new Date(item.createdAt).toLocaleDateString()
+export function blockListRows(sites: TrackedSites): string[][] {
+  return blockListSites(sites).map((site) => [
+    site.domain,
+    new Date(site.block.addedAt).toLocaleDateString()
   ]);
+}
 
-  const csv = toCSV(headers, rows);
+/** ブロックリストを CSV でダウンロードする */
+export function exportBlockList(sites: TrackedSites): void {
+  const headers = ['Domain', 'Added Date'];
+  const csv = toCSV(headers, blockListRows(sites));
   downloadCSV(`visionfocus-blocklist-${getDateString()}.csv`, csv);
 }
 

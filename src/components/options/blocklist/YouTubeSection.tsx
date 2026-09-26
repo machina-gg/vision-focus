@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import {
   Youtube,
   ShieldBan,
@@ -17,32 +23,55 @@ import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
+import type { TrackedSite } from '~/types/site';
 
 interface YouTubeSectionProps {
-  youtube: YouTubeSectionValue;
-  onYouTubeChange: (youtube: YouTubeSectionValue) => void;
+  /** youtube.com の追跡中のサイト（追跡していなければ null） */
+  site: TrackedSite | null;
+  onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
   /** ブロックを弱める操作を確認に回す。確認が通るまで設定は変えない */
   onRequestUnblock: (request: UnblockRequest) => void;
 }
 
 // OFF にするとブロックが弱まるトグル。ここに無いトグルは確認なしで切り替える
-const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSectionValue> = new Set([
+const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSettingsInput> = new Set([
   'enabled',
   'blockAccess'
 ]);
+
+/**
+ * youtube.com のサイトから節の表示と送信の値を作る。
+ * ブロックリストの入力から youtube.com を足した場合（機能なし・ブロック有効）も機能全体を有効として見せる
+ * （無効として見せると、非表示の切り替えで送る値の enabled が false になり、アクセスブロックが外れる）。
+ * ブロック設定が無効でも時間制限は値に残す（アクセスブロックを ON に戻したときに復元するため）
+ */
+function settingsOf(site: TrackedSite | null): YouTubeSettingsInput {
+  const features = site?.youtube ?? null;
+  const blockAccess = site?.block?.enabled === true;
+  return {
+    enabled: features !== null || blockAccess,
+    blockAccess,
+    hideShorts: features?.hideShorts ?? false,
+    hideRecommendations: features?.hideRecommendations ?? false,
+    hideComments: features?.hideComments ?? false,
+    hideHomeFeed: features?.hideHomeFeed ?? false,
+    timeLimit: site?.block?.timeLimit ?? null
+  };
+}
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
 type LimitTypeOption = 'always' | 'daily';
 
 export function YouTubeSection({
-  youtube,
+  site,
   onYouTubeChange,
   onRequestUnblock
 }: YouTubeSectionProps) {
-  const isEnabled = youtube?.enabled ?? false;
-  const blockAccessEnabled = youtube?.blockAccess ?? false;
+  const youtube = useMemo(() => settingsOf(site), [site]);
+  const isEnabled = youtube.enabled;
+  const blockAccessEnabled = youtube.blockAccess;
 
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,18 +97,18 @@ export function YouTubeSection({
   }, []);
 
   // 現在の保存済み値
-  const currentType: LimitTypeOption = youtube?.timeLimit
+  const currentType: LimitTypeOption = youtube.timeLimit
     ? youtube.timeLimit.type
     : 'always';
 
   // 現在の保存済み分数
-  const currentMinutes = youtube?.timeLimit
+  const currentMinutes = youtube.timeLimit
     ? Math.floor(youtube.timeLimit.limitSeconds / 60)
     : TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
 
   // 既存の制限時間を取得し、プリセット値に丸める
   const getInitialMinutes = () => {
-    if (!youtube?.timeLimit) {
+    if (!youtube.timeLimit) {
       return TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
     }
 
@@ -105,13 +134,13 @@ export function YouTubeSection({
     (selectedType !== 'always' && minutes !== currentMinutes);
 
   const handleToggle = useCallback(
-    (key: keyof YouTubeSectionValue) => (checked: boolean) => {
+    (key: keyof YouTubeSettingsInput) => (checked: boolean) => {
       if (!checked && UNBLOCK_GUARDED_KEYS.has(key)) {
         // トグルは制御コンポーネントなので、確認が通るまで onYouTubeChange を
         // 呼ばなければキャンセル時に元の表示のまま残る
         onRequestUnblock({
           domain: YOUTUBE_DOMAIN,
-          timeLimit: youtube?.timeLimit,
+          timeLimit: youtube.timeLimit,
           action: 'toggle',
           onConfirm: () => onYouTubeChange({ ...youtube, [key]: false })
         });
@@ -238,7 +267,7 @@ export function YouTubeSection({
             icon={<ShieldBan className="w-4 h-4" />}
             title={getMessage('youtubeBlockAccess')}
             description={getMessage('youtubeBlockAccessDescription')}
-            checked={youtube?.blockAccess ?? false}
+            checked={youtube.blockAccess}
             onChange={handleToggle('blockAccess')}
             disabled={!isEnabled}
           />
@@ -301,7 +330,7 @@ export function YouTubeSection({
               </div>
 
               {/* Current settings display */}
-              {youtube?.timeLimit && (
+              {youtube.timeLimit && (
                 <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
                   {getMessage('currentSetting')}: {getMessage('dailyLimit')} -{' '}
                   {Math.floor(youtube.timeLimit.limitSeconds / 60)}{' '}
@@ -330,7 +359,7 @@ export function YouTubeSection({
             icon={feature.icon}
             title={feature.title}
             description={feature.description}
-            checked={youtube?.[feature.key] ?? false}
+            checked={youtube[feature.key]}
             onChange={handleToggle(feature.key)}
             disabled={!isEnabled}
           />

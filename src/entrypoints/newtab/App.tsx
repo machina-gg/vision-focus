@@ -22,7 +22,6 @@ import {
   useStorageItem
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { selectBlockList } from '~/lib/siteSelectors';
 import { formatTimeLocalized } from '~/lib/time';
 import {
   clearLastBlockedDomain,
@@ -76,8 +75,11 @@ export function NewtabApp() {
   // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
   const now = new Date();
   const today = todayStats(activity, sites, now);
-  const blockRows = selectBlockList(trackedSites);
-  const blockCounts = blockCountsByDomain(activity, blockRows, now);
+  const blockCounts = blockCountsByDomain(
+    activity,
+    Object.values(trackedSites),
+    now
+  );
   const blockedInfo = blockedDomain
     ? {
         domain: blockedDomain,
@@ -248,7 +250,10 @@ export function NewtabApp() {
         />
 
         {/* Blocked Sites List */}
-        <BlockedSitesList blockRows={blockRows} blockCounts={blockCounts} />
+        <BlockedSitesList
+          trackedSites={trackedSites}
+          blockCounts={blockCounts}
+        />
 
         {/* Setup CTA - スタイルが 1 つも無いときだけ出す。壁紙には写さない */}
         {!hasPresets && (

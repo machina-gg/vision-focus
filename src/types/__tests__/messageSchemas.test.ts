@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   TrackedSiteSchema,
   YouTubeFeaturesSchema,
-  YouTubeSectionValueSchema
+  YouTubeSettingsInputSchema
 } from '../messageSchemas';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 
@@ -44,7 +44,7 @@ describe('TrackedSiteSchema', () => {
   });
 });
 
-describe('YouTubeSectionValueSchema', () => {
+describe('YouTubeSettingsInputSchema', () => {
   it('時間制限は null を含めて必須', () => {
     const value = {
       enabled: true,
@@ -54,9 +54,10 @@ describe('YouTubeSectionValueSchema', () => {
       hideComments: false,
       hideHomeFeed: false
     };
-    expect(YouTubeSectionValueSchema.safeParse(value).success).toBe(false);
+    expect(YouTubeSettingsInputSchema.safeParse(value).success).toBe(false);
     expect(
-      YouTubeSectionValueSchema.safeParse({ ...value, timeLimit: null }).success
+      YouTubeSettingsInputSchema.safeParse({ ...value, timeLimit: null })
+        .success
     ).toBe(true);
   });
 });

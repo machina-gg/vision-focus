@@ -24,6 +24,10 @@ export function SchedulesTab({
   onToggleSchedule
 }: SchedulesTabProps) {
   const { settings, vision } = useSettings();
+  // 判定（blockService の isBlockingWindowOpen）と同じく有効なスケジュールだけを数える。
+  // すべて無効なら「スケジュール無し」として常にブロックするので、注意書きを出すと挙動と食い違う
+  const hasEnabledSchedule =
+    settings?.schedules.some((schedule) => schedule.enabled) ?? false;
   return (
     <div className="space-y-6">
       {/* Weekly Calendar */}
@@ -44,8 +48,7 @@ export function SchedulesTab({
           </Button>
         </div>
 
-        {/* スケジュールが1件以上ある場合に注意書きを表示 */}
-        {settings && settings.schedules.length > 0 && (
+        {hasEnabledSchedule && (
           <div className="mb-4 p-3 bg-info-50 rounded-lg">
             <div className="flex items-start gap-2">
               <Info className="w-5 h-5 text-info-600 flex-shrink-0 mt-0.5" />

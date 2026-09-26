@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // ロゴはバンドルに含めるため ?inline（データ URL）で import する。
 // getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
@@ -34,11 +34,6 @@ import {
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import {
-  selectBlockList,
-  selectTrackedSiteRows,
-  selectYouTubeSection
-} from '~/lib/siteSelectors';
 import { getSettings, getVision, settingsItem, sitesItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
@@ -69,22 +64,9 @@ function OptionsAppContent() {
   const schedules = useSchedules({ settings, setSettings });
   const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
-  // 事実の表と母集団（追跡中のサイト）。background だけが書き、画面は読んで導出するだけ
-  const { activity, sites } = useActivitySources();
-  // 追跡中のサイトの設定。各タブへは今の props の形に組み立て直して渡す
+  // 事実の表と追跡中のサイト。どちらも background だけが書き、画面は読んで導出するだけ
+  const { activity } = useActivitySources();
   const [trackedSites] = useStorageItem(sitesItem);
-  const blockRows = useMemo(
-    () => selectBlockList(trackedSites),
-    [trackedSites]
-  );
-  const youtube = useMemo(
-    () => selectYouTubeSection(trackedSites),
-    [trackedSites]
-  );
-  const trackedSiteRows = useMemo(
-    () => selectTrackedSiteRows(trackedSites),
-    [trackedSites]
-  );
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
@@ -199,8 +181,7 @@ function OptionsAppContent() {
             onToggleDomain={blocklist.handleToggleDomain}
             onUpdateTimeLimit={blocklist.handleUpdateTimeLimit}
             activity={activity}
-            blockRows={blockRows}
-            youtube={youtube}
+            trackedSites={trackedSites}
             onYouTubeChange={handleYouTubeChange}
           />
         )}
@@ -219,14 +200,13 @@ function OptionsAppContent() {
         {activeTab === TABS.ANALYTICS && (
           <AnalyticsTab
             activity={activity}
-            sites={sites}
-            blockRows={blockRows}
-            trackedSiteRows={trackedSiteRows}
+            trackedSites={trackedSites}
             onReblock={analytics.handleReblock}
             onReset={analytics.handleResetAnalytics}
             onStopTracking={analytics.handleStopTracking}
             onRefresh={analytics.handleRefreshAnalytics}
             onAddSite={analytics.handleAddSiteToTrack}
+            addSiteError={analytics.addSiteError}
             isSupportPromptVisible={supportPrompt.isVisible}
             onSupport={supportPrompt.handleSupport}
             onDismissSupport={supportPrompt.handleDismiss}

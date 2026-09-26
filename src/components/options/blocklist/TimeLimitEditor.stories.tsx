@@ -1,15 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockListRow } from '~/lib/siteSelectors';
-
-const baseItem: BlockListRow = {
-  id: '1',
-  domain: 'twitter.com',
-  createdAt: '2026-02-01T10:00:00Z',
-  enabled: true,
-  timeLimit: null
-};
+import { blockedSite } from '~/test/sites';
 
 const meta = {
   title: 'Options/Blocklist/TimeLimitEditor',
@@ -26,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 // 常時ブロック（時間制限なし）の場合
 export const AlwaysBlocked: Story = {
   args: {
-    item: baseItem,
+    site: blockedSite('twitter.com'),
     onUpdate: () => {},
     usedSeconds: 0
   }
@@ -35,7 +27,9 @@ export const AlwaysBlocked: Story = {
 // 1 日の制限時間が設定されている場合
 export const WithDailyLimit: Story = {
   args: {
-    item: { ...baseItem, timeLimit: { type: 'daily', limitSeconds: 1800 } },
+    site: blockedSite('twitter.com', {
+      timeLimit: { type: 'daily', limitSeconds: 1800 }
+    }),
     onUpdate: () => {},
     usedSeconds: 0
   }
@@ -44,7 +38,9 @@ export const WithDailyLimit: Story = {
 // 制限に近づいている場合（残り時間バッジが警告色になる）
 export const NearLimit: Story = {
   args: {
-    item: { ...baseItem, timeLimit: { type: 'daily', limitSeconds: 1800 } },
+    site: blockedSite('twitter.com', {
+      timeLimit: { type: 'daily', limitSeconds: 1800 }
+    }),
     onUpdate: () => {},
     usedSeconds: 1700
   }

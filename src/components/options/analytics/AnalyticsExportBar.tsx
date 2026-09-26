@@ -18,6 +18,7 @@ import {
 } from '~/constants/intervals';
 import { retentionRange } from '~/hooks/useActivityStats';
 import { rankSites, sumRange } from '~/lib/activityStats';
+import { blockListSites } from '~/lib/blockList';
 import { getMessage } from '~/lib/i18n';
 import {
   exportBlockList,
@@ -32,26 +33,23 @@ import {
   copyImageToClipboard,
   downloadImage
 } from '~/lib/share';
+import { trackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TrackedSites } from '~/types/site';
 
 interface AnalyticsExportBarProps {
-  /** ブロックリスト（CSV の出力元） */
-  blockRows: BlockListRow[];
   /** 事実の表 */
   activity: ActivityLog;
-  /** 母集団（追跡中のサイト） */
-  sites: readonly SiteKey[];
+  /** 追跡中のサイト。数値の母集団と、ブロックリスト CSV の出力元 */
+  trackedSites: TrackedSites;
   onRefresh: () => Promise<void>;
   onReset: () => void;
 }
 
 export function AnalyticsExportBar({
-  blockRows,
   activity,
-  sites,
+  trackedSites,
   onRefresh,
   onReset
 }: AnalyticsExportBarProps) {
@@ -70,6 +68,8 @@ export function AnalyticsExportBar({
     setTimeout(() => setIsRefreshing(false), REFRESH_SPINNER_DELAY_MS);
   };
 
+  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
+
   // CSV・X シェアの数値はすべて保持期間全体・追跡中のサイトから出す
   const { range, totals, topBlockedSite } = useMemo(() => {
     const retention = retentionRange(new Date());
@@ -81,7 +81,7 @@ export function AnalyticsExportBar({
     };
   }, [activity, sites]);
 
-  const hasBlockList = blockRows.length > 0;
+  const hasBlockList = blockListSites(trackedSites).length > 0;
   const hasBlockCounts = totals.blocks > 0;
   const hasDailyStats =
     totals.seconds > 0 || totals.blocks > 0 || totals.unblocks > 0;
@@ -90,7 +90,7 @@ export function AnalyticsExportBar({
     hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData;
 
   const handleExportBlockList = () => {
-    exportBlockList(blockRows);
+    exportBlockList(trackedSites);
     trackFeatureUse('csv_export');
     setShowExportMenu(false);
   };

@@ -1,15 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DomainListItem } from './DomainListItem';
-import type { BlockListRow } from '~/lib/siteSelectors';
-
-const baseItem: BlockListRow = {
-  id: '1',
-  domain: 'twitter.com',
-  createdAt: '2026-02-01T10:00:00Z',
-  enabled: true,
-  timeLimit: null
-};
+import { blockedSite } from '~/test/sites';
 
 const meta = {
   title: 'Options/Blocklist/DomainListItem',
@@ -26,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 // 常時ブロック・ブロック回数の記録がある場合
 export const Basic: Story = {
   args: {
-    item: baseItem,
+    site: blockedSite('twitter.com'),
     blockCount: 12,
     usedSeconds: 0,
     onToggle: () => {},
@@ -37,12 +29,9 @@ export const Basic: Story = {
 
 export const WithTimeLimit: Story = {
   args: {
-    item: {
-      ...baseItem,
-      id: '3',
-      domain: 'youtube.com',
+    site: blockedSite('reddit.com', {
       timeLimit: { type: 'daily', limitSeconds: 1800 }
-    },
+    }),
     blockCount: 5,
     usedSeconds: 900,
     onToggle: () => {},
@@ -54,7 +43,7 @@ export const WithTimeLimit: Story = {
 // トグルで無効化されている場合
 export const Disabled: Story = {
   args: {
-    item: { ...baseItem, id: '4', domain: 'reddit.com', enabled: false },
+    site: blockedSite('facebook.com', { enabled: false }),
     blockCount: 0,
     usedSeconds: 0,
     onToggle: () => {},

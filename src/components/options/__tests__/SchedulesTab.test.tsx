@@ -136,6 +136,31 @@ describe('SchedulesTab', () => {
       expect(screen.queryByText('noSchedules')).not.toBeInTheDocument();
     });
 
+    it('すべて無効なら注意書きを出さない（無効だけならスケジュール無しと同じく常にブロックする）', () => {
+      renderTab(
+        settingsOf([
+          scheduleOf({ enabled: false }),
+          scheduleOf({ id: 'schedule-2', enabled: false })
+        ])
+      );
+
+      expect(
+        screen.queryByText('scheduleBlockingNotice')
+      ).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('schedule-item')).toHaveLength(2);
+    });
+
+    it('有効なスケジュールが 1 件でもあれば注意書きを出す', () => {
+      renderTab(
+        settingsOf([
+          scheduleOf({ enabled: false }),
+          scheduleOf({ id: 'schedule-2', enabled: true })
+        ])
+      );
+
+      expect(screen.getByText('scheduleBlockingNotice')).toBeInTheDocument();
+    });
+
     it('名前と時間帯を出す', () => {
       renderTab(settingsOf([scheduleOf()]));
 

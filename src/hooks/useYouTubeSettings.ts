@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 
 interface UseYouTubeSettingsReturn {
-  handleYouTubeChange: (youtube: YouTubeSectionValue) => Promise<void>;
+  handleYouTubeChange: (youtube: YouTubeSettingsInput) => Promise<void>;
 }
 
 /**
@@ -17,7 +17,7 @@ interface UseYouTubeSettingsReturn {
  */
 export function useYouTubeSettings(): UseYouTubeSettingsReturn {
   const handleYouTubeChange = useCallback(
-    async (youtube: YouTubeSectionValue) => {
+    async (youtube: YouTubeSettingsInput) => {
       try {
         await sendMessage('update-youtube-settings', { youtube });
       } catch {

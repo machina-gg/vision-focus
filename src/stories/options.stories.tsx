@@ -12,7 +12,6 @@ import {
 } from '~/components/options';
 import { SettingsProvider } from '~/contexts/SettingsContext';
 import { useStorageItem } from '~/hooks';
-import { selectBlockList, selectYouTubeSection } from '~/lib/siteSelectors';
 import { sitesItem } from '~/lib/storage';
 
 import '~/styles/globals.css';
@@ -47,8 +46,7 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             onToggleDomain={() => {}}
             onUpdateTimeLimit={() => {}}
             activity={{}}
-            blockRows={selectBlockList(trackedSites)}
-            youtube={selectYouTubeSection(trackedSites)}
+            trackedSites={trackedSites}
             onYouTubeChange={() => {}}
           />
         );

@@ -49,7 +49,7 @@ import { removeBlockHandler } from '../handlers/remove-block';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
 import { invoke } from './handlers/helpers';
 import { toDateKey } from '~/lib/time';
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import {
   blockedSite,
   sitesOf,
@@ -66,8 +66,8 @@ function givenSites(...sites: TrackedSite[]) {
 const storedSites = () => store.sites as TrackedSites;
 
 const youtube = (
-  overrides: Partial<YouTubeSectionValue> = {}
-): YouTubeSectionValue => ({
+  overrides: Partial<YouTubeSettingsInput> = {}
+): YouTubeSettingsInput => ({
   enabled: true,
   blockAccess: false,
   hideShorts: false,

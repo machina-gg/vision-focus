@@ -9,10 +9,19 @@ import {
   DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 } from '~/types/storage';
 import type { AppSettings } from '~/types/storage';
-import type { BlockListRow, YouTubeSectionValue } from '~/lib/siteSelectors';
 import type { ActivityLog } from '~/types/activity';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
+import type { TimeLimit } from '~/types/storage';
+import type { TrackedSite } from '~/types/site';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import {
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 
 /**
  * BlocklistTab の表示分岐とコールバックの検査
@@ -34,8 +43,8 @@ stubI18nWithSubstitutions();
 
 const contextState = vi.hoisted(() => ({
   settings: undefined as unknown,
-  // 一覧の行は props で渡る（追跡中のサイトから画面側で組み立てる）
-  blockRows: [] as unknown[]
+  // 追跡中のサイトは props で渡る
+  sites: [] as unknown[]
 }));
 
 vi.mock('~/contexts/SettingsContext', () => ({
@@ -66,16 +75,15 @@ function switchNear(text: string): HTMLElement {
   throw new Error(`${text} に対応するトグルが見つからない`);
 }
 
-const itemOf = (overrides: Partial<BlockListRow> = {}): BlockListRow => ({
-  id: 'item-1',
-  domain: 'example.com',
-  createdAt: '2026-01-01T00:00:00Z',
-  enabled: true,
-  timeLimit: null,
-  ...overrides
-});
+/** ブロック設定を持つサイト（既定は example.com の有効な常時ブロック） */
+const itemOf = (
+  overrides: { domain?: string; enabled?: boolean; timeLimit?: TimeLimit } = {}
+): TrackedSite => {
+  const { domain = 'example.com', ...block } = overrides;
+  return blockedSite(domain, block);
+};
 
-const YOUTUBE_OFF: YouTubeSectionValue = {
+const YOUTUBE_OFF: YouTubeSettingsInput = {
   enabled: false,
   blockAccess: false,
   hideShorts: false,
@@ -85,23 +93,28 @@ const YOUTUBE_OFF: YouTubeSectionValue = {
   timeLimit: null
 };
 
-/** 全体の設定（Context）と一覧の行（props）を用意する。undefined は設定が未取得 */
+/** 全体の設定（Context）と追跡中のサイト（props）を用意する。undefined は設定が未取得 */
 function setSettings(
-  overrides: (Partial<AppSettings> & { blockRows?: BlockListRow[] }) | undefined
+  overrides: (Partial<AppSettings> & { sites?: TrackedSite[] }) | undefined
 ) {
   if (overrides === undefined) {
     contextState.settings = undefined;
-    contextState.blockRows = [];
+    contextState.sites = [];
     return;
   }
-  const { blockRows = [], ...rest } = overrides;
+  const { sites = [], ...rest } = overrides;
   contextState.settings = { ...DEFAULT_SETTINGS, ...rest };
-  contextState.blockRows = blockRows;
+  contextState.sites = sites;
 }
 
 type TabProps = Parameters<typeof BlocklistTab>[0];
 
-function renderTab(props: Partial<TabProps> = {}) {
+/** `youtube` は youtube.com のサイト（追跡中のサイトに足して渡す） */
+function renderTab({
+  youtube,
+  ...props
+}: Partial<TabProps> & { youtube?: TrackedSite } = {}) {
+  const sites = contextState.sites as TrackedSite[];
   const handlers = {
     setNewDomain: vi.fn(),
     onAddDomain: vi.fn(),
@@ -115,9 +128,8 @@ function renderTab(props: Partial<TabProps> = {}) {
     <BlocklistTab
       newDomain=""
       blockError=""
-      youtube={YOUTUBE_OFF}
       activity={{}}
-      blockRows={contextState.blockRows as BlockListRow[]}
+      trackedSites={sitesOf(...sites, ...(youtube ? [youtube] : []))}
       {...handlers}
       {...props}
     />
@@ -127,7 +139,7 @@ function renderTab(props: Partial<TabProps> = {}) {
 }
 
 beforeEach(() => {
-  setSettings({ blockRows: [] });
+  setSettings({ sites: [] });
 });
 
 describe('BlocklistTab', () => {
@@ -153,7 +165,7 @@ describe('BlocklistTab', () => {
     });
 
     it('ブロック対象が 0 件なら未登録の案内を表示し、読み込み中は表示しない', () => {
-      setSettings({ blockRows: [] });
+      setSettings({ sites: [] });
 
       renderTab();
 
@@ -164,9 +176,9 @@ describe('BlocklistTab', () => {
 
     it('ブロック対象の件数ぶん項目を表示する', () => {
       setSettings({
-        blockRows: [
-          itemOf({ id: 'a', domain: 'a.example' }),
-          itemOf({ id: 'b', domain: 'b.example' })
+        sites: [
+          itemOf({ domain: 'a.example' }),
+          itemOf({ domain: 'b.example' })
         ]
       });
 
@@ -196,7 +208,7 @@ describe('BlocklistTab', () => {
     }
 
     it('ブロック回数は保持期間全体の合計をその項目に表示する', () => {
-      setSettings({ blockRows: [itemOf({ domain: 'example.com' })] });
+      setSettings({ sites: [itemOf({ domain: 'example.com' })] });
       const lastWeek = new Date();
       lastWeek.setDate(lastWeek.getDate() - 7);
 
@@ -211,7 +223,7 @@ describe('BlocklistTab', () => {
     });
 
     it('照合できる回数が無ければバッジを表示しない', () => {
-      setSettings({ blockRows: [itemOf({ domain: 'example.com' })] });
+      setSettings({ sites: [itemOf({ domain: 'example.com' })] });
 
       renderTab({ activity: logOf({ 'other.example': { blocks: 9 } }) });
 
@@ -220,7 +232,7 @@ describe('BlocklistTab', () => {
 
     it('時間制限の残り時間は今日の表示秒数から出す', () => {
       setSettings({
-        blockRows: [
+        sites: [
           itemOf({
             domain: 'example.com',
             timeLimit: { type: 'daily', limitSeconds: 60 }
@@ -238,7 +250,7 @@ describe('BlocklistTab', () => {
 
     it('前日の表示秒数は残り時間に数えない', () => {
       setSettings({
-        blockRows: [itemOf({ timeLimit: { type: 'daily', limitSeconds: 60 } })]
+        sites: [itemOf({ timeLimit: { type: 'daily', limitSeconds: 60 } })]
       });
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
@@ -297,9 +309,7 @@ describe('BlocklistTab', () => {
   describe('通知設定', () => {
     it('時間制限つきのサイトがあっても通知設定は出さない（設定タブの担当）', () => {
       setSettings({
-        blockRows: [
-          itemOf({ timeLimit: { type: 'daily', limitSeconds: 1800 } })
-        ]
+        sites: [itemOf({ timeLimit: { type: 'daily', limitSeconds: 1800 } })]
       });
 
       renderTab();
@@ -312,7 +322,7 @@ describe('BlocklistTab', () => {
 
   describe('パスワード保護なしの解除', () => {
     beforeEach(() => {
-      setSettings({ blockRows: [itemOf()] });
+      setSettings({ sites: [itemOf()] });
     });
 
     it('パスワード保護の表示は出ない', () => {
@@ -349,14 +359,14 @@ describe('BlocklistTab', () => {
       expect(handlers.onToggleDomain).not.toHaveBeenCalled();
     });
 
-    it('無効なトグルを入れるときは確認なしで onToggleDomain(id, true) が呼ばれる', () => {
-      setSettings({ blockRows: [itemOf({ enabled: false })] });
+    it('無効なトグルを入れるときは確認なしで onToggleDomain(サイトキー, true) が呼ばれる', () => {
+      setSettings({ sites: [itemOf({ enabled: false })] });
 
       const handlers = renderTab();
 
       fireEvent.click(screen.getByTestId('blocklist-item-toggle'));
 
-      expect(handlers.onToggleDomain).toHaveBeenCalledWith('item-1', true);
+      expect(handlers.onToggleDomain).toHaveBeenCalledWith('example.com', true);
       expect(
         screen.queryByTestId('unblock-confirm-hold-button')
       ).not.toBeInTheDocument();
@@ -378,7 +388,7 @@ describe('BlocklistTab', () => {
   describe('パスワード保護ありの解除', () => {
     beforeEach(() => {
       setSettings({
-        blockRows: [itemOf()],
+        sites: [itemOf()],
         password: { enabled: true, passwordHash: 'hash' }
       });
     });
@@ -423,18 +433,43 @@ describe('BlocklistTab', () => {
   // YouTube の操作そのものは YouTubeSection のテストが担う。
   // ここでは props が子まで届くことだけを確かめる
   describe('YouTube 設定の受け渡し', () => {
-    it('渡した YouTube 設定がそのまま子に反映される', () => {
+    it('youtube.com のサイトが子に渡る', () => {
       renderTab({
-        youtube: { ...YOUTUBE_OFF, enabled: true }
+        youtube: trackedSite(YOUTUBE_DOMAIN, { youtube: youtubeFeatures() })
       });
 
       expect(screen.getByText('youtubeBlockAccess')).toBeInTheDocument();
+    });
+
+    // youtube.com の設定は YouTube の節だけが担当する（一覧にも出すと 2 箇所から変えられる）
+    it('ブロック設定を持つ youtube.com は「ブロック中のサイト」一覧に出さない', () => {
+      setSettings({ sites: [itemOf({ domain: 'a.example' })] });
+
+      renderTab({ youtube: blockedSite(YOUTUBE_DOMAIN) });
+
+      expect(
+        screen
+          .getAllByTestId('blocklist-item-domain')
+          .map((el) => el.textContent)
+      ).toEqual(['a.example']);
+    });
+
+    it('youtube.com だけなら一覧は未登録の案内になる', () => {
+      renderTab({ youtube: blockedSite(YOUTUBE_DOMAIN) });
+
+      expect(screen.getByText('noBlockedSites')).toBeInTheDocument();
     });
   });
 
   // YouTube を弱める操作も、ブロックリストと同じ確認の経路を通ることを確かめる
   describe('YouTube のブロックを弱める操作', () => {
-    const youtubeOn = {
+    // YouTube 機能とアクセスブロック（有効）を持つ youtube.com と、そのとき節が送る値
+    const youtubeOn = blockedSite(
+      YOUTUBE_DOMAIN,
+      {},
+      { youtube: youtubeFeatures() }
+    );
+    const youtubeOnValue: YouTubeSettingsInput = {
       ...YOUTUBE_OFF,
       enabled: true,
       blockAccess: true
@@ -463,10 +498,11 @@ describe('BlocklistTab', () => {
 
     it('時間制限があればブロック方式を 1 日の上限と表示する', () => {
       renderTab({
-        youtube: {
-          ...youtubeOn,
-          timeLimit: { type: 'daily', limitSeconds: 1800 }
-        }
+        youtube: blockedSite(
+          YOUTUBE_DOMAIN,
+          { timeLimit: { type: 'daily', limitSeconds: 1800 } },
+          { youtube: youtubeFeatures() }
+        )
       });
 
       fireEvent.click(switchNear('youtubeBlockAccess'));
@@ -504,14 +540,14 @@ describe('BlocklistTab', () => {
 
       expect(handlers.onYouTubeChange).toHaveBeenCalledTimes(1);
       expect(handlers.onYouTubeChange).toHaveBeenCalledWith({
-        ...youtubeOn,
+        ...youtubeOnValue,
         enabled: false
       });
     });
 
     it('ON にする操作は確認なしで反映する', () => {
       const handlers = renderTab({
-        youtube: { ...youtubeOn, blockAccess: false }
+        youtube: trackedSite(YOUTUBE_DOMAIN, { youtube: youtubeFeatures() })
       });
 
       fireEvent.click(switchNear('youtubeBlockAccess'));
@@ -520,14 +556,14 @@ describe('BlocklistTab', () => {
         screen.queryByTestId('unblock-confirm-hold-button')
       ).not.toBeInTheDocument();
       expect(handlers.onYouTubeChange).toHaveBeenCalledWith({
-        ...youtubeOn,
+        ...youtubeOnValue,
         blockAccess: true
       });
     });
 
     it('パスワード保護中はパスワード入力が開き、まだ切らない', () => {
       setSettings({
-        blockRows: [],
+        sites: [],
         password: { enabled: true, passwordHash: 'hash' }
       });
       const handlers = renderTab({ youtube: youtubeOn });
@@ -543,7 +579,7 @@ describe('BlocklistTab', () => {
 
     it('パスワード入力を閉じるとトグルは ON のまま残る', () => {
       setSettings({
-        blockRows: [],
+        sites: [],
         password: { enabled: true, passwordHash: 'hash' }
       });
       const handlers = renderTab({ youtube: youtubeOn });

@@ -2,20 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AnalyticsSummary } from './AnalyticsSummary';
 import { daysAgoKey, mockActivity } from '~/stories/mockActivity';
-import { selectTrackedSiteRows } from '~/lib/siteSelectors';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
 /** 今日から days 日前の時刻（ブロック開始日は今日基準の相対で作る） */
 const isoDaysAgo = (days: number): string =>
   new Date(`${daysAgoKey(days)}T12:00:00`).toISOString();
 
-// twitter.com はブロック中、facebook.com / reddit.com はブロックリストから外して追跡だけが続く
-const mixedRows = selectTrackedSiteRows(
-  sitesOf(
-    blockedSite('twitter.com', { addedAt: isoDaysAgo(3) }),
-    trackedSite('facebook.com'),
-    trackedSite('reddit.com')
-  )
+// twitter.com はブロック中、facebook.com はトグルで無効、reddit.com はブロックリストから外して追跡だけが続く
+const mixedSites = sitesOf(
+  blockedSite('twitter.com', { addedAt: isoDaysAgo(3) }),
+  blockedSite('facebook.com', { addedAt: isoDaysAgo(10), enabled: false }),
+  trackedSite('reddit.com')
 );
 
 // 解除日と解除後の時間は activity から出る
@@ -38,12 +35,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ブロック中・解除済みが混在し、合計浪費時間も表示される場合
+// ブロック中・無効・追跡だけが混在し、合計浪費時間も表示される場合
 export const WithTrackedSites: Story = {
   args: {
     activity: mixedActivity,
-    sites: ['twitter.com', 'facebook.com', 'reddit.com'],
-    trackedSiteRows: mixedRows,
+    trackedSites: mixedSites,
     onReblock: () => {},
     onStopTracking: () => {}
   }
@@ -53,8 +49,7 @@ export const WithTrackedSites: Story = {
 export const NoTrackedSites: Story = {
   args: {
     activity: {},
-    sites: [],
-    trackedSiteRows: [],
+    trackedSites: {},
     onReblock: () => {},
     onStopTracking: () => {}
   }

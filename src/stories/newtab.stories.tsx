@@ -4,33 +4,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GoalDisplay, MiniStats, BlockedSitesList } from '~/components/newtab';
 import { DownloadButton } from '~/components/features';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import { blockedSite, sitesOf } from '~/test/sites';
 
 import '~/styles/globals.css';
 
-const mockBlockList: BlockListRow[] = [
-  {
-    id: '1',
-    domain: 'twitter.com',
-    createdAt: '2026-02-01T10:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '2',
-    domain: 'youtube.com',
-    createdAt: '2026-02-02T14:30:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '3',
-    domain: 'reddit.com',
-    createdAt: '2026-02-03T09:15:00Z',
-    enabled: true,
-    timeLimit: null
-  }
-];
+// youtube.com は YouTube の節が担当するので、一覧には出ない
+const mockSites = sitesOf(
+  blockedSite('twitter.com', { addedAt: '2026-02-01T10:00:00Z' }),
+  blockedSite('youtube.com', { addedAt: '2026-02-02T14:30:00Z' }),
+  blockedSite('reddit.com', { addedAt: '2026-02-03T09:15:00Z' })
+);
 
 const mockBlockCounts: Record<string, number> = {
   'twitter.com': 15,
@@ -77,7 +60,7 @@ function NewtabDemo() {
 
         {/* Blocked Sites List */}
         <BlockedSitesList
-          blockRows={mockBlockList}
+          trackedSites={mockSites}
           blockCounts={mockBlockCounts}
           maxVisible={5}
         />
@@ -185,7 +168,7 @@ const FullFeaturedWrapper = () => {
           onAnalyticsClick={() => alert('Open analytics')}
         />
         <BlockedSitesList
-          blockRows={mockBlockList}
+          trackedSites={mockSites}
           blockCounts={mockBlockCounts}
           maxVisible={5}
         />

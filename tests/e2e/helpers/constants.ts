@@ -188,6 +188,8 @@ export const SELECTORS = {
   analytics: {
     siteRankingList: '[data-testid="analytics-top-sites-heading"]',
     trackedSitesList: '[data-testid="analytics-tracked-sites-heading"]',
+    // 追跡中サイト一覧の 1 行。data-status は blocked / disabled / tracking
+    trackedSite: '[data-testid="analytics-tracked-site"]',
     wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
     exportButton: '[data-testid="analytics-export-button"]',
     exportBlocklist: '[data-testid="analytics-export-blocklist"]',
@@ -201,6 +203,7 @@ export const SELECTORS = {
     stopTrackingButton: '[data-testid="analytics-stop-tracking-button"]',
     addSiteInput: '[data-testid="analytics-add-site-input"]',
     addSiteButton: '[data-testid="analytics-add-site-button"]',
+    addSiteError: '[data-testid="analytics-add-site-error"]',
     // 週次 / 月次レポートの切り替えタブ（Tabs が `tab-${id}` を付ける）
     weeklyReportTab: '[data-testid="tab-report-weekly"]',
     monthlyReportTab: '[data-testid="tab-report-monthly"]'
