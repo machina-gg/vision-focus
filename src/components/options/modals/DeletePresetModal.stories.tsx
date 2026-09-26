@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 参照しているスケジュールが 1 件だけの場合
 export const Default: Story = {
   args: {
     isOpen: true,
@@ -24,7 +23,6 @@ export const Default: Story = {
   }
 };
 
-// 参照しているスケジュールが複数ある場合
 export const MultipleSchedules: Story = {
   args: {
     isOpen: true,
@@ -34,7 +32,6 @@ export const MultipleSchedules: Story = {
   }
 };
 
-// 閉じている状態
 export const Closed: Story = {
   args: {
     isOpen: false,

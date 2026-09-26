@@ -16,7 +16,6 @@ interface UnblockConfirmModalProps {
   domain: string;
   blockStyle: string;
   action: UnblockAction;
-  /** 確定までに押し続ける秒数。説明文・残り秒数の表示もこの値に従う */
   holdSeconds: UnblockHoldSeconds;
 }
 
@@ -45,7 +44,6 @@ export function UnblockConfirmModal({
     }
   }, []);
 
-  // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       resetProgress();
@@ -83,7 +81,6 @@ export function UnblockConfirmModal({
     resetProgress();
   }, [resetProgress]);
 
-  // Clean up animation frame on unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current !== null) {
@@ -118,7 +115,6 @@ export function UnblockConfirmModal({
           </div>
         </div>
 
-        {/* Long-press button */}
         <div className="space-y-2">
           <button
             type="button"
@@ -128,12 +124,10 @@ export function UnblockConfirmModal({
             onPointerLeave={handlePointerLeave}
             className="relative w-full h-12 overflow-hidden rounded-lg border-2 border-danger-300 bg-danger-50 select-none touch-none cursor-pointer transition-colors hover:border-danger-400"
           >
-            {/* Progress bar */}
             <div
               className="absolute inset-y-0 left-0 bg-danger-200 transition-none"
               style={{ width: `${progress}%` }}
             />
-            {/* Button text */}
             <div className="relative flex items-center justify-center gap-2 h-full">
               <Icon
                 className={`w-4 h-4 ${isHolding ? 'text-danger-700' : 'text-danger-500'}`}

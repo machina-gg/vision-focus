@@ -16,7 +16,6 @@ const mockSites: TrackedSites = sitesOf(
   blockedSite('reddit.com', { addedAt: '2026-02-03T09:15:00Z' })
 );
 
-// 画面の操作を手元の状態に反映するだけの例（実際は background が sites を書く）
 const BlocklistTabWrapper = () => {
   const [trackedSites, setTrackedSites] = useState(mockSites);
   const [newDomain, setNewDomain] = useState('');
@@ -104,10 +103,6 @@ export const Default: Story = {
   render: () => <BlocklistTabWrapper />
 };
 
-// #370: 長い URL を入力した状態で、入力欄の末尾が確認できること・
-// 「追加」ボタンが潰れたり折り返したりしないことを確認するための story
-// BlocklistTab は内部で useSettings() を呼ぶため、SettingsProvider で
-// ラップしないと Storybook 上でクラッシュする（Default と同じ制約）
 export const LongUrlInput: Story = {
   render: () => (
     <SettingsProvider>

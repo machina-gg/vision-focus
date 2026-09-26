@@ -5,9 +5,6 @@ interface EmptyReportProps {
   message: string;
 }
 
-/**
- * 空のレポート状態を表示するコンポーネント
- */
 export function EmptyReport({ message }: EmptyReportProps) {
   return (
     <div className="text-center py-8">

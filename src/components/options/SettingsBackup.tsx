@@ -27,10 +27,6 @@ interface SettingsBackupProps {
   onSettingsChange?: () => void;
 }
 
-/**
- * Settings Backup セクションコンポーネント
- * 設定のエクスポート・インポート機能を提供
- */
 export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
@@ -62,7 +58,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
       downloadSettings(data);
       setExportStatus('success');
 
-      // Reset status after a short delay
       setTimeout(() => {
         setExportStatus('idle');
         setExportWarning(null);
@@ -77,14 +72,12 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
     fileInputRef.current?.click();
   };
 
-  /** インポートの失敗を表示し、一定時間後に表示を戻す */
   const showImportError = (messageKey: string) => {
     setImportStatus('error');
     setImportMessage(getMessage(messageKey));
     setTimeout(() => {
       setImportStatus('idle');
       setImportMessage(null);
-      // 保存前に表示した警告も一緒に片付ける（失敗した内容の警告が残らないように）
       setImportWarnings([]);
     }, SHARE_MESSAGE_DELAY_MS);
   };
@@ -111,7 +104,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         setImportWarnings(warnings);
       }
 
-      // Apply imported settings
       if (!result.data) {
         throw new Error('No data');
       }
@@ -124,23 +116,19 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
       const { settings: newSettings, vision: newVision } =
         applyImportedSettings(result.data, currentSettings, currentVision);
 
-      // 設定と追跡中のサイトの保存は background に任せる。保存とブロックルールの更新、
-      // 開いているタブのブロックまでを一続きで処理させるため
+      // 保存・ブロックルールの更新・開いているタブのブロックを一続きで処理させるため、保存は background に任せる
       const response = await sendMessage('import-settings', {
         settings: newSettings,
         sites: Object.values(result.data.sites)
       });
 
-      // 保存に失敗したときは成功表示を出さない（スタイルも書き換えない）
       if (!response?.success) {
         showImportError('importErrorSaveFailed');
         return;
       }
 
-      // スタイルはブロック判定に関わらないため、画面側から保存する
       await setVision(newVision);
 
-      // 既存のサイトと入れ子になって取り込まなかったサイトを警告に足す
       const skipped = (response.skipped ?? []).map(({ domain, conflict }) =>
         getMessage('importWarningNestedSite', [domain, conflict])
       );
@@ -151,10 +139,8 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
       setImportStatus('success');
       setImportMessage(getMessage('importSuccessWithMerge'));
 
-      // Notify parent of settings change
       onSettingsChange?.();
 
-      // Reset status after a short delay
       setTimeout(() => {
         setImportStatus('idle');
         setImportMessage(null);
@@ -163,7 +149,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
     } catch {
       showImportError('importErrorInvalidFormat');
     } finally {
-      // 失敗したときも同じファイルを選び直せるように、必ず入力を空へ戻す
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -187,7 +172,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
       </div>
 
       <div className="space-y-4">
-        {/* Export Section */}
         <div className="p-4 bg-gray-50 rounded-lg">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -235,7 +219,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
           )}
         </div>
 
-        {/* Import Section */}
         <div className="p-4 bg-gray-50 rounded-lg">
           <div className="flex items-start justify-between">
             <div className="flex-1">

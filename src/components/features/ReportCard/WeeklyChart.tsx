@@ -16,18 +16,12 @@ interface WeeklyChartProps {
   dailyBlockCounts: number[];
 }
 
-/**
- * 曜日ラベルを i18n から取得
- */
 function getDayLabels(): string[] {
   return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((key) =>
     getMessage(key)
   );
 }
 
-/**
- * 週次チャート用のフォーマット（秒 → 分/時間）
- */
 function formatChartMinutes(seconds: number): string {
   const totalMinutes = Math.round(seconds / 60);
   const hours = Math.floor(totalMinutes / 60);
@@ -36,9 +30,6 @@ function formatChartMinutes(seconds: number): string {
   return `${mins}m`;
 }
 
-/**
- * 週次複合チャート: 日別の無駄時間（棒グラフ）+ ブロック数（折れ線グラフ）
- */
 export function WeeklyChart({
   dailyBreakdown,
   dailyBlockCounts
@@ -46,7 +37,7 @@ export function WeeklyChart({
   const dayLabels = getDayLabels();
   const chartData = dailyBreakdown.map((d, i) => ({
     day: dayLabels[i] || `D${i + 1}`,
-    wasteTime: Math.round(d.wasteTime / 60), // 分に変換
+    wasteTime: Math.round(d.wasteTime / 60),
     blockCount: dailyBlockCounts[i] || 0
   }));
 

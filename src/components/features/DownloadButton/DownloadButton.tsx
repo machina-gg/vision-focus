@@ -76,7 +76,6 @@ export function DownloadButton({
     return 'bg-black/50 hover:bg-black/70';
   };
 
-  // 読み上げ用の保存結果。成否は一度きりの出来事なので、属性だけでは伝わらない
   const statusMessage =
     downloadStatus === 'success'
       ? getMessage('downloadWallpaperSuccess')
@@ -86,7 +85,6 @@ export function DownloadButton({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Main Button */}
       <button
         data-testid="newtab-download-button"
         onClick={() => setIsOpen(!isOpen)}
@@ -110,10 +108,7 @@ export function DownloadButton({
         )}
       </button>
 
-      {/*
-        保存結果の読み上げ領域。見た目は変えずに読み上げだけ行うため sr-only で置く。
-        状態が変わる前から領域を描画しておかないと読み上げられないので、待機中は空文字を入れる
-      */}
+      {/* 内容が変わる前から描画しておかないと読み上げられないため、待機中も空文字で置く */}
       <span
         role="status"
         className="sr-only"
@@ -123,17 +118,14 @@ export function DownloadButton({
         {statusMessage}
       </span>
 
-      {/* Resolution Menu - excluded from wallpaper capture */}
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
             data-html2canvas-ignore="true"
           />
 
-          {/* Menu */}
           <div
             ref={menuRef}
             className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"

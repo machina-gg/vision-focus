@@ -1,21 +1,11 @@
-/**
- * チャート共通ユーティリティ
- */
-
 import { parseDateKey } from '~/lib/activityStats';
 
-/**
- * 日付キー（ローカル日付）をフォーマット (e.g., "Jan 1")。
- * new Date('YYYY-MM-DD') は UTC の 0 時として読まれ、UTC より西では前日になるため使わない
- */
+/** new Date('YYYY-MM-DD') は UTC の 0 時として読まれ、UTC より西では前日になるため使わない */
 export function formatDate(dateStr: string): string {
   const date = parseDateKey(dateStr);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-/**
- * 分を時間と分の文字列にフォーマット (e.g., "2h 30m" or "45m")
- */
 export function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
@@ -23,10 +13,6 @@ export function formatMinutes(minutes: number): string {
   return `${mins}m`;
 }
 
-/**
- * チャートの Y 軸設定を取得
- * maxValue が 120 分以上の場合は時間単位、それ以外は分単位
- */
 export function getTimeAxisConfig(maxValue: number) {
   const useHours = maxValue >= 120;
   const tickFormatter = (v: number) => (useHours ? `${v}h` : `${v}m`);
@@ -39,16 +25,13 @@ export function getTimeAxisConfig(maxValue: number) {
   };
 }
 
-/**
- * サイト別チャート用カラーパレット
- */
 export const SITE_COLORS = [
-  '#fdba74', // orange-300
-  '#fcd34d', // amber-300
-  '#bef264', // lime-300
-  '#6ee7b7', // emerald-300
-  '#67e8f9', // cyan-300
-  '#a5b4fc', // indigo-300
-  '#d8b4fe', // purple-300
-  '#f9a8d4' // pink-300
+  '#fdba74',
+  '#fcd34d',
+  '#bef264',
+  '#6ee7b7',
+  '#67e8f9',
+  '#a5b4fc',
+  '#d8b4fe',
+  '#f9a8d4'
 ];

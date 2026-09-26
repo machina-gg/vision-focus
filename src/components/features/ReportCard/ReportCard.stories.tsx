@@ -6,8 +6,7 @@ import { WeeklyReportCard, MonthlyReportCard } from './ReportCard';
 import { generateMonthlyReport, generateWeeklyReport } from '~/lib/report';
 import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
 
-// 実際のレポート生成に例の activity を通す（合計・内訳・トップが同じ期間から出る形を見せる）。
-// 期間は今日基準なので、例の activity も今日からの相対日付で作ってある
+// レポートの期間は今日基準なので、例の activity も今日からの相対日付で作る
 const activity = storyActivity();
 const mockWeeklyReport = generateWeeklyReport(activity, STORY_SITES, 0);
 const mockMonthlyReport = generateMonthlyReport(activity, STORY_SITES, 0);
@@ -31,7 +30,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 週次レポート: データがある場合
 export const WeeklyWithData: Story = {
   args: {
     report: mockWeeklyReport,
@@ -41,7 +39,6 @@ export const WeeklyWithData: Story = {
   }
 };
 
-// 週次レポート: 当該週が進行中の場合（バッジ表示・次へボタン無効）
 export const WeeklyCurrentWeek: Story = {
   args: {
     report: mockWeeklyReport,
@@ -52,7 +49,6 @@ export const WeeklyCurrentWeek: Story = {
   }
 };
 
-// 週次レポート: データが無い場合
 export const WeeklyEmpty: Story = {
   args: {
     report: null,
@@ -62,7 +58,6 @@ export const WeeklyEmpty: Story = {
   }
 };
 
-// 月次レポート: データがある場合（WeeklyReportCard とは別コンポーネントのため render で描画する）
 export const MonthlyWithData: StoryObj<typeof MonthlyReportCard> = {
   render: (args) => <MonthlyReportCard {...args} />,
   args: {
@@ -73,7 +68,6 @@ export const MonthlyWithData: StoryObj<typeof MonthlyReportCard> = {
   }
 };
 
-// 月次レポート: データが無い場合
 export const MonthlyEmpty: StoryObj<typeof MonthlyReportCard> = {
   render: (args) => <MonthlyReportCard {...args} />,
   args: {

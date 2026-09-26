@@ -6,7 +6,6 @@ interface FormFeedbackProps {
   success: string | null;
 }
 
-/** Displays error and success feedback messages for password forms */
 export function FormFeedback({ error, success }: FormFeedbackProps) {
   return (
     <>

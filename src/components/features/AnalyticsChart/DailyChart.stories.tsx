@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 過去 14 日分のデータがある場合（分単位）
 export const WithData: Story = {
   args: {
     data: [
@@ -45,7 +44,6 @@ export const WithData: Story = {
   }
 };
 
-// 値が大きく、時間単位の目盛りに切り替わる場合
 export const LargeValues: Story = {
   args: {
     data: [
@@ -56,7 +54,6 @@ export const LargeValues: Story = {
   }
 };
 
-// データが無い場合
 export const Empty: Story = {
   args: {
     data: []

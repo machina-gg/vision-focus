@@ -24,13 +24,11 @@ export function SchedulesTab({
   onToggleSchedule
 }: SchedulesTabProps) {
   const { settings, vision } = useSettings();
-  // 判定（blockService の isBlockingWindowOpen）と同じく有効なスケジュールだけを数える。
-  // すべて無効なら「スケジュール無し」として常にブロックするので、注意書きを出すと挙動と食い違う
+  // blockService の isBlockingWindowOpen と同じく、有効なスケジュールだけを数える
   const hasEnabledSchedule =
     settings?.schedules.some((schedule) => schedule.enabled) ?? false;
   return (
     <div className="space-y-6">
-      {/* Weekly Calendar */}
       <WeeklyCalendar
         schedules={settings?.schedules ?? []}
         vision={vision}
@@ -89,8 +87,6 @@ export function SchedulesTab({
                     {DAY_KEYS.map((day, idx) => (
                       <span
                         key={day}
-                        // 有効な曜日かどうかが背景色の差でしか出ておらず、
-                        // 読み上げでは区別が付かない（machina-gg/vision-focus#455）
                         data-active={String(schedule.days.includes(idx))}
                         className={`text-xs px-1.5 py-0.5 rounded ${
                           schedule.days.includes(idx)

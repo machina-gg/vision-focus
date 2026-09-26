@@ -6,7 +6,6 @@ import { getMessage } from '~/lib/i18n';
 import { normalizeEndTime } from '~/lib/time';
 import type { Schedule, VisionSettings } from '~/types/storage';
 
-// Predefined colors for schedule blocks
 const SCHEDULE_COLORS = [
   { bg: 'bg-info-100', border: 'border-info-300', text: 'text-info-800' },
   {
@@ -27,7 +26,7 @@ const SCHEDULE_COLORS = [
 ];
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-const HOURS = Array.from({ length: 25 }, (_, i) => i); // 0-24
+const HOURS = Array.from({ length: 25 }, (_, i) => i);
 
 interface WeeklyCalendarProps {
   schedules: Schedule[];
@@ -45,7 +44,6 @@ interface ScheduleBlock {
 }
 
 function parseTime(time: string): { hour: number; minute: number } {
-  // Handle "24:00" as end of day
   if (time === '24:00') return { hour: 24, minute: 0 };
   const [hour, minute] = time.split(':').map(Number);
   return { hour, minute };
@@ -109,7 +107,6 @@ export function WeeklyCalendar({
   const currentTimePercent =
     ((now.getHours() * 60 + now.getMinutes()) / (24 * 60)) * 100;
 
-  // Create color map for schedules
   const colorMap = useMemo(() => {
     const map = new Map<string, number>();
     schedules.forEach((s, i) => {
@@ -118,14 +115,12 @@ export function WeeklyCalendar({
     return map;
   }, [schedules]);
 
-  // Get preset name for a schedule
   const getPresetName = (presetId: string | undefined): string | null => {
     if (!presetId || !vision?.presets) return null;
     const preset = vision.presets.find((p) => p.id === presetId);
     return preset?.name ?? null;
   };
 
-  // Create legend items
   const legendItems = useMemo(() => {
     return schedules.map((s) => ({
       id: s.id,
@@ -145,16 +140,12 @@ export function WeeklyCalendar({
         {getMessage('weeklyCalendar')}
       </h2>
 
-      {/* Calendar Grid */}
       <div
         className="border border-gray-200 rounded-lg overflow-hidden"
         data-testid="weekly-calendar"
       >
-        {/* Header Row - Days */}
         <div className="grid grid-cols-8 bg-gray-50 border-b border-gray-200">
-          <div className="p-2 text-center text-xs font-medium text-gray-500 border-r border-gray-200">
-            {/* Empty cell for time column */}
-          </div>
+          <div className="p-2 text-center text-xs font-medium text-gray-500 border-r border-gray-200"></div>
           {DAY_KEYS.map((day, index) => {
             const isToday = index === todayDayIndex;
             return (
@@ -173,9 +164,7 @@ export function WeeklyCalendar({
           })}
         </div>
 
-        {/* Calendar Body */}
         <div className="relative grid grid-cols-8" style={{ height: '400px' }}>
-          {/* Time Labels Column */}
           <div className="relative border-r border-gray-200">
             {HOURS.filter((h) => h % 3 === 0).map((hour) => {
               const translateClass =
@@ -196,7 +185,6 @@ export function WeeklyCalendar({
             })}
           </div>
 
-          {/* Day Columns */}
           {DAY_KEYS.map((day, dayIndex) => {
             const blocks = getScheduleBlocksForDay(
               schedules,
@@ -209,7 +197,6 @@ export function WeeklyCalendar({
                 key={day}
                 className="relative border-r border-gray-200 last:border-r-0"
               >
-                {/* Hour grid lines */}
                 {HOURS.filter((h) => h % 3 === 0 && h < 24).map((hour) => (
                   <div
                     key={hour}
@@ -218,7 +205,6 @@ export function WeeklyCalendar({
                   />
                 ))}
 
-                {/* Current time indicator */}
                 {dayIndex === todayDayIndex && (
                   <div
                     className="absolute left-0 right-0 z-10 pointer-events-none"
@@ -231,7 +217,6 @@ export function WeeklyCalendar({
                   </div>
                 )}
 
-                {/* Schedule Blocks */}
                 {blocks.map((block) => {
                   const colors = SCHEDULE_COLORS[block.colorIndex];
                   const presetName = getPresetName(block.schedule.presetId);
@@ -269,7 +254,6 @@ export function WeeklyCalendar({
         </div>
       </div>
 
-      {/* Legend */}
       <div className="mt-4 flex flex-wrap gap-3">
         {legendItems.map((item) => {
           const colors = SCHEDULE_COLORS[item.colorIndex];

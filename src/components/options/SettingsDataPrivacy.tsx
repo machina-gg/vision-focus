@@ -10,10 +10,6 @@ interface SettingsDataPrivacyProps {
   onAnalyticsOptInChange: (optIn: AnalyticsOptIn) => Promise<void>;
 }
 
-/**
- * Data & Privacy セクションコンポーネント
- * 分析データの共有設定を管理
- */
 export function SettingsDataPrivacy({
   settings,
   onAnalyticsOptInChange

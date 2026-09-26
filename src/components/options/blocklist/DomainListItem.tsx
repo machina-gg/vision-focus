@@ -10,9 +10,7 @@ import type { TimeLimit } from '~/types/storage';
 interface DomainListItemProps {
   site: BlockedSite;
   blockCount: number;
-  /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   usedSeconds: number;
-  /** 操作の宛先はサイトキー */
   onToggle: (domain: string, enabled: boolean) => void;
   onRemove: (domain: string) => void;
   onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
@@ -64,7 +62,6 @@ export function DomainListItem({
         </Button>
       </div>
 
-      {/* Time Limit Editor */}
       <div className="ml-11">
         <TimeLimitEditor
           site={site}

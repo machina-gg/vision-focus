@@ -23,21 +23,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// オンの場合
 export const Checked: Story = {
   args: {
     checked: true
   }
 };
 
-// オフの場合
 export const Unchecked: Story = {
   args: {
     checked: false
   }
 };
 
-// 無効化されている場合（親機能がオフのとき）
 export const Disabled: Story = {
   args: {
     checked: false,

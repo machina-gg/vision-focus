@@ -11,7 +11,6 @@ import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
 interface UnblockHoldSecondsFieldProps {
   holdSeconds: UnblockHoldSeconds;
   onUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
-  /** パスワード保護中は長押し確認が出ないため、選べないことを示す */
   disabled: boolean;
 }
 
@@ -27,7 +26,6 @@ export function UnblockHoldSecondsField({
 
   const handleChange = useCallback(
     (value: string) => {
-      // 選択肢の外の値は保存しない（長押しの秒数が壊れると解除できなくなるため）
       const selected = UNBLOCK_HOLD_SECONDS_OPTIONS.find(
         (seconds) => String(seconds) === value
       );
@@ -39,7 +37,6 @@ export function UnblockHoldSecondsField({
 
   return (
     <div data-testid="unblock-hold-seconds-field">
-      {/* select を label で包み、読み上げと検索で項目名が select に結び付くようにする */}
       <label className="block">
         <span className="block text-sm font-medium text-gray-600 mb-2">
           {getMessage('unblockHoldSeconds')}

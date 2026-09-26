@@ -40,7 +40,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
 
   return (
     <>
-      {/* Goal Settings */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           <div className="flex items-center gap-2">
@@ -49,7 +48,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           </div>
         </h2>
         <div className="space-y-4">
-          {/* Preset Name (only when editing a preset) */}
           {selectedPreset && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -64,7 +62,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
             </div>
           )}
 
-          {/* Main Goal */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {getMessage('yourGoal')}
@@ -77,7 +74,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
             />
           </div>
 
-          {/* Sub-message */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {getMessage('goalSubText')}
@@ -96,7 +92,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
             </p>
           </div>
 
-          {/* Text Color */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {getMessage('textColor')}
@@ -121,13 +116,11 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
         </div>
       </Card>
 
-      {/* Background Settings */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {getMessage('dashboardBackground')}
         </h2>
 
-        {/* Background Type Toggle */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {getMessage('backgroundType')}
@@ -162,7 +155,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           </div>
         </div>
 
-        {/* Image Selection */}
         {(draftDisplaySettings.backgroundType || 'image') === 'image' && (
           <div className="grid grid-cols-3 gap-4">
             {BACKGROUND_OPTIONS.map((bg) => (
@@ -190,7 +182,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           </div>
         )}
 
-        {/* Color Selection */}
         {draftDisplaySettings.backgroundType === 'color' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -214,7 +205,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           </div>
         )}
 
-        {/* Custom Background Upload */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-gray-900">
@@ -228,7 +218,6 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
         </div>
       </Card>
 
-      {/* Font Customization */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {getMessage('fontCustomization')}

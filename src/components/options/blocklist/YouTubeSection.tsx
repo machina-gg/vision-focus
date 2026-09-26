@@ -27,25 +27,16 @@ import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { TrackedSite } from '~/types/site';
 
 interface YouTubeSectionProps {
-  /** youtube.com の追跡中のサイト（追跡していなければ null） */
   site: TrackedSite | null;
   onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
-  /** ブロックを弱める操作を確認に回す。確認が通るまで設定は変えない */
   onRequestUnblock: (request: UnblockRequest) => void;
 }
 
-// OFF にするとブロックが弱まるトグル。ここに無いトグルは確認なしで切り替える
 const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSettingsInput> = new Set([
   'enabled',
   'blockAccess'
 ]);
 
-/**
- * youtube.com のサイトから節の表示と送信の値を作る。
- * ブロックリストの入力から youtube.com を足した場合（機能なし・ブロック有効）も機能全体を有効として見せる
- * （無効として見せると、非表示の切り替えで送る値の enabled が false になり、アクセスブロックが外れる）。
- * ブロック設定が無効でも時間制限は値に残す（アクセスブロックを ON に戻したときに復元するため）
- */
 function settingsOf(site: TrackedSite | null): YouTubeSettingsInput {
   const features = site?.youtube ?? null;
   const blockAccess = site?.block?.enabled === true;
@@ -76,7 +67,6 @@ export function YouTubeSection({
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (savedTimerRef.current) {
@@ -96,39 +86,32 @@ export function YouTubeSection({
     }, SAVED_FEEDBACK_DURATION_MS);
   }, []);
 
-  // 現在の保存済み値
   const currentType: LimitTypeOption = youtube.timeLimit
     ? youtube.timeLimit.type
     : 'always';
 
-  // 現在の保存済み分数
   const currentMinutes = youtube.timeLimit
     ? Math.floor(youtube.timeLimit.limitSeconds / 60)
     : TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
 
-  // 既存の制限時間を取得し、プリセット値に丸める
   const getInitialMinutes = () => {
     if (!youtube.timeLimit) {
       return TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
     }
 
     const existingMinutes = Math.floor(youtube.timeLimit.limitSeconds / 60);
-    // 既存の値がプリセット外の場合、最も近いプリセット値に丸める
     return roundToNearestPreset(existingMinutes);
   };
 
-  // ローカルステートで編集中の値を管理
   const [selectedType, setSelectedType] =
     useState<LimitTypeOption>(currentType);
   const [minutes, setMinutes] = useState(getInitialMinutes());
 
-  // 保存済み値が変更されたときにローカルステートを更新
   useEffect(() => {
     setSelectedType(currentType);
     setMinutes(currentMinutes);
   }, [currentType, currentMinutes]);
 
-  // 変更があるかチェック
   const hasChanges =
     selectedType !== currentType ||
     (selectedType !== 'always' && minutes !== currentMinutes);
@@ -136,8 +119,6 @@ export function YouTubeSection({
   const handleToggle = useCallback(
     (key: keyof YouTubeSettingsInput) => (checked: boolean) => {
       if (!checked && UNBLOCK_GUARDED_KEYS.has(key)) {
-        // トグルは制御コンポーネントなので、確認が通るまで onYouTubeChange を
-        // 呼ばなければキャンセル時に元の表示のまま残る
         onRequestUnblock({
           domain: YOUTUBE_DOMAIN,
           timeLimit: youtube.timeLimit,
@@ -154,7 +135,6 @@ export function YouTubeSection({
   const handleTypeChange = useCallback((newType: LimitTypeOption) => {
     setSelectedType(newType);
 
-    // タイプ変更時にデフォルトのプリセット値を設定
     if (newType !== 'always') {
       const defaultMinutes = TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
       setMinutes(roundToNearestPreset(defaultMinutes));
@@ -167,7 +147,6 @@ export function YouTubeSection({
     setMinutes(newMinutes);
   }, []);
 
-  // 保存ボタンのハンドラー
   const handleSave = useCallback(() => {
     if (selectedType === 'always') {
       onYouTubeChange({ ...youtube, timeLimit: null });
@@ -188,7 +167,6 @@ export function YouTubeSection({
     { value: 'daily', label: getMessage('dailyLimit') }
   ];
 
-  // プリセット選択肢を生成
   const getPresetOptions = () => {
     const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
@@ -241,7 +219,6 @@ export function YouTubeSection({
         </div>
       </div>
 
-      {/* Master Toggle */}
       <div className="p-3 bg-gray-50 rounded-lg mb-4">
         <div className="flex items-center justify-between">
           <div>
@@ -260,7 +237,6 @@ export function YouTubeSection({
         </div>
       </div>
 
-      {/* Block Access Toggle */}
       {isEnabled && (
         <div className="mb-4">
           <YouTubeFeatureToggle
@@ -272,7 +248,6 @@ export function YouTubeSection({
             disabled={!isEnabled}
           />
 
-          {/* Time Limit Settings for Block Access */}
           {blockAccessEnabled && (
             <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg space-y-3">
               <div className="flex items-center gap-2 mb-2">
@@ -311,7 +286,6 @@ export function YouTubeSection({
                 </div>
               )}
 
-              {/* 保存ボタン */}
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleSave}
@@ -329,7 +303,6 @@ export function YouTubeSection({
                 )}
               </div>
 
-              {/* Current settings display */}
               {youtube.timeLimit && (
                 <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
                   {getMessage('currentSetting')}: {getMessage('dailyLimit')} -{' '}
@@ -342,7 +315,6 @@ export function YouTubeSection({
         </div>
       )}
 
-      {/* Feature Toggles */}
       {!isEnabled && (
         <div className="mb-3 p-2 bg-block-50 border border-block-200 rounded-lg flex items-center gap-2">
           <Info className="w-4 h-4 text-block-600 flex-shrink-0" />

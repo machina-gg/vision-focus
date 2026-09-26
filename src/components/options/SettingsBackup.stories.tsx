@@ -14,14 +14,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 親から変更通知コールバックを受け取る場合
 export const Default: Story = {
   args: {
     onSettingsChange: () => {}
   }
 };
 
-// コールバックが渡されない場合（onSettingsChange は任意）
 export const WithoutCallback: Story = {
   args: {}
 };

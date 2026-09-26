@@ -6,14 +6,12 @@ import { BlockedSitesList } from './BlockedSitesList';
 import { blockedSite, sitesOf } from '~/test/sites';
 import type { TrackedSite } from '~/types/site';
 
-/** ブロック設定を持つ追跡中のサイト（追加時刻は並び順を決める） */
 const blockedAt = (
   domain: string,
   addedAt: string,
   enabled = true
 ): TrackedSite => blockedSite(domain, { addedAt, enabled });
 
-// youtube.com は YouTube の節が担当するので、一覧には出ない
 const mockSites: TrackedSite[] = [
   blockedAt('twitter.com', '2026-02-10T10:00:00Z'),
   blockedAt('youtube.com', '2026-02-10T11:00:00Z'),

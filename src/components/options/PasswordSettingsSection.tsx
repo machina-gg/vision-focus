@@ -27,20 +27,9 @@ interface PasswordSettingsSectionProps {
 
 type SettingMode = 'view' | 'set' | 'change' | 'remove';
 
-/**
- * 新しいパスワードの保存結果。
- *
- * 失敗の理由を表示済みかどうかを返り値で伝える。呼び出し側が error の状態を
- * 読んで判断すると、useCallback が閉じ込めた更新前の値を見てしまう（#454）。
- */
+// 呼び出し側が error の状態で判断すると useCallback が閉じ込めた更新前の値を見るため、返り値で伝える
 type SaveResult = 'saved' | 'failed-reported' | 'failed-unreported';
 
-/**
- * ブロック解除の保護（長押しの秒数とパスワード保護）をまとめたカード。
- *
- * 両者は排他で、パスワード保護が有効な間は長押し確認が出ない。片方だけを見て
- * 「なぜ長押しが出ないのか」と迷わないよう、同じカードに並べる。
- */
 export function PasswordSettingsSection({
   passwordSettings,
   onUpdate,
@@ -74,7 +63,6 @@ export function PasswordSettingsSection({
     setMode('view');
   }, []);
 
-  /** Validates new password and confirmation, then hashes and saves */
   const saveNewPassword = useCallback(
     async (successMessageKey: string): Promise<SaveResult> => {
       const validation = validatePasswordStrength(newPassword);
@@ -102,7 +90,6 @@ export function PasswordSettingsSection({
     [newPassword, confirmPassword, onUpdate, resetForm]
   );
 
-  /** Verifies the current password against stored hash */
   const verifyCurrentPassword = useCallback(async (): Promise<boolean> => {
     if (!passwordSettings.passwordHash) {
       setError(getMessage('passwordNotSet'));

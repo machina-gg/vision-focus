@@ -14,21 +14,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 改善傾向
 export const Improving: Story = {
   args: {
     trend: 'improving'
   }
 };
 
-// 悪化傾向
 export const Declining: Story = {
   args: {
     trend: 'declining'
   }
 };
 
-// 横ばい
 export const Stable: Story = {
   args: {
     trend: 'stable'

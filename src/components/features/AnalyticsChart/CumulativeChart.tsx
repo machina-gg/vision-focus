@@ -21,9 +21,6 @@ export interface CumulativeChartProps {
   data: CumulativeChartData[];
 }
 
-/**
- * 累積チャート: アンブロック以降の累積時間を棒グラフで表示
- */
 export function CumulativeChart({ data }: CumulativeChartProps) {
   if (data.length === 0) {
     return (
@@ -33,11 +30,9 @@ export function CumulativeChart({ data }: CumulativeChartProps) {
     );
   }
 
-  // Y 軸の単位を動的に決定
   const maxValue = Math.max(...data.map((d) => d.cumulative), 0);
   const axisConfig = getTimeAxisConfig(maxValue);
 
-  // データを変換（時間単位の場合のみ）
   const displayData = data.map((d) => ({
     ...d,
     date: formatDate(d.date),

@@ -8,16 +8,9 @@ interface DeletePresetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  /** 削除しようとしているスタイルを参照しているスケジュールの件数 */
   scheduleCount: number;
 }
 
-/**
- * スタイル削除の確認モーダル。
- *
- * 参照しているスケジュールが 1 件以上あるときだけ開く（#333）。
- * スケジュール自体は残り、スタイル連携（presetId）だけが外れることを伝える。
- */
 export function DeletePresetModal({
   isOpen,
   onClose,

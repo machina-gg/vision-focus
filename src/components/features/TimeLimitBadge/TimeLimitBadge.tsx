@@ -41,7 +41,6 @@ export function TimeLimitBadge({
 
   const timeDisplay = formatTime(remainingSeconds);
   const timeDisplayLocalized = formatTimeLocalized(remainingSeconds);
-  // 時間制限は 1 日単位のみ
   const suffix = getMessage('perDay');
 
   if (compact) {
@@ -49,8 +48,6 @@ export function TimeLimitBadge({
       <span
         data-testid="time-limit-badge"
         data-state="remaining"
-        // 省スペース表示では残りわずかが背景色にしか出ないため、属性でも持たせる
-        // （machina-gg/vision-focus#455）
         data-low={String(isLow)}
         className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
       >

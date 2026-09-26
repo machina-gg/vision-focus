@@ -14,14 +14,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// レポートデータが無い場合の既定メッセージ
 export const Default: Story = {
   args: {
     message: 'No report data available'
   }
 };
 
-// メッセージが長い場合でも折り返して表示されること
 export const LongMessage: Story = {
   args: {
     message:

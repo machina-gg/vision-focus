@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 残り時間に余裕がある場合
 export const Remaining: Story = {
   args: {
     remainingSeconds: 1200,
@@ -22,7 +21,6 @@ export const Remaining: Story = {
   }
 };
 
-// 残り時間が閾値（20%）を下回り警告表示になる場合
 export const Warning: Story = {
   args: {
     remainingSeconds: 240,
@@ -30,7 +28,6 @@ export const Warning: Story = {
   }
 };
 
-// 制限時間を使い切った場合
 export const Exceeded: Story = {
   args: {
     remainingSeconds: 0,
@@ -38,7 +35,6 @@ export const Exceeded: Story = {
   }
 };
 
-// 省スペース表示（compact）の場合
 export const Compact: Story = {
   args: {
     remainingSeconds: 1200,
@@ -47,7 +43,6 @@ export const Compact: Story = {
   }
 };
 
-// 警告表示自体を無効化した場合（showWarning: false）
 export const WarningDisabled: Story = {
   args: {
     remainingSeconds: 120,

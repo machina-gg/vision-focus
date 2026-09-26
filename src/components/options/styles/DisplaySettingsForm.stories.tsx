@@ -6,8 +6,6 @@ import { DisplaySettingsForm } from './DisplaySettingsForm';
 import type { UsePresetsReturn } from '~/hooks/usePresets';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
-// フォームの入力欄を触るためのハンドラは空実装で十分（Storybook では
-// 実際の保存は行わない）
 const noopHandlers: Pick<
   UsePresetsReturn,
   | 'setShowSavePresetModal'
@@ -49,7 +47,6 @@ const noopHandlers: Pick<
   handleFontSettingsChange: () => {}
 };
 
-// プリセットを選択して編集している状態
 const editingPresets: UsePresetsReturn = {
   draftDisplaySettings: {
     ...DEFAULT_DISPLAY_SETTINGS,
@@ -75,7 +72,6 @@ const editingPresets: UsePresetsReturn = {
   ...noopHandlers
 };
 
-// どのプリセットも選択していない状態（何も描画しない）
 const noSelection: UsePresetsReturn = {
   ...editingPresets,
   selectedPresetId: null
@@ -100,14 +96,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// プリセットを選択して編集している状態
 export const Editing: Story = {
   args: {
     presets: editingPresets
   }
 };
 
-// 選択中のプリセットが無い状態（フォームを描画しない）
 export const NoSelection: Story = {
   args: {
     presets: noSelection

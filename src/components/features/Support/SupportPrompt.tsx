@@ -5,19 +5,10 @@ import { getMessage } from '~/lib/i18n';
 import { SupportButton } from './SupportButton';
 
 interface SupportPromptProps {
-  /** 支援ページを開く */
   onSupport: () => Promise<void>;
-  /** 誘導を閉じる */
   onDismiss: () => Promise<void>;
 }
 
-/**
- * レポートの下に控えめに出す支援誘導
- *
- * 出すかどうかは親が決める（この部品は渡された操作を伝えるだけ）。閉じるだけで
- * 機能の利用を妨げない。新規タブとブロック画面には置かない — 集中させる
- * 画面であり、外部リンクは離脱経路になるため。
- */
 export function SupportPrompt({ onSupport, onDismiss }: SupportPromptProps) {
   return (
     <div

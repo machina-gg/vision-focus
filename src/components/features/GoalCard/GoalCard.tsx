@@ -21,7 +21,6 @@ export function GoalCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(goalText);
 
-  // 空文字・空白のみの場合は未設定として扱う
   const hasGoal = goalText.trim().length > 0;
 
   const handleSave = () => {
@@ -67,7 +66,6 @@ export function GoalCard({
               autoFocus
             />
           ) : (
-            // 目標未設定時は空欄にせず、設定を促す案内を薄い文字で表示する
             <p
               data-testid="goal-card-text"
               className={`text-base line-clamp-2 ${

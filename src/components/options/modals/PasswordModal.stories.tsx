@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 既定のタイトル・説明文で開いた状態
 export const Default: Story = {
   args: {
     isOpen: true,
@@ -24,7 +23,6 @@ export const Default: Story = {
   }
 };
 
-// 呼び出し側でタイトル・説明文を差し替えた状態
 export const CustomTitleAndDescription: Story = {
   args: {
     isOpen: true,
@@ -36,7 +34,6 @@ export const CustomTitleAndDescription: Story = {
   }
 };
 
-// 閉じている状態
 export const Closed: Story = {
   args: {
     isOpen: false,

@@ -10,26 +10,17 @@ import { getMessage } from '~/lib/i18n';
 
 const VERSION = '1.0.0';
 
-/**
- * 読むもの（使い方・FAQ・困ったとき・支援・問い合わせ）だけを並べるタブ。
- * 値を変える項目は設定タブに置く
- */
 export function HelpTab() {
   return (
     <div className="space-y-6">
-      {/* Getting Started */}
       <HelpGettingStarted />
 
-      {/* FAQ */}
       <HelpFAQ />
 
-      {/* Troubleshooting */}
       <HelpTroubleshooting />
 
-      {/* Support Development */}
       <SupportSection />
 
-      {/* Support */}
       <Card>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-premium-100 rounded-lg flex items-center justify-center">
@@ -58,7 +49,6 @@ export function HelpTab() {
         </div>
       </Card>
 
-      {/* Version Info */}
       <div className="text-center text-xs text-gray-400">
         <p>VisionFocus v{VERSION}</p>
       </div>

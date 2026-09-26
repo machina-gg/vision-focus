@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// パスワード保護が無効な場合（初期表示。トグルで設定フォームへ遷移する）
 export const Disabled: Story = {
   args: {
     passwordSettings: { enabled: false, passwordHash: null },
@@ -24,7 +23,6 @@ export const Disabled: Story = {
   }
 };
 
-// パスワード保護が有効な場合（変更リンクが表示され、長押しの秒数は選べない）
 export const Enabled: Story = {
   args: {
     passwordSettings: {

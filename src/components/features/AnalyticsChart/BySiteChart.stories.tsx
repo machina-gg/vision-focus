@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// サイトが複数ある場合
 export const WithData: Story = {
   args: {
     data: [
@@ -35,14 +34,12 @@ export const WithData: Story = {
   }
 };
 
-// サイトが 1 件だけの場合
 export const SingleSite: Story = {
   args: {
     data: [{ domain: 'twitter.com', fullDomain: 'twitter.com', time: 3600 }]
   }
 };
 
-// データが無い場合
 export const Empty: Story = {
   args: {
     data: []

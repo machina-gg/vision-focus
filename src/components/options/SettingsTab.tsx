@@ -24,10 +24,6 @@ interface SettingsTabProps {
   onSettingsChange: () => void;
 }
 
-/**
- * 拡張機能全体に効く設定（ブロック解除の保護・通知・データ・バックアップ）を集めるタブ。
- * 設定値は SettingsContext から読み、保存は親から渡された手段に任せる
- */
 export function SettingsTab({
   onPasswordUpdate,
   onUnblockConfirmUpdate,

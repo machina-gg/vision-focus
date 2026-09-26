@@ -63,7 +63,6 @@ export function GoalDisplay({
 
   return (
     <div className="group relative">
-      {/* 目標未設定時は空見出しにせず、設定を促す案内を薄く表示する */}
       <h1
         data-testid="newtab-goal-text"
         className={`drop-shadow-lg leading-tight transition-opacity duration-300 ${
@@ -82,7 +81,6 @@ export function GoalDisplay({
         </p>
       )}
 
-      {/* Edit button - only show when no preset is active */}
       {canEdit && (
         <button
           data-testid="newtab-goal-edit-button"

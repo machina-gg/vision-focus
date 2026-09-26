@@ -5,11 +5,7 @@ import { Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
 interface PasswordFieldProps {
-  /**
-   * 入力欄の識別子。ラベルの指し先（htmlFor）とテスト用の目印を兼ねるため、
-   * 同じ画面に複数の欄を出す呼び出し側は欄ごとに別の値を渡す
-   * （machina-gg/vision-focus#468）
-   */
+  /** ラベルの指し先（htmlFor）とテスト用の目印を兼ねるため、同じ画面の欄ごとに別の値を渡す */
   fieldId: string;
   label: string;
   value: string;
@@ -17,16 +13,10 @@ interface PasswordFieldProps {
   show: boolean;
   onToggleShow: () => void;
   placeholder: string;
-  /**
-   * 入力欄でのキー操作。確認ボタン以外に Enter でも送信する呼び出し側が使う
-   * （machina-gg/vision-focus#476）
-   */
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  /** 開いた直後にこの欄へ入力できる状態にするか（ダイアログの中で使う） */
   autoFocus?: boolean;
 }
 
-/** Reusable password input field with visibility toggle */
 export function PasswordField({
   fieldId,
   label,
@@ -48,8 +38,6 @@ export function PasswordField({
       </label>
       <div className="relative">
         <Input
-          // 識別子をテスト用の目印にも使う。ラベルの指し先と目印が同じ値なので、
-          // 片方だけ書き換えて食い違うことがない（machina-gg/vision-focus#468）
           id={fieldId}
           data-testid={fieldId}
           type={show ? 'text' : 'password'}
@@ -62,9 +50,6 @@ export function PasswordField({
         />
         <button
           type="button"
-          // アイコンだけのボタンなので名前を属性で持たせる。表示中かどうかも
-          // 目のアイコンの差でしか出ておらず、読み上げでは区別が付かない
-          // （machina-gg/vision-focus#455）
           aria-label={
             show ? getMessage('hidePassword') : getMessage('showPassword')
           }

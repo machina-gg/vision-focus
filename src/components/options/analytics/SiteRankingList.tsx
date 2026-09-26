@@ -8,18 +8,14 @@ import { getMessage } from '~/lib/i18n';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 
-/** ランキングに並べるサイトの数 */
 const RANKING_LIMIT = 10;
 
 interface SiteRankingListProps {
-  /** 事実の表 */
   activity: ActivityLog;
-  /** 母集団（追跡中のサイト） */
   sites: readonly SiteKey[];
 }
 
 export function SiteRankingList({ activity, sites }: SiteRankingListProps) {
-  // ブロック回数と解除回数は同じ期間（保持期間全体）・同じ母集団から出す
   const { topBlockedSites, unblocksBySite } = useMemo(() => {
     const range = retentionRange(new Date());
     return {

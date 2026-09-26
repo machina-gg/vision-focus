@@ -15,26 +15,16 @@ import {
 } from './analytics';
 
 interface AnalyticsTabProps {
-  /** 事実の表。タブ内の数値はすべてここから導出する */
   activity: ActivityLog;
-  /**
-   * 追跡中のサイト。タブ内のどの数値もこの集合だけを数え（母集団）、
-   * 追跡中サイト一覧の状態・操作とブロックリスト CSV もここから出す
-   */
   trackedSites: TrackedSites;
   onReblock: (site: TrackedSite) => void;
   onReset: () => void;
   onStopTracking: (site: TrackedSite) => void;
   onRefresh: () => Promise<void>;
-  /** 追加できたら true（入力欄を空にする） */
   onAddSite: (domain: string) => Promise<boolean>;
-  /** 追跡サイトの追加を拒否した理由（形式の誤り・重複・入れ子） */
   addSiteError: string;
-  /** 支援誘導を出すか */
   isSupportPromptVisible: boolean;
-  /** 支援ページを開く */
   onSupport: () => Promise<void>;
-  /** 支援誘導を閉じる */
   onDismissSupport: () => Promise<void>;
 }
 
@@ -52,10 +42,8 @@ export function AnalyticsTab({
   onDismissSupport
 }: AnalyticsTabProps) {
   const [newSiteDomain, setNewSiteDomain] = useState('');
-  // 母集団は一覧・CSV と同じ値から作る（数値の母集団と一覧の行を食い違わせない）
   const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
 
-  // 拒否されたときは入力を残す（理由を読んで直せるように）
   const handleAddSite = async () => {
     const domain = newSiteDomain.trim().toLowerCase();
     if (!domain) return;
@@ -75,7 +63,6 @@ export function AnalyticsTab({
 
       <SiteRankingList activity={activity} sites={sites} />
 
-      {/* Add Site */}
       <Card>
         <h3
           className="text-sm font-medium text-gray-700 mb-3"

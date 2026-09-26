@@ -17,9 +17,6 @@ interface StatsGridProps {
   wasteTimeChangePercent: number | null;
 }
 
-/**
- * 変化率を表示用にフォーマット
- */
 function formatChangePercent(value: number | null): string {
   if (value === null) {
     return getMessage('noComparisonData');
@@ -28,12 +25,6 @@ function formatChangePercent(value: number | null): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
-/**
- * 変化が良い方向か悪い方向かを決定
- *
- * 無駄時間の増減なので、減少（負）が改善、増加（正）が悪化にあたる。
- * 色とアイコンの出し分けはこの向きから導くため、判定はここ 1 箇所に置く。
- */
 type ChangeDirection = 'improved' | 'worsened' | 'unchanged' | 'unknown';
 
 function getChangeDirection(value: number | null): ChangeDirection {
@@ -43,10 +34,6 @@ function getChangeDirection(value: number | null): ChangeDirection {
   return 'unchanged';
 }
 
-/**
- * 変化の向きから色を決定
- * 改善（無駄時間が減少）= 緑、悪化（増加）= 赤
- */
 function getChangeColor(direction: ChangeDirection) {
   if (direction === 'unknown')
     return {
@@ -69,10 +56,6 @@ function getChangeColor(direction: ChangeDirection) {
   return { bg: 'bg-gray-50', text: 'text-gray-700', label: 'text-gray-500' };
 }
 
-/**
- * 統計情報グリッドコンポーネント
- * 無駄時間、変化率、ブロック数、アンブロック数を表示
- */
 export function StatsGrid({
   wasteTime,
   blockCount,
@@ -95,8 +78,6 @@ export function StatsGrid({
       </div>
       <div
         data-testid="waste-time-change"
-        // 良い方向か悪い方向かが色とアイコンにしか出ないため、属性でも持たせる
-        // （machina-gg/vision-focus#455）
         data-change-direction={changeDirection}
         className={`text-center p-3 ${changeColors.bg} rounded-lg`}
       >

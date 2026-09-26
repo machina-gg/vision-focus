@@ -16,7 +16,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 未入力（作成ボタンが無効化されている状態）
 export const Empty: Story = {
   args: {
     isOpen: true,
@@ -27,7 +26,6 @@ export const Empty: Story = {
   }
 };
 
-// 名前が入力済み（作成ボタンが押せる状態）
 export const Filled: Story = {
   args: {
     isOpen: true,
@@ -38,7 +36,6 @@ export const Filled: Story = {
   }
 };
 
-// 入力欄への文字入力を実際に反映するインタラクティブな状態
 const InteractiveTemplate = () => {
   const [presetName, setPresetName] = useState('');
 

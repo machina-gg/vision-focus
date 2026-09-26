@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 未入力・非表示（マスク）の状態
 export const Default: Story = {
   args: {
     fieldId: 'password-field-default',
@@ -36,7 +35,6 @@ export const Default: Story = {
   }
 };
 
-// 入力済み・表示切り替えボタンで平文表示にした状態
 export const Shown: Story = {
   args: {
     fieldId: 'password-field-shown',
@@ -49,7 +47,6 @@ export const Shown: Story = {
   }
 };
 
-// 表示切り替えボタンを実際に操作できるインタラクティブな状態
 const InteractiveTemplate = () => {
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);

@@ -50,7 +50,6 @@ export function NotificationSettingsSection({
 
   return (
     <Card>
-      {/* 時間制限つきサイトが無いときも常に出すため、何に効く設定かを見出しの下で示す */}
       <div className="flex items-center gap-3 mb-4">
         <Bell className="w-5 h-5 text-info-500" />
         <div>

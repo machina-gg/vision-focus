@@ -6,10 +6,6 @@ interface TrendIconProps {
   trend: 'improving' | 'declining' | 'stable';
 }
 
-/**
- * トレンドアイコンコンポーネント
- * 改善・悪化・安定のトレンドを視覚的に表示する
- */
 export function TrendIcon({ trend }: TrendIconProps) {
   if (trend === 'improving') {
     return (

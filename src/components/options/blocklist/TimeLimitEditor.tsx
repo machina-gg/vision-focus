@@ -15,7 +15,6 @@ type LimitTypeOption = 'always' | 'daily';
 interface TimeLimitEditorProps {
   site: BlockedSite;
   onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
-  /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   usedSeconds: number;
 }
 
@@ -29,7 +28,6 @@ export function TimeLimitEditor({
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (savedTimerRef.current) {
@@ -38,14 +36,12 @@ export function TimeLimitEditor({
     };
   }, []);
 
-  // 既存の非プリセット値を最も近いプリセット値にマイグレーション
   useEffect(() => {
     if (!timeLimit) return;
 
     const existingMinutes = Math.floor(timeLimit.limitSeconds / 60);
     const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
-    // 既存の値がプリセットに含まれていない場合、マイグレーションを実行
     if (!presets.includes(existingMinutes as never)) {
       const nearestPreset = roundToNearestPreset(existingMinutes);
       setMinutes(nearestPreset);
@@ -67,37 +63,30 @@ export function TimeLimitEditor({
     }, SAVED_FEEDBACK_DURATION_MS);
   }, []);
 
-  // 現在の保存済み値
   const currentType: LimitTypeOption = timeLimit ? timeLimit.type : 'always';
 
-  // 現在の保存済み分数
   const currentMinutes = timeLimit
     ? Math.floor(timeLimit.limitSeconds / 60)
     : TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
 
-  // 既存の制限時間を取得し、プリセット値に丸める
   const getInitialMinutes = () => {
     if (!timeLimit) {
       return TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
     }
 
     const existingMinutes = Math.floor(timeLimit.limitSeconds / 60);
-    // 既存の値がプリセット外の場合、最も近いプリセット値に丸める
     return roundToNearestPreset(existingMinutes);
   };
 
-  // ローカルステートで編集中の値を管理
   const [selectedType, setSelectedType] =
     useState<LimitTypeOption>(currentType);
   const [minutes, setMinutes] = useState(getInitialMinutes());
 
-  // 保存済み値が変更されたときにローカルステートを更新
   useEffect(() => {
     setSelectedType(currentType);
     setMinutes(currentMinutes);
   }, [currentType, currentMinutes]);
 
-  // 変更があるかチェック
   const hasChanges =
     selectedType !== currentType ||
     (selectedType !== 'always' && minutes !== currentMinutes);
@@ -105,7 +94,6 @@ export function TimeLimitEditor({
   const handleTypeChange = useCallback((newType: LimitTypeOption) => {
     setSelectedType(newType);
 
-    // タイプ変更時にデフォルトのプリセット値を設定
     if (newType !== 'always') {
       const defaultMinutes = TIME_LIMIT_CONFIG.DEFAULT_DAILY_LIMIT / 60;
       setMinutes(roundToNearestPreset(defaultMinutes));
@@ -118,7 +106,6 @@ export function TimeLimitEditor({
     setMinutes(newMinutes);
   }, []);
 
-  // 保存ボタンのハンドラー
   const handleSave = useCallback(async () => {
     if (selectedType === 'always') {
       await onUpdate(null);
@@ -136,7 +123,6 @@ export function TimeLimitEditor({
     { value: 'daily', label: getMessage('dailyLimit') }
   ];
 
-  // プリセット選択肢を生成
   const getPresetOptions = () => {
     const presets = TIME_LIMIT_CONFIG.DAILY_PRESET_MINUTES;
 
@@ -201,7 +187,6 @@ export function TimeLimitEditor({
             </div>
           )}
 
-          {/* 保存ボタン */}
           <div className="flex items-center gap-2">
             <Button
               onClick={handleSave}
@@ -221,7 +206,6 @@ export function TimeLimitEditor({
         </div>
       )}
 
-      {/* Show remaining time badge if time limit is set and item is enabled */}
       {enabled && timeLimit && remainingSeconds !== null && (
         <div className="mt-2">
           <TimeLimitBadge

@@ -21,7 +21,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 無駄時間が前期間より減った（改善）場合
 export const Improved: Story = {
   args: {
     wasteTime: 3600,
@@ -31,7 +30,6 @@ export const Improved: Story = {
   }
 };
 
-// 無駄時間が前期間より増えた（悪化）場合
 export const Worsened: Story = {
   args: {
     wasteTime: 7200,
@@ -41,7 +39,6 @@ export const Worsened: Story = {
   }
 };
 
-// 前期間と変化が無い場合
 export const Unchanged: Story = {
   args: {
     wasteTime: 5400,
@@ -51,7 +48,6 @@ export const Unchanged: Story = {
   }
 };
 
-// 比較できる前期間データが無い場合
 export const NoComparisonData: Story = {
   args: {
     wasteTime: 3600,
