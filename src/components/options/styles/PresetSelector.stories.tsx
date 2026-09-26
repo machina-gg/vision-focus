@@ -63,7 +63,6 @@ const presetList = [
   }
 ];
 
-// プリセットが 1 件も無い状態
 const emptyPresets: UsePresetsReturn = {
   draftDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
   draftPresets: [],
@@ -78,13 +77,11 @@ const emptyPresets: UsePresetsReturn = {
   ...noopHandlers
 };
 
-// プリセットが複数あり、どれも選択していない状態
 const withPresetsNoSelection: UsePresetsReturn = {
   ...emptyPresets,
   draftPresets: presetList
 };
 
-// プリセットを選択して編集中（未保存の変更あり）の状態
 const editingDirty: UsePresetsReturn = {
   ...emptyPresets,
   draftPresets: presetList,
@@ -93,7 +90,6 @@ const editingDirty: UsePresetsReturn = {
   isDirty: true
 };
 
-// 選択中のプリセットが適用済み（アクティブ）の状態
 const activePreset: UsePresetsReturn = {
   ...emptyPresets,
   draftPresets: presetList,
@@ -133,7 +129,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// プリセットが 1 件も無い場合
 export const Empty: Story = {
   args: {
     presets: emptyPresets,
@@ -141,7 +136,6 @@ export const Empty: Story = {
   }
 };
 
-// プリセットはあるが、まだ何も選択していない場合
 export const NoSelection: Story = {
   args: {
     presets: withPresetsNoSelection,
@@ -149,7 +143,6 @@ export const NoSelection: Story = {
   }
 };
 
-// 選択中のプリセットに未保存の変更がある場合
 export const EditingDirty: Story = {
   args: {
     presets: editingDirty,
@@ -157,7 +150,6 @@ export const EditingDirty: Story = {
   }
 };
 
-// 選択中のプリセットが現在アクティブ（適用済み）な場合
 export const ActivePreset: Story = {
   args: {
     presets: activePreset,

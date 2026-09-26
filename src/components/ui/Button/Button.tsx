@@ -52,9 +52,6 @@ export function Button({
         ${fullWidth ? 'w-full' : ''}
         ${className}
       `}
-      // 見た目の種類・大きさ・幅・読み込み中を属性としても持たせる。
-      // 装飾のクラス名にしか出ていないと、支援技術にもテストにも状態が伝わらない
-      // （machina-gg/vision-focus#455）
       data-variant={variant}
       data-size={size}
       data-full-width={String(fullWidth)}

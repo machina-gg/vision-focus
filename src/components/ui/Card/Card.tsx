@@ -42,8 +42,6 @@ export function Card({
         ${isClickable ? 'cursor-pointer hover:border-primary-300 transition-colors' : ''}
         ${className}
       `}
-      // 見た目の種類と余白の大きさを属性としても持たせる
-      // （machina-gg/vision-focus#455）
       data-variant={variant}
       data-padding={padding}
       onClick={onClick}

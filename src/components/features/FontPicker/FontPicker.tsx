@@ -57,7 +57,6 @@ const CATEGORY_ORDER: FontCategory[] = [
   'japanese'
 ];
 
-// Load Google Font dynamically
 function loadGoogleFont(fontName: string) {
   const linkId = `google-font-${fontName.replace(/\+/g, '-')}`;
   if (document.getElementById(linkId)) return;
@@ -79,7 +78,6 @@ export function FontPicker({
     getFontCategory(value.family)
   );
 
-  // Load font when family changes
   useEffect(() => {
     const fontDef = getFontDefinition(value.family);
     if (fontDef.googleFont) {
@@ -87,7 +85,6 @@ export function FontPicker({
     }
   }, [value.family]);
 
-  // Load fonts for selected category
   useEffect(() => {
     const category = FONT_CATEGORIES[selectedCategory];
     category.fonts.forEach((font) => {
@@ -103,7 +100,6 @@ export function FontPicker({
 
   const handleCategoryChange = (category: FontCategory) => {
     setSelectedCategory(category);
-    // Auto-select first font in category
     const firstFont = FONT_CATEGORIES[category].fonts[0];
     if (firstFont) {
       handleChange({ family: firstFont.family });
@@ -122,14 +118,12 @@ export function FontPicker({
     <div
       className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      {/* Preview */}
       <div className="p-4 bg-gray-900 rounded-lg">
         <p className="text-white text-center truncate" style={previewStyle}>
           {previewText}
         </p>
       </div>
 
-      {/* Font Category */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           <Type className="w-4 h-4 inline-block mr-1" />
@@ -142,9 +136,6 @@ export function FontPicker({
               <button
                 key={categoryKey}
                 data-testid="font-category-button"
-                // 選択中かどうかを枠線と背景色でしか表していなかったため、押下状態を持たせる。
-                // disabled は包む div の pointer-events だけではキーボード操作を止められない
-                // （machina-gg/vision-focus#455）
                 aria-pressed={selectedCategory === categoryKey}
                 disabled={disabled}
                 onClick={() => handleCategoryChange(categoryKey)}
@@ -164,7 +155,6 @@ export function FontPicker({
         </div>
       </div>
 
-      {/* Font Family (within selected category) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {getMessage('fontFamily')}
@@ -193,7 +183,6 @@ export function FontPicker({
         </div>
       </div>
 
-      {/* Font Size */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {getMessage('fontSize')}
@@ -221,7 +210,6 @@ export function FontPicker({
         </div>
       </div>
 
-      {/* Font Weight */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {getMessage('fontWeight')}

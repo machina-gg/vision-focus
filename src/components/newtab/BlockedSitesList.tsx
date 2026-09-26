@@ -6,9 +6,7 @@ import { getMessage } from '~/lib/i18n';
 import type { TrackedSites } from '~/types/site';
 
 interface BlockedSitesListProps {
-  /** 追跡中のサイト。一覧は `blockListSites` のうちブロックが有効なもの */
   trackedSites: TrackedSites;
-  /** サイトキーごとのブロック回数（無いサイトは 0 回として扱う） */
   blockCounts: Record<string, number>;
   maxVisible?: number;
 }
@@ -19,10 +17,8 @@ export function BlockedSitesList({
   maxVisible = 5
 }: BlockedSitesListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  // 「もっと見る」で上限を外したかどうか
   const [showsAll, setShowsAll] = useState(false);
 
-  // 無効にしたサイトは今ブロックしていないので出さない
   const enabledBlockList = blockListSites(trackedSites).filter(
     (site) => site.block.enabled
   );
@@ -31,8 +27,6 @@ export function BlockedSitesList({
     return null;
   }
 
-  // 上限は展開したときにも効かせる。外れるのは「もっと見る」を押したときだけ
-  // （一覧が縦に伸びると、新規タブの主役である目標が画面の外へ押し出されるため）
   const visibleSites = showsAll
     ? enabledBlockList
     : enabledBlockList.slice(0, maxVisible);
@@ -40,7 +34,6 @@ export function BlockedSitesList({
   const hasMore = enabledBlockList.length > maxVisible;
 
   const handleToggleList = () => {
-    // 畳むときは「もっと見る」も戻す。次に開いたときにも上限が効くようにするため
     if (isExpanded) {
       setShowsAll(false);
     }

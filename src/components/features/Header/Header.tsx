@@ -2,8 +2,7 @@ import React from 'react';
 
 import { Settings, HelpCircle } from 'lucide-react';
 
-// アイコンはバンドルに含めるため ?inline（データ URL）で import する。
-// html2canvas によるキャプチャ対象に入るため、外部 URL ではなくデータ URL の方が安全
+// html2canvas のキャプチャ対象に入るため、外部 URL ではなくデータ URL（?inline）で埋め込む
 import iconBase64 from '~/assets/icon.png?inline';
 
 import { Toggle } from '~/components/ui';
@@ -31,7 +30,6 @@ export function Header({
       className="flex items-center justify-between px-4 py-3 border-b border-gray-100"
       data-testid="app-header"
     >
-      {/* Logo + Name + Version */}
       <div className="flex items-center gap-2">
         <img
           src={iconBase64}
@@ -49,9 +47,7 @@ export function Header({
         </div>
       </div>
 
-      {/* Controls */}
       <div className="flex items-center gap-2">
-        {/* Block Toggle */}
         {onPausedChange && (
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-500">
@@ -66,7 +62,6 @@ export function Header({
           </div>
         )}
 
-        {/* Settings */}
         {showSettings && (
           <button
             data-testid="settings-button"
@@ -78,7 +73,6 @@ export function Header({
           </button>
         )}
 
-        {/* Help */}
         {onHelpClick && (
           <button
             data-testid="help-button"

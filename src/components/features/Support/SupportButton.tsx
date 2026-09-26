@@ -10,13 +10,7 @@ export interface SupportButtonProps {
   className?: string;
 }
 
-/**
- * Buy Me a Coffee の支援ボタン
- *
- * 公式のウィジェット JS や外部ホストの画像は読み込まない。Manifest V3 は
- * リモートコードの実行を禁止しており、外部画像もネットワークアクセスに
- * なるため、ブランドカラーとアイコンで同等の見た目を自前で構成する。
- */
+// 公式のウィジェット JS や外部画像は読み込まない（MV3 はリモートコードの実行を禁じ、外部画像はネットワークアクセスになる）
 export function SupportButton({
   onClick,
   size = 'md',

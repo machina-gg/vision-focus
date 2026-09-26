@@ -28,7 +28,6 @@ export function PasswordModal({
   const [isVerifying, setIsVerifying] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setPassword('');
@@ -37,14 +36,9 @@ export function PasswordModal({
     }
   }, [isOpen]);
 
-  // 送信できるかどうかの判定はここ 1 つだけを使う。
-  // ボタンの無効化と Enter キーが別々の条件を持つと、片方だけが未入力を
-  // 通してしまうずれが再発する（machina-gg/vision-focus#465）
   const canSubmit = !isVerifying && password !== '';
 
   const handleSubmit = useCallback(async () => {
-    // 受け取る側の検査。canSubmit（押せるかどうか）とは役割が別で、
-    // 送信の経路が増えても空のまま照合へ進ませない
     if (!password) {
       setError(getMessage('passwordRequired'));
       return;
@@ -94,11 +88,6 @@ export function PasswordModal({
         </div>
 
         <div className="space-y-2">
-          {/*
-            入力欄は共通の部品に寄せる。ラベルと入力欄の結び付き、表示切り替え
-            ボタンの名前がこれで他のパスワード欄と揃う
-            （machina-gg/vision-focus#468 / #476）
-          */}
           <PasswordField
             fieldId="password-field-verify"
             label={getMessage('enterPassword')}

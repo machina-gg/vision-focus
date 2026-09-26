@@ -5,7 +5,7 @@ import { getMessage } from '~/lib/i18n';
 
 interface MiniStatsProps {
   blockCount: number;
-  blockingDays: number | null; // null if site is not in blocklist
+  blockingDays: number | null;
   onAnalyticsClick?: () => void;
 }
 
@@ -17,7 +17,6 @@ export function MiniStats({
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex justify-center gap-4">
-        {/* Today's Blocks */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
           <div className="flex items-center justify-center gap-2 text-block-500 mb-1">
             <Ban className="w-4 h-4" />
@@ -33,7 +32,6 @@ export function MiniStats({
           </p>
         </div>
 
-        {/* Blocking Days */}
         {blockingDays !== null && (
           <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
             <div className="flex items-center justify-center gap-2 text-info-500 mb-1">
@@ -52,7 +50,6 @@ export function MiniStats({
         )}
       </div>
 
-      {/* Analytics Link */}
       {onAnalyticsClick && (
         <button
           onClick={onAnalyticsClick}

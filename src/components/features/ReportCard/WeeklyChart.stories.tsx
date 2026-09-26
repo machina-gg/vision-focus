@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 分単位で収まる週次データ
 export const WithData: Story = {
   args: {
     dailyBreakdown: [
@@ -39,7 +38,6 @@ export const WithData: Story = {
   }
 };
 
-// 値が大きく、時間単位の目盛りに切り替わる場合
 export const LargeValues: Story = {
   args: {
     dailyBreakdown: [
@@ -55,7 +53,6 @@ export const LargeValues: Story = {
   }
 };
 
-// 1 週間ともにデータが無い場合
 export const Empty: Story = {
   args: {
     dailyBreakdown: [

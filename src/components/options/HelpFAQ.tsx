@@ -4,10 +4,6 @@ import { MessageCircle, ChevronRight } from 'lucide-react';
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
-/**
- * FAQ セクションコンポーネント
- * よくある質問と回答を表示
- */
 export function HelpFAQ() {
   return (
     <Card>

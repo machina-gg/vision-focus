@@ -14,5 +14,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// props を持たないため、唯一の表示状態
 export const Default: Story = {};

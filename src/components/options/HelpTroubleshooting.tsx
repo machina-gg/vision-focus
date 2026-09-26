@@ -4,10 +4,6 @@ import { Wrench, ChevronRight } from 'lucide-react';
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
-/**
- * Troubleshooting セクションコンポーネント
- * トラブルシューティング情報を表示
- */
 export function HelpTroubleshooting() {
   return (
     <Card>

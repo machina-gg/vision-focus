@@ -13,7 +13,6 @@ const meta = {
     layout: 'padded'
   },
   tags: ['autodocs'],
-  // 設定画面の本文と同じ幅（max-w-6xl）で、全幅表示のレポートを確かめる
   decorators: [
     (Story) => (
       <div className="max-w-6xl mx-auto">
@@ -26,7 +25,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 週次・月次データがある場合
 export const WithData: Story = {
   args: {
     activity: storyActivity(),
@@ -37,7 +35,6 @@ export const WithData: Story = {
   }
 };
 
-// 月次のタブを選んだ場合
 export const MonthlyTab: Story = {
   args: {
     activity: storyActivity(),
@@ -52,7 +49,6 @@ export const MonthlyTab: Story = {
   }
 };
 
-// データが無い場合
 export const Empty: Story = {
   args: {
     activity: {},
@@ -63,7 +59,6 @@ export const Empty: Story = {
   }
 };
 
-// 支援の案内を出さない場合
 export const WithoutSupportPrompt: Story = {
   args: {
     activity: storyActivity(),

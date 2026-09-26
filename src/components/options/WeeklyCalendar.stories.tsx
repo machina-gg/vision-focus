@@ -76,7 +76,7 @@ const mockSchedules: Schedule[] = [
     name: 'Work Hours',
     startTime: '09:00',
     endTime: '18:00',
-    days: [1, 2, 3, 4, 5], // Mon-Fri
+    days: [1, 2, 3, 4, 5],
     enabled: true,
     presetId: 'work-preset'
   },
@@ -85,7 +85,7 @@ const mockSchedules: Schedule[] = [
     name: 'Evening Focus',
     startTime: '20:00',
     endTime: '23:00',
-    days: [0, 1, 2, 3, 4, 5, 6], // Every day
+    days: [0, 1, 2, 3, 4, 5, 6],
     enabled: true,
     presetId: 'focus-preset'
   }

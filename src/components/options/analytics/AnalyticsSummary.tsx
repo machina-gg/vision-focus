@@ -16,7 +16,6 @@ import type { TrackedSite, TrackedSites } from '~/types/site';
 const DAYS_PER_WEEK = 7;
 const DAYS_PER_MONTH = 30;
 
-/** 日付キーから今日までの経過を言葉にする（日付はどちらもローカル日付） */
 function formatRelativeDate(date: DateKey, today: DateKey): string {
   const diffDays = daysBetween(date, today);
 
@@ -35,13 +34,8 @@ function formatRelativeDate(date: DateKey, today: DateKey): string {
   }
 }
 
-/**
- * 一覧での状態。`block === null` は追跡だけ、`block.enabled` でブロック中と無効（トグル OFF）を分ける。
- * 無効はブロック設定が残っている（時間制限も保ったまま）ので、追跡だけとは戻し方が違う
- */
 type TrackedSiteStatus = 'blocked' | 'disabled' | 'tracking';
 
-// 並び順（ブロック中 → 無効 → 追跡だけ）
 const STATUS_ORDER: Record<TrackedSiteStatus, number> = {
   blocked: 0,
   disabled: 1,
@@ -59,7 +53,6 @@ function statusOf(site: TrackedSite): TrackedSiteStatus {
   return site.block.enabled ? 'blocked' : 'disabled';
 }
 
-/** 一覧の 1 行（追跡中のサイト 1 つ） */
 interface TrackedSiteRow {
   site: TrackedSite;
   status: TrackedSiteStatus;
@@ -68,13 +61,9 @@ interface TrackedSiteRow {
 }
 
 interface AnalyticsSummaryProps {
-  /** 事実の表 */
   activity: ActivityLog;
-  /** 追跡中のサイト。一覧の行はこの集合で、状態と操作はサイトの設定から決める */
   trackedSites: TrackedSites;
-  /** ブロックを効かせ直す（追跡だけならブロックリストに入れ、無効ならトグルを ON に戻す） */
   onReblock: (site: TrackedSite) => void;
-  /** 追跡を止める（追跡だけのサイトにだけ出す） */
   onStopTracking: (site: TrackedSite) => void;
 }
 
@@ -97,7 +86,6 @@ export function AnalyticsSummary({
     return rows.sort((a, b) => {
       const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
       if (byStatus !== 0) return byStatus;
-      // 同じ状態の中では最近ブロックリストに入れたものを先に
       const byAddedAt = (b.site.block?.addedAt ?? '').localeCompare(
         a.site.block?.addedAt ?? ''
       );
@@ -105,14 +93,12 @@ export function AnalyticsSummary({
     });
   }, [activity, trackedSites, today]);
 
-  // 今ブロックが効いていないサイト（無効・追跡だけ）。解除後の時間を出す対象
   const unblockedSites = useMemo(() => {
     return allTrackedSites.filter((row) => row.status !== 'blocked');
   }, [allTrackedSites]);
 
   const hasTrackedSites = allTrackedSites.length > 0;
 
-  // 合計は各行と同じ関数で出す（行の値の和と一致させる）
   const totalWastedTime = useMemo(() => {
     return totalSecondsSinceUnblock(
       activity,
@@ -123,7 +109,6 @@ export function AnalyticsSummary({
 
   return (
     <>
-      {/* Empty State */}
       {!hasTrackedSites && (
         <Card>
           <div className="text-center py-12">
@@ -140,7 +125,6 @@ export function AnalyticsSummary({
         </Card>
       )}
 
-      {/* 追跡中のサイト一覧（浪費時間統合） */}
       {hasTrackedSites && (
         <Card>
           <h3
@@ -165,7 +149,6 @@ export function AnalyticsSummary({
             ))}
           </div>
 
-          {/* 合計浪費時間（解除済みサイトが2つ以上の場合） */}
           {unblockedSites.length > 1 && (
             <div className="pt-4 mt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
@@ -184,7 +167,6 @@ export function AnalyticsSummary({
   );
 }
 
-// 追跡中サイトのアイテム表示（ステータス + 浪費時間統合表示）
 interface TrackedSiteItemProps {
   row: TrackedSiteRow;
   today: DateKey;
@@ -200,8 +182,6 @@ function TrackedSiteItem({
 }: TrackedSiteItemProps) {
   const { site, status } = row;
   const isBlocked = status === 'blocked';
-  // 追跡の停止は追跡だけのサイトにだけ出す。ブロック設定（無効を含む）を消すのはブロックリストタブの
-  // 確認つきの経路だけにし、YouTube 機能を持つサイトは止めない（非表示の設定が画面の操作なしに消える）
   const canStopTracking = site.block === null && site.youtube === null;
   const bgColor = isBlocked ? 'bg-success-50' : 'bg-block-50';
   const borderColor = isBlocked ? 'border-success-100' : 'border-block-100';
@@ -244,7 +224,6 @@ function TrackedSiteItem({
             </p>
           )}
 
-          {/* 浪費時間表示（ブロックが効いていないサイトのみ） */}
           {!isBlocked && (
             <div className="mt-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-block-500" />
@@ -255,7 +234,6 @@ function TrackedSiteItem({
           )}
         </div>
 
-        {/* アクションボタン（ブロックが効いていないサイトのみ） */}
         {!isBlocked && (
           <div className="flex items-center gap-2">
             <Button

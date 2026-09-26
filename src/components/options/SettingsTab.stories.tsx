@@ -13,7 +13,6 @@ const meta = {
   },
   tags: ['autodocs'],
   decorators: [
-    // SettingsTab は設定値を useSettings() から読むため Provider が要る
     (Story) => (
       <SettingsProvider>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>

@@ -30,13 +30,11 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div
         role="dialog"
         aria-modal="true"
@@ -47,7 +45,6 @@ export function Modal({
           ${sizeStyles[size]}
         `}
       >
-        {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
@@ -60,7 +57,6 @@ export function Modal({
           </div>
         )}
 
-        {/* Content */}
         <div className="px-6 py-4">{children}</div>
       </div>
     </div>

@@ -23,15 +23,10 @@ const isReportTab = (tabId: string): tabId is ReportTab =>
   tabId === REPORT_TABS.WEEKLY || tabId === REPORT_TABS.MONTHLY;
 
 interface AnalyticsDateFilterProps {
-  /** 事実の表 */
   activity: ActivityLog;
-  /** 母集団（追跡中のサイト）。合計・内訳・トップのすべてをこの集合から出す */
   sites: readonly SiteKey[];
-  /** 支援誘導を出すか */
   isSupportPromptVisible: boolean;
-  /** 支援ページを開く */
   onSupport: () => Promise<void>;
-  /** 支援誘導を閉じる */
   onDismissSupport: () => Promise<void>;
 }
 
@@ -42,10 +37,7 @@ export function AnalyticsDateFilter({
   onSupport,
   onDismissSupport
 }: AnalyticsDateFilterProps) {
-  // 選択中のタブは保存しない（開き直せば週次に戻る）
   const [activeTab, setActiveTab] = useState<ReportTab>(REPORT_TABS.WEEKLY);
-  // オフセットはカードではなくここで持つ。タブ切り替えで非表示のカードは
-  // アンマウントされるので、カード側に持たせると見ていた期間が失われる
   const [weeklyOffset, setWeeklyOffset] = useState(0);
   const [monthlyOffset, setMonthlyOffset] = useState(0);
 
@@ -112,7 +104,6 @@ export function AnalyticsDateFilter({
         />
       )}
 
-      {/* 価値を実感した直後に控えめに支援を案内する */}
       {isSupportPromptVisible && (
         <SupportPrompt onSupport={onSupport} onDismiss={onDismissSupport} />
       )}

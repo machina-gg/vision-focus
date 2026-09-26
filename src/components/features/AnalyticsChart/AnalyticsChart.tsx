@@ -18,18 +18,13 @@ import { CumulativeChart } from './CumulativeChart';
 
 export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
-/** 3 系列と見出しの合計が共有する期間（今日を含む直近の日数）。見出しの文言にもこの値を渡す */
 export const CHART_DAYS = 14;
-/** サイト別グラフに並べるサイトの数 */
 const BY_SITE_LIMIT = 8;
-/** サイト別グラフの軸ラベルに収める文字数 */
 const DOMAIN_LABEL_MAX = 15;
 const SECONDS_PER_MINUTE = 60;
 
 export interface AnalyticsChartProps {
-  /** 事実の表 */
   activity: ActivityLog;
-  /** 母集団（追跡中のサイト） */
   sites: readonly SiteKey[];
   disabled?: boolean;
 }
@@ -45,13 +40,10 @@ export function AnalyticsChart({
 }: AnalyticsChartProps) {
   const [chartType, setChartType] = useState<ChartType>('daily');
 
-  // 日別・サイト別・累積・見出しの合計はすべてこの 1 つの期間から出す。
-  // 系列ごとに期間を変えると、見出しの合計とグラフの和が食い違う
   const { totalSeconds, dailyData, bySiteData, cumulativeData } =
     useMemo(() => {
       const range = lastNDaysRange(new Date(), CHART_DAYS);
       const total = sumRange(activity, sites, range).seconds;
-      // 期間内に表示時間が無ければ 0 の線ではなく「データなし」を出す
       if (total === 0) {
         return {
           totalSeconds: 0,
@@ -104,7 +96,6 @@ export function AnalyticsChart({
     <div
       className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      {/* Summary */}
       <div className="p-4 bg-block-50 rounded-lg border border-block-100">
         <p className="text-sm text-block-600 font-medium">
           {getMessage('totalTimeOnTrackedSites', String(CHART_DAYS))}
@@ -117,12 +108,8 @@ export function AnalyticsChart({
         </p>
       </div>
 
-      {/* Chart Type Selector */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
         <button
-          // 選択中かどうかを背景色でしか表していなかったため、押下状態を持たせる。
-          // disabled は包む div の pointer-events だけではキーボード操作を止められない
-          // （machina-gg/vision-focus#455）
           aria-pressed={chartType === 'daily'}
           disabled={disabled}
           onClick={() => setChartType('daily')}
@@ -172,7 +159,6 @@ export function AnalyticsChart({
         </button>
       </div>
 
-      {/* Chart */}
       <div className="bg-white p-4 rounded-xl border border-gray-200">
         {renderChart()}
       </div>

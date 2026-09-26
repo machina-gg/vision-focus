@@ -11,10 +11,6 @@ import {
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
-/**
- * Getting Started セクションコンポーネント
- * VisionFocus の主要機能を説明するカード
- */
 export function HelpGettingStarted() {
   return (
     <Card>

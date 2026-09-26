@@ -15,7 +15,6 @@ interface ScheduleModalProps {
   onFormChange: (form: ScheduleFormData) => void;
   onSave: () => void;
   vision: VisionSettings | undefined;
-  /** 保存できなかった理由（重複など）。入力を変えると親が消す */
   error?: string | null;
 }
 
@@ -116,7 +115,6 @@ export function ScheduleModal({
           </div>
         </div>
 
-        {/* Preset Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {getMessage('schedulePreset')}

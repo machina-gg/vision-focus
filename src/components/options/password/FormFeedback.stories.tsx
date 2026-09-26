@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// エラーも成功も無い状態（何も表示しない）
 export const Empty: Story = {
   args: {
     error: null,
@@ -31,7 +30,6 @@ export const Empty: Story = {
   }
 };
 
-// エラーメッセージを表示する状態
 export const WithError: Story = {
   args: {
     error: 'パスワードが一致しません',
@@ -39,7 +37,6 @@ export const WithError: Story = {
   }
 };
 
-// 成功メッセージを表示する状態
 export const WithSuccess: Story = {
   args: {
     error: null,

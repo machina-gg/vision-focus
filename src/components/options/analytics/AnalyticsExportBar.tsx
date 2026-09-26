@@ -39,9 +39,7 @@ import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
 interface AnalyticsExportBarProps {
-  /** 事実の表 */
   activity: ActivityLog;
-  /** 追跡中のサイト。数値の母集団と、ブロックリスト CSV の出力元 */
   trackedSites: TrackedSites;
   onRefresh: () => Promise<void>;
   onReset: () => void;
@@ -70,7 +68,6 @@ export function AnalyticsExportBar({
 
   const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
 
-  // CSV・X シェアの数値はすべて保持期間全体・追跡中のサイトから出す
   const { range, totals, topBlockedSite } = useMemo(() => {
     const retention = retentionRange(new Date());
     const [top] = rankSites(activity, sites, retention, 'blocks', 1);
@@ -117,7 +114,6 @@ export function AnalyticsExportBar({
     if (!chartRef.current) return;
 
     try {
-      // チャートをキャンバスとしてキャプチャ
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -125,7 +121,6 @@ export function AnalyticsExportBar({
         return;
       }
 
-      // クリップボードに画像をコピー
       const success = await copyImageToClipboard(canvas);
       if (!success) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -133,7 +128,6 @@ export function AnalyticsExportBar({
         return;
       }
 
-      // シェアテキストを生成
       const text = generateShareText({
         totalBlockCount: totals.blocks,
         totalWasteTime: totals.seconds,
@@ -142,12 +136,10 @@ export function AnalyticsExportBar({
 
       setShareMessage({ type: 'success', text: getMessage('shareSuccess') });
 
-      // Xでシェア
       shareToX(text);
 
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     } catch {
-      // Xシェアに失敗
       setShareMessage({ type: 'error', text: getMessage('shareError') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
@@ -157,7 +149,6 @@ export function AnalyticsExportBar({
     if (!chartRef.current) return;
 
     try {
-      // チャートをキャンバスとしてキャプチャ
       const canvas = await captureElementAsCanvas(chartRef.current);
       if (!canvas) {
         setShareMessage({ type: 'error', text: getMessage('shareError') });
@@ -165,13 +156,11 @@ export function AnalyticsExportBar({
         return;
       }
 
-      // ファイル名を生成
       const filename = `visionfocus-analytics-${toDateKey(new Date())}.png`;
       downloadImage(canvas, filename);
       setShareMessage({ type: 'success', text: getMessage('downloadSuccess') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     } catch {
-      // 画像ダウンロードに失敗
       setShareMessage({ type: 'error', text: getMessage('shareError') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
@@ -184,7 +173,6 @@ export function AnalyticsExportBar({
 
   return (
     <>
-      {/* Header Card with Export */}
       <Card>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
@@ -201,7 +189,6 @@ export function AnalyticsExportBar({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Export Dropdown */}
             <div className="relative">
               <Button
                 variant="secondary"
@@ -258,7 +245,6 @@ export function AnalyticsExportBar({
                 </>
               )}
             </div>
-            {/* Refresh Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -276,7 +262,6 @@ export function AnalyticsExportBar({
         </div>
       </Card>
 
-      {/* Analytics Chart */}
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -315,7 +300,6 @@ export function AnalyticsExportBar({
             </Button>
           </div>
         </div>
-        {/* Share message */}
         {shareMessage && (
           <div
             className={`mb-4 p-3 rounded-lg text-sm ${
@@ -332,7 +316,6 @@ export function AnalyticsExportBar({
         </div>
       </Card>
 
-      {/* Reset Confirmation Modal */}
       <Modal
         isOpen={showResetModal}
         onClose={() => setShowResetModal(false)}

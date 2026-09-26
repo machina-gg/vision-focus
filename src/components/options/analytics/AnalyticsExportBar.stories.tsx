@@ -6,7 +6,6 @@ import { AnalyticsExportBar } from './AnalyticsExportBar';
 import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
-// twitter.com だけブロックリストにあり、残りは追跡だけ
 const mockSites = sitesOf(
   blockedSite('twitter.com'),
   ...STORY_SITES.filter((site) => site !== 'twitter.com').map((site) =>
@@ -33,7 +32,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// エクスポート可能なデータがある場合
 export const WithData: Story = {
   args: {
     activity: storyActivity(),
@@ -43,7 +41,6 @@ export const WithData: Story = {
   }
 };
 
-// データが無い場合（エクスポートボタンが無効化される）
 export const Empty: Story = {
   args: {
     activity: {},

@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 時間制限通知が有効な場合（分数選択が表示される）
 export const NotificationEnabled: Story = {
   args: {
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
@@ -22,7 +21,6 @@ export const NotificationEnabled: Story = {
   }
 };
 
-// 時間制限通知が無効な場合
 export const NotificationDisabled: Story = {
   args: {
     notifications: { timeLimitEnabled: false, timeLimitMinutes: 5 },
@@ -30,7 +28,6 @@ export const NotificationDisabled: Story = {
   }
 };
 
-// 設定が未保存の場合（既定値の有効・5 分前で表示する）
 export const NotSaved: Story = {
   args: {
     notifications: undefined,

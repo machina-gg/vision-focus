@@ -15,7 +15,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ブロック回数の多い順にランキング表示（解除回数バッジ付きのサイトあり）
 export const WithRankedSites: Story = {
   args: {
     activity: mockActivity([
@@ -28,7 +27,6 @@ export const WithRankedSites: Story = {
   }
 };
 
-// ランキングが無い場合（コンポーネントは何も描画しない）
 export const Empty: Story = {
   args: {
     activity: {},

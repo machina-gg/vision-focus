@@ -15,7 +15,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 常時ブロック（時間制限なし）の場合
 export const AlwaysBlocked: Story = {
   args: {
     site: blockedSite('twitter.com'),
@@ -24,7 +23,6 @@ export const AlwaysBlocked: Story = {
   }
 };
 
-// 1 日の制限時間が設定されている場合
 export const WithDailyLimit: Story = {
   args: {
     site: blockedSite('twitter.com', {
@@ -35,7 +33,6 @@ export const WithDailyLimit: Story = {
   }
 };
 
-// 制限に近づいている場合（残り時間バッジが警告色になる）
 export const NearLimit: Story = {
   args: {
     site: blockedSite('twitter.com', {

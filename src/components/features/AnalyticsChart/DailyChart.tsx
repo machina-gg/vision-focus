@@ -21,9 +21,6 @@ export interface DailyChartProps {
   data: DailyChartData[];
 }
 
-/**
- * 日次チャート: 過去 14 日間のトラッキング時間を折れ線グラフで表示
- */
 export function DailyChart({ data }: DailyChartProps) {
   if (data.length === 0) {
     return (
@@ -33,11 +30,9 @@ export function DailyChart({ data }: DailyChartProps) {
     );
   }
 
-  // Y 軸の単位を動的に決定
   const maxValue = Math.max(...data.map((d) => d.time), 0);
   const axisConfig = getTimeAxisConfig(maxValue);
 
-  // データを変換（時間単位の場合のみ）
   const displayData = data.map((d) => ({
     ...d,
     date: formatDate(d.date),

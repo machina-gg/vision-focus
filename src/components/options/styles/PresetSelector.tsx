@@ -31,7 +31,6 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
 
   return (
     <>
-      {/* Preset Selector */}
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2
@@ -42,7 +41,6 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
           </h2>
         </div>
 
-        {/* Empty state or Preset tabs */}
         {draftPresets.length === 0 ? (
           <EmptyState onCreateClick={() => setShowSavePresetModal(true)} />
         ) : (
@@ -64,7 +62,6 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
         )}
       </Card>
 
-      {/* Editing indicator and action buttons */}
       {selectedPreset && (
         <EditingIndicator
           selectedPreset={selectedPreset}
@@ -82,8 +79,6 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
     </>
   );
 }
-
-// --- Internal sub-components ---
 
 function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   return (
@@ -133,11 +128,7 @@ function PresetButtons({
           <button
             key={preset.id}
             data-testid="style-preset-button"
-            // 適用中かどうかがアイコンの有無でしか出ておらず、
-            // 読み上げでは区別が付かない（machina-gg/vision-focus#466）
             data-active={String(isActive)}
-            // 選択中（いま編集しているもの）が背景色でしか出ておらず、
-            // 読み上げでは区別が付かない（machina-gg/vision-focus#475）
             aria-pressed={isSelected}
             onClick={() => onSelectPreset(preset.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -158,7 +149,6 @@ function PresetButtons({
         );
       })}
 
-      {/* New preset button */}
       {draftPresets.length < MAX_PRESETS && (
         <button
           data-testid="style-new-preset-button"

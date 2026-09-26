@@ -90,7 +90,7 @@ export function ImageUploader({
       if (file) {
         handleFile(file);
       }
-      // Reset input so the same file can be selected again
+      // 空に戻さないと、同じファイルを選び直したときに change が発火しない
       e.target.value = '';
     },
     [handleFile]

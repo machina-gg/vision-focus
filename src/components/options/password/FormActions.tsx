@@ -13,7 +13,6 @@ interface FormActionsProps {
   submitVariant?: ButtonProps['variant'];
 }
 
-/** Cancel/Submit button pair for password forms */
 export function FormActions({
   onCancel,
   onSubmit,

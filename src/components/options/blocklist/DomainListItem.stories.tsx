@@ -15,7 +15,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 常時ブロック・ブロック回数の記録がある場合
 export const Basic: Story = {
   args: {
     site: blockedSite('twitter.com'),
@@ -40,7 +39,6 @@ export const WithTimeLimit: Story = {
   }
 };
 
-// トグルで無効化されている場合
 export const Disabled: Story = {
   args: {
     site: blockedSite('facebook.com', { enabled: false }),

@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ブロック解除（トグル）の確認
 export const ToggleUnblock: Story = {
   args: {
     isOpen: true,
@@ -27,7 +26,6 @@ export const ToggleUnblock: Story = {
   }
 };
 
-// ブロック項目自体の削除の確認
 export const DeleteBlock: Story = {
   args: {
     isOpen: true,
@@ -40,7 +38,6 @@ export const DeleteBlock: Story = {
   }
 };
 
-// 長押しの秒数を長くした場合（説明文と残り秒数が設定に従う）
 export const LongHold: Story = {
   args: {
     isOpen: true,
@@ -53,7 +50,6 @@ export const LongHold: Story = {
   }
 };
 
-// 閉じている状態
 export const Closed: Story = {
   args: {
     isOpen: false,

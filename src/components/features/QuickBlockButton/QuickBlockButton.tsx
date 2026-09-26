@@ -18,7 +18,6 @@ export function QuickBlockButton({
 }: QuickBlockButtonProps) {
   const [inputValue, setInputValue] = useState('');
 
-  // Auto-fill with current domain when it changes
   useEffect(() => {
     if (currentDomain) {
       setInputValue(currentDomain);

@@ -7,11 +7,6 @@ import { trackFeatureUse } from '~/lib/analytics';
 import { openSupportPage } from '~/lib/supportPrompt';
 import { SupportButton } from './SupportButton';
 
-/**
- * ヘルプタブに常設する支援セクション
- *
- * ユーザーが自分の意思で設定を見に来る場所なので、頻度制御はせず常に表示する。
- */
 export function SupportSection() {
   const handleClick = useCallback(() => {
     void trackFeatureUse('support_open');

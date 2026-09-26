@@ -15,7 +15,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// YouTube ブロック機能が無効な場合
 export const Disabled: Story = {
   args: {
     site: null,
@@ -24,7 +23,6 @@ export const Disabled: Story = {
   }
 };
 
-// 有効だがアクセス自体はブロックしていない場合（個別機能のみオン）
 export const EnabledWithFeatures: Story = {
   args: {
     site: trackedSite('youtube.com', {
@@ -35,7 +33,6 @@ export const EnabledWithFeatures: Story = {
   }
 };
 
-// アクセスをブロックし、1 日の時間制限も設定している場合
 export const EnabledWithBlockAccess: Story = {
   args: {
     site: blockedSite(

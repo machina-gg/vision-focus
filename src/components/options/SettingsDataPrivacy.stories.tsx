@@ -29,7 +29,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 分析データの共有に同意済みの場合
 export const OptedIn: Story = {
   args: {
     settings: {
@@ -40,7 +39,6 @@ export const OptedIn: Story = {
   }
 };
 
-// 分析データの共有を拒否済みの場合
 export const OptedOut: Story = {
   args: {
     settings: {
@@ -51,7 +49,6 @@ export const OptedOut: Story = {
   }
 };
 
-// まだ未決定・settings が渡されない場合（トグルは未同意扱い）
 export const NoSettings: Story = {
   args: {
     settings: undefined,

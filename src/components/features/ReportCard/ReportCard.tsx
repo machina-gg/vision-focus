@@ -29,9 +29,6 @@ interface MonthlyReportCardProps {
   isCurrentMonth?: boolean;
 }
 
-/**
- * 週次レポートカード
- */
 export function WeeklyReportCard({
   report,
   onPrevious,
@@ -41,7 +38,6 @@ export function WeeklyReportCard({
 }: WeeklyReportCardProps) {
   return (
     <Card>
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary-500" />
@@ -55,8 +51,6 @@ export function WeeklyReportCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* アイコンだけで名前が無いと読み上げでどちらのボタンか分からない
-              （machina-gg/vision-focus#455） */}
           <Button
             variant="ghost"
             size="sm"
@@ -84,12 +78,10 @@ export function WeeklyReportCard({
         <EmptyReport message={getMessage('noReportData')} />
       ) : (
         <div className="space-y-4">
-          {/* Trend */}
           <div className="flex justify-end">
             <TrendIcon trend={report.trend} />
           </div>
 
-          {/* Stats */}
           <StatsGrid
             wasteTime={report.totals.seconds}
             blockCount={report.totals.blocks}
@@ -97,7 +89,6 @@ export function WeeklyReportCard({
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
-          {/* Daily Chart: Waste Time + Block Count */}
           <div className="pt-4 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getMessage('dailyBreakdown')}
@@ -111,7 +102,6 @@ export function WeeklyReportCard({
             />
           </div>
 
-          {/* Top Sites */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <div>
               <h4 className="text-sm font-medium text-danger-700 mb-2">
@@ -142,9 +132,6 @@ export function WeeklyReportCard({
   );
 }
 
-/**
- * 月次レポートカード
- */
 export function MonthlyReportCard({
   report,
   onPrevious,
@@ -154,7 +141,6 @@ export function MonthlyReportCard({
 }: MonthlyReportCardProps) {
   return (
     <Card>
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary-500" />
@@ -195,12 +181,10 @@ export function MonthlyReportCard({
         <EmptyReport message={getMessage('noReportData')} />
       ) : (
         <div className="space-y-4">
-          {/* Trend */}
           <div className="flex justify-end">
             <TrendIcon trend={report.trend} />
           </div>
 
-          {/* Stats */}
           <StatsGrid
             wasteTime={report.totals.seconds}
             blockCount={report.totals.blocks}
@@ -208,7 +192,6 @@ export function MonthlyReportCard({
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
-          {/* Weekly Trend Chart */}
           <div className="pt-4 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getMessage('weeklyTrend')}
@@ -222,7 +205,6 @@ export function MonthlyReportCard({
             />
           </div>
 
-          {/* Top Sites */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <div>
               <h4 className="text-sm font-medium text-danger-700 mb-2">

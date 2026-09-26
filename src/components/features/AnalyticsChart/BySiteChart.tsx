@@ -23,9 +23,6 @@ export interface BySiteChartProps {
   data: BySiteChartData[];
 }
 
-/**
- * サイト別チャート: トップ 8 サイトの使用時間を横棒グラフで表示
- */
 export function BySiteChart({ data }: BySiteChartProps) {
   if (data.length === 0) {
     return (

@@ -12,7 +12,6 @@ import { PresetSelector, DisplaySettingsForm } from './styles';
 
 export function StylesTab() {
   const [vision, setVision] = useStorageItem(visionItem);
-  // スタイル削除時にスケジュールの連携を外すため settings も扱う（#333）
   const [settings, setSettings] = useStorageItem(settingsItem);
 
   const presets = usePresets({ vision, setVision, settings, setSettings });
@@ -24,14 +23,12 @@ export function StylesTab() {
     <div
       className={`grid grid-cols-1 ${isEditing ? 'lg:grid-cols-5' : ''} gap-6`}
     >
-      {/* Left Column - Settings */}
       <div className={`${isEditing ? 'lg:col-span-3' : ''} space-y-6`}>
         <PresetSelector presets={presets} vision={vision} />
 
         <DisplaySettingsForm presets={presets} />
       </div>
 
-      {/* Right Column - Preview (sticky) - Only shown when editing */}
       {selectedPresetId && (
         <div className="lg:col-span-2">
           <div className="sticky top-6">
@@ -62,9 +59,7 @@ export function StylesTab() {
                         }
                 }
               >
-                {/* Overlay */}
                 <div className="absolute inset-0 bg-black/30" />
-                {/* Content */}
                 <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">
                   <p
                     className="text-center drop-shadow-lg"
@@ -118,7 +113,6 @@ export function StylesTab() {
         </div>
       )}
 
-      {/* New Preset Modal */}
       <NewPresetModal
         isOpen={presets.showSavePresetModal}
         onClose={() => presets.setShowSavePresetModal(false)}
@@ -127,7 +121,6 @@ export function StylesTab() {
         onCreate={presets.handleCreatePreset}
       />
 
-      {/* Delete Preset Confirmation Modal（参照しているスケジュールがあるときだけ開く） */}
       <DeletePresetModal
         isOpen={presets.deleteTargetPresetId !== null}
         onClose={presets.handleCancelDeletePreset}

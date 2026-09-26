@@ -23,7 +23,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 送信可能な状態
 export const Default: Story = {
   args: {
     onCancel: () => {},
@@ -34,7 +33,6 @@ export const Default: Story = {
   }
 };
 
-// 未入力等で送信できない状態
 export const Disabled: Story = {
   args: {
     onCancel: () => {},
@@ -45,7 +43,6 @@ export const Disabled: Story = {
   }
 };
 
-// 送信処理中の状態
 export const Processing: Story = {
   args: {
     onCancel: () => {},
@@ -56,7 +53,6 @@ export const Processing: Story = {
   }
 };
 
-// 送信ボタンを危険な操作として表示する状態
 export const DangerVariant: Story = {
   args: {
     onCancel: () => {},

@@ -9,18 +9,11 @@ interface RankedListItem {
 
 interface RankedListProps {
   items: RankedListItem[];
-  /** 値の表示タイプ（時間 or カウント） */
   valueType: 'time' | 'count';
-  /** 背景色（Tailwindクラス） */
   bgColor: string;
-  /** テキスト色（Tailwindクラス） */
   textColor: string;
 }
 
-/**
- * ランキングリストコンポーネント
- * TopSitesList と TopBlockedSitesList の共通化
- */
 export function RankedList({
   items,
   valueType,

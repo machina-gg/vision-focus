@@ -4,18 +4,15 @@ import { AnalyticsSummary } from './AnalyticsSummary';
 import { daysAgoKey, mockActivity } from '~/stories/mockActivity';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
-/** 今日から days 日前の時刻（ブロック開始日は今日基準の相対で作る） */
 const isoDaysAgo = (days: number): string =>
   new Date(`${daysAgoKey(days)}T12:00:00`).toISOString();
 
-// twitter.com はブロック中、facebook.com はトグルで無効、reddit.com はブロックリストから外して追跡だけが続く
 const mixedSites = sitesOf(
   blockedSite('twitter.com', { addedAt: isoDaysAgo(3) }),
   blockedSite('facebook.com', { addedAt: isoDaysAgo(10), enabled: false }),
   trackedSite('reddit.com')
 );
 
-// 解除日と解除後の時間は activity から出る
 const mixedActivity = mockActivity([
   ['facebook.com', { seconds: 1800, unblocks: 1 }, 3],
   ['facebook.com', { seconds: 1800 }, 0],
@@ -35,7 +32,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ブロック中・無効・追跡だけが混在し、合計浪費時間も表示される場合
 export const WithTrackedSites: Story = {
   args: {
     activity: mixedActivity,
@@ -45,7 +41,6 @@ export const WithTrackedSites: Story = {
   }
 };
 
-// 追跡サイトが無い場合（空状態）
 export const NoTrackedSites: Story = {
   args: {
     activity: {},

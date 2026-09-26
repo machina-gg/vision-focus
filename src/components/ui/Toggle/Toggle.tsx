@@ -6,7 +6,6 @@ export interface ToggleProps {
   label?: string;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  /** E2E テスト用の識別子（内部の button 要素に付与される） */
   'data-testid'?: string;
 }
 

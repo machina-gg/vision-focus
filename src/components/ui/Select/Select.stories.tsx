@@ -29,7 +29,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// プレースホルダのみ（未選択）の状態
 export const Placeholder: Story = {
   args: {
     value: '',
@@ -39,7 +38,6 @@ export const Placeholder: Story = {
   }
 };
 
-// 選択済みの状態
 export const Selected: Story = {
   args: {
     value: 'mon',
@@ -49,7 +47,6 @@ export const Selected: Story = {
   }
 };
 
-// 選択肢が無い状態
 export const NoOptions: Story = {
   args: {
     value: '',
@@ -59,7 +56,6 @@ export const NoOptions: Story = {
   }
 };
 
-// 操作できない（disabled）状態
 export const Disabled: Story = {
   args: {
     value: 'mon',
@@ -69,7 +65,6 @@ export const Disabled: Story = {
   }
 };
 
-// 選択の変更を実際に反映するインタラクティブな状態
 const InteractiveTemplate = () => {
   const [value, setValue] = useState('');
 

@@ -46,7 +46,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 新規追加（未入力）の状態
 export const AddNew: Story = {
   args: {
     isOpen: true,
@@ -59,7 +58,6 @@ export const AddNew: Story = {
   }
 };
 
-// 既存スケジュールを編集している状態
 export const EditExisting: Story = {
   args: {
     isOpen: true,
@@ -80,7 +78,6 @@ export const EditExisting: Story = {
   }
 };
 
-// 重複などで保存できなかった状態（エラー表示あり）
 export const WithError: Story = {
   args: {
     isOpen: true,
@@ -94,7 +91,6 @@ export const WithError: Story = {
   }
 };
 
-// 適用できるプリセットが無い状態
 export const NoPresets: Story = {
   args: {
     isOpen: true,

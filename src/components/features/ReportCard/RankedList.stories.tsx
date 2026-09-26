@@ -21,7 +21,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 時間表示（無駄時間ランキング相当）
 export const TimeValues: Story = {
   args: {
     items: [
@@ -35,7 +34,6 @@ export const TimeValues: Story = {
   }
 };
 
-// 回数表示（ブロック回数ランキング相当）
 export const CountValues: Story = {
   args: {
     items: [
@@ -49,7 +47,6 @@ export const CountValues: Story = {
   }
 };
 
-// 4 件以上あっても上位 3 件だけを表示する境界値
 export const MoreThanThree: Story = {
   args: {
     items: [
@@ -65,7 +62,6 @@ export const MoreThanThree: Story = {
   }
 };
 
-// 長いドメイン名が行の残り幅いっぱいまで表示され、収まらない分だけ省略される
 export const LongDomain: Story = {
   args: {
     items: [
@@ -79,7 +75,6 @@ export const LongDomain: Story = {
   }
 };
 
-// データが無い場合
 export const Empty: Story = {
   args: {
     items: [],

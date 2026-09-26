@@ -25,13 +25,10 @@ interface BlocklistTabProps {
   setNewDomain: (value: string) => void;
   blockError: string;
   onAddDomain: () => void;
-  /** 操作の宛先はサイトキー */
   onRemoveDomain: (domain: string) => void;
   onToggleDomain: (domain: string, enabled: boolean) => void;
   onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
-  /** 事実の表。ブロック回数と時間制限の今日の使用量をここから導出する */
   activity: ActivityLog;
-  /** 追跡中のサイト。一覧（`blockListSites`）と YouTube の節（youtube.com）をここから出す */
   trackedSites: TrackedSites;
   onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
 }
@@ -74,7 +71,6 @@ export function BlocklistTab({
     [requestUnblock, onRemoveDomain, trackedSites]
   );
 
-  // ブロックを弱める向き（無効化）だけ確認を通す。有効化は即時に反映する
   const handleToggleClick = useCallback(
     (domain: string, enabled: boolean) => {
       if (enabled) {
@@ -127,8 +123,7 @@ export function BlocklistTab({
           {getMessage('blockedSites')}
         </h2>
         {settings === undefined ? (
-          // 設定がまだ読めていない状態。未登録（0 件）の案内と取り違えないよう別の表示にする。
-          // 一覧の枠（Card）は出したままにして、読み込み完了時に画面が跳ねないようにする
+          // 読み込み完了時に画面が跳ねないよう、読み込み中も一覧の枠（Card）は出したままにする
           <div
             role="status"
             className="flex flex-col items-center justify-center gap-2 py-8"
@@ -157,14 +152,12 @@ export function BlocklistTab({
         )}
       </Card>
 
-      {/* YouTube In-App Blocking Section */}
       <YouTubeSection
         site={trackedSites[YOUTUBE_DOMAIN] ?? null}
         onYouTubeChange={onYouTubeChange}
         onRequestUnblock={requestUnblock}
       />
 
-      {/* Password Protection Indicator */}
       {isPasswordProtected && (
         <div className="flex items-center gap-2 text-sm text-block-600">
           <Lock className="w-4 h-4" />
@@ -172,7 +165,6 @@ export function BlocklistTab({
         </div>
       )}
 
-      {/* Password Modal */}
       {isPasswordProtected && settings?.password?.passwordHash && (
         <PasswordModal
           isOpen={unblockGuard.isPasswordModalOpen}
@@ -184,7 +176,6 @@ export function BlocklistTab({
         />
       )}
 
-      {/* Unblock Confirmation Modal (non-password flow) */}
       {unblockGuard.pending && settings && (
         <UnblockConfirmModal
           isOpen={unblockGuard.isConfirmModalOpen}
