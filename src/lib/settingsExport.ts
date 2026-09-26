@@ -24,6 +24,7 @@ const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
 
 const LARGE_EXPORT_WARNING_SIZE = 1 * 1024 * 1024;
 
+/** 設定ファイル（JSON）の形 */
 export interface ExportedSettings {
   version: number;
   exportedAt: string;
@@ -38,6 +39,7 @@ export interface ExportedSettings {
   };
 }
 
+/** validateImportedData の結果。error と warnings は i18n のキー */
 export interface ImportResult {
   success: boolean;
   error?: string;
@@ -106,10 +108,12 @@ const exportDataSchema = z.object({
   })
 });
 
+/** 設定ファイルにしたときのバイト数 */
 export function calculateExportSize(data: ExportedSettings): number {
   return new Blob([JSON.stringify(data)]).size;
 }
 
+/** 設定ファイルが大きすぎる警告を出す大きさを超えるか */
 export function hasLargeCustomBackgrounds(data: ExportedSettings): boolean {
   const size = calculateExportSize(data);
   return size > LARGE_EXPORT_WARNING_SIZE;
@@ -120,6 +124,7 @@ function getDateString(): string {
   return now.toISOString().split('T')[0];
 }
 
+/** 今の設定から設定ファイルの中身を作る（isLarge は大きすぎる警告を出すか） */
 export function exportSettings(
   settings: AppSettings,
   vision: VisionSettings,
@@ -144,6 +149,7 @@ export function exportSettings(
   return { data: exportData, isLarge };
 }
 
+/** 設定ファイルを JSON でダウンロードする */
 export function downloadSettings(data: ExportedSettings): void {
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -159,6 +165,7 @@ export function downloadSettings(data: ExportedSettings): void {
   URL.revokeObjectURL(url);
 }
 
+/** 取り込む JSON を検証し、参照先の無いプリセット ID を外した中身を返す */
 export function validateImportedData(jsonString: string): ImportResult {
   if (jsonString.length > MAX_IMPORT_SIZE) {
     return {
@@ -227,6 +234,7 @@ export function readFileAsString(file: File): Promise<string> {
   });
 }
 
+/** 取り込んだ設定を今の設定に重ねる（スケジュール・プリセットは無いものだけ足し、他は上書き。追跡中のサイトは扱わない） */
 export function applyImportedSettings(
   data: ExportedSettings['data'],
   currentSettings: AppSettings,
@@ -261,6 +269,7 @@ export function applyImportedSettings(
   return { settings: newSettings, vision: newVision };
 }
 
+/** 既定値だけで作った設定ファイルの中身 */
 export function createDefaultExportData(): ExportedSettings {
   return {
     version: EXPORT_VERSION,

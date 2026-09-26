@@ -2,6 +2,7 @@ import { MS_PER_DAY } from '~/constants/intervals';
 import { getUILanguage } from '~/lib/i18n';
 import type { DateKey } from '~/types/activity';
 
+/** 秒を "45s" / "12m" / "1h 5m" の形にする */
 export function formatTime(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}s`;
@@ -17,6 +18,7 @@ export function formatTime(seconds: number): string {
   return `${minutes}m`;
 }
 
+/** 秒を UI 言語に合わせた表示（"1時間5分" / "1 hr 5 min" など）にする */
 export function formatTimeLocalized(seconds: number): string {
   const language = getUILanguage();
 
@@ -38,6 +40,7 @@ export function formatTimeLocalized(seconds: number): string {
   return language === 'ja' ? `${minutes}分` : `${minutes} min`;
 }
 
+/** 秒を "m:ss" か "h:mm:ss" の形にする */
 export function formatTimeShort(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -50,10 +53,12 @@ export function formatTimeShort(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
+/** 今日の UTC の日付（YYYY-MM-DD）。ローカル日付が要るなら toDateKey を使う */
 export function getTodayKey(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+/** ローカル日付の日付キー（YYYY-MM-DD） */
 // toISOString は UTC の日付になり、UTC より東のタイムゾーンでは前日にずれるため、ローカルの年月日から組み立てる
 export function toDateKey(date: Date): DateKey {
   const year = date.getFullYear();
@@ -62,6 +67,7 @@ export function toDateKey(date: Date): DateKey {
   return `${year}-${month}-${day}`;
 }
 
+/** UTC の日付（YYYY-MM-DD）。ローカル日付が要るなら toDateKey を使う */
 export function getDateKey(date: Date): string {
   return date.toISOString().split('T')[0];
 }
@@ -74,6 +80,7 @@ export function isWithinDays(dateKey: string, days: number): boolean {
   return diffDays <= days;
 }
 
+/** 今日から遡る n 日の UTC の日付（新しい順） */
 export function getLastNDays(n: number): string[] {
   const dates: string[] = [];
   const today = new Date();
@@ -87,6 +94,7 @@ export function getLastNDays(n: number): string[] {
   return dates;
 }
 
+/** "HH:MM" の形か（"24:00" も許す） */
 export function isValidTimeString(time: string): boolean {
   if (!time || typeof time !== 'string') return false;
   if (time === '24:00') return true;
@@ -94,16 +102,22 @@ export function isValidTimeString(time: string): boolean {
   return match !== null;
 }
 
+/** "HH:MM" を 0 時からの分にする（形が不正なら 0） */
 export function parseTimeToMinutes(time: string): number {
   if (!isValidTimeString(time)) return 0;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
+/** 終了時刻の "00:00" を、その日の終わりの "24:00" に読み替える */
 export function normalizeEndTime(endTime: string): string {
   return endTime === '00:00' ? '24:00' : endTime;
 }
 
+/**
+ * 現在時刻が曜日と時間帯の範囲内か（終了が開始以前なら日をまたぐ範囲として扱う）
+ * @param days 曜日（0 = 日曜。Date#getDay と同じ）
+ */
 export function isWithinSchedule(
   startTime: string,
   endTime: string,

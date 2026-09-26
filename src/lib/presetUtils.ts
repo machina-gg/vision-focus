@@ -3,6 +3,7 @@ import type {
   DashboardDisplaySettings
 } from '~/types/storage';
 
+/** プリセットから表示に使う項目だけを取り出す */
 export function presetToDisplaySettings(
   preset: DashboardPreset
 ): DashboardDisplaySettings {

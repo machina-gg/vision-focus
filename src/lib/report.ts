@@ -17,6 +17,7 @@ import type {
 } from '~/types/report';
 import type { SiteKey } from '~/types/site';
 
+/** レポートのトップに並べるサイトの数 */
 export const REPORT_TOP_SITES_LIMIT = 5;
 
 const TREND_THRESHOLD = 0.05;
@@ -78,6 +79,7 @@ function changePercent(current: number, previous: number): number | null {
   return ((current - previous) / previous) * PERCENT;
 }
 
+/** 週次レポート。weekOffset は 0 = 今週、-1 = 先週で、過去の週に記録が無ければ null */
 export function generateWeeklyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -102,6 +104,7 @@ export function generateWeeklyReport(
   };
 }
 
+/** 月次レポート。monthOffset は 0 = 今月、-1 = 先月で、過去の月に記録が無ければ null */
 export function generateMonthlyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -128,6 +131,7 @@ export function generateMonthlyReport(
   };
 }
 
+/** 日付キー 2 つを週の範囲の表示（例: "Jun 10 - 16" / "Jun 24 - Jul 7"）にする */
 export function formatWeekRange(weekStart: string, weekEnd: string): string {
   const start = parseDateKey(weekStart);
   const end = parseDateKey(weekEnd);
@@ -140,6 +144,7 @@ export function formatWeekRange(weekStart: string, weekEnd: string): string {
   return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}`;
 }
 
+/** YYYY-MM を表示用の月（例: "June 2024"）にする */
 export function formatMonth(monthKey: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);

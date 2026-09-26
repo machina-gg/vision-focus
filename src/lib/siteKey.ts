@@ -1,10 +1,12 @@
 import type { SiteKey } from '~/types/site';
 
+/** YouTube のサイトキー。YouTube 固有の非表示機能はこのキーのサイトだけが持てる */
 export const YOUTUBE_DOMAIN: SiteKey = 'youtube.com';
 
 const WILDCARD_PREFIX = '*.';
 const WWW_PREFIX = 'www.';
 
+/** 入力を照合用のサイトキーにする（小文字にし、先頭の *. と www. を外す） */
 export function normalizeSiteKey(input: string): SiteKey {
   let key = input.trim().toLowerCase();
   if (key.startsWith(WILDCARD_PREFIX)) {
@@ -16,6 +18,7 @@ export function normalizeSiteKey(input: string): SiteKey {
   return key;
 }
 
+/** ホスト名が属するサイトキー（キーと一致するか .キー で終わるもののうち最長。無ければ null） */
 export function resolveSiteKey(
   hostname: string,
   sites: readonly SiteKey[]
@@ -34,11 +37,13 @@ export function resolveSiteKey(
   return best;
 }
 
+/** 入れ子になる既存のサイト。relation は既存のサイトから見た関係 */
 export interface NestedSite {
   site: SiteKey;
   relation: 'ancestor' | 'descendant';
 }
 
+/** key を追加すると入れ子になる既存のサイトを返す（同じキーは数えない。無ければ null） */
 export function findNestedSite(
   key: SiteKey,
   sites: readonly SiteKey[]

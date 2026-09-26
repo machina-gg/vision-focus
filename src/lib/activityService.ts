@@ -64,6 +64,7 @@ function isRecordable(event: ActivityEvent, tracked: Set<SiteKey>): boolean {
   return true;
 }
 
+/** 出来事を発生したローカル日付・サイトの行へ加算する（追跡中でないサイトの出来事は捨てる） */
 export async function appendActivity(
   ...events: ActivityEvent[]
 ): Promise<void> {
@@ -87,6 +88,7 @@ export async function appendActivity(
   });
 }
 
+/** appendActivity と同じだが、失敗を投げずにログへ残す（本体の処理に付随して記録するときの入口） */
 export async function recordActivity(
   ...events: ActivityEvent[]
 ): Promise<void> {
@@ -97,6 +99,7 @@ export async function recordActivity(
   }
 }
 
+/** ホスト名で起きた出来事を追跡中のサイトへ引き直して記録する（同じサイトのホストは 1 件にまとめ、失敗は投げない） */
 export async function recordHostActivity(
   hosts: readonly string[],
   toEvent: (site: SiteKey) => ActivityEvent
@@ -118,6 +121,7 @@ export async function recordHostActivity(
   }
 }
 
+/** サイトの列をすべての日から消す（空になった日の行も消す） */
 export async function purgeSite(site: SiteKey): Promise<void> {
   await enqueue(async () => {
     const log = await readLog();
@@ -137,6 +141,7 @@ export async function purgeSite(site: SiteKey): Promise<void> {
   });
 }
 
+/** date より前の日の行を消す（date 自身は残す） */
 export async function pruneBefore(date: DateKey): Promise<void> {
   await enqueue(async () => {
     const log = await readLog();

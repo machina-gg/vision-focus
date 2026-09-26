@@ -57,6 +57,7 @@ async function captureElement(
   return outputCanvas;
 }
 
+/** 要素を指定の解像度の PNG にする（縦横比を保って中央に置き、余白は黒） */
 export async function captureWallpaper(
   element: HTMLElement,
   options: CaptureOptions = { resolution: '1080p', quality: 0.95 }
@@ -78,6 +79,7 @@ export async function captureWallpaper(
   });
 }
 
+/** 要素を壁紙の PNG でダウンロードする（ファイル名に寸法が付く） */
 export async function downloadWallpaper(
   element: HTMLElement,
   filename: string = 'visionfocus-wallpaper',
@@ -98,6 +100,7 @@ export async function downloadWallpaper(
   URL.revokeObjectURL(url);
 }
 
+/** 解像度の選択肢（表示名と寸法つき） */
 export function getResolutionOptions(): {
   value: Resolution;
   label: string;

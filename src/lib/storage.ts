@@ -52,6 +52,7 @@ export async function setSettings(settings: AppSettings): Promise<void> {
   await settingsItem.setValue(settings);
 }
 
+/** 設定の一部を書き換えて保存し、保存後の設定を返す */
 export async function updateSettings(
   update: Partial<AppSettings>
 ): Promise<AppSettings> {
@@ -80,6 +81,7 @@ export async function getSites(): Promise<TrackedSites> {
   return objectOrFallback(await sitesItem.getValue(), DEFAULT_SITES);
 }
 
+/** settings / vision / sites / activity をまとめて読む（supportPrompt は含めない） */
 export async function getAllStorage(): Promise<StorageSchema> {
   const [settings, vision, sites, activity] = await Promise.all([
     getSettings(),
@@ -96,6 +98,7 @@ export async function getAllStorage(): Promise<StorageSchema> {
   };
 }
 
+/** settings / vision / sites / activity を消す（supportPrompt は残す） */
 export async function clearAllStorage(): Promise<void> {
   await Promise.all([
     settingsItem.removeValue(),
@@ -109,6 +112,7 @@ const SESSION_KEYS = {
   lastBlockedDomain: 'lastBlockedDomain'
 } as const;
 
+/** 最後にブロックしたドメインを session 領域に残す（ブロック画面の表示に使う） */
 export async function setLastBlockedDomain(domain: string): Promise<void> {
   await chrome.storage.session.set({
     [SESSION_KEYS.lastBlockedDomain]: domain

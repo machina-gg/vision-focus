@@ -1,10 +1,12 @@
 import { IMAGE_LIMITS } from '~/constants/limits';
 
+/** validateImageFile の結果（valid が false のときだけ error に理由が入る） */
 export interface ImageValidationResult {
   valid: boolean;
   error?: string;
 }
 
+/** 背景画像として使える形式・サイズかを確かめる */
 export function validateImageFile(file: File): ImageValidationResult {
   if (!file) {
     return { valid: false, error: 'No file provided' };
@@ -68,6 +70,7 @@ function calculateDimensions(
   return { width: Math.round(newWidth), height: Math.round(newHeight) };
 }
 
+/** 画像を上限の縦横に縮めて JPEG の data URL にする（maxSizeMB に収まらなければ投げる） */
 export async function compressImage(
   file: File,
   maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
@@ -116,6 +119,7 @@ export async function compressImage(
   return dataUrl;
 }
 
+/** data URL の中身のバイト数（base64 を復号した後の大きさ） */
 export function getBase64Size(dataUrl: string): number {
   const base64 = dataUrl.split(',')[1];
   if (!base64) return 0;
@@ -124,6 +128,7 @@ export function getBase64Size(dataUrl: string): number {
   return Math.floor((base64.length * 3) / 4) - padding;
 }
 
+/** バイト数を B / KB / MB の表示にする */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

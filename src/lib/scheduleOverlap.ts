@@ -3,6 +3,7 @@ import type { Schedule } from '~/types/storage';
 
 const MINUTES_PER_DAY = 24 * 60;
 
+/** 重複を調べる時間帯。保存前のフォームも渡せるよう id と enabled を持たない */
 export interface ScheduleTimeSpan {
   startTime: string;
   endTime: string;
@@ -33,6 +34,10 @@ function overlaps(a: MinuteRange, b: MinuteRange): boolean {
   return a.start < b.end && b.start < a.end;
 }
 
+/**
+ * 曜日を共有し時間帯が交差する既存のスケジュールを返す（無効なものも対象。無ければ null）
+ * @param excludeId 編集中のスケジュール自身を除くための id
+ */
 export function findOverlappingSchedule(
   candidate: ScheduleTimeSpan,
   schedules: Schedule[],

@@ -50,6 +50,7 @@ function formatDateKey(date: DateKey | null): string {
   return date === null ? '-' : parseDateKey(date).toLocaleDateString();
 }
 
+/** ブロックリスト CSV の行（ドメイン・追加日）。並びは blockListSites と同じ */
 export function blockListRows(sites: TrackedSites): string[][] {
   return blockListSites(sites).map((site) => [
     site.domain,
@@ -57,12 +58,14 @@ export function blockListRows(sites: TrackedSites): string[][] {
   ]);
 }
 
+/** ブロックリストを CSV でダウンロードする */
 export function exportBlockList(sites: TrackedSites): void {
   const headers = ['Domain', 'Added Date'];
   const csv = toCSV(headers, blockListRows(sites));
   downloadCSV(`visionfocus-blocklist-${getDateString()}.csv`, csv);
 }
 
+/** サイト別ブロック回数 CSV の行（ドメイン・回数・最後にブロックした日）。多い順で、0 回のサイトは含めない */
 export function blockCountRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -77,6 +80,7 @@ export function blockCountRows(
   );
 }
 
+/** 期間内のサイト別ブロック回数を CSV でダウンロードする */
 export function exportSiteBlockCounts(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -87,6 +91,7 @@ export function exportSiteBlockCounts(
   downloadCSV(`visionfocus-block-counts-${getDateString()}.csv`, csv);
 }
 
+/** 日別統計 CSV の行（日付・浪費時間・ブロック回数）。新しい日から並べ、記録が 0 の日は含めない */
 export function dailyActivityRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -98,6 +103,7 @@ export function dailyActivityRows(
     .map((day) => [day.date, formatTime(day.seconds), String(day.blocks)]);
 }
 
+/** 期間内の日別統計を CSV でダウンロードする */
 export function exportDailyActivity(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -108,6 +114,7 @@ export function exportDailyActivity(
   downloadCSV(`visionfocus-daily-stats-${getDateString()}.csv`, csv);
 }
 
+/** 解除したサイト CSV の行（ドメイン・解除日・解除後の時間・最終表示日）。解除後の時間の多い順で、解除したことが無いサイトは含めない */
 export function unblockedSiteRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -129,6 +136,7 @@ export function unblockedSiteRows(
     ]);
 }
 
+/** 解除したサイトごとの解除後の時間を CSV でダウンロードする */
 export function exportUnblockedSiteTimes(
   log: ActivityLog,
   sites: readonly SiteKey[],

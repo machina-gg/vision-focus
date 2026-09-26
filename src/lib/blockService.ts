@@ -14,8 +14,10 @@ import type { BlockRule, SiteKey, TrackedSites } from '~/types/site';
 
 export type { BlockReason, BlockState } from '~/lib/blockRule';
 
+/** evaluateBlock が見るブロック設定 */
 export type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
 
+/** 1 件の登録（ブロック設定を持つ追跡中のサイト）の判定結果 */
 export interface SiteBlockStatus {
   site: SiteKey;
   rule: BlockRuleInput;
@@ -36,6 +38,7 @@ interface Registration {
 
 const NOT_BLOCKED: BlockState = { blocked: false, reason: null };
 
+/** 有効で、現在時刻が範囲内のスケジュールが 1 件以上あるか */
 export function isAnyScheduleActive(
   schedules: Schedule[] | undefined
 ): boolean {
@@ -46,6 +49,7 @@ export function isAnyScheduleActive(
   );
 }
 
+/** ブロックが効く時間帯か（有効なスケジュールが 1 件も無ければ常に true） */
 export function isBlockingWindowOpen(
   schedules: Schedule[] | undefined
 ): boolean {
@@ -125,6 +129,7 @@ function representative(
   return tightest ?? statuses[0] ?? null;
 }
 
+/** ホスト名を覆う登録の判定結果を代表 1 件で返す（覆う登録が無ければ null） */
 export async function getSiteBlockStatus(
   hostname: string
 ): Promise<SiteBlockStatus | null> {
@@ -134,6 +139,7 @@ export async function getSiteBlockStatus(
   );
 }
 
+/** 複数のホスト名を覆う登録すべての判定結果を、登録ごとに 1 件で返す */
 export async function getSiteBlockStatuses(
   hostnames: readonly string[]
 ): Promise<SiteBlockStatus[]> {
@@ -150,6 +156,7 @@ export async function getSiteBlockStatuses(
   return [...covering].map((registration) => evaluate(registration, inputs));
 }
 
+/** URL のホスト名のブロック判定（URL として読めなければブロックしない） */
 export async function getBlockState(url: string): Promise<BlockState> {
   const domain = extractDomain(url);
   if (!domain) return NOT_BLOCKED;
@@ -157,6 +164,7 @@ export async function getBlockState(url: string): Promise<BlockState> {
   return getBlockStateForDomain(domain);
 }
 
+/** ホスト名のブロック判定（覆う登録のどれかがブロックならブロック） */
 export async function getBlockStateForDomain(
   domain: string
 ): Promise<BlockState> {
@@ -169,6 +177,7 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   return state.blocked;
 }
 
+/** ブロック回数として記録するか（ブロック判定の結論と同じ） */
 export async function shouldTrackBlockForDomain(
   domain: string
 ): Promise<boolean> {
@@ -176,6 +185,7 @@ export async function shouldTrackBlockForDomain(
   return state.blocked;
 }
 
+/** 今ブロックしている登録のサイトキー一覧（declarativeNetRequest のルールの元になる） */
 export async function getActiveBlockedDomains(): Promise<SiteKey[]> {
   const inputs = await loadInputs();
   const blocked = new Set<SiteKey>();

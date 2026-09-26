@@ -32,6 +32,7 @@ import type {
   UpdateYouTubeSettingsResponse
 } from '~/types/messages';
 
+/** メッセージ名ごとの引数と戻り値。送信側と受信側の型をここで縛る */
 export interface ProtocolMap {
   'add-block'(data: AddBlockRequest): AddBlockResponse;
   'add-tracked-site'(data: AddTrackedSiteRequest): AddTrackedSiteResponse;
@@ -49,10 +50,11 @@ export interface ProtocolMap {
   ): UpdateYouTubeSettingsResponse;
 }
 
-/** data は外部から届く値で型どおりとは限らないため、実行時の検証（zod）はハンドラ側で行う */
+/** background 側で onMessage に渡すハンドラの型。data は外部から届く値で型どおりとは限らないため、実行時の検証（zod）はハンドラ側で行う */
 export type MessageHandler<TName extends keyof ProtocolMap> = (
   message: Message<ProtocolMap, TName> & ExtensionMessage
 ) => MaybePromise<GetReturnType<ProtocolMap[TName]>>;
 
+/** ProtocolMap に沿って background と画面・コンテンツスクリプトの間で送受信する */
 export const { sendMessage, onMessage, removeAllListeners } =
   defineExtensionMessaging<ProtocolMap>();

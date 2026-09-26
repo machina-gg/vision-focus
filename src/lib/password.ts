@@ -1,3 +1,4 @@
+/** パスワードの SHA-256 ハッシュ（16 進文字列） */
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -17,6 +18,7 @@ export async function verifyPassword(
   return inputHash === storedHash;
 }
 
+/** パスワードの長さが 4〜100 文字か（外れたら errorKey に i18n のキーが入る） */
 export function validatePasswordStrength(password: string): {
   isValid: boolean;
   errorKey: string | null;
