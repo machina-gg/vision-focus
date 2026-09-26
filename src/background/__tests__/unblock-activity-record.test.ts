@@ -183,6 +183,11 @@ describe('効いていないブロックを外す操作は解除として数え�
     });
 
     expect(todayUnblocks('youtube.com')).toBeUndefined();
+    // ブロック設定の無い youtube.com でも、機能を外した行は追跡中に残る
+    expect(storedSites()['youtube.com']).toMatchObject({
+      block: null,
+      youtube: null
+    });
   });
 });
 

@@ -15,7 +15,7 @@ import {
   setStorageDataFromExtension,
   setSettingsFromExtension,
   setSitesFromExtension,
-  getStorageData
+  readSiteSetting
 } from './helpers/storage';
 import { TEST_DATA, TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
@@ -358,10 +358,7 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     // 保存済みのサイトからもブロック設定が消える（追跡は続く）
     await expect
-      .poll(async () => {
-        const sites = await getStorageData(optionsPage, 'sites');
-        return sites?.[TEST_DOMAINS.example]?.block ?? 'missing';
-      })
+      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'block'))
       .toBeNull();
 
     await optionsPage.close();

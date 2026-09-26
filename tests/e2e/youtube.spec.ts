@@ -7,14 +7,14 @@ import {
   toggleAfter
 } from './helpers/pages';
 import {
-  getStorageData,
   setStorageData,
   setSettings,
   setSites,
   makeActivity,
   makeAppSettings,
   makeSites,
-  clearStorageFromExtension
+  clearStorageFromExtension,
+  readSiteSetting
 } from './helpers/storage';
 import { SELECTORS, TEST_DOMAINS, UI_TEXT } from './helpers/constants';
 import { triggerBlockRuleRecompute, waitForBlockRules } from './helpers/sw';
@@ -442,10 +442,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await expect(masterToggle).toHaveAttribute('aria-checked', 'false');
     // YouTube 機能が外れる（youtube.com は追跡中に残る）
     await expect
-      .poll(async () => {
-        const sites = await getStorageData(page, 'sites');
-        return sites?.[YOUTUBE_SITE]?.youtube ?? 'missing';
-      })
+      .poll(() => readSiteSetting(page, YOUTUBE_SITE, 'youtube'))
       .toBeNull();
 
     await page.close();
