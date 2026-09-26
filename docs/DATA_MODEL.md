@@ -71,14 +71,14 @@ erDiagram
 
 ### AppSettings（全サイトに共通の設定）
 
-| フィールド     | 型                             | 説明                                                       |
-| -------------- | ------------------------------ | ---------------------------------------------------------- |
-| paused         | boolean                        | 全体の一時停止                                             |
-| schedules      | Schedule[]                     | スケジュール。1 件以上あればスケジュール内だけブロックする |
-| notifications  | NotificationSettings           | 時間制限の通知                                             |
-| password       | PasswordSettings               | 解除操作のパスワード保護                                   |
-| unblockConfirm | UnblockConfirmSettings         | パスワード未設定時の長押し確認                             |
-| analyticsOptIn | AnalyticsOptIn \| null（任意） | GA4 の同意。未決定なら無いか null                          |
+| フィールド     | 型                             | 説明                                                                                                            |
+| -------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| paused         | boolean                        | 全体の一時停止                                                                                                  |
+| schedules      | Schedule[]                     | スケジュール。有効なものが 1 件以上あればスケジュール内だけブロックする（すべて無効ならスケジュール無しと同じ） |
+| notifications  | NotificationSettings           | 時間制限の通知                                                                                                  |
+| password       | PasswordSettings               | 解除操作のパスワード保護                                                                                        |
+| unblockConfirm | UnblockConfirmSettings         | パスワード未設定時の長押し確認                                                                                  |
+| analyticsOptIn | AnalyticsOptIn \| null（任意） | GA4 の同意。未決定なら無いか null                                                                               |
 
 ### Schedule（スケジュール）
 
@@ -132,12 +132,17 @@ erDiagram
 
 生成契機は 2 つ: ブロックリストへの追加（`block` を持つ）と、分析タブからの追跡サイトの追加（`block` が null）。youtube.com は YouTube 機能を有効にしたときにも作られる。
 
-| 操作                   | 変わるもの                                       |
-| ---------------------- | ------------------------------------------------ |
-| ブロックリストに追加   | `block` を作る（サイトが無ければサイトごと作る） |
-| ブロックのトグル       | `block.enabled`                                  |
-| ブロックリストから削除 | `block` を null にする（追跡は続く）             |
-| 追跡の停止             | サイトと、その `activity` の行を消す             |
+| 操作                   | 変わるもの                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| ブロックリストに追加   | `block` を作る（サイトが無ければサイトごと作る）                                    |
+| ブロックのトグル       | `block.enabled`                                                                     |
+| ブロックリストから削除 | `block` を null にする（追跡は続く）                                                |
+| 追跡の停止             | サイトと、その `activity` の行を消す（`block` か `youtube` を持つサイトは止めない） |
+
+画面での見え方（どちらも `sites` からの導出で、保存はしない）:
+
+- 「ブロック中のサイト」一覧（ブロックリストタブ・新しいタブ・ブロックリスト CSV）は、`block` を持つサイトから youtube.com を除いたもの（`src/lib/blockList.ts` の `blockListSites`。新しいタブはそのうち `block.enabled` のものだけ）。youtube.com の設定は YouTube の節だけが扱う
+- 追跡中サイト一覧（分析タブ）の状態は、`block === null` なら解除済み（追跡だけ）、`block.enabled` でブロック中 / ブロック中（無効）
 
 ### BlockRule（ブロックの設定）
 
@@ -233,15 +238,16 @@ DashboardDisplaySettings に次を足したもの。
 
 「浪費時間」は、追跡中のサイトが表示されていた時間の合計（分類は持たない）。
 
-| 画面・処理                                           | 導出（`src/lib/activityStats.ts`）               | 期間                         |
-| ---------------------------------------------------- | ------------------------------------------------ | ---------------------------- |
-| ポップアップの今日のサマリー・新しいタブの MiniStats | `todaySummary`                                   | 今日                         |
-| ブロック画面の回数と時間                             | `siteTotals`                                     | 保持期間全体                 |
-| 時間制限の判定・残り時間・通知・バッジ               | `secondsOnDay`                                   | 今日                         |
-| 利用時間の推移（日別・サイト別・累積）               | `dailySeries` / `rankSites` / `cumulativeSeries` | グラフの期間（全系列で同じ） |
-| 週次・月次レポート                                   | `sumRange` / `dailySeries` / `rankSites`         | その週・その月               |
-| 追跡中のサイト一覧（解除日・解除後の時間）           | `lastUnblockedOn` / `secondsSinceUnblock`        | 最後に解除した日から今日     |
-| CSV                                                  | `dailySeries` / `rankSites` / `lastActiveOn`     | 保持期間全体                 |
+| 画面・処理                                           | 導出（`src/lib/activityStats.ts`）                                     | 期間                         |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- |
+| ポップアップの今日のサマリー・新しいタブの MiniStats | `todaySummary`                                                         | 今日                         |
+| ブロック画面の回数と時間                             | `siteTotals`                                                           | 保持期間全体                 |
+| 時間制限の判定・残り時間・通知・バッジ               | `secondsOnDay`                                                         | 今日                         |
+| 利用時間の推移（日別・サイト別・累積）               | `dailySeries` / `rankSites` / `cumulativeSeries`                       | グラフの期間（全系列で同じ） |
+| 週次・月次レポート                                   | `sumRange` / `dailySeries` / `rankSites`                               | その週・その月               |
+| 追跡中のサイト一覧（解除日・解除後の時間・合計）     | `lastUnblockedOn` / `secondsSinceUnblock` / `totalSecondsSinceUnblock` | 最後に解除した日から今日     |
+| CSV（ブロック回数・日別統計）                        | `rankSites` / `lastBlockedOn` / `dailySeries`                          | 保持期間全体                 |
+| CSV（解除したサイト）                                | `lastUnblockedOn` / `secondsSinceUnblock` / `lastActiveOn`             | 最後に解除した日から今日     |
 
 ## 機能上限
 

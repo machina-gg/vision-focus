@@ -1115,6 +1115,10 @@
     "message": "Unblocked",
     "description": "Status label for unblocked sites"
   },
+  "statusBlockDisabled": {
+    "message": "Blocked (disabled)",
+    "description": "Status label for sites whose block is turned off with the toggle"
+  },
   "blockedSince": {
     "message": "Blocked since",
     "description": "Blocked since label"

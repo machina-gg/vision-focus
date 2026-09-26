@@ -145,12 +145,16 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // 追跡だけのサイトを置く（一覧の行は追跡中のサイト）
+    // 一覧の行は追跡中のサイト。状態は block === null（追跡だけ）/ block.enabled（ブロック中 / 無効）で分かれる
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
       'sites',
-      makeSites([{ domain: 'youtube.com' }])
+      makeSites([
+        { domain: 'youtube.com' },
+        { domain: 'blocked.com', block: {} },
+        { domain: 'paused.com', block: { enabled: false } }
+      ])
     );
     await setupPage.close();
 
@@ -164,6 +168,28 @@ test.describe('Options - Analytics Tab', () => {
 
     // 追跡中一覧に対象ドメインが表示される
     await expect(trackedSection).toContainText('youtube.com');
+
+    // 行はブロック中 → 無効 → 追跡だけの順に並び、状態は行の属性に出る
+    const rows = page.locator(SELECTORS.analytics.trackedSite);
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0)).toHaveAttribute('data-status', 'blocked');
+    await expect(rows.nth(0)).toContainText('blocked.com');
+    await expect(rows.nth(1)).toHaveAttribute('data-status', 'disabled');
+    await expect(rows.nth(1)).toContainText('paused.com');
+    await expect(rows.nth(2)).toHaveAttribute('data-status', 'tracking');
+    await expect(rows.nth(2)).toContainText('youtube.com');
+
+    // トグルで無効にしたサイトは再ブロックだけを出す（ブロック設定を消すのはブロックリストタブの経路だけ）。
+    // ブロック中の行には再ブロックも出さない
+    await expect(
+      rows.nth(1).locator(SELECTORS.analytics.reblockButton)
+    ).toBeVisible();
+    await expect(
+      rows.nth(1).locator(SELECTORS.analytics.stopTrackingButton)
+    ).toHaveCount(0);
+    await expect(
+      rows.nth(0).locator(SELECTORS.analytics.reblockButton)
+    ).toHaveCount(0);
 
     await page.close();
   });
@@ -252,12 +278,16 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // ブロックリストから外した（追跡だけの）サイトを置く
+    // ブロックリストから外した（追跡だけの）サイトと、ブロックをトグルで無効にしたサイトを置く
+    // （停止できるのは追跡だけのサイト。無効のサイトはブロック設定ごと残る）
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
       'sites',
-      makeSites([{ domain: 'reddit.com' }])
+      makeSites([
+        { domain: 'reddit.com' },
+        { domain: 'paused.com', block: { enabled: false } }
+      ])
     );
     await setupPage.close();
 
@@ -273,11 +303,13 @@ test.describe('Options - Analytics Tab', () => {
       .locator('xpath=..');
     await expect(trackedSection).toContainText('reddit.com');
 
-    // トラッキング停止ボタンをクリック
-    const stopButton = page
-      .locator(SELECTORS.analytics.stopTrackingButton)
-      .first();
-    await stopButton.click();
+    // 行ごとのトラッキング停止ボタンを押す
+    const stopButtonOf = (domain: string) =>
+      page
+        .locator(SELECTORS.analytics.trackedSite)
+        .filter({ hasText: domain })
+        .locator(SELECTORS.analytics.stopTrackingButton);
+    await stopButtonOf('reddit.com').click();
 
     // 追跡中のサイトから当該ドメインが消える。
     // 消すのは停止ボタンの経路だけ（stop-tracking ハンドラ）
@@ -287,15 +319,21 @@ test.describe('Options - Analytics Tab', () => {
       )
       .not.toContain('reddit.com');
 
+    // 無効にしたサイトには停止ボタンを出さず、保存値にもブロック設定ごと残る
+    await expect(stopButtonOf('paused.com')).toHaveCount(0);
+    expect(
+      (await getStorageData(page, 'sites'))?.['paused.com']?.block
+    ).toEqual(expect.objectContaining({ enabled: false }));
+
     // 保存内容から描き直させて、画面からも消えていることを確かめる
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
-    // 追跡中のサイトが 0 件になると一覧そのものが描画されない
-    // （AnalyticsSummary は hasTrackedSites が false なら空状態を出す）
-    await expect(
-      page.locator(SELECTORS.analytics.trackedSitesList)
-    ).toHaveCount(0);
+    // 一覧には無効にしたサイトだけが残る
+    await expect(page.locator(SELECTORS.analytics.trackedSite)).toHaveCount(1);
+    await expect(page.locator(SELECTORS.analytics.trackedSite)).toContainText(
+      'paused.com'
+    );
 
     await page.close();
   });
@@ -324,6 +362,24 @@ test.describe('Options - Analytics Tab', () => {
         { timeout: 10000 }
       )
       .toContain('example.com');
+
+    // 追加できたら入力欄は空に戻り、拒否の理由は出ない
+    await expect(addSiteInput).toHaveValue('');
+    await expect(page.locator(SELECTORS.analytics.addSiteError)).toHaveCount(0);
+
+    // 追跡中のサイトに含まれるサブドメインは入れ子として拒否され、理由が画面に出る
+    await addSiteInput.fill('m.example.com');
+    await addButton.click();
+
+    const error = page.locator(SELECTORS.analytics.addSiteError);
+    await expect(error).toBeVisible();
+    await expect(error).toContainText('m.example.com');
+    await expect(error).toContainText('example.com');
+    // 理由を読んで直せるよう、入力は残る
+    await expect(addSiteInput).toHaveValue('m.example.com');
+    expect(Object.keys((await getStorageData(page, 'sites')) ?? {})).toEqual([
+      'example.com'
+    ]);
 
     await page.close();
   });

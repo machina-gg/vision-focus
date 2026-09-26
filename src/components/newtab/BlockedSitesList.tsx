@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Shield } from 'lucide-react';
 
+import { blockListSites } from '~/lib/blockList';
 import { getMessage } from '~/lib/i18n';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TrackedSites } from '~/types/site';
 
 interface BlockedSitesListProps {
-  blockRows: BlockListRow[];
-  /** 項目の domain ごとのブロック回数（無い項目は 0 回として扱う） */
+  /** 追跡中のサイト。一覧は `blockListSites` のうちブロックが有効なもの */
+  trackedSites: TrackedSites;
+  /** サイトキーごとのブロック回数（無いサイトは 0 回として扱う） */
   blockCounts: Record<string, number>;
   maxVisible?: number;
 }
 
 export function BlockedSitesList({
-  blockRows,
+  trackedSites,
   blockCounts,
   maxVisible = 5
 }: BlockedSitesListProps) {
@@ -20,8 +22,10 @@ export function BlockedSitesList({
   // 「もっと見る」で上限を外したかどうか
   const [showsAll, setShowsAll] = useState(false);
 
-  // Filter to only show enabled blocked sites
-  const enabledBlockList = blockRows.filter((item) => item.enabled !== false);
+  // 無効にしたサイトは今ブロックしていないので出さない
+  const enabledBlockList = blockListSites(trackedSites).filter(
+    (site) => site.block.enabled
+  );
 
   if (enabledBlockList.length === 0) {
     return null;
@@ -73,7 +77,7 @@ export function BlockedSitesList({
               const count = blockCounts[item.domain] ?? 0;
               return (
                 <li
-                  key={item.id}
+                  key={item.domain}
                   className="px-5 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">

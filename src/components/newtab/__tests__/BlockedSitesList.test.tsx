@@ -4,8 +4,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { BlockedSitesList } from '../BlockedSitesList';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import type { TrackedSite, TrackedSites } from '~/types/site';
 
 /**
  * BlockedSitesList の表示件数と開閉の検査
@@ -19,13 +21,8 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // ブロック回数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
-const itemOf = (domain: string, enabled = true): BlockListRow => ({
-  id: domain,
-  domain,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled,
-  timeLimit: null
-});
+const itemOf = (domain: string, enabled = true): TrackedSite =>
+  blockedSite(domain, { enabled });
 
 /** 開閉ボタンを押して一覧を開く（もう一度押すと閉じる） */
 function expand() {
@@ -50,15 +47,17 @@ function visibleDomains() {
 }
 
 /** domain が site0..siteN-1 の有効なブロック項目を n 件作る */
-function itemsOf(n: number): BlockListRow[] {
-  return Array.from({ length: n }, (_, i) => itemOf(`site${i}.example`));
+function itemsOf(n: number): TrackedSites {
+  return sitesOf(
+    ...Array.from({ length: n }, (_, i) => itemOf(`site${i}.example`))
+  );
 }
 
 describe('BlockedSitesList', () => {
   describe('表示するサイトが無いとき', () => {
     it('ブロック一覧が空なら何も描画しない', () => {
       const { container } = render(
-        <BlockedSitesList blockRows={[]} blockCounts={{}} />
+        <BlockedSitesList trackedSites={{}} blockCounts={{}} />
       );
 
       expect(container).toBeEmptyDOMElement();
@@ -67,7 +66,10 @@ describe('BlockedSitesList', () => {
     it('すべて無効なら何も描画しない', () => {
       const { container } = render(
         <BlockedSitesList
-          blockRows={[itemOf('a.example', false), itemOf('b.example', false)]}
+          trackedSites={sitesOf(
+            itemOf('a.example', false),
+            itemOf('b.example', false)
+          )}
           blockCounts={{}}
         />
       );
@@ -76,15 +78,34 @@ describe('BlockedSitesList', () => {
     });
   });
 
+  describe('並べるサイト', () => {
+    it('追跡だけのサイトと youtube.com は並べない（youtube.com は YouTube の節が担当する）', () => {
+      render(
+        <BlockedSitesList
+          trackedSites={sitesOf(
+            itemOf('a.example'),
+            trackedSite('tracked.example'),
+            itemOf(YOUTUBE_DOMAIN)
+          )}
+          blockCounts={{}}
+        />
+      );
+
+      expand();
+
+      expect(visibleDomains()).toEqual(['a.example']);
+    });
+  });
+
   describe('見出しの件数', () => {
     it('有効なサイトだけを数える', () => {
       render(
         <BlockedSitesList
-          blockRows={[
+          trackedSites={sitesOf(
             itemOf('a.example'),
             itemOf('b.example', false),
             itemOf('c.example')
-          ]}
+          )}
           blockCounts={{}}
         />
       );
@@ -98,7 +119,10 @@ describe('BlockedSitesList', () => {
   describe('折りたたんでいるとき', () => {
     it('ドメインの一覧を出さない', () => {
       render(
-        <BlockedSitesList blockRows={[itemOf('a.example')]} blockCounts={{}} />
+        <BlockedSitesList
+          trackedSites={sitesOf(itemOf('a.example'))}
+          blockCounts={{}}
+        />
       );
 
       expect(
@@ -108,7 +132,10 @@ describe('BlockedSitesList', () => {
 
     it('開閉ボタンが未展開であることを属性で示す', () => {
       render(
-        <BlockedSitesList blockRows={[itemOf('a.example')]} blockCounts={{}} />
+        <BlockedSitesList
+          trackedSites={sitesOf(itemOf('a.example'))}
+          blockCounts={{}}
+        />
       );
 
       expect(screen.getByTestId('newtab-blocked-sites-toggle')).toHaveAttribute(
@@ -122,7 +149,10 @@ describe('BlockedSitesList', () => {
     it('有効なサイトのドメインだけを出す', () => {
       render(
         <BlockedSitesList
-          blockRows={[itemOf('a.example'), itemOf('hidden.example', false)]}
+          trackedSites={sitesOf(
+            itemOf('a.example'),
+            itemOf('hidden.example', false)
+          )}
           blockCounts={{}}
         />
       );
@@ -137,7 +167,10 @@ describe('BlockedSitesList', () => {
 
     it('開閉ボタンが展開中であることを属性で示す', () => {
       render(
-        <BlockedSitesList blockRows={[itemOf('a.example')]} blockCounts={{}} />
+        <BlockedSitesList
+          trackedSites={sitesOf(itemOf('a.example'))}
+          blockCounts={{}}
+        />
       );
 
       expand();
@@ -150,7 +183,10 @@ describe('BlockedSitesList', () => {
 
     it('もう一度押すと閉じる', () => {
       render(
-        <BlockedSitesList blockRows={[itemOf('a.example')]} blockCounts={{}} />
+        <BlockedSitesList
+          trackedSites={sitesOf(itemOf('a.example'))}
+          blockCounts={{}}
+        />
       );
 
       expand();
@@ -164,7 +200,7 @@ describe('BlockedSitesList', () => {
     it('件数が maxVisible を超えていても maxVisible 件までしか並べない', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(7)}
+          trackedSites={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -178,7 +214,7 @@ describe('BlockedSitesList', () => {
     it('maxVisible が 0 でも例外にならない', () => {
       render(
         <BlockedSitesList
-          blockRows={[itemOf('a.example')]}
+          trackedSites={sitesOf(itemOf('a.example'))}
           blockCounts={{}}
           maxVisible={0}
         />
@@ -196,7 +232,7 @@ describe('BlockedSitesList', () => {
     it('maxVisible を超える分が残っているなら、残りの件数を添えて出す', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(7)}
+          trackedSites={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -211,7 +247,7 @@ describe('BlockedSitesList', () => {
     it('押すと残りが出る', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(7)}
+          trackedSites={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -229,7 +265,7 @@ describe('BlockedSitesList', () => {
     it('残りを出したあとにもう一度押すと上限に戻る', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(7)}
+          trackedSites={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -246,7 +282,7 @@ describe('BlockedSitesList', () => {
     it('件数が maxVisible 以下なら出さない', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(5)}
+          trackedSites={itemsOf(5)}
           blockCounts={{}}
           maxVisible={5}
         />
@@ -261,7 +297,7 @@ describe('BlockedSitesList', () => {
     it('一覧を畳んで開き直すと上限が効いた状態に戻る', () => {
       render(
         <BlockedSitesList
-          blockRows={itemsOf(7)}
+          trackedSites={itemsOf(7)}
           blockCounts={{}}
           maxVisible={2}
         />
@@ -281,7 +317,7 @@ describe('BlockedSitesList', () => {
     it('1 回以上なら回数を出す', () => {
       render(
         <BlockedSitesList
-          blockRows={[itemOf('a.example')]}
+          trackedSites={sitesOf(itemOf('a.example'))}
           blockCounts={{ 'a.example': 3 }}
         />
       );
@@ -294,7 +330,7 @@ describe('BlockedSitesList', () => {
     it('0 回なら回数を出さない', () => {
       render(
         <BlockedSitesList
-          blockRows={[itemOf('a.example')]}
+          trackedSites={sitesOf(itemOf('a.example'))}
           blockCounts={{ 'a.example': 0 }}
         />
       );
@@ -306,7 +342,10 @@ describe('BlockedSitesList', () => {
 
     it('記録が無いドメインでも例外にならず、回数を出さない', () => {
       render(
-        <BlockedSitesList blockRows={[itemOf('a.example')]} blockCounts={{}} />
+        <BlockedSitesList
+          trackedSites={sitesOf(itemOf('a.example'))}
+          blockCounts={{}}
+        />
       );
 
       expand();

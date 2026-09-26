@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
+import { trackedSiteKeys } from '~/lib/siteService';
 import type { ActivityLog } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
-import type { BlockListRow, TrackedSiteListRow } from '~/lib/siteSelectors';
+import type { TrackedSite, TrackedSites } from '~/types/site';
 
 import {
   AnalyticsExportBar,
@@ -17,17 +17,19 @@ import {
 interface AnalyticsTabProps {
   /** 事実の表。タブ内の数値はすべてここから導出する */
   activity: ActivityLog;
-  /** 母集団（追跡中のサイト）。タブ内のどの数値もこの集合だけを数える */
-  sites: readonly SiteKey[];
-  /** ブロックリスト（CSV の出力元） */
-  blockRows: BlockListRow[];
-  /** 追跡中サイト一覧のブロック状態・ブロック開始日・できる操作 */
-  trackedSiteRows: TrackedSiteListRow[];
-  onReblock: (domain: string) => void;
+  /**
+   * 追跡中のサイト。タブ内のどの数値もこの集合だけを数え（母集団）、
+   * 追跡中サイト一覧の状態・操作とブロックリスト CSV もここから出す
+   */
+  trackedSites: TrackedSites;
+  onReblock: (site: TrackedSite) => void;
   onReset: () => void;
-  onStopTracking: (domain: string) => void;
+  onStopTracking: (site: TrackedSite) => void;
   onRefresh: () => Promise<void>;
-  onAddSite: (domain: string) => void;
+  /** 追加できたら true（入力欄を空にする） */
+  onAddSite: (domain: string) => Promise<boolean>;
+  /** 追跡サイトの追加を拒否した理由（形式の誤り・重複・入れ子） */
+  addSiteError: string;
   /** 支援誘導を出すか */
   isSupportPromptVisible: boolean;
   /** 支援ページを開く */
@@ -38,23 +40,26 @@ interface AnalyticsTabProps {
 
 export function AnalyticsTab({
   activity,
-  sites,
-  blockRows,
-  trackedSiteRows,
+  trackedSites,
   onReblock,
   onReset,
   onStopTracking,
   onRefresh,
   onAddSite,
+  addSiteError,
   isSupportPromptVisible,
   onSupport,
   onDismissSupport
 }: AnalyticsTabProps) {
   const [newSiteDomain, setNewSiteDomain] = useState('');
+  // 母集団は一覧・CSV と同じ値から作る（数値の母集団と一覧の行を食い違わせない）
+  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
 
-  const handleAddSite = () => {
-    if (newSiteDomain.trim()) {
-      onAddSite(newSiteDomain.trim().toLowerCase());
+  // 拒否されたときは入力を残す（理由を読んで直せるように）
+  const handleAddSite = async () => {
+    const domain = newSiteDomain.trim().toLowerCase();
+    if (!domain) return;
+    if (await onAddSite(domain)) {
       setNewSiteDomain('');
     }
   };
@@ -62,9 +67,8 @@ export function AnalyticsTab({
   return (
     <div className="space-y-6">
       <AnalyticsExportBar
-        blockRows={blockRows}
         activity={activity}
-        sites={sites}
+        trackedSites={trackedSites}
         onRefresh={onRefresh}
         onReset={onReset}
       />
@@ -99,12 +103,19 @@ export function AnalyticsTab({
             {getMessage('add')}
           </Button>
         </div>
+        {addSiteError && (
+          <p
+            className="mt-2 text-sm text-danger-600"
+            data-testid="analytics-add-site-error"
+          >
+            {addSiteError}
+          </p>
+        )}
       </Card>
 
       <AnalyticsSummary
         activity={activity}
-        sites={sites}
-        trackedSiteRows={trackedSiteRows}
+        trackedSites={trackedSites}
         onReblock={onReblock}
         onStopTracking={onStopTracking}
       />

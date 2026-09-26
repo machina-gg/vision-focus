@@ -9,8 +9,10 @@ import {
   REFRESH_SPINNER_DELAY_MS
 } from '~/constants/intervals';
 import { toDateKey } from '~/lib/time';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TrackedSites } from '~/types/site';
 
 /**
  * AnalyticsExportBar の表示分岐とコールバックの検査
@@ -55,14 +57,13 @@ vi.mock('~/components/features', () => ({
   AnalyticsChart: () => <div data-testid="analytics-chart" />
 }));
 
-const blockListOf = (domains: string[]): BlockListRow[] =>
-  domains.map((domain) => ({
-    id: domain,
-    domain,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    enabled: true,
-    timeLimit: null
-  }));
+/** ブロック設定を持つサイトだけの追跡中のサイト */
+const blockListOf = (domains: string[]): TrackedSites =>
+  sitesOf(...domains.map((domain) => blockedSite(domain)));
+
+/** 追跡だけのサイト（数値の母集団） */
+const trackedOf = (domains: string[]): TrackedSites =>
+  sitesOf(...domains.map((domain) => trackedSite(domain)));
 
 const row = (values: Partial<DailySiteActivity>): DailySiteActivity => ({
   seconds: 0,
@@ -84,9 +85,8 @@ function renderBar(
   const onReset = vi.fn();
   const result = render(
     <AnalyticsExportBar
-      blockRows={[]}
       activity={{}}
-      sites={[]}
+      trackedSites={{}}
       onRefresh={onRefresh}
       onReset={onReset}
       {...overrides}
@@ -126,7 +126,7 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('ブロックリストだけでも書き出しボタンは押せる', () => {
-      renderBar({ blockRows: blockListOf(['example.com']) });
+      renderBar({ trackedSites: blockListOf(['example.com']) });
 
       expect(screen.getByTestId('analytics-export-button')).toBeEnabled();
     });
@@ -134,7 +134,7 @@ describe('AnalyticsExportBar', () => {
     it('解除の記録だけでも書き出しボタンは押せる', () => {
       renderBar({
         activity: { [daysAgo(0)]: { 'example.com': row({ unblocks: 1 }) } },
-        sites: ['example.com']
+        trackedSites: trackedOf(['example.com'])
       });
 
       expect(screen.getByTestId('analytics-export-button')).toBeEnabled();
@@ -143,14 +143,20 @@ describe('AnalyticsExportBar', () => {
     it('母集団の外のサイトの記録しか無ければデータ無しとして扱う', () => {
       renderBar({
         activity: { [daysAgo(0)]: { 'untracked.com': row({ blocks: 3 }) } },
-        sites: ['example.com']
+        trackedSites: trackedOf(['example.com'])
       });
 
       expect(screen.getByTestId('analytics-export-button')).toBeDisabled();
     });
 
+    it('youtube.com のブロック設定しか無ければブロックリストは空として扱う（YouTube の節が担当する）', () => {
+      renderBar({ trackedSites: blockListOf([YOUTUBE_DOMAIN]) });
+
+      expect(screen.getByTestId('analytics-export-button')).toBeDisabled();
+    });
+
     it('ブロックリストが空配列ならデータ無しとして扱う', () => {
-      renderBar({ blockRows: blockListOf([]) });
+      renderBar({ trackedSites: blockListOf([]) });
 
       expect(screen.getByTestId('analytics-export-button')).toBeDisabled();
     });
@@ -158,7 +164,7 @@ describe('AnalyticsExportBar', () => {
 
   describe('書き出しメニュー', () => {
     it('データを持たない項目は押せない', () => {
-      renderBar({ blockRows: blockListOf(['example.com']) });
+      renderBar({ trackedSites: blockListOf(['example.com']) });
 
       openExportMenu();
 
@@ -171,18 +177,18 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('ブロックリストを書き出すと一覧が渡り、利用実績を記録する', () => {
-      const blockRows = blockListOf(['example.com']);
-      renderBar({ blockRows });
+      const trackedSites = blockListOf(['example.com']);
+      renderBar({ trackedSites });
 
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-blocklist'));
 
-      expect(exportLib.exportBlockList).toHaveBeenCalledWith(blockRows);
+      expect(exportLib.exportBlockList).toHaveBeenCalledWith(trackedSites);
       expect(analytics.trackFeatureUse).toHaveBeenCalledWith('csv_export');
     });
 
     it('書き出すとメニューは閉じる', () => {
-      renderBar({ blockRows: blockListOf(['example.com']) });
+      renderBar({ trackedSites: blockListOf(['example.com']) });
 
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-blocklist'));
@@ -199,7 +205,7 @@ describe('AnalyticsExportBar', () => {
         }
       };
       const sites = ['example.com'];
-      renderBar({ activity, sites });
+      renderBar({ activity, trackedSites: trackedOf(sites) });
       const retention = {
         from: daysAgo(MAX_HISTORY_DAYS_FALLBACK),
         to: daysAgo(0)
@@ -231,7 +237,7 @@ describe('AnalyticsExportBar', () => {
     });
 
     it('もう一度押すとメニューは閉じる', () => {
-      renderBar({ blockRows: blockListOf(['example.com']) });
+      renderBar({ trackedSites: blockListOf(['example.com']) });
 
       openExportMenu();
       openExportMenu();
@@ -283,7 +289,7 @@ describe('AnalyticsExportBar', () => {
             'a.example': row({ seconds: 999, blocks: 99 })
           }
         },
-        sites: ['a.example', 'b.example']
+        trackedSites: trackedOf(['a.example', 'b.example'])
       });
 
       await act(async () => {

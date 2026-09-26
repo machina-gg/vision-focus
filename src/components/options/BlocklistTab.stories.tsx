@@ -4,45 +4,21 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlocklistTab } from './BlocklistTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';
-import {
-  selectYouTubeSection,
-  type BlockListRow,
-  type YouTubeSectionValue
-} from '~/lib/siteSelectors';
+import { blockedSite, sitesOf } from '~/test/sites';
+import type { TrackedSites } from '~/types/site';
 
-const mockBlockList: BlockListRow[] = [
-  {
-    id: 'twitter.com',
-    domain: 'twitter.com',
-    createdAt: '2026-02-01T10:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: 'instagram.com',
-    domain: 'instagram.com',
-    createdAt: '2026-02-02T14:30:00Z',
-    enabled: true,
-    timeLimit: {
-      type: 'daily',
-      limitSeconds: 1800
-    }
-  },
-  {
-    id: 'reddit.com',
-    domain: 'reddit.com',
-    createdAt: '2026-02-03T09:15:00Z',
-    enabled: true,
-    timeLimit: null
-  }
-];
+const mockSites: TrackedSites = sitesOf(
+  blockedSite('twitter.com', { addedAt: '2026-02-01T10:00:00Z' }),
+  blockedSite('instagram.com', {
+    addedAt: '2026-02-02T14:30:00Z',
+    timeLimit: { type: 'daily', limitSeconds: 1800 }
+  }),
+  blockedSite('reddit.com', { addedAt: '2026-02-03T09:15:00Z' })
+);
 
-// youtube.com が無いときの節の値（すべて OFF）
-const youtubeOff: YouTubeSectionValue = selectYouTubeSection({});
-
+// 画面の操作を手元の状態に反映するだけの例（実際は background が sites を書く）
 const BlocklistTabWrapper = () => {
-  const [blockRows, setBlockList] = useState(mockBlockList);
-  const [youtube, setYouTube] = useState(youtubeOff);
+  const [trackedSites, setTrackedSites] = useState(mockSites);
   const [newDomain, setNewDomain] = useState('');
   const [blockError, setBlockError] = useState('');
 
@@ -52,28 +28,27 @@ const BlocklistTabWrapper = () => {
       return;
     }
     const domain = newDomain.toLowerCase().trim();
-    setBlockList([
-      ...blockRows,
-      {
-        id: domain,
-        domain,
-        createdAt: new Date().toISOString(),
-        enabled: true,
-        timeLimit: null
-      }
-    ]);
+    setTrackedSites({
+      ...trackedSites,
+      [domain]: blockedSite(domain, { addedAt: new Date().toISOString() })
+    });
     setNewDomain('');
     setBlockError('');
   };
 
-  const handleRemoveDomain = (id: string) => {
-    setBlockList(blockRows.filter((item) => item.id !== id));
+  const handleRemoveDomain = (domain: string) => {
+    const rest = { ...trackedSites };
+    delete rest[domain];
+    setTrackedSites(rest);
   };
 
-  const handleToggleDomain = (id: string, enabled: boolean) => {
-    setBlockList(
-      blockRows.map((item) => (item.id === id ? { ...item, enabled } : item))
-    );
+  const handleToggleDomain = (domain: string, enabled: boolean) => {
+    const site = trackedSites[domain];
+    if (!site?.block) return;
+    setTrackedSites({
+      ...trackedSites,
+      [domain]: { ...site, block: { ...site.block, enabled } }
+    });
   };
 
   return (
@@ -87,9 +62,8 @@ const BlocklistTabWrapper = () => {
         onToggleDomain={handleToggleDomain}
         onUpdateTimeLimit={() => {}}
         activity={{}}
-        blockRows={blockRows}
-        youtube={youtube}
-        onYouTubeChange={setYouTube}
+        trackedSites={trackedSites}
+        onYouTubeChange={() => {}}
       />
     </SettingsProvider>
   );
@@ -118,8 +92,7 @@ const meta = {
     onToggleDomain: () => {},
     onUpdateTimeLimit: () => {},
     activity: {},
-    blockRows: mockBlockList,
-    youtube: youtubeOff,
+    trackedSites: mockSites,
     onYouTubeChange: () => {}
   }
 } satisfies Meta<typeof BlocklistTab>;
@@ -147,8 +120,7 @@ export const LongUrlInput: Story = {
         onToggleDomain={() => {}}
         onUpdateTimeLimit={() => {}}
         activity={{}}
-        blockRows={mockBlockList}
-        youtube={youtubeOff}
+        trackedSites={mockSites}
         onYouTubeChange={() => {}}
       />
     </SettingsProvider>

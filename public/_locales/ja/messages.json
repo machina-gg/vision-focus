@@ -1115,6 +1115,10 @@
     "message": "解除済み",
     "description": "解除済みサイトのステータスラベル"
   },
+  "statusBlockDisabled": {
+    "message": "ブロック中（無効）",
+    "description": "ブロック設定はあるがトグルで無効にしているサイトの状態ラベル"
+  },
   "blockedSince": {
     "message": "ブロック開始",
     "description": "ブロック開始日ラベル"

@@ -6,18 +6,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AnalyticsSummary } from '../AnalyticsSummary';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import type { TrackedSiteListRow } from '~/lib/siteSelectors';
+import type { TrackedSite } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import {
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 
 /**
  * AnalyticsSummary の表示分岐とコールバックの検査
  *
- * 一覧の行は母集団（追跡中のサイト）で、ブロック中かどうか・ブロック開始日・できる操作は
- * 追跡中のサイトの設定から、解除日と解除後の時間は activity から出る。
- * 追跡サイトが 0 件のときの空状態、ブロック中と解除済みで変わる表示、
+ * 一覧の行は追跡中のサイトで、状態（ブロック中 / 無効 / 追跡だけ）・ブロック開始日・できる操作は
+ * サイトの設定から、解除日と解除後の時間は activity から出る。
+ * 追跡サイトが 0 件のときの空状態、状態ごとに変わる表示、
  * 経過日数の言い回しの切り替わり（今日 / 昨日 / N 日前 / N 週間前 / N か月前）を
  * 境界値で確かめる。再ブロック・追跡停止は取り消しが効くとは限らないため、
- * どのドメインが渡るかまで見る。
+ * どのサイトが渡るかまで見る。
  */
 
 // 置換値（経過日数・週数・月数）が描画結果に現れるよう chrome.i18n を差し替える
@@ -32,8 +38,8 @@ const isoDaysAgo = (days: number): string => dateDaysAgo(days).toISOString();
 const keyDaysAgo = (days: number): string => toDateKey(dateDaysAgo(days));
 
 /**
- * 一覧の 1 行。`blocked` はブロック設定が有効なサイト、`unblocked` はブロック設定を
- * 持たない（ブロックリストから外した・追跡だけの）サイト
+ * 追跡中のサイト 1 つ。`blocked` はブロック設定が有効、`disabled` はブロック設定をトグルで無効にしたもの、
+ * `tracking` はブロック設定を持たない（ブロックリストから外した・追跡だけの）サイト
  */
 const siteOf = ({
   domain = 'example.com',
@@ -41,24 +47,15 @@ const siteOf = ({
   blockedAt = isoDaysAgo(0)
 }: {
   domain?: string;
-  status?: 'blocked' | 'unblocked';
+  status?: 'blocked' | 'disabled' | 'tracking';
   blockedAt?: string;
-} = {}): TrackedSiteListRow =>
-  status === 'blocked'
-    ? {
-        domain,
-        isBlocked: true,
-        blockedAt,
-        canReblock: false,
-        canStopTracking: false
-      }
-    : {
-        domain,
-        isBlocked: false,
-        blockedAt: null,
-        canReblock: true,
-        canStopTracking: true
-      };
+} = {}): TrackedSite =>
+  status === 'tracking'
+    ? trackedSite(domain)
+    : blockedSite(domain, {
+        enabled: status === 'blocked',
+        addedAt: blockedAt
+      });
 
 const row = (seconds: number, unblocks = 0): DailySiteActivity => ({
   seconds,
@@ -68,21 +65,18 @@ const row = (seconds: number, unblocks = 0): DailySiteActivity => ({
 
 interface RenderOptions {
   activity?: ActivityLog;
-  /** 母集団。省略時は各行のサイトキー */
-  sites?: string[];
 }
 
 function renderSummary(
-  entries: TrackedSiteListRow[],
-  { activity = {}, sites }: RenderOptions = {}
+  sites: TrackedSite[],
+  { activity = {} }: RenderOptions = {}
 ) {
   const onReblock = vi.fn();
   const onStopTracking = vi.fn();
   const result = render(
     <AnalyticsSummary
       activity={activity}
-      sites={sites ?? entries.map((e) => e.domain)}
-      trackedSiteRows={entries}
+      trackedSites={sitesOf(...sites)}
       onReblock={onReblock}
       onStopTracking={onStopTracking}
     />
@@ -127,16 +121,18 @@ describe('AnalyticsSummary', () => {
   });
 
   describe('並び順', () => {
-    it('ブロック中を先に、解除済みを後に並べる', () => {
-      const { container } = renderSummary([
-        siteOf({ domain: 'unblocked.example', status: 'unblocked' }),
+    it('ブロック中 → 無効 → 追跡だけの順に並べる', () => {
+      renderSummary([
+        siteOf({ domain: 'tracking.example', status: 'tracking' }),
+        siteOf({ domain: 'disabled.example', status: 'disabled' }),
         siteOf({ domain: 'blocked.example', status: 'blocked' })
       ]);
 
-      const text = container.textContent ?? '';
-      expect(text.indexOf('blocked.example')).toBeLessThan(
-        text.indexOf('unblocked.example')
-      );
+      expect(
+        screen
+          .getAllByTestId('analytics-tracked-site')
+          .map((el) => el.getAttribute('data-status'))
+      ).toEqual(['blocked', 'disabled', 'tracking']);
     });
 
     it('同じ状態どうしではブロックした日が新しい方を先に並べる', () => {
@@ -152,49 +148,82 @@ describe('AnalyticsSummary', () => {
     });
   });
 
-  describe('母集団と行の結び付け', () => {
-    it('行の無い追跡中のサイトは解除中として並べ、操作ボタンは出さない', () => {
-      renderSummary([], { sites: ['imported.example'] });
+  // ブロック設定をトグルで無効にしたサイト。ブロックは効いていないが設定（時間制限を含む）は残っている
+  describe('無効にしたサイト', () => {
+    it('「ブロック中（無効）」の表示にし、ブロック開始日と解除後の時間を出す', () => {
+      renderSummary(
+        [siteOf({ status: 'disabled', blockedAt: isoDaysAgo(2) })],
+        {
+          activity: {
+            [keyDaysAgo(1)]: { 'example.com': row(60, 1) },
+            [keyDaysAgo(0)]: { 'example.com': row(600) }
+          }
+        }
+      );
 
-      expect(screen.getByText('imported.example')).toBeInTheDocument();
-      expect(screen.getByText('statusUnblocked')).toBeInTheDocument();
-      expect(
-        screen.queryByTestId('analytics-reblock-button')
-      ).not.toBeInTheDocument();
+      expect(screen.getByText('statusBlockDisabled')).toBeInTheDocument();
+      expect(screen.getByText('blockedSince: daysAgo(2)')).toBeInTheDocument();
+      expect(screen.getByText('unblockedOn: yesterday')).toBeInTheDocument();
+      expect(screen.getByText('11m')).toBeInTheDocument();
     });
 
-    it('無効化したブロック設定を持つサイトは解除中と出し、操作ボタンは出さない', () => {
-      renderSummary([
-        {
-          domain: 'paused.example',
-          isBlocked: false,
-          blockedAt: isoDaysAgo(2),
-          canReblock: false,
-          canStopTracking: false
-        }
-      ]);
+    it('再ブロックだけを出し、押すとそのサイトが渡る（追跡停止は出さない）', () => {
+      const site = siteOf({ domain: 'paused.example', status: 'disabled' });
+      const { onReblock } = renderSummary([site]);
 
-      expect(screen.getByText('statusUnblocked')).toBeInTheDocument();
-      expect(screen.getByText('blockedSince: daysAgo(2)')).toBeInTheDocument();
-      expect(
-        screen.queryByTestId('analytics-reblock-button')
-      ).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('analytics-reblock-button'));
+
+      expect(onReblock).toHaveBeenCalledWith(site);
       expect(
         screen.queryByTestId('analytics-stop-tracking-button')
       ).not.toBeInTheDocument();
     });
 
-    it('YouTube 機能を使うサイトは再ブロックだけを出す（追跡停止は出さない）', () => {
-      renderSummary([
+    it('解除後の時間の合計に数える', () => {
+      renderSummary(
+        [
+          siteOf({ domain: 'a.example', status: 'disabled' }),
+          siteOf({ domain: 'b.example', status: 'tracking' })
+        ],
         {
-          domain: 'youtube.com',
-          isBlocked: false,
-          blockedAt: null,
-          canReblock: true,
-          canStopTracking: false
+          activity: {
+            [keyDaysAgo(0)]: {
+              'a.example': row(600, 1),
+              'b.example': row(1200, 1)
+            }
+          }
         }
+      );
+
+      expect(screen.getByText('totalWastedTime')).toBeInTheDocument();
+      expect(screen.getByText('30m')).toBeInTheDocument();
+    });
+  });
+
+  describe('YouTube 機能を使うサイト', () => {
+    it('追跡だけなら再ブロックだけを出す（追跡停止は出さない）', () => {
+      renderSummary([
+        trackedSite('youtube.com', { youtube: youtubeFeatures() })
       ]);
 
+      expect(
+        screen.getByTestId('analytics-reblock-button')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('analytics-stop-tracking-button')
+      ).not.toBeInTheDocument();
+    });
+
+    it('アクセスブロックを無効にしていても追跡停止は出さない', () => {
+      renderSummary([
+        blockedSite(
+          'youtube.com',
+          { enabled: false },
+          { youtube: youtubeFeatures() }
+        )
+      ]);
+
+      expect(screen.getByText('statusBlockDisabled')).toBeInTheDocument();
       expect(
         screen.getByTestId('analytics-reblock-button')
       ).toBeInTheDocument();
@@ -229,9 +258,9 @@ describe('AnalyticsSummary', () => {
     });
   });
 
-  describe('解除済みのサイト', () => {
+  describe('追跡だけのサイト', () => {
     it('解除済みの表示にし、最後に解除した日から今日までの表示時間と操作ボタンを出す', () => {
-      renderSummary([siteOf({ status: 'unblocked' })], {
+      renderSummary([siteOf({ status: 'tracking' })], {
         activity: {
           // 最後の解除より前の日は数えない
           [keyDaysAgo(5)]: { 'example.com': row(9999, 1) },
@@ -251,7 +280,7 @@ describe('AnalyticsSummary', () => {
     });
 
     it('解除の記録が無ければ浪費時間は 0 秒と出す', () => {
-      renderSummary([siteOf({ status: 'unblocked' })], {
+      renderSummary([siteOf({ status: 'tracking' })], {
         activity: { [keyDaysAgo(0)]: { 'example.com': row(600) } }
       });
 
@@ -259,13 +288,13 @@ describe('AnalyticsSummary', () => {
     });
 
     it('解除の記録が無ければ解除日の行を出さない', () => {
-      renderSummary([siteOf({ status: 'unblocked' })]);
+      renderSummary([siteOf({ status: 'tracking' })]);
 
       expect(screen.queryByText(/^unblockedOn:/)).not.toBeInTheDocument();
     });
 
     it('最後に解除した日を相対表記で出す', () => {
-      renderSummary([siteOf({ status: 'unblocked' })], {
+      renderSummary([siteOf({ status: 'tracking' })], {
         activity: {
           [keyDaysAgo(3)]: { 'example.com': row(0, 1) },
           [keyDaysAgo(1)]: { 'example.com': row(0, 1) }
@@ -277,31 +306,29 @@ describe('AnalyticsSummary', () => {
   });
 
   describe('操作', () => {
-    it('再ブロックを押すとそのドメインで onReblock が呼ばれる', () => {
-      const { onReblock } = renderSummary([
-        siteOf({ domain: 'wasted.example', status: 'unblocked' })
-      ]);
+    it('再ブロックを押すとそのサイトで onReblock が呼ばれる', () => {
+      const site = siteOf({ domain: 'wasted.example', status: 'tracking' });
+      const { onReblock } = renderSummary([site]);
 
       fireEvent.click(screen.getByTestId('analytics-reblock-button'));
 
-      expect(onReblock).toHaveBeenCalledWith('wasted.example');
+      expect(onReblock).toHaveBeenCalledWith(site);
     });
 
-    it('追跡停止を押すとそのドメインで onStopTracking が呼ばれる', () => {
-      const { onStopTracking } = renderSummary([
-        siteOf({ domain: 'wasted.example', status: 'unblocked' })
-      ]);
+    it('追跡停止を押すとそのサイトで onStopTracking が呼ばれる', () => {
+      const site = siteOf({ domain: 'wasted.example', status: 'tracking' });
+      const { onStopTracking } = renderSummary([site]);
 
       fireEvent.click(screen.getByTestId('analytics-stop-tracking-button'));
 
-      expect(onStopTracking).toHaveBeenCalledWith('wasted.example');
+      expect(onStopTracking).toHaveBeenCalledWith(site);
     });
   });
 
   describe('合計浪費時間', () => {
     const twoUnblocked = [
-      siteOf({ domain: 'a.example', status: 'unblocked' }),
-      siteOf({ domain: 'b.example', status: 'unblocked' })
+      siteOf({ domain: 'a.example', status: 'tracking' }),
+      siteOf({ domain: 'b.example', status: 'tracking' })
     ];
 
     it('解除済みが 2 件以上なら、各行の値の和を合計として出す', () => {
@@ -324,7 +351,7 @@ describe('AnalyticsSummary', () => {
 
     it('解除済みが 1 件なら合計は出さない', () => {
       renderSummary([
-        siteOf({ domain: 'a.example', status: 'unblocked' }),
+        siteOf({ domain: 'a.example', status: 'tracking' }),
         siteOf({ domain: 'b.example', status: 'blocked' })
       ]);
 

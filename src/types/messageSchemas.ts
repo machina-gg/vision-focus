@@ -37,9 +37,9 @@ export const UpdateTimeLimitBodySchema = z.object({
 
 export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 
-// YouTube の節が扱う値（非表示機能とアクセスブロックをまとめた、画面の今の形）。
+// YouTube の節が送る値（機能全体の有効・非表示機能・アクセスブロックをまとめた形）。
 // 保存形は youtube.com の追跡中のサイトで、変換は update-youtube-settings ハンドラが行う
-export const YouTubeSectionValueSchema = z.object({
+export const YouTubeSettingsInputSchema = z.object({
   enabled: z.boolean(),
   blockAccess: z.boolean(),
   hideShorts: z.boolean(),
@@ -52,8 +52,10 @@ export const YouTubeSectionValueSchema = z.object({
 // Schema for update-youtube-settings message handler
 // YouTube 設定は background 経由で保存する（保存と同時に既存タブのブロックを行うため）
 export const UpdateYouTubeSettingsBodySchema = z.object({
-  youtube: YouTubeSectionValueSchema
+  youtube: YouTubeSettingsInputSchema
 });
+
+export type YouTubeSettingsInput = z.infer<typeof YouTubeSettingsInputSchema>;
 
 export type UpdateYouTubeSettingsBody = z.infer<
   typeof UpdateYouTubeSettingsBodySchema

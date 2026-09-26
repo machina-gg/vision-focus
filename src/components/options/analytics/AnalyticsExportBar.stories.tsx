@@ -4,17 +4,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AnalyticsExportBar } from './AnalyticsExportBar';
 import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
-const mockBlockList: BlockListRow[] = [
-  {
-    id: 'twitter.com',
-    domain: 'twitter.com',
-    createdAt: '2026-02-01T10:00:00Z',
-    enabled: true,
-    timeLimit: null
-  }
-];
+// twitter.com だけブロックリストにあり、残りは追跡だけ
+const mockSites = sitesOf(
+  blockedSite('twitter.com'),
+  ...STORY_SITES.filter((site) => site !== 'twitter.com').map((site) =>
+    trackedSite(site)
+  )
+);
 
 const meta = {
   title: 'Options/Analytics/AnalyticsExportBar',
@@ -38,9 +36,8 @@ type Story = StoryObj<typeof meta>;
 // エクスポート可能なデータがある場合
 export const WithData: Story = {
   args: {
-    blockRows: mockBlockList,
     activity: storyActivity(),
-    sites: STORY_SITES,
+    trackedSites: mockSites,
     onRefresh: async () => {},
     onReset: () => {}
   }
@@ -49,9 +46,8 @@ export const WithData: Story = {
 // データが無い場合（エクスポートボタンが無効化される）
 export const Empty: Story = {
   args: {
-    blockRows: [],
     activity: {},
-    sites: [],
+    trackedSites: {},
     onRefresh: async () => {},
     onReset: () => {}
   }

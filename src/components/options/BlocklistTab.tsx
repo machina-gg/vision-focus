@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Plus, Lock } from 'lucide-react';
 
 import { Button, Card, Input } from '~/components/ui';
@@ -12,25 +12,28 @@ import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import { blockCountsByDomain } from '~/hooks/useActivityStats';
 import { secondsOnDay } from '~/lib/activityStats';
+import { blockListSites } from '~/lib/blockList';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { toDateKey } from '~/lib/time';
-import type { BlockListRow, YouTubeSectionValue } from '~/lib/siteSelectors';
 import type { TimeLimit } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
+import type { TrackedSites } from '~/types/site';
 
 interface BlocklistTabProps {
   newDomain: string;
   setNewDomain: (value: string) => void;
   blockError: string;
   onAddDomain: () => void;
-  onRemoveDomain: (id: string) => void;
-  onToggleDomain: (id: string, enabled: boolean) => void;
-  onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
+  /** 操作の宛先はサイトキー */
+  onRemoveDomain: (domain: string) => void;
+  onToggleDomain: (domain: string, enabled: boolean) => void;
+  onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
   /** 事実の表。ブロック回数と時間制限の今日の使用量をここから導出する */
   activity: ActivityLog;
-  /** ブロックリストの行（追跡中のサイトのうちブロック設定を持つもの） */
-  blockRows: BlockListRow[];
-  youtube: YouTubeSectionValue;
-  onYouTubeChange: (youtube: YouTubeSectionValue) => void;
+  /** 追跡中のサイト。一覧（`blockListSites`）と YouTube の節（youtube.com）をここから出す */
+  trackedSites: TrackedSites;
+  onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
 }
 
 export function BlocklistTab({
@@ -42,8 +45,7 @@ export function BlocklistTab({
   onToggleDomain,
   onUpdateTimeLimit,
   activity,
-  blockRows,
-  youtube,
+  trackedSites,
   onYouTubeChange
 }: BlocklistTabProps) {
   const { settings } = useSettings();
@@ -55,39 +57,40 @@ export function BlocklistTab({
   const { requestUnblock } = unblockGuard;
   const now = new Date();
   const today = toDateKey(now);
-  const blockCounts = blockCountsByDomain(activity, blockRows, now);
+  const blockList = useMemo(() => blockListSites(trackedSites), [trackedSites]);
+  const blockCounts = blockCountsByDomain(activity, blockList, now);
 
   const handleRemoveClick = useCallback(
-    (id: string) => {
-      const item = blockRows.find((b) => b.id === id);
-      if (!item) return;
+    (domain: string) => {
+      const block = trackedSites[domain]?.block;
+      if (!block) return;
       requestUnblock({
-        domain: item.domain,
-        timeLimit: item.timeLimit,
+        domain,
+        timeLimit: block.timeLimit,
         action: 'delete',
-        onConfirm: () => onRemoveDomain(id)
+        onConfirm: () => onRemoveDomain(domain)
       });
     },
-    [requestUnblock, onRemoveDomain, blockRows]
+    [requestUnblock, onRemoveDomain, trackedSites]
   );
 
   // ブロックを弱める向き（無効化）だけ確認を通す。有効化は即時に反映する
   const handleToggleClick = useCallback(
-    (id: string, enabled: boolean) => {
+    (domain: string, enabled: boolean) => {
       if (enabled) {
-        onToggleDomain(id, enabled);
+        onToggleDomain(domain, enabled);
         return;
       }
-      const item = blockRows.find((b) => b.id === id);
-      if (!item) return;
+      const block = trackedSites[domain]?.block;
+      if (!block) return;
       requestUnblock({
-        domain: item.domain,
-        timeLimit: item.timeLimit,
+        domain,
+        timeLimit: block.timeLimit,
         action: 'toggle',
-        onConfirm: () => onToggleDomain(id, false)
+        onConfirm: () => onToggleDomain(domain, false)
       });
     },
-    [requestUnblock, onToggleDomain, blockRows]
+    [requestUnblock, onToggleDomain, trackedSites]
   );
 
   return (
@@ -133,18 +136,18 @@ export function BlocklistTab({
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-gray-600">{getMessage('loading')}</p>
           </div>
-        ) : blockRows.length === 0 ? (
+        ) : blockList.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             {getMessage('noBlockedSites')}
           </p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {blockRows.map((item) => (
+            {blockList.map((site) => (
               <DomainListItem
-                key={item.id}
-                item={item}
-                blockCount={blockCounts[item.domain] ?? 0}
-                usedSeconds={secondsOnDay(activity, item.domain, today)}
+                key={site.domain}
+                site={site}
+                blockCount={blockCounts[site.domain] ?? 0}
+                usedSeconds={secondsOnDay(activity, site.domain, today)}
                 onToggle={handleToggleClick}
                 onRemove={handleRemoveClick}
                 onUpdateTimeLimit={onUpdateTimeLimit}
@@ -156,7 +159,7 @@ export function BlocklistTab({
 
       {/* YouTube In-App Blocking Section */}
       <YouTubeSection
-        youtube={youtube}
+        site={trackedSites[YOUTUBE_DOMAIN] ?? null}
         onYouTubeChange={onYouTubeChange}
         onRequestUnblock={requestUnblock}
       />

@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsTab } from '../AnalyticsTab';
 import type { ActivityLog } from '~/types/activity';
-import { selectBlockList, selectTrackedSiteRows } from '~/lib/siteSelectors';
+import type { TrackedSites } from '~/types/site';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
 /**
@@ -13,7 +13,7 @@ import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
  *
  * ドメインは前後の空白と大文字小文字の揺れが混ざりやすく、揃えずに
  * 保存すると同じサイトが二重に並ぶ。ここでは渡る文字列そのものと、
- * 空白だけの入力で追加させないことを見る。
+ * 空白だけの入力で追加させないこと、拒否されたときに理由を出して入力を残すことを見る。
  *
  * 一覧・集計・書き出しは子コンポーネントの責務なので、受け取った値を
  * そのまま渡しているかだけを見る（実体は chrome.storage を読みに行く）。
@@ -27,25 +27,23 @@ interface SourcesProps {
 const sourcesText = ({ activity, sites }: SourcesProps) =>
   `${Object.keys(activity).join(',')}|${sites.join(',')}`;
 
+/** 追跡中のサイトをそのまま受ける子（書き出し・一覧）の受け取った値 */
+interface TrackedSitesProps {
+  activity: ActivityLog;
+  trackedSites: TrackedSites;
+}
+const trackedSitesText = ({ activity, trackedSites }: TrackedSitesProps) =>
+  sourcesText({ activity, sites: Object.keys(trackedSites) });
+
 vi.mock('../analytics', () => ({
-  AnalyticsExportBar: (
-    props: SourcesProps & { blockRows: { domain: string }[] }
-  ) => (
-    <div data-testid="export-bar">
-      {props.blockRows.map((row) => row.domain).join(',')}
-      <span data-testid="export-bar-sources">{sourcesText(props)}</span>
-    </div>
+  AnalyticsExportBar: (props: TrackedSitesProps) => (
+    <div data-testid="export-bar">{trackedSitesText(props)}</div>
   ),
   SiteRankingList: (props: SourcesProps) => (
     <div data-testid="site-ranking">{sourcesText(props)}</div>
   ),
-  AnalyticsSummary: (
-    props: SourcesProps & { trackedSiteRows: { domain: string }[] }
-  ) => (
-    <div data-testid="summary">
-      {props.trackedSiteRows.map((row) => row.domain).join(',')}
-      <span data-testid="summary-sources">{sourcesText(props)}</span>
-    </div>
+  AnalyticsSummary: (props: TrackedSitesProps) => (
+    <div data-testid="summary">{trackedSitesText(props)}</div>
   ),
   AnalyticsDateFilter: (
     props: SourcesProps & {
@@ -83,7 +81,7 @@ function renderTab(props: Partial<TabProps> = {}) {
     onReset: vi.fn(),
     onStopTracking: vi.fn(),
     onRefresh: vi.fn(async () => undefined),
-    onAddSite: vi.fn(),
+    onAddSite: vi.fn(async (_domain: string) => true),
     onSupport: vi.fn(async () => undefined),
     onDismissSupport: vi.fn(async () => undefined)
   };
@@ -91,9 +89,8 @@ function renderTab(props: Partial<TabProps> = {}) {
   render(
     <AnalyticsTab
       activity={{}}
-      sites={[]}
-      blockRows={[]}
-      trackedSiteRows={[]}
+      trackedSites={{}}
+      addSiteError=""
       isSupportPromptVisible={false}
       {...handlers}
       {...props}
@@ -188,14 +185,51 @@ describe('AnalyticsTab', () => {
       expect(onAddSite).not.toHaveBeenCalled();
     });
 
-    it('追加すると入力欄が空に戻り、続けて押せなくなる', () => {
+    it('追加すると入力欄が空に戻り、続けて押せなくなる', async () => {
       const { input, button } = renderTab();
 
       type(input, 'example.com');
-      fireEvent.click(button);
+      await act(async () => {
+        fireEvent.click(button);
+      });
 
       expect(input).toHaveValue('');
       expect(button).toBeDisabled();
+    });
+  });
+
+  // 入れ子・重複・形式の誤りは background が拒否し、理由は親から addSiteError で届く
+  describe('追加を拒否されたとき', () => {
+    it('入力欄を空にしない（理由を読んで直せるように）', async () => {
+      const { input, button } = renderTab({
+        onAddSite: vi.fn(async (_domain: string) => false)
+      });
+
+      type(input, 'm.example.com');
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(input).toHaveValue('m.example.com');
+    });
+
+    it('拒否の理由を表示する', () => {
+      renderTab({
+        addSiteError:
+          'm.example.com は追跡中の example.com に含まれるため追加できません'
+      });
+
+      expect(screen.getByTestId('analytics-add-site-error')).toHaveTextContent(
+        'm.example.com は追跡中の example.com に含まれるため追加できません'
+      );
+    });
+
+    it('理由が空なら何も表示しない', () => {
+      renderTab();
+
+      expect(
+        screen.queryByTestId('analytics-add-site-error')
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -207,36 +241,17 @@ describe('AnalyticsTab', () => {
             'a.example': { seconds: 60, blocks: 1, unblocks: 0 }
           }
         },
-        sites: ['a.example', 'b.example']
-      });
-
-      const expected = '2026-03-10|a.example,b.example';
-      expect(screen.getByTestId('export-bar-sources')).toHaveTextContent(
-        expected
-      );
-      expect(screen.getByTestId('site-ranking')).toHaveTextContent(expected);
-      expect(screen.getByTestId('summary-sources')).toHaveTextContent(expected);
-      expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
-    });
-
-    it('追跡中サイト一覧の行を集計の要約へ渡す', () => {
-      renderTab({
-        trackedSiteRows: selectTrackedSiteRows(
-          sitesOf(trackedSite('example.com'))
+        trackedSites: sitesOf(
+          trackedSite('a.example'),
+          blockedSite('b.example')
         )
       });
 
-      expect(screen.getByTestId('summary')).toHaveTextContent('example.com');
-    });
-
-    it('ブロックリストを書き出しの欄へ渡す', () => {
-      renderTab({
-        blockRows: selectBlockList(sitesOf(blockedSite('blocked.example')))
-      });
-
-      expect(screen.getByTestId('export-bar')).toHaveTextContent(
-        'blocked.example'
-      );
+      const expected = '2026-03-10|a.example,b.example';
+      expect(screen.getByTestId('export-bar')).toHaveTextContent(expected);
+      expect(screen.getByTestId('site-ranking')).toHaveTextContent(expected);
+      expect(screen.getByTestId('summary')).toHaveTextContent(expected);
+      expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
     });
 
     it('支援の案内を出すかどうかを期間の絞り込みへ渡す', () => {

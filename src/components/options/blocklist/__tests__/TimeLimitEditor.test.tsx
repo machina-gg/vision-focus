@@ -4,9 +4,9 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { TimeLimitEditor } from '../TimeLimitEditor';
-import type { BlockListRow } from '~/lib/siteSelectors';
 import type { TimeLimit } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import { blockedSite } from '~/test/sites';
 
 /**
  * TimeLimitEditor の表示分岐とコールバックの検査
@@ -19,14 +19,6 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // 置換値（制限分数・残り時間）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-const baseItem: BlockListRow = {
-  id: 'item-1',
-  domain: 'example.com',
-  createdAt: '2026-01-01T00:00:00Z',
-  enabled: true,
-  timeLimit: null
-};
-
 function renderEditor(options: {
   timeLimit?: TimeLimit | null;
   enabled?: boolean;
@@ -36,11 +28,10 @@ function renderEditor(options: {
   const onUpdate = options.onUpdate ?? vi.fn();
   render(
     <TimeLimitEditor
-      item={{
-        ...baseItem,
+      site={blockedSite('example.com', {
         enabled: options.enabled ?? true,
         timeLimit: options.timeLimit ?? null
-      }}
+      })}
       onUpdate={onUpdate}
       usedSeconds={options.usedSeconds ?? 0}
     />

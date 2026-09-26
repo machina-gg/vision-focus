@@ -4,12 +4,22 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { YouTubeSection } from '../YouTubeSection';
-import { selectYouTubeSection } from '~/lib/siteSelectors';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
+import type { BlockRule, TrackedSite, YouTubeFeatures } from '~/types/site';
 
-// youtube.com が無いときの節の値（すべて OFF）
-const YOUTUBE_OFF = selectYouTubeSection({});
+// youtube.com が無いときに節が送る値（すべて OFF）
+const YOUTUBE_OFF: YouTubeSettingsInput = {
+  enabled: false,
+  blockAccess: false,
+  hideShorts: false,
+  hideRecommendations: false,
+  hideComments: false,
+  hideHomeFeed: false,
+  timeLimit: null
+};
 
 /**
  * YouTubeSection の表示分岐とコールバックの検査
@@ -38,20 +48,46 @@ function switchNear(text: string): HTMLElement {
   throw new Error(`${text} に対応するトグルが見つからない`);
 }
 
-function renderSection(
-  youtube: Partial<YouTubeSectionValue> = {},
-  onYouTubeChange = vi.fn()
-) {
-  const settings: YouTubeSectionValue = { ...YOUTUBE_OFF, ...youtube };
+/**
+ * 節が表示する値（`settings`）から youtube.com のサイトを組み立てる。
+ * enabled なら YouTube 機能を持ち、blockAccess ならブロック設定（有効）を持つ
+ */
+function siteOf(youtube: Partial<YouTubeSettingsInput>): TrackedSite | null {
+  const settings = { ...YOUTUBE_OFF, ...youtube };
+  if (!settings.enabled) return null;
+  const features: YouTubeFeatures = youtubeFeatures({
+    hideShorts: settings.hideShorts,
+    hideRecommendations: settings.hideRecommendations,
+    hideComments: settings.hideComments,
+    hideHomeFeed: settings.hideHomeFeed
+  });
+  return settings.blockAccess
+    ? blockedSite(
+        YOUTUBE_DOMAIN,
+        { timeLimit: settings.timeLimit ?? null },
+        { youtube: features }
+      )
+    : trackedSite(YOUTUBE_DOMAIN, { youtube: features });
+}
+
+function renderSite(site: TrackedSite | null, onYouTubeChange = vi.fn()) {
   const onRequestUnblock = vi.fn<(request: UnblockRequest) => void>();
   render(
     <YouTubeSection
-      youtube={settings}
+      site={site}
       onYouTubeChange={onYouTubeChange}
       onRequestUnblock={onRequestUnblock}
     />
   );
-  return { settings, onYouTubeChange, onRequestUnblock };
+  return { onYouTubeChange, onRequestUnblock };
+}
+
+function renderSection(
+  youtube: Partial<YouTubeSettingsInput> = {},
+  onYouTubeChange = vi.fn()
+) {
+  const settings: YouTubeSettingsInput = { ...YOUTUBE_OFF, ...youtube };
+  return { settings, ...renderSite(siteOf(youtube), onYouTubeChange) };
 }
 
 /** 確認に回された依頼を 1 件取り出す（呼ばれていなければ失敗させる） */
@@ -63,6 +99,76 @@ function onlyRequest(
 }
 
 describe('YouTubeSection', () => {
+  // 保存形（youtube.com のサイト）から節の表示と送る値を作る部分
+  describe('youtube.com のサイトの見せ方', () => {
+    it('youtube.com が無ければすべて OFF', () => {
+      renderSite(null);
+
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'false'
+      );
+    });
+
+    it('ブロックリストの入力から足した youtube.com（機能なし）も有効・アクセスブロック ON として見せる', () => {
+      // 無効として見せると、非表示の切り替えで送る値の enabled が false になりアクセスブロックが外れる
+      const { onYouTubeChange } = renderSite(blockedSite(YOUTUBE_DOMAIN));
+
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+      expect(switchNear('youtubeBlockAccess')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+
+      fireEvent.click(switchNear('youtubeHideShorts'));
+
+      expect(onYouTubeChange).toHaveBeenCalledWith({
+        ...YOUTUBE_OFF,
+        enabled: true,
+        blockAccess: true,
+        hideShorts: true
+      });
+    });
+
+    it('機能を使っていてブロック設定が無効なら、アクセスブロック OFF で時間制限は保って送る', () => {
+      // ON に戻したときに保存済みの時間制限が復元されるよう、送る値にも残す
+      const timeLimit = { type: 'daily' as const, limitSeconds: 600 };
+      const block: Partial<BlockRule> = { enabled: false, timeLimit };
+      const { onYouTubeChange } = renderSite(
+        blockedSite(YOUTUBE_DOMAIN, block, {
+          youtube: youtubeFeatures({ hideHomeFeed: true })
+        })
+      );
+
+      expect(switchNear('youtubeBlockAccess')).toHaveAttribute(
+        'aria-checked',
+        'false'
+      );
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+
+      expect(onYouTubeChange).toHaveBeenCalledWith({
+        ...YOUTUBE_OFF,
+        enabled: true,
+        blockAccess: true,
+        hideHomeFeed: true,
+        timeLimit
+      });
+    });
+
+    it('無効のブロック設定だけの youtube.com は「有効」に数えない', () => {
+      renderSite(blockedSite(YOUTUBE_DOMAIN, { enabled: false }));
+
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'false'
+      );
+    });
+  });
+
   describe('無効のとき', () => {
     it('既定の設定では主トグルが OFF で、無効の案内が出る', () => {
       renderSection();

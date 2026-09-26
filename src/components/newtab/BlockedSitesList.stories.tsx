@@ -3,51 +3,25 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlockedSitesList } from './BlockedSitesList';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import { blockedSite, sitesOf } from '~/test/sites';
+import type { TrackedSite } from '~/types/site';
 
-const mockBlockList: BlockListRow[] = [
-  {
-    id: '1',
-    domain: 'twitter.com',
-    createdAt: '2026-02-10T10:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '2',
-    domain: 'youtube.com',
-    createdAt: '2026-02-10T11:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '3',
-    domain: 'reddit.com',
-    createdAt: '2026-02-10T12:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '4',
-    domain: 'facebook.com',
-    createdAt: '2026-02-10T13:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '5',
-    domain: 'instagram.com',
-    createdAt: '2026-02-10T14:00:00Z',
-    enabled: true,
-    timeLimit: null
-  },
-  {
-    id: '6',
-    domain: 'tiktok.com',
-    createdAt: '2026-02-10T15:00:00Z',
-    enabled: true,
-    timeLimit: null
-  }
+/** ブロック設定を持つ追跡中のサイト（追加時刻は並び順を決める） */
+const blockedAt = (
+  domain: string,
+  addedAt: string,
+  enabled = true
+): TrackedSite => blockedSite(domain, { addedAt, enabled });
+
+// youtube.com は YouTube の節が担当するので、一覧には出ない
+const mockSites: TrackedSite[] = [
+  blockedAt('twitter.com', '2026-02-10T10:00:00Z'),
+  blockedAt('youtube.com', '2026-02-10T11:00:00Z'),
+  blockedAt('reddit.com', '2026-02-10T12:00:00Z'),
+  blockedAt('facebook.com', '2026-02-10T13:00:00Z'),
+  blockedAt('instagram.com', '2026-02-10T14:00:00Z'),
+  blockedAt('tiktok.com', '2026-02-10T15:00:00Z'),
+  blockedAt('x.com', '2026-02-10T16:00:00Z')
 ];
 
 const mockBlockCounts: Record<string, number> = {
@@ -56,7 +30,8 @@ const mockBlockCounts: Record<string, number> = {
   'reddit.com': 23,
   'facebook.com': 5,
   'instagram.com': 12,
-  'tiktok.com': 7
+  'tiktok.com': 7,
+  'x.com': 4
 };
 
 const meta = {
@@ -83,7 +58,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    blockRows: mockBlockList,
+    trackedSites: sitesOf(...mockSites),
     blockCounts: mockBlockCounts,
     maxVisible: 5
   }
@@ -91,7 +66,7 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    blockRows: [],
+    trackedSites: {},
     blockCounts: {},
     maxVisible: 5
   }
@@ -99,7 +74,7 @@ export const Empty: Story = {
 
 export const FewSites: Story = {
   args: {
-    blockRows: mockBlockList.slice(0, 3),
+    trackedSites: sitesOf(...mockSites.slice(0, 3)),
     blockCounts: mockBlockCounts,
     maxVisible: 5
   }
@@ -107,7 +82,7 @@ export const FewSites: Story = {
 
 export const NoCounts: Story = {
   args: {
-    blockRows: mockBlockList,
+    trackedSites: sitesOf(...mockSites),
     blockCounts: {},
     maxVisible: 5
   }
@@ -115,16 +90,10 @@ export const NoCounts: Story = {
 
 export const WithDisabled: Story = {
   args: {
-    blockRows: [
-      ...mockBlockList,
-      {
-        id: '7',
-        domain: 'disabled-site.com',
-        createdAt: '2026-02-10T16:00:00Z',
-        enabled: false,
-        timeLimit: null
-      }
-    ],
+    trackedSites: sitesOf(
+      ...mockSites,
+      blockedAt('disabled-site.com', '2026-02-10T17:00:00Z', false)
+    ),
     blockCounts: mockBlockCounts,
     maxVisible: 5
   }

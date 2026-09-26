@@ -1,3 +1,4 @@
+import type { BlockedSite } from '~/lib/blockList';
 import type {
   BlockRule,
   SiteKey,
@@ -31,12 +32,12 @@ export function trackedSite(
 export function blockedSite(
   domain: SiteKey,
   block: Partial<BlockRule> = {},
-  overrides: Partial<TrackedSite> = {}
-): TrackedSite {
-  return trackedSite(domain, {
-    block: { enabled: true, addedAt: ADDED_AT, timeLimit: null, ...block },
-    ...overrides
-  });
+  overrides: Omit<Partial<TrackedSite>, 'block'> = {}
+): BlockedSite {
+  return {
+    ...trackedSite(domain, overrides),
+    block: { enabled: true, addedAt: ADDED_AT, timeLimit: null, ...block }
+  };
 }
 
 /** YouTube 機能（既定はすべて OFF） */

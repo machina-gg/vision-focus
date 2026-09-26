@@ -19,7 +19,7 @@ import { updateYouTubeSite } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
-import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import type { TrackedSite } from '~/types/site';
@@ -32,8 +32,8 @@ interface Response {
 const LIMIT = { type: 'daily' as const, limitSeconds: 1800 };
 
 const youtube = (
-  overrides: Partial<YouTubeSectionValue> = {}
-): YouTubeSectionValue => ({
+  overrides: Partial<YouTubeSettingsInput> = {}
+): YouTubeSettingsInput => ({
   enabled: false,
   blockAccess: false,
   hideShorts: false,

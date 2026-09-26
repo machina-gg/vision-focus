@@ -43,29 +43,30 @@
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名    | 種別    | 説明                                                                     |
-| ------------------- | ------- | ------------------------------------------------------------------------ |
-| GeneralTab          | options | スタイル設定（スタイル管理）                                             |
-| BlocklistTab        | options | ブロックリスト管理                                                       |
-| SchedulesTab        | options | スケジュール管理                                                         |
-| WeeklyCalendar      | options | 週間カレンダー表示                                                       |
-| AnalyticsTab        | options | 分析タブ。`activity` と追跡中のサイト（母集団）を子へそのまま渡す        |
-| AnalyticsExportBar  | options | 分析タブの見出し・CSV エクスポート・X シェア・利用時間の推移             |
-| SiteRankingList     | options | ブロック回数のランキング（保持期間全体）                                 |
-| AnalyticsSummary    | options | 追跡中のサイト一覧（解除日・解除後の時間・合計）                         |
-| AnalyticsDateFilter | options | 週次/月次レポートの切り替えと期間の移動                                  |
-| SettingsTab         | options | 設定タブ（ブロック解除の保護・通知・データとプライバシー・バックアップ） |
-| HelpTab             | options | ヘルプタブ（読むものだけ）                                               |
-| ScheduleModal       | modal   | スケジュール編集モーダル                                                 |
-| NewPresetModal      | modal   | 新規スタイル作成モーダル                                                 |
-| DeletePresetModal   | modal   | スタイル削除確認モーダル                                                 |
+| コンポーネント名    | 種別    | 説明                                                                                                                         |
+| ------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| GeneralTab          | options | スタイル設定（スタイル管理）                                                                                                 |
+| BlocklistTab        | options | ブロックリスト管理。追跡中のサイト（`sites`）を受け、一覧は `blockListSites`、YouTube の節へは `sites['youtube.com']` を渡す |
+| SchedulesTab        | options | スケジュール管理                                                                                                             |
+| WeeklyCalendar      | options | 週間カレンダー表示                                                                                                           |
+| AnalyticsTab        | options | 分析タブ。`activity` と追跡中のサイト（`sites`）を受け、母集団（サイトキー）を作って子へ渡す                                 |
+| AnalyticsExportBar  | options | 分析タブの見出し・CSV エクスポート・X シェア・利用時間の推移。追跡中のサイト（`sites`）を受ける                              |
+| SiteRankingList     | options | ブロック回数のランキング（保持期間全体）                                                                                     |
+| AnalyticsSummary    | options | 追跡中のサイト一覧（状態・解除日・解除後の時間・合計）。追跡中のサイト（`sites`）を受ける                                    |
+| AnalyticsDateFilter | options | 週次/月次レポートの切り替えと期間の移動                                                                                      |
+| SettingsTab         | options | 設定タブ（ブロック解除の保護・通知・データとプライバシー・バックアップ）                                                     |
+| HelpTab             | options | ヘルプタブ（読むものだけ）                                                                                                   |
+| ScheduleModal       | modal   | スケジュール編集モーダル                                                                                                     |
+| NewPresetModal      | modal   | 新規スタイル作成モーダル                                                                                                     |
+| DeletePresetModal   | modal   | スタイル削除確認モーダル                                                                                                     |
 
 ### ユーティリティ（lib）
 
-| ファイル名   | 説明                         |
-| ------------ | ---------------------------- |
-| export.ts    | CSVエクスポート機能          |
-| wallpaper.ts | 壁紙キャプチャ・ダウンロード |
+| ファイル名   | 説明                                                                                   |
+| ------------ | -------------------------------------------------------------------------------------- |
+| blockList.ts | 「ブロック中のサイト」一覧に並べるサイトの導出（`blockListSites`。youtube.com を除く） |
+| export.ts    | CSVエクスポート機能                                                                    |
+| wallpaper.ts | 壁紙キャプチャ・ダウンロード                                                           |
 
 ### ページコンポーネント
 
@@ -482,19 +483,24 @@ function usePresets(props: {
 ### useAnalytics
 
 分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）。
-値は返さない（一覧の行は `sites` から、数値は `useActivitySources` の `activity` から画面が導出する）。
-どの操作もメッセージ（`add-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
+返す値は追加を拒否した理由（`addSiteError`）だけ（一覧の行は `sites` から、数値は `activity` から画面が導出する）。
+どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
 （追跡中のサイトと事実の表を書けるのは background だけ）。
 
 ```typescript
 function useAnalytics(): {
-  handleReblock: (domain: string) => Promise<void>;
+  addSiteError: string;
+  handleReblock: (site: TrackedSite) => Promise<void>;
   handleResetAnalytics: () => Promise<void>;
-  handleStopTracking: (domain: string) => Promise<void>;
+  handleStopTracking: (site: TrackedSite) => Promise<void>;
   handleRefreshAnalytics: () => Promise<void>;
-  handleAddSiteToTrack: (domain: string) => Promise<void>;
+  handleAddSiteToTrack: (domain: string) => Promise<boolean>;
 };
 ```
+
+- `handleReblock`: ブロック設定が無ければ `add-block`、無効なら `toggle-block`（ON）。ブロック中なら何もしない
+- `handleStopTracking`: `stop-tracking` を依頼するだけ（ブロック設定か YouTube 機能を持つサイトは background が拒否する。ブロック設定を消すのはブロックリストタブの確認つきの経路だけ）
+- `handleAddSiteToTrack`: 追加できたら true。拒否されたらハンドラの `error` を `addSiteError` に入れて false
 
 ---
 
@@ -518,7 +524,7 @@ YouTube 設定の保存フック。
 
 ```typescript
 function useYouTubeSettings(): {
-  handleYouTubeChange: (youtube: YouTubeSectionValue) => Promise<void>;
+  handleYouTubeChange: (youtube: YouTubeSettingsInput) => Promise<void>;
 };
 ```
 
@@ -526,7 +532,7 @@ function useYouTubeSettings(): {
 
 - 保存は background の `update-youtube-settings` ハンドラが `sites['youtube.com']` に行い、画面は `sites` の監視で表示を追従させる
 - ハンドラ側でブロックルールの更新・既存タブのブロック・解除の記録まで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
-- `YouTubeSectionValue` は画面が今受け取っている形を `src/lib/siteSelectors.ts`（一時）が組み立てたもの
+- `YouTubeSettingsInput`（`src/types/messageSchemas.ts`）は YouTube の節が送る値（機能全体の有効・非表示機能・アクセスブロック・時間制限）。`YouTubeSection` が `sites['youtube.com']` から組み立て、`youtube.com` への書き方への変換はハンドラが行う
 
 ---
 

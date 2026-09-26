@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import {
   exportBlockList,
+  blockListRows,
   blockCountRows,
   dailyActivityRows,
   unblockedSiteRows,
@@ -11,21 +12,20 @@ import {
 } from '~/lib/export';
 import { parseDateKey } from '~/lib/activityStats';
 import { formatTime } from '~/lib/time';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import type { ActivityLog } from '~/types/activity';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import type { TrackedSites } from '~/types/site';
 
-// ブロックリストの行を作る
-function makeBlockItem(
-  domain: string,
-  createdAt: string = '2024-01-15T10:00:00Z'
-): BlockListRow {
-  return {
-    id: domain,
-    domain,
-    createdAt,
-    enabled: true,
-    timeLimit: null
-  };
+// ブロック設定を持つサイトだけの保存形を作る
+function blockSitesOf(
+  ...entries: [domain: string, addedAt?: string][]
+): TrackedSites {
+  return sitesOf(
+    ...entries.map(([domain, addedAt = '2024-01-15T10:00:00Z']) =>
+      blockedSite(domain, { addedAt })
+    )
+  );
 }
 
 describe('export utilities', () => {
@@ -85,12 +85,12 @@ describe('export utilities', () => {
 
   describe('exportBlockList', () => {
     it('CSVに正しくエクスポートされる（基本ケース）', () => {
-      const blockRows: BlockListRow[] = [
-        makeBlockItem('youtube.com', '2024-01-15T10:00:00Z'),
-        makeBlockItem('twitter.com', '2024-01-14T09:00:00Z')
-      ];
+      const sites = blockSitesOf(
+        ['reddit.com', '2024-01-15T10:00:00Z'],
+        ['twitter.com', '2024-01-14T09:00:00Z']
+      );
 
-      exportBlockList(blockRows);
+      exportBlockList(sites);
 
       expect(mockCreateElement).toHaveBeenCalledWith('a');
       expect(mockClick).toHaveBeenCalled();
@@ -99,72 +99,64 @@ describe('export utilities', () => {
     });
 
     it('空配列の場合でもエラーなく実行される', () => {
-      const blockRows: BlockListRow[] = [];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      expect(() => exportBlockList({})).not.toThrow();
     });
 
     it('単一要素でも正しくエクスポートされる', () => {
-      const blockRows: BlockListRow[] = [
-        makeBlockItem('reddit.com', '2024-01-10T15:30:00Z')
-      ];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      const sites = blockSitesOf(['reddit.com', '2024-01-10T15:30:00Z']);
+      expect(() => exportBlockList(sites)).not.toThrow();
       expect(mockClick).toHaveBeenCalled();
     });
 
     it('ドメイン名にカンマが含まれる場合に正しくエスケープされる', () => {
       // This is an edge case - domains shouldn't have commas, but the CSV escaping should handle it
-      const blockRows: BlockListRow[] = [
-        makeBlockItem('example,test.com', '2024-01-15T10:00:00Z')
-      ];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      const sites = blockSitesOf(['example,test.com']);
+      expect(() => exportBlockList(sites)).not.toThrow();
+    });
+  });
+
+  describe('blockListRows', () => {
+    it('ブロック設定を持つサイトを追加した順に並べ、無効のサイトも含める（追跡だけのサイトは含めない）', () => {
+      const sites = sitesOf(
+        blockedSite('b.com', { addedAt: '2024-01-15T10:00:00Z' }),
+        trackedSite('tracked.com'),
+        blockedSite('a.com', {
+          addedAt: '2024-01-10T10:00:00Z',
+          enabled: false
+        })
+      );
+      expect(blockListRows(sites).map(([domain]) => domain)).toEqual([
+        'a.com',
+        'b.com'
+      ]);
+    });
+
+    it('youtube.com は YouTube の節が担当するので CSV にも含めない', () => {
+      const sites = sitesOf(blockedSite(YOUTUBE_DOMAIN), blockedSite('x.com'));
+      expect(blockListRows(sites).map(([domain]) => domain)).toEqual(['x.com']);
     });
   });
 
   describe('CSV escaping', () => {
     it('カンマを含む文字列が正しくエスケープされる', () => {
-      const blockRows: BlockListRow[] = [
-        {
-          id: 'test',
-          domain: 'example,test.com',
-          createdAt: '2024-01-15T10:00:00Z',
-          enabled: true,
-          timeLimit: null
-        }
-      ];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      const sites = blockSitesOf(['example,test.com']);
+      expect(() => exportBlockList(sites)).not.toThrow();
     });
 
     it('ダブルクォートを含む文字列が正しくエスケープされる', () => {
-      const blockRows: BlockListRow[] = [
-        {
-          id: 'test',
-          domain: 'example"test.com',
-          createdAt: '2024-01-15T10:00:00Z',
-          enabled: true,
-          timeLimit: null
-        }
-      ];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      const sites = blockSitesOf(['example"test.com']);
+      expect(() => exportBlockList(sites)).not.toThrow();
     });
 
     it('改行を含む文字列が正しくエスケープされる', () => {
-      const blockRows: BlockListRow[] = [
-        {
-          id: 'test',
-          domain: 'example\ntest.com',
-          createdAt: '2024-01-15T10:00:00Z',
-          enabled: true,
-          timeLimit: null
-        }
-      ];
-      expect(() => exportBlockList(blockRows)).not.toThrow();
+      const sites = blockSitesOf(['example\ntest.com']);
+      expect(() => exportBlockList(sites)).not.toThrow();
     });
   });
 
   describe('filename generation', () => {
     it('ファイル名に正しい日付が含まれる', () => {
-      const blockRows: BlockListRow[] = [makeBlockItem('youtube.com')];
-      exportBlockList(blockRows);
+      exportBlockList(blockSitesOf(['reddit.com']));
 
       // Check that createElement was called with 'a'
       expect(mockCreateElement).toHaveBeenCalledWith('a');
@@ -176,8 +168,7 @@ describe('export utilities', () => {
 
   describe('BOM for Excel compatibility', () => {
     it('CSVファイルにBOMが含まれる（Excel日本語互換性）', () => {
-      const blockRows: BlockListRow[] = [makeBlockItem('youtube.com')];
-      exportBlockList(blockRows);
+      exportBlockList(blockSitesOf(['reddit.com']));
 
       // Verify Blob was created (BOM is added in downloadCSV)
       expect(global.Blob).toHaveBeenCalled();

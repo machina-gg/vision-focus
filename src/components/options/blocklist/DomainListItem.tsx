@@ -4,21 +4,22 @@ import { Trash2, Shield } from 'lucide-react';
 import { Button, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockListRow } from '~/lib/siteSelectors';
+import type { BlockedSite } from '~/lib/blockList';
 import type { TimeLimit } from '~/types/storage';
 
 interface DomainListItemProps {
-  item: BlockListRow;
+  site: BlockedSite;
   blockCount: number;
   /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   usedSeconds: number;
-  onToggle: (id: string, enabled: boolean) => void;
-  onRemove: (id: string) => void;
-  onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
+  /** 操作の宛先はサイトキー */
+  onToggle: (domain: string, enabled: boolean) => void;
+  onRemove: (domain: string) => void;
+  onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
 }
 
 export function DomainListItem({
-  item,
+  site,
   blockCount,
   usedSeconds,
   onToggle,
@@ -30,20 +31,20 @@ export function DomainListItem({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Toggle
-            checked={item.enabled}
-            onChange={(checked) => onToggle(item.id, checked)}
+            checked={site.block.enabled}
+            onChange={(checked) => onToggle(site.domain, checked)}
             size="sm"
             data-testid="blocklist-item-toggle"
           />
           <div>
             <p
               data-testid="blocklist-item-domain"
-              className={`font-medium ${item.enabled ? 'text-gray-900' : 'text-gray-400'}`}
+              className={`font-medium ${site.block.enabled ? 'text-gray-900' : 'text-gray-400'}`}
             >
-              {item.domain}
+              {site.domain}
             </p>
             <p className="text-xs text-gray-500">
-              Added {new Date(item.createdAt).toLocaleDateString()}
+              Added {new Date(site.block.addedAt).toLocaleDateString()}
             </p>
           </div>
           {blockCount > 0 && (
@@ -56,7 +57,7 @@ export function DomainListItem({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onRemove(item.id)}
+          onClick={() => onRemove(site.domain)}
           data-testid="blocklist-item-remove"
         >
           <Trash2 className="w-4 h-4 text-danger-500" />
@@ -66,8 +67,8 @@ export function DomainListItem({
       {/* Time Limit Editor */}
       <div className="ml-11">
         <TimeLimitEditor
-          item={item}
-          onUpdate={(timeLimit) => onUpdateTimeLimit(item.id, timeLimit)}
+          site={site}
+          onUpdate={(timeLimit) => onUpdateTimeLimit(site.domain, timeLimit)}
           usedSeconds={usedSeconds}
         />
       </div>

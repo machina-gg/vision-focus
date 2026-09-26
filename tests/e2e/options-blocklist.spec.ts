@@ -341,11 +341,30 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     context,
     extensionId
   }) => {
+    // youtube.com の設定は YouTube 専用の節だけが担当する。ブロック設定を持っていても
+    // 「ブロック中のサイト」一覧には出さない
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(setupPage, 'settings', makeAppSettings());
+    await setStorageData(
+      setupPage,
+      'sites',
+      makeSites([
+        { domain: 'youtube.com', block: {}, youtube: {} },
+        { domain: 'example.com', block: {} }
+      ])
+    );
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'blocklist');
 
     // YouTube セクションが表示される
     const youtubeSection = page.locator('text=/YouTube/i');
     await expect(youtubeSection.first()).toBeVisible();
+
+    // 一覧には youtube.com 以外だけが並ぶ
+    await expect(page.locator(SELECTORS.options.itemDomain)).toHaveText([
+      'example.com'
+    ]);
 
     await page.close();
   });
@@ -437,6 +456,9 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       name: UI_TEXT.youtube.timeLimitSettings
     });
     await expect(timeLimitHeading).toBeVisible();
+
+    // youtube.com の時間制限は YouTube の節だけで設定する（一覧には行が無い）
+    await expect(page.locator(SELECTORS.options.listItem)).toHaveCount(0);
 
     // 見出しの後ろにある 2 つの select が種別と制限時間
     await timeLimitHeading
