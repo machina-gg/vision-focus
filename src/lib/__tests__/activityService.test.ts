@@ -57,7 +57,9 @@ import {
   appendActivity,
   clearActivity,
   pruneBefore,
-  purgeSite
+  purgeSite,
+  recordActivity,
+  recordHostActivity
 } from '~/lib/activityService';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
@@ -303,5 +305,99 @@ describe('clearActivity', () => {
     ]);
 
     expect(stored()).toBeUndefined();
+  });
+});
+
+describe('recordActivity', () => {
+  it('出来事を記録する', async () => {
+    await recordActivity({
+      kind: 'unblock',
+      site: 'x.com',
+      at: localDate(2026, 9, 26)
+    });
+
+    expect(stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 0, 1) } });
+  });
+
+  it('記録に失敗しても投げず、失敗をログに残す', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    vi.mocked(getTrackedSiteKeys).mockRejectedValueOnce(new Error('失敗'));
+
+    await expect(
+      recordActivity({
+        kind: 'unblock',
+        site: 'x.com',
+        at: localDate(2026, 9, 26)
+      })
+    ).resolves.toBeUndefined();
+
+    expect(consoleError).toHaveBeenCalledOnce();
+    consoleError.mockRestore();
+  });
+});
+
+describe('recordHostActivity', () => {
+  const at = localDate(2026, 9, 26);
+  const stay = (site: string) => ({
+    kind: 'stay' as const,
+    site,
+    seconds: 5,
+    at
+  });
+
+  it('ホスト名を追跡中のサイトに引き直して記録する', async () => {
+    await recordHostActivity(['www.youtube.com'], stay);
+
+    expect(stored()).toEqual({
+      '2026-09-26': { 'youtube.com': row(5, 0, 0) }
+    });
+  });
+
+  it('同じサイトに属するホストは 1 件にまとめる', async () => {
+    const toEvent = vi.fn(stay);
+
+    await recordHostActivity(
+      ['www.youtube.com', 'm.youtube.com', 'youtube.com', 'x.com'],
+      toEvent
+    );
+
+    expect(toEvent.mock.calls.map(([site]) => site).sort()).toEqual([
+      'x.com',
+      'youtube.com'
+    ]);
+    expect(stored()).toEqual({
+      '2026-09-26': { 'youtube.com': row(5, 0, 0), 'x.com': row(5, 0, 0) }
+    });
+  });
+
+  it('追跡中のサイトに属さないホストは記録しない', async () => {
+    const toEvent = vi.fn(stay);
+
+    await recordHostActivity(['example.com', 'notyoutube.com'], toEvent);
+
+    expect(toEvent).not.toHaveBeenCalled();
+    expect(stored()).toBeUndefined();
+  });
+
+  it('ホストが無ければ追跡中の集合も読まない', async () => {
+    await recordHostActivity([], stay);
+
+    expect(getTrackedSiteKeys).not.toHaveBeenCalled();
+  });
+
+  it('追跡中の集合の読み出しに失敗しても投げず、失敗をログに残す', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    vi.mocked(getTrackedSiteKeys).mockRejectedValueOnce(new Error('失敗'));
+
+    await expect(
+      recordHostActivity(['youtube.com'], stay)
+    ).resolves.toBeUndefined();
+
+    expect(consoleError).toHaveBeenCalledOnce();
+    consoleError.mockRestore();
   });
 });

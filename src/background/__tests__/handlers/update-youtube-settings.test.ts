@@ -13,12 +13,12 @@ vi.mock('../../blocker', () => ({
 }));
 
 vi.mock('~/lib/activityService', () => ({
-  appendActivity: vi.fn()
+  recordActivity: vi.fn()
 }));
 
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import { appendActivity } from '~/lib/activityService';
+import { recordActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
 import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 import type { YouTubeSettings } from '~/types/storage';
@@ -211,8 +211,8 @@ describe('update-youtube-settings ハンドラ', () => {
         youtube: youtube({ enabled: true, blockAccess: false })
       });
 
-      expect(appendActivity).toHaveBeenCalledOnce();
-      expect(appendActivity).toHaveBeenCalledWith({
+      expect(recordActivity).toHaveBeenCalledOnce();
+      expect(recordActivity).toHaveBeenCalledWith({
         kind: 'unblock',
         site: 'youtube.com',
         at: expect.any(Date)
@@ -227,29 +227,8 @@ describe('update-youtube-settings ハンドラ', () => {
       });
 
       expect(
-        vi.mocked(appendActivity).mock.invocationCallOrder[0]
+        vi.mocked(recordActivity).mock.invocationCallOrder[0]
       ).toBeLessThan(vi.mocked(setSettings).mock.invocationCallOrder[0]);
-    });
-
-    it('記録に失敗しても設定の保存は行い、成功を返す', async () => {
-      const consoleError = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
-      vi.mocked(appendActivity).mockRejectedValueOnce(
-        new Error('write failed')
-      );
-      givenStoredYouTube(youtube({ enabled: true, blockAccess: true }));
-
-      const result = await invoke<Response>(handler, {
-        youtube: youtube({ enabled: false, blockAccess: true })
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(setSettings).toHaveBeenCalledOnce();
-      expect(updateBlockRules).toHaveBeenCalledOnce();
-      // 握りつぶさず、記録できていないことをログに残す
-      expect(consoleError).toHaveBeenCalledOnce();
-      consoleError.mockRestore();
     });
 
     it('YouTube 機能ごと無効にしてアクセスブロックが外れたときも記録する', async () => {
@@ -259,7 +238,7 @@ describe('update-youtube-settings ハンドラ', () => {
         youtube: youtube({ enabled: false, blockAccess: true })
       });
 
-      expect(appendActivity).toHaveBeenCalledOnce();
+      expect(recordActivity).toHaveBeenCalledOnce();
     });
 
     it.each([
@@ -283,7 +262,7 @@ describe('update-youtube-settings ハンドラ', () => {
 
       await invoke(handler, { youtube: next });
 
-      expect(appendActivity).not.toHaveBeenCalled();
+      expect(recordActivity).not.toHaveBeenCalled();
     });
   });
 });

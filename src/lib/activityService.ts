@@ -11,6 +11,7 @@
 
 import { activityItem } from '~/lib/storage';
 import { getTrackedSiteKeys } from '~/lib/siteService';
+import { resolveSiteKey } from '~/lib/siteKey';
 import { objectOrFallback } from '~/lib/storedValue';
 import { toDateKey } from '~/lib/time';
 import type {
@@ -102,6 +103,49 @@ export async function appendActivity(
     }
     await activityItem.setValue(next);
   });
+}
+
+/**
+ * 本体の処理（設定の保存・タブのリダイレクト・旧データの記録）に付随して事実を記録する入口。
+ * 記録の失敗で本体の処理を止めないよう、失敗はここで受け止めてログに残す
+ * （握りつぶすと「起きなかった」と「記録できていない」が区別できなくなる）。
+ * background のハンドラ・リスナーはこちらを呼ぶ
+ */
+export async function recordActivity(
+  ...events: ActivityEvent[]
+): Promise<void> {
+  try {
+    await appendActivity(...events);
+  } catch (error) {
+    console.error('Failed to record activity', error);
+  }
+}
+
+/**
+ * ホスト名で起きた出来事を、追跡中のサイトへ引き直して記録する（失敗の扱いは `recordActivity` と同じ）。
+ * 同じサイトに属するホスト（www. 付きと m. 付きなど）は 1 件にまとめてから `toEvent` に渡す。
+ * 同時に表示されていた別ホストの滞在を 1 回分として数えるため。
+ * どの追跡中のサイトにも属さないホストは記録しない
+ */
+export async function recordHostActivity(
+  hosts: readonly string[],
+  toEvent: (site: SiteKey) => ActivityEvent
+): Promise<void> {
+  if (hosts.length === 0) return;
+
+  try {
+    const tracked = await getTrackedSiteKeys();
+    const sites = new Set<SiteKey>();
+    for (const host of hosts) {
+      const site = resolveSiteKey(host, tracked);
+      if (site) sites.add(site);
+    }
+    if (sites.size === 0) return;
+
+    await appendActivity(...[...sites].map(toEvent));
+  } catch (error) {
+    console.error('Failed to record activity', error);
+  }
 }
 
 /** 追跡を止めたサイトの列をすべての日から消す。空になった日の行も消す */

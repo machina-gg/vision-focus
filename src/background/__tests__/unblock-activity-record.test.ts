@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 /**
  * 解除の 3 経路（トグル OFF・ブロックリストからの削除・YouTube のアクセスブロック OFF）で、
  * 事実の表（activity）に `unblock` が実際に保存されることを確かめる。
  *
- * ハンドラ単体のテストは書き手（`appendActivity`）をモックするため「呼ばれたか」までしか
+ * ハンドラ単体のテストは記録の入口（`recordActivity`）をモックするため「呼ばれたか」までしか
  * 見られない。書き手は追跡中の集合に無いキーの出来事を捨てるので、呼んだ時点の保存値に
  * よっては黙って消える。ここでは書き手と追跡中の集合（`siteService`）を実物のまま通し、
  * 保存領域だけをインメモリの実体に差し替えて、保存された値そのものを見る。
@@ -14,7 +14,8 @@ const store = vi.hoisted(() => ({
   settings: undefined as unknown,
   unblockHistory: undefined as unknown,
   analytics: undefined as unknown,
-  activity: undefined as unknown
+  activity: undefined as unknown,
+  failActivityWrites: false
 }));
 
 vi.mock('~/lib/storage', () => ({
@@ -33,6 +34,7 @@ vi.mock('~/lib/storage', () => ({
   activityItem: {
     getValue: vi.fn(async () => structuredClone(store.activity ?? {})),
     setValue: vi.fn(async (value: unknown) => {
+      if (store.failActivityWrites) throw new Error('write failed');
       store.activity = structuredClone(value);
     }),
     removeValue: vi.fn(async () => {
@@ -92,6 +94,7 @@ beforeEach(() => {
     siteUnblockCounts: {}
   };
   store.activity = undefined;
+  store.failActivityWrites = false;
 });
 
 describe('解除の事実が保存される', () => {
@@ -143,5 +146,61 @@ describe('解除の事実が保存される', () => {
     });
 
     expect(todayUnblocks('youtube.com')).toBe(1);
+  });
+});
+
+describe('事実の記録に失敗しても、本体の操作は成功する', () => {
+  let consoleError: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    store.failActivityWrites = true;
+    consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    consoleError.mockRestore();
+  });
+
+  it('トグル OFF', async () => {
+    givenSettings({ blockList: [blockItem] });
+
+    const result = await invoke(toggleBlockHandler, {
+      id: 'item-1',
+      enabled: false
+    });
+
+    expect(result).toEqual({ success: true });
+    expect((store.settings as AppSettings).blockList[0].enabled).toBe(false);
+    expect(consoleError).toHaveBeenCalledOnce();
+  });
+
+  it('ブロックリストからの削除', async () => {
+    givenSettings({ blockList: [blockItem] });
+
+    const result = await invoke(removeBlockHandler, { id: 'item-1' });
+
+    expect(result).toEqual({ success: true });
+    expect((store.settings as AppSettings).blockList).toEqual([]);
+    expect(consoleError).toHaveBeenCalledOnce();
+  });
+
+  it('YouTube のアクセスブロック OFF', async () => {
+    givenSettings({
+      youtube: { ...DEFAULT_YOUTUBE_SETTINGS, enabled: true, blockAccess: true }
+    });
+
+    const result = await invoke(updateYouTubeSettingsHandler, {
+      youtube: {
+        ...DEFAULT_YOUTUBE_SETTINGS,
+        enabled: false,
+        blockAccess: true
+      }
+    });
+
+    expect(result).toEqual({ success: true });
+    expect((store.settings as AppSettings).youtube.enabled).toBe(false);
+    expect(consoleError).toHaveBeenCalledOnce();
   });
 });

@@ -23,7 +23,7 @@ vi.mock('~/lib/analytics', () => ({
 }));
 
 vi.mock('~/lib/activityService', () => ({
-  appendActivity: vi.fn()
+  recordActivity: vi.fn()
 }));
 
 import {
@@ -34,7 +34,7 @@ import {
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
-import { appendActivity } from '~/lib/activityService';
+import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
 import { DEFAULT_SETTINGS, DEFAULT_ANALYTICS } from '~/types/storage';
 
@@ -265,8 +265,8 @@ describe('toggle-block ハンドラ', () => {
     it('トグル OFF で 1 回の解除を記録する', async () => {
       await invoke(handler, { id: 'item-1', enabled: false });
 
-      expect(appendActivity).toHaveBeenCalledOnce();
-      expect(appendActivity).toHaveBeenCalledWith({
+      expect(recordActivity).toHaveBeenCalledOnce();
+      expect(recordActivity).toHaveBeenCalledWith({
         kind: 'unblock',
         site: 'example.com',
         at: expect.any(Date)
@@ -281,7 +281,7 @@ describe('toggle-block ハンドラ', () => {
 
       await invoke(handler, { id: 'item-1', enabled: false });
 
-      expect(appendActivity).toHaveBeenCalledWith(
+      expect(recordActivity).toHaveBeenCalledWith(
         expect.objectContaining({ kind: 'unblock', site: 'example.com' })
       );
     });
@@ -294,7 +294,7 @@ describe('toggle-block ハンドラ', () => {
 
       await invoke(handler, { id: 'item-1', enabled: true });
 
-      expect(appendActivity).not.toHaveBeenCalled();
+      expect(recordActivity).not.toHaveBeenCalled();
     });
 
     it('旧データの解除カウントも従来どおり増やす', async () => {

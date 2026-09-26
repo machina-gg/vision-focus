@@ -8,11 +8,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 vi.mock('~/lib/activityService', () => ({
-  appendActivity: vi.fn()
-}));
-
-vi.mock('~/lib/siteService', () => ({
-  getTrackedSiteKeys: vi.fn()
+  recordHostActivity: vi.fn()
 }));
 
 import {
@@ -22,8 +18,7 @@ import {
   setLastBlockedDomain
 } from '~/lib/storage';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
-import { appendActivity } from '~/lib/activityService';
-import { getTrackedSiteKeys } from '~/lib/siteService';
+import { recordHostActivity } from '~/lib/activityService';
 import { DEFAULT_ANALYTICS } from '~/types/storage';
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -34,7 +29,6 @@ beforeEach(() => {
     ...DEFAULT_ANALYTICS,
     dailyStats: {}
   });
-  vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
 });
 
 describe('recordBlockedDomain', () => {
@@ -135,33 +129,18 @@ describe('recordBlockedDomain', () => {
   });
 
   describe('事実の表（activity）', () => {
-    it('追跡中のサイトに 1 回のブロックを記録する', async () => {
-      await recordBlockedDomain('example.com');
+    it('ブロックしたホスト名で 1 回のブロックを記録する', async () => {
+      await recordBlockedDomain('www.example.com');
 
-      expect(appendActivity).toHaveBeenCalledOnce();
-      expect(appendActivity).toHaveBeenCalledWith({
+      expect(recordHostActivity).toHaveBeenCalledOnce();
+      const [hosts, toEvent] = vi.mocked(recordHostActivity).mock.calls[0];
+      expect(hosts).toEqual(['www.example.com']);
+      // ホスト名から追跡中のサイトへの引き直しは書き手側が行う
+      expect(toEvent('example.com')).toEqual({
         kind: 'block',
         site: 'example.com',
         at: expect.any(Date)
       });
-    });
-
-    it('サブドメイン・www 付きのホスト名は追跡中のサイトに引き直す', async () => {
-      await recordBlockedDomain('www.example.com');
-      await recordBlockedDomain('m.example.com');
-
-      expect(vi.mocked(appendActivity).mock.calls).toEqual([
-        [expect.objectContaining({ kind: 'block', site: 'example.com' })],
-        [expect.objectContaining({ kind: 'block', site: 'example.com' })]
-      ]);
-    });
-
-    it('追跡中のサイトに属さないホスト名なら記録しない', async () => {
-      await recordBlockedDomain('other.com');
-
-      expect(appendActivity).not.toHaveBeenCalled();
-      // 旧データへの記録は従来どおり行う
-      expect(incrementSiteBlockCount).toHaveBeenCalledWith('other.com');
     });
 
     it('ブロック画面が読む値は、事実の表の書き込みより先に保存する', async () => {
@@ -169,7 +148,7 @@ describe('recordBlockedDomain', () => {
 
       expect(
         vi.mocked(setLastBlockedDomain).mock.invocationCallOrder[0]
-      ).toBeLessThan(vi.mocked(appendActivity).mock.invocationCallOrder[0]);
+      ).toBeLessThan(vi.mocked(recordHostActivity).mock.invocationCallOrder[0]);
     });
   });
 });

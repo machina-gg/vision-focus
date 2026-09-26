@@ -1,22 +1,35 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 /**
- * ブロックが成立したとき、事実の表（activity）に `block` が 1 回だけ記録されることを、
+ * ブロックが成立したとき、事実の表（activity）に `block` が 1 回だけ保存されることを、
  * 記録が始まる 2 つの経路それぞれで確かめる。
  * - `webNavigation.onBeforeNavigate`（navigationTracking）
  * - `blockExistingTabs`（設定変更で既に開いているタブを飛ばす経路）
  *
  * 経路ごとの単体テストは `recordBlockedDomain` をモックするため「呼ばれたか」までしか
- * 見られない。ここでは経路と `recordBlockedDomain` を実物のまま通し、書き手
- * （`appendActivity`）に届いた出来事を数える。
+ * 見られない。ここでは経路・`recordBlockedDomain`・書き手（activityService）を実物のまま通し、
+ * 保存領域だけをインメモリの実体に差し替えて、保存された値そのものを数える。
  */
+
+const activityStore = vi.hoisted(() => ({
+  value: undefined as unknown,
+  failWrites: false
+}));
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   getAnalytics: vi.fn(),
   setAnalytics: vi.fn(),
   incrementSiteBlockCount: vi.fn(),
-  setLastBlockedDomain: vi.fn()
+  setLastBlockedDomain: vi.fn(),
+  activityItem: {
+    getValue: vi.fn(async () => structuredClone(activityStore.value ?? {})),
+    setValue: vi.fn(async (value: unknown) => {
+      if (activityStore.failWrites) throw new Error('write failed');
+      activityStore.value = structuredClone(value);
+    }),
+    removeValue: vi.fn()
+  }
 }));
 
 vi.mock('~/lib/blockService', () => ({
@@ -34,17 +47,14 @@ vi.mock('~/lib/siteService', () => ({
   getTrackedSiteKeys: vi.fn()
 }));
 
-vi.mock('~/lib/activityService', () => ({
-  appendActivity: vi.fn()
-}));
-
 import { getAnalytics } from '~/lib/storage';
 import { getBlockState, shouldTrackBlockForDomain } from '~/lib/blockService';
 import { getTrackedSiteKeys } from '~/lib/siteService';
-import { appendActivity } from '~/lib/activityService';
+import { toDateKey } from '~/lib/time';
 import { blockExistingTabs } from '../blocker';
 import { setupNavigationTracking } from '../listeners/navigationTracking';
 import { DEFAULT_ANALYTICS } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
 
 type NavigateListener = (
   details: chrome.webNavigation.WebNavigationParentedCallbackDetails
@@ -53,6 +63,7 @@ type NavigateListener = (
 /** chrome API のモック。遷移リスナーを捕捉し、開いているタブを差し替えられる */
 function setupChrome(tabs: chrome.tabs.Tab[] = []) {
   let listener: NavigateListener | null = null;
+  const update = vi.fn().mockResolvedValue(undefined);
 
   (globalThis as Record<string, unknown>).chrome = {
     runtime: {
@@ -61,7 +72,7 @@ function setupChrome(tabs: chrome.tabs.Tab[] = []) {
     },
     tabs: {
       query: vi.fn().mockResolvedValue(tabs),
-      update: vi.fn().mockResolvedValue(undefined)
+      update
     },
     webNavigation: {
       onBeforeNavigate: {
@@ -73,6 +84,7 @@ function setupChrome(tabs: chrome.tabs.Tab[] = []) {
   };
 
   return {
+    update,
     navigate: async (url: string) => {
       if (!listener) throw new Error('リスナーが未登録');
       await listener({
@@ -84,14 +96,18 @@ function setupChrome(tabs: chrome.tabs.Tab[] = []) {
   };
 }
 
-const blockEvent = (site: string) => ({
-  kind: 'block',
-  site,
-  at: expect.any(Date)
-});
+/** 今日の行に保存されたブロック回数（行が無ければ undefined） */
+function todayBlocks(site: string): number | undefined {
+  const log = activityStore.value as ActivityLog | undefined;
+  return log?.[toDateKey(new Date())]?.[site]?.blocks;
+}
+
+const tab = (id: number, url: string) => ({ id, url }) as chrome.tabs.Tab;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  activityStore.value = undefined;
+  activityStore.failWrites = false;
   vi.mocked(getAnalytics).mockResolvedValue({
     ...DEFAULT_ANALYTICS,
     dailyStats: {}
@@ -108,35 +124,26 @@ describe('ブロック成立時の事実の記録', () => {
 
     await harness.navigate('https://www.youtube.com/watch?v=abc');
 
-    expect(vi.mocked(appendActivity).mock.calls).toEqual([
-      [blockEvent('youtube.com')]
-    ]);
+    expect(todayBlocks('youtube.com')).toBe(1);
   });
 
   it('既存タブを飛ばす経路で 1 回だけ記録する', async () => {
-    setupChrome([
-      { id: 1, url: 'https://www.youtube.com/watch?v=abc' } as chrome.tabs.Tab
-    ]);
+    setupChrome([tab(1, 'https://www.youtube.com/watch?v=abc')]);
 
     await blockExistingTabs();
 
-    expect(vi.mocked(appendActivity).mock.calls).toEqual([
-      [blockEvent('youtube.com')]
-    ]);
+    expect(todayBlocks('youtube.com')).toBe(1);
   });
 
   it('既存タブを飛ばす経路では、飛ばしたタブの数だけ記録する', async () => {
     setupChrome([
-      { id: 1, url: 'https://www.youtube.com/watch?v=a' } as chrome.tabs.Tab,
-      { id: 2, url: 'https://m.youtube.com/watch?v=b' } as chrome.tabs.Tab
+      tab(1, 'https://www.youtube.com/watch?v=a'),
+      tab(2, 'https://m.youtube.com/watch?v=b')
     ]);
 
     await blockExistingTabs();
 
-    expect(vi.mocked(appendActivity).mock.calls).toEqual([
-      [blockEvent('youtube.com')],
-      [blockEvent('youtube.com')]
-    ]);
+    expect(todayBlocks('youtube.com')).toBe(2);
   });
 
   it('ブロックが成立しなければどちらの経路でも記録しない', async () => {
@@ -145,14 +152,26 @@ describe('ブロック成立時の事実の記録', () => {
       blocked: false,
       reason: null
     });
-    const harness = setupChrome([
-      { id: 1, url: 'https://www.youtube.com/' } as chrome.tabs.Tab
-    ]);
+    const harness = setupChrome([tab(1, 'https://www.youtube.com/')]);
     setupNavigationTracking();
 
     await harness.navigate('https://www.youtube.com/');
     await blockExistingTabs();
 
-    expect(appendActivity).not.toHaveBeenCalled();
+    expect(activityStore.value).toBeUndefined();
+  });
+
+  it('事実の記録に失敗しても、既存タブのリダイレクトは行う', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    activityStore.failWrites = true;
+    const harness = setupChrome([tab(1, 'https://www.youtube.com/')]);
+
+    await blockExistingTabs();
+
+    expect(harness.update).toHaveBeenCalledOnce();
+    expect(consoleError).toHaveBeenCalledOnce();
+    consoleError.mockRestore();
   });
 });

@@ -9,7 +9,7 @@ import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { getTodayKey } from '~/lib/time';
 import { trackEvent } from '~/lib/analytics';
 import type { DailyStat, SiteUnblockCount } from '~/types/storage';
-import { appendActivity } from '~/lib/activityService';
+import { recordActivity } from '~/lib/activityService';
 import { normalizeSiteKey } from '~/lib/siteKey';
 
 export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
@@ -50,7 +50,7 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   } else {
     // If disabling (unblocking), record unblock count
     await incrementUnblockCount(domain);
-    await appendActivity({
+    await recordActivity({
       kind: 'unblock',
       site: normalizeSiteKey(domain),
       at: new Date()

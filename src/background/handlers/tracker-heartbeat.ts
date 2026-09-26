@@ -19,10 +19,7 @@ import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { getYouTubeBlockItem } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
-import { appendActivity } from '~/lib/activityService';
-import { getTrackedSiteKeys } from '~/lib/siteService';
-import { resolveSiteKey } from '~/lib/siteKey';
-import type { SiteKey } from '~/types/site';
+import { recordHostActivity } from '~/lib/activityService';
 
 // Track active pages and their last heartbeat
 interface ActivePage {
@@ -77,32 +74,16 @@ function ensureRecordingTimer() {
       recordingTimer = null;
     }
 
-    // 旧データの記録とタイマーの後始末を済ませてから書く（失敗しても旧データ側を巻き込まない）
-    await recordStay(visibleHosts, seconds);
+    // 表示中のページの滞在を、追跡中のサイトごとに 1 回分記録する
+    // （同じサイトの別ホストを同時に表示していても 1 回分。解除中かどうかでは絞らない）
+    const at = new Date();
+    await recordHostActivity(visibleHosts, (site) => ({
+      kind: 'stay',
+      site,
+      seconds,
+      at
+    }));
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-}
-
-/**
- * 表示中のホスト名を追跡中のサイトに引き直し、サイトごとに 1 回分の滞在を記録する。
- * 同じサイトを www 付きと m. 付きのように別ホストで同時に表示していても、
- * 表示されていた実時間は 1 回分なので、サイトキーで重複を除いてから足す。
- * 解除中かどうかでは絞らない（追跡中のサイトの表示時間はすべて事実として残す）
- */
-async function recordStay(hosts: string[], seconds: number): Promise<void> {
-  if (hosts.length === 0) return;
-
-  const tracked = await getTrackedSiteKeys();
-  const sites = new Set<SiteKey>();
-  for (const host of hosts) {
-    const site = resolveSiteKey(host, tracked);
-    if (site) sites.add(site);
-  }
-  if (sites.size === 0) return;
-
-  const at = new Date();
-  await appendActivity(
-    ...[...sites].map((site) => ({ kind: 'stay' as const, site, seconds, at }))
-  );
 }
 
 // Normalize domain by removing www prefix

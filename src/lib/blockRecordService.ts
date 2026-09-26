@@ -22,9 +22,7 @@ import {
   setLastBlockedDomain
 } from '~/lib/storage';
 import { getTodayKey } from '~/lib/time';
-import { appendActivity } from '~/lib/activityService';
-import { getTrackedSiteKeys } from '~/lib/siteService';
-import { resolveSiteKey } from '~/lib/siteKey';
+import { recordHostActivity } from '~/lib/activityService';
 
 /**
  * ブロックが成立したドメインを記録する
@@ -62,9 +60,11 @@ export async function recordBlockedDomain(domain: string): Promise<void> {
     }
   });
 
-  // 事実の表のブロック回数。ホスト名（www. / m. 付きなど）を追跡中のサイトに引き直す
-  const site = resolveSiteKey(domain, await getTrackedSiteKeys());
-  if (site) {
-    await appendActivity({ kind: 'block', site, at: new Date() });
-  }
+  // 事実の表のブロック回数。ホスト名（www. / m. 付きなど）は追跡中のサイトに引き直される。
+  // 記録の失敗はここで止まらないので、呼び出し元のリダイレクトは続く
+  await recordHostActivity([domain], (site) => ({
+    kind: 'block',
+    site,
+    at: new Date()
+  }));
 }

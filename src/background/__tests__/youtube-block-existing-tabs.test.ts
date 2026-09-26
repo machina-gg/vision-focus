@@ -26,11 +26,8 @@ vi.mock('~/lib/chromeApi', () => ({
 
 // 事実の表（activity）への記録はこの検査の対象外（タブの置き換えを見る）
 vi.mock('~/lib/activityService', () => ({
-  appendActivity: vi.fn()
-}));
-
-vi.mock('~/lib/siteService', () => ({
-  getTrackedSiteKeys: vi.fn(async () => [])
+  recordActivity: vi.fn(),
+  recordHostActivity: vi.fn()
 }));
 
 import {

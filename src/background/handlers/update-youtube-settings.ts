@@ -2,7 +2,7 @@ import type { MessageHandler } from '~/lib/messaging';
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
-import { appendActivity } from '~/lib/activityService';
+import { recordActivity } from '~/lib/activityService';
 import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 
 /**
@@ -42,7 +42,11 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     // 含めるため、機能ごと無効にした設定を保存した後では youtube.com が集合から外れ、
     // 書き手に捨てられる
     if (wasBlockingAccess && !blocksAccess) {
-      await recordYouTubeUnblock();
+      await recordActivity({
+        kind: 'unblock',
+        site: YOUTUBE_DOMAIN,
+        at: new Date()
+      });
     }
 
     await setSettings({ ...settings, youtube });
@@ -60,20 +64,3 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     return { success: false, error: 'Failed to update YouTube settings' };
   }
 };
-
-/**
- * YouTube の解除を事実の表に記録する。
- * 設定の保存より先に呼ぶので、記録の失敗で保存そのものを止めないよう、ここで失敗を受け止める
- * （保存が本体で、記録は付随する事実。失敗はログに残して「記録できていない」と区別できるようにする）
- */
-async function recordYouTubeUnblock(): Promise<void> {
-  try {
-    await appendActivity({
-      kind: 'unblock',
-      site: YOUTUBE_DOMAIN,
-      at: new Date()
-    });
-  } catch (error) {
-    console.error('Failed to record YouTube unblock activity', error);
-  }
-}
