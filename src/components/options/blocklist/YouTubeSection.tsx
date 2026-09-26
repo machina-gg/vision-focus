@@ -15,12 +15,22 @@ import { Card, Toggle, Select, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { YouTubeFeatureToggle } from './YouTubeFeatureToggle';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
+import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
+import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettings } from '~/types/storage';
 
 interface YouTubeSectionProps {
   youtube: YouTubeSettings;
   onYouTubeChange: (youtube: YouTubeSettings) => void;
+  /** ブロックを弱める操作を確認に回す。確認が通るまで設定は変えない */
+  onRequestUnblock: (request: UnblockRequest) => void;
 }
+
+// OFF にするとブロックが弱まるトグル。ここに無いトグルは確認なしで切り替える
+const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSettings> = new Set([
+  'enabled',
+  'blockAccess'
+]);
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
@@ -28,7 +38,8 @@ type LimitTypeOption = 'always' | 'daily';
 
 export function YouTubeSection({
   youtube,
-  onYouTubeChange
+  onYouTubeChange,
+  onRequestUnblock
 }: YouTubeSectionProps) {
   const isEnabled = youtube?.enabled ?? false;
   const blockAccessEnabled = youtube?.blockAccess ?? false;
@@ -95,9 +106,20 @@ export function YouTubeSection({
 
   const handleToggle = useCallback(
     (key: keyof YouTubeSettings) => (checked: boolean) => {
+      if (!checked && UNBLOCK_GUARDED_KEYS.has(key)) {
+        // トグルは制御コンポーネントなので、確認が通るまで onYouTubeChange を
+        // 呼ばなければキャンセル時に元の表示のまま残る
+        onRequestUnblock({
+          domain: YOUTUBE_DOMAIN,
+          timeLimit: youtube?.timeLimit,
+          action: 'toggle',
+          onConfirm: () => onYouTubeChange({ ...youtube, [key]: false })
+        });
+        return;
+      }
       onYouTubeChange({ ...youtube, [key]: checked });
     },
-    [youtube, onYouTubeChange]
+    [youtube, onYouTubeChange, onRequestUnblock]
   );
 
   const handleTypeChange = useCallback((newType: LimitTypeOption) => {

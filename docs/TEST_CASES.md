@@ -206,6 +206,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 | YT-007 | YouTube 設定変更が即座に反映される                   | P2     |
 | YT-009 | Hide Shorts + Time Limit 同時設定時に両方が機能する  | P1     |
 | YT-010 | blockAccess と Time Limit の併用（超過後にブロック） | P1     |
+| YT-011 | 有効化を OFF にすると確認が出て、長押しで解除される  | P1     |
 
 ### アナリティクス機能
 

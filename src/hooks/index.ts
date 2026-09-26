@@ -10,4 +10,5 @@ export * from './useResolvedPreset';
 export * from './useSchedules';
 export * from './useStorageItem';
 export * from './useSupportPrompt';
+export * from './useUnblockGuard';
 export * from './useYouTubeSettings';

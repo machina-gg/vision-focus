@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { YouTubeSection } from '../YouTubeSection';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
+import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettings } from '~/types/storage';
 
 /**
@@ -39,10 +40,23 @@ function renderSection(
   onYouTubeChange = vi.fn()
 ) {
   const settings: YouTubeSettings = { ...DEFAULT_YOUTUBE_SETTINGS, ...youtube };
+  const onRequestUnblock = vi.fn<(request: UnblockRequest) => void>();
   render(
-    <YouTubeSection youtube={settings} onYouTubeChange={onYouTubeChange} />
+    <YouTubeSection
+      youtube={settings}
+      onYouTubeChange={onYouTubeChange}
+      onRequestUnblock={onRequestUnblock}
+    />
   );
-  return { settings, onYouTubeChange };
+  return { settings, onYouTubeChange, onRequestUnblock };
+}
+
+/** 確認に回された依頼を 1 件取り出す（呼ばれていなければ失敗させる） */
+function onlyRequest(
+  onRequestUnblock: ReturnType<typeof renderSection>['onRequestUnblock']
+): UnblockRequest {
+  expect(onRequestUnblock).toHaveBeenCalledTimes(1);
+  return onRequestUnblock.mock.calls[0][0];
 }
 
 describe('YouTubeSection', () => {
@@ -73,8 +87,8 @@ describe('YouTubeSection', () => {
       expect(switchNear('youtubeHideHomeFeed')).toBeDisabled();
     });
 
-    it('主トグルを押すと enabled だけが true になって返る', () => {
-      const { settings, onYouTubeChange } = renderSection();
+    it('主トグルを押すと確認なしで enabled だけが true になって返る', () => {
+      const { settings, onYouTubeChange, onRequestUnblock } = renderSection();
 
       fireEvent.click(switchNear('youtubeEnabled'));
 
@@ -82,6 +96,7 @@ describe('YouTubeSection', () => {
         ...settings,
         enabled: true
       });
+      expect(onRequestUnblock).not.toHaveBeenCalled();
     });
   });
 
@@ -110,8 +125,8 @@ describe('YouTubeSection', () => {
       });
     });
 
-    it('ON の個別機能を押すと false になって返る', () => {
-      const { settings, onYouTubeChange } = renderSection({
+    it('ON の個別機能を押すと確認なしで false になって返る', () => {
+      const { settings, onYouTubeChange, onRequestUnblock } = renderSection({
         enabled: true,
         hideComments: true
       });
@@ -127,10 +142,13 @@ describe('YouTubeSection', () => {
         ...settings,
         hideComments: false
       });
+      expect(onRequestUnblock).not.toHaveBeenCalled();
     });
 
-    it('アクセスブロックを押すと blockAccess が true になって返る', () => {
-      const { settings, onYouTubeChange } = renderSection({ enabled: true });
+    it('アクセスブロックを押すと確認なしで blockAccess が true になって返る', () => {
+      const { settings, onYouTubeChange, onRequestUnblock } = renderSection({
+        enabled: true
+      });
 
       fireEvent.click(switchNear('youtubeBlockAccess'));
 
@@ -138,12 +156,100 @@ describe('YouTubeSection', () => {
         ...settings,
         blockAccess: true
       });
+      expect(onRequestUnblock).not.toHaveBeenCalled();
     });
 
     it('アクセスブロックが OFF なら時間制限の設定は出ない', () => {
       renderSection({ enabled: true, blockAccess: false });
 
       expect(screen.queryByText('timeLimitSettings')).not.toBeInTheDocument();
+    });
+  });
+
+  // OFF にするとブロックが弱まる 2 つのトグルは、確認が通るまで設定を変えない
+  describe('ブロックを弱める操作の確認', () => {
+    it('主トグルを OFF にすると確認に回り、まだ設定を変えない', () => {
+      const { onYouTubeChange, onRequestUnblock } = renderSection({
+        enabled: true
+      });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+
+      const request = onlyRequest(onRequestUnblock);
+      expect(request).toMatchObject({
+        domain: 'youtube.com',
+        timeLimit: null,
+        action: 'toggle'
+      });
+      expect(onYouTubeChange).not.toHaveBeenCalled();
+      // 制御コンポーネントなので、確認が通るまで表示も ON のまま
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+    });
+
+    it('主トグルの確認が通ると enabled だけが false になって返る', () => {
+      const { settings, onYouTubeChange, onRequestUnblock } = renderSection({
+        enabled: true,
+        hideShorts: true
+      });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+      onlyRequest(onRequestUnblock).onConfirm();
+
+      expect(onYouTubeChange).toHaveBeenCalledWith({
+        ...settings,
+        enabled: false
+      });
+    });
+
+    it('アクセスブロックを OFF にすると確認に回り、まだ設定を変えない', () => {
+      const { onYouTubeChange, onRequestUnblock } = renderSection({
+        enabled: true,
+        blockAccess: true
+      });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+
+      expect(onlyRequest(onRequestUnblock)).toMatchObject({
+        domain: 'youtube.com',
+        action: 'toggle'
+      });
+      expect(onYouTubeChange).not.toHaveBeenCalled();
+      expect(switchNear('youtubeBlockAccess')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+    });
+
+    it('アクセスブロックの確認が通ると blockAccess だけが false になって返る', () => {
+      const { settings, onYouTubeChange, onRequestUnblock } = renderSection({
+        enabled: true,
+        blockAccess: true
+      });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+      onlyRequest(onRequestUnblock).onConfirm();
+
+      expect(onYouTubeChange).toHaveBeenCalledWith({
+        ...settings,
+        blockAccess: false
+      });
+    });
+
+    // ブロック方式の表示は時間制限の有無で決まるため、時間制限をそのまま渡す
+    it('時間制限があれば依頼にその時間制限が載る', () => {
+      const timeLimit = { type: 'daily' as const, limitSeconds: 30 * 60 };
+      const { onRequestUnblock } = renderSection({
+        enabled: true,
+        blockAccess: true,
+        timeLimit
+      });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+
+      expect(onlyRequest(onRequestUnblock).timeLimit).toEqual(timeLimit);
     });
   });
 

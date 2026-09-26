@@ -555,6 +555,37 @@ function useYouTubeSettings(props: {
 
 ---
 
+### useUnblockGuard
+
+ブロックを弱める操作を、確認を通してから実行するフック。
+
+```typescript
+function useUnblockGuard(isPasswordProtected: boolean): {
+  pending: PendingUnblock | null;
+  isPasswordModalOpen: boolean;
+  isConfirmModalOpen: boolean;
+  requestUnblock: (request: UnblockRequest) => void;
+  confirm: () => void;
+  close: () => void;
+};
+
+interface UnblockRequest {
+  domain: string;
+  timeLimit: TimeLimit | null | undefined;
+  action: 'toggle' | 'delete';
+  onConfirm: () => void;
+}
+```
+
+**機能**
+
+- パスワード保護中は `PasswordModal`、それ以外は `UnblockConfirmModal`（長押し確認）へ振り分ける
+- 確認が通ったときだけ `onConfirm` を呼ぶ。キャンセルすると何も実行しない
+- ブロック方式の表示は `timeLimit` の有無で「1 日の上限 / 常時ブロック」を出し分ける
+- 対象の操作: ブロックリストの無効化・削除、YouTube の「有効化」「アクセスをブロック」の OFF（`BlocklistTab` が持ち、`YouTubeSection` には `onRequestUnblock` として渡す）
+
+---
+
 ## 5. 型定義
 
 ### BlockItem

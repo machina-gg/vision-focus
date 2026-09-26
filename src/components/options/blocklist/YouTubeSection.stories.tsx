@@ -29,7 +29,8 @@ type Story = StoryObj<typeof meta>;
 export const Disabled: Story = {
   args: {
     youtube: baseYouTube,
-    onYouTubeChange: () => {}
+    onYouTubeChange: () => {},
+    onRequestUnblock: () => {}
   }
 };
 
@@ -42,7 +43,8 @@ export const EnabledWithFeatures: Story = {
       hideShorts: true,
       hideRecommendations: true
     },
-    onYouTubeChange: () => {}
+    onYouTubeChange: () => {},
+    onRequestUnblock: () => {}
   }
 };
 
@@ -57,6 +59,7 @@ export const EnabledWithBlockAccess: Story = {
       hideComments: true,
       timeLimit: { type: 'daily', limitSeconds: 1800 }
     },
-    onYouTubeChange: () => {}
+    onYouTubeChange: () => {},
+    onRequestUnblock: () => {}
   }
 };
