@@ -256,9 +256,9 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - 拡張機能側は `declarativeNetRequest` の `||domain` でスキーム非依存に判定するため、実サイトと同じ経路を通る
 - HTTPS で待ち受けるのは、`youtube.com` が HSTS プリロード済みで http:// が内部昇格されるため。証明書は実行時に自己署名で生成する（リポジトリには含めない）
 - storage の書き込みは Service Worker 経由（`tests/e2e/helpers/sw.ts`）で行う。options を開いて書くとアプリの hydration が state を書き戻して上書きしたり、UI が時間制限値をプリセットに丸めたりするため、意図した状態にならない
-- 時間制限の超過判定は `analytics` を見るが、analytics の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` / `time-limit-reset` アラーム）を即時発火させて待つ
+- 時間制限の超過判定は `activity` の今日の行（サイトキーごとの `seconds`）を見るが、activity の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` アラーム）を即時発火させて待つ。使用量の種も `makeActivity()` で置く（日付はローカル日付。日付が変わった状態は前日の行として置く）
 - ポップアップの今日のサマリー（POP-004）・新しいタブのミニ統計（NEW-004）・ブロック情報とブロック中のサイト一覧の回数（NEW-009 / NEW-010）は `activity` から導出される。前 2 つは今日の行だけ、後 2 つは保持期間全体を数える。種は `makeActivity()` で置き、**母集団は追跡中のサイト**なので、対象のサイトを同じテストでブロックリストか解除履歴にも入れる（入れないと行が読み飛ばされて 0 になる）
-- fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` / `makeTimeLimitUsage()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
+- fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
 - storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
 - 解除後の時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に `status: 'unblocked'` で載っているドメインだけ**。履歴に無い／再ブロック中のドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
 - ⚠ `analytics.siteTime` を書くのは `src/background/tracker.ts` だけで、`tracker-heartbeat` は書かない。`tracker.ts` はウィンドウが前面のときだけ記録するが、xvfb 上の並列 Chromium でも各 worker のブラウザは 1 ウィンドウであり、それが前面と判定されることは実測済み（machina-gg/vision-focus#463）。`siteTime` を合否に使うテストは、前提として `getWindowFocusStateViaSW`（`tests/e2e/helpers/sw.ts`）で前面であることを確かめてから poll する（AN-004 がこの形）。heartbeat が書く `unblockHistory.sites[domain].timeAfterUnblock` は前面かどうかに依存しない
@@ -558,7 +558,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 **期待結果**
 
-- 00:00:00 に Time Limit がリセットされる
+- 00:00:00（端末のローカル時刻）を過ぎると使用量は 0 から数え直しになる（使用量は今日の行を読むだけで、リセット処理は無い）
 - リダイレクトされない
 
 ---
@@ -580,6 +580,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 - YouTube のみリダイレクトされる（Daily 60秒 超過）
 - Twitter はリダイレクトされない（Daily 120秒 未満）
+- 使用量はサイト単位で数える（`www.` 付き・`m.` 付きのホストでの滞在も同じサイトの使用量に入る）
 
 ---
 
@@ -598,7 +599,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 - リダイレクトされない（アクセスブロックが有効なときだけ newtab へ飛ばす）
 - 注入される CSS は設定で有効にした非表示のルールだけで、上限超過を理由に足されるルールは無い
-- 時間制限の計測も進まない（アクセスブロックが有効なときだけ時間制限を使う。#407）
+- 滞在は `youtube.com` の今日の行に記録されるが、時間制限の判定と通知には使わない（アクセスブロックが有効なときだけ時間制限を使う）
 
 ---
 
@@ -724,6 +725,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - スケジュールのプリセットが適用される
 - Time Limit 超過後にリダイレクトされる
 - 両方の機能が独立して動作する
+- スケジュール外では Time Limit を超過していてもリダイレクトされない（スケジュールが 1 件以上あれば、時間制限の無い項目も含めてすべての項目はスケジュール内だけブロックする）
 
 ---
 

@@ -153,6 +153,7 @@ DashboardDisplaySettings を継承し、以下を追加：
 - **記録対象は追跡中のサイトだけ**。追跡中のサイトの集合は `src/lib/siteService.ts` の `getTrackedSiteKeys` が作る（解除履歴のキー・ブロックリストのドメイン・YouTube 機能が有効なら `youtube.com`）
 - **書き手は `src/lib/activityService.ts` だけ**（background から呼ぶ）。加算・削除のすべてを 1 本の待ち行列で直列化する
 - 保持期間を超えた日の行は `daily-cleanup` アラームが消す（保持日数は下記「機能上限」）
+- 時間制限の今日の使用量は、そのサイトの今日の行の `seconds`（`src/lib/activityStats.ts` の `secondsOnDay`）。日が変われば別の行を読むので、使用量のリセット処理は持たない（判定の流れ: [BLOCK_STATE_MACHINE.md](./BLOCK_STATE_MACHINE.md)）
 
 ### DailySiteActivity（1 日・1 サイトぶんの事実）
 

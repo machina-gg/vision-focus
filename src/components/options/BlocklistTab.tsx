@@ -10,12 +10,12 @@ import { getMessage } from '~/lib/i18n';
 import { YouTubeSection, DomainListItem } from '~/components/options/blocklist';
 import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
-import type {
-  SiteBlockCount,
-  TimeLimit,
-  TimeLimitUsage,
-  YouTubeSettings
-} from '~/types/storage';
+import { blockCountsByDomain } from '~/hooks/useActivityStats';
+import { secondsOnDay } from '~/lib/activityStats';
+import { normalizeSiteKey } from '~/lib/siteKey';
+import { toDateKey } from '~/lib/time';
+import type { TimeLimit, YouTubeSettings } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
 
 interface BlocklistTabProps {
   newDomain: string;
@@ -25,8 +25,8 @@ interface BlocklistTabProps {
   onRemoveDomain: (id: string) => void;
   onToggleDomain: (id: string, enabled: boolean) => void;
   onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
-  siteBlockCounts?: Record<string, SiteBlockCount>;
-  timeLimitUsage?: Record<string, TimeLimitUsage>;
+  /** 事実の表。ブロック回数と時間制限の今日の使用量をここから導出する */
+  activity: ActivityLog;
   youtube: YouTubeSettings;
   onYouTubeChange: (youtube: YouTubeSettings) => void;
 }
@@ -39,8 +39,7 @@ export function BlocklistTab({
   onRemoveDomain,
   onToggleDomain,
   onUpdateTimeLimit,
-  siteBlockCounts = {},
-  timeLimitUsage = {},
+  activity,
   youtube,
   onYouTubeChange
 }: BlocklistTabProps) {
@@ -51,6 +50,13 @@ export function BlocklistTab({
   );
   const unblockGuard = useUnblockGuard(isPasswordProtected);
   const { requestUnblock } = unblockGuard;
+  const now = new Date();
+  const today = toDateKey(now);
+  const blockCounts = blockCountsByDomain(
+    activity,
+    settings?.blockList ?? [],
+    now
+  );
 
   const handleRemoveClick = useCallback(
     (id: string) => {
@@ -134,29 +140,22 @@ export function BlocklistTab({
           </p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {settings.blockList.map((item) => {
-              const domainKey = item.isWildcard
-                ? item.domain.replace('*.', '')
-                : item.domain;
-              const blockCount =
-                siteBlockCounts[domainKey]?.count ??
-                siteBlockCounts[item.domain]?.count ??
-                0;
-              const usage =
-                timeLimitUsage[domainKey] ?? timeLimitUsage[item.domain];
-
-              return (
-                <DomainListItem
-                  key={item.id}
-                  item={item}
-                  blockCount={blockCount}
-                  usage={usage}
-                  onToggle={handleToggleClick}
-                  onRemove={handleRemoveClick}
-                  onUpdateTimeLimit={onUpdateTimeLimit}
-                />
-              );
-            })}
+            {settings.blockList.map((item) => (
+              <DomainListItem
+                key={item.id}
+                item={item}
+                blockCount={blockCounts[item.domain] ?? 0}
+                // 判定と同じサイトキーで引く（ワイルドカード・www. 付きでも同じ行になる）
+                usedSeconds={secondsOnDay(
+                  activity,
+                  normalizeSiteKey(item.domain),
+                  today
+                )}
+                onToggle={handleToggleClick}
+                onRemove={handleRemoveClick}
+                onUpdateTimeLimit={onUpdateTimeLimit}
+              />
+            ))}
           </div>
         )}
       </Card>

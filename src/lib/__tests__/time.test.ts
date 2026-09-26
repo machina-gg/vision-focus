@@ -11,7 +11,6 @@ import {
   isValidTimeString,
   parseTimeToMinutes,
   normalizeEndTime,
-  needsDailyReset,
   isWithinSchedule,
   toDateKey
 } from '~/lib/time';
@@ -286,20 +285,6 @@ describe('normalizeEndTime', () => {
     expect(normalizeEndTime('12:30')).toBe('12:30');
     expect(normalizeEndTime('23:59')).toBe('23:59');
     expect(normalizeEndTime('24:00')).toBe('24:00');
-  });
-});
-
-describe('needsDailyReset', () => {
-  it('returns true when dates differ', () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const lastReset = getDateKey(yesterday);
-    expect(needsDailyReset(lastReset)).toBe(true);
-  });
-
-  it('returns false when dates match', () => {
-    const today = getTodayKey();
-    expect(needsDailyReset(today)).toBe(false);
   });
 });
 

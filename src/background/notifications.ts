@@ -1,20 +1,18 @@
 import { getSettings } from '~/lib/storage';
-import { findEnabledBlockItemForDomain } from '~/lib/blockService';
-import { getRemainingTime } from '~/lib/timeLimitService';
-import {
-  getYouTubeRemainingTime,
-  isYouTubeTimeLimitActive
-} from '~/lib/youtubeBlockService';
+import type { SiteBlockStatus } from '~/lib/blockService';
+import { toDateKey } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 
-// In-memory state to track which domains have been notified
-// Key: domain, Value: reset key (YYYY-MM-DD)
+const SECONDS_PER_MINUTE = 60;
+
+// 通知済みのサイト。値は通知した日（ローカル日付）
 const notifiedDomains = new Map<string, string>();
 
-// Get the reset key for the current period (time limits reset daily)
+// 時間制限の使用量はローカル日付の行で数えるので、通知済みの区切りも同じ日付にする
+// （ずれると日が変わっても通知が出ない、または同じ日に 2 回出る）
 function getResetKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return toDateKey(new Date());
 }
 
 // Check if a domain has already been notified in the current period
@@ -90,90 +88,31 @@ async function showTimeLimitNotification(
   });
 }
 
-// Check and potentially send notification for a domain
-// Uses centralized BlockService for consistent state checking
+/**
+ * 時間制限の残りが通知の閾値を下回ったら 1 日 1 回通知する。
+ * 残り時間は判定（`evaluateBlock`）の値を使うので、一時停止中・スケジュール外・無効な項目
+ * （残り時間を持たない）は通知しない
+ */
 export async function checkTimeLimitNotification(
-  domain: string
+  status: SiteBlockStatus
 ): Promise<void> {
+  const { site, rule, state } = status;
+  const remainingSeconds = state.remainingSeconds;
+  if (!rule.timeLimit || remainingSeconds === undefined) return;
+  if (remainingSeconds <= 0) return;
+
   const settings = await getSettings();
+  if (!settings.notifications?.timeLimitEnabled) return;
+  if (hasBeenNotified(site)) return;
 
-  // Check if notifications are enabled
-  if (!settings.notifications?.timeLimitEnabled) {
-    return;
-  }
+  const remainingMinutes = Math.ceil(remainingSeconds / SECONDS_PER_MINUTE);
+  if (remainingMinutes > settings.notifications.timeLimitMinutes) return;
 
-  // Use centralized service to find enabled block item
-  const blockItem = await findEnabledBlockItemForDomain(domain);
-
-  // Only process domains with time limits
-  if (!blockItem || !blockItem.timeLimit) {
-    return;
-  }
-
-  const { limitSeconds } = blockItem.timeLimit;
-
-  // Check if already notified in this period
-  if (hasBeenNotified(domain)) {
-    return;
-  }
-
-  // Use centralized service for remaining time
-  const remainingSeconds = await getRemainingTime(domain, blockItem);
-
-  // If no remaining time info or already exceeded, skip
-  if (remainingSeconds === null || remainingSeconds <= 0) {
-    return;
-  }
-
-  const remainingMinutes = Math.ceil(remainingSeconds / 60);
-  const notifyAtMinutes = settings.notifications.timeLimitMinutes;
-
-  // Check if we should notify
-  if (remainingMinutes <= notifyAtMinutes) {
-    const totalMinutes = Math.round(limitSeconds / 60);
-    await showTimeLimitNotification(domain, remainingMinutes, totalMinutes);
-    markAsNotified(domain);
-  }
-}
-
-// Check and potentially send notification for YouTube time limit
-export async function checkYouTubeTimeLimitNotification(): Promise<void> {
-  const settings = await getSettings();
-
-  if (!settings.notifications?.timeLimitEnabled) {
-    return;
-  }
-
-  // アクセスブロックが無効なら時間制限そのものを使わないので通知もしない（#407）
-  const youtube = settings.youtube;
-  if (!isYouTubeTimeLimitActive(youtube)) {
-    return;
-  }
-
-  const { limitSeconds } = youtube.timeLimit;
-
-  if (hasBeenNotified('youtube.com')) {
-    return;
-  }
-
-  const remainingSeconds = await getYouTubeRemainingTime();
-
-  if (remainingSeconds === null || remainingSeconds <= 0) {
-    return;
-  }
-
-  const remainingMinutes = Math.ceil(remainingSeconds / 60);
-  const notifyAtMinutes = settings.notifications.timeLimitMinutes;
-
-  if (remainingMinutes <= notifyAtMinutes) {
-    const totalMinutes = Math.round(limitSeconds / 60);
-    await showTimeLimitNotification(
-      'youtube.com',
-      remainingMinutes,
-      totalMinutes
-    );
-    markAsNotified('youtube.com');
-  }
+  const totalMinutes = Math.round(
+    rule.timeLimit.limitSeconds / SECONDS_PER_MINUTE
+  );
+  await showTimeLimitNotification(site, remainingMinutes, totalMinutes);
+  markAsNotified(site);
 }
 
 // Reset notification state (useful for testing or when user changes settings)

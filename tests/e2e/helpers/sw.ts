@@ -73,8 +73,9 @@ export async function getBlockRuleFilters(
  * ブロックルールの再計算を促す
  *
  * 実装は 1 分間隔の `check-schedule` アラームで `updateBlockRules()` を呼ぶ。
- * 時間制限の超過判定は analytics を見るが、analytics の変更は再計算の
+ * 時間制限の超過判定は activity（今日の行）を見るが、activity の変更は再計算の
  * トリガーにならないため、テストからは同じアラームを即時発火させて待つ。
+ * 日付が変わって今日の行が空になったことも、同じ経路でルールに反映される。
  */
 export async function triggerBlockRuleRecompute(
   context: BrowserContext
@@ -120,21 +121,6 @@ export async function waitForNoBlockRules(
 
   throw new Error(
     `ブロックルールが外れない: ${domains.join(', ')} を待っていた`
-  );
-}
-
-/**
- * 期限切れの Time Limit 使用実績のリセットを促す
- *
- * 実装は 1 分間隔の `time-limit-reset` アラームで `resetExpiredUsage()` を
- * 呼び、`lastDailyReset` が現在の日付と違うドメインの使用秒数を 0 に戻す。
- */
-export async function triggerTimeLimitReset(
-  context: BrowserContext
-): Promise<void> {
-  const sw = await getServiceWorker(context);
-  await sw.evaluate(() =>
-    chrome.alarms.create('time-limit-reset', { when: Date.now() + 100 })
   );
 }
 

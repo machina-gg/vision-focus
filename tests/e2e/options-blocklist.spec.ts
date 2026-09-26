@@ -4,9 +4,8 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
-  makeAnalytics,
+  makeActivity,
   makeSettings,
-  makeSiteBlockCounts,
   makeYouTubeSettings,
   TEST_DATA,
   SELECTORS,
@@ -318,7 +317,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     context,
     extensionId
   }) => {
-    // ブロックリストと Analytics データをセットアップ
+    // ブロックリストと事実の表（activity）をセットアップ
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
@@ -326,13 +325,14 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       withAnalyticsOptIn: true
     });
 
-    // 直近のブロック時刻のキーは lastBlocked（lastBlockedAt は実装に無い）
+    // ブロック回数は activity の blocks を保持期間全体で合計した値（今日 8 回 + 前日 4 回）
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([['example.com', 12]])
-      })
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 8 }],
+        ['example.com', { blocks: 4 }, 1]
+      ])
     );
     await setupPage.close();
 

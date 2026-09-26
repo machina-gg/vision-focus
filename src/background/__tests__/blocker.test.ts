@@ -7,8 +7,7 @@ vi.mock('~/lib/storage', () => ({
 
 vi.mock('~/lib/blockService', () => ({
   getBlockState: vi.fn(),
-  getActiveBlockedDomains: vi.fn(),
-  findBlockItemForDomain: vi.fn()
+  getActiveBlockedDomains: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({

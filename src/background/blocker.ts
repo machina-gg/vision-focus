@@ -12,9 +12,6 @@ import { recordBlockedDomain } from '~/lib/blockRecordService';
 // Re-export types for backwards compatibility
 export type { BlockReason };
 
-// Re-export functions from blockService for backwards compatibility
-export { findBlockItemForDomain } from '~/lib/blockService';
-
 // Update declarativeNetRequest rules based on current settings
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings();

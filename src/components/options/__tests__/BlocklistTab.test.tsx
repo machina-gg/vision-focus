@@ -9,6 +9,8 @@ import {
   DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 } from '~/types/storage';
 import type { AppSettings, BlockItem } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
+import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -93,6 +95,7 @@ function renderTab(props: Partial<TabProps> = {}) {
       newDomain=""
       blockError=""
       youtube={DEFAULT_SETTINGS.youtube}
+      activity={{}}
       {...handlers}
       {...props}
     />
@@ -154,47 +157,97 @@ describe('BlocklistTab', () => {
     });
   });
 
-  describe('ブロック回数の対応づけ', () => {
-    it('ドメイン名が一致する回数をその項目に表示する', () => {
+  describe('事実の表（activity）からの導出', () => {
+    /** 日付 × サイトの行を作る（既定は今日のローカル日付） */
+    function logOf(
+      rows: Record<string, { seconds?: number; blocks?: number }>,
+      date: Date = new Date()
+    ): ActivityLog {
+      return {
+        [toDateKey(date)]: Object.fromEntries(
+          Object.entries(rows).map(([site, row]) => [
+            site,
+            { seconds: row.seconds ?? 0, blocks: row.blocks ?? 0, unblocks: 0 }
+          ])
+        )
+      };
+    }
+
+    it('ブロック回数は保持期間全体の合計をその項目に表示する', () => {
       setSettings({ blockList: [itemOf({ domain: 'example.com' })] });
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
 
       renderTab({
-        siteBlockCounts: {
-          'example.com': { domain: 'example.com', count: 4, lastBlocked: '' }
+        activity: {
+          ...logOf({ 'example.com': { blocks: 3 } }),
+          ...logOf({ 'example.com': { blocks: 1 } }, lastWeek)
         }
       });
 
       expect(screen.getByText('blockedTimesShort(4)')).toBeInTheDocument();
     });
 
-    it('ワイルドカード指定はワイルドカードを外した名前で照合する', () => {
+    it('ワイルドカード・www. 付きの項目はサイトキーで照合する', () => {
       setSettings({
-        blockList: [itemOf({ domain: '*.example.com', isWildcard: true })]
+        blockList: [
+          itemOf({ domain: '*.example.com', isWildcard: true }),
+          itemOf({ id: 'item-2', domain: 'www.other.example' })
+        ]
       });
 
       renderTab({
-        siteBlockCounts: {
-          'example.com': { domain: 'example.com', count: 7, lastBlocked: '' }
-        }
+        activity: logOf({
+          'example.com': { blocks: 7 },
+          'other.example': { blocks: 2 }
+        })
       });
 
       expect(screen.getByText('blockedTimesShort(7)')).toBeInTheDocument();
+      expect(screen.getByText('blockedTimesShort(2)')).toBeInTheDocument();
     });
 
     it('照合できる回数が無ければバッジを表示しない', () => {
       setSettings({ blockList: [itemOf({ domain: 'example.com' })] });
 
-      renderTab({
-        siteBlockCounts: {
-          'other.example': {
-            domain: 'other.example',
-            count: 9,
-            lastBlocked: ''
-          }
-        }
-      });
+      renderTab({ activity: logOf({ 'other.example': { blocks: 9 } }) });
 
       expect(screen.queryByText(/^blockedTimesShort/)).not.toBeInTheDocument();
+    });
+
+    it('時間制限の残り時間は今日の表示秒数から出す', () => {
+      setSettings({
+        blockList: [
+          itemOf({
+            domain: 'www.example.com',
+            timeLimit: { type: 'daily', limitSeconds: 60 }
+          })
+        ]
+      });
+
+      renderTab({ activity: logOf({ 'example.com': { seconds: 60 } }) });
+
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-state',
+        'exceeded'
+      );
+    });
+
+    it('前日の表示秒数は残り時間に数えない', () => {
+      setSettings({
+        blockList: [itemOf({ timeLimit: { type: 'daily', limitSeconds: 60 } })]
+      });
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      renderTab({
+        activity: logOf({ 'example.com': { seconds: 600 } }, yesterday)
+      });
+
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-state',
+        'remaining'
+      );
     });
   });
 

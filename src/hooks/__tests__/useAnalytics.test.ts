@@ -126,8 +126,7 @@ describe('useAnalytics', () => {
         siteTime: {},
         siteCategories: {},
         siteBlockCounts: {},
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       });
     });
 

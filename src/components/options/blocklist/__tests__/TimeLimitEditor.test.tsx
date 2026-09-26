@@ -4,7 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { TimeLimitEditor } from '../TimeLimitEditor';
-import type { BlockItem, TimeLimit, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem, TimeLimit } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -30,7 +30,7 @@ const baseItem: BlockItem = {
 function renderEditor(options: {
   timeLimit?: TimeLimit | null;
   enabled?: boolean;
-  usage?: TimeLimitUsage;
+  usedSeconds?: number;
   onUpdate?: (timeLimit: TimeLimit | null) => void;
 }) {
   const onUpdate = options.onUpdate ?? vi.fn();
@@ -42,7 +42,7 @@ function renderEditor(options: {
         timeLimit: options.timeLimit ?? null
       }}
       onUpdate={onUpdate}
-      usage={options.usage}
+      usedSeconds={options.usedSeconds ?? 0}
     />
   );
   return onUpdate;
@@ -52,12 +52,6 @@ function renderEditor(options: {
 function expand() {
   fireEvent.click(screen.getByRole('button', { name: /alwaysBlocked|limit/ }));
 }
-
-const usageOf = (dailyUsedSeconds: number): TimeLimitUsage => ({
-  domain: 'example.com',
-  dailyUsedSeconds,
-  lastDailyReset: '2026-01-01'
-});
 
 describe('TimeLimitEditor', () => {
   describe('折りたたみ時の表示', () => {
@@ -196,10 +190,10 @@ describe('TimeLimitEditor', () => {
   });
 
   describe('残り時間バッジ', () => {
-    it('有効・時間制限あり・使用量ありのとき残り時間を表示する', () => {
+    it('有効・時間制限ありのとき残り時間を表示する', () => {
       renderEditor({
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usage: usageOf(600)
+        usedSeconds: 600
       });
 
       expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
@@ -211,7 +205,7 @@ describe('TimeLimitEditor', () => {
     it('使用量が制限を超えていたら超過として表示する', () => {
       renderEditor({
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usage: usageOf(2400)
+        usedSeconds: 2400
       });
 
       expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
@@ -220,24 +214,30 @@ describe('TimeLimitEditor', () => {
       );
     });
 
-    it('使用量が未取得ならバッジを表示しない', () => {
-      renderEditor({ timeLimit: { type: 'daily', limitSeconds: 1800 } });
+    it('今日まだ使っていなければ上限までの残り時間を表示する', () => {
+      renderEditor({
+        timeLimit: { type: 'daily', limitSeconds: 1800 },
+        usedSeconds: 0
+      });
 
-      expect(screen.queryByTestId('time-limit-badge')).not.toBeInTheDocument();
+      expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
+        'data-state',
+        'remaining'
+      );
     });
 
     it('ブロックが無効ならバッジを表示しない', () => {
       renderEditor({
         enabled: false,
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usage: usageOf(600)
+        usedSeconds: 600
       });
 
       expect(screen.queryByTestId('time-limit-badge')).not.toBeInTheDocument();
     });
 
     it('時間制限が未設定ならバッジを表示しない', () => {
-      renderEditor({ timeLimit: null, usage: usageOf(600) });
+      renderEditor({ timeLimit: null, usedSeconds: 600 });
 
       expect(screen.queryByTestId('time-limit-badge')).not.toBeInTheDocument();
     });

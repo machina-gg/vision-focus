@@ -19,9 +19,7 @@ const timeLimitInfo = {
   hasTimeLimit: true,
   remainingSeconds: 300,
   limitType: 'daily' as const,
-  limitSeconds: 1800,
-  usedSeconds: 1500,
-  isExceeded: false
+  limitSeconds: 1800
 };
 
 beforeEach(() => {

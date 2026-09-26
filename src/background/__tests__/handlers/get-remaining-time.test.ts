@@ -2,12 +2,13 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-vi.mock('../../time-limit', () => ({
-  getTimeLimitInfoForUrl: vi.fn()
+vi.mock('~/lib/blockService', () => ({
+  getSiteBlockStatus: vi.fn()
 }));
 
-import { getTimeLimitInfoForUrl } from '../../time-limit';
+import { getSiteBlockStatus } from '~/lib/blockService';
 import { getRemainingTimeHandler as handler } from '../../handlers/get-remaining-time';
+import type { SiteBlockStatus } from '~/lib/blockService';
 
 interface Response {
   success: boolean;
@@ -15,19 +16,24 @@ interface Response {
   data?: unknown;
 }
 
-const info = {
-  hasTimeLimit: true,
-  remainingSeconds: 300,
-  limitSeconds: 1800,
-  limitType: 'daily' as const,
-  usedSeconds: 1500,
-  isExceeded: false
-};
+const LIMIT_SECONDS = 1800;
+
+function status(overrides: Partial<SiteBlockStatus> = {}): SiteBlockStatus {
+  return {
+    site: 'example.com',
+    rule: {
+      enabled: true,
+      timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
+    },
+    state: { blocked: false, reason: null, remainingSeconds: 300 },
+    ...overrides
+  };
+}
 
 describe('get-remaining-time ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getTimeLimitInfoForUrl).mockResolvedValue(info);
+    vi.mocked(getSiteBlockStatus).mockResolvedValue(status());
   });
 
   describe('入力検証', () => {
@@ -40,36 +46,78 @@ describe('get-remaining-time ハンドラ', () => {
       const result = await invoke<Response>(handler, body);
 
       expect(result).toEqual({ success: false, error: 'Invalid URL' });
-      expect(getTimeLimitInfoForUrl).not.toHaveBeenCalled();
+      expect(getSiteBlockStatus).not.toHaveBeenCalled();
     });
   });
 
-  it('URL の時間制限情報を返す', async () => {
+  it('URL のホスト名で判定し、判定の残り時間を返す', async () => {
     const result = await invoke<Response>(handler, {
-      url: 'https://example.com/page'
+      url: 'https://www.example.com/page'
     });
 
-    expect(result).toEqual({ success: true, data: info });
-    expect(getTimeLimitInfoForUrl).toHaveBeenCalledWith(
-      'https://example.com/page'
-    );
+    expect(getSiteBlockStatus).toHaveBeenCalledWith('www.example.com');
+    expect(result).toEqual({
+      success: true,
+      data: {
+        hasTimeLimit: true,
+        remainingSeconds: 300,
+        limitType: 'daily',
+        limitSeconds: LIMIT_SECONDS
+      }
+    });
   });
 
-  it('時間制限が設定されていない URL でも成功として返す', async () => {
-    vi.mocked(getTimeLimitInfoForUrl).mockResolvedValue({
-      hasTimeLimit: false,
-      remainingSeconds: null,
-      limitSeconds: null,
-      limitType: null,
-      usedSeconds: null,
-      isExceeded: false
-    });
+  it('判定が残り時間を持たない（スケジュール外・一時停止中）なら remainingSeconds は null', async () => {
+    vi.mocked(getSiteBlockStatus).mockResolvedValue(
+      status({ state: { blocked: false, reason: null } })
+    );
 
     const result = await invoke<Response>(handler, {
       url: 'https://example.com'
     });
 
-    expect(result?.success).toBe(true);
-    expect(result?.data).toMatchObject({ hasTimeLimit: false });
+    expect(result?.data).toMatchObject({
+      hasTimeLimit: true,
+      remainingSeconds: null
+    });
+  });
+
+  it('時間制限が設定されていないサイトでも成功として返す', async () => {
+    vi.mocked(getSiteBlockStatus).mockResolvedValue(
+      status({
+        rule: { enabled: true, timeLimit: null },
+        state: { blocked: true, reason: 'always_blocked' }
+      })
+    );
+
+    const result = await invoke<Response>(handler, {
+      url: 'https://example.com'
+    });
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        hasTimeLimit: false,
+        remainingSeconds: null,
+        limitType: null,
+        limitSeconds: null
+      }
+    });
+  });
+
+  it.each([
+    ['ブロック設定の無いサイト', null],
+    [
+      'ブロックが無効なサイト',
+      status({ rule: { enabled: false, timeLimit: null } })
+    ]
+  ])('%s なら null を返す', async (_label, value) => {
+    vi.mocked(getSiteBlockStatus).mockResolvedValue(value);
+
+    const result = await invoke<Response>(handler, {
+      url: 'https://example.com'
+    });
+
+    expect(result).toEqual({ success: true, data: null });
   });
 });

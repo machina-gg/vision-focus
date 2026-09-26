@@ -61,8 +61,7 @@ const mockAnalytics: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const emptyAnalytics: AnalyticsData = {
@@ -70,8 +69,7 @@ const emptyAnalytics: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const meta = {

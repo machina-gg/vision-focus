@@ -5,7 +5,7 @@ import { Select, Button } from '~/components/ui';
 import { TimeLimitBadge } from '~/components/features';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
-import type { BlockItem, TimeLimit, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem, TimeLimit } from '~/types/storage';
 
 const SAVED_FEEDBACK_DURATION_MS = 2000;
 
@@ -14,13 +14,14 @@ type LimitTypeOption = 'always' | 'daily';
 interface TimeLimitEditorProps {
   item: BlockItem;
   onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
-  usage?: TimeLimitUsage;
+  /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
+  usedSeconds: number;
 }
 
 export function TimeLimitEditor({
   item,
   onUpdate,
-  usage
+  usedSeconds
 }: TimeLimitEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -145,11 +146,9 @@ export function TimeLimitEditor({
     }));
   };
 
-  // Calculate remaining time for display
-  const remainingSeconds =
-    item.timeLimit && usage
-      ? item.timeLimit.limitSeconds - usage.dailyUsedSeconds
-      : null;
+  const remainingSeconds = item.timeLimit
+    ? item.timeLimit.limitSeconds - usedSeconds
+    : null;
 
   return (
     <div className="mt-2">

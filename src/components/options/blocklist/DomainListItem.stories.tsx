@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DomainListItem } from './DomainListItem';
-import type { BlockItem, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 
 const baseItem: BlockItem = {
   id: '1',
@@ -29,7 +29,7 @@ export const Basic: Story = {
   args: {
     item: baseItem,
     blockCount: 12,
-    usage: undefined,
+    usedSeconds: 0,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}
@@ -41,7 +41,7 @@ export const WithWildcard: Story = {
   args: {
     item: { ...baseItem, id: '2', domain: 'example.com', isWildcard: true },
     blockCount: 0,
-    usage: undefined,
+    usedSeconds: 0,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}
@@ -58,11 +58,7 @@ export const WithTimeLimit: Story = {
       timeLimit: { type: 'daily', limitSeconds: 1800 }
     },
     blockCount: 5,
-    usage: {
-      domain: 'youtube.com',
-      dailyUsedSeconds: 900,
-      lastDailyReset: '2026-02-15'
-    } satisfies TimeLimitUsage,
+    usedSeconds: 900,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}
@@ -74,7 +70,7 @@ export const Disabled: Story = {
   args: {
     item: { ...baseItem, id: '4', domain: 'reddit.com', enabled: false },
     blockCount: 0,
-    usage: undefined,
+    usedSeconds: 0,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}

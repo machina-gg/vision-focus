@@ -121,11 +121,6 @@ export function normalizeEndTime(endTime: string): string {
   return endTime === '00:00' ? '24:00' : endTime;
 }
 
-// Check if daily reset is needed
-export function needsDailyReset(lastDailyReset: string): boolean {
-  return lastDailyReset !== getTodayKey();
-}
-
 // Check if current time is within schedule
 export function isWithinSchedule(
   startTime: string,

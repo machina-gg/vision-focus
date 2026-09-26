@@ -30,8 +30,7 @@ const mockAnalytics: AnalyticsData = {
       count: 3,
       lastUnblocked: '2026-02-14T08:00:00Z'
     }
-  },
-  timeLimitUsage: {}
+  }
 };
 
 const emptyAnalytics: AnalyticsData = {
@@ -39,8 +38,7 @@ const emptyAnalytics: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const meta = {

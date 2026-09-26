@@ -343,8 +343,7 @@ describe('export utilities', () => {
             '2024-01-15T10:00:00Z'
           )
         },
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       };
       const unblockHistory: UnblockHistory = { sites: {} };
 
@@ -368,8 +367,7 @@ describe('export utilities', () => {
             '2024-01-15T10:00:00Z'
           )
         },
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       };
       const unblockHistory: UnblockHistory = {
         sites: {
@@ -397,8 +395,7 @@ describe('export utilities', () => {
         siteTime: {},
         siteCategories: {},
         siteBlockCounts: {},
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       };
       const unblockHistory: UnblockHistory = { sites: {} };
 
@@ -416,8 +413,7 @@ describe('export utilities', () => {
         siteTime: {},
         siteCategories: {},
         siteBlockCounts: {},
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       };
       const unblockHistory: UnblockHistory = { sites: {} };
 

@@ -1,22 +1,11 @@
 import type { MessageHandler } from '~/lib/messaging';
 import { extractDomain, matchesDomain } from '~/lib/domain';
-import {
-  getSettings,
-  getUnblockHistory,
-  setUnblockHistory
-} from '~/lib/storage';
+import { getUnblockHistory, setUnblockHistory } from '~/lib/storage';
 import type { BlockItem, UnblockHistory } from '~/types/storage';
 import { TRACKER_CONFIG } from '~/constants/limits';
 import { STALE_ENTRY_TIMEOUT_MS } from '~/constants/intervals';
-import { recordTimeLimitUsage, findBlockItemForDomain } from '../time-limit';
 import { checkTimeLimitNotification } from '../notifications';
-import {
-  recordYouTubeTimeLimitUsage,
-  hasYouTubeExceededTimeLimit
-} from '~/lib/youtubeBlockService';
-import { checkYouTubeTimeLimitNotification } from '../notifications';
-import { hasExceededTimeLimit } from '~/lib/timeLimitService';
-import { getYouTubeBlockItem } from '~/lib/blockService';
+import { getSiteBlockStatuses } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
 import { recordHostActivity } from '~/lib/activityService';
@@ -52,8 +41,7 @@ function ensureRecordingTimer() {
         page.isActive &&
         timeSinceHeartbeat <= TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS
       ) {
-        // Record 5 seconds of time for this page
-        await recordTime(page.domain, seconds);
+        await recordTimeAfterUnblock(page.domain, seconds);
         visibleHosts.push(page.domain);
       } else if (timeSinceHeartbeat > TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS) {
         // Page is stale, mark as inactive
@@ -83,6 +71,9 @@ function ensureRecordingTimer() {
       seconds,
       at
     }));
+
+    // 時間制限の使用量は上で書いた今日の行なので、記録の後に判定する
+    await enforceTimeLimits(visibleHosts);
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 }
 
@@ -136,50 +127,37 @@ function findUnblockedSite(
   return null;
 }
 
-// Record time for a domain (tracks time-limited sites and unblock history)
-async function recordTime(domain: string, seconds: number): Promise<void> {
+/**
+ * 表示中のサイトのうち時間制限つきのものについて、残りが少なければ通知し、
+ * 使い切ったらその場でルールを更新して開いているタブもブロックする
+ * （ルールの更新だけでは新しい遷移しか塞がらない）
+ */
+async function enforceTimeLimits(hosts: readonly string[]): Promise<void> {
+  const statuses = await getSiteBlockStatuses(hosts);
+  let exceeded = false;
+  for (const status of statuses) {
+    if (!status.rule.timeLimit) continue;
+    await checkTimeLimitNotification(status);
+    if (status.state.blocked) exceeded = true;
+  }
+  if (exceeded) {
+    await updateBlockRules();
+    await blockExistingTabs();
+  }
+}
+
+// 解除中のサイトの「解除後の時間」を加算する
+async function recordTimeAfterUnblock(
+  domain: string,
+  seconds: number
+): Promise<void> {
   if (seconds <= 0 || !domain) return;
-
-  // Check if this domain has a time limit (record usage for time-limited sites)
-  const blockItem = await findBlockItemForDomain(domain);
-  if (blockItem && blockItem.timeLimit) {
-    await recordTimeLimitUsage(domain, seconds);
-    // Check if we need to send a notification about time running low
-    await checkTimeLimitNotification(domain);
-
-    // If time limit is now exceeded, update block rules immediately
-    if (await hasExceededTimeLimit(domain, blockItem)) {
-      await updateBlockRules();
-      await blockExistingTabs();
-    }
-    // Don't return here - the unblock history is updated below as well
-  }
-
-  // YouTube-specific time limit recording
-  const normalizedDomain = normalizeDomain(domain);
-  if (normalizedDomain === 'youtube.com') {
-    await recordYouTubeTimeLimitUsage(seconds);
-    await checkYouTubeTimeLimitNotification();
-
-    // 時間制限を超過したら、ブロックリストの項目と同じくその場でルールを更新し、
-    // 開いているタブもブロックする。ルール更新だけでは新しい遷移しか塞がらない（#392）。
-    // アクセスブロックが無効なら超過してもブロックされないため、仮想のブロック項目
-    // （ブロック条件の SSOT）で先に振り分け、ルール再構築と全タブ走査を繰り返さない
-    const youtubeItem = getYouTubeBlockItem(await getSettings());
-    if (youtubeItem?.timeLimit && (await hasYouTubeExceededTimeLimit())) {
-      await updateBlockRules();
-      await blockExistingTabs();
-    }
-  }
 
   // Only track sites that are currently unblocked
   const history = await getUnblockHistory();
   const matchedDomain = findUnblockedSite(domain, history);
 
-  if (!matchedDomain) {
-    // Not an unblocked site, skip (but time limit was already recorded above)
-    return;
-  }
+  if (!matchedDomain) return;
 
   const unblockedSite = history.sites[matchedDomain];
 

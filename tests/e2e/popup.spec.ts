@@ -396,22 +396,12 @@ test.describe('Popup 画面', () => {
     });
 
     // Time Limit 使用状況をセットアップ（残り10分）。
-    // 使用状況は analytics.timeLimitUsage にドメインをキーとする
-    // レコードとして保持される
-    await setStorageData(setupPage, 'analytics', {
-      dailyStats: {},
-      siteTime: {},
-      siteCategories: {},
-      siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {
-        [TEST_DOMAINS.example]: {
-          domain: TEST_DOMAINS.example,
-          dailyUsedSeconds: 1200, // 20分使用済み
-          lastDailyReset: new Date().toISOString().split('T')[0]
-        }
-      }
-    });
+    // 使用状況は activity の今日の行にサイトキーごとの表示秒数として保持される
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([[TEST_DOMAINS.example, { seconds: 1200 }]]) // 20分使用済み
+    );
     await setupPage.close();
 
     // 外部サイトを開いてからポップアップを開く

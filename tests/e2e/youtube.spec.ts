@@ -10,6 +10,7 @@ import {
   getStorageData,
   setStorageData,
   setSettings,
+  makeActivity,
   makeSettings,
   makeYouTubeSettings,
   clearStorageFromExtension
@@ -25,6 +26,9 @@ import {
   generateYouTubeHideCSS
 } from '~/lib/youtubeHideStyles';
 import type { YouTubeSettings } from '~/types/storage';
+
+// 時間制限の使用量を引くサイトキー（ホスト名ではない。www. 付きで開いても同じ行を読む）
+const YOUTUBE_SITE = 'youtube.com';
 
 /**
  * E2E Tests: YouTube ブロック機能
@@ -224,22 +228,12 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       youtube: youtubeSettings
     });
 
-    // 既に超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
-    const todayKey = new Date().toISOString().split('T')[0];
-    await setStorageData(page, 'analytics', {
-      dailyStats: {},
-      siteTime: {},
-      siteCategories: {},
-      siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 10, // 超過（limitSeconds: 1）
-          lastDailyReset: todayKey
-        }
-      }
-    });
+    // 既に超過（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 1）
+    await setStorageData(
+      page,
+      'activity',
+      makeActivity([[YOUTUBE_SITE, { seconds: 10 }]])
+    );
 
     await page.close();
 
@@ -374,22 +368,12 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       })
     });
 
-    // Time Limit は未超過（analytics.timeLimitUsage に youtube.com の使用データを設定）
-    const todayKey = new Date().toISOString().split('T')[0];
-    await setStorageData(page, 'analytics', {
-      dailyStats: {},
-      siteTime: {},
-      siteCategories: {},
-      siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 30, // 未超過（limitSeconds: 60）
-          lastDailyReset: todayKey
-        }
-      }
-    });
+    // Time Limit は未超過（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 60）
+    await setStorageData(
+      page,
+      'activity',
+      makeActivity([[YOUTUBE_SITE, { seconds: 30 }]])
+    );
 
     await page.close();
 
@@ -441,27 +425,17 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       })
     });
 
-    // Time Limit を超過させる（analytics.timeLimitUsage に youtube.com の使用データを設定）。
-    // blockAccess に時間制限を併用した場合は、ブロックリストと同じく超過後にブロックする（#392）
-    const todayKey = new Date().toISOString().split('T')[0];
-    await setStorageData(page, 'analytics', {
-      dailyStats: {},
-      siteTime: {},
-      siteCategories: {},
-      siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          dailyUsedSeconds: 120, // 超過（limitSeconds: 60）
-          lastDailyReset: todayKey
-        }
-      }
-    });
+    // Time Limit を超過させる（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 60）。
+    // blockAccess に時間制限を併用した場合は、ブロックリストと同じく超過後にブロックする
+    await setStorageData(
+      page,
+      'activity',
+      makeActivity([[YOUTUBE_SITE, { seconds: 120 }]])
+    );
 
     await page.close();
 
-    // 超過判定は analytics を見るが、analytics の変更は再計算のトリガーに
+    // 超過判定は activity を見るが、activity の変更は再計算のトリガーに
     // ならない。実装と同じ経路（check-schedule アラーム）で再計算させてから、
     // youtube.com のルールが載るまで待つ
     await triggerBlockRuleRecompute(context);

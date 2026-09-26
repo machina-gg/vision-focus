@@ -4,7 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { DomainListItem } from '../DomainListItem';
-import type { BlockItem, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -29,7 +29,7 @@ const baseItem: BlockItem = {
 function renderItem(overrides: {
   item?: Partial<BlockItem>;
   blockCount?: number;
-  usage?: TimeLimitUsage;
+  usedSeconds?: number;
   onToggle?: (id: string, enabled: boolean) => void;
   onRemove?: (id: string) => void;
   onUpdateTimeLimit?: Parameters<typeof DomainListItem>[0]['onUpdateTimeLimit'];
@@ -38,7 +38,7 @@ function renderItem(overrides: {
     <DomainListItem
       item={{ ...baseItem, ...overrides.item }}
       blockCount={overrides.blockCount ?? 0}
-      usage={overrides.usage}
+      usedSeconds={overrides.usedSeconds ?? 0}
       onToggle={overrides.onToggle ?? vi.fn()}
       onRemove={overrides.onRemove ?? vi.fn()}
       onUpdateTimeLimit={overrides.onUpdateTimeLimit ?? vi.fn()}

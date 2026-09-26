@@ -5,14 +5,7 @@ import { sendMessage } from '~/lib/messaging';
 import { DOMAIN_POLLING_MS } from '~/constants/intervals';
 import { getActiveTab } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
-import type { TimeLimitType } from '~/types/storage';
-
-export interface TimeLimitInfo {
-  hasTimeLimit: boolean;
-  remainingSeconds: number | null;
-  limitType: TimeLimitType | null;
-  limitSeconds: number | null;
-}
+import type { TimeLimitInfo } from '~/types/messages';
 
 export interface UseCurrentDomainReturn {
   currentDomain: string | undefined;

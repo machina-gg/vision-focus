@@ -1,71 +1,74 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { isAnyScheduleActive } from '~/lib/blockService';
-import type { Schedule } from '~/types/storage';
-
-// storage モジュールをモック
+// storage モジュールをモック（事実の表はテストごとに差し替える）
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  getAnalytics: vi.fn()
+  activityItem: { getValue: vi.fn() }
 }));
 
-// time モジュールの isWithinSchedule をモック
-vi.mock('~/lib/time', () => ({
-  isWithinSchedule: vi.fn(),
-  getTodayKey: vi.fn(() => '2024-06-12'),
-  needsDailyReset: vi.fn(() => false)
+// スケジュールの内外だけを差し替え、日付キー（toDateKey）は実物を使う
+vi.mock('~/lib/time', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/lib/time')>()),
+  isWithinSchedule: vi.fn()
 }));
 
-// timeLimitService をモック
-// （calculateRemainingTime は youtubeBlockService が import するため、
-//   モックから欠けていると同モジュールの読み込みで落ちる）
-vi.mock('~/lib/timeLimitService', () => ({
-  hasExceededTimeLimit: vi.fn(),
-  getRemainingTime: vi.fn(),
-  checkTimeLimitExceeded: vi.fn(),
-  calculateRemainingTime: vi.fn()
-}));
-
-import { getSettings, getAnalytics } from '~/lib/storage';
-import { isWithinSchedule } from '~/lib/time';
+import { getSettings, activityItem } from '~/lib/storage';
+import { isWithinSchedule, toDateKey } from '~/lib/time';
 import {
-  hasExceededTimeLimit,
-  getRemainingTime,
-  checkTimeLimitExceeded
-} from '~/lib/timeLimitService';
-import {
-  findBlockItemForDomain,
-  findEnabledBlockItemForDomain,
+  isAnyScheduleActive,
+  isBlockingWindowOpen,
   getBlockState,
-  findMatchingBlockItem,
-  getYouTubeBlockItem,
+  getBlockStateForDomain,
+  getSiteBlockStatus,
+  getSiteBlockStatuses,
   shouldBlockUrl,
   shouldTrackBlockForDomain,
   getActiveBlockedDomains
 } from '~/lib/blockService';
 import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
-import type { AppSettings, YouTubeSettings } from '~/types/storage';
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_ANALYTICS,
-  DEFAULT_YOUTUBE_SETTINGS
+import type {
+  AppSettings,
+  BlockItem,
+  Schedule,
+  YouTubeSettings
 } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
+import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 const mockGetSettings = vi.mocked(getSettings);
-const mockGetAnalytics = vi.mocked(getAnalytics);
+const mockGetActivity = vi.mocked(activityItem.getValue);
 const mockIsWithinSchedule = vi.mocked(isWithinSchedule);
-const mockHasExceededTimeLimit = vi.mocked(hasExceededTimeLimit);
-const mockGetRemainingTime = vi.mocked(getRemainingTime);
-const mockCheckTimeLimitExceeded = vi.mocked(checkTimeLimitExceeded);
+
+const LIMIT_SECONDS = 1800;
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockIsWithinSchedule.mockReturnValue(true);
+  mockGetActivity.mockResolvedValue({});
 });
 
-// テスト用の設定を生成
-function createSettings(overrides: Partial<AppSettings> = {}): AppSettings {
-  return { ...DEFAULT_SETTINGS, ...overrides };
+// テスト用の設定を生成して保存値にする
+function givenSettings(overrides: Partial<AppSettings> = {}): void {
+  mockGetSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, ...overrides });
+}
+
+function item(overrides: Partial<BlockItem> = {}): BlockItem {
+  return {
+    id: '1',
+    domain: 'example.com',
+    isWildcard: false,
+    createdAt: '2024-01-01T00:00:00Z',
+    enabled: true,
+    timeLimit: null,
+    ...overrides
+  };
+}
+
+function limitedItem(overrides: Partial<BlockItem> = {}): BlockItem {
+  return item({
+    timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS },
+    ...overrides
+  });
 }
 
 // アクセスブロックを有効にした YouTube 設定を生成
@@ -80,8 +83,23 @@ function youtubeSettings(
   };
 }
 
+/** 指定日の行にサイトごとの表示秒数を入れる（既定は今日のローカル日付） */
+function givenSeconds(
+  seconds: Record<string, number>,
+  date: Date = new Date()
+): void {
+  const row = Object.fromEntries(
+    Object.entries(seconds).map(([site, s]) => [
+      site,
+      { seconds: s, blocks: 0, unblocks: 0 }
+    ])
+  );
+  const log: ActivityLog = { [toDateKey(date)]: row };
+  mockGetActivity.mockResolvedValue(log);
+}
+
 // スケジュール外を再現するための、常に「有効だが時間外」のスケジュール
-const OUT_OF_SCHEDULE = [
+const OUT_OF_SCHEDULE: Schedule[] = [
   {
     id: 's1',
     name: 'Work',
@@ -92,947 +110,522 @@ const OUT_OF_SCHEDULE = [
   }
 ];
 
-describe('isAnyScheduleActive', () => {
-  it('schedules が未設定でも例外を投げず true を返す', () => {
-    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、
-    // ここで落ちないことを保証する
-    expect(isAnyScheduleActive(undefined)).toBe(true);
-  });
+function schedule(overrides: Partial<Schedule> = {}): Schedule {
+  return {
+    id: 's1',
+    name: 'Test',
+    startTime: '09:00',
+    endTime: '17:00',
+    days: [1, 2, 3, 4, 5],
+    enabled: true,
+    ...overrides
+  };
+}
 
-  it('スケジュールが空の場合はtrueを返す', () => {
-    expect(isAnyScheduleActive([])).toBe(true);
-  });
+describe('isAnyScheduleActive（有効かつ範囲内のスケジュールがあるか）', () => {
+  it.each([
+    ['未設定', undefined, true, false],
+    ['空', [], true, false],
+    ['有効で範囲内', [schedule()], true, true],
+    ['無効（範囲内でも）', [schedule({ enabled: false })], true, false],
+    ['有効で範囲外', [schedule()], false, false]
+  ] satisfies [string, Schedule[] | undefined, boolean, boolean][])(
+    '%s',
+    (_label, schedules, within, expected) => {
+      mockIsWithinSchedule.mockReturnValue(within);
+      expect(isAnyScheduleActive(schedules)).toBe(expected);
+    }
+  );
+});
 
-  it('有効なスケジュールがスケジュール内の場合はtrue', () => {
-    mockIsWithinSchedule.mockReturnValue(true);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: true
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(true);
-  });
+describe('isBlockingWindowOpen（ブロックが効く時間帯か）', () => {
+  it.each([
+    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、ここで落ちないことを保証する
+    ['未設定なら常に効く', undefined, false, true],
+    ['スケジュールが無ければ常に効く', [], false, true],
+    [
+      'すべて無効なら「スケジュール無し」と同じく常に効く',
+      [schedule({ enabled: false }), schedule({ id: 's2', enabled: false })],
+      false,
+      true
+    ],
+    ['有効なスケジュールの範囲内なら効く', [schedule()], true, true],
+    [
+      '有効なスケジュールの範囲外なら効かない（無効なものは数えない）',
+      [schedule(), schedule({ id: 's2', enabled: false })],
+      false,
+      false
+    ]
+  ] satisfies [string, Schedule[] | undefined, boolean, boolean][])(
+    '%s',
+    (_label, schedules, within, expected) => {
+      mockIsWithinSchedule.mockReturnValue(within);
+      expect(isBlockingWindowOpen(schedules)).toBe(expected);
+    }
+  );
 
-  it('スケジュールが無効の場合はfalse', () => {
-    mockIsWithinSchedule.mockReturnValue(true);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: false
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(false);
-  });
-
-  it('スケジュール外の場合はfalse', () => {
+  it('全部無効のスケジュールがあっても常時ブロックの項目はブロックする', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: true
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(false);
-  });
-});
-
-describe('findBlockItemForDomain', () => {
-  it('一致するドメインのBlockItemを返す', async () => {
-    const settings = createSettings({
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ]
+    givenSettings({
+      blockList: [item()],
+      schedules: [schedule({ enabled: false })]
     });
-    mockGetSettings.mockResolvedValue(settings);
-    const result = await findBlockItemForDomain('youtube.com');
-    expect(result).not.toBeNull();
-    expect(result!.domain).toBe('youtube.com');
-  });
 
-  it('一致しない場合はnullを返す', async () => {
-    const settings = createSettings({ blockList: [] });
-    mockGetSettings.mockResolvedValue(settings);
-    const result = await findBlockItemForDomain('youtube.com');
-    expect(result).toBeNull();
-  });
-
-  it('設定を引数で渡せる', async () => {
-    const settings = createSettings({
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'twitter.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ]
+    expect(await getBlockState('https://example.com')).toEqual({
+      blocked: true,
+      reason: 'always_blocked'
     });
-    const result = await findBlockItemForDomain('twitter.com', settings);
-    expect(result).not.toBeNull();
-    // getSettingsは呼ばれない
-    expect(mockGetSettings).not.toHaveBeenCalled();
-  });
-});
-
-describe('findEnabledBlockItemForDomain', () => {
-  it('有効なBlockItemを返す', async () => {
-    const settings = createSettings({
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: true
-        }
-      ]
-    });
-    mockGetSettings.mockResolvedValue(settings);
-    const result = await findEnabledBlockItemForDomain('youtube.com');
-    expect(result).not.toBeNull();
-  });
-
-  it('無効なBlockItemはnullを返す', async () => {
-    const settings = createSettings({
-      blockList: [
-        {
-          id: 'b1',
-          domain: 'youtube.com',
-          isWildcard: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          enabled: false
-        }
-      ]
-    });
-    mockGetSettings.mockResolvedValue(settings);
-    const result = await findEnabledBlockItemForDomain('youtube.com');
-    expect(result).toBeNull();
+    expect(await getActiveBlockedDomains()).toEqual(['example.com']);
   });
 });
 
 describe('getBlockState', () => {
   it('無効なURLではブロックしない', async () => {
     const result = await getBlockState('');
-    expect(result.blocked).toBe(false);
-    expect(result.reason).toBeNull();
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('一時停止中はブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        paused: true,
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(false);
+    givenSettings({ paused: true, blockList: [item()] });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('ブロックリストにないURLはブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(createSettings({ blockList: [] }));
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(false);
+    givenSettings({ blockList: [item()] });
+    const result = await getBlockState('https://google.com');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('無効化されたアイテムはブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: false
-          }
-        ]
-      })
-    );
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(false);
+    givenSettings({ blockList: [item({ enabled: false })] });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('スケジュール外ではブロックしない', async () => {
+  it('スケジュール外では常時ブロックの項目もブロックしない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ],
-        schedules: [
-          {
-            id: 's1',
-            name: 'Work',
-            startTime: '09:00',
-            endTime: '17:00',
-            days: [1],
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(false);
+    givenSettings({ blockList: [item()], schedules: OUT_OF_SCHEDULE });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: false, reason: null });
+  });
+
+  it('スケジュール外では上限を超えていてもブロックせず、残り時間も返さない', async () => {
+    mockIsWithinSchedule.mockReturnValue(false);
+    givenSettings({ blockList: [limitedItem()], schedules: OUT_OF_SCHEDULE });
+    givenSeconds({ 'example.com': LIMIT_SECONDS * 2 });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
   it('タイムリミットなしの場合は常にブロック', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(true);
-    expect(result.reason).toBe('always_blocked');
+    givenSettings({ blockList: [item()] });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
   });
 
-  it('タイムリミット超過の場合にブロック', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 3600 }
-          }
-        ]
-      })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(true);
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(true);
-    expect(result.reason).toBe('time_limit_exceeded');
+  it('今日の表示秒数が上限に達したらブロック', async () => {
+    givenSettings({ blockList: [limitedItem()] });
+    givenSeconds({ 'example.com': LIMIT_SECONDS });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({
+      blocked: true,
+      reason: 'time_limit_exceeded',
+      remainingSeconds: 0
+    });
   });
 
-  it('タイムリミット未超過の場合はブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 3600 }
-          }
-        ]
-      })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(false);
-    mockGetRemainingTime.mockResolvedValue(1800);
-    const result = await getBlockState('https://youtube.com');
-    expect(result.blocked).toBe(false);
-    expect(result.remainingSeconds).toBe(1800);
+  it('上限未満ならブロックせず残り時間を返す', async () => {
+    givenSettings({ blockList: [limitedItem()] });
+    givenSeconds({ 'example.com': 600 });
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({
+      blocked: false,
+      reason: null,
+      remainingSeconds: LIMIT_SECONDS - 600
+    });
+  });
+
+  it('前日（ローカル日付）の行は今日の使用量に数えない', async () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    givenSettings({ blockList: [limitedItem()] });
+    givenSeconds({ 'example.com': LIMIT_SECONDS * 2 }, yesterday);
+    const result = await getBlockState('https://example.com');
+    expect(result).toEqual({
+      blocked: false,
+      reason: null,
+      remainingSeconds: LIMIT_SECONDS
+    });
+  });
+
+  it.each(['www.example.com', 'm.example.com', 'example.com'])(
+    'ホスト名 %s の使用量はサイトキー example.com の行で引く',
+    async (host) => {
+      givenSettings({ blockList: [limitedItem()] });
+      givenSeconds({ 'example.com': LIMIT_SECONDS });
+      const result = await getBlockState(`https://${host}/page`);
+      expect(result.reason).toBe('time_limit_exceeded');
+    }
+  );
+
+  it('ワイルドカード・www. 付きで登録した項目も同じサイトキーで判定する', async () => {
+    givenSettings({
+      blockList: [
+        limitedItem({ domain: '*.example.com', isWildcard: true }),
+        limitedItem({ id: '2', domain: 'www.reddit.com' })
+      ]
+    });
+    givenSeconds({ 'example.com': LIMIT_SECONDS, 'reddit.com': LIMIT_SECONDS });
+
+    expect((await getBlockState('https://example.com')).blocked).toBe(true);
+    expect((await getBlockState('https://m.reddit.com')).blocked).toBe(true);
+  });
+
+  it('同じサイトキーの項目が複数あれば、どれかがブロックならブロックする', async () => {
+    givenSettings({
+      blockList: [
+        item({ domain: 'reddit.com', enabled: false }),
+        item({ id: '2', domain: 'www.reddit.com', enabled: true })
+      ]
+    });
+    const result = await getBlockState('https://www.reddit.com');
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
+    expect(await getActiveBlockedDomains()).toEqual(['reddit.com']);
+  });
+
+  it('親の登録がブロックしていれば、子の登録が無効でもサブドメインをブロックする', async () => {
+    givenSettings({
+      blockList: [
+        item({ domain: 'google.com' }),
+        item({ id: '2', domain: 'mail.google.com', enabled: false })
+      ]
+    });
+    expect(await getBlockState('https://mail.google.com')).toEqual({
+      blocked: true,
+      reason: 'always_blocked'
+    });
+  });
+
+  it('子の登録だけがブロックなら、親のホスト名はブロックしない', async () => {
+    givenSettings({
+      blockList: [
+        item({ domain: 'google.com', enabled: false }),
+        item({ id: '2', domain: 'mail.google.com' })
+      ]
+    });
+    expect((await getBlockState('https://google.com')).blocked).toBe(false);
+    expect((await getBlockState('https://mail.google.com')).blocked).toBe(true);
+  });
+
+  it('覆う登録がどれもブロックでなければ、残り秒数がいちばん少ない制限の値を返す', async () => {
+    givenSettings({
+      blockList: [
+        limitedItem({ domain: 'google.com' }),
+        limitedItem({
+          id: '2',
+          domain: 'mail.google.com',
+          timeLimit: { type: 'daily', limitSeconds: 600 }
+        })
+      ]
+    });
+    givenSeconds({ 'google.com': 100, 'mail.google.com': 500 });
+    expect(await getBlockState('https://mail.google.com')).toEqual({
+      blocked: false,
+      reason: null,
+      remainingSeconds: 100
+    });
+  });
+});
+
+describe('getSiteBlockStatus', () => {
+  it('サイトキー・ブロック設定・判定結果を返す', async () => {
+    givenSettings({ blockList: [limitedItem({ domain: 'www.example.com' })] });
+    givenSeconds({ 'example.com': 100 });
+
+    expect(await getSiteBlockStatus('m.example.com')).toEqual({
+      site: 'example.com',
+      rule: {
+        enabled: true,
+        timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
+      },
+      state: {
+        blocked: false,
+        reason: null,
+        remainingSeconds: LIMIT_SECONDS - 100
+      }
+    });
+  });
+
+  it('ブロック設定の無いホスト名は null', async () => {
+    givenSettings({ blockList: [item()] });
+    expect(await getSiteBlockStatus('google.com')).toBeNull();
+  });
+
+  it('複数のホスト名は同じサイトを 1 件にまとめる', async () => {
+    givenSettings({ blockList: [item()] });
+    const statuses = await getSiteBlockStatuses([
+      'www.example.com',
+      'example.com',
+      'google.com'
+    ]);
+    expect(statuses.map((s) => s.site)).toEqual(['example.com']);
+    expect(mockGetSettings).toHaveBeenCalledOnce();
   });
 });
 
 describe('shouldBlockUrl', () => {
   it('getBlockStateの結果のblocked値を返す', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await shouldBlockUrl('https://youtube.com');
-    expect(result).toBe(true);
-  });
-});
-
-describe('findMatchingBlockItem', () => {
-  it('ブロックリストの項目を返し、仮想項目ではないと示す', async () => {
-    const item = {
-      id: 'b1',
-      domain: 'twitch.tv',
-      isWildcard: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      enabled: true
-    };
-    mockGetSettings.mockResolvedValue(createSettings({ blockList: [item] }));
-
-    const matched = await findMatchingBlockItem('www.twitch.tv');
-
-    expect(matched).toEqual({ item, isVirtual: false });
-  });
-
-  it('ブロックリストに無い YouTube は仮想項目として返す', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ blockList: [], youtube: youtubeSettings() })
-    );
-
-    const matched = await findMatchingBlockItem('m.youtube.com');
-
-    expect(matched?.isVirtual).toBe(true);
-    expect(matched?.item.domain).toBe(YOUTUBE_DOMAIN);
-  });
-
-  it('ブロックリストの項目は無効でも仮想項目より優先される', async () => {
-    const item = {
-      id: 'b1',
-      domain: 'youtube.com',
-      isWildcard: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      enabled: false
-    };
-    mockGetSettings.mockResolvedValue(
-      createSettings({ blockList: [item], youtube: youtubeSettings() })
-    );
-
-    const matched = await findMatchingBlockItem('youtube.com');
-
-    expect(matched).toEqual({ item, isVirtual: false });
-  });
-
-  it('どちらにも一致しなければ null', async () => {
-    mockGetSettings.mockResolvedValue(createSettings({ blockList: [] }));
-
-    expect(await findMatchingBlockItem('example.com')).toBeNull();
+    givenSettings({ blockList: [item()] });
+    expect(await shouldBlockUrl('https://example.com')).toBe(true);
+    expect(await shouldBlockUrl('https://google.com')).toBe(false);
   });
 });
 
 describe('shouldTrackBlockForDomain', () => {
-  it('一時停止中はfalse', async () => {
-    mockGetSettings.mockResolvedValue(createSettings({ paused: true }));
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
-  });
+  // ブロックされたかどうかと記録するかどうかは同じ結論にする。
+  // 揃っていないと、ブロックはされるのに記録されない・記録だけ増えるドメインが出る
+  it.each([
+    ['一時停止中', { paused: true, blockList: [item()] }, false],
+    ['ブロックリストにない', { blockList: [] }, false],
+    ['無効なアイテム', { blockList: [item({ enabled: false })] }, false],
+    ['有効な常時ブロック', { blockList: [item()] }, true],
+    ['時間制限の上限未満', { blockList: [limitedItem()] }, false]
+  ] satisfies [string, Partial<AppSettings>, boolean][])(
+    '%s',
+    async (_label, settings, expected) => {
+      givenSettings(settings);
+      expect(await shouldTrackBlockForDomain('example.com')).toBe(expected);
+    }
+  );
 
-  it('ブロックリストにないドメインはfalse', async () => {
-    mockGetSettings.mockResolvedValue(createSettings({ blockList: [] }));
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
-  });
-
-  it('無効なアイテムのドメインはfalse', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: false
-          }
-        ]
-      })
-    );
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
-  });
-
-  it('有効なアイテムでスケジュール内ならtrue', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(true);
-  });
-
-  // 記録側もブロックリスト → 仮想項目の順で照合する（#351）。
-  // ここが getBlockState と揃っていないと、ブロックはされるのに
-  // 「最後にブロックしたドメイン」が残らず、ブロック画面に帯が出ない
   it('ブロックリストに無くても YouTube のアクセスブロックが有効ならtrue', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ blockList: [], youtube: youtubeSettings() })
-    );
-    const result = await shouldTrackBlockForDomain('www.youtube.com');
-    expect(result).toBe(true);
+    givenSettings({ youtube: youtubeSettings() });
+    expect(await shouldTrackBlockForDomain('www.youtube.com')).toBe(true);
+  });
+});
+
+describe('YouTube（旧保存形から組み立てたブロック設定）', () => {
+  it('アクセスブロックが有効ならブロックする', async () => {
+    givenSettings({ youtube: youtubeSettings() });
+    const result = await getBlockState('https://www.youtube.com/watch?v=abc');
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
   });
 
-  it('YouTube のアクセスブロックが無効ならfalse', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [],
-        youtube: youtubeSettings({ blockAccess: false })
-      })
-    );
-    const result = await shouldTrackBlockForDomain('www.youtube.com');
-    expect(result).toBe(false);
+  it('アクセスブロックが無効ならブロックしない', async () => {
+    givenSettings({ youtube: youtubeSettings({ blockAccess: false }) });
+    const result = await getBlockState('https://www.youtube.com/');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('ブロックリストの項目が仮想項目より優先される（無効ならfalse）', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: false
-          }
-        ],
-        youtube: youtubeSettings()
-      })
-    );
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
+  it('YouTube 自体が無効ならブロックしない', async () => {
+    givenSettings({ youtube: youtubeSettings({ enabled: false }) });
+    const result = await getBlockState('https://www.youtube.com/');
+    expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('スケジュール外なら YouTube でもfalse', async () => {
-    mockIsWithinSchedule.mockReturnValue(false);
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [],
-        youtube: youtubeSettings(),
-        schedules: OUT_OF_SCHEDULE
+  it('時間制限は youtube.com の今日の行で判定する', async () => {
+    givenSettings({
+      youtube: youtubeSettings({
+        timeLimit: { type: 'daily', limitSeconds: 60 }
       })
-    );
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
+    });
+    givenSeconds({ [YOUTUBE_DOMAIN]: 30 });
+    expect(await getBlockState('https://m.youtube.com/')).toEqual({
+      blocked: false,
+      reason: null,
+      remainingSeconds: 30
+    });
+
+    givenSeconds({ [YOUTUBE_DOMAIN]: 60 });
+    expect(await getBlockState('https://m.youtube.com/')).toEqual({
+      blocked: true,
+      reason: 'time_limit_exceeded',
+      remainingSeconds: 0
+    });
   });
 
-  // 記録はブロック判定そのものを見る（machina-gg/vision-focus#448）。
-  // 記録側が時間制限を持っていないと、超過前の遷移までブロック回数に加算され、
-  // 利用者が見る「〜回ブロックしました」と統計が実際より多くなる
-  it('時間制限が超過していなければfalse', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 3600 }
-          }
-        ]
-      })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(false);
-    mockGetRemainingTime.mockResolvedValue(1800);
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(false);
-  });
-
-  it('時間制限を超過していればtrue', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 3600 }
-          }
-        ]
-      })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(true);
-    const result = await shouldTrackBlockForDomain('youtube.com');
-    expect(result).toBe(true);
-  });
-
-  it('時間制限の無い項目は超過判定を経ずにtrue', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'twitch.tv',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    const result = await shouldTrackBlockForDomain('www.twitch.tv');
-    expect(result).toBe(true);
-    expect(mockHasExceededTimeLimit).not.toHaveBeenCalled();
-  });
-
-  // 仮想項目の使用実績はホスト名ではなく項目のドメインで引く（#392）。
-  // 記録側が判定を通ることで、この読み替えも 1 箇所で済む
-  it('YouTube の仮想項目でも時間制限が超過していなければfalse', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [],
-        youtube: youtubeSettings({
-          timeLimit: { type: 'daily', limitSeconds: 3600 }
-        })
-      })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(false);
-    mockGetRemainingTime.mockResolvedValue(1800);
-    const result = await shouldTrackBlockForDomain('m.youtube.com');
-    expect(result).toBe(false);
-    expect(mockHasExceededTimeLimit).toHaveBeenCalledWith(
-      YOUTUBE_DOMAIN,
-      expect.objectContaining({ domain: YOUTUBE_DOMAIN })
-    );
+  it('ブロックリストの youtube.com が無効でも、YouTube のアクセスブロックが有効ならブロックする', async () => {
+    // 覆う登録のどれかがブロックならブロック（YouTube の設定も 1 件の登録として数える）
+    givenSettings({
+      blockList: [item({ domain: 'www.youtube.com', enabled: false })],
+      youtube: youtubeSettings()
+    });
+    const result = await getBlockState('https://www.youtube.com/');
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
+    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
   });
 });
 
 describe('getActiveBlockedDomains', () => {
   it('一時停止中は空配列を返す', async () => {
-    mockGetSettings.mockResolvedValue(createSettings({ paused: true }));
-    const result = await getActiveBlockedDomains();
-    expect(result).toEqual([]);
+    givenSettings({
+      paused: true,
+      blockList: [item()],
+      youtube: youtubeSettings()
+    });
+    expect(await getActiveBlockedDomains()).toEqual([]);
   });
 
-  it('スケジュール外でも常時ブロックサイト（timeLimit なし）はブロックする', async () => {
+  it('スケジュール外では常時ブロックの項目もブロックしない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'twitter.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ],
-        schedules: [
-          {
-            id: 's1',
-            name: 'Test',
-            startTime: '09:00',
-            endTime: '17:00',
-            days: [1],
-            enabled: true
-          }
-        ]
-      })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    const result = await getActiveBlockedDomains();
-    expect(result).toContain('twitter.com');
+    givenSettings({
+      blockList: [item()],
+      schedules: OUT_OF_SCHEDULE,
+      youtube: youtubeSettings()
+    });
+    expect(await getActiveBlockedDomains()).toEqual([]);
   });
 
-  it('タイムリミットなしの有効アイテムをリストに含む', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true
-          }
-        ]
-      })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    const result = await getActiveBlockedDomains();
-    expect(result).toContain('youtube.com');
+  it('常時ブロックと上限に達した項目だけを含め、上限未満・無効な項目は含めない', async () => {
+    givenSettings({
+      blockList: [
+        item({ id: '1', domain: 'always.com' }),
+        limitedItem({ id: '2', domain: 'exceeded.com' }),
+        limitedItem({ id: '3', domain: 'under.com' }),
+        item({ id: '4', domain: 'disabled.com', enabled: false })
+      ]
+    });
+    givenSeconds({ 'exceeded.com': LIMIT_SECONDS, 'under.com': 10 });
+
+    expect(await getActiveBlockedDomains()).toEqual([
+      'always.com',
+      'exceeded.com'
+    ]);
   });
 
-  it('タイムリミット超過のアイテムもリストに含む', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'twitter.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 3600 }
-          }
-        ]
-      })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    mockCheckTimeLimitExceeded.mockReturnValue(true);
-    const result = await getActiveBlockedDomains();
-    expect(result).toContain('twitter.com');
+  it('ワイルドカード・www. 付きの項目はサイトキーで返す', async () => {
+    givenSettings({
+      blockList: [
+        item({ id: '1', domain: '*.example.com', isWildcard: true }),
+        item({ id: '2', domain: 'www.reddit.com' })
+      ]
+    });
+    expect(await getActiveBlockedDomains()).toEqual([
+      'example.com',
+      'reddit.com'
+    ]);
   });
 
-  it('YouTube blockAccessが有効でスケジュール内ならYouTubeドメインを含む', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        youtube: {
-          enabled: true,
-          blockAccess: true,
-          hideShorts: false,
-          hideRecommendations: false,
-          hideComments: false,
-          hideHomeFeed: false,
-          timeLimit: null
-        }
-      })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    const result = await getActiveBlockedDomains();
-    expect(result).toContain('youtube.com');
-    expect(result).toContain('www.youtube.com');
+  it('YouTube のアクセスブロックが有効なら youtube.com を含める', async () => {
+    givenSettings({ youtube: youtubeSettings() });
+    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
   });
 
-  it('無効なアイテムはリストに含まない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: false
-          }
-        ]
+  it('YouTube の時間制限は上限に達してから含める', async () => {
+    givenSettings({
+      youtube: youtubeSettings({
+        timeLimit: { type: 'daily', limitSeconds: 60 }
       })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    const result = await getActiveBlockedDomains();
-    expect(result).not.toContain('youtube.com');
-  });
+    });
+    givenSeconds({ [YOUTUBE_DOMAIN]: 59 });
+    expect(await getActiveBlockedDomains()).toEqual([]);
 
-  it('YouTube blockAccessはスケジュール外では動作しない', async () => {
-    mockIsWithinSchedule.mockReturnValue(false);
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        youtube: {
-          enabled: true,
-          blockAccess: true,
-          hideShorts: false,
-          hideRecommendations: false,
-          hideComments: false,
-          hideHomeFeed: false,
-          timeLimit: null
-        },
-        schedules: [
-          {
-            id: 's1',
-            name: 'Test',
-            startTime: '09:00',
-            endTime: '17:00',
-            days: [1],
-            enabled: true
-          }
-        ]
-      })
-    );
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-    const result = await getActiveBlockedDomains();
-    expect(result).toEqual([]);
-  });
-
-  it('一時停止中はYouTubeブロックも無効になる', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        paused: true,
-        youtube: {
-          enabled: true,
-          blockAccess: true,
-          hideShorts: false,
-          hideRecommendations: false,
-          hideComments: false,
-          hideHomeFeed: false,
-          timeLimit: null
-        }
-      })
-    );
-    const result = await getActiveBlockedDomains();
-    expect(result).toEqual([]);
+    givenSeconds({ [YOUTUBE_DOMAIN]: 60 });
+    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
   });
 });
 
-describe('getYouTubeBlockItem', () => {
-  it('アクセスブロックが有効なら仮想のブロック項目を返す', () => {
-    const item = getYouTubeBlockItem(
-      createSettings({ youtube: youtubeSettings() })
-    );
+describe('判定とルール生成の一致', () => {
+  // 開いているページの判定（getBlockStateForDomain）と新しい遷移を止めるルール
+  // （getActiveBlockedDomains の各キーの `||キー`）は同じ入力で同じ結論にする。
+  // どちらかが条件や範囲を独自に持つと、開いているタブと新しい遷移で結果がずれる
+  const PARENT = 'example.com';
+  const CHILD = 'mail.example.com';
+  const HOSTS = [PARENT, `www.${PARENT}`, CHILD, `a.${CHILD}`, 'other.test'];
 
-    expect(item).not.toBeNull();
-    expect(item!.enabled).toBe(true);
-    expect(item!.timeLimit).toBeNull();
-  });
+  /** ルールの集合がホスト名を `||キー` の範囲で覆うか */
+  function ruleCovers(ruleDomains: readonly string[], host: string): boolean {
+    return ruleDomains.some((key) => host === key || host.endsWith(`.${key}`));
+  }
 
-  it('計測キーは youtubeBlockService と同じドメインにする', () => {
-    // ずれると時間制限の超過判定が別のキーを読み、永久に超過しなくなる
-    const item = getYouTubeBlockItem(
-      createSettings({ youtube: youtubeSettings() })
-    );
-
-    expect(item!.domain).toBe(YOUTUBE_DOMAIN);
-  });
-
-  it('時間制限の設定をそのまま引き継ぐ', () => {
-    const timeLimit = { type: 'daily' as const, limitSeconds: 60 };
-    const item = getYouTubeBlockItem(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-
-    expect(item!.timeLimit).toEqual(timeLimit);
-  });
-
-  it.each([
-    ['YouTube 自体が無効', { enabled: false, blockAccess: true }],
-    ['アクセスブロックが無効', { enabled: true, blockAccess: false }],
-    ['どちらも無効', { enabled: false, blockAccess: false }]
-  ])('%s のときは null を返す', (_label, overrides) => {
-    const item = getYouTubeBlockItem(
-      createSettings({ youtube: youtubeSettings(overrides) })
-    );
-
-    expect(item).toBeNull();
-  });
-});
-
-describe('getBlockState - YouTube（仮想のブロック項目）', () => {
-  it.each([
-    ['https://youtube.com/'],
-    ['https://www.youtube.com/watch?v=abc'],
-    ['https://m.youtube.com/']
-  ])('%s は時間制限なしなら常時ブロックする', async (url) => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings() })
-    );
-
-    const result = await getBlockState(url);
-
-    expect(result.blocked).toBe(true);
-    expect(result.reason).toBe('always_blocked');
-  });
-
-  it('アクセスブロックが無効ならブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ blockAccess: false }) })
-    );
-
-    const result = await getBlockState('https://www.youtube.com/');
-
-    expect(result.blocked).toBe(false);
-    expect(result.reason).toBeNull();
-  });
-
-  it('YouTube 自体が無効ならブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ enabled: false }) })
-    );
-
-    const result = await getBlockState('https://www.youtube.com/');
-
-    expect(result.blocked).toBe(false);
-  });
-
-  it('一時停止中はブロックしない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ paused: true, youtube: youtubeSettings() })
-    );
-
-    const result = await getBlockState('https://www.youtube.com/');
-
-    expect(result.blocked).toBe(false);
-  });
-
-  it('スケジュール外ではブロックしない', async () => {
-    mockIsWithinSchedule.mockReturnValue(false);
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        youtube: youtubeSettings(),
-        schedules: OUT_OF_SCHEDULE
-      })
-    );
-
-    const result = await getBlockState('https://www.youtube.com/');
-
-    expect(result.blocked).toBe(false);
-  });
-
-  it('時間制限を超過したらブロックする', async () => {
-    const timeLimit = { type: 'daily' as const, limitSeconds: 60 };
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(true);
-
-    const result = await getBlockState('https://www.youtube.com/watch?v=abc');
-
-    expect(result.blocked).toBe(true);
-    expect(result.reason).toBe('time_limit_exceeded');
-  });
-
-  it('時間制限が未超過ならブロックせず残り時間を返す', async () => {
-    const timeLimit = { type: 'daily' as const, limitSeconds: 60 };
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(false);
-    mockGetRemainingTime.mockResolvedValue(30);
-
-    const result = await getBlockState('https://www.youtube.com/watch?v=abc');
-
-    expect(result.blocked).toBe(false);
-    expect(result.remainingSeconds).toBe(30);
-  });
-
-  it('使用実績はホスト名ではなく youtube.com で引く', async () => {
-    // 計測は youtubeBlockService が 'youtube.com' 固定で記録するため、
-    // 'www.youtube.com' で引くと永久に超過しない
-    const timeLimit = { type: 'daily' as const, limitSeconds: 60 };
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-    mockHasExceededTimeLimit.mockResolvedValue(true);
-
-    await getBlockState('https://www.youtube.com/watch?v=abc');
-
-    expect(mockHasExceededTimeLimit).toHaveBeenCalledWith(
-      YOUTUBE_DOMAIN,
-      expect.objectContaining({ timeLimit })
-    );
-  });
-
-  it('ブロックリストに同じドメインがあればそちらの設定が優先される', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        youtube: youtubeSettings(),
+  const cases: [
+    string,
+    Partial<AppSettings>,
+    Record<string, number>,
+    boolean
+  ][] = [
+    ['常時ブロック', { blockList: [item()] }, {}, false],
+    [
+      'スケジュール外の常時ブロック',
+      { blockList: [item()], schedules: OUT_OF_SCHEDULE },
+      {},
+      true
+    ],
+    [
+      '上限に達した時間制限',
+      { blockList: [limitedItem({ domain: 'www.example.com' })] },
+      { [PARENT]: LIMIT_SECONDS },
+      false
+    ],
+    [
+      '上限未満の時間制限',
+      { blockList: [limitedItem()] },
+      { [PARENT]: 1 },
+      false
+    ],
+    [
+      'スケジュール外で上限に達した時間制限',
+      { blockList: [limitedItem()], schedules: OUT_OF_SCHEDULE },
+      { [PARENT]: LIMIT_SECONDS },
+      true
+    ],
+    ['一時停止中', { paused: true, blockList: [item()] }, {}, false],
+    [
+      '親ブロック + 子無効',
+      {
+        blockList: [item(), item({ id: '2', domain: CHILD, enabled: false })]
+      },
+      {},
+      false
+    ],
+    [
+      '親無効 + 子ブロック',
+      {
+        blockList: [item({ enabled: false }), item({ id: '2', domain: CHILD })]
+      },
+      {},
+      false
+    ],
+    [
+      '親に時間制限（上限未満）+ 子常時',
+      { blockList: [limitedItem(), item({ id: '2', domain: CHILD })] },
+      { [PARENT]: 1 },
+      false
+    ],
+    [
+      '親に時間制限（上限到達）+ 子に時間制限（上限未満）',
+      {
+        blockList: [limitedItem(), limitedItem({ id: '2', domain: CHILD })]
+      },
+      { [PARENT]: LIMIT_SECONDS, [CHILD]: 1 },
+      false
+    ],
+    [
+      '同じサイトキーの重複登録（無効 + 有効）',
+      {
         blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: false
-          }
+          item({ enabled: false }),
+          item({ id: '2', domain: `www.${PARENT}` })
         ]
-      })
-    );
+      },
+      {},
+      false
+    ]
+  ];
 
-    const result = await getBlockState('https://www.youtube.com/');
+  it.each(cases)('%s', async (_label, settings, seconds, outOfSchedule) => {
+    mockIsWithinSchedule.mockReturnValue(!outOfSchedule);
+    givenSettings(settings);
+    givenSeconds(seconds);
 
-    expect(result.blocked).toBe(false);
-  });
-});
-
-describe('getActiveBlockedDomains - YouTube の時間制限', () => {
-  const timeLimit = { type: 'daily' as const, limitSeconds: 60 };
-
-  beforeEach(() => {
-    mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
-  });
-
-  it('時間制限が未超過ならブロック対象に含めない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-    mockCheckTimeLimitExceeded.mockReturnValue(false);
-
-    const result = await getActiveBlockedDomains();
-
-    expect(result).toEqual([]);
-  });
-
-  it('時間制限を超過したらブロック対象に含める', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ timeLimit }) })
-    );
-    mockCheckTimeLimitExceeded.mockReturnValue(true);
-
-    const result = await getActiveBlockedDomains();
-
-    expect(result).toContain('youtube.com');
-    expect(result).toContain('www.youtube.com');
-    expect(mockCheckTimeLimitExceeded).toHaveBeenCalledWith(
-      YOUTUBE_DOMAIN,
-      timeLimit,
-      DEFAULT_ANALYTICS
-    );
-  });
-
-  it('アクセスブロックが無効ならブロック対象に含めない', async () => {
-    mockGetSettings.mockResolvedValue(
-      createSettings({ youtube: youtubeSettings({ blockAccess: false }) })
-    );
-
-    const result = await getActiveBlockedDomains();
-
-    expect(result).toEqual([]);
-  });
-
-  it('ブロックリストに同じドメインがあれば仮想項目を使わない', async () => {
-    // getBlockState と優先順位を揃えないと、開いているタブはブロックされないのに
-    // 新しい遷移だけがブロックされる食い違いが起きる
-    mockGetSettings.mockResolvedValue(
-      createSettings({
-        youtube: youtubeSettings(),
-        blockList: [
-          {
-            id: 'b1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: '2024-01-01T00:00:00Z',
-            enabled: true,
-            timeLimit
-          }
-        ]
-      })
-    );
-    mockCheckTimeLimitExceeded.mockReturnValue(false);
-
-    const result = await getActiveBlockedDomains();
-
-    expect(result).toEqual([]);
+    const ruleDomains = await getActiveBlockedDomains();
+    for (const host of HOSTS) {
+      const state = await getBlockStateForDomain(host);
+      expect({ host, blocked: state.blocked }).toEqual({
+        host,
+        blocked: ruleCovers(ruleDomains, host)
+      });
+    }
   });
 });

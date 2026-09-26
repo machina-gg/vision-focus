@@ -6,7 +6,7 @@
  * name ごとに束ねる。送信側の引数と戻り値はその ProtocolMap で縛られる
  */
 
-import type { TimeLimitInfo } from '~/lib/timeLimitService';
+import type { TimeLimitType } from './site';
 
 // Re-export types inferred from Zod schemas
 export {
@@ -47,6 +47,17 @@ export interface GetStatsResponse {
     domain: string;
     count: number;
   } | null;
+}
+
+/**
+ * 開いているページのサイトの時間制限（ポップアップの残り時間バッジが読む）。
+ * 残り時間は判定（`evaluateBlock`）の値なので、一時停止中・スケジュール外は null になる
+ */
+export interface TimeLimitInfo {
+  hasTimeLimit: boolean;
+  remainingSeconds: number | null;
+  limitType: TimeLimitType | null;
+  limitSeconds: number | null;
 }
 
 // Get Remaining Time (use GetRemainingTimeBody from messageSchemas.ts)

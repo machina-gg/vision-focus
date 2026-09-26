@@ -23,28 +23,17 @@ vi.mock('~/lib/storage', () => ({
   setUnblockHistory: vi.fn()
 }));
 
-vi.mock('../time-limit', () => ({
-  recordTimeLimitUsage: vi.fn(),
-  findBlockItemForDomain: vi.fn(async () => null)
+vi.mock('~/lib/blockService', () => ({
+  getSiteBlockStatuses: vi.fn(async () => [])
 }));
 
 vi.mock('../notifications', () => ({
-  checkTimeLimitNotification: vi.fn(),
-  checkYouTubeTimeLimitNotification: vi.fn()
+  checkTimeLimitNotification: vi.fn()
 }));
 
 vi.mock('../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
-}));
-
-vi.mock('~/lib/youtubeBlockService', () => ({
-  recordYouTubeTimeLimitUsage: vi.fn(),
-  hasYouTubeExceededTimeLimit: vi.fn(async () => false)
-}));
-
-vi.mock('~/lib/timeLimitService', () => ({
-  hasExceededTimeLimit: vi.fn(async () => false)
 }));
 
 vi.mock('~/lib/time', () => ({

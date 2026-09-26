@@ -26,8 +26,6 @@ export default defineConfig({
         'src/types/messages.ts',
         'src/types/report.ts',
         'src/types/storageSchemas.ts',
-        // re-export のみのファイル（ロジックを持たず、実体は src/lib 側でテスト済み）
-        'src/background/time-limit.ts',
         // WXT のエントリポイント。ビルド時の仮想モジュール `#imports` に依存しており
         // vitest からは読み込めない（src/background/init.ts の説明を参照）。
         // vitest 4 の AST ベース解析は未変換の TS をパースできずエラーを出して自動除外するので、

@@ -120,8 +120,7 @@ const BlocklistTabWrapper = () => {
         onRemoveDomain={handleRemoveDomain}
         onToggleDomain={handleToggleDomain}
         onUpdateTimeLimit={() => {}}
-        siteBlockCounts={{}}
-        timeLimitUsage={{}}
+        activity={{}}
         youtube={settings.youtube}
         onYouTubeChange={handleYouTubeChange}
       />
@@ -151,8 +150,7 @@ const meta = {
     onRemoveDomain: () => {},
     onToggleDomain: () => {},
     onUpdateTimeLimit: () => {},
-    siteBlockCounts: {},
-    timeLimitUsage: {},
+    activity: {},
     youtube: mockSettings.youtube,
     onYouTubeChange: () => {}
   }
@@ -180,8 +178,7 @@ export const LongUrlInput: Story = {
         onRemoveDomain={() => {}}
         onToggleDomain={() => {}}
         onUpdateTimeLimit={() => {}}
-        siteBlockCounts={{}}
-        timeLimitUsage={{}}
+        activity={{}}
         youtube={mockSettings.youtube}
         onYouTubeChange={() => {}}
       />
