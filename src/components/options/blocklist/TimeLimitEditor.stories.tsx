@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { TimeLimitEditor } from './TimeLimitEditor';
 import type { BlockItem, TimeLimitUsage } from '~/types/storage';

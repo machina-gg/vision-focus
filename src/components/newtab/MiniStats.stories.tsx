@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { MiniStats } from './MiniStats';
 
@@ -6,14 +6,10 @@ const meta = {
   title: 'Newtab/MiniStats',
   component: MiniStats,
   parameters: {
-    layout: 'centered',
-    backgrounds: {
-      default: 'dark',
-      values: [
-        { name: 'dark', value: '#1f2937' },
-        { name: 'light', value: '#ffffff' }
-      ]
-    }
+    layout: 'centered'
+  },
+  globals: {
+    backgrounds: { value: 'dark' }
   },
   tags: ['autodocs']
 } satisfies Meta<typeof MiniStats>;

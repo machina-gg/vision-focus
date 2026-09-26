@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { SchedulesTab } from './SchedulesTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';

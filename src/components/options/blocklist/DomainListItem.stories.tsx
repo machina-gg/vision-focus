@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DomainListItem } from './DomainListItem';
 import type { BlockItem, TimeLimitUsage } from '~/types/storage';

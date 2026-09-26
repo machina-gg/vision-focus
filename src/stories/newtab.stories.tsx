@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GoalDisplay, MiniStats, BlockedSitesList } from '~/components/newtab';
 import { DownloadButton } from '~/components/features';

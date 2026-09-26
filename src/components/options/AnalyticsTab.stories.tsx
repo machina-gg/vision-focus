@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AnalyticsTab } from './AnalyticsTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';
