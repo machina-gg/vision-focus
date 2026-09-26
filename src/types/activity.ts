@@ -24,12 +24,31 @@ export interface DailySiteActivity {
 /** 日付キー × サイトキー → その日の事実。活動の事実の置き場はここだけ */
 export type ActivityLog = Record<DateKey, Record<SiteKey, DailySiteActivity>>;
 
-/**
- * 事実の表の書き手に渡す出来事。
- * stay = 表示されていた秒数 / block = アクセスがブロックされた / unblock = 利用者がブロックを解除した。
- * site は出来事が起きたサイト、at は出来事の時刻（どの日に数えるかの判定に使う）
- */
+/** 事実の表の書き手に渡す出来事 */
 export type ActivityEvent =
-  | { kind: 'stay'; site: SiteKey; seconds: number; at: Date }
-  | { kind: 'block'; site: SiteKey; at: Date }
-  | { kind: 'unblock'; site: SiteKey; at: Date };
+  | {
+      /** ページが表示されていた */
+      kind: 'stay';
+      /** 出来事が起きたサイト */
+      site: SiteKey;
+      /** 表示されていた秒数 */
+      seconds: number;
+      /** 出来事の時刻（どの日に数えるかの判定に使う） */
+      at: Date;
+    }
+  | {
+      /** ページへのアクセスがブロックされた */
+      kind: 'block';
+      /** 出来事が起きたサイト */
+      site: SiteKey;
+      /** 出来事の時刻（どの日に数えるかの判定に使う） */
+      at: Date;
+    }
+  | {
+      /** 利用者がブロックを解除した */
+      kind: 'unblock';
+      /** 出来事が起きたサイト */
+      site: SiteKey;
+      /** 出来事の時刻（どの日に数えるかの判定に使う） */
+      at: Date;
+    };

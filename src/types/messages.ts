@@ -6,20 +6,48 @@ import type {
 import type { NestedSite } from '~/lib/siteKey';
 import type { TimeLimitType } from './site';
 
-/**
- * background が画面へ返す失敗の種類。文言は画面が messageErrorText で i18n にする。
- * nested-site の domain は依頼された表記、nested は入れ子になる既存のサイトとその関係
- */
+/** background が画面へ返す失敗の種類。文言は画面が messageErrorText で i18n にする */
 export type MessageError =
-  | { code: 'invalid-request' }
-  | { code: 'invalid-url' }
-  | { code: 'invalid-domain' }
-  | { code: 'already-blocked' }
-  | { code: 'already-tracked' }
-  | { code: 'nested-site'; domain: string; nested: NestedSite }
-  | { code: 'block-not-found' }
-  | { code: 'site-in-use' }
-  | { code: 'save-failed' };
+  | {
+      /** 依頼の本文が不正 */
+      code: 'invalid-request';
+    }
+  | {
+      /** URL を読めない */
+      code: 'invalid-url';
+    }
+  | {
+      /** ドメインとして正しくない */
+      code: 'invalid-domain';
+    }
+  | {
+      /** 既にブロックリストにある */
+      code: 'already-blocked';
+    }
+  | {
+      /** 既に追跡中 */
+      code: 'already-tracked';
+    }
+  | {
+      /** 既存のサイトと入れ子になる */
+      code: 'nested-site';
+      /** 依頼された表記 */
+      domain: string;
+      /** 入れ子になる既存のサイトとその関係 */
+      nested: NestedSite;
+    }
+  | {
+      /** ブロックリストに対象の項目が無い */
+      code: 'block-not-found';
+    }
+  | {
+      /** ブロック設定か YouTube の機能が残っているため追跡をやめられない */
+      code: 'site-in-use';
+    }
+  | {
+      /** 保存に失敗した */
+      code: 'save-failed';
+    };
 
 /** サイトをブロックリストに加える依頼 */
 export interface AddBlockRequest {
