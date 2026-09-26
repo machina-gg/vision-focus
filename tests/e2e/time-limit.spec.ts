@@ -2,16 +2,14 @@ import { test, expect } from './fixtures/extension';
 import { openExternalSite, openOptions, openPopup } from './helpers/pages';
 import {
   makeSettings,
-  makeAnalytics,
-  makeTimeLimitUsage,
+  makeActivity,
   clearStorageFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS } from './helpers/constants';
 import {
-  getStorageViaSW,
+  getBlockRuleFilters,
   setupStorageViaSW,
   triggerBlockRuleRecompute,
-  triggerTimeLimitReset,
   waitForBlockRules,
   waitForNoBlockRules
 } from './helpers/sw';
@@ -30,7 +28,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
   test('TL-003: Time Limit 超過時に newtab.html へリダイレクトされる', async ({
     context
   }) => {
-    // 使用実績（analytics）と設定を SW 経由でまとめて書く。
+    // 使用実績（activity の今日の行）と設定を SW 経由でまとめて書く。
     // options を開いて書くと、アプリが state を書き戻して上書きしたり、
     // 時間制限値をプリセットに丸めたりするため、意図した状態にならない
     await setupStorageViaSW(context, {
@@ -46,14 +44,12 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
-          daily: 100 // 60秒を超過
-        })
+      activity: makeActivity({
+        [TEST_DOMAINS.example]: { seconds: 100 } // 60秒を超過
       })
     });
 
-    // 超過判定は analytics を見るが、analytics の変更は再計算のトリガーに
+    // 超過判定は activity を見るが、activity の変更は再計算のトリガーに
     // ならない。実装と同じ経路（check-schedule アラーム）で再計算させる
     await triggerBlockRuleRecompute(context);
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
@@ -72,10 +68,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     await blockedPage.close();
   });
 
-  // TL-004 / TL-005（超過後の日付・時刻変更によるリセット）は削除した。
-  // リセットの実処理（time-limit-reset アラーム → resetExpiredUsage）を
-  // 通さず、ルールの再計算もしていなかったため「ブロックされない」が
-  // 常に成立していた。同じ観点は TL-009 で実際の経路を通して検証している。
+  // 日付が変わったときの扱いは TL-009 で検証する（前日の行だけがある状態で
+  // ルールを再計算させる）。
 
   test('TL-006: 残り時間がポップアップで表示される', async ({
     context,
@@ -94,11 +88,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, {
-          daily: 30
-        })
-      })
+      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 30 } })
     });
 
     // 外部サイトを開いてからポップアップを開く
@@ -143,9 +133,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 60 })
-      })
+      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 60 } })
     });
 
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
@@ -174,9 +162,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 100 })
-      })
+      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 100 } })
     });
 
     await triggerBlockRuleRecompute(context);
@@ -199,7 +185,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // 前日の使用実績で超過している状態を作る
+    // 前日（ローカル日付）の行だけが上限を超えている状態を作る。
+    // 使用量は今日の行だけを読むので、リセット処理を経ずに今日は 0 秒になる
     await setupStorageViaSW(context, {
       settings: makeSettings({
         blockList: [
@@ -210,32 +197,30 @@ test.describe('TimeLimit - Time Limit 機能', () => {
             createdAt: new Date().toISOString(),
             enabled: true,
             timeLimit: { type: 'daily', limitSeconds: 60 }
+          },
+          // 再計算が走ったことの目印。これが無いとルールが 0 件のままになり、
+          // 「今日は超過していないから載らない」と「まだ再計算されていない」を区別できない
+          {
+            id: '2',
+            domain: TEST_DOMAINS.reddit,
+            isWildcard: false,
+            createdAt: new Date().toISOString(),
+            enabled: true
           }
         ]
       }),
-      analytics: makeAnalytics({
-        timeLimitUsage: makeTimeLimitUsage(
-          TEST_DOMAINS.example,
-          { daily: 100 },
-          yesterday
-        )
-      })
+      activity: makeActivity(
+        { [TEST_DOMAINS.example]: { seconds: 100 } },
+        yesterday
+      )
     });
 
-    // 実装と同じ経路（time-limit-reset アラーム）でリセットさせる
-    await triggerTimeLimitReset(context);
-
-    await expect
-      .poll(async () => {
-        const analytics = await getStorageViaSW(context, 'analytics');
-        return analytics?.timeLimitUsage?.[TEST_DOMAINS.example]
-          ?.dailyUsedSeconds;
-      })
-      .toBe(0);
-
-    // リセット後は超過していないため、アクセスできる
+    // 今日は超過していないため、実装と同じ経路（check-schedule アラーム）で
+    // 再計算してもルールに載らず、アクセスできる
     await triggerBlockRuleRecompute(context);
-    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
+    await waitForBlockRules(context, [TEST_DOMAINS.reddit]);
+    const filters = await getBlockRuleFilters(context);
+    expect(filters.some((f) => f.includes(TEST_DOMAINS.example))).toBe(false);
 
     const page = await openExternalSite(
       context,
@@ -270,11 +255,9 @@ test.describe('TimeLimit - Time Limit 機能', () => {
         ]
       }),
       // example.com は超過（70/60）、reddit.com は未超過（10/300）
-      analytics: makeAnalytics({
-        timeLimitUsage: {
-          ...makeTimeLimitUsage(TEST_DOMAINS.example, { daily: 70 }),
-          ...makeTimeLimitUsage(TEST_DOMAINS.reddit, { daily: 10 })
-        }
+      activity: makeActivity({
+        [TEST_DOMAINS.example]: { seconds: 70 },
+        [TEST_DOMAINS.reddit]: { seconds: 10 }
       })
     });
 

@@ -1,5 +1,15 @@
-import type { BlockState } from '~/lib/blockService';
 import type { BlockRule } from '~/types/site';
+
+/** ブロックの理由。null = ブロックしていない */
+export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
+
+/** ブロックの判定結果 */
+export interface BlockState {
+  blocked: boolean;
+  reason: BlockReason;
+  /** 時間制限が効いているときの今日の残り秒数（スケジュール外・一時停止中は持たない） */
+  remainingSeconds?: number;
+}
 
 export interface BlockContext {
   /** 全体の一時停止 */

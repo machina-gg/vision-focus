@@ -30,7 +30,6 @@ export {
   type SiteUnblockCount,
   type TimeLimitType,
   type TimeLimit,
-  type TimeLimitUsage,
   type AnalyticsData,
   type TrackedSite,
   type UnblockedSite,

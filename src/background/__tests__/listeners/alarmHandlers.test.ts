@@ -13,10 +13,6 @@ vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn()
 }));
 
-vi.mock('../../time-limit', () => ({
-  resetExpiredUsage: vi.fn()
-}));
-
 vi.mock('../../notifications', () => ({
   clearExpiredNotifications: vi.fn()
 }));
@@ -30,7 +26,6 @@ import { sendDailyActive } from '~/lib/analytics';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
 import { updateBlockRules } from '../../blocker';
-import { resetExpiredUsage } from '../../time-limit';
 import { clearExpiredNotifications } from '../../notifications';
 import {
   setupAlarmHandlers,
@@ -40,7 +35,6 @@ import { DEFAULT_ANALYTICS } from '~/types/storage';
 import {
   ALARM_DAILY_CLEANUP_MINUTES,
   ALARM_CHECK_SCHEDULE_MINUTES,
-  ALARM_TIME_LIMIT_RESET_MINUTES,
   MAX_HISTORY_DAYS_FALLBACK
 } from '~/constants/intervals';
 import type { DailyStat } from '~/types/storage';
@@ -103,7 +97,7 @@ afterEach(() => {
 });
 
 describe('createAlarms', () => {
-  it('3 種類の定期アラームを作成する', () => {
+  it('2 種類の定期アラームを作成する', () => {
     createAlarms();
 
     expect(harness.create).toHaveBeenCalledWith('daily-cleanup', {
@@ -112,9 +106,7 @@ describe('createAlarms', () => {
     expect(harness.create).toHaveBeenCalledWith('check-schedule', {
       periodInMinutes: ALARM_CHECK_SCHEDULE_MINUTES
     });
-    expect(harness.create).toHaveBeenCalledWith('time-limit-reset', {
-      periodInMinutes: ALARM_TIME_LIMIT_RESET_MINUTES
-    });
+    expect(harness.create).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -174,6 +166,14 @@ describe('setupAlarmHandlers', () => {
       expect(pruneBefore).toHaveBeenCalledWith(toDateKey(cutoff));
     });
 
+    it('前日以前の通知済みの記録を消す', async () => {
+      setupAlarmHandlers();
+
+      await harness.fire('daily-cleanup');
+
+      expect(clearExpiredNotifications).toHaveBeenCalledOnce();
+    });
+
     it('日次アクティブを送信する', async () => {
       setupAlarmHandlers();
 
@@ -199,27 +199,7 @@ describe('setupAlarmHandlers', () => {
 
       expect(setAnalytics).not.toHaveBeenCalled();
       expect(pruneBefore).not.toHaveBeenCalled();
-      expect(resetExpiredUsage).not.toHaveBeenCalled();
       expect(clearExpiredNotifications).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('time-limit-reset', () => {
-    it('期限切れの使用量をリセットし、通知状態も消す', async () => {
-      setupAlarmHandlers();
-
-      await harness.fire('time-limit-reset');
-
-      expect(resetExpiredUsage).toHaveBeenCalledOnce();
-      expect(clearExpiredNotifications).toHaveBeenCalledOnce();
-    });
-
-    it('ブロックルールの更新は行わない', async () => {
-      setupAlarmHandlers();
-
-      await harness.fire('time-limit-reset');
-
-      expect(updateBlockRules).not.toHaveBeenCalled();
     });
   });
 
@@ -231,6 +211,5 @@ describe('setupAlarmHandlers', () => {
     expect(setAnalytics).not.toHaveBeenCalled();
     expect(sendDailyActive).not.toHaveBeenCalled();
     expect(updateBlockRules).not.toHaveBeenCalled();
-    expect(resetExpiredUsage).not.toHaveBeenCalled();
   });
 });

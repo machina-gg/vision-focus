@@ -38,12 +38,6 @@ export const UpdateTimeLimitBodySchema = z.object({
 export type UpdateTimeLimitBody = z.infer<typeof UpdateTimeLimitBodySchema>;
 
 // Schema for AnalyticsData validation (used in youtube.ts content script)
-const TimeLimitUsageSchema = z.object({
-  domain: z.string(),
-  dailyUsedSeconds: z.number(),
-  lastDailyReset: z.string()
-});
-
 const DailyStatSchema = z.object({
   date: z.string(),
   wasteTime: z.number(),
@@ -68,8 +62,7 @@ export const AnalyticsDataSchema = z.object({
   dailyStats: z.record(z.string(), DailyStatSchema),
   siteTime: z.record(z.string(), SiteTimeSchema),
   siteCategories: z.record(z.string(), z.enum(['waste', 'invest', 'neutral'])),
-  siteBlockCounts: z.record(z.string(), SiteBlockCountSchema),
-  timeLimitUsage: z.record(z.string(), TimeLimitUsageSchema)
+  siteBlockCounts: z.record(z.string(), SiteBlockCountSchema)
 });
 
 // Schema for YouTubeSettings validation (used in youtube.ts content script)

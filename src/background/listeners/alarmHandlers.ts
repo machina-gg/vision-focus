@@ -3,11 +3,9 @@ import { sendDailyActive } from '~/lib/analytics';
 import {
   ALARM_DAILY_CLEANUP_MINUTES,
   ALARM_CHECK_SCHEDULE_MINUTES,
-  ALARM_TIME_LIMIT_RESET_MINUTES,
   MAX_HISTORY_DAYS_FALLBACK
 } from '~/constants/intervals';
 import { updateBlockRules } from '../blocker';
-import { resetExpiredUsage } from '../time-limit';
 import { clearExpiredNotifications } from '../notifications';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
@@ -54,25 +52,19 @@ async function pruneOldActivity(): Promise<void> {
 /**
  * アラームリスナーを登録する
  * - daily-cleanup: 古いデータの削除と日次アクティブ送信
- * - check-schedule: スケジュール変更のチェック
- * - time-limit-reset: 期限切れ時間制限のリセット
+ * - check-schedule: ブロックルールの再計算。スケジュールの切り替わりと、日付が変わって
+ *   時間制限の使用量（今日の行）が 0 に戻ったことをルールに反映する
  */
 export function setupAlarmHandlers(): void {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'daily-cleanup') {
       await cleanupOldAnalytics();
       await pruneOldActivity();
+      clearExpiredNotifications();
       await sendDailyActive();
     }
     if (alarm.name === 'check-schedule') {
-      // Update block rules every minute to handle schedule changes
       await updateBlockRules();
-    }
-    if (alarm.name === 'time-limit-reset') {
-      // Reset expired time limit usage
-      await resetExpiredUsage();
-      // Clear notification state for domains that have reset
-      clearExpiredNotifications();
     }
   });
 }
@@ -86,8 +78,5 @@ export function createAlarms(): void {
   });
   chrome.alarms.create('check-schedule', {
     periodInMinutes: ALARM_CHECK_SCHEDULE_MINUTES
-  });
-  chrome.alarms.create('time-limit-reset', {
-    periodInMinutes: ALARM_TIME_LIMIT_RESET_MINUTES
   });
 }

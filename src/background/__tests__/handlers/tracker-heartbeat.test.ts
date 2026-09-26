@@ -23,33 +23,13 @@ vi.mock('~/lib/storage', () => ({
   }
 }));
 
-vi.mock('../../time-limit', () => ({
-  recordTimeLimitUsage: vi.fn(),
-  findBlockItemForDomain: vi.fn()
-}));
-
 vi.mock('../../notifications', () => ({
-  checkTimeLimitNotification: vi.fn(),
-  checkYouTubeTimeLimitNotification: vi.fn()
+  checkTimeLimitNotification: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
-}));
-
-vi.mock('~/lib/youtubeBlockService', () => ({
-  recordYouTubeTimeLimitUsage: vi.fn(),
-  hasYouTubeExceededTimeLimit: vi.fn()
-}));
-
-vi.mock('~/lib/timeLimitService', () => ({
-  hasExceededTimeLimit: vi.fn()
-}));
-
-vi.mock('~/lib/time', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('~/lib/time')>()),
-  getTodayKey: vi.fn(() => '2026-08-11')
 }));
 
 vi.mock('~/lib/siteService', () => ({
@@ -63,17 +43,8 @@ import {
   getUnblockHistory,
   setUnblockHistory
 } from '~/lib/storage';
-import { recordTimeLimitUsage, findBlockItemForDomain } from '../../time-limit';
-import {
-  checkTimeLimitNotification,
-  checkYouTubeTimeLimitNotification
-} from '../../notifications';
+import { checkTimeLimitNotification } from '../../notifications';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
-import {
-  recordYouTubeTimeLimitUsage,
-  hasYouTubeExceededTimeLimit
-} from '~/lib/youtubeBlockService';
-import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
@@ -83,7 +54,11 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_YOUTUBE_SETTINGS
 } from '~/types/storage';
-import type { TrackedSite, YouTubeSettings } from '~/types/storage';
+import type {
+  AppSettings,
+  TrackedSite,
+  YouTubeSettings
+} from '~/types/storage';
 import { TRACKER_CONFIG } from '~/constants/limits';
 
 interface Response {
@@ -132,6 +107,35 @@ function givenYouTubeSettings(overrides: Partial<YouTubeSettings> = {}) {
   });
 }
 
+const LIMIT_SECONDS = 1800;
+
+/** example.com を時間制限つきでブロックリストに入れ、追跡中にする */
+function givenTimeLimitedExample(overrides: Partial<AppSettings> = {}) {
+  vi.mocked(getSettings).mockResolvedValue({
+    ...DEFAULT_SETTINGS,
+    blockList: [
+      {
+        id: 'item-1',
+        domain: 'example.com',
+        isWildcard: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        enabled: true,
+        timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
+      }
+    ],
+    ...overrides
+  });
+  vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
+}
+
+/** 今日（ローカル日付）の行にサイトの滞在秒数を入れておく */
+function givenTodaySeconds(site: string, seconds: number) {
+  const log: ActivityLog = {
+    [toDateKey(new Date())]: { [site]: { seconds, blocks: 0, unblocks: 0 } }
+  };
+  activityStore.value = log;
+}
+
 describe('tracker-heartbeat ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -144,9 +148,6 @@ describe('tracker-heartbeat ハンドラ', () => {
       siteTime: {},
       dailyStats: {}
     });
-    vi.mocked(findBlockItemForDomain).mockResolvedValue(null);
-    vi.mocked(hasExceededTimeLimit).mockResolvedValue(false);
-    vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(false);
     vi.mocked(getTrackedSiteKeys).mockResolvedValue([]);
     activityStore.value = undefined;
     givenYouTubeSettings({
@@ -246,7 +247,7 @@ describe('tracker-heartbeat ハンドラ', () => {
   describe('計測タイマー', () => {
     it('active 後、記録間隔ごとに時間を計測する', async () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-08-11T00:00:00.000Z'));
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
       const handler = await loadHandler();
 
       await invoke(handler, {
@@ -257,9 +258,7 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
-      // 追跡対象（時間制限・解除履歴）でないため保存はされないが、
-      // 計測対象の判定処理までは到達している
-      expect(findBlockItemForDomain).toHaveBeenCalledWith('example.com');
+      expect(getTrackedSiteKeys).toHaveBeenCalled();
     });
 
     it('inactive にすると計測されなくなる', async () => {
@@ -278,7 +277,7 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
-      expect(findBlockItemForDomain).not.toHaveBeenCalled();
+      expect(getTrackedSiteKeys).not.toHaveBeenCalled();
     });
 
     it('ハートビートが途絶えると計測を止める', async () => {
@@ -296,154 +295,150 @@ describe('tracker-heartbeat ハンドラ', () => {
         TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS +
           TRACKER_CONFIG.RECORDING_INTERVAL_MS
       );
-      vi.mocked(findBlockItemForDomain).mockClear();
+      vi.mocked(getTrackedSiteKeys).mockClear();
 
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
-      expect(findBlockItemForDomain).not.toHaveBeenCalled();
+      expect(getTrackedSiteKeys).not.toHaveBeenCalled();
     });
   });
 
-  describe('時間制限付きサイトの計測', () => {
-    it('時間制限付きサイトの利用時間を記録し通知を確認する', async () => {
-      vi.useFakeTimers();
-      vi.mocked(findBlockItemForDomain).mockResolvedValue({
-        id: 'item-1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        enabled: true,
-        timeLimit: { type: 'daily', limitSeconds: 1800 }
-      });
+  describe('時間制限の適用（使用量は activity の今日の行）', () => {
+    async function showExampleFor(intervals = 1) {
       const handler = await loadHandler();
-
       await invoke(handler, {
-        url: 'https://example.com',
+        url: 'https://www.example.com/page',
         status: 'active',
         timestamp: Date.now()
       });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(recordTimeLimitUsage).toHaveBeenCalledWith(
-        'example.com',
-        RECORDED_SECONDS
+      await vi.advanceTimersByTimeAsync(
+        TRACKER_CONFIG.RECORDING_INTERVAL_MS * intervals
       );
-      expect(checkTimeLimitNotification).toHaveBeenCalledWith('example.com');
+    }
+
+    it('記録した滞在を含めた残り時間で通知を確認する', async () => {
+      vi.useFakeTimers();
+      givenTimeLimitedExample();
+      givenTodaySeconds('example.com', 100);
+
+      await showExampleFor();
+
+      // www. 付きのホストでもサイトキーで引く
+      expect(checkTimeLimitNotification).toHaveBeenCalledWith({
+        site: 'example.com',
+        rule: {
+          enabled: true,
+          timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
+        },
+        state: {
+          blocked: false,
+          reason: null,
+          remainingSeconds: LIMIT_SECONDS - 100 - RECORDED_SECONDS
+        }
+      });
+      expect(updateBlockRules).not.toHaveBeenCalled();
     });
 
-    it('制限を超過したら即座にブロックルールを適用する', async () => {
+    it('この記録で上限に達したら、その場でルールを更新し開いているタブもブロックする', async () => {
       vi.useFakeTimers();
-      vi.mocked(findBlockItemForDomain).mockResolvedValue({
-        id: 'item-1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        enabled: true,
-        timeLimit: { type: 'daily', limitSeconds: 1800 }
-      });
-      vi.mocked(hasExceededTimeLimit).mockResolvedValue(true);
-      const handler = await loadHandler();
+      givenTimeLimitedExample();
+      givenTodaySeconds('example.com', LIMIT_SECONDS - RECORDED_SECONDS);
 
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+      await showExampleFor();
 
-      expect(updateBlockRules).toHaveBeenCalled();
-      expect(blockExistingTabs).toHaveBeenCalled();
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
 
-    it('制限未超過ならブロックルールを再適用しない', async () => {
+    it('前日の使用量は数えない', async () => {
       vi.useFakeTimers();
-      vi.mocked(findBlockItemForDomain).mockResolvedValue({
-        id: 'item-1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        enabled: true,
-        timeLimit: { type: 'daily', limitSeconds: 1800 }
-      });
-      const handler = await loadHandler();
+      givenTimeLimitedExample();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      activityStore.value = {
+        [toDateKey(yesterday)]: {
+          'example.com': { seconds: LIMIT_SECONDS * 2, blocks: 0, unblocks: 0 }
+        }
+      } satisfies ActivityLog;
 
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+      await showExampleFor();
 
       expect(updateBlockRules).not.toHaveBeenCalled();
     });
-  });
 
-  describe('YouTube の計測', () => {
-    it('youtube.com は専用の計測処理を通す', async () => {
+    it('一時停止中は上限を超えていても適用しない', async () => {
       vi.useFakeTimers();
-      const handler = await loadHandler();
+      givenTimeLimitedExample({ paused: true });
+      givenTodaySeconds('example.com', LIMIT_SECONDS * 2);
 
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      // www 有無を正規化して判定している
-      expect(recordYouTubeTimeLimitUsage).toHaveBeenCalledWith(
-        RECORDED_SECONDS
-      );
-      expect(checkYouTubeTimeLimitNotification).toHaveBeenCalled();
-    });
-
-    it('YouTube 以外では専用処理を呼ばない', async () => {
-      vi.useFakeTimers();
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(recordYouTubeTimeLimitUsage).not.toHaveBeenCalled();
-    });
-
-    it('制限を超過したらブロックルールを適用し開いているタブもブロックする', async () => {
-      // ルール更新だけでは新しい遷移しか塞がらないため、開いているタブも明示的にブロックする
-      vi.useFakeTimers();
-      vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(true);
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(updateBlockRules).toHaveBeenCalled();
-      expect(blockExistingTabs).toHaveBeenCalled();
-    });
-
-    it('制限未超過ならブロックルールを再適用しない', async () => {
-      vi.useFakeTimers();
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+      await showExampleFor();
 
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
 
-    it('アクセスブロックが無効なら超過しても再適用しない', async () => {
+    it('常時ブロックの項目は通知もルール更新もしない', async () => {
+      vi.useFakeTimers();
+      givenTimeLimitedExample();
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [
+          {
+            id: 'item-1',
+            domain: 'example.com',
+            isWildcard: false,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            enabled: true,
+            timeLimit: null
+          }
+        ]
+      });
+
+      await showExampleFor();
+
+      expect(checkTimeLimitNotification).not.toHaveBeenCalled();
+      expect(updateBlockRules).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('YouTube の時間制限', () => {
+    async function showYouTube() {
+      const handler = await loadHandler();
+      await invoke(handler, {
+        url: 'https://www.youtube.com/watch?v=abc',
+        status: 'active',
+        timestamp: Date.now()
+      });
+      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+    }
+
+    beforeEach(() => {
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
+    });
+
+    it('上限に達したらブロックリストの項目と同じくルールを更新し開いているタブもブロックする', async () => {
+      vi.useFakeTimers();
+      givenTodaySeconds('youtube.com', 60);
+
+      await showYouTube();
+
+      expect(checkTimeLimitNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ site: 'youtube.com' })
+      );
+      expect(updateBlockRules).toHaveBeenCalled();
+      expect(blockExistingTabs).toHaveBeenCalled();
+    });
+
+    it('上限未満ならブロックルールを再適用しない', async () => {
+      vi.useFakeTimers();
+
+      await showYouTube();
+
+      expect(updateBlockRules).not.toHaveBeenCalled();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
+    it('アクセスブロックが無効なら上限を超えても通知もルール更新もしない', async () => {
       // 超過してもブロックされない設定なので、記録間隔ごとの
       // ルール再構築と全タブ走査を繰り返さない
       vi.useFakeTimers();
@@ -452,38 +447,13 @@ describe('tracker-heartbeat ハンドラ', () => {
         blockAccess: false,
         timeLimit: { type: 'daily', limitSeconds: 60 }
       });
-      vi.mocked(hasYouTubeExceededTimeLimit).mockResolvedValue(true);
-      const handler = await loadHandler();
+      givenTodaySeconds('youtube.com', 600);
 
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+      await showYouTube();
 
+      expect(checkTimeLimitNotification).not.toHaveBeenCalled();
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
-    });
-
-    it('時間制限が未設定なら超過判定自体を行わない', async () => {
-      vi.useFakeTimers();
-      givenYouTubeSettings({
-        enabled: true,
-        blockAccess: true,
-        timeLimit: null
-      });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(hasYouTubeExceededTimeLimit).not.toHaveBeenCalled();
-      expect(updateBlockRules).not.toHaveBeenCalled();
     });
   });
 

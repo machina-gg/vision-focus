@@ -4,12 +4,13 @@ import { Trash2, Shield } from 'lucide-react';
 import { Button, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockItem, TimeLimit, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem, TimeLimit } from '~/types/storage';
 
 interface DomainListItemProps {
   item: BlockItem;
   blockCount: number;
-  usage: TimeLimitUsage | undefined;
+  /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
+  usedSeconds: number;
   onToggle: (id: string, enabled: boolean) => void;
   onRemove: (id: string) => void;
   onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
@@ -18,7 +19,7 @@ interface DomainListItemProps {
 export function DomainListItem({
   item,
   blockCount,
-  usage,
+  usedSeconds,
   onToggle,
   onRemove,
   onUpdateTimeLimit
@@ -73,7 +74,7 @@ export function DomainListItem({
         <TimeLimitEditor
           item={item}
           onUpdate={(timeLimit) => onUpdateTimeLimit(item.id, timeLimit)}
-          usage={usage}
+          usedSeconds={usedSeconds}
         />
       </div>
     </div>

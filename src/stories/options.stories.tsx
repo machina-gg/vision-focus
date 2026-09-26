@@ -43,6 +43,7 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             onRemoveDomain={() => {}}
             onToggleDomain={() => {}}
             onUpdateTimeLimit={() => {}}
+            activity={{}}
             youtube={settings.youtube}
             onYouTubeChange={() => {}}
           />

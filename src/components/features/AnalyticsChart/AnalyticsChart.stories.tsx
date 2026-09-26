@@ -76,8 +76,7 @@ const mockAnalytics: AnalyticsData = {
     'reddit.com': 'waste'
   },
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const mockUnblockHistory: UnblockHistory = {
@@ -114,8 +113,7 @@ const emptyAnalytics: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const emptyUnblockHistory: UnblockHistory = {
@@ -187,8 +185,7 @@ export const SingleSite: Story = {
       },
       siteCategories: { 'twitter.com': 'waste' },
       siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {}
+      siteUnblockCounts: {}
     },
     unblockHistory: {
       sites: {

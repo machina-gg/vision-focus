@@ -28,11 +28,17 @@ import {
   useAnalytics,
   useBlocklist,
   useSchedules,
+  useStorageItem,
   useSupportPrompt,
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { getSettings, getVision, settingsItem } from '~/lib/storage';
+import {
+  activityItem,
+  getSettings,
+  getVision,
+  settingsItem
+} from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type {
@@ -63,6 +69,8 @@ function OptionsAppContent() {
   const schedules = useSchedules({ settings, setSettings });
   const { handleYouTubeChange } = useYouTubeSettings({ settings, setSettings });
   const supportPrompt = useSupportPrompt();
+  // 事実の表は background だけが書く。画面は読むだけなので更新関数は受け取らない
+  const [activity] = useStorageItem(activityItem);
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
@@ -176,8 +184,7 @@ function OptionsAppContent() {
             onRemoveDomain={blocklist.handleRemoveDomain}
             onToggleDomain={blocklist.handleToggleDomain}
             onUpdateTimeLimit={blocklist.handleUpdateTimeLimit}
-            siteBlockCounts={analytics.analyticsData.siteBlockCounts}
-            timeLimitUsage={analytics.analyticsData.timeLimitUsage}
+            activity={activity}
             youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
             onYouTubeChange={handleYouTubeChange}
           />

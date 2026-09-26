@@ -34,13 +34,6 @@ export interface SiteUnblockCount {
 // 実体は site.ts。既存の import 元（~/types/analytics / ~/types/storage）を保つための再エクスポート
 export type { TimeLimitType, TimeLimit } from './site';
 
-// Time limit usage tracking for a domain
-export interface TimeLimitUsage {
-  domain: string;
-  dailyUsedSeconds: number;
-  lastDailyReset: string; // YYYY-MM-DD
-}
-
 // Analytics data
 export interface AnalyticsData {
   dailyStats: Record<string, DailyStat>; // key: YYYY-MM-DD
@@ -48,7 +41,6 @@ export interface AnalyticsData {
   siteCategories: Record<string, 'waste' | 'invest' | 'neutral'>; // key: domain
   siteBlockCounts: Record<string, SiteBlockCount>; // key: domain (persists even after removal from blockList)
   siteUnblockCounts: Record<string, SiteUnblockCount>; // key: domain (tracks unblock toggle-off actions)
-  timeLimitUsage: Record<string, TimeLimitUsage>; // key: domain
 }
 
 // Tracked site - tracks sites from when they are blocked
@@ -81,8 +73,7 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 export const DEFAULT_UNBLOCK_HISTORY: UnblockHistory = {

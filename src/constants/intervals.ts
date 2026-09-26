@@ -57,9 +57,6 @@ export const ALARM_DAILY_CLEANUP_MINUTES = 60;
 /** Period for the check-schedule alarm (minutes) */
 export const ALARM_CHECK_SCHEDULE_MINUTES = 1;
 
-/** Period for the time-limit-reset alarm (minutes) */
-export const ALARM_TIME_LIMIT_RESET_MINUTES = 1;
-
 // ---------------------------------------------------------------------------
 //  Analytics
 // ---------------------------------------------------------------------------

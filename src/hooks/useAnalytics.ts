@@ -40,8 +40,7 @@ export function useAnalytics({
     siteTime: {},
     siteCategories: {},
     siteBlockCounts: {},
-    siteUnblockCounts: {},
-    timeLimitUsage: {}
+    siteUnblockCounts: {}
   });
 
   const [unblockHistory, setUnblockHistory] = useState<UnblockHistory>(
@@ -126,8 +125,7 @@ export function useAnalytics({
         siteTime: {},
         siteCategories: {},
         siteBlockCounts: {},
-        siteUnblockCounts: {},
-        timeLimitUsage: {}
+        siteUnblockCounts: {}
       };
       await analyticsItem.setValue(emptyAnalytics);
       setAnalyticsData(emptyAnalytics);

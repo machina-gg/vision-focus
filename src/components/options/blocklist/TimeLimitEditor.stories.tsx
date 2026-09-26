@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { TimeLimitEditor } from './TimeLimitEditor';
-import type { BlockItem, TimeLimitUsage } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 
 const baseItem: BlockItem = {
   id: '1',
@@ -29,7 +29,7 @@ export const AlwaysBlocked: Story = {
   args: {
     item: baseItem,
     onUpdate: () => {},
-    usage: undefined
+    usedSeconds: 0
   }
 };
 
@@ -38,7 +38,7 @@ export const WithDailyLimit: Story = {
   args: {
     item: { ...baseItem, timeLimit: { type: 'daily', limitSeconds: 1800 } },
     onUpdate: () => {},
-    usage: undefined
+    usedSeconds: 0
   }
 };
 
@@ -47,10 +47,6 @@ export const NearLimit: Story = {
   args: {
     item: { ...baseItem, timeLimit: { type: 'daily', limitSeconds: 1800 } },
     onUpdate: () => {},
-    usage: {
-      domain: 'twitter.com',
-      dailyUsedSeconds: 1700,
-      lastDailyReset: '2026-02-15'
-    } satisfies TimeLimitUsage
+    usedSeconds: 1700
   }
 };

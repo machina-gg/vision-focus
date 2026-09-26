@@ -101,13 +101,6 @@ const mockAnalytics: AnalyticsData = {
       count: 1,
       lastUnblocked: '2026-02-11T14:30:00Z'
     }
-  },
-  timeLimitUsage: {
-    'youtube.com': {
-      domain: 'youtube.com',
-      dailyUsedSeconds: 1200,
-      lastDailyReset: '2026-02-15'
-    }
   }
 };
 
@@ -170,8 +163,7 @@ export const Empty: Story = {
       siteTime: {},
       siteCategories: {},
       siteBlockCounts: {},
-      siteUnblockCounts: {},
-      timeLimitUsage: {}
+      siteUnblockCounts: {}
     },
     onReblock: () => {},
     onReset: () => {},

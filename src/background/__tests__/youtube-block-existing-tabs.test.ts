@@ -9,9 +9,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
  * blocker と blockService を実物のまま通し、chrome.tabs への指示を検証する
  */
 
-// ストレージだけをモックする（blocker / blockService / timeLimitService は実物）
+// ストレージだけをモックする（blocker / blockService は実物）
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
+  activityItem: { getValue: vi.fn() },
   setSettings: vi.fn(),
   getAnalytics: vi.fn(),
   setAnalytics: vi.fn(),
@@ -34,12 +35,13 @@ import {
   getSettings,
   setSettings,
   getAnalytics,
+  activityItem,
   incrementSiteBlockCount,
   setLastBlockedDomain
 } from '~/lib/storage';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
 import { invoke } from './handlers/helpers';
-import { getTodayKey } from '~/lib/time';
+import { toDateKey } from '~/lib/time';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_ANALYTICS,
@@ -88,16 +90,11 @@ function givenStoredSettings(youtube: Partial<YouTubeSettings>) {
   });
 }
 
-/** YouTube の使用実績を用意する（計測キーは 'youtube.com' 固定） */
-function givenYouTubeUsage(dailyUsedSeconds: number) {
-  vi.mocked(getAnalytics).mockResolvedValue({
-    ...DEFAULT_ANALYTICS,
-    timeLimitUsage: {
-      'youtube.com': {
-        domain: 'youtube.com',
-        dailyUsedSeconds,
-        lastDailyReset: getTodayKey()
-      }
+/** YouTube の今日の表示秒数を用意する（サイトキーは 'youtube.com'） */
+function givenYouTubeUsage(seconds: number) {
+  vi.mocked(activityItem.getValue).mockResolvedValue({
+    [toDateKey(new Date())]: {
+      'youtube.com': { seconds, blocks: 0, unblocks: 0 }
     }
   });
 }
@@ -121,6 +118,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     vi.clearAllMocks();
     chromeMock = setupChrome();
     vi.mocked(getAnalytics).mockResolvedValue(DEFAULT_ANALYTICS);
+    vi.mocked(activityItem.getValue).mockResolvedValue({});
     givenStoredSettings({ enabled: true, blockAccess: false });
   });
 
@@ -197,9 +195,9 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     const arg = calls[calls.length - 1][0] as {
       addRules: chrome.declarativeNetRequest.Rule[];
     };
+    // ||youtube.com は www. を含むすべてのサブドメインを止める
     expect(arg.addRules.map((rule) => rule.condition?.urlFilter)).toEqual([
-      '||youtube.com',
-      '||www.youtube.com'
+      '||youtube.com'
     ]);
   });
 });

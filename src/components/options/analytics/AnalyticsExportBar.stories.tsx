@@ -61,8 +61,7 @@ const mockAnalytics: AnalyticsData = {
       lastBlocked: '2026-02-15T10:00:00Z'
     }
   },
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const mockUnblockHistory: UnblockHistory = {
@@ -83,8 +82,7 @@ const emptyAnalytics: AnalyticsData = {
   siteTime: {},
   siteCategories: {},
   siteBlockCounts: {},
-  siteUnblockCounts: {},
-  timeLimitUsage: {}
+  siteUnblockCounts: {}
 };
 
 const emptyUnblockHistory: UnblockHistory = { sites: {} };

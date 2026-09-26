@@ -10,12 +10,14 @@ import { getMessage } from '~/lib/i18n';
 import { YouTubeSection, DomainListItem } from '~/components/options/blocklist';
 import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
-import type {
-  SiteBlockCount,
-  TimeLimit,
-  TimeLimitUsage,
-  YouTubeSettings
-} from '~/types/storage';
+import { secondsOnDay, siteTotals } from '~/lib/activityStats';
+import { normalizeSiteKey } from '~/lib/siteKey';
+import { toDateKey } from '~/lib/time';
+import type { TimeLimit, YouTubeSettings } from '~/types/storage';
+import type { ActivityLog, DateRange } from '~/types/activity';
+
+// ブロック回数は事実の表にある全期間で数える（保持期間を過ぎた日は表から消える）
+const WHOLE_LOG: DateRange = { from: '0000-01-01', to: '9999-12-31' };
 
 interface BlocklistTabProps {
   newDomain: string;
@@ -25,8 +27,8 @@ interface BlocklistTabProps {
   onRemoveDomain: (id: string) => void;
   onToggleDomain: (id: string, enabled: boolean) => void;
   onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
-  siteBlockCounts?: Record<string, SiteBlockCount>;
-  timeLimitUsage?: Record<string, TimeLimitUsage>;
+  /** 事実の表。ブロック回数と時間制限の今日の使用量をここから導出する */
+  activity: ActivityLog;
   youtube: YouTubeSettings;
   onYouTubeChange: (youtube: YouTubeSettings) => void;
 }
@@ -39,8 +41,7 @@ export function BlocklistTab({
   onRemoveDomain,
   onToggleDomain,
   onUpdateTimeLimit,
-  siteBlockCounts = {},
-  timeLimitUsage = {},
+  activity,
   youtube,
   onYouTubeChange
 }: BlocklistTabProps) {
@@ -51,6 +52,7 @@ export function BlocklistTab({
   );
   const unblockGuard = useUnblockGuard(isPasswordProtected);
   const { requestUnblock } = unblockGuard;
+  const today = toDateKey(new Date());
 
   const handleRemoveClick = useCallback(
     (id: string) => {
@@ -135,22 +137,15 @@ export function BlocklistTab({
         ) : (
           <div className="divide-y divide-gray-100">
             {settings.blockList.map((item) => {
-              const domainKey = item.isWildcard
-                ? item.domain.replace('*.', '')
-                : item.domain;
-              const blockCount =
-                siteBlockCounts[domainKey]?.count ??
-                siteBlockCounts[item.domain]?.count ??
-                0;
-              const usage =
-                timeLimitUsage[domainKey] ?? timeLimitUsage[item.domain];
+              // 判定と同じサイトキーで引く（ワイルドカード・www. 付きでも同じ行になる）
+              const site = normalizeSiteKey(item.domain);
 
               return (
                 <DomainListItem
                   key={item.id}
                   item={item}
-                  blockCount={blockCount}
-                  usage={usage}
+                  blockCount={siteTotals(activity, site, WHOLE_LOG).blocks}
+                  usedSeconds={secondsOnDay(activity, site, today)}
                   onToggle={handleToggleClick}
                   onRemove={handleRemoveClick}
                   onUpdateTimeLimit={onUpdateTimeLimit}
