@@ -4,13 +4,23 @@ import { AlertTriangle, Trash2 } from 'lucide-react';
 import { Button, Modal } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/** DeletePresetModal に渡す開閉状態と削除の操作 */
 interface DeletePresetModalProps {
+  /** false の間は表示しない */
   isOpen: boolean;
+  /** 取消ボタンか背景が押されたときに呼ぶ */
   onClose: () => void;
+  /** 削除ボタンが押されたときに呼ぶ */
   onConfirm: () => void;
+  /** 削除するプリセットを使っているスケジュールの数（削除してもスケジュールは残る旨と一緒に出す） */
   scheduleCount: number;
 }
 
+/**
+ * プリセットを削除してよいかを、そのプリセットを使うスケジュールの数とともに確認するモーダルを表示する
+ * @param props 開閉状態と削除の操作（各フィールドは DeletePresetModalProps）
+ * @returns 削除の確認モーダル
+ */
 export function DeletePresetModal({
   isOpen,
   onClose,

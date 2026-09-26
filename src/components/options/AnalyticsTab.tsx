@@ -14,20 +14,37 @@ import {
   AnalyticsDateFilter
 } from './analytics';
 
+/** AnalyticsTab に渡す集計元のデータと各操作 */
 interface AnalyticsTabProps {
+  /** 日別・サイト別の閲覧時間とブロック回数の記録 */
   activity: ActivityLog;
+  /** 登録済みのサイト（計測・ブロックの状態を含む） */
   trackedSites: TrackedSites;
+  /** 一覧のサイトをブロックに戻すときに、そのサイトを受け取る */
   onReblock: (site: TrackedSite) => void;
+  /** 計測データの削除を求められたときに呼ぶ */
   onReset: () => void;
+  /** 一覧のサイトの計測をやめるときに、そのサイトを受け取る */
   onStopTracking: (site: TrackedSite) => void;
+  /** 計測データの読み直しを求められたときに呼ぶ */
   onRefresh: () => Promise<void>;
+  /** 小文字にしたドメインを受け取って計測対象に加え、加えられたら true を返す（true なら入力欄を空に戻す） */
   onAddSite: (domain: string) => Promise<boolean>;
+  /** 計測対象の追加に失敗した理由（空なら出さない） */
   addSiteError: string;
+  /** true なら期間別のレポートの下に支援の呼びかけを出す */
   isSupportPromptVisible: boolean;
+  /** 支援の呼びかけで支援ボタンが押されたときに呼ぶ */
   onSupport: () => Promise<void>;
+  /** 支援の呼びかけが閉じられたときに呼ぶ */
   onDismissSupport: () => Promise<void>;
 }
 
+/**
+ * 設定画面の分析タブ（書き出し・サイト別の順位・計測対象の追加・計測中のサイト一覧・期間別のレポート）を表示する
+ * @param props 集計元のデータと各操作（各フィールドは AnalyticsTabProps）
+ * @returns 分析タブの中身
+ */
 export function AnalyticsTab({
   activity,
   trackedSites,

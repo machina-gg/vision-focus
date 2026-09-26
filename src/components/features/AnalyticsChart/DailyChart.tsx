@@ -12,15 +12,25 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatDate, formatMinutes, getTimeAxisConfig } from './chartUtils';
 
+/** 日別グラフの点 1 つ分 */
 interface DailyChartData {
+  /** 日付（YYYY-MM-DD） */
   date: string;
+  /** その日の閲覧時間（分） */
   time: number;
 }
 
+/** DailyChart に渡す日ごとの閲覧時間 */
 export interface DailyChartProps {
+  /** 古い日から並べた閲覧時間（空なら「データなし」を出す） */
   data: DailyChartData[];
 }
 
+/**
+ * 日ごとの閲覧時間を折れ線グラフで表示する（最大が 120 分以上なら軸を時間単位にする）
+ * @param props 日ごとの閲覧時間（各フィールドは DailyChartProps）
+ * @returns 折れ線グラフ。データが空なら「データなし」の表示
+ */
 export function DailyChart({ data }: DailyChartProps) {
   if (data.length === 0) {
     return (

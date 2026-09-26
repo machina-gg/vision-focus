@@ -7,17 +7,31 @@ import type { ScheduleFormData } from '~/hooks/useSchedules';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
+/** ScheduleModal に渡す開閉状態・フォームの内容と操作 */
 interface ScheduleModalProps {
+  /** false の間は表示しない */
   isOpen: boolean;
+  /** 取消ボタンか背景が押されたときに呼ぶ */
   onClose: () => void;
+  /** 編集中のスケジュール（null なら新規追加として見出しとボタンを出す） */
   editingSchedule: Schedule | null;
+  /** フォームに入っている名前・時間帯・曜日・プリセット */
   scheduleForm: ScheduleFormData;
+  /** どれかの欄が変わったときに変更後のフォーム全体を受け取る（曜日は昇順に並べ直す） */
   onFormChange: (form: ScheduleFormData) => void;
+  /** 保存ボタンが押されたときに呼ぶ */
   onSave: () => void;
+  /** プリセットの選択肢を引く表示設定（読み込み前は undefined で、選択肢は「なし」だけ） */
   vision: VisionSettings | undefined;
+  /** 保存できない理由（null か省略なら出さない） */
   error?: string | null;
 }
 
+/**
+ * スケジュールの名前・開始と終了の時刻・曜日・適用するプリセットを入力させるモーダルを表示する
+ * @param props 開閉状態・フォームの内容と操作（各フィールドは ScheduleModalProps）
+ * @returns スケジュールの追加・編集のモーダル
+ */
 export function ScheduleModal({
   isOpen,
   onClose,

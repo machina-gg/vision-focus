@@ -11,8 +11,11 @@ import {
 } from 'recharts';
 import { getMessage } from '~/lib/i18n';
 
+/** WeeklyChart に渡す曜日ごとの集計 */
 interface WeeklyChartProps {
+  /** 月曜から順に並べた日ごとの集計（wasteTime は秒。棒に使うのは wasteTime だけ） */
   dailyBreakdown: { wasteTime: number; blockCount: number }[];
+  /** 月曜から順に並べた日ごとのブロック回数（折れ線に使う。欠けた日は 0） */
   dailyBlockCounts: number[];
 }
 
@@ -30,6 +33,11 @@ function formatChartMinutes(seconds: number): string {
   return `${mins}m`;
 }
 
+/**
+ * 週の曜日ごとの時間を棒、ブロック回数を折れ線で重ねて表示する（最大が 120 分以上なら時間の軸を時間単位にする）
+ * @param props 曜日ごとの集計（各フィールドは WeeklyChartProps）
+ * @returns 棒と折れ線の複合グラフ
+ */
 export function WeeklyChart({
   dailyBreakdown,
   dailyBlockCounts

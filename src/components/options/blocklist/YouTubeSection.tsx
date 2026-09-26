@@ -26,9 +26,13 @@ import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { TrackedSite } from '~/types/site';
 
+/** YouTubeSection に渡す YouTube の登録状態と操作 */
 interface YouTubeSectionProps {
+  /** YouTube の登録内容（登録が無ければ null で、すべてオフとして表示する） */
   site: TrackedSite | null;
+  /** 変更後の YouTube の設定全体を受け取る */
   onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
+  /** 全体の有効化かアクセスのブロックをオフにするときに、解除の確認を求める */
   onRequestUnblock: (request: UnblockRequest) => void;
 }
 
@@ -55,6 +59,11 @@ const SAVED_FEEDBACK_DURATION_MS = 2000;
 
 type LimitTypeOption = 'always' | 'daily';
 
+/**
+ * YouTube の設定（全体の有効化・アクセスのブロック・時間制限・ショートやおすすめなどの非表示）をカードで表示する
+ * @param props YouTube の登録状態と操作（各フィールドは YouTubeSectionProps）
+ * @returns YouTube の設定のカード
+ */
 export function YouTubeSection({
   site,
   onYouTubeChange,

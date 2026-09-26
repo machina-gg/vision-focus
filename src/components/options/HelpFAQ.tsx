@@ -4,6 +4,10 @@ import { MessageCircle, ChevronRight } from 'lucide-react';
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/**
+ * よくある質問を、開閉できる質問と回答の一覧としてカードで表示する
+ * @returns よくある質問のカード
+ */
 export function HelpFAQ() {
   return (
     <Card>

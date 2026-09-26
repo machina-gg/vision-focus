@@ -5,11 +5,17 @@ import { X } from 'lucide-react';
 
 type ModalSize = 'sm' | 'md' | 'lg';
 
+/** Modal に渡す開閉状態・見出し・中身 */
 export interface ModalProps {
+  /** false の間は何も描画しない */
   isOpen: boolean;
+  /** 背景か閉じるボタンが押されたときに呼ぶ */
   onClose: () => void;
+  /** 見出し（省略時は見出しと閉じるボタンの帯を出さない） */
   title?: string;
+  /** ダイアログの最大幅（省略時は 'md'） */
   size?: ModalSize;
+  /** ダイアログの本文 */
   children: ReactNode;
 }
 
@@ -19,6 +25,11 @@ const sizeStyles: Record<ModalSize, string> = {
   lg: 'max-w-lg'
 };
 
+/**
+ * 画面全体を暗くした上にダイアログを重ねて表示する
+ * @param props 開閉状態・見出し・中身（各フィールドは ModalProps）
+ * @returns ダイアログの要素。閉じているときは null
+ */
 export function Modal({
   isOpen,
   onClose,

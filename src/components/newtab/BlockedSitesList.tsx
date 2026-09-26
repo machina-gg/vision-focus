@@ -5,12 +5,21 @@ import { blockListSites } from '~/lib/blockList';
 import { getMessage } from '~/lib/i18n';
 import type { TrackedSites } from '~/types/site';
 
+/** BlockedSitesList に渡すサイトとブロック回数 */
 interface BlockedSitesListProps {
+  /** 登録済みのサイト（ブロックが有効なものだけを並べる） */
   trackedSites: TrackedSites;
+  /** ドメインごとのブロック回数（無いドメインは 0 として回数を出さない） */
   blockCounts: Record<string, number>;
+  /** 「もっと見る」を押す前に出す件数（省略時は 5） */
   maxVisible?: number;
 }
 
+/**
+ * ブロック中のサイトを、開閉できる一覧と回数で表示する
+ * @param props サイトとブロック回数（各フィールドは BlockedSitesListProps）
+ * @returns 開閉ボタンと一覧。ブロック中のサイトが無ければ null
+ */
 export function BlockedSitesList({
   trackedSites,
   blockCounts,

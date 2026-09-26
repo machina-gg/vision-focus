@@ -12,12 +12,21 @@ const SAVED_FEEDBACK_DURATION_MS = 2000;
 
 type LimitTypeOption = 'always' | 'daily';
 
+/** TimeLimitEditor に渡すサイトと保存先 */
 interface TimeLimitEditorProps {
+  /** 時間制限を編集するブロック中のサイト */
   site: BlockedSite;
+  /** 保存した時間制限を受け取る（null なら常にブロック）。既存の分数が選択肢に無いときは最も近い選択肢に直して呼ぶ */
   onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
+  /** 今日の使用時間（秒。残り時間のバッジに使う） */
   usedSeconds: number;
 }
 
+/**
+ * サイトの時間制限（常にブロックか 1 日の上限か）を開閉できる欄で編集させ、制限があれば今日の残り時間をバッジで表示する
+ * @param props サイトと保存先（各フィールドは TimeLimitEditorProps）
+ * @returns 時間制限の編集欄
+ */
 export function TimeLimitEditor({
   site,
   onUpdate,

@@ -18,10 +18,15 @@ import type {
 import { FormActions, FormFeedback, PasswordField } from './password';
 import { UnblockHoldSecondsField } from './UnblockHoldSecondsField';
 
+/** PasswordSettingsSection に渡す解除保護の現在の設定と保存先 */
 interface PasswordSettingsSectionProps {
+  /** 現在のパスワード設定（有効かつハッシュがあるときだけ保護中として扱う） */
   passwordSettings: PasswordSettings;
+  /** 設定・変更・解除したパスワード設定を保存する（失敗は例外で知らせる） */
   onUpdate: (settings: PasswordSettings) => Promise<void>;
+  /** 解除の確認で長押しさせる秒数 */
   holdSeconds: UnblockHoldSeconds;
+  /** 長押しの秒数を変えたときに、変更後の確認設定を保存する */
   onUnblockConfirmUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
 }
 
@@ -30,6 +35,11 @@ type SettingMode = 'view' | 'set' | 'change' | 'remove';
 // 呼び出し側が error の状態で判断すると useCallback が閉じ込めた更新前の値を見るため、返り値で伝える
 type SaveResult = 'saved' | 'failed-reported' | 'failed-unreported';
 
+/**
+ * 解除保護の設定（長押しの秒数と、パスワードの設定・変更・解除のフォーム）をカードで表示する（パスワードの保護中は長押しの秒数を変えられない）
+ * @param props 現在の設定と保存先（各フィールドは PasswordSettingsSectionProps）
+ * @returns 解除保護のカード
+ */
 export function PasswordSettingsSection({
   passwordSettings,
   onUpdate,

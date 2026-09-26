@@ -3,12 +3,21 @@ import { Ban, Calendar, TrendingUp } from 'lucide-react';
 
 import { getMessage } from '~/lib/i18n';
 
+/** MiniStats に渡す今日の数値と操作 */
 interface MiniStatsProps {
+  /** 今日ブロックした回数 */
   blockCount: number;
+  /** ブロックされたサイトをブロックリストに入れてからの日数（null なら枠を出さない） */
   blockingDays: number | null;
+  /** 分析を見るボタンが押されたときに呼ぶ（省略時はボタンを出さない） */
   onAnalyticsClick?: () => void;
 }
 
+/**
+ * 今日のブロック回数とブロックを続けている日数を小さな枠で表示する
+ * @param props 今日の数値と操作（各フィールドは MiniStatsProps）
+ * @returns 数値の枠と分析を見るボタンをまとめた要素
+ */
 export function MiniStats({
   blockCount,
   blockingDays,

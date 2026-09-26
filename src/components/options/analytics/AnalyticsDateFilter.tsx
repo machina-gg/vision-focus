@@ -22,14 +22,25 @@ type ReportTab = (typeof REPORT_TABS)[keyof typeof REPORT_TABS];
 const isReportTab = (tabId: string): tabId is ReportTab =>
   tabId === REPORT_TABS.WEEKLY || tabId === REPORT_TABS.MONTHLY;
 
+/** AnalyticsDateFilter に渡す集計元と支援の呼びかけの操作 */
 interface AnalyticsDateFilterProps {
+  /** 日別・サイト別の閲覧時間とブロック回数の記録 */
   activity: ActivityLog;
+  /** レポートの集計に含めるサイト */
   sites: readonly SiteKey[];
+  /** true ならレポートの下に支援の呼びかけを出す */
   isSupportPromptVisible: boolean;
+  /** 支援の呼びかけで支援ボタンが押されたときに呼ぶ */
   onSupport: () => Promise<void>;
+  /** 支援の呼びかけが閉じられたときに呼ぶ */
   onDismissSupport: () => Promise<void>;
 }
 
+/**
+ * 週と月のレポートをタブで切り替えて表示し、前後の期間へ移動できるようにする（今の期間より先へは進めない）
+ * @param props 集計元と支援の呼びかけの操作（各フィールドは AnalyticsDateFilterProps）
+ * @returns レポートのカード
+ */
 export function AnalyticsDateFilter({
   activity,
   sites,

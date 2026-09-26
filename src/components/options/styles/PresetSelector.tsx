@@ -7,11 +7,19 @@ import type { VisionSettings, DashboardDisplaySettings } from '~/types/storage';
 import { MAX_PRESETS } from '~/constants/limits';
 import type { UsePresetsReturn } from '~/hooks/usePresets';
 
+/** PresetSelector に渡すプリセット編集の状態と、適用中のプリセットを引く表示設定 */
 interface PresetSelectorProps {
+  /** usePresets が返す、プリセットの下書き一覧と選択・保存・適用・削除の操作 */
   presets: UsePresetsReturn;
+  /** 適用中のプリセットを示すための表示設定（読み込み前は undefined で、適用中の印を出さない） */
   vision: VisionSettings | undefined;
 }
 
+/**
+ * プリセットの一覧と作成ボタン、選択中のプリセットの保存・適用・削除の操作を表示する（プリセットが無ければ作成を促す）
+ * @param props プリセット編集の状態と表示設定（各フィールドは PresetSelectorProps）
+ * @returns プリセットのカードと、選択中のプリセットの編集状態の表示
+ */
 export function PresetSelector({ presets, vision }: PresetSelectorProps) {
   const {
     draftPresets,

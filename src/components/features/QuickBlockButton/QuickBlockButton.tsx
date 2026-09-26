@@ -5,12 +5,21 @@ import { Shield } from 'lucide-react';
 import { Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/** QuickBlockButton に渡す初期値とブロックの受け取り先 */
 export interface QuickBlockButtonProps {
+  /** 入力欄にあらかじめ入れるドメイン（変わるたびに入れ直す） */
   currentDomain?: string;
+  /** ブロックボタンか Enter で、前後の空白を除いたドメインを受け取る（空なら呼ばない） */
   onBlock: (domain: string) => void;
+  /** true なら入力もブロックもできなくする */
   disabled?: boolean;
 }
 
+/**
+ * ドメインを入力してすぐブロック対象に加える欄を表示する
+ * @param props 初期値とブロックの受け取り先（各フィールドは QuickBlockButtonProps）
+ * @returns 見出し・入力欄・ブロックボタンをまとめた要素
+ */
 export function QuickBlockButton({
   currentDomain,
   onBlock,

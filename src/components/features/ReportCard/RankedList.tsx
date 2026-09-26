@@ -2,18 +2,31 @@ import React from 'react';
 import { getMessage } from '~/lib/i18n';
 import { formatTime } from '~/lib/time';
 
+/** 順位表の 1 行分 */
 interface RankedListItem {
+  /** サイトのドメイン */
   domain: string;
+  /** 並べる基準の値（valueType が 'time' なら秒、'count' なら回数） */
   value: number;
 }
 
+/** RankedList に渡す順位表の行と見た目 */
 interface RankedListProps {
+  /** 上位から並べた行（先頭 3 件だけ出す。空なら「データなし」を出す） */
   items: RankedListItem[];
+  /** 値を時間として整形するか、回数のまま出すか */
   valueType: 'time' | 'count';
+  /** 各行の背景色のクラス */
   bgColor: string;
+  /** 値の文字色のクラス */
   textColor: string;
 }
 
+/**
+ * サイトの上位 3 件を順位つきで表示する
+ * @param props 順位表の行と見た目（各フィールドは RankedListProps）
+ * @returns 順位表。行が無ければ「データなし」の文言
+ */
 export function RankedList({
   items,
   valueType,

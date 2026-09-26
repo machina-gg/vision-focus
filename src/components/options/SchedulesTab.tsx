@@ -10,13 +10,23 @@ import { WeeklyCalendar } from './WeeklyCalendar';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
+/** SchedulesTab に渡すスケジュールの操作 */
 interface SchedulesTabProps {
+  /** 追加ボタンが押されたときに呼ぶ */
   onAddSchedule: () => void;
+  /** 一覧の編集ボタンかカレンダー上の枠が押されたときに、そのスケジュールを受け取る */
   onEditSchedule: (schedule: Schedule) => void;
+  /** 削除ボタンが押されたときに、そのスケジュールの id を受け取る */
   onDeleteSchedule: (id: string) => void;
+  /** 有効・無効が切り替わったときに、id と切り替え後の状態を受け取る */
   onToggleSchedule: (id: string, enabled: boolean) => void;
 }
 
+/**
+ * 設定画面のスケジュールタブ（週のカレンダーとスケジュールの一覧）を表示する（スケジュールは設定のコンテキストから読む）
+ * @param props スケジュールの操作（各フィールドは SchedulesTabProps）
+ * @returns スケジュールタブの中身
+ */
 export function SchedulesTab({
   onAddSchedule,
   onEditSchedule,

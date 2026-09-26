@@ -10,10 +10,15 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatTime } from '~/lib/time';
 
+/** StatsGrid に渡す期間の集計値 */
 interface StatsGridProps {
+  /** 対象サイトで過ごした時間（秒） */
   wasteTime: number;
+  /** ブロックした回数 */
   blockCount: number;
+  /** ブロックを解除した回数 */
   unblockCount: number;
+  /** 前の期間からの時間の増減（%。負なら減少。前の期間のデータが無ければ null） */
   wasteTimeChangePercent: number | null;
 }
 
@@ -56,6 +61,11 @@ function getChangeColor(direction: ChangeDirection) {
   return { bg: 'bg-gray-50', text: 'text-gray-700', label: 'text-gray-500' };
 }
 
+/**
+ * 期間の時間・前期間比・ブロック回数・解除回数を 4 つの枠に並べて表示する（時間が減ったら緑、増えたら赤）
+ * @param props 期間の集計値（各フィールドは StatsGridProps）
+ * @returns 4 列の集計表示
+ */
 export function StatsGrid({
   wasteTime,
   blockCount,

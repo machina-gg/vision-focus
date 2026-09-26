@@ -7,6 +7,10 @@ import { trackFeatureUse } from '~/lib/analytics';
 import { openSupportPage } from '~/lib/supportPrompt';
 import { SupportButton } from './SupportButton';
 
+/**
+ * 開発の支援を呼びかける説明と、支援ページを開くボタンをカードで表示する
+ * @returns 支援のカード
+ */
 export function SupportSection() {
   const handleClick = useCallback(() => {
     void trackFeatureUse('support_open');

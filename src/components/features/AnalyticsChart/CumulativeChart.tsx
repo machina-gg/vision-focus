@@ -12,15 +12,25 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatDate, formatMinutes, getTimeAxisConfig } from './chartUtils';
 
+/** 累計グラフの棒 1 本分 */
 interface CumulativeChartData {
+  /** 日付（YYYY-MM-DD） */
   date: string;
+  /** その日までの累計閲覧時間（分） */
   cumulative: number;
 }
 
+/** CumulativeChart に渡す日ごとの累計 */
 export interface CumulativeChartProps {
+  /** 古い日から並べた累計（空なら「データなし」を出す） */
   data: CumulativeChartData[];
 }
 
+/**
+ * 日ごとの累計閲覧時間を縦棒グラフで表示する（最大が 120 分以上なら軸を時間単位にする）
+ * @param props 日ごとの累計（各フィールドは CumulativeChartProps）
+ * @returns 縦棒グラフ。データが空なら「データなし」の表示
+ */
 export function CumulativeChart({ data }: CumulativeChartProps) {
   if (data.length === 0) {
     return (

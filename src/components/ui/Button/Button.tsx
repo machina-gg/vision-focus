@@ -4,11 +4,17 @@ import React from 'react';
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
+/** Button に渡す見た目の指定と、button 要素にそのまま渡す属性 */
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** 色の種類（省略時は 'primary'） */
   variant?: ButtonVariant;
+  /** 余白と文字の大きさ（省略時は 'md'） */
   size?: ButtonSize;
+  /** true の間は回転アイコンを出し、押せなくする */
   loading?: boolean;
+  /** true なら親の幅いっぱいに広げる */
   fullWidth?: boolean;
+  /** ボタンのラベルとして表示する内容 */
   children: ReactNode;
 }
 
@@ -27,6 +33,11 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: 'px-6 py-3 text-lg'
 };
 
+/**
+ * 色・大きさ・読み込み中表示を切り替えられるボタンを表示する
+ * @param props 見た目の指定と button 要素の属性（各フィールドは ButtonProps。disabled か loading のどちらかが true なら押せない）
+ * @returns button 要素
+ */
 export function Button({
   variant = 'primary',
   size = 'md',

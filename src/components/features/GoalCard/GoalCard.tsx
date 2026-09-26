@@ -5,13 +5,23 @@ import { Edit2, Target } from 'lucide-react';
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/** GoalCard に渡す目標の文言と操作 */
 export interface GoalCardProps {
+  /** 今日の目標（空白だけなら「目標未設定」の案内を出す） */
   goalText: string;
+  /** 編集中でないときにカードが押されたら呼ぶ */
   onClick?: () => void;
+  /** true ならホバー時に編集ボタンを出す */
   editable?: boolean;
+  /** 編集を確定したとき（Enter かフォーカスが外れたとき）に入力した文言を受け取る */
   onEdit?: (text: string) => void;
 }
 
+/**
+ * 今日の目標をカードに表示し、編集できる場合はその場で書き換えられるようにする
+ * @param props 目標の文言と操作（各フィールドは GoalCardProps。Esc で編集を取り消す）
+ * @returns 目標のカード
+ */
 export function GoalCard({
   goalText,
   onClick,

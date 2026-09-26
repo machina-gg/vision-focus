@@ -11,10 +11,15 @@ import {
 } from 'recharts';
 import { getMessage } from '~/lib/i18n';
 
+/** MonthlyTrendChart に渡す週ごとの集計 */
 interface MonthlyTrendChartProps {
+  /** 月内の週を古い順に並べた集計（軸には W1, W2… と順番で出す） */
   weeklyBreakdown: {
+    /** 週の開始日 */
     weekStart: string;
+    /** その週に対象サイトで過ごした時間（秒） */
     wasteTime: number;
+    /** その週にブロックした回数 */
     blockCount: number;
   }[];
 }
@@ -27,6 +32,11 @@ function formatChartMinutes(seconds: number): string {
   return `${mins}m`;
 }
 
+/**
+ * 月内の週ごとの時間を棒、ブロック回数を折れ線で重ねて表示する（最大が 120 分以上なら時間の軸を時間単位にする）
+ * @param props 週ごとの集計（各フィールドは MonthlyTrendChartProps）
+ * @returns 棒と折れ線の複合グラフ
+ */
 export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
   const chartData = weeklyBreakdown.map((w, i) => ({
     week: `W${i + 1}`,

@@ -13,22 +13,39 @@ import { WeeklyChart } from './WeeklyChart';
 import { MonthlyTrendChart } from './MonthlyTrendChart';
 import { EmptyReport } from './EmptyReport';
 
+/** WeeklyReportCard に渡す週のレポートと週の移動 */
 interface WeeklyReportCardProps {
+  /** 表示する週のレポート（null ならデータなしの案内を出す） */
   report: WeeklyReport | null;
+  /** 前の週へ移るボタンが押されたときに呼ぶ */
   onPrevious: () => void;
+  /** 次の週へ移るボタンが押されたときに呼ぶ */
   onNext: () => void;
+  /** false なら次の週へ移るボタンを押せなくする */
   canGoNext: boolean;
+  /** true なら今週（集計途中）の印を出す */
   isCurrentWeek?: boolean;
 }
 
+/** MonthlyReportCard に渡す月のレポートと月の移動 */
 interface MonthlyReportCardProps {
+  /** 表示する月のレポート（null ならデータなしの案内を出す） */
   report: MonthlyReport | null;
+  /** 前の月へ移るボタンが押されたときに呼ぶ */
   onPrevious: () => void;
+  /** 次の月へ移るボタンが押されたときに呼ぶ */
   onNext: () => void;
+  /** false なら次の月へ移るボタンを押せなくする */
   canGoNext: boolean;
+  /** true なら今月（集計途中）の印を出す */
   isCurrentMonth?: boolean;
 }
 
+/**
+ * 週のレポート（傾向・集計値・曜日ごとのグラフ・上位サイト）を、週を移動できるカードで表示する
+ * @param props 週のレポートと週の移動（各フィールドは WeeklyReportCardProps）
+ * @returns 週のレポートのカード
+ */
 export function WeeklyReportCard({
   report,
   onPrevious,
@@ -132,6 +149,11 @@ export function WeeklyReportCard({
   );
 }
 
+/**
+ * 月のレポート（傾向・集計値・週ごとのグラフ・上位サイト）を、月を移動できるカードで表示する
+ * @param props 月のレポートと月の移動（各フィールドは MonthlyReportCardProps）
+ * @returns 月のレポートのカード
+ */
 export function MonthlyReportCard({
   report,
   onPrevious,

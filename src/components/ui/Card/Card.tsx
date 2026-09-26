@@ -4,9 +4,13 @@ import React from 'react';
 type CardVariant = 'default' | 'outlined' | 'elevated';
 type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
+/** Card に渡す見た目の指定と、div 要素にそのまま渡す属性 */
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  /** 枠線と影の付け方（省略時は 'default'） */
   variant?: CardVariant;
+  /** 内側の余白（省略時は 'md'） */
   padding?: CardPadding;
+  /** カードの中に表示する内容 */
   children: ReactNode;
 }
 
@@ -23,6 +27,11 @@ const paddingStyles: Record<CardPadding, string> = {
   lg: 'p-6'
 };
 
+/**
+ * 内容を角丸の白い枠で囲んで表示する（onClick を渡すとボタンとして振る舞う）
+ * @param props 見た目の指定と div 要素の属性（各フィールドは CardProps）
+ * @returns カードの div 要素
+ */
 export function Card({
   variant = 'default',
   padding = 'md',

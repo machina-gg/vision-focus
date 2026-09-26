@@ -20,19 +20,35 @@ import type { ActivityLog } from '~/types/activity';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { TrackedSites } from '~/types/site';
 
+/** BlocklistTab に渡す追加欄の状態・ブロック対象のデータと各操作 */
 interface BlocklistTabProps {
+  /** 追加欄に入力中のドメイン */
   newDomain: string;
+  /** 追加欄の入力が変わったときに受け取る */
   setNewDomain: (value: string) => void;
+  /** 追加に失敗した理由（空なら出さない） */
   blockError: string;
+  /** 追加ボタンが押されたときに呼ぶ */
   onAddDomain: () => void;
+  /** 解除の確認（パスワード・長押し）を通ったあとに、削除するドメインを受け取る */
   onRemoveDomain: (domain: string) => void;
+  /** 有効・無効の切り替えを受け取る（無効にするときは解除の確認を通ったあとに呼ぶ） */
   onToggleDomain: (domain: string, enabled: boolean) => void;
+  /** ドメインの時間制限の変更を受け取る（null なら制限を外す） */
   onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
+  /** 今日の使用時間とブロック回数を出すための記録 */
   activity: ActivityLog;
+  /** 登録済みのサイト（ブロック設定のあるものを一覧に出す） */
   trackedSites: TrackedSites;
+  /** YouTube の個別設定の変更を受け取る */
   onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
 }
 
+/**
+ * 設定画面のブロックタブ（追加欄・ブロック中のサイト一覧・YouTube の設定）を表示し、解除にはパスワードと長押しの確認を挟む
+ * @param props 追加欄の状態・ブロック対象のデータと各操作（各フィールドは BlocklistTabProps）
+ * @returns ブロックタブの中身と、解除の確認用のモーダル
+ */
 export function BlocklistTab({
   newDomain,
   setNewDomain,

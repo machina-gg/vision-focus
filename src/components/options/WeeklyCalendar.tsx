@@ -28,9 +28,13 @@ const SCHEDULE_COLORS = [
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 const HOURS = Array.from({ length: 25 }, (_, i) => i);
 
+/** WeeklyCalendar に渡すスケジュールと操作 */
 interface WeeklyCalendarProps {
+  /** カレンダーに並べるスケジュール（並び順で色を割り当てる。空ならカレンダーを出さない） */
   schedules: Schedule[];
+  /** プリセット名を引くための表示設定（読み込み前は undefined で、プリセット名を出さない） */
   vision: VisionSettings | undefined;
+  /** カレンダー上の枠が押されたときに、そのスケジュールを受け取る */
   onScheduleClick: (schedule: Schedule) => void;
 }
 
@@ -97,6 +101,11 @@ function useCurrentTime(): Date {
   return now;
 }
 
+/**
+ * 日曜から土曜までの週のカレンダーに、スケジュールを時間帯の枠として重ね、今日の列に現在時刻の線を引いて表示する
+ * @param props スケジュールと操作（各フィールドは WeeklyCalendarProps。無効なスケジュールは薄く取り消し線つきで出す）
+ * @returns 週のカレンダーと凡例のカード。スケジュールが無ければ null
+ */
 export function WeeklyCalendar({
   schedules,
   vision,

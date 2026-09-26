@@ -12,10 +12,15 @@ import {
   type ImageErrorCode
 } from '~/lib/image';
 
+/** ImageUploader に渡す現在の画像と変更の受け取り先 */
 export interface ImageUploaderProps {
+  /** 設定済みの画像のデータ URL（null なら未設定としてアップロード欄を出す） */
   value: string | null;
+  /** 圧縮した画像のデータ URL を受け取る。削除されたときは null */
   onChange: (dataUrl: string | null) => void;
+  /** 圧縮後の上限サイズ（MB。省略時は 1） */
   maxSizeMB?: number;
+  /** true なら選択・ドロップ・削除をできなくする */
   disabled?: boolean;
 }
 
@@ -37,6 +42,11 @@ function imageErrorText(code: ImageErrorCode, maxSizeMB: number): string {
   }
 }
 
+/**
+ * 背景画像をクリックかドロップで選ばせて圧縮し、設定済みならそのプレビューと削除ボタンを表示する
+ * @param props 現在の画像と変更の受け取り先（各フィールドは ImageUploaderProps）
+ * @returns アップロード欄とエラー文、または設定済み画像のプレビュー
+ */
 export function ImageUploader({
   value,
   onChange,

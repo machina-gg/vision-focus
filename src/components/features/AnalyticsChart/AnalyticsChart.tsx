@@ -16,16 +16,22 @@ import { DailyChart } from './DailyChart';
 import { BySiteChart } from './BySiteChart';
 import { CumulativeChart } from './CumulativeChart';
 
+/** 切り替えて表示するグラフの種類（日別の推移 / サイト別の内訳 / 累計の推移） */
 export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
+/** グラフが集計する期間の日数（今日を含む直近の日数） */
 export const CHART_DAYS = 14;
 const BY_SITE_LIMIT = 8;
 const DOMAIN_LABEL_MAX = 15;
 const SECONDS_PER_MINUTE = 60;
 
+/** AnalyticsChart に渡す集計元と対象サイト */
 export interface AnalyticsChartProps {
+  /** 日別・サイト別の閲覧時間の記録 */
   activity: ActivityLog;
+  /** 集計に含めるサイト */
   sites: readonly SiteKey[];
+  /** true なら薄く表示して操作できなくする */
   disabled?: boolean;
 }
 
@@ -33,6 +39,11 @@ function toMinutes(seconds: number): number {
   return Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
+/**
+ * 直近 CHART_DAYS 日の合計閲覧時間と、種類を切り替えられるグラフを表示する
+ * @param props 集計元の記録と対象サイト（各フィールドは AnalyticsChartProps）
+ * @returns 合計時間・グラフ切り替えボタン・グラフをまとめた要素
+ */
 export function AnalyticsChart({
   activity,
   sites,

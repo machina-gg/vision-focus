@@ -60,13 +60,23 @@ interface TrackedSiteRow {
   secondsSinceUnblock: number;
 }
 
+/** AnalyticsSummary に渡す集計元とサイトごとの操作 */
 interface AnalyticsSummaryProps {
+  /** 日別・サイト別の閲覧時間と解除の記録 */
   activity: ActivityLog;
+  /** 登録済みのサイト（計測・ブロックの状態を含む） */
   trackedSites: TrackedSites;
+  /** 行のサイトをブロックに戻すときに、そのサイトを受け取る */
   onReblock: (site: TrackedSite) => void;
+  /** 行のサイトの計測をやめるときに、そのサイトを受け取る */
   onStopTracking: (site: TrackedSite) => void;
 }
 
+/**
+ * 計測中のサイトを状態（ブロック中・無効・計測のみ）の順に並べ、解除してからの時間とその合計を表示する
+ * @param props 集計元とサイトごとの操作（各フィールドは AnalyticsSummaryProps）
+ * @returns 計測中のサイトの一覧。サイトが無ければその案内
+ */
 export function AnalyticsSummary({
   activity,
   trackedSites,
