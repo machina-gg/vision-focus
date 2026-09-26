@@ -1,28 +1,4 @@
-export {
-  type FontFamily,
-  type FontCategory,
-  type FontSize,
-  type FontWeight,
-  type FontSettings,
-  type FontDefinition,
-  FONT_CATEGORIES,
-  getFontDefinition,
-  getFontCategory,
-  getFontFamilyCSS,
-  FONT_FAMILY_MAP,
-  FONT_SIZE_MAP,
-  FONT_WEIGHT_MAP,
-  FONT_FAMILY_NAMES,
-  DEFAULT_FONT_SETTINGS
-} from './font';
-
-export { type WeeklyReport, type MonthlyReport } from './report';
-
-export {
-  type TimeLimitType,
-  type TimeLimit,
-  type AnalyticsOptIn
-} from './analytics';
+export { type TimeLimit, type AnalyticsOptIn } from './analytics';
 
 export {
   type DashboardDisplaySettings,
@@ -33,7 +9,6 @@ export {
 } from './vision';
 
 import type { VisionSettings } from './vision';
-import { DEFAULT_VISION } from './vision';
 import type { ActivityLog } from './activity';
 import type { TrackedSites } from './site';
 
@@ -141,10 +116,3 @@ export const DEFAULT_SITES: TrackedSites = {};
 
 /** 共有される既定値。書き手は複製してから書き換える */
 export const DEFAULT_ACTIVITY: ActivityLog = {};
-
-export const DEFAULT_STORAGE: StorageSchema = {
-  settings: DEFAULT_SETTINGS,
-  vision: DEFAULT_VISION,
-  sites: DEFAULT_SITES,
-  activity: DEFAULT_ACTIVITY
-};

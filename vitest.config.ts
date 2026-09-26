@@ -17,7 +17,6 @@ export default defineConfig({
         'src/**/*.stories.tsx',
         'src/**/__tests__/**',
         'src/test/**',
-        'src/types/index.ts',
         'src/types/messages.ts',
         'src/types/report.ts',
         'src/types/storageSchemas.ts',

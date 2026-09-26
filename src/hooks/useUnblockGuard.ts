@@ -4,7 +4,7 @@ import { getMessage } from '~/lib/i18n';
 import type { TimeLimit } from '~/types/storage';
 
 /** 確認モーダルの文言を切り替える種別（無効化 / 削除） */
-export type UnblockAction = 'toggle' | 'delete';
+type UnblockAction = 'toggle' | 'delete';
 
 /** ブロックを弱める操作 1 件ぶんの依頼（確認モーダルに出す情報と、確認後に実行する処理） */
 export interface UnblockRequest {
@@ -24,9 +24,7 @@ export interface PendingUnblock extends UnblockRequest {
 type GuardMode = 'password' | 'confirm';
 
 /** ブロック方式の表示ラベル（「1日の制限」/「常時ブロック」）を返す */
-export function getBlockStyleLabel(
-  timeLimit: TimeLimit | null | undefined
-): string {
+function getBlockStyleLabel(timeLimit: TimeLimit | null | undefined): string {
   return getMessage(timeLimit ? 'dailyLimit' : 'alwaysBlocked');
 }
 

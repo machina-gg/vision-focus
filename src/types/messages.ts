@@ -1,10 +1,9 @@
-import type { TimeLimitType } from './site';
-
-export {
-  type GetRemainingTimeBody,
-  type TrackerHeartbeatBody,
-  type UpdateTimeLimitBody
+import type {
+  GetRemainingTimeBody,
+  TrackerHeartbeatBody,
+  UpdateTimeLimitBody
 } from './messageSchemas';
+import type { TimeLimitType } from './site';
 
 export interface AddBlockRequest {
   domain: string;
@@ -41,8 +40,7 @@ export interface TimeLimitInfo {
   limitSeconds: number | null;
 }
 
-export type GetRemainingTimeRequest =
-  import('./messageSchemas').GetRemainingTimeBody;
+export type GetRemainingTimeRequest = GetRemainingTimeBody;
 
 export interface GetRemainingTimeResponse {
   success: boolean;
@@ -57,7 +55,7 @@ export interface ImportSettingsRequest {
 }
 
 /** 既存のサイトと入れ子になるため取り込まなかったサイト */
-export interface SkippedNestedSite {
+interface SkippedNestedSite {
   /** ファイルに書かれていた表記 */
   domain: string;
   /** 入れ子の相手（既存か、先に取り込んだサイト） */
@@ -102,16 +100,14 @@ export interface TogglePauseResponse {
   paused: boolean;
 }
 
-export type TrackerHeartbeatRequest =
-  import('./messageSchemas').TrackerHeartbeatBody;
+export type TrackerHeartbeatRequest = TrackerHeartbeatBody;
 
 export interface TrackerHeartbeatResponse {
   success: boolean;
   error?: string;
 }
 
-export type UpdateTimeLimitRequest =
-  import('./messageSchemas').UpdateTimeLimitBody;
+export type UpdateTimeLimitRequest = UpdateTimeLimitBody;
 
 export interface UpdateTimeLimitResponse {
   success: boolean;

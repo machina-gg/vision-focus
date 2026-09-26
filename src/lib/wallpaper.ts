@@ -58,7 +58,7 @@ async function captureElement(
 }
 
 /** 要素を指定の解像度の PNG にする（縦横比を保って中央に置き、余白は黒） */
-export async function captureWallpaper(
+async function captureWallpaper(
   element: HTMLElement,
   options: CaptureOptions = { resolution: '1080p', quality: 0.95 }
 ): Promise<Blob> {

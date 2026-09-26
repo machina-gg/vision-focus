@@ -220,41 +220,6 @@ export function getFontCategory(family: FontFamily): FontCategory {
   return 'system';
 }
 
-/** CSS の font-family に渡す値を返す */
-export const getFontFamilyCSS = (family: FontFamily): string => {
-  return getFontDefinition(family).css;
-};
-
-/** family → CSS の font-family の値 */
-export const FONT_FAMILY_MAP: Record<string, string> = Object.values(
-  FONT_CATEGORIES
-)
-  .flatMap((cat) => cat.fonts)
-  .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {});
-
-/** 文字サイズ → Tailwind のクラス */
-export const FONT_SIZE_MAP: Record<FontSize, string> = {
-  sm: 'text-2xl',
-  md: 'text-3xl',
-  lg: 'text-4xl',
-  xl: 'text-5xl'
-};
-
-/** 太さ → Tailwind のクラス */
-export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
-  normal: 'font-normal',
-  medium: 'font-medium',
-  semibold: 'font-semibold',
-  bold: 'font-bold'
-};
-
-/** family → 画面に出す表示名 */
-export const FONT_FAMILY_NAMES: Record<string, string> = Object.values(
-  FONT_CATEGORIES
-)
-  .flatMap((cat) => cat.fonts)
-  .reduce((acc, font) => ({ ...acc, [font.family]: font.name }), {});
-
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
   family: 'system',
   size: 'md',

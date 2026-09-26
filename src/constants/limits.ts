@@ -11,22 +11,11 @@ export const BLOCKER_CONFIG = {
   URL_FILTER_PREFIX: '||'
 } as const;
 
-export const ANALYTICS_CONFIG = {
-  TREND_CHANGE_THRESHOLD: 0.1,
-  TOP_SITES_LIMIT: 5
-} as const;
-
 export const TRACKER_CONFIG = {
   ACTIVITY_TIMEOUT_MS: 30 * 1000,
   HEARTBEAT_INTERVAL_MS: 5 * 1000,
   RECORDING_INTERVAL_MS: 5 * 1000,
   HEARTBEAT_TIMEOUT_MS: 10 * 1000
-} as const;
-
-export const DOMAIN_CONFIG = {
-  WILDCARD_PREFIX: '*.',
-  MAX_DOMAIN_LENGTH: 253,
-  MAX_LABEL_LENGTH: 63
 } as const;
 
 export const TIME_LIMIT_CONFIG = {

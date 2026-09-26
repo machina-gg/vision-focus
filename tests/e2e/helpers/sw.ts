@@ -9,9 +9,7 @@ import type { StorageSchema } from '~/types/storage';
 
 // 拡張機能のページを開いて storage を書くと、アプリの hydration が state を書き戻して直後の書き込みを消すため、SW から操作する
 
-export async function getServiceWorker(
-  context: BrowserContext
-): Promise<Worker> {
+async function getServiceWorker(context: BrowserContext): Promise<Worker> {
   const [existing] = context.serviceWorkers();
   return existing ?? (await context.waitForEvent('serviceworker'));
 }

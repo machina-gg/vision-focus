@@ -2,7 +2,7 @@ import { getMessage } from '~/lib/i18n';
 import type { AddSiteRejection } from '~/lib/siteService';
 import type { NestedSite } from '~/lib/siteKey';
 
-export function nestedSiteMessage(input: string, nested: NestedSite): string {
+function nestedSiteMessage(input: string, nested: NestedSite): string {
   const key =
     nested.relation === 'ancestor'
       ? 'siteErrorInsideTrackedSite'

@@ -52,7 +52,7 @@ export type UpdateYouTubeSettingsBody = z.infer<
   typeof UpdateYouTubeSettingsBodySchema
 >;
 
-export const BlockRuleSchema = z.object({
+const BlockRuleSchema = z.object({
   enabled: z.boolean(),
   addedAt: z.string(),
   timeLimit: TimeLimitSchema.nullable()

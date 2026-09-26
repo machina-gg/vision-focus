@@ -32,7 +32,7 @@ export interface WeeklyReport extends ReportTopSites {
 }
 
 /** 月の中の 1 週分の合計（月の外の日は含めない） */
-export interface WeeklyPoint extends ActivityTotals {
+interface WeeklyPoint extends ActivityTotals {
   /** 週の最初の日。月をまたぐ週は月の初日 */
   weekStart: DateKey;
 }
