@@ -132,9 +132,11 @@ stateDiagram-v2
 判定は他のサイトと同じ `evaluateBlock()` を通り、YouTube だけの条件は無い。
 
 - 設定画面の YouTube の節で機能全体を無効にすると、非表示機能（`youtube`）とブロック設定（`block`）の両方が
-  null になる。アクセスブロックを OFF にするとブロック設定が null になる（時間制限も残さない）
+  null になる。アクセスブロックを OFF にすると `block.enabled` が false になる（ブロックリストのトグル OFF と同じ。
+  時間制限は残り、ON に戻せば復元される）
+- 節の「有効」表示は `youtube` があるか、ブロック設定が有効なとき。無効のブロック設定だけの youtube.com は有効に数えない
 - 使用量は `youtube.com` の今日の行を読む（`www.youtube.com` / `m.youtube.com` の滞在も同じ行に入る）。
-  滞在は追跡中なら常に記録されるが、ブロックと通知に使うのはブロック設定があるときだけ
+  滞在は追跡中なら常に記録されるが、ブロックと通知に使うのはブロック設定が有効なときだけ
 - 非表示の設定（Shorts / おすすめ / コメント / ホームフィード）はこの状態遷移とは独立で、
   `sites['youtube.com'].youtube` があればブロック設定の値に関わらず適用される。制限を併用していると上限までは
   YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`）

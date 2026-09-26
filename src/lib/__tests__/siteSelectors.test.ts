@@ -103,7 +103,23 @@ describe('selectYouTubeSection', () => {
     });
   });
 
-  it('無効化したブロック設定はアクセスブロック OFF として見せる', () => {
+  it('機能を使っていてブロック設定が無効なら、有効・アクセスブロック OFF で時間制限は保って見せる', () => {
+    // ON に戻したときに保存済みの時間制限が復元されるよう、節の値にも残す
+    const sites = sitesOf(
+      blockedSite(
+        YOUTUBE_DOMAIN,
+        { enabled: false, timeLimit: LIMIT },
+        { youtube: youtubeFeatures() }
+      )
+    );
+    expect(selectYouTubeSection(sites)).toMatchObject({
+      enabled: true,
+      blockAccess: false,
+      timeLimit: LIMIT
+    });
+  });
+
+  it('無効のブロック設定だけの youtube.com は「有効」に数えない', () => {
     const sites = sitesOf(blockedSite(YOUTUBE_DOMAIN, { enabled: false }));
     expect(selectYouTubeSection(sites)).toMatchObject({
       enabled: false,

@@ -121,6 +121,25 @@ describe('解除の事実が保存される', () => {
     });
 
     expect(todayUnblocks('youtube.com')).toBe(1);
+    // ブロック設定は無効になるだけで残る（ON に戻せば時間制限ごと復元される）
+    expect(storedSites()['youtube.com'].block?.enabled).toBe(false);
+  });
+
+  it('無効化済みのアクセスブロックで機能ごと無効にしても解除は数えない', async () => {
+    givenSites(
+      blockedSite(
+        'youtube.com',
+        { enabled: false },
+        { youtube: youtubeFeatures() }
+      )
+    );
+
+    await invoke(updateYouTubeSettingsHandler, {
+      youtube: youtube({ enabled: false })
+    });
+
+    expect(todayUnblocks('youtube.com')).toBeUndefined();
+    expect(storedSites()['youtube.com'].block).toBeNull();
   });
 
   it('YouTube 機能ごと無効にしたとき（保存の後でも youtube.com は追跡中に残る）', async () => {

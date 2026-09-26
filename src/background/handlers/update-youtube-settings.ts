@@ -11,7 +11,8 @@ import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 /**
  * YouTube の節の値を youtube.com の追跡中のサイトに書く形へ変える。
  * 機能全体を無効にするとアクセスブロックも外れる（非表示もブロックも使わない状態）。
- * アクセスブロックを外すとブロック設定ごと消える（時間制限も残さない）
+ * アクセスブロックの OFF はブロックリストのトグル OFF と同じ意味で、ブロック設定を無効にするだけ
+ * （時間制限は残し、ON に戻せば復元される）
  */
 function toSiteUpdate(
   value: UpdateYouTubeSettingsBody['youtube']
@@ -24,9 +25,7 @@ function toSiteUpdate(
       hideComments: value.hideComments,
       hideHomeFeed: value.hideHomeFeed
     },
-    block: value.blockAccess
-      ? { enabled: true, timeLimit: value.timeLimit ?? null }
-      : null
+    block: { enabled: value.blockAccess, timeLimit: value.timeLimit ?? null }
   };
 }
 

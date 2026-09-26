@@ -279,6 +279,45 @@ describe('updateYouTubeSite', () => {
     );
   });
 
+  it('アクセスブロックの無効化はブロック設定を残し、時間制限と addedAt を保つ', async () => {
+    const existing = blockedSite(
+      YOUTUBE_DOMAIN,
+      { timeLimit: LIMIT },
+      { youtube: youtubeFeatures() }
+    );
+    givenSites(sitesOf(existing));
+
+    await updateYouTubeSite(
+      {
+        youtube: youtubeFeatures(),
+        block: { enabled: false, timeLimit: LIMIT }
+      },
+      NOW
+    );
+
+    expect(stored()[YOUTUBE_DOMAIN].block).toEqual({
+      enabled: false,
+      addedAt: existing.block?.addedAt,
+      timeLimit: LIMIT
+    });
+  });
+
+  it('ブロック設定が無ければ、無効のブロック設定は作らない', async () => {
+    givenSites(
+      sitesOf(trackedSite(YOUTUBE_DOMAIN, { youtube: youtubeFeatures() }))
+    );
+
+    await updateYouTubeSite(
+      {
+        youtube: youtubeFeatures({ hideShorts: true }),
+        block: { enabled: false, timeLimit: null }
+      },
+      NOW
+    );
+
+    expect(stored()[YOUTUBE_DOMAIN].block).toBeNull();
+  });
+
   it('機能もブロックも外しても youtube.com は追跡中に残る', async () => {
     givenSites(
       sitesOf(blockedSite(YOUTUBE_DOMAIN, {}, { youtube: youtubeFeatures() }))

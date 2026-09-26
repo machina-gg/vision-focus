@@ -232,13 +232,17 @@ export async function setTimeLimit(
 /** youtube.com に書く値。`youtube` は非表示機能（null = 使わない）、`block` はアクセスブロック */
 export interface YouTubeSiteUpdate {
   youtube: YouTubeFeatures | null;
-  /** null = アクセスブロックしない */
+  /**
+   * アクセスブロック。null = ブロック設定ごと外す。
+   * `enabled: false` は既存のブロック設定を無効にする（ブロック設定が無ければ作らない）
+   */
   block: Pick<BlockRule, 'enabled' | 'timeLimit'> | null;
 }
 
 /**
  * youtube.com の YouTube 機能とアクセスブロックを書く。サイトが無ければ作る。
  * ブロックリストに入れた時刻（`addedAt`）は既存のブロック設定があれば引き継ぐ。
+ * 無効のブロック設定は新しく作らない（非表示だけを使うサイトにブロック設定を生やさない）。
  * 変更前のサイト（無ければ null）を返す
  */
 export async function updateYouTubeSite(
@@ -248,13 +252,16 @@ export async function updateYouTubeSite(
   return mutateSites((sites) => {
     const before = sites[YOUTUBE_DOMAIN] ?? null;
     const current = before ?? newSite(YOUTUBE_DOMAIN, now);
-    const block: BlockRule | null = update.block
-      ? {
-          addedAt: current.block?.addedAt ?? now.toISOString(),
-          enabled: update.block.enabled,
-          timeLimit: update.block.timeLimit
-        }
-      : null;
+    const keepsNoBlock =
+      update.block !== null && !update.block.enabled && !current.block;
+    const block: BlockRule | null =
+      update.block && !keepsNoBlock
+        ? {
+            addedAt: current.block?.addedAt ?? now.toISOString(),
+            enabled: update.block.enabled,
+            timeLimit: update.block.timeLimit
+          }
+        : null;
     return {
       next: {
         ...sites,

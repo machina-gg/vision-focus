@@ -109,11 +109,11 @@ describe('update-youtube-settings ハンドラ', () => {
         }
       ],
       [
-        '機能だけ（アクセスブロック OFF は時間制限も残さない）',
+        'アクセスブロック OFF はブロック設定を無効にするだけ（時間制限は保つ）',
         youtube({ enabled: true, hideComments: true, timeLimit: LIMIT }),
         {
           youtube: youtubeFeatures({ hideComments: true }),
-          block: null
+          block: { enabled: false, timeLimit: LIMIT }
         }
       ],
       [
