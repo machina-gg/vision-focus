@@ -1,15 +1,21 @@
 import { IMAGE_LIMITS } from '~/constants/limits';
 
-/** validateImageFile の結果（valid が false のときだけ error に理由が入る） */
-export interface ImageValidationResult {
-  valid: boolean;
-  error?: string;
+/** 画像を背景に使えなかった理由。文言は画面が i18n で決める */
+export type ImageErrorCode =
+  'unsupported-type' | 'file-too-large' | 'not-compressible' | 'process-failed';
+
+/** 画像の検証・変換の失敗。code で理由を持つ */
+export class ImageError extends Error {
+  constructor(readonly code: ImageErrorCode) {
+    super(code);
+    this.name = 'ImageError';
+  }
 }
 
-/** 背景画像として使える形式・サイズかを確かめる */
-export function validateImageFile(file: File): ImageValidationResult {
+/** 背景画像として使える形式・サイズかを確かめ、使えなければ理由を返す（使えるなら null） */
+export function validateImageFile(file: File): ImageErrorCode | null {
   if (!file) {
-    return { valid: false, error: 'No file provided' };
+    return 'process-failed';
   }
 
   if (
@@ -17,33 +23,27 @@ export function validateImageFile(file: File): ImageValidationResult {
       file.type as (typeof IMAGE_LIMITS.SUPPORTED_TYPES)[number]
     )
   ) {
-    return {
-      valid: false,
-      error: 'Unsupported file type. Please use JPEG, PNG, or WebP.'
-    };
+    return 'unsupported-type';
   }
 
   if (file.size > IMAGE_LIMITS.MAX_FILE_SIZE) {
-    return {
-      valid: false,
-      error: `File too large. Maximum size is ${IMAGE_LIMITS.MAX_FILE_SIZE / 1024 / 1024}MB.`
-    };
+    return 'file-too-large';
   }
 
-  return { valid: true };
+  return null;
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new ImageError('process-failed'));
 
     const reader = new FileReader();
     reader.onload = (e) => {
       img.src = e.target?.result as string;
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new ImageError('process-failed'));
     reader.readAsDataURL(file);
   });
 }
@@ -70,14 +70,14 @@ function calculateDimensions(
   return { width: Math.round(newWidth), height: Math.round(newHeight) };
 }
 
-/** 画像を上限の縦横に縮めて JPEG の data URL にする（maxSizeMB に収まらなければ投げる） */
+/** 画像を上限の縦横に縮めて JPEG の data URL にする（失敗は ImageError で投げる） */
 export async function compressImage(
   file: File,
   maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
 ): Promise<string> {
-  const validation = validateImageFile(file);
-  if (!validation.valid) {
-    throw new Error(validation.error);
+  const invalid = validateImageFile(file);
+  if (invalid) {
+    throw new ImageError(invalid);
   }
 
   const img = await loadImage(file);
@@ -94,7 +94,7 @@ export async function compressImage(
 
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    throw new Error('Failed to get canvas context');
+    throw new ImageError('process-failed');
   }
 
   ctx.fillStyle = '#000000';
@@ -111,9 +111,7 @@ export async function compressImage(
   }
 
   if (dataUrl.length > targetSize) {
-    throw new Error(
-      `Unable to compress image below ${maxSizeMB}MB. Try a smaller image.`
-    );
+    throw new ImageError('not-compressible');
   }
 
   return dataUrl;

@@ -114,6 +114,9 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 受信側（`onMessage`）の双方を型で縛る。background 側のハンドラは
 `src/background/handlers/` に置き、name との対応は同ディレクトリの
 `index.ts` が `onMessage` で登録する。
+失敗は文言ではなく種類（`src/types/messages.ts` の `MessageError`）で返し、
+画面が `src/lib/messageError.ts` の `messageErrorText` で i18n の文言にする
+（background は利用者の言語を決めない）。
 
 ```
 ┌─────────────┐   @webext-core/messaging        ┌─────────────┐

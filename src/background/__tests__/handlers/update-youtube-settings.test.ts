@@ -23,10 +23,11 @@ import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import type { TrackedSite } from '~/types/site';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 const LIMIT = { type: 'daily' as const, limitSeconds: 1800 };
@@ -79,12 +80,12 @@ describe('update-youtube-settings ハンドラ', () => {
           }
         }
       ]
-    ])('%s なら Invalid request body を返す', async (_label, body) => {
+    ])('%s なら invalid-request を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
       expect(result).toEqual({
         success: false,
-        error: 'Invalid request body'
+        error: { code: 'invalid-request' }
       });
       expect(updateYouTubeSite).not.toHaveBeenCalled();
       expect(updateBlockRules).not.toHaveBeenCalled();
@@ -187,7 +188,7 @@ describe('update-youtube-settings ハンドラ', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Failed to update YouTube settings'
+      error: { code: 'save-failed' }
     });
     expect(blockExistingTabs).not.toHaveBeenCalled();
     expect(recordActivity).not.toHaveBeenCalled();

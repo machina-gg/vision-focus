@@ -134,7 +134,7 @@ describe('useCurrentDomain', () => {
     it('レスポンスが success: false なら時間制限情報を更新しない', async () => {
       vi.mocked(sendMessage).mockResolvedValue({
         success: false,
-        error: 'Invalid URL'
+        error: { code: 'invalid-url' }
       });
 
       const { result } = renderHook(() => useCurrentDomain());

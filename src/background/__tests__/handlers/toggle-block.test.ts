@@ -25,10 +25,11 @@ import { trackEvent } from '~/lib/analytics';
 import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
 import type { BlockRule } from '~/types/site';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
 
 const before = (enabled: boolean): BlockRule => ({
@@ -51,11 +52,14 @@ describe('toggle-block ハンドラ', () => {
     ])('%s なら失敗し、何も変えない', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
-      expect(result).toEqual({ success: false, error: 'Invalid request body' });
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'invalid-request' }
+      });
       expect(setBlockEnabled).not.toHaveBeenCalled();
     });
 
-    it('ブロック設定を持たないサイトなら Item not found を返す', async () => {
+    it('ブロック設定を持たないサイトなら block-not-found を返す', async () => {
       vi.mocked(setBlockEnabled).mockResolvedValue(null);
 
       const result = await invoke<Response>(handler, {
@@ -63,7 +67,10 @@ describe('toggle-block ハンドラ', () => {
         enabled: true
       });
 
-      expect(result).toEqual({ success: false, error: 'Item not found' });
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'block-not-found' }
+      });
       expect(updateBlockRules).not.toHaveBeenCalled();
     });
   });

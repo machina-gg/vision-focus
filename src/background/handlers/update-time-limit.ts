@@ -9,7 +9,7 @@ export const updateTimeLimitHandler: MessageHandler<
   const parsed = UpdateTimeLimitBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   const { domain, timeLimit } = parsed.data;
@@ -17,13 +17,13 @@ export const updateTimeLimitHandler: MessageHandler<
   try {
     const updated = await setTimeLimit(domain, timeLimit);
     if (!updated) {
-      return { success: false, error: 'Block item not found' };
+      return { success: false, error: { code: 'block-not-found' } };
     }
 
     await updateBlockRules();
 
     return { success: true };
   } catch {
-    return { success: false, error: 'Failed to update time limit' };
+    return { success: false, error: { code: 'save-failed' } };
   }
 };

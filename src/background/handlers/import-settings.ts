@@ -34,7 +34,7 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   const parsed = ImportSettingsBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   try {
@@ -70,6 +70,6 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
       }))
     };
   } catch {
-    return { success: false, error: 'Failed to import settings' };
+    return { success: false, error: { code: 'save-failed' } };
   }
 };

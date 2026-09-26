@@ -8,13 +8,13 @@ export const stopTrackingHandler: MessageHandler<'stop-tracking'> = async ({
 }) => {
   const parsed = SiteBodySchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
   const { domain } = parsed.data;
 
   const result = await stopTracking(domain);
   if (result === 'in-use') {
-    return { success: false, error: 'Site is still blocked' };
+    return { success: false, error: { code: 'site-in-use' } };
   }
   // 追跡中に無くても事実の列が残っていることがあるので、消す処理は常に通す
   await purgeSite(domain);

@@ -9,18 +9,14 @@ export const addBlockHandler: MessageHandler<'add-block'> = async ({
   const { domain } = data;
 
   if (!domain) {
-    return { success: false, error: 'Domain is required' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   const result = await addBlock(domain, new Date());
   if (result.rejection !== null) {
     return {
       success: false,
-      error: addSiteError(
-        domain,
-        result.rejection,
-        'Domain already in block list'
-      )
+      error: addSiteError(domain, result.rejection, 'already-blocked')
     };
   }
 

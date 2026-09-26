@@ -1,21 +1,19 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
-import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 vi.mock('~/lib/siteService', () => ({
   addTrackedSite: vi.fn()
 }));
 
-import { addTrackedSite } from '~/lib/siteService';
+import { addTrackedSite, type AddSiteRejection } from '~/lib/siteService';
 import { addTrackedSiteHandler as handler } from '../../handlers/add-tracked-site';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
 }
-
-stubI18nWithSubstitutions();
 
 describe('add-tracked-site ハンドラ', () => {
   beforeEach(() => {
@@ -29,7 +27,10 @@ describe('add-tracked-site ハンドラ', () => {
   ])('%s なら失敗し、追跡中のサイトを変えない', async (_label, data) => {
     const result = await invoke<Response>(handler, data);
 
-    expect(result).toEqual({ success: false, error: 'Domain is required' });
+    expect(result).toEqual({
+      success: false,
+      error: { code: 'invalid-request' }
+    });
     expect(addTrackedSite).not.toHaveBeenCalled();
   });
 
@@ -51,22 +52,34 @@ describe('add-tracked-site ハンドラ', () => {
   });
 
   it.each([
-    ['既に追跡中', { reason: 'duplicate' as const }, 'Site already tracked'],
+    [
+      '既に追跡中',
+      { reason: 'duplicate' as const },
+      { code: 'already-tracked' }
+    ],
+    ['形式の誤り', { reason: 'invalid' as const }, { code: 'invalid-domain' }],
     [
       '入れ子',
       {
         reason: 'nested' as const,
         nested: { site: 'google.com', relation: 'ancestor' as const }
       },
-      'siteErrorInsideTrackedSite(mail.google.com,google.com)'
+      {
+        code: 'nested-site',
+        domain: 'mail.google.com',
+        nested: { site: 'google.com', relation: 'ancestor' }
+      }
     ]
-  ])('%s なら理由を返す', async (_label, rejection, error) => {
-    vi.mocked(addTrackedSite).mockResolvedValue({ site: null, rejection });
+  ] satisfies [string, AddSiteRejection, MessageError][])(
+    '%s なら理由を返す',
+    async (_label, rejection, error) => {
+      vi.mocked(addTrackedSite).mockResolvedValue({ site: null, rejection });
 
-    const result = await invoke<Response>(handler, {
-      domain: 'mail.google.com'
-    });
+      const result = await invoke<Response>(handler, {
+        domain: 'mail.google.com'
+      });
 
-    expect(result).toEqual({ success: false, error });
-  });
+      expect(result).toEqual({ success: false, error });
+    }
+  );
 });

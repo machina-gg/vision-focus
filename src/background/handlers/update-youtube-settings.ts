@@ -29,7 +29,7 @@ export const updateYouTubeSettingsHandler: MessageHandler<
   const parsed = UpdateYouTubeSettingsBodySchema.safeParse(data);
 
   if (!parsed.success) {
-    return { success: false, error: 'Invalid request body' };
+    return { success: false, error: { code: 'invalid-request' } };
   }
 
   const update = toSiteUpdate(parsed.data.youtube);
@@ -57,6 +57,6 @@ export const updateYouTubeSettingsHandler: MessageHandler<
 
     return { success: true };
   } catch {
-    return { success: false, error: 'Failed to update YouTube settings' };
+    return { success: false, error: { code: 'save-failed' } };
   }
 };

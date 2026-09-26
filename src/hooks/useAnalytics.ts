@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 import type { TrackedSite } from '~/types/site';
 
 interface UseAnalyticsReturn {
@@ -11,8 +12,6 @@ interface UseAnalyticsReturn {
   handleRefreshAnalytics: () => Promise<void>;
   handleAddSiteToTrack: (domain: string) => Promise<boolean>;
 }
-
-const ADD_SITE_FAILED = 'Failed to add site';
 
 /** 分析タブの操作（再ブロック・記録のリセット・追跡の停止・追跡サイトの追加）を background へ依頼する */
 export function useAnalytics(): UseAnalyticsReturn {
@@ -56,13 +55,13 @@ export function useAnalytics(): UseAnalyticsReturn {
     try {
       const response = await sendMessage('add-tracked-site', { domain });
       if (!response.success) {
-        setAddSiteError(response.error || ADD_SITE_FAILED);
+        setAddSiteError(messageErrorText(response.error));
         return false;
       }
       setAddSiteError('');
       return true;
     } catch {
-      setAddSiteError(ADD_SITE_FAILED);
+      setAddSiteError(messageErrorText(undefined));
       return false;
     }
   }, []);

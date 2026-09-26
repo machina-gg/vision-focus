@@ -9,10 +9,11 @@ vi.mock('~/lib/blockService', () => ({
 import { getSiteBlockStatus } from '~/lib/blockService';
 import { getRemainingTimeHandler as handler } from '../../handlers/get-remaining-time';
 import type { SiteBlockStatus } from '~/lib/blockService';
+import type { MessageError } from '~/types/messages';
 
 interface Response {
   success: boolean;
-  error?: string;
+  error?: MessageError;
   data?: unknown;
 }
 
@@ -42,10 +43,13 @@ describe('get-remaining-time ハンドラ', () => {
       ['url が無い', {}],
       ['url が文字列以外', { url: 123 }],
       ['body が null', null]
-    ])('%s なら Invalid URL を返す', async (_label, body) => {
+    ])('%s なら invalid-url を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
 
-      expect(result).toEqual({ success: false, error: 'Invalid URL' });
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'invalid-url' }
+      });
       expect(getSiteBlockStatus).not.toHaveBeenCalled();
     });
   });
