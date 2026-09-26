@@ -3,47 +3,24 @@ import path from 'path';
 
 import { startTestServer, type TestServer } from './testServer';
 
-/**
- * Chrome拡張機能テスト用のカスタムフィクスチャ
- *
- * 拡張機能をロードした状態でテストを実行するための設定
- */
-
-// 拡張機能のビルドディレクトリパス（CI では pnpm build で chrome-mv3 を生成）
 import fs from 'fs';
 
 const PROD_PATH = path.join(__dirname, '../../../.output/chrome-mv3');
 const DEV_PATH = path.join(__dirname, '../../../.output/chrome-mv3-dev');
 const EXTENSION_PATH = fs.existsSync(PROD_PATH) ? PROD_PATH : DEV_PATH;
 
-// カスタムフィクスチャの型定義
 export type ExtensionFixtures = {
   context: BrowserContext;
   extensionId: string;
-  /**
-   * ブラウザの起動言語（`--lang`）
-   *
-   * 拡張機能の表示言語は chrome.i18n がブラウザの言語設定から決める
-   * （machina-gg/vision-focus#401）。テスト側から切り替える手段は起動言語しかない。
-   * 未指定なら Chromium の既定（拡張機能は default_locale の en で表示される）。
-   */
+  /** 拡張機能の表示言語は chrome.i18n が起動言語（`--lang`）から決めるため、切り替えはここでしか行えない */
   browserLanguage: string | undefined;
 };
 
-/** ワーカー単位で共有するフィクスチャ */
 export type ExtensionWorkerFixtures = {
-  /** テスト用のローカルサーバ（ワーカー単位で 1 台） */
   testServer: TestServer;
 };
 
-/**
- * test.extend でカスタムフィクスチャを定義
- *
- * - context: 拡張機能をロードした BrowserContext
- * - extensionId: ロードされた拡張機能のID
- */
 export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
-  // ローカルサーバはワーカー単位で使い回す（テストごとの起動は無駄）
   testServer: [
     async ({}, use) => {
       const server = await startTestServer();
@@ -53,18 +30,11 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
     { scope: 'worker' }
   ],
 
-  // 起動言語（`test.use({ browserLanguage: 'ja' })` で上書きする）
   browserLanguage: [undefined, { option: true }],
 
-  // BrowserContextのカスタマイズ
   context: async ({ testServer, headless, browserLanguage }, use) => {
-    // Chrome拡張機能をロードした状態で BrowserContext を起動
     const context = await chromium.launchPersistentContext('', {
-      // 新ヘッドレス（channel: 'chromium'）は拡張機能をサポートする。
-      // 旧来の headless: true は chrome-headless-shell を使うため
-      // 拡張機能をロードできない（そのため長らく headless: false だった）。
-      // 画面が出ないのでローカル実行中にフォーカスを奪われず、実行も速い。
-      // 描画を見て調べたいときは `pnpm test:e2e:headed` を使う
+      // 旧 headless: true（chrome-headless-shell）は拡張機能をロードできないため、新ヘッドレスの channel: 'chromium' を使う
       channel: 'chromium',
       headless,
       ignoreHTTPSErrors: true,
@@ -72,10 +42,8 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
         `--disable-extensions-except=${EXTENSION_PATH}`,
         `--load-extension=${EXTENSION_PATH}`,
         '--no-sandbox',
-        // 全ホストをローカルのテストサーバへ向ける。
-        // localhost / 127.0.0.1 は拡張機能の内部通信に使うため除外する
+        // localhost / 127.0.0.1 は拡張機能の内部通信に使うため振り向け先から除外する
         `--host-resolver-rules=MAP * 127.0.0.1:${testServer.port}, EXCLUDE localhost`,
-        // テストサーバは自己署名証明書を使うため、警告を無視させる
         '--ignore-certificate-errors',
         ...(browserLanguage ? [`--lang=${browserLanguage}`] : [])
       ]
@@ -85,9 +53,7 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
     await context.close();
   },
 
-  // 拡張機能IDを取得するフィクスチャ
   extensionId: async ({ context }, use) => {
-    // Service Worker (background.ts) のURLから拡張機能IDを取得
     let [background] = context.serviceWorkers();
     if (!background) {
       background = await context.waitForEvent('serviceworker');

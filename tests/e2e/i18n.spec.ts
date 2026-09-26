@@ -4,14 +4,6 @@ import { clearStorageFromExtension } from './helpers/storage';
 import { setupTestStorageViaSW } from './helpers/sw';
 import { SELECTORS } from './helpers/constants';
 
-/**
- * E2E Tests: 多言語対応
- *
- * 表示言語は chrome.i18n がブラウザの言語設定から決める
- * （machina-gg/vision-focus#401）。拡張機能側に言語切替は無いため、
- * 言語を変えるにはブラウザの起動言語（`--lang`）を変える。
- */
-
 test.describe('i18n - 多言語対応', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     await clearStorageFromExtension(context, extensionId);
@@ -25,8 +17,6 @@ test.describe('i18n - 多言語対応', () => {
 
     const popupPage = await openPopup(context, extensionId);
 
-    // 英語のテキストが表示されることを確認（要素は testid で特定し、
-    // 文言そのものを検証する）
     await expect(popupPage.locator(SELECTORS.quickBlock.heading)).toHaveText(
       'Block Websites'
     );
@@ -42,11 +32,6 @@ test.describe('i18n - 多言語対応', () => {
 
     const popupPage = await openPopup(context, extensionId);
 
-    // ⚠ 「言語セレクタが無い」ことを存在しないセレクタの不在で確かめない。
-    // 実装に一度も無かった要素の不在は、何を壊しても成立する。
-    // ヘッダーが実装どおりの操作だけを持つことを正面から確かめる
-    // （src/components/features/Header/Header.tsx）。言語切替が足されれば
-    // 個数が合わなくなって落ちる
     const implementedControls = [
       SELECTORS.header.pauseToggle,
       SELECTORS.header.settingsButton,
@@ -67,7 +52,6 @@ test.describe('i18n - 多言語対応', () => {
 });
 
 test.describe('i18n - ブラウザ言語が日本語', () => {
-  // ブラウザを日本語で起動する（拡張機能の表示言語はここでしか変えられない）
   test.use({ browserLanguage: 'ja' });
 
   test.beforeEach(async ({ context, extensionId }) => {
@@ -101,14 +85,10 @@ test.describe('i18n - ブラウザ言語が日本語', () => {
     );
     await popupPage.close();
 
-    // New Tab を開く
     const newtabPage = await openNewTab(context, extensionId);
-    // 新規タブは目標テキスト自体が表示されるため、日本語UIの確認は
-    // ブロックサイトリストの見出し（トグル）で行う
     await expect(newtabPage.locator(SELECTORS.newtab.container)).toBeVisible();
     await newtabPage.close();
 
-    // Options を開く
     const optionsPage = await openOptions(context, extensionId);
     await expect(optionsPage.locator(SELECTORS.options.title)).toHaveText(
       'ダッシュボード'
