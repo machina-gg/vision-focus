@@ -3,23 +3,36 @@ import { getMessage } from '~/lib/i18n';
 
 /** 非表示にする YouTube の要素の CSS セレクタ */
 export const YOUTUBE_SELECTORS = {
+  /** ホームの Shorts の棚 */
   shortsShelf: 'ytd-rich-shelf-renderer[is-shorts]',
+  /** 縮小表示のサイドメニューの Shorts タブ */
   shortsTab: 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
+  /** 検索結果・関連欄の Shorts の棚 */
   shortsSection: 'ytd-reel-shelf-renderer',
+  /** 展開したサイドメニューの Shorts へのリンク */
   shortsSidebarTab:
     'ytd-guide-entry-renderer a[title="Shorts"], ytd-guide-entry-renderer a[href="/shorts"]',
 
+  /** ホームのおすすめ動画の一覧 */
   homeFeed: 'ytd-browse[page-subtype="home"] ytd-rich-grid-renderer',
+  /** ホームの一覧の中身 */
   homeFeedContents: 'ytd-browse[page-subtype="home"] #contents',
+  /** ホーム上部の絞り込みチップの列 */
   homeChips: 'ytd-feed-filter-chip-bar-renderer',
 
+  /** 再生ページの関連動画の欄 */
   relatedVideos: '#related',
+  /** 動画の終わりに出るおすすめ */
   endScreen: '.ytp-endscreen-content',
+  /** 自動再生の切り替えボタン */
   autoplayToggle: '.ytp-autonav-toggle-button',
 
+  /** コメント欄 */
   comments: 'ytd-comments#comments',
+  /** ライブ配信のチャット欄 */
   liveChat: 'ytd-live-chat-frame#chat',
 
+  /** 再生ページの右側の欄 */
   secondaryInner: '#secondary-inner'
 } as const;
 
