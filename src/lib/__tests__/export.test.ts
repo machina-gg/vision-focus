@@ -5,8 +5,17 @@ import {
   exportBlockCounts,
   exportDailyStats,
   exportUnblockedSites,
-  exportAllData
+  exportAllData,
+  blockCountRows,
+  dailyActivityRows,
+  unblockedSiteRows,
+  exportSiteBlockCounts,
+  exportDailyActivity,
+  exportUnblockedSiteTimes
 } from '~/lib/export';
+import { parseDateKey } from '~/lib/activityStats';
+import { formatTime } from '~/lib/time';
+import type { ActivityLog } from '~/types/activity';
 import type {
   BlockItem,
   AnalyticsData,
@@ -490,6 +499,79 @@ describe('export utilities', () => {
       const content = blobCall[0][0];
       // BOM is '\uFEFF', should be prepended
       expect(content.startsWith('\uFEFF')).toBe(true);
+    });
+  });
+
+  describe('activity から出す CSV', () => {
+    // 母集団の外のサイト（untracked.com）と期間外の日（2024-01-01）を混ぜてある
+    const log: ActivityLog = {
+      '2024-01-01': { 'youtube.com': { seconds: 999, blocks: 9, unblocks: 0 } },
+      '2024-01-10': {
+        'youtube.com': { seconds: 600, blocks: 2, unblocks: 1 },
+        'reddit.com': { seconds: 0, blocks: 5, unblocks: 0 },
+        'untracked.com': { seconds: 5000, blocks: 50, unblocks: 5 }
+      },
+      '2024-01-12': {},
+      '2024-01-14': {
+        'youtube.com': { seconds: 1200, blocks: 1, unblocks: 0 },
+        'x.com': { seconds: 300, blocks: 0, unblocks: 2 }
+      }
+    };
+    const sites = ['youtube.com', 'reddit.com', 'x.com'];
+    const range = { from: '2024-01-05', to: '2024-01-15' };
+    const localDate = (date: string) => parseDateKey(date).toLocaleDateString();
+
+    it('ブロック回数: 期間内の多い順。0 回のサイトは出さない', () => {
+      expect(blockCountRows(log, sites, range)).toEqual([
+        ['reddit.com', '5', localDate('2024-01-10')],
+        ['youtube.com', '3', localDate('2024-01-14')]
+      ]);
+    });
+
+    it('日別統計: 新しい日から。何も無い日は出さない', () => {
+      expect(dailyActivityRows(log, sites, range)).toEqual([
+        ['2024-01-14', formatTime(1500), '1'],
+        ['2024-01-10', formatTime(600), '7']
+      ]);
+    });
+
+    it('解除サイト: 解除後の時間の多い順。解除したことが無いサイトは出さない', () => {
+      expect(unblockedSiteRows(log, sites, '2024-01-15')).toEqual([
+        [
+          'youtube.com',
+          localDate('2024-01-10'),
+          formatTime(600 + 1200),
+          localDate('2024-01-14')
+        ],
+        [
+          'x.com',
+          localDate('2024-01-14'),
+          formatTime(300),
+          localDate('2024-01-14')
+        ]
+      ]);
+    });
+
+    it('母集団が空ならどの CSV も行を持たない', () => {
+      expect(blockCountRows(log, [], range)).toEqual([]);
+      expect(dailyActivityRows(log, [], range)).toEqual([]);
+      expect(unblockedSiteRows(log, [], '2024-01-15')).toEqual([]);
+    });
+
+    it('ダウンロードの列見出しは既存の CSV と同じ', () => {
+      exportSiteBlockCounts(log, sites, range);
+      exportDailyActivity(log, sites, range);
+      exportUnblockedSiteTimes(log, sites, '2024-01-15');
+
+      const contents = (
+        global.Blob as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.map((call) => String(call[0][0]));
+      expect(contents[0]).toContain('Domain,Block Count,Last Blocked');
+      expect(contents[1]).toContain('Date,Waste Time,Block Count');
+      expect(contents[2]).toContain(
+        'Domain,Unblocked Date,Time Since Unblock,Last Activity'
+      );
+      expect(mockClick).toHaveBeenCalledTimes(3);
     });
   });
 });

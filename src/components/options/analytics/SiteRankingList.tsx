@@ -2,18 +2,41 @@ import React, { useMemo } from 'react';
 import { Shield, Unlock } from 'lucide-react';
 
 import { Card } from '~/components/ui';
+import { retentionRange } from '~/hooks/useActivityStats';
+import { rankSites } from '~/lib/activityStats';
 import { getMessage } from '~/lib/i18n';
-import type { AnalyticsData } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
+
+/** ランキングに並べるサイトの数 */
+const RANKING_LIMIT = 10;
 
 interface SiteRankingListProps {
-  analyticsData: AnalyticsData;
+  /** 事実の表 */
+  activity: ActivityLog;
+  /** 母集団（追跡中のサイト） */
+  sites: readonly SiteKey[];
 }
 
-export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
-  const topBlockedSites = useMemo(() => {
-    const counts = Object.values(analyticsData.siteBlockCounts || {});
-    return counts.sort((a, b) => b.count - a.count).slice(0, 10);
-  }, [analyticsData.siteBlockCounts]);
+export function SiteRankingList({ activity, sites }: SiteRankingListProps) {
+  // ブロック回数と解除回数は同じ期間（保持期間全体）・同じ母集団から出す
+  const { topBlockedSites, unblocksBySite } = useMemo(() => {
+    const range = retentionRange(new Date());
+    return {
+      topBlockedSites: rankSites(
+        activity,
+        sites,
+        range,
+        'blocks',
+        RANKING_LIMIT
+      ),
+      unblocksBySite: new Map(
+        rankSites(activity, sites, range, 'unblocks', sites.length).map(
+          ({ domain, value }) => [domain, value]
+        )
+      )
+    };
+  }, [activity, sites]);
 
   if (topBlockedSites.length === 0) {
     return null;
@@ -32,8 +55,7 @@ export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
       </div>
       <div className="space-y-2">
         {topBlockedSites.map((site, index) => {
-          const unblockCount =
-            analyticsData.siteUnblockCounts?.[site.domain]?.count || 0;
+          const unblockCount = unblocksBySite.get(site.domain) ?? 0;
           return (
             <div
               key={site.domain}
@@ -48,7 +70,7 @@ export function SiteRankingList({ analyticsData }: SiteRankingListProps) {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-danger-100 text-danger-700 text-sm font-medium rounded-full">
                   <Shield className="w-3.5 h-3.5" />
-                  {getMessage('blockedTimesShort', site.count.toString())}
+                  {getMessage('blockedTimesShort', site.value.toString())}
                 </span>
                 {unblockCount > 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-warning-100 text-warning-700 text-sm font-medium rounded-full">

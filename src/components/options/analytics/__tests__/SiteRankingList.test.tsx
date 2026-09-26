@@ -4,13 +4,15 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { SiteRankingList } from '../SiteRankingList';
-import type { AnalyticsData } from '~/types/analytics';
-import { DEFAULT_ANALYTICS } from '~/types/analytics';
+import { MAX_HISTORY_DAYS_FALLBACK } from '~/constants/intervals';
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog } from '~/types/activity';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
  * SiteRankingList の並び替え・件数の上限・解除回数の出し分けの検査
  *
+ * 数値は activity のブロック回数・解除回数を、保持期間全体・追跡中のサイトで数えたもの。
  * 集計が空のときにセクションごと消えること（見出しだけが残らないこと）と、
  * ブロック回数の多い順に 10 件までであることを見る。
  * 解除回数は 0 のとき出さない分岐があるため、境界として 0 と 1 を含める。
@@ -19,24 +21,30 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // ブロック回数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
-const analyticsOf = (
+/** 今日の行にブロック回数・解除回数を置き、置いたサイトを母集団にする */
+const propsOf = (
   blockCounts: Record<string, number>,
   unblockCounts: Record<string, number> = {}
-): AnalyticsData => ({
-  ...DEFAULT_ANALYTICS,
-  siteBlockCounts: Object.fromEntries(
-    Object.entries(blockCounts).map(([domain, count]) => [
-      domain,
-      { domain, count, lastBlocked: '2026-03-01T00:00:00.000Z' }
-    ])
-  ),
-  siteUnblockCounts: Object.fromEntries(
-    Object.entries(unblockCounts).map(([domain, count]) => [
-      domain,
-      { domain, count, lastUnblocked: '2026-03-01T00:00:00.000Z' }
-    ])
-  )
-});
+): { activity: ActivityLog; sites: string[] } => {
+  const sites = [
+    ...new Set([...Object.keys(blockCounts), ...Object.keys(unblockCounts)])
+  ];
+  return {
+    activity: {
+      [toDateKey(new Date())]: Object.fromEntries(
+        sites.map((site) => [
+          site,
+          {
+            seconds: 0,
+            blocks: blockCounts[site] ?? 0,
+            unblocks: unblockCounts[site] ?? 0
+          }
+        ])
+      )
+    },
+    sites
+  };
+};
 
 /** textContent 上での出現位置（並び順の確認に使う） */
 const positionOf = (container: HTMLElement, text: string) =>
@@ -45,23 +53,15 @@ const positionOf = (container: HTMLElement, text: string) =>
 describe('SiteRankingList', () => {
   describe('集計が無いとき', () => {
     it('ブロック回数が 0 件ならセクションごと描画しない', () => {
-      const { container } = render(
-        <SiteRankingList analyticsData={analyticsOf({})} />
-      );
+      const { container } = render(<SiteRankingList {...propsOf({})} />);
 
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('siteBlockCounts が未設定でも例外にならず、何も描画しない', () => {
+    it('母集団の外のサイトは数えない', () => {
+      const { activity } = propsOf({ 'untracked.example': 5 });
       const { container } = render(
-        <SiteRankingList
-          analyticsData={
-            {
-              ...DEFAULT_ANALYTICS,
-              siteBlockCounts: undefined
-            } as unknown as AnalyticsData
-          }
-        />
+        <SiteRankingList activity={activity} sites={['a.example']} />
       );
 
       expect(container).toBeEmptyDOMElement();
@@ -72,7 +72,7 @@ describe('SiteRankingList', () => {
     it('ブロック回数の多い順に並べる', () => {
       const { container } = render(
         <SiteRankingList
-          analyticsData={analyticsOf({
+          {...propsOf({
             'few.example': 1,
             'many.example': 9,
             'mid.example': 5
@@ -90,9 +90,7 @@ describe('SiteRankingList', () => {
 
     it('順位の番号を 1 から振る', () => {
       render(
-        <SiteRankingList
-          analyticsData={analyticsOf({ 'a.example': 3, 'b.example': 2 })}
-        />
+        <SiteRankingList {...propsOf({ 'a.example': 3, 'b.example': 2 })} />
       );
 
       expect(screen.getByText('1')).toBeInTheDocument();
@@ -107,17 +105,36 @@ describe('SiteRankingList', () => {
         ])
       );
 
-      render(<SiteRankingList analyticsData={analyticsOf(counts)} />);
+      render(<SiteRankingList {...propsOf(counts)} />);
 
       expect(screen.getByText('site-9.example')).toBeInTheDocument();
       expect(screen.queryByText('site-10.example')).not.toBeInTheDocument();
       expect(screen.queryByText('site-11.example')).not.toBeInTheDocument();
     });
 
-    it('ブロック回数を文言の置換値として出す', () => {
+    it('保持期間内の日をまたいで足し上げ、保持期間より古い日は数えない', () => {
+      const daysAgo = (days: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() - days);
+        return toDateKey(d);
+      };
+      const row = (blocks: number) => ({ seconds: 0, blocks, unblocks: 0 });
       render(
-        <SiteRankingList analyticsData={analyticsOf({ 'a.example': 7 })} />
+        <SiteRankingList
+          activity={{
+            [daysAgo(0)]: { 'a.example': row(2) },
+            [daysAgo(10)]: { 'a.example': row(3) },
+            [daysAgo(MAX_HISTORY_DAYS_FALLBACK + 1)]: { 'a.example': row(100) }
+          }}
+          sites={['a.example']}
+        />
       );
+
+      expect(screen.getByText('blockedTimesShort(5)')).toBeInTheDocument();
+    });
+
+    it('ブロック回数を文言の置換値として出す', () => {
+      render(<SiteRankingList {...propsOf({ 'a.example': 7 })} />);
 
       expect(screen.getByText('blockedTimesShort(7)')).toBeInTheDocument();
     });
@@ -125,18 +142,14 @@ describe('SiteRankingList', () => {
 
   describe('解除回数', () => {
     it('解除の記録が無いサイトには解除回数を出さない', () => {
-      render(
-        <SiteRankingList analyticsData={analyticsOf({ 'a.example': 3 })} />
-      );
+      render(<SiteRankingList {...propsOf({ 'a.example': 3 })} />);
 
       expect(screen.queryByText('0')).not.toBeInTheDocument();
     });
 
     it('解除回数が 0 のときも出さない', () => {
       render(
-        <SiteRankingList
-          analyticsData={analyticsOf({ 'a.example': 3 }, { 'a.example': 0 })}
-        />
+        <SiteRankingList {...propsOf({ 'a.example': 3 }, { 'a.example': 0 })} />
       );
 
       expect(screen.queryByText('0')).not.toBeInTheDocument();
@@ -144,9 +157,7 @@ describe('SiteRankingList', () => {
 
     it('解除回数が 1 以上のときはその数を出す', () => {
       render(
-        <SiteRankingList
-          analyticsData={analyticsOf({ 'a.example': 3 }, { 'a.example': 4 })}
-        />
+        <SiteRankingList {...propsOf({ 'a.example': 3 }, { 'a.example': 4 })} />
       );
 
       expect(screen.getByText('4')).toBeInTheDocument();

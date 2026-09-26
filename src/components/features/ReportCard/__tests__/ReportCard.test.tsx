@@ -40,21 +40,13 @@ const weeklyReportOf = (
 ): WeeklyReport => ({
   weekStart: '2026-03-09',
   weekEnd: '2026-03-15',
-  totalWasteTime: 3660,
-  totalBlockCount: 12,
-  totalUnblockCount: 3,
+  totals: { seconds: 3660, blocks: 12, unblocks: 3 },
   dailyBreakdown: [
-    {
-      date: '2026-03-09',
-      wasteTime: 600,
-      investTime: 0,
-      blockCount: 2,
-      unblockCount: 1
-    }
+    { date: '2026-03-09', seconds: 600, blocks: 2, unblocks: 1 },
+    { date: '2026-03-10', seconds: 0, blocks: 0, unblocks: 0 }
   ],
-  dailyBlockCounts: [2, 0, 0, 0, 0, 0, 0],
-  topWasteSites: [{ domain: 'waste.example', time: 1200 }],
-  topBlockedSites: [{ domain: 'blocked.example', count: 5 }],
+  topWasteSites: [{ domain: 'waste.example', value: 1200 }],
+  topBlockedSites: [{ domain: 'blocked.example', value: 5 }],
   topUnblockedSites: [],
   wasteTimeChangePercent: -12.5,
   trend: 'improving',
@@ -65,19 +57,12 @@ const monthlyReportOf = (
   overrides: Partial<MonthlyReport> = {}
 ): MonthlyReport => ({
   month: '2026-03',
-  totalWasteTime: 7200,
-  totalBlockCount: 40,
-  totalUnblockCount: 8,
+  totals: { seconds: 7200, blocks: 40, unblocks: 8 },
   weeklyBreakdown: [
-    {
-      weekStart: '2026-03-02',
-      wasteTime: 1800,
-      blockCount: 10,
-      unblockCount: 2
-    }
+    { weekStart: '2026-03-02', seconds: 1800, blocks: 10, unblocks: 2 }
   ],
-  topWasteSites: [{ domain: 'waste.example', time: 3600 }],
-  topBlockedSites: [{ domain: 'blocked.example', count: 9 }],
+  topWasteSites: [{ domain: 'waste.example', value: 3600 }],
+  topBlockedSites: [{ domain: 'blocked.example', value: 9 }],
   topUnblockedSites: [],
   wasteTimeChangePercent: null,
   trend: 'stable',
@@ -177,8 +162,11 @@ describe('WeeklyReportCard', () => {
 
       expect(screen.getByTestId('weekly-chart')).toHaveTextContent(
         JSON.stringify({
-          dailyBreakdown: [{ wasteTime: 600, blockCount: 2 }],
-          dailyBlockCounts: [2, 0, 0, 0, 0, 0, 0]
+          dailyBreakdown: [
+            { wasteTime: 600, blockCount: 2 },
+            { wasteTime: 0, blockCount: 0 }
+          ],
+          dailyBlockCounts: [2, 0]
         })
       );
     });
@@ -317,7 +305,11 @@ describe('MonthlyReportCard', () => {
       renderCard(report);
 
       expect(screen.getByTestId('monthly-trend-chart')).toHaveTextContent(
-        JSON.stringify({ weeklyBreakdown: report.weeklyBreakdown })
+        JSON.stringify({
+          weeklyBreakdown: [
+            { weekStart: '2026-03-02', wasteTime: 1800, blockCount: 10 }
+          ]
+        })
       );
     });
 

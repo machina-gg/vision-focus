@@ -25,20 +25,15 @@ import {
 } from '~/components/options';
 import { AnalyticsOptInModal } from '~/components/options/modals';
 import {
+  useActivitySources,
   useAnalytics,
   useBlocklist,
   useSchedules,
-  useStorageItem,
   useSupportPrompt,
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import {
-  activityItem,
-  getSettings,
-  getVision,
-  settingsItem
-} from '~/lib/storage';
+import { getSettings, getVision, settingsItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type {
@@ -69,8 +64,8 @@ function OptionsAppContent() {
   const schedules = useSchedules({ settings, setSettings });
   const { handleYouTubeChange } = useYouTubeSettings({ settings, setSettings });
   const supportPrompt = useSupportPrompt();
-  // 事実の表は background だけが書く。画面は読むだけなので更新関数は受け取らない
-  const [activity] = useStorageItem(activityItem);
+  // 事実の表と母集団（追跡中のサイト）。background だけが書き、画面は読んで導出するだけ
+  const { activity, sites } = useActivitySources();
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
@@ -203,8 +198,9 @@ function OptionsAppContent() {
         {/* Analytics Tab */}
         {activeTab === TABS.ANALYTICS && (
           <AnalyticsTab
+            activity={activity}
+            sites={sites}
             unblockHistory={analytics.unblockHistory}
-            analyticsData={analytics.analyticsData}
             onReblock={analytics.handleReblock}
             onReset={analytics.handleResetAnalytics}
             onStopTracking={analytics.handleStopTracking}

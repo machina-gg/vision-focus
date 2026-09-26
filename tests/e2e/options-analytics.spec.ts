@@ -7,8 +7,10 @@ import {
   clearStorage,
   setStorageData,
   makeSettings,
+  makeActivity,
   makeAnalytics,
   makeSiteBlockCounts,
+  makeUnblockHistory,
   getStorageData,
   SELECTORS,
   UI_TEXT
@@ -65,6 +67,29 @@ function rankingDomainAt(page: Page, rank: number): Locator {
     );
 }
 
+/**
+ * サイト別ランキングの種（youtube.com: 10 回 > reddit.com: 5 回）を置く
+ *
+ * ランキングは追跡中のサイトの activity から出る。種に置くサイトは解除履歴にも
+ * 入れて追跡中にする（ブロック中として置き、再ブロック・停止のボタンは出さない）。
+ */
+async function seedBlockRanking(page: Page): Promise<void> {
+  await setStorageData(
+    page,
+    'unblockHistory',
+    makeUnblockHistory(['youtube.com', 'reddit.com'], { status: 'blocked' })
+  );
+  await setStorageData(
+    page,
+    'activity',
+    makeActivity([
+      ['youtube.com', { blocks: 6 }],
+      ['youtube.com', { blocks: 4 }, 3],
+      ['reddit.com', { blocks: 5 }, 1]
+    ])
+  );
+}
+
 test.describe('Options - Analytics Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     // 各テストの前にストレージをセットアップ
@@ -74,18 +99,9 @@ test.describe('Options - Analytics Tab', () => {
       withGoal: true,
       withAnalyticsOptIn: true
     });
-    // サイトランキングは集計データが無いと描画されないため用意する
-    // （SiteRankingList は topBlockedSites.length === 0 で null を返す）
-    await setStorageData(
-      page,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([
-          ['youtube.com', 10],
-          ['reddit.com', 5]
-        ])
-      })
-    );
+    // サイトランキングはブロック回数が無いと描画されないため用意する
+    // （SiteRankingList はランキングが空なら null を返す）
+    await seedBlockRanking(page);
     await page.close();
   });
 
@@ -108,21 +124,13 @@ test.describe('Options - Analytics Tab', () => {
     extensionId
   }) => {
     // テスト用の分析データを追加。
+    // youtube.com は 2 日に分けて置き、日をまたいで足し上げることも見る
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
       withAnalyticsOptIn: true
     });
-    await setStorageData(
-      setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([
-          ['youtube.com', 10],
-          ['reddit.com', 5]
-        ])
-      })
-    );
+    await seedBlockRanking(setupPage);
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -143,20 +151,13 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の解除履歴データを追加
+    // テスト用の解除履歴データを追加（一覧の行は追跡中のサイト）
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'unblockHistory', {
-      sites: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          status: 'unblocked',
-          blockedAt: '2024-01-01T00:00:00.000Z',
-          unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: 3600,
-          lastActivity: '2024-01-01T11:00:00.000Z'
-        }
-      }
-    });
+    await setStorageData(
+      setupPage,
+      'unblockHistory',
+      makeUnblockHistory(['youtube.com'])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -177,21 +178,24 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の解除履歴データを追加
+    // 解除後の時間は activity から出る: 最後に解除した日（2 日前）から今日までの表示秒数。
+    // 解除より前の日（5 日前）の時間は入らない
     const wastedSeconds = 7200; // 2 時間
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'unblockHistory', {
-      sites: {
-        'reddit.com': {
-          domain: 'reddit.com',
-          status: 'unblocked',
-          blockedAt: '2024-01-01T00:00:00.000Z',
-          unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: wastedSeconds,
-          lastActivity: '2024-01-01T12:00:00.000Z'
-        }
-      }
-    });
+    await setStorageData(
+      setupPage,
+      'unblockHistory',
+      makeUnblockHistory(['reddit.com'])
+    );
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['reddit.com', { seconds: 999 }, 5],
+        ['reddit.com', { seconds: 3600, unblocks: 1 }, 2],
+        ['reddit.com', { seconds: wastedSeconds - 3600 }]
+      ])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -367,19 +371,13 @@ test.describe('Options - Analytics Tab', () => {
     });
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([['youtube.com', 10]]),
-        dailyStats: {
-          [new Date().toISOString().slice(0, 10)]: {
-            date: new Date().toISOString().slice(0, 10),
-            wasteTime: 600,
-            investTime: 0,
-            blockCount: 3,
-            unblockCount: 0
-          }
-        }
-      })
+      'unblockHistory',
+      makeUnblockHistory(['youtube.com'], { status: 'blocked' })
+    );
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([['youtube.com', { seconds: 600, blocks: 3 }]])
     );
     await setupPage.close();
 
@@ -474,21 +472,11 @@ test.describe('Options - Analytics Tab', () => {
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       })
     );
+    // youtube.com はブロックリストにあるので追跡中。統計の CSV はその activity から出る
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([['youtube.com', 10]]),
-        dailyStats: {
-          [new Date().toISOString().slice(0, 10)]: {
-            date: new Date().toISOString().slice(0, 10),
-            wasteTime: 600,
-            investTime: 0,
-            blockCount: 3,
-            unblockCount: 0
-          }
-        }
-      })
+      'activity',
+      makeActivity([['youtube.com', { seconds: 600, blocks: 3 }]])
     );
     await setupPage.close();
 
@@ -500,6 +488,14 @@ test.describe('Options - Analytics Tab', () => {
 
     // エクスポートはドロップダウンを開いてから項目を選ぶ
     await exportButton.click();
+
+    // 統計データ（ブロック回数・日別統計）も activity から書き出せる
+    await expect(
+      page.locator(SELECTORS.analytics.exportBlockCounts)
+    ).toBeEnabled();
+    await expect(
+      page.locator(SELECTORS.analytics.exportDailyStats)
+    ).toBeEnabled();
 
     // クリックより前に待ち受けを開始しないとイベントを取りこぼす
     const downloadPromise = page.waitForEvent('download');
@@ -520,18 +516,17 @@ test.describe('Options - Analytics Tab', () => {
       withGoal: true,
       withAnalyticsOptIn: true
     });
-    await setStorageData(setupPage, 'unblockHistory', {
-      sites: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          status: 'unblocked',
-          blockedAt: '2024-01-01T00:00:00.000Z',
-          unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: 3600,
-          lastActivity: '2024-01-01T11:00:00.000Z'
-        }
-      }
-    });
+    // 解除サイトの CSV は activity の解除の記録から出る
+    await setStorageData(
+      setupPage,
+      'unblockHistory',
+      makeUnblockHistory(['youtube.com'])
+    );
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([['youtube.com', { seconds: 3600, unblocks: 1 }]])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');

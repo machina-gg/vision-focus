@@ -16,12 +16,14 @@ import {
   REFRESH_SPINNER_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
+import { retentionRange } from '~/hooks/useActivityStats';
+import { rankSites, sumRange } from '~/lib/activityStats';
 import { getMessage } from '~/lib/i18n';
 import {
   exportBlockList,
-  exportBlockCounts,
-  exportDailyStats,
-  exportUnblockedSites
+  exportDailyActivity,
+  exportSiteBlockCounts,
+  exportUnblockedSiteTimes
 } from '~/lib/export';
 import {
   shareToX,
@@ -30,24 +32,25 @@ import {
   copyImageToClipboard,
   downloadImage
 } from '~/lib/share';
-import type {
-  UnblockHistory,
-  AnalyticsData,
-  AppSettings
-} from '~/types/storage';
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
+import type { AppSettings } from '~/types/storage';
 
 interface AnalyticsExportBarProps {
   settings: AppSettings | null;
-  analyticsData: AnalyticsData;
-  unblockHistory: UnblockHistory;
+  /** 事実の表 */
+  activity: ActivityLog;
+  /** 母集団（追跡中のサイト） */
+  sites: readonly SiteKey[];
   onRefresh: () => Promise<void>;
   onReset: () => void;
 }
 
 export function AnalyticsExportBar({
   settings,
-  analyticsData,
-  unblockHistory,
+  activity,
+  sites,
   onRefresh,
   onReset
 }: AnalyticsExportBarProps) {
@@ -66,11 +69,22 @@ export function AnalyticsExportBar({
     setTimeout(() => setIsRefreshing(false), REFRESH_SPINNER_DELAY_MS);
   };
 
+  // CSV・X シェアの数値はすべて保持期間全体・追跡中のサイトから出す
+  const { range, totals, topBlockedSite } = useMemo(() => {
+    const retention = retentionRange(new Date());
+    const [top] = rankSites(activity, sites, retention, 'blocks', 1);
+    return {
+      range: retention,
+      totals: sumRange(activity, sites, retention),
+      topBlockedSite: top?.domain
+    };
+  }, [activity, sites]);
+
   const hasBlockList = (settings?.blockList?.length ?? 0) > 0;
-  const hasBlockCounts =
-    Object.keys(analyticsData.siteBlockCounts || {}).length > 0;
-  const hasDailyStats = Object.keys(analyticsData.dailyStats || {}).length > 0;
-  const hasUnblockedData = Object.keys(unblockHistory.sites || {}).length > 0;
+  const hasBlockCounts = totals.blocks > 0;
+  const hasDailyStats =
+    totals.seconds > 0 || totals.blocks > 0 || totals.unblocks > 0;
+  const hasUnblockedData = totals.unblocks > 0;
   const hasAnyData =
     hasBlockList || hasBlockCounts || hasDailyStats || hasUnblockedData;
 
@@ -83,45 +97,22 @@ export function AnalyticsExportBar({
   };
 
   const handleExportBlockCounts = () => {
-    if (analyticsData.siteBlockCounts) {
-      exportBlockCounts(analyticsData.siteBlockCounts);
-      trackFeatureUse('csv_export');
-    }
-    setShowExportMenu(false);
-  };
-
-  const handleExportDailyStats = () => {
-    if (analyticsData.dailyStats) {
-      exportDailyStats(analyticsData.dailyStats);
-      trackFeatureUse('csv_export');
-    }
-    setShowExportMenu(false);
-  };
-
-  const handleExportUnblockedSites = () => {
-    exportUnblockedSites(unblockHistory);
+    exportSiteBlockCounts(activity, sites, range);
     trackFeatureUse('csv_export');
     setShowExportMenu(false);
   };
 
-  const totalBlockCount = useMemo(() => {
-    return Object.values(analyticsData.siteBlockCounts || {}).reduce(
-      (sum, site) => sum + site.count,
-      0
-    );
-  }, [analyticsData.siteBlockCounts]);
+  const handleExportDailyStats = () => {
+    exportDailyActivity(activity, sites, range);
+    trackFeatureUse('csv_export');
+    setShowExportMenu(false);
+  };
 
-  const totalWasteTime = useMemo(() => {
-    return Object.values(analyticsData.dailyStats || {}).reduce(
-      (sum, stat) => sum + stat.wasteTime,
-      0
-    );
-  }, [analyticsData.dailyStats]);
-
-  const topBlockedSites = useMemo(() => {
-    const counts = Object.values(analyticsData.siteBlockCounts || {});
-    return counts.sort((a, b) => b.count - a.count).slice(0, 10);
-  }, [analyticsData.siteBlockCounts]);
+  const handleExportUnblockedSites = () => {
+    exportUnblockedSiteTimes(activity, sites, toDateKey(new Date()));
+    trackFeatureUse('csv_export');
+    setShowExportMenu(false);
+  };
 
   const handleShareToX = useCallback(async () => {
     if (!chartRef.current) return;
@@ -145,9 +136,9 @@ export function AnalyticsExportBar({
 
       // シェアテキストを生成
       const text = generateShareText({
-        totalBlockCount,
-        totalWasteTime,
-        topBlockedSite: topBlockedSites[0]?.domain
+        totalBlockCount: totals.blocks,
+        totalWasteTime: totals.seconds,
+        topBlockedSite
       });
 
       setShareMessage({ type: 'success', text: getMessage('shareSuccess') });
@@ -161,7 +152,7 @@ export function AnalyticsExportBar({
       setShareMessage({ type: 'error', text: getMessage('shareError') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
     }
-  }, [totalBlockCount, totalWasteTime, topBlockedSites]);
+  }, [totals, topBlockedSite]);
 
   const handleDownloadImage = useCallback(async () => {
     if (!chartRef.current) return;
@@ -176,7 +167,7 @@ export function AnalyticsExportBar({
       }
 
       // ファイル名を生成
-      const filename = `visionfocus-analytics-${new Date().toISOString().split('T')[0]}.png`;
+      const filename = `visionfocus-analytics-${toDateKey(new Date())}.png`;
       downloadImage(canvas, filename);
       setShareMessage({ type: 'success', text: getMessage('downloadSuccess') });
       setTimeout(() => setShareMessage(null), SHARE_MESSAGE_DELAY_MS);
@@ -338,10 +329,7 @@ export function AnalyticsExportBar({
           </div>
         )}
         <div ref={chartRef}>
-          <AnalyticsChart
-            analytics={analyticsData}
-            unblockHistory={unblockHistory}
-          />
+          <AnalyticsChart activity={activity} sites={sites} />
         </div>
       </Card>
 

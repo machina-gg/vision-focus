@@ -3,126 +3,14 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { WeeklyReportCard, MonthlyReportCard } from './ReportCard';
-import type { WeeklyReport, MonthlyReport } from '~/types/report';
+import { generateMonthlyReport, generateWeeklyReport } from '~/lib/report';
+import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
 
-const mockWeeklyReport: WeeklyReport = {
-  weekStart: '2026-02-09',
-  weekEnd: '2026-02-15',
-  totalWasteTime: 18000,
-  totalBlockCount: 42,
-  totalUnblockCount: 6,
-  dailyBreakdown: [
-    {
-      date: '2026-02-09',
-      wasteTime: 1800,
-      investTime: 3600,
-      blockCount: 3,
-      unblockCount: 0
-    },
-    {
-      date: '2026-02-10',
-      wasteTime: 3600,
-      investTime: 4200,
-      blockCount: 8,
-      unblockCount: 1
-    },
-    {
-      date: '2026-02-11',
-      wasteTime: 2400,
-      investTime: 5400,
-      blockCount: 5,
-      unblockCount: 0
-    },
-    {
-      date: '2026-02-12',
-      wasteTime: 4200,
-      investTime: 3000,
-      blockCount: 9,
-      unblockCount: 2
-    },
-    {
-      date: '2026-02-13',
-      wasteTime: 1200,
-      investTime: 6000,
-      blockCount: 4,
-      unblockCount: 0
-    },
-    {
-      date: '2026-02-14',
-      wasteTime: 3000,
-      investTime: 2400,
-      blockCount: 7,
-      unblockCount: 1
-    },
-    {
-      date: '2026-02-15',
-      wasteTime: 1800,
-      investTime: 4800,
-      blockCount: 6,
-      unblockCount: 2
-    }
-  ],
-  dailyBlockCounts: [3, 8, 5, 9, 4, 7, 6],
-  topWasteSites: [
-    { domain: 'twitter.com', time: 7200 },
-    { domain: 'youtube.com', time: 5400 },
-    { domain: 'reddit.com', time: 1800 }
-  ],
-  topBlockedSites: [
-    { domain: 'twitter.com', count: 12 },
-    { domain: 'youtube.com', count: 8 },
-    { domain: 'reddit.com', count: 5 }
-  ],
-  topUnblockedSites: [{ domain: 'twitter.com', count: 3 }],
-  wasteTimeChangePercent: -12.4,
-  trend: 'improving'
-};
-
-const mockMonthlyReport: MonthlyReport = {
-  month: '2026-02',
-  totalWasteTime: 72000,
-  totalBlockCount: 160,
-  totalUnblockCount: 20,
-  weeklyBreakdown: [
-    {
-      weekStart: '2026-02-02',
-      wasteTime: 14400,
-      blockCount: 30,
-      unblockCount: 4
-    },
-    {
-      weekStart: '2026-02-09',
-      wasteTime: 18000,
-      blockCount: 42,
-      unblockCount: 6
-    },
-    {
-      weekStart: '2026-02-16',
-      wasteTime: 21600,
-      blockCount: 48,
-      unblockCount: 5
-    },
-    {
-      weekStart: '2026-02-23',
-      wasteTime: 18000,
-      blockCount: 40,
-      unblockCount: 5
-    }
-  ],
-  topWasteSites: [
-    { domain: 'twitter.com', time: 28800 },
-    { domain: 'youtube.com', time: 21600 },
-    { domain: 'reddit.com', time: 14400 }
-  ],
-  topBlockedSites: [
-    { domain: 'twitter.com', count: 60 },
-    { domain: 'youtube.com', count: 45 },
-    { domain: 'reddit.com', count: 30 }
-  ],
-  topUnblockedSites: [{ domain: 'twitter.com', count: 10 }],
-  wasteTimeChangePercent: 8.1,
-  trend: 'declining'
-};
+// 実際のレポート生成に例の activity を通す（合計・内訳・トップが同じ期間から出る形を見せる）。
+// 期間は今日基準なので、例の activity も今日からの相対日付で作ってある
+const activity = storyActivity();
+const mockWeeklyReport = generateWeeklyReport(activity, STORY_SITES, 0);
+const mockMonthlyReport = generateMonthlyReport(activity, STORY_SITES, 0);
 
 const meta = {
   title: 'Features/ReportCard',

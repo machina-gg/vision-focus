@@ -1,135 +1,93 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart3, TrendingUp, Layers } from 'lucide-react';
 
-import type { AnalyticsData, UnblockHistory } from '~/types/storage';
+import {
+  cumulativeSeries,
+  dailySeries,
+  lastNDaysRange,
+  rankSites,
+  sumRange
+} from '~/lib/activityStats';
 import { getMessage } from '~/lib/i18n';
 import { formatTime } from '~/lib/time';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
 import { DailyChart } from './DailyChart';
 import { BySiteChart } from './BySiteChart';
 import { CumulativeChart } from './CumulativeChart';
 
 export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
+/** 3 系列と見出しの合計が共有する期間（今日を含む直近の日数） */
+export const CHART_DAYS = 14;
+/** サイト別グラフに並べるサイトの数 */
+const BY_SITE_LIMIT = 8;
+/** サイト別グラフの軸ラベルに収める文字数 */
+const DOMAIN_LABEL_MAX = 15;
+const SECONDS_PER_MINUTE = 60;
+
 export interface AnalyticsChartProps {
-  analytics: AnalyticsData;
-  unblockHistory: UnblockHistory;
+  /** 事実の表 */
+  activity: ActivityLog;
+  /** 母集団（追跡中のサイト） */
+  sites: readonly SiteKey[];
   disabled?: boolean;
 }
 
+function toMinutes(seconds: number): number {
+  return Math.round(seconds / SECONDS_PER_MINUTE);
+}
+
 export function AnalyticsChart({
-  analytics,
-  unblockHistory,
+  activity,
+  sites,
   disabled = false
 }: AnalyticsChartProps) {
   const [chartType, setChartType] = useState<ChartType>('daily');
 
-  // Get list of all tracked domains (both blocked and unblocked)
-  const trackedDomains = useMemo(() => {
-    return Object.keys(unblockHistory.sites);
-  }, [unblockHistory.sites]);
-
-  // A. Daily total time on all tracked sites
-  const dailyData = useMemo(() => {
-    const entries = Object.entries(analytics.dailyStats)
-      .map(([date, stat]) => ({
-        date,
-        time: Math.round(stat.wasteTime / 60) // Convert to minutes
-      }))
-      .filter((e) => e.time > 0)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-14); // Last 14 days
-
-    // If no daily stats, show current total as today's data
-    if (entries.length === 0) {
-      const currentTotal = Object.values(unblockHistory.sites).reduce(
-        (sum, site) => sum + site.timeAfterUnblock,
-        0
-      );
-      if (currentTotal > 0) {
-        return [
-          {
-            date: new Date().toISOString().split('T')[0],
-            time: Math.round(currentTotal / 60)
-          }
-        ];
+  // 日別・サイト別・累積・見出しの合計はすべてこの 1 つの期間から出す。
+  // 系列ごとに期間を変えると、見出しの合計とグラフの和が食い違う
+  const { totalSeconds, dailyData, bySiteData, cumulativeData } =
+    useMemo(() => {
+      const range = lastNDaysRange(new Date(), CHART_DAYS);
+      const total = sumRange(activity, sites, range).seconds;
+      // 期間内に表示時間が無ければ 0 の線ではなく「データなし」を出す
+      if (total === 0) {
+        return {
+          totalSeconds: 0,
+          dailyData: [],
+          bySiteData: [],
+          cumulativeData: []
+        };
       }
-      return [];
-    }
-
-    return entries;
-  }, [analytics.dailyStats, unblockHistory.sites]);
-
-  // B. Site-by-site breakdown (stacked)
-  const bySiteData = useMemo(() => {
-    // Get daily breakdown per site from siteTime
-    // For now, show total per site as a simple bar chart
-    const siteData = trackedDomains
-      .map((domain) => ({
-        domain: domain.length > 15 ? domain.slice(0, 15) + '...' : domain,
-        fullDomain: domain,
-        time: Math.round(
-          (unblockHistory.sites[domain]?.timeAfterUnblock || 0) / 60
-        )
-      }))
-      .filter((s) => s.time > 0)
-      .sort((a, b) => b.time - a.time)
-      .slice(0, 8); // Top 8 sites
-
-    return siteData;
-  }, [trackedDomains, unblockHistory.sites]);
-
-  // C. Cumulative time since unblock
-  const cumulativeData = useMemo(() => {
-    // Find earliest unblock date
-    const unblockedSites = Object.values(unblockHistory.sites);
-    if (unblockedSites.length === 0) return [];
-
-    const earliestUnblock = unblockedSites.reduce((earliest, site) => {
-      const date = new Date(site.unblockedAt);
-      return date < earliest ? date : earliest;
-    }, new Date());
-
-    // Generate cumulative data from daily stats
-    const dailyEntries = Object.entries(analytics.dailyStats)
-      .filter(([date]) => new Date(date) >= earliestUnblock)
-      .sort(([a], [b]) => a.localeCompare(b));
-
-    // If no daily stats, show at least current total as a single point
-    if (dailyEntries.length === 0) {
-      const currentTotal = unblockedSites.reduce(
-        (sum, site) => sum + site.timeAfterUnblock,
-        0
-      );
-      if (currentTotal > 0) {
-        return [
-          {
-            date: new Date().toISOString().split('T')[0],
-            cumulative: Math.round(currentTotal / 60)
-          }
-        ];
-      }
-      return [];
-    }
-
-    let cumulative = 0;
-    const data = dailyEntries.map(([date, stat]) => {
-      cumulative += stat.wasteTime;
       return {
-        date,
-        cumulative: Math.round(cumulative / 60) // Minutes
+        totalSeconds: total,
+        dailyData: dailySeries(activity, sites, range).map((point) => ({
+          date: point.date,
+          time: toMinutes(point.seconds)
+        })),
+        bySiteData: rankSites(
+          activity,
+          sites,
+          range,
+          'seconds',
+          BY_SITE_LIMIT
+        ).map(({ domain, value }) => ({
+          domain:
+            domain.length > DOMAIN_LABEL_MAX
+              ? domain.slice(0, DOMAIN_LABEL_MAX) + '...'
+              : domain,
+          fullDomain: domain,
+          time: toMinutes(value)
+        })),
+        cumulativeData: cumulativeSeries(activity, sites, range).map(
+          (point) => ({
+            date: point.date,
+            cumulative: toMinutes(point.seconds)
+          })
+        )
       };
-    });
-
-    return data.slice(-14); // Last 14 days
-  }, [analytics.dailyStats, unblockHistory.sites]);
-
-  // Total time across all tracked sites
-  const totalTime = useMemo(() => {
-    return Object.values(unblockHistory.sites).reduce(
-      (sum, site) => sum + site.timeAfterUnblock,
-      0
-    );
-  }, [unblockHistory.sites]);
+    }, [activity, sites]);
 
   const renderChart = () => {
     switch (chartType) {
@@ -152,10 +110,10 @@ export function AnalyticsChart({
           {getMessage('totalTimeOnTrackedSites')}
         </p>
         <p className="text-2xl font-bold text-block-700">
-          {formatTime(totalTime)}
+          {formatTime(totalSeconds)}
         </p>
         <p className="text-xs text-block-500 mt-1">
-          {getMessage('chartSiteCount', String(trackedDomains.length))}
+          {getMessage('chartSiteCount', String(sites.length))}
         </p>
       </div>
 

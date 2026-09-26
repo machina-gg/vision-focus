@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useAnalytics } from '~/hooks/useAnalytics';
-import type { AnalyticsData, UnblockHistory } from '~/types/storage';
+import type { UnblockHistory } from '~/types/storage';
 import {
   DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
@@ -64,12 +64,11 @@ describe('useAnalytics', () => {
   const mockSetSettings = vi.fn();
 
   describe('初期状態', () => {
-    it('空のアナリティクスデータで開始する', () => {
+    it('旧い集計（analytics）は画面へ返さない', () => {
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
       );
-      expect(result.current.analyticsData.dailyStats).toEqual({});
-      expect(result.current.analyticsData.siteTime).toEqual({});
+      expect(result.current).not.toHaveProperty('analyticsData');
     });
 
     it('デフォルトのアンブロック履歴で開始する', () => {
@@ -81,20 +80,20 @@ describe('useAnalytics', () => {
   });
 
   describe('reloadAnalyticsData', () => {
-    it('ストレージからデータを読み込む', async () => {
-      const mockAnalytics: AnalyticsData = {
-        ...DEFAULT_ANALYTICS,
-        dailyStats: {
-          '2024-06-12': {
-            date: '2024-06-12',
-            wasteTime: 100,
-            investTime: 50,
-            blockCount: 5,
-            unblockCount: 1
+    it('ストレージから解除履歴を読み込む', async () => {
+      const history = {
+        sites: {
+          'example.com': {
+            domain: 'example.com',
+            status: 'unblocked' as const,
+            blockedAt: '2024-06-01T00:00:00.000Z',
+            unblockedAt: '2024-06-02T00:00:00.000Z',
+            timeAfterUnblock: 0,
+            lastActivity: null
           }
         }
       };
-      mockGetAnalytics.mockResolvedValue(mockAnalytics);
+      mockGetUnblockHistory.mockResolvedValue(history);
 
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
@@ -104,9 +103,9 @@ describe('useAnalytics', () => {
         await result.current.reloadAnalyticsData();
       });
 
-      expect(
-        result.current.analyticsData.dailyStats['2024-06-12']
-      ).toBeTruthy();
+      expect(result.current.unblockHistory).toEqual(history);
+      // 数値は activity から導出するので、旧い集計は読みに行かない
+      expect(mockGetAnalytics).not.toHaveBeenCalled();
     });
   });
 
@@ -199,9 +198,9 @@ describe('useAnalytics', () => {
         await result.current.handleRefreshAnalytics();
       });
 
-      // 保存済みデータの読み出しが呼ばれたことを確認
-      expect(mockGetAnalytics).toHaveBeenCalled();
+      // 解除履歴を読み直す（数値は activity から導出するので旧い集計は読まない）
       expect(mockGetUnblockHistory).toHaveBeenCalled();
+      expect(mockGetAnalytics).not.toHaveBeenCalled();
     });
   });
 

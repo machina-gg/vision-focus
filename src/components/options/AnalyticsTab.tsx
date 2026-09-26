@@ -4,7 +4,9 @@ import { Plus } from 'lucide-react';
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { useSettings } from '~/contexts/SettingsContext';
-import type { UnblockHistory, AnalyticsData } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
+import type { UnblockHistory } from '~/types/storage';
 
 import {
   AnalyticsExportBar,
@@ -14,8 +16,12 @@ import {
 } from './analytics';
 
 interface AnalyticsTabProps {
+  /** 事実の表。タブ内の数値はすべてここから導出する */
+  activity: ActivityLog;
+  /** 母集団（追跡中のサイト）。タブ内のどの数値もこの集合だけを数える */
+  sites: readonly SiteKey[];
+  /** 追跡中サイト一覧のブロック状態・ブロック開始日・操作の宛先 */
   unblockHistory: UnblockHistory;
-  analyticsData: AnalyticsData;
   onReblock: (domain: string) => void;
   onReset: () => void;
   onStopTracking: (domain: string) => void;
@@ -30,8 +36,9 @@ interface AnalyticsTabProps {
 }
 
 export function AnalyticsTab({
+  activity,
+  sites,
   unblockHistory,
-  analyticsData,
   onReblock,
   onReset,
   onStopTracking,
@@ -55,13 +62,13 @@ export function AnalyticsTab({
     <div className="space-y-6">
       <AnalyticsExportBar
         settings={settings}
-        analyticsData={analyticsData}
-        unblockHistory={unblockHistory}
+        activity={activity}
+        sites={sites}
         onRefresh={onRefresh}
         onReset={onReset}
       />
 
-      <SiteRankingList analyticsData={analyticsData} />
+      <SiteRankingList activity={activity} sites={sites} />
 
       {/* Add Site */}
       <Card>
@@ -94,13 +101,16 @@ export function AnalyticsTab({
       </Card>
 
       <AnalyticsSummary
+        activity={activity}
+        sites={sites}
         unblockHistory={unblockHistory}
         onReblock={onReblock}
         onStopTracking={onStopTracking}
       />
 
       <AnalyticsDateFilter
-        analyticsData={analyticsData}
+        activity={activity}
+        sites={sites}
         isSupportPromptVisible={isSupportPromptVisible}
         onSupport={onSupport}
         onDismissSupport={onDismissSupport}
