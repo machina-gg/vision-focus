@@ -2,14 +2,11 @@ import { defineContentScript } from '#imports';
 
 import { sendMessage } from '~/lib/messaging';
 
-// Tracking state
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 let isStopped = false;
 
-// Heartbeat interval (send heartbeat every 5 seconds when visible)
 const HEARTBEAT_INTERVAL_MS = 5 * 1000;
 
-// Check if extension context is still valid
 function isContextValid(): boolean {
   try {
     return !!chrome.runtime?.id;
@@ -18,11 +15,9 @@ function isContextValid(): boolean {
   }
 }
 
-// Send heartbeat to background
 async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
   if (isStopped) return;
 
-  // Check if extension context is still valid
   if (!isContextValid()) {
     stopHeartbeat();
     return;
@@ -35,12 +30,10 @@ async function sendHeartbeat(status: 'active' | 'inactive' | 'heartbeat') {
       timestamp: Date.now()
     });
   } catch {
-    // Extension context likely invalidated, stop tracking
     stopHeartbeat();
   }
 }
 
-// Handle visibility change
 function handleVisibilityChange() {
   if (isStopped || !isContextValid()) {
     stopHeartbeat();
@@ -48,62 +41,48 @@ function handleVisibilityChange() {
   }
 
   if (document.hidden) {
-    // Page is hidden, notify background
     sendHeartbeat('inactive');
   } else {
-    // Page is visible again
     sendHeartbeat('active');
   }
 }
 
-// 表示中のページから heartbeat を送り始める
 function startHeartbeat() {
-  // Listen for visibility changes
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  // Start heartbeat interval
   heartbeatInterval = setInterval(() => {
-    // Stop if context invalidated
     if (!isContextValid()) {
       stopHeartbeat();
       return;
     }
 
-    // Send heartbeat if page is visible (simple visibility-based tracking)
     if (!document.hidden) {
       sendHeartbeat('heartbeat');
     }
   }, HEARTBEAT_INTERVAL_MS);
 
-  // Initial heartbeat if page is visible
   if (!document.hidden) {
     sendHeartbeat('active');
   }
 }
 
-// heartbeat を止める
 function stopHeartbeat() {
   if (isStopped) return;
   isStopped = true;
 
-  // Remove visibility listener
   document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-  // Clear interval
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
   }
 }
 
-// Handle page unload
 function handleUnload() {
   stopHeartbeat();
 }
 
-// Initialize
 function init() {
-  // Skip tracking for extension pages
   if (
     window.location.protocol === 'chrome-extension:' ||
     window.location.protocol === 'moz-extension:' ||
@@ -114,8 +93,6 @@ function init() {
 
   startHeartbeat();
 
-  // Clean up on page hide (replaces deprecated unload event)
-  // pagehide is the modern replacement that works with bfcache
   window.addEventListener('pagehide', handleUnload);
 }
 

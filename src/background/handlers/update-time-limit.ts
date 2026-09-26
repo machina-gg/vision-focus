@@ -3,7 +3,6 @@ import { setTimeLimit } from '~/lib/siteService';
 import { updateBlockRules } from '../blocker';
 import { UpdateTimeLimitBodySchema } from '~/types/messageSchemas';
 
-// ブロック設定を持つサイトの時間制限を変える（domain はサイトキー）
 export const updateTimeLimitHandler: MessageHandler<
   'update-time-limit'
 > = async ({ data }) => {
@@ -21,7 +20,6 @@ export const updateTimeLimitHandler: MessageHandler<
       return { success: false, error: 'Block item not found' };
     }
 
-    // Update block rules (sites with time limits are handled differently)
     await updateBlockRules();
 
     return { success: true };

@@ -10,12 +10,10 @@ import {
   generateYouTubeHideCSS
 } from '~/lib/youtubeHideStyles';
 
-// youtube.com の YouTube 機能（null = 使わない）
 let currentSettings: YouTubeFeatures | null = null;
 let styleElement: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
 
-// Apply CSS to the page
 function applyStyles(settings: YouTubeFeatures | null): void {
   const css = generateYouTubeHideCSS(settings);
 
@@ -23,7 +21,6 @@ function applyStyles(settings: YouTubeFeatures | null): void {
     styleElement = document.createElement('style');
     styleElement.id = 'vision-focus-youtube-blocker';
     const newStyleElement = styleElement;
-    // Insert at document_start, so we need to wait for head
     const insertStyle = () => {
       if (document.head) {
         document.head.appendChild(newStyleElement);
@@ -37,20 +34,16 @@ function applyStyles(settings: YouTubeFeatures | null): void {
   styleElement.textContent = css;
 }
 
-// Handle dynamic content (YouTube is an SPA)
 function handleDynamicContent(): void {
   if (!currentSettings) return;
 
-  // Additional DOM manipulation for dynamic elements
   if (currentSettings.hideShorts) {
-    // Remove Shorts from navigation dynamically
     document
       .querySelectorAll(YOUTUBE_SELECTORS.shortsSidebarTab)
       .forEach((el) => ((el as HTMLElement).style.display = 'none'));
   }
 
   if (currentSettings.hideRecommendations) {
-    // Disable autoplay when recommendations are hidden
     const autoplayToggle = document.querySelector(
       YOUTUBE_SELECTORS.autoplayToggle
     ) as HTMLElement;
@@ -60,7 +53,6 @@ function handleDynamicContent(): void {
   }
 }
 
-// Setup MutationObserver for SPA navigation
 function setupObserver(): void {
   if (observer) {
     observer.disconnect();
@@ -82,7 +74,6 @@ function setupObserver(): void {
   });
 
   const newObserver = observer;
-  // Observe body for changes (YouTube SPA updates)
   const startObserving = () => {
     if (document.body && newObserver) {
       newObserver.observe(document.body, {
@@ -96,10 +87,6 @@ function setupObserver(): void {
   startObserving();
 }
 
-/**
- * 追跡中のサイトから youtube.com の YouTube 機能を取り出す。
- * 形が崩れていれば機能を使わない（null）として扱う（壊れた値で CSS を組み立てない）
- */
 function featuresOf(
   sites: TrackedSites | null | undefined
 ): YouTubeFeatures | null {
@@ -109,7 +96,6 @@ function featuresOf(
   return parsed.success ? parsed.data : null;
 }
 
-// Load settings from storage
 async function loadSettings(): Promise<void> {
   try {
     currentSettings = featuresOf(await sitesItem.getValue());
@@ -121,7 +107,6 @@ async function loadSettings(): Promise<void> {
   handleDynamicContent();
 }
 
-// Watch for settings changes
 function watchSettings(): void {
   const unwatchSettings = sitesItem.watch((newSites) => {
     currentSettings = featuresOf(newSites);
@@ -129,9 +114,7 @@ function watchSettings(): void {
     handleDynamicContent();
   });
 
-  // ページが破棄されるときに監視を解除する。
-  // event.persisted が true のときは bfcache に入るだけで後から復帰しうるため、
-  // 解除すると復帰後に設定変更へ追従できなくなる
+  // persisted は bfcache に入るだけで復帰しうるので、解除すると復帰後に設定へ追従できなくなる
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) return;
 
@@ -140,13 +123,11 @@ function watchSettings(): void {
   });
 }
 
-// Initialize
 async function init(): Promise<void> {
   await loadSettings();
   setupObserver();
   watchSettings();
 
-  // Handle page navigation (YouTube SPA)
   window.addEventListener('yt-navigate-finish', () => {
     handleDynamicContent();
   });

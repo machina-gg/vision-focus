@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-// ロゴはバンドルに含めるため ?inline（データ URL）で import する。
-// getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
+// ?inline で埋め込む（URL 参照だと web_accessible_resources 未宣言のためビルド出力に含まれず 404 になる）
 import logoBase64 from '~/assets/images/logo.png?inline';
 
 import {
@@ -48,27 +47,22 @@ import '~/styles/globals.css';
 function OptionsAppContent() {
   const { settings, setSettings, vision, setVision } = useSettings();
 
-  // Read initial tab from URL hash (e.g., #help)
   const [activeTab, setActiveTab] = useState<TabName>(() =>
     getTabFromHash(window.location.hash)
   );
 
-  // Sync URL hash with active tab
   useEffect(() => {
     window.location.hash = activeTab;
   }, [activeTab]);
 
-  // Custom hooks
   const analytics = useAnalytics();
   const blocklist = useBlocklist({ settings, setSettings });
   const schedules = useSchedules({ settings, setSettings });
   const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
-  // 事実の表と追跡中のサイト。どちらも background だけが書き、画面は読んで導出するだけ
   const { activity } = useActivitySources();
   const [trackedSites] = useStorageItem(sitesItem);
 
-  // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
     if (!settings) return;
     const updated = { ...settings, password };
@@ -76,7 +70,6 @@ function OptionsAppContent() {
     setSettings(updated);
   };
 
-  // 長押し確認の秒数の保存（パスワード保護と同じく設定全体を書き戻す）
   const handleUnblockConfirmUpdate = async (
     unblockConfirm: UnblockConfirmSettings
   ) => {
@@ -86,7 +79,6 @@ function OptionsAppContent() {
     setSettings(updated);
   };
 
-  // Analytics opt-in handler
   const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
     if (!settings) return;
     const updated = { ...settings, analyticsOptIn: optIn };
@@ -94,7 +86,6 @@ function OptionsAppContent() {
     setSettings(updated);
   };
 
-  // Tabs configuration (using TABS constant for type safety)
   const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
     {
       id: TABS.BLOCKLIST,
@@ -130,15 +121,12 @@ function OptionsAppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header
         className="bg-white border-b border-gray-200"
         data-testid="options-header"
       >
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
-            {/* ロゴは横長（およそ 4.4:1）なので高さだけ固定し、幅は縦横比に任せる。
-                正方形枠に収めると幅方向に大きく縮んで判読できなくなる */}
             <img
               src={logoBase64}
               alt="VisionFocus Logo"
@@ -155,7 +143,6 @@ function OptionsAppContent() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Tabs */}
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -167,10 +154,8 @@ function OptionsAppContent() {
           className="mb-8"
         />
 
-        {/* Styles Tab */}
         {activeTab === TABS.STYLES && <StylesTab />}
 
-        {/* Block List Tab */}
         {activeTab === TABS.BLOCKLIST && (
           <BlocklistTab
             newDomain={blocklist.newDomain}
@@ -186,7 +171,6 @@ function OptionsAppContent() {
           />
         )}
 
-        {/* Schedules Tab */}
         {activeTab === TABS.SCHEDULES && (
           <SchedulesTab
             onAddSchedule={schedules.openAddSchedule}
@@ -196,7 +180,6 @@ function OptionsAppContent() {
           />
         )}
 
-        {/* Analytics Tab */}
         {activeTab === TABS.ANALYTICS && (
           <AnalyticsTab
             activity={activity}
@@ -213,7 +196,6 @@ function OptionsAppContent() {
           />
         )}
 
-        {/* Settings Tab */}
         {activeTab === TABS.SETTINGS && (
           <SettingsTab
             onPasswordUpdate={handlePasswordUpdate}
@@ -221,7 +203,6 @@ function OptionsAppContent() {
             onUpdateNotifications={blocklist.handleUpdateNotifications}
             onAnalyticsOptInChange={handleAnalyticsOptIn}
             onSettingsChange={async () => {
-              // Reload settings and vision after import
               const [newSettings, newVision] = await Promise.all([
                 getSettings(),
                 getVision()
@@ -232,11 +213,9 @@ function OptionsAppContent() {
           />
         )}
 
-        {/* Help Tab */}
         {activeTab === TABS.HELP && <HelpTab />}
       </main>
 
-      {/* Schedule Modal */}
       <ScheduleModal
         isOpen={schedules.showScheduleModal}
         onClose={() => schedules.setShowScheduleModal(false)}
@@ -247,7 +226,6 @@ function OptionsAppContent() {
         vision={vision}
         error={schedules.scheduleError}
       />
-      {/* Analytics Opt-In Modal (shown once on first visit if not yet decided) */}
       <AnalyticsOptInModal
         onAllow={() =>
           handleAnalyticsOptIn({

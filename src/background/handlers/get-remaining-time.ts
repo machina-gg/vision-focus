@@ -4,11 +4,7 @@ import { extractDomain } from '~/lib/domain';
 import { getSiteBlockStatus } from '~/lib/blockService';
 import type { TimeLimitInfo } from '~/types/messages';
 
-/**
- * URL のサイトの時間制限を返す。ブロック設定が無い・無効なサイトは null。
- * 残り時間は判定と同じ `evaluateBlock` の値を使う（別に計算すると、バッジの残り時間と
- * 実際にブロックされる時刻がずれる）
- */
+// 残り時間は判定と同じ `evaluateBlock` から取る（別に計算すると実際のブロック時刻とずれる）
 async function getTimeLimitInfo(url: string): Promise<TimeLimitInfo | null> {
   const hostname = extractDomain(url);
   if (!hostname) return null;
@@ -34,7 +30,6 @@ async function getTimeLimitInfo(url: string): Promise<TimeLimitInfo | null> {
   };
 }
 
-// Message handler for getting remaining time for a URL
 export const getRemainingTimeHandler: MessageHandler<
   'get-remaining-time'
 > = async ({ data }) => {

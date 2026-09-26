@@ -1,25 +1,9 @@
 import { defineConfig } from 'wxt';
 
-/**
- * WXT のビルド設定。
- *
- * manifest の内容は「WXT が生成できないものだけ」をここに書く。
- * icons / action.default_popup / background / options_ui / chrome_url_overrides /
- * content_scripts / version は WXT がエントリと package.json から生成するため、
- * ここには書かない。
- *
- * ※ name / description だけは例外。ストア表示名と説明文は Chrome の
- *    `_locales`（public/_locales/{en,ja}/messages.json）から引くため、
- *    `__MSG_*__` を明示する（machina-gg/vision-focus#401）。
- */
+// manifest には WXT がエントリと package.json から生成できないものだけを書く
 export default defineConfig({
-  // エントリの探索起点。`~` / `@` エイリアスも srcDir を指すため、
-  // 既存コードの `~/lib/...` 形式の import はそのまま使える
   srcDir: 'src',
-  // 出力へそのままコピーされる静的ファイル（root 相対）
   publicDir: 'public',
-  // auto-import は使わない（既存コードは全 import を明示している）。
-  // defineBackground / defineContentScript は `#imports` から明示的に import する
   imports: false,
   modules: ['@wxt-dev/module-react'],
   manifest: {
@@ -41,15 +25,12 @@ export default defineConfig({
     },
     web_accessible_resources: [
       {
-        // newtab.html は declarativeNetRequest の redirect 先。公開しないと
-        // 他サイト（検索結果のリンク等）からの遷移が ERR_BLOCKED_BY_CLIENT で
-        // 止まり、ブロック画面に到達できない（machina-gg/vision-focus#351）
+        // redirect 先の newtab.html を公開しないと、他サイトからの遷移が ERR_BLOCKED_BY_CLIENT で止まる
         resources: ['newtab.html', 'assets/images/backgrounds/*'],
         matches: ['<all_urls>']
       }
     ],
-    // WXT が action に入れるのは default_popup だけなので、
-    // ツールバーアイコン（public/icon/*.png）は自分で指定する
+    // WXT は action に default_popup しか入れないので、アイコンは自分で指定する
     action: {
       default_icon: {
         16: 'icon/16.png',

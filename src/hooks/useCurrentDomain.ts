@@ -13,9 +13,6 @@ export interface UseCurrentDomainReturn {
   clearDomain: () => void;
 }
 
-/**
- * Hook to detect the current tab's domain and poll for time limit info
- */
 export function useCurrentDomain(): UseCurrentDomainReturn {
   const [currentDomain, setCurrentDomain] = useState<string | undefined>();
   const [timeLimitInfo, setTimeLimitInfo] = useState<TimeLimitInfo | null>(
@@ -34,7 +31,6 @@ export function useCurrentDomain(): UseCurrentDomainReturn {
           const domain = extractDomain(tab.url);
           setCurrentDomain(domain || undefined);
 
-          // Get time limit info for this URL
           if (tab.url) {
             const response = await sendMessage('get-remaining-time', {
               url: tab.url
@@ -51,7 +47,6 @@ export function useCurrentDomain(): UseCurrentDomainReturn {
 
     getCurrentDomainAndTimeLimit();
 
-    // Refresh time limit info periodically
     const interval = setInterval(
       getCurrentDomainAndTimeLimit,
       DOMAIN_POLLING_MS

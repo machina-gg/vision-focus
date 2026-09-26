@@ -8,7 +8,6 @@ import { blockedSite, sitesOf } from '~/test/sites';
 
 import '~/styles/globals.css';
 
-// youtube.com は YouTube の節が担当するので、一覧には出ない
 const mockSites = sitesOf(
   blockedSite('twitter.com', { addedAt: '2026-02-01T10:00:00Z' }),
   blockedSite('youtube.com', { addedAt: '2026-02-02T14:30:00Z' }),
@@ -35,7 +34,6 @@ function NewtabDemo() {
       }}
     >
       <div className="w-full max-w-4xl mx-auto text-center space-y-8">
-        {/* Goal Display */}
         <GoalDisplay
           goalText="Surpass my rivals and achieve overwhelming results"
           goalSubText="Focus on what truly matters"
@@ -55,17 +53,14 @@ function NewtabDemo() {
           onKeyDown={() => {}}
         />
 
-        {/* Mini Stats */}
         <MiniStats blockCount={12} blockingDays={7} />
 
-        {/* Blocked Sites List */}
         <BlockedSitesList
           trackedSites={mockSites}
           blockCounts={mockBlockCounts}
           maxVisible={5}
         />
 
-        {/* Download Button */}
         <div className="flex justify-center">
           <DownloadButton targetRef={containerRef} />
         </div>

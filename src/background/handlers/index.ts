@@ -1,9 +1,3 @@
-/**
- * background のメッセージハンドラの登録。
- *
- * ハンドラは素の関数として各ファイルに置き、name との対応をここ 1 箇所に集約する。
- */
-
 import { onMessage } from '~/lib/messaging';
 import { addBlockHandler } from './add-block';
 import { addTrackedSiteHandler } from './add-tracked-site';
@@ -18,7 +12,6 @@ import { trackerHeartbeatHandler } from './tracker-heartbeat';
 import { updateTimeLimitHandler } from './update-time-limit';
 import { updateYouTubeSettingsHandler } from './update-youtube-settings';
 
-/** 全メッセージハンドラを chrome.runtime.onMessage に登録する */
 export function registerMessageHandlers(): void {
   onMessage('add-block', addBlockHandler);
   onMessage('add-tracked-site', addTrackedSiteHandler);

@@ -29,15 +29,12 @@ export default tseslint.config(
       }
     },
     rules: {
-      // React
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      // dangerouslySetInnerHTML の使用を禁止する（XSS 対策）
       'react/no-danger': 'error',
 
-      // TypeScript
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
@@ -46,13 +43,10 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
 
-      // General
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
       'no-var': 'error',
 
-      // セキュリティ（eslint-plugin-security の推奨ルールのうち誤検知が多いものはオフにし、
-      // XSS / コードインジェクションに直結するルールのみを有効化する）
       'security/detect-eval-with-expression': 'error',
       'security/detect-object-injection': 'off',
       'security/detect-non-literal-fs-filename': 'off',
@@ -60,7 +54,6 @@ export default tseslint.config(
       'security/detect-unsafe-regex': 'warn',
       'no-eval': 'error',
       'no-implied-eval': 'error',
-      // 生の innerHTML への代入を禁止する（XSS 対策。DOM 操作は React の標準レンダリングを使う）
       'no-restricted-syntax': [
         'error',
         {

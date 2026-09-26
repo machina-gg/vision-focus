@@ -1,11 +1,4 @@
-/**
- * Background image optimization script
- *
- * Resizes all background images to 1920x1080 and converts to WebP format.
- * Requires: npm install sharp (installed in a temp directory to avoid project conflicts)
- *
- * Usage: node scripts/optimize-images.mjs
- */
+// sharp はプロジェクトの依存と衝突させないよう別ディレクトリに入れ、SHARP_PATH で渡す
 
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join, basename, extname } from 'path';
@@ -28,7 +21,6 @@ const MAX_HEIGHT = 1080;
 const WEBP_QUALITY = 82;
 
 async function loadSharp() {
-  // Support loading sharp from external node_modules via SHARP_PATH env var
   const sharpPath = process.env.SHARP_PATH;
   try {
     if (sharpPath) {

@@ -23,10 +23,8 @@ export function useResolvedPreset({
   vision,
   settings
 }: UseResolvedPresetOptions): UseResolvedPresetReturn {
-  // Time tick for schedule checking (updates when tab becomes visible)
   const [timeTick, setTimeTick] = useState(0);
 
-  // Re-check schedule when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -38,7 +36,6 @@ export function useResolvedPreset({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Priority: 1. Active schedule preset, 2. User-selected preset (activePresetId), 3. Default settings
   const displaySettings: DashboardDisplaySettings = useMemo(() => {
     if (!vision) return DEFAULT_DISPLAY_SETTINGS;
 

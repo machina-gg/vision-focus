@@ -42,11 +42,9 @@ export function NewtabApp() {
   const [editText, setEditText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ブロックされて飛んできたときのホスト名。数値は下で activity から導出する
-  // （ブロックの記録はリダイレクトと前後するので、読んだ時点の値で固定しない）
+  // ブロックの記録はリダイレクトと前後するので、数値は読んだ時点で固定せず activity から導出する
   const [blockedDomain, setBlockedDomain] = useState<string | null>(null);
 
-  // Block reason (from URL parameter)
   const [blockReason, setBlockReason] = useState<string | null>(null);
 
   const { displaySettings } = useResolvedPreset({ vision, settings });
@@ -54,7 +52,6 @@ export function NewtabApp() {
   const { isStorageLoaded, isBackgroundReady, containerStyle, fontStyle } =
     useBackgroundPreload({ displaySettings });
 
-  // Check if we were redirected from a blocked site
   useEffect(() => {
     const loadBlockedInfo = async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -72,7 +69,7 @@ export function NewtabApp() {
     loadBlockedInfo();
   }, []);
 
-  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
+  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも今日の値にするため）
   const now = new Date();
   const today = todayStats(activity, sites, now);
   const blockCounts = blockCountsByDomain(
@@ -91,7 +88,6 @@ export function NewtabApp() {
   const goalSubText = displaySettings.goalSubText;
   const textColor = displaySettings.textColor;
 
-  // Calculate blocking days for the blocked site
   const blockingDays = useMemo(() => {
     if (!blockedDomain) return null;
 
@@ -116,7 +112,6 @@ export function NewtabApp() {
           goalText: editText.trim()
         }
       };
-      // setVision がストレージへの保存も行う
       await setVision(updated);
     }
     setIsEditing(false);
@@ -153,8 +148,6 @@ export function NewtabApp() {
     );
   }
 
-  // ブロック画面はこの 1 つだけ。スタイル未設定でも同じ画面を描き、
-  // スタイル作成の案内だけを出し分ける（machina-gg/vision-focus#449）
   return (
     <div
       ref={containerRef}
@@ -162,15 +155,12 @@ export function NewtabApp() {
       style={containerStyle}
       data-testid="newtab-container"
     >
-      {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/30"
         data-testid="newtab-overlay"
       />
 
-      {/* Content */}
       <div className="relative z-10 w-full max-w-2xl px-8 text-center">
-        {/* Blocked Site Info */}
         {blockedInfo && (
           <div className="mb-8 animate-fade-in" data-testid="newtab-block-info">
             <div
@@ -224,7 +214,6 @@ export function NewtabApp() {
           </div>
         )}
 
-        {/* Goal Text */}
         <div className="mb-12">
           <GoalDisplay
             goalText={goalText}
@@ -242,20 +231,17 @@ export function NewtabApp() {
           />
         </div>
 
-        {/* Mini Stats */}
         <MiniStats
           blockCount={today.blocks}
           blockingDays={blockingDays}
           onAnalyticsClick={handleAnalyticsClick}
         />
 
-        {/* Blocked Sites List */}
         <BlockedSitesList
           trackedSites={trackedSites}
           blockCounts={blockCounts}
         />
 
-        {/* Setup CTA - スタイルが 1 つも無いときだけ出す。壁紙には写さない */}
         {!hasPresets && (
           <div
             className="mt-8 pt-6 border-t border-white/10"
@@ -276,21 +262,15 @@ export function NewtabApp() {
         )}
       </div>
 
-      {/* Bottom Controls - excluded from wallpaper capture */}
       <div
         className="absolute bottom-6 right-6 flex items-center gap-3"
         data-html2canvas-ignore="true"
       >
-        {/*
-          壁紙のダウンロード。ref は描画の後に入るので、描画中に containerRef.current で
-          出し分けると、後続の再描画が起きない限りボタンが出ない。
-          撮影対象はボタン側が押された時点の ref から読む
-        */}
+        {/* ref は描画の後に入る。描画中に containerRef.current で出し分けるとボタンが出ないことがある */}
         <DownloadButton
           targetRef={containerRef as React.RefObject<HTMLElement>}
         />
 
-        {/* Settings Button */}
         <button
           data-testid="newtab-settings-button"
           onClick={handleSettingsClick}

@@ -31,7 +31,7 @@ import '~/styles/globals.css';
 function PopupAppContent() {
   const { settings, setSettings, vision } = useSettings();
   const { activity, sites } = useActivitySources();
-  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
+  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも今日の値にするため）
   const stats = todayStats(activity, sites, new Date());
   const { displaySettings } = useResolvedPreset({ vision, settings });
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
@@ -46,7 +46,6 @@ function PopupAppContent() {
     isPasswordProtected
   } = usePopupActions({ settings, clearDomain });
 
-  // Password verification for pause toggle
   const passwordVerification = usePasswordVerification({
     passwordHash: settings?.password?.passwordHash ?? null,
     onSuccess: async () => {
@@ -54,7 +53,6 @@ function PopupAppContent() {
     }
   });
 
-  // Analytics opt-in handler
   const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
     if (!settings) return;
     const updated = { ...settings, analyticsOptIn: optIn };
@@ -210,7 +208,6 @@ function PopupAppContent() {
         </div>
       </div>
 
-      {/* Analytics Opt-In Modal */}
       <AnalyticsOptInModal
         onAllow={() =>
           handleAnalyticsOptIn({
@@ -226,7 +223,6 @@ function PopupAppContent() {
         }
       />
 
-      {/* Password Modal for Pause */}
       {settings?.password?.passwordHash && (
         <PasswordModal
           isOpen={passwordVerification.showModal}
