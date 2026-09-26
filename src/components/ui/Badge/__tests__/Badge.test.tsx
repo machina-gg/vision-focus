@@ -5,14 +5,6 @@ import { describe, it, expect } from 'vitest';
 
 import { Badge } from '../Badge';
 
-/**
- * Badge の中身の描画と、見た目の種類の検査
- *
- * 種類は装飾のクラス名にしか出ていなかったため data-variant を足してから
- * 検査する（COMPONENT_TESTING.md「状態は属性で表す」。Button の data-variant と
- * 同じ流儀）。色そのものは見ない。
- */
-
 const badge = () => screen.getByTestId('badge-host').firstElementChild;
 
 function renderBadge(props: Partial<React.ComponentProps<typeof Badge>> = {}) {

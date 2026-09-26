@@ -26,7 +26,6 @@ import {
   DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 } from '~/types/storage';
 
-// テスト用のエクスポートデータを作成するヘルパー
 function createValidExportData(
   overrides: Partial<ExportedSettings['data']> = {}
 ): ExportedSettings {
@@ -73,7 +72,6 @@ describe('hasLargeCustomBackgrounds', () => {
   });
 
   it('大きいデータ（1MB超）はtrueを返す', () => {
-    // 1MB超のカスタム背景データを生成
     const largeBackground = 'x'.repeat(1.1 * 1024 * 1024);
     const data = createValidExportData({
       presets: [
@@ -233,9 +231,7 @@ describe('validateImportedData', () => {
   });
 
   it('language を含む旧形式のファイルも取り込め、language は捨てられる', () => {
-    // 言語切替を廃止する前（machina-gg/vision-focus#401）に書き出した
-    // ファイルには language が残っている。未知のキーとして無視されるだけで、
-    // 取り込み自体は成功する
+    // language は廃止済みの項目で、未知のキーとして無視されるだけで取り込みは成功する
     const data = createValidExportData();
     const withLanguage = {
       ...data,
@@ -371,8 +367,6 @@ describe('createDefaultExportData', () => {
 });
 
 describe('長押しの秒数のエクスポート・インポート', () => {
-  // 書き出したファイルを読み戻したとき、秒数が変わらないこと。選べない値・項目が
-  // 無いファイルはどちらも形式エラーで拒む（既定値への読み替えはしない）
   const settingsWith30s: AppSettings = {
     ...DEFAULT_SETTINGS,
     unblockConfirm: { holdSeconds: 30 }
@@ -421,7 +415,7 @@ describe('長押しの秒数のエクスポート・インポート', () => {
 });
 
 describe('必須項目（notifications / unblockConfirm）が無いファイルの取り込み', () => {
-  // どちらも必須項目なので、欠けたファイルは既定値へ読み替えず形式エラーで拒む
+  // 既定値へ読み替えない
   it.each(['notifications', 'unblockConfirm'] as const)(
     '%s を持たないファイルは形式エラーで拒む',
     (key) => {

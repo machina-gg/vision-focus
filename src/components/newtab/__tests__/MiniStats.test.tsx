@@ -6,15 +6,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { MiniStats } from '../MiniStats';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * MiniStats の出し分けと、渡した数値が表示に出るかの検査
- *
- * ブロック日数はブロックリストに無いサイトで null になり、その欄ごと
- * 消える。0 件・0 日は「消す」ではなく「0 と出す」のが決まりなので、
- * null と 0 を取り違えていないことを見る。
- */
-
-// 日数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
 describe('MiniStats', () => {

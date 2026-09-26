@@ -55,7 +55,6 @@ describe('useSupportPrompt', () => {
   it('判定が終わるまでは表示しない', async () => {
     const { result } = renderHook(() => useSupportPrompt());
 
-    // storage の読み込みが解決する前は非表示
     expect(result.current.isVisible).toBe(false);
 
     // 判定の完了まで待ってから終わる（未処理の state 更新を残さない）

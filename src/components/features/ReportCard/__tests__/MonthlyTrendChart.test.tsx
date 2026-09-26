@@ -5,17 +5,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { MonthlyTrendChart } from '../MonthlyTrendChart';
 
-/**
- * MonthlyTrendChart が組み立てるグラフ用データと単位の切り替えの検査
- *
- * 週ごとの無駄時間（秒）を分へ丸め、一番多い週が 2 時間以上なら時間表示へ
- * 切り替える。週の数は月によって 4〜6 と変わるため、件数に依存せず
- * 通し番号のラベルが付くことも見る。
- *
- * グラフ本体は recharts に任せており jsdom では寸法が 0 で描画されないため、
- * 受け取った props を読める形に差し替えて「何を渡したか」を見る。
- */
-
 const chart = vi.hoisted(() => ({
   data: [] as { week: string; wasteTime: number; blockCount: number }[],
   wasteTickFormatter: undefined as ((value: number) => string) | undefined,
@@ -61,7 +50,6 @@ vi.mock('recharts', () => ({
   Line: () => null
 }));
 
-/** 週ごとの内訳（無駄時間は秒） */
 const weeksOf = (weeks: { waste: number; blocks?: number }[]) =>
   weeks.map((week, index) => ({
     weekStart: `2026-03-0${index + 1}`,

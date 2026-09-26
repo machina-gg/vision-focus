@@ -44,7 +44,6 @@ const youtube = (
   ...overrides
 });
 
-/** 保存前の youtube.com（無ければ null） */
 function givenStored(site: TrackedSite | null) {
   vi.mocked(updateYouTubeSite).mockResolvedValue(site);
 }

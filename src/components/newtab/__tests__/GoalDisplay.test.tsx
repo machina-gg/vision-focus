@@ -5,18 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { GoalDisplay } from '../GoalDisplay';
 
-/**
- * GoalDisplay の表示分岐とコールバックの検査
- *
- * 過去の不具合（machina-gg/vision-focus#301 / #371）は目標未設定時に
- * 見出しが空になるもので、E2E は目標を設定してから確認するため
- * 未設定の経路を踏んでいなかった。空文字と空白のみの両方を確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
-// 必須 props の既定値。各テストは確かめたい値だけを上書きする
 const baseProps = {
   goalText: '今日の目標',
   goalSubText: '',

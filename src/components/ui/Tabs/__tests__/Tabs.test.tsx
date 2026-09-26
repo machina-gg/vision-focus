@@ -6,16 +6,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { Tabs } from '../Tabs';
 import type { Tab } from '../Tabs';
 
-/**
- * Tabs の選択状態の出し分けと、押したときに渡る ID の検査
- *
- * 選択中かどうかは aria-selected で出ている（COMPONENT_TESTING.md
- * 「状態は属性で表す」）。装飾の下線・文字色は見ない。
- *
- * タブ 0 件・どのタブにも一致しない activeTab は、タブを増減させる画面で
- * 実際に通る経路なので境界として含める。
- */
-
 const TABS: Tab[] = [
   { id: 'blocklist', label: 'ブロックリスト' },
   { id: 'schedules', label: 'スケジュール' },

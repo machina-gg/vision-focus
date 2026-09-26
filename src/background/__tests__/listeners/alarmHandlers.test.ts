@@ -31,7 +31,6 @@ import {
   MAX_HISTORY_DAYS_FALLBACK
 } from '~/constants/intervals';
 
-/** アラームリスナーを捕捉できる chrome モックを構築する */
 function setupChrome() {
   let handler: ((alarm: chrome.alarms.Alarm) => Promise<void>) | null = null;
   const create = vi.fn();
@@ -50,7 +49,6 @@ function setupChrome() {
 
   return {
     create,
-    /** 登録済みリスナーへアラームを流す */
     fire: async (name: string) => {
       if (!handler) throw new Error('リスナーが未登録');
       await handler({ name } as chrome.alarms.Alarm);

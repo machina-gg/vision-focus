@@ -11,7 +11,6 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // chrome APIのグローバルモック
   (globalThis as Record<string, unknown>).chrome = {
     runtime: {
       id: 'test-extension-id',

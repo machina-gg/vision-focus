@@ -8,15 +8,6 @@ import type { TimeLimit } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite } from '~/test/sites';
 
-/**
- * TimeLimitEditor の表示分岐とコールバックの検査
- *
- * 保存済みの値（未設定・プリセット値・プリセット外の値）ごとに何が表示され、
- * 保存時に何が渡るかを確かめる。プリセット外の値は描画時に自動で丸められる
- * （マイグレーション）ため、その経路も含める。
- */
-
-// 置換値（制限分数・残り時間）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
 function renderEditor(options: {
@@ -39,7 +30,6 @@ function renderEditor(options: {
   return onUpdate;
 }
 
-/** 折りたたまれたエディタを開く */
 function expand() {
   fireEvent.click(screen.getByRole('button', { name: /alwaysBlocked|limit/ }));
 }

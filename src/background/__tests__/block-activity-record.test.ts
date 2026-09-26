@@ -1,15 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * ブロックが成立したとき、事実の表（activity）に `block` が 1 回だけ保存されることを、
- * 記録が始まる 2 つの経路それぞれで確かめる。
- * - `webNavigation.onBeforeNavigate`（navigationTracking）
- * - `blockExistingTabs`（設定変更で既に開いているタブを飛ばす経路）
- *
- * 経路ごとの単体テストは `recordBlockedDomain` をモックするため「呼ばれたか」までしか
- * 見られない。ここでは経路・`recordBlockedDomain`・書き手（activityService）を実物のまま通し、
- * 保存領域だけをインメモリの実体に差し替えて、保存された値そのものを数える。
- */
+// 経路ごとの単体テストは recordBlockedDomain をモックするため、ここでは経路と書き手を実物のまま通して保存された値を数える
 
 const activityStore = vi.hoisted(() => ({
   value: undefined as unknown,
@@ -54,7 +45,6 @@ type NavigateListener = (
   details: chrome.webNavigation.WebNavigationParentedCallbackDetails
 ) => Promise<void>;
 
-/** chrome API のモック。遷移リスナーを捕捉し、開いているタブを差し替えられる */
 function setupChrome(tabs: chrome.tabs.Tab[] = []) {
   let listener: NavigateListener | null = null;
   const update = vi.fn().mockResolvedValue(undefined);
@@ -90,7 +80,6 @@ function setupChrome(tabs: chrome.tabs.Tab[] = []) {
   };
 }
 
-/** 今日の行に保存されたブロック回数（行が無ければ undefined） */
 function todayBlocks(site: string): number | undefined {
   const log = activityStore.value as ActivityLog | undefined;
   return log?.[toDateKey(new Date())]?.[site]?.blocks;

@@ -5,15 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Select } from '../Select';
 
-/**
- * Select の選択肢の出し分けと、選んだ値の受け渡しの検査
- *
- * 選択肢が 0 件・プレースホルダの有無・無効化の 3 つで描画が変わる。
- * プレースホルダは「選べない先頭項目」として出るため、選択肢として
- * 数えられてしまわないことまで見る。
- * 大きさ・配色はクラス名にしか出ないため検査しない。
- */
-
 const OPTIONS = [
   { value: 'a', label: 'りんご' },
   { value: 'b', label: 'みかん' }

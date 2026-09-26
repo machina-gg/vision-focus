@@ -8,18 +8,6 @@ import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
-/**
- * AnalyticsTab の「計測するサイトを足す」入力の検査
- *
- * ドメインは前後の空白と大文字小文字の揺れが混ざりやすく、揃えずに
- * 保存すると同じサイトが二重に並ぶ。ここでは渡る文字列そのものと、
- * 空白だけの入力で追加させないこと、拒否されたときに理由を出して入力を残すことを見る。
- *
- * 一覧・集計・書き出しは子コンポーネントの責務なので、受け取った値を
- * そのまま渡しているかだけを見る（実体は chrome.storage を読みに行く）。
- */
-
-/** 子が受け取った事実と母集団を「日付|サイト」の形で読めるようにする */
 interface SourcesProps {
   activity: ActivityLog;
   sites: readonly string[];
@@ -27,7 +15,6 @@ interface SourcesProps {
 const sourcesText = ({ activity, sites }: SourcesProps) =>
   `${Object.keys(activity).join(',')}|${sites.join(',')}`;
 
-/** 追跡中のサイトをそのまま受ける子（書き出し・一覧）の受け取った値 */
 interface TrackedSitesProps {
   activity: ActivityLog;
   trackedSites: TrackedSites;
@@ -198,7 +185,6 @@ describe('AnalyticsTab', () => {
     });
   });
 
-  // 入れ子・重複・形式の誤りは background が拒否し、理由は親から addSiteError で届く
   describe('追加を拒否されたとき', () => {
     it('入力欄を空にしない（理由を読んで直せるように）', async () => {
       const { input, button } = renderTab({

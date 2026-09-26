@@ -13,20 +13,6 @@ import type {
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 import { DEFAULT_FONT_SETTINGS } from '~/types/font';
 
-/**
- * DisplaySettingsForm の表示分岐と、変更したときに渡る値の検査
- *
- * スタイルが選ばれていないときはフォームごと出さない。背景は「画像」と
- * 「色」で出る欄が入れ替わり、未設定（保存データが古い場合）は画像側へ
- * 倒れる決まりなので、その境界を見る。
- *
- * 状態は usePresets が持つため戻り値ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- * 選択中の背景・種別ボタンの強調は aria-pressed で確かめる
- * （COMPONENT_TESTING.md「状態は属性で表す」。クラス名は見ない）。
- */
-
-// 背景画像の URL は chrome.runtime.getURL を経由する（テスト環境には無い）
 vi.mock('~/constants/backgrounds', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('~/constants/backgrounds')>();
@@ -36,8 +22,6 @@ vi.mock('~/constants/backgrounds', async (importOriginal) => {
   };
 });
 
-// 画像の読み込みとフォントの適用は別コンポーネントの責務。
-// ここでは受け取った値を読める形に差し替える
 vi.mock('~/components/features', () => ({
   ImageUploader: (props: { value: string | null }) => (
     <div data-testid="image-uploader">{String(props.value)}</div>
@@ -57,7 +41,6 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   createdAt: '2026-01-01T00:00:00.000Z'
 });
 
-/** usePresets の戻り値。テストで見るものだけ上書きする */
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS },
@@ -99,7 +82,6 @@ function renderForm(overrides: Partial<UsePresetsReturn> = {}) {
   return { presets, ...view };
 }
 
-/** 背景の設定だけを差し替えた draftDisplaySettings */
 const displayWith = (
   overrides: Partial<DashboardDisplaySettings>
 ): DashboardDisplaySettings => ({ ...DEFAULT_DISPLAY_SETTINGS, ...overrides });

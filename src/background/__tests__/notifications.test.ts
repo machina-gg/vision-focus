@@ -26,10 +26,6 @@ import {
 import type { AppSettings } from '~/types/storage';
 import type { SiteBlockStatus } from '~/lib/blockService';
 
-/**
- * 通知 API を差し替えた chrome モックを構築する。
- * manifest は通知アイコンのパスの参照元なので、テストごとに差し替えられるようにする
- */
 function setupChrome(
   withNotifications = true,
   manifest: { icons?: Record<string, string> } = {
@@ -53,7 +49,6 @@ function setupChrome(
 
 const LIMIT_SECONDS = 1800;
 
-/** 判定の結果（既定は残り 2 分・閾値 5 分以内） */
 function status(overrides: Partial<SiteBlockStatus> = {}): SiteBlockStatus {
   return {
     site: 'example.com',
@@ -81,7 +76,6 @@ let harness: ReturnType<typeof setupChrome>;
 beforeEach(() => {
   vi.clearAllMocks();
   harness = setupChrome();
-  // モジュールレベルの通知済み状態をテスト間で持ち越さない
   resetNotificationState();
   vi.mocked(getSettings).mockResolvedValue(settings());
   vi.mocked(isExtensionContextValid).mockReturnValue(true);
@@ -154,7 +148,6 @@ describe('checkTimeLimitNotification', () => {
     });
 
     it.each([
-      // 一時停止中・スケジュール外・無効な項目では判定が残り時間を返さない
       ['判定が残り時間を持たない', undefined],
       ['既に制限を超過している', 0],
       ['残り時間が負数', -60]
@@ -240,8 +233,7 @@ describe('通知済み状態の管理', () => {
 
   it('ローカル時刻の 0 時を過ぎると再度通知される', async () => {
     vi.useFakeTimers();
-    // ローカル時刻で組み立てる。UTC の日付で区切ると、UTC より東のタイムゾーンでは
-    // この 2 時刻が同じ日になり再通知されない
+    // UTC の日付で区切ると、UTC より東のタイムゾーンではこの 2 時刻が同じ日になり再通知されない
     vi.setSystemTime(new Date(2026, 7, 11, 23, 59));
 
     await checkTimeLimitNotification(status());
@@ -257,16 +249,13 @@ describe('通知済み状態の管理', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 7, 11, 10, 0));
 
-    // 当日分として通知済みにする
     await checkTimeLimitNotification(status());
     expect(harness.create).toHaveBeenCalledOnce();
 
-    // 同日内では記録が保持されるため、再通知されない
     clearExpiredNotifications();
     await checkTimeLimitNotification(status());
     expect(harness.create).toHaveBeenCalledOnce();
 
-    // 日付が変われば期限切れとして削除され、再通知される
     vi.setSystemTime(new Date(2026, 7, 13, 10, 0));
     clearExpiredNotifications();
     await checkTimeLimitNotification(status());

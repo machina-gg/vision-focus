@@ -14,21 +14,6 @@ import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
-/**
- * AnalyticsExportBar の表示分岐とコールバックの検査
- *
- * CSV の書き出しは「そのデータがあるときだけ押せる」決まりなので、
- * データの有無ごとに押せるかどうかを確かめる。CSV と X シェア文の数値は、
- * 保持期間全体・追跡中のサイトの activity から出る。シェア・画像保存は
- * 途中で失敗しても成功表示を出さないことを見る。
- *
- * グラフ本体（AnalyticsChart）は描画に外部ライブラリを使い、ここでの
- * 検査対象ではないため差し替える。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
 const exportLib = vi.hoisted(() => ({
   exportBlockList: vi.fn(),
   exportSiteBlockCounts: vi.fn(),
@@ -57,11 +42,9 @@ vi.mock('~/components/features', () => ({
   AnalyticsChart: () => <div data-testid="analytics-chart" />
 }));
 
-/** ブロック設定を持つサイトだけの追跡中のサイト */
 const blockListOf = (domains: string[]): TrackedSites =>
   sitesOf(...domains.map((domain) => blockedSite(domain)));
 
-/** 追跡だけのサイト（数値の母集団） */
 const trackedOf = (domains: string[]): TrackedSites =>
   sitesOf(...domains.map((domain) => trackedSite(domain)));
 

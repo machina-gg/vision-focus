@@ -6,18 +6,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { FontPicker } from '../FontPicker';
 import { FONT_CATEGORIES, type FontSettings } from '~/types/font';
 
-/**
- * FontPicker の選択肢の出し分けと、保存内容の検査
- *
- * 開いたときにどのカテゴリが選ばれるかは、渡されたフォントの所属で決まる。
- * カテゴリを変えると先頭のフォントが自動で選ばれるため、onChange に渡る設定が
- * 他の項目（サイズ・太さ）を保ったままかまで見る。
- *
- * 選択中のボタンは aria-pressed を持つため、強調のクラス名ではなく押下状態で
- * 確かめる（machina-gg/vision-focus#455）。プレビューは装飾ではなく
- * 「選んだ値がどう見えるか」そのものなので、インラインの style を確かめる。
- */
-
 const settingsOf = (overrides: Partial<FontSettings> = {}): FontSettings => ({
   family: 'system',
   size: 'md',
@@ -44,14 +32,12 @@ function renderPicker(
 const buttonTexts = (testId: string) =>
   screen.getAllByTestId(testId).map((el) => el.textContent);
 
-/** 押下状態になっているボタンの文言（選択中の印） */
 const pressedTexts = (testId: string) =>
   screen
     .getAllByTestId(testId)
     .filter((el) => el.getAttribute('aria-pressed') === 'true')
     .map((el) => el.textContent);
 
-/** 名前でボタンを押す（カテゴリ名・フォント名・サイズ名・太さ名） */
 const clickButton = (name: string) =>
   fireEvent.click(screen.getByRole('button', { name }));
 
@@ -269,8 +255,7 @@ describe('FontPicker', () => {
     it('キーボードから届いても設定は書き換わらない', () => {
       const { onChange } = renderPicker(settingsOf(), { disabled: true });
 
-      // ⚠ 包む div の pointer-events はマウスしか止めない。
-      // 無効の属性が無いと、この押下で設定が書き換わる
+      // 包む div の pointer-events はマウスしか止めないため、無効の属性が無いとこの押下で設定が書き換わる
       clickButton('Large');
       clickButton('Japanese');
 

@@ -5,15 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { QuickBlockButton } from '../QuickBlockButton';
 
-/**
- * QuickBlockButton の表示分岐とコールバックの検査
- *
- * 現在のドメインが未取得（undefined）の経路を含めて確かめる。
- * E2E はサイトを開いてから操作するため、この経路を踏んでいなかった。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
 describe('QuickBlockButton', () => {
   describe('初期表示', () => {
     it('currentDomain が未指定なら入力欄は空で、ボタンは押せない', () => {

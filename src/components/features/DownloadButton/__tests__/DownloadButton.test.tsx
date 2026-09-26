@@ -6,18 +6,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DownloadButton } from '../DownloadButton';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 
-/**
- * DownloadButton の表示分岐とコールバックの検査
- *
- * 壁紙の保存は成否がアイコンの差し替えでしか出ていなかったため、状態を表す
- * 属性（data-download-status / data-downloading）と読み上げ領域を足してから、
- * 成功・失敗のどちらでもそれらが切り替わることを確かめる。
- * 保存に渡る引数（解像度・品質）が選んだ選択肢どおりであることも見る。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- */
-
 const wallpaper = vi.hoisted(() => ({
   downloadWallpaper: vi.fn(),
   getResolutionOptions: vi.fn()
@@ -36,12 +24,10 @@ vi.mock('~/lib/analytics', () => ({
   trackFeatureUse: analytics.trackFeatureUse
 }));
 
-/** 保存対象の要素を持つ ref（新規タブのダッシュボード相当） */
 function refWithElement(): React.RefObject<HTMLElement> {
   return { current: document.createElement('div') };
 }
 
-/** 保存対象がまだ描画されていない ref */
 function emptyRef(): React.RefObject<HTMLElement> {
   return { current: null } as React.RefObject<HTMLElement>;
 }
@@ -152,7 +138,6 @@ describe('DownloadButton', () => {
     });
 
     it('保存が終わるまでは保存中の状態になり、ボタンを押せない', async () => {
-      // 保存の途中で止めた状態を見るため、解決しない Promise を返す
       let finish = () => {};
       wallpaper.downloadWallpaper.mockReturnValue(
         new Promise<void>((resolve) => {
@@ -190,8 +175,6 @@ describe('DownloadButton', () => {
   });
 
   describe('保存結果の表示', () => {
-    // 成否はアイコンの差し替えでしか出ていなかったため data-download-status を
-    // 足してから、その値で検査する（アイコンのクラス名は見ない）
     it('成功すると状態が成功になる', async () => {
       render(<DownloadButton targetRef={refWithElement()} />);
 
@@ -228,8 +211,6 @@ describe('DownloadButton', () => {
   });
 
   describe('保存結果の読み上げ', () => {
-    // 成否は一度きりの出来事なので、属性だけでは読み上げ利用者に伝わらない。
-    // 読み上げ領域（role="status"）に文言が出ることを見る
     it('待機中は読み上げ領域を空のまま置いておく', () => {
       render(<DownloadButton targetRef={refWithElement()} />);
 

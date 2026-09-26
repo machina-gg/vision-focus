@@ -1,21 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * YouTube のアクセスブロックを OFF→ON にしたとき、開いている YouTube のタブが
- * newtab に置き換わることを固定するテスト（#392）。
- *
- * ハンドラ単体のテスト（handlers/update-youtube-settings.test.ts）は blocker を
- * モックするため「blockExistingTabs() が呼ばれたか」までしか見られない。ここでは
- * blocker と blockService を実物のまま通し、chrome.tabs への指示を検証する
- */
-
-// ストレージだけをモックする（blocker / blockService は実物）
+// ハンドラ単体のテストは blocker をモックするため、ここでは blocker と blockService を実物のまま通してタブへの指示を見る
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   getSites: vi.fn(),
   sitesItem: { setValue: vi.fn() },
   activityItem: { getValue: vi.fn() },
-  // blockExistingTabs はリダイレクト前にブロックを記録する（#351）
   setLastBlockedDomain: vi.fn()
 }));
 
@@ -23,7 +13,6 @@ vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
 
-// 事実の表（activity）への記録はこの検査の対象外（タブの置き換えを見る）
 vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn(),
   recordHostActivity: vi.fn()
@@ -49,7 +38,6 @@ const YOUTUBE_TAB = { id: 1, url: 'https://www.youtube.com/watch?v=abc' };
 const OTHER_TAB = { id: 2, url: 'https://example.com/' };
 const NEWTAB_URL = 'chrome-extension://test-id/newtab.html';
 
-/** chrome API のモックを構築する */
 function setupChrome() {
   const chromeMock = {
     declarativeNetRequest: {
@@ -74,10 +62,6 @@ function setupChrome() {
   return chromeMock;
 }
 
-/**
- * 保存前の追跡中のサイト（YouTube 機能は有効・アクセスブロックは無効）を用意し、
- * 保存された値が以降の判定に反映されるようにする
- */
 function givenStoredSites() {
   let stored: TrackedSites = sitesOf(
     trackedSite('youtube.com', { youtube: youtubeFeatures() })
@@ -91,7 +75,6 @@ function givenStoredSites() {
   );
 }
 
-/** YouTube の今日の表示秒数を用意する（サイトキーは 'youtube.com'） */
 function givenYouTubeUsage(seconds: number) {
   vi.mocked(activityItem.getValue).mockResolvedValue({
     [toDateKey(new Date())]: {
@@ -100,7 +83,6 @@ function givenYouTubeUsage(seconds: number) {
   });
 }
 
-/** アクセスブロックを ON にする（必要なら時間制限つきで） */
 async function turnOnBlockAccess(timeLimit: TimeLimit | null = null) {
   return invoke(updateYouTubeSettingsHandler, {
     youtube: {
@@ -134,8 +116,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
   });
 
   it('置き換えたタブのブロックを記録する（ブロック画面の帯の表示元）', async () => {
-    // 置き換え経路では元ドメインの webNavigation イベントが発生しないため、
-    // ここで記録しないと帯に出す「最後にブロックしたドメイン」が残らない（#351）
+    // 置き換え経路では元ドメインの webNavigation イベントが発生しないため、ここで記録しないと帯に出すドメインが残らない
     await turnOnBlockAccess();
 
     expect(setLastBlockedDomain).toHaveBeenCalledWith('www.youtube.com');

@@ -5,21 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { PasswordModal } from '../PasswordModal';
 
-/**
- * PasswordModal の表示分岐とコールバックの検査
- *
- * パスワードが合っていないのに onSuccess が呼ばれると、保護そのものが
- * 意味を失う。照合が失敗・例外のどちらでも onSuccess が呼ばれないこと、
- * 開き直したときに前回の入力とエラーが残らないことを確かめる。
- *
- * chrome.i18n はテスト環境に無く、getMessage はキー名をそのまま返す
- * （src/lib/i18n.ts）。文言の検査はキー名で行う。
- *
- * 入力欄はラベルの文言から引く。伏せ字で中身が見えないため、ラベルと
- * 結び付いていないと何を入力する欄か読み上げでも分からない
- * （machina-gg/vision-focus#468 / #476）。
- */
-
 const password = vi.hoisted(() => ({
   verifyPassword: vi.fn()
 }));
@@ -45,10 +30,8 @@ function renderModal(
   return { onClose, onSuccess, ...result };
 }
 
-/** 入力欄はラベルの文言から引く（結び付きが切れたらここで落ちる） */
 const field = () => screen.getByLabelText('enterPassword');
 
-/** 表示切り替えは名前で引く（アイコンだけのボタンに付けた aria-label） */
 const toggleButton = () => screen.getByRole('button', { name: 'showPassword' });
 
 function type(value: string) {
@@ -79,7 +62,6 @@ describe('PasswordModal', () => {
     it('title が未指定なら既定の見出しを出す', () => {
       renderModal();
 
-      // 見出しは既定文言のキー名で描画される
       expect(screen.getByRole('heading')).toHaveTextContent('passwordRequired');
     });
 
@@ -116,7 +98,6 @@ describe('PasswordModal', () => {
     it('入力欄をラベルの文言から特定できる', () => {
       renderModal();
 
-      // ラベルが指しているのは伏せ字の入力欄そのもの
       expect(field()).toBe(screen.getByPlaceholderText('passwordPlaceholder'));
     });
 
@@ -153,8 +134,6 @@ describe('PasswordModal', () => {
 
       fireEvent.click(toggleButton());
 
-      // 表示中かどうかが目のアイコンの差だけで表されていると、
-      // 読み上げでは今どちらの状態か分からない（#455 / #476）
       expect(
         screen.getByRole('button', { name: 'hidePassword' })
       ).toBeInTheDocument();
@@ -240,8 +219,6 @@ describe('PasswordModal', () => {
     });
 
     it('未入力のまま Enter を押しても照合しない', async () => {
-      // 確認ボタンと同じ条件で止まる。ここが緩むと、パスワード保護を
-      // 付けていても空のまま照合へ進める（#465）。
       // 見出しの既定文言と区別するため title を渡して描画する
       renderModal({ title: '解除の確認' });
 
@@ -250,13 +227,11 @@ describe('PasswordModal', () => {
       });
 
       expect(password.verifyPassword).not.toHaveBeenCalled();
-      // 押せない操作なので、エラー文言も出さずに何も起きない
       expect(screen.queryByText('passwordRequired')).not.toBeInTheDocument();
     });
 
     it('未入力かつ照合中に Enter を押しても照合しない', async () => {
-      // 照合中は入力欄を空にできないため、1 度照合を走らせて
-      // 解決させないまま、その最中の Enter を見る
+      // 照合中は入力欄を空にできないため、照合を解決させないままその最中の Enter を見る
       let resolveVerify: (value: boolean) => void = () => undefined;
       password.verifyPassword.mockReturnValue(
         new Promise<boolean>((resolve) => {

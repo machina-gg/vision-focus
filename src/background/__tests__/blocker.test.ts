@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// storage / blockService / chromeApi をモックし、chrome API 呼び出しを検証する
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn()
 }));
@@ -35,13 +34,11 @@ interface UpdateRulesArg {
   addRules: chrome.declarativeNetRequest.Rule[];
 }
 
-/** chrome API のグローバルモックを構築する */
 function setupChrome(overrides: Record<string, unknown> = {}) {
   const chromeMock = {
     declarativeNetRequest: {
       getDynamicRules: vi.fn().mockResolvedValue([]),
       updateDynamicRules: vi.fn().mockResolvedValue(undefined),
-      // 実装が参照する enum 値
       RuleActionType: { REDIRECT: 'redirect' },
       ResourceType: { MAIN_FRAME: 'main_frame' }
     },
@@ -62,7 +59,6 @@ function setupChrome(overrides: Record<string, unknown> = {}) {
   return chromeMock;
 }
 
-/** updateDynamicRules に渡された引数を取得する */
 function lastUpdateRulesArg(
   chromeMock: ReturnType<typeof setupChrome>
 ): UpdateRulesArg {

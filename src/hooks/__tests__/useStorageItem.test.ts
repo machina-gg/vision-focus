@@ -10,12 +10,6 @@ interface TestValue {
 
 const FALLBACK: TestValue = { goal: 'default' };
 
-/**
- * メモリ上で動くストレージ項目のふりをするオブジェクトを作る。
- *
- * 実物（@wxt-dev/storage の defineItem）は chrome.storage を必要とするため、
- * フック側の振る舞いだけを見るためにこの最小実装に差し替える。
- */
 function createFakeItem(initial: TestValue | null = null) {
   let value = initial;
   const listeners = new Set<(newValue: TestValue) => void>();
@@ -42,7 +36,6 @@ function createFakeItem(initial: TestValue | null = null) {
   return {
     item: item as unknown as WxtStorageItem<TestValue, Record<string, unknown>>,
     unwatch,
-    /** 他コンテキストからの変更を模す */
     emit: (next: TestValue) => listeners.forEach((listener) => listener(next))
   };
 }
@@ -59,7 +52,7 @@ describe('useStorageItem', () => {
 
   it('使えない形の値（旧形式の文字列）は fallback に倒す', async () => {
     const { item, emit } = createFakeItem();
-    // 旧実装が書いた JSON 文字列が残っている状態を模す
+    // JSON 文字列で保存された古いデータが残っている状態を模す
     vi.mocked(item.getValue).mockResolvedValue(
       JSON.stringify({ goal: 'stale' }) as unknown as TestValue
     );

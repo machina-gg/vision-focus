@@ -8,17 +8,6 @@ import type { AppSettings, Schedule } from '~/types/storage';
 import type { DashboardPreset, VisionSettings } from '~/types/vision';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/vision';
 
-/**
- * SchedulesTab の一覧の出し分けと、操作で渡る引数の検査
- *
- * 設定は SettingsContext から来るため Context ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- * 週表示のカレンダーは別コンポーネントの責務なので、受け取った props だけ見る。
- *
- * 有効な曜日は背景色の差でしか出ていなかったため data-active を足してから
- * 検査する（COMPONENT_TESTING.md「状態は属性で表す」）。
- */
-
 const settingsState = vi.hoisted(() => ({
   settings: undefined as AppSettings | undefined,
   vision: undefined as VisionSettings | undefined
@@ -61,7 +50,6 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   createdAt: '2026-01-01T00:00:00.000Z'
 });
 
-/** 検査に使うキーだけを持つ設定（他のキーは既定のままで表示に関わらない） */
 const settingsOf = (schedules: Schedule[]): AppSettings =>
   ({ schedules }) as AppSettings;
 

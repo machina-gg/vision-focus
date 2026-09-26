@@ -5,7 +5,6 @@ import { useSchedules, type ScheduleFormData } from '~/hooks/useSchedules';
 import type { AppSettings, Schedule } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
-// Mock dependencies
 vi.mock('~/lib/analytics', () => ({
   trackFeatureUse: vi.fn()
 }));
@@ -177,7 +176,6 @@ describe('useSchedules', () => {
   describe('handleSaveSchedule', () => {
     beforeEach(() => {
       vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-      // crypto.randomUUID のモック
       vi.stubGlobal('crypto', {
         ...global.crypto,
         randomUUID: vi.fn(() => 'new-schedule-id')
@@ -322,7 +320,7 @@ describe('useSchedules', () => {
 
       expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
-      expect(trackFeatureUse).not.toHaveBeenCalled(); // 編集時は呼ばれない
+      expect(trackFeatureUse).not.toHaveBeenCalled();
       expect(result.current.showScheduleModal).toBe(false);
       expect(result.current.editingSchedule).toBeNull();
     });

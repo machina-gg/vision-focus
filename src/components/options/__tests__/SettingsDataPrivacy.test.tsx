@@ -7,19 +7,8 @@ import { SettingsDataPrivacy } from '../SettingsDataPrivacy';
 import type { AnalyticsOptIn } from '~/types/analytics';
 import type { AppSettings } from '~/types/storage';
 
-/**
- * SettingsDataPrivacy の切り替えの初期状態と、保存に渡る値の検査
- *
- * 未設定（設定そのものが無い / analyticsOptIn が無い / null）はすべて
- * 「共有しない」に倒れる。ここが反転すると、決めていない利用者の
- * 送信が既定で有効になるため境界として全部見る。
- *
- * 決定時刻は現在時刻から作るため、時刻を固定して引数まで確かめる。
- */
-
 const NOW = new Date('2026-03-10T12:00:00.000Z');
 
-/** 検査に使うキーだけを持つ設定（他のキーは表示に関わらない） */
 const settingsOf = (
   analyticsOptIn: AnalyticsOptIn | null | undefined
 ): AppSettings => ({ analyticsOptIn }) as AppSettings;

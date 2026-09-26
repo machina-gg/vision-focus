@@ -22,10 +22,6 @@ import { trackerHeartbeatHandler } from '../../handlers/tracker-heartbeat';
 import { updateTimeLimitHandler } from '../../handlers/update-time-limit';
 import { updateYouTubeSettingsHandler } from '../../handlers/update-youtube-settings';
 
-/**
- * name とハンドラの対応は登録側（handlers/index.ts）にしか無いため、
- * 取り違え（別の name に別のハンドラを登録する）をここで検出する
- */
 const expected = [
   ['add-block', addBlockHandler],
   ['add-tracked-site', addTrackedSiteHandler],

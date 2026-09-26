@@ -9,10 +9,6 @@ type WatchCallback<T> = (
   oldValue?: T
 ) => Promise<void>;
 
-/**
- * resetModules でモジュールを読み直すとモック関数の実体も作り直されるため、
- * hoisted な共有スパイを使って呼び出し記録の同一性を保つ。
- */
 const mocks = vi.hoisted(() => ({
   watchSettings: vi.fn(),
   watchSites: vi.fn(),
@@ -99,8 +95,7 @@ describe('setupSettingsWatcher', () => {
   });
 
   it('ブロックを有効化する変更でも既存タブには手を出さない（各メッセージハンドラの担当）', async () => {
-    // blocker のモックに blockExistingTabs を持たせていないため、
-    // watcher がこれを呼べばここで参照エラーになる
+    // blocker のモックに blockExistingTabs が無いため、watcher がこれを呼べば参照エラーになる
     const { settingsWatcher, sitesWatcher, updateBlockRules } = await load();
 
     await settingsWatcher(settings({ paused: false }));

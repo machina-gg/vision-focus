@@ -15,21 +15,8 @@ import {
   youtubeFeatures
 } from '~/test/sites';
 
-/**
- * AnalyticsSummary の表示分岐とコールバックの検査
- *
- * 一覧の行は追跡中のサイトで、状態（ブロック中 / 無効 / 追跡だけ）・ブロック開始日・できる操作は
- * サイトの設定から、解除日と解除後の時間は activity から出る。
- * 追跡サイトが 0 件のときの空状態、状態ごとに変わる表示、
- * 経過日数の言い回しの切り替わり（今日 / 昨日 / N 日前 / N 週間前 / N か月前）を
- * 境界値で確かめる。再ブロック・追跡停止は取り消しが効くとは限らないため、
- * どのサイトが渡るかまで見る。
- */
-
-// 置換値（経過日数・週数・月数）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-/** 経過日数の判定が現在時刻に依存するため、基準時刻をローカル時刻で固定する（2026-03-01） */
 const NOW = new Date(2026, 2, 1, 12);
 
 const dateDaysAgo = (days: number): Date =>
@@ -37,10 +24,6 @@ const dateDaysAgo = (days: number): Date =>
 const isoDaysAgo = (days: number): string => dateDaysAgo(days).toISOString();
 const keyDaysAgo = (days: number): string => toDateKey(dateDaysAgo(days));
 
-/**
- * 追跡中のサイト 1 つ。`blocked` はブロック設定が有効、`disabled` はブロック設定をトグルで無効にしたもの、
- * `tracking` はブロック設定を持たない（ブロックリストから外した・追跡だけの）サイト
- */
 const siteOf = ({
   domain = 'example.com',
   status = 'blocked',
@@ -148,7 +131,6 @@ describe('AnalyticsSummary', () => {
     });
   });
 
-  // ブロック設定をトグルで無効にしたサイト。ブロックは効いていないが設定（時間制限を含む）は残っている
   describe('無効にしたサイト', () => {
     it('「ブロック中（無効）」の表示にし、ブロック開始日と解除後の時間を出す', () => {
       renderSummary(

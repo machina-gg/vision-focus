@@ -10,24 +10,6 @@ import type { DashboardPreset, VisionSettings } from '~/types/storage';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * PresetSelector の表示分岐とコールバックの検査
- *
- * スタイル（プリセット）が 0 件のときの案内、上限に達したときの表示、
- * 選択中のスタイルが既に適用済みかどうかで変わるボタンを確かめる。
- * 保存ボタンは「目標が空」「名前が空」「変更が無い」のいずれでも押せない
- * 決まりなので、それぞれの境界を個別に見る。
- *
- * 適用中かどうかはアイコンの有無でしか出ていなかったため data-active を
- * 足してから、その値で検査する（アイコンのクラス名は見ない）。
- * 選択中（いま編集しているもの）は背景色でしか出ていなかったため
- * aria-pressed を足してから、その値で検査する（強調のクラス名は見ない）。
- *
- * 状態は usePresets が持つため、戻り値ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- */
-
-// 置換値（スタイル名・上限件数）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
 const presetOf = (id: string, name: string): DashboardPreset => ({
@@ -37,7 +19,6 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   createdAt: '2026-01-01T00:00:00.000Z'
 });
 
-/** usePresets の戻り値。テストで見るものだけ上書きする */
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: '目標' },

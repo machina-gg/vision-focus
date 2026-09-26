@@ -1,12 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-/**
- * chrome.storage のモック
- *
- * @wxt-dev/storage は読み込み時に `globalThis.chrome` を掴むため、モジュールの
- * import より前に用意する必要がある（vi.hoisted はモジュール評価より先に走る）。
- * local 領域は実際に値を保持する簡易実装にして、保存形式（キーと値）まで検証する。
- */
+// @wxt-dev/storage は読み込み時に globalThis.chrome を掴むため、import より前に用意する
 const fakeChrome = vi.hoisted(() => {
   const localData: Record<string, unknown> = {};
 
@@ -36,8 +30,7 @@ const fakeChrome = vi.hoisted(() => {
     remove: vi.fn()
   };
 
-  // chrome オブジェクト自体は差し替えない（差し替えると @wxt-dev/storage が
-  // 掴んだ参照と食い違う）。テストごとに中身だけ初期化する
+  // chrome オブジェクト自体を差し替えると @wxt-dev/storage が掴んだ参照と食い違うため、中身だけ初期化する
   (globalThis as Record<string, unknown>).chrome = {
     runtime: { id: 'test-extension' },
     storage: { local: localArea, session }
@@ -91,8 +84,7 @@ describe('保存形式', () => {
   });
 
   it('旧形式（JSON 文字列）が残っていても初期値を返す', async () => {
-    // 実キーは変わらないため、旧実装が書いた JSON 文字列が同じキーに残りうる。
-    // そのまま返すと settings.schedules などの参照が壊れる
+    // 実キーが同じため古い JSON 文字列が残りうる。そのまま返すと settings.schedules などの参照が壊れる
     fakeChrome.localData.settings = JSON.stringify({
       ...DEFAULT_SETTINGS,
       paused: true

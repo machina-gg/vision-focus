@@ -6,14 +6,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WeeklyReportCard, MonthlyReportCard } from '../ReportCard';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';
 
-/**
- * WeeklyReportCard / MonthlyReportCard の表示分岐とコールバックの検査
- *
- * レポートが無いとき（集計対象の期間にデータが無い・遡りすぎた）に空表示へ
- * 落ちること、期間の表記へ渡す値、次の期間へ進めないときにボタンが効かないことを
- * 確かめる。期間の見出しは「進行中」の文言で区別できるため、強調の色は見ない。
- */
-
 // 期間の表記はロケールと時差で変わるため、渡した値と表示の対応だけを見る
 vi.mock('~/lib/report', () => ({
   formatWeekRange: vi.fn(
@@ -22,8 +14,6 @@ vi.mock('~/lib/report', () => ({
   formatMonth: vi.fn((month: string) => `月:${month}`)
 }));
 
-// グラフは recharts に任せており、jsdom では寸法が 0 で描画されない。
-// カードの責務は「どのデータを渡すか」なので、渡った値を読める形に差し替える
 vi.mock('../WeeklyChart', () => ({
   WeeklyChart: (props: Record<string, unknown>) => (
     <div data-testid="weekly-chart">{JSON.stringify(props)}</div>
@@ -69,12 +59,6 @@ const monthlyReportOf = (
   ...overrides
 });
 
-/**
- * 期間を移動するボタン
- *
- * アイコンだけのボタンにも読み上げ用の名前が付いたため、描画順ではなく名前で取る
- * （machina-gg/vision-focus#455）。テスト環境の getMessage は文言のキーを返す
- */
 const navButton = (messageKey: string) =>
   screen.getByRole('button', { name: messageKey });
 

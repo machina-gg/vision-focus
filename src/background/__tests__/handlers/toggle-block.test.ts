@@ -31,7 +31,6 @@ interface Response {
   error?: string;
 }
 
-/** 切り替える前のブロック設定 */
 const before = (enabled: boolean): BlockRule => ({
   enabled,
   addedAt: '2026-01-01T00:00:00.000Z',

@@ -2,13 +2,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-// storage をモック
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
   setSettings: vi.fn()
 }));
 
-// blocker をモック（chrome.declarativeNetRequest に依存するため）
 vi.mock('~/background/blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()

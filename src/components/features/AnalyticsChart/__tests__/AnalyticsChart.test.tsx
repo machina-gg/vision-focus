@@ -8,18 +8,6 @@ import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
-/**
- * AnalyticsChart が組み立てるグラフ用データと、表示するグラフの切り替えの検査
- *
- * 日別・サイト別・累積・見出しの合計は、同じ期間（今日を含む直近 CHART_DAYS 日）・
- * 同じ母集団（追跡中のサイト）の activity から出る。期間の外の日・母集団の外の
- * サイトがどれにも入らないこと、4 つの値が互いに一致することを確かめる。
- *
- * グラフ本体は recharts に任せており jsdom では寸法が 0 で描画されないため、
- * 受け取ったデータを読める形に差し替えて「何を渡したか」を見る。
- */
-
-// サイト件数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
 vi.mock('../DailyChart', () => ({
@@ -38,9 +26,8 @@ vi.mock('../CumulativeChart', () => ({
   )
 }));
 
-/** 期間が「今日」基準のため、基準時刻をローカル時刻で固定する（2026-03-10） */
 const NOW = new Date(2026, 2, 10, 12);
-/** 直近 14 日の初日 */
+// 直近 14 日の初日
 const FIRST_DAY = '2026-02-25';
 
 const seconds = (value: number) => ({ seconds: value, blocks: 0, unblocks: 0 });
@@ -55,18 +42,15 @@ function renderChart(
   );
 }
 
-/** グラフの種類を切り替えるボタン（文言のキーで選ぶ） */
 const switchTo = (messageKey: string) =>
   fireEvent.click(screen.getByRole('button', { name: messageKey }));
 
-/** 押下状態になっているボタンの文言（選択中の印） */
 const pressedTexts = () =>
   screen
     .getAllByRole('button')
     .filter((el) => el.getAttribute('aria-pressed') === 'true')
     .map((el) => el.textContent);
 
-/** 差し替えたグラフが受け取ったデータ */
 function chartData<T>(testId: string): T[] {
   return JSON.parse(screen.getByTestId(testId).textContent ?? '[]') as T[];
 }
@@ -98,7 +82,6 @@ describe('AnalyticsChart', () => {
     it('直近 14 日・追跡中のサイトの合計時間と件数を出す', () => {
       renderChart(activity, sites);
 
-      // 見出しの日数はグラフの期間と同じ定数から渡る
       expect(
         screen.getByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
       ).toBeInTheDocument();
@@ -276,8 +259,7 @@ describe('AnalyticsChart', () => {
     it('キーボードから届いてもグラフは切り替わらない', () => {
       renderChart({}, [], true);
 
-      // ⚠ 包む div の pointer-events はマウスしか止めない。
-      // 無効の属性が無いと、この押下でグラフが切り替わる
+      // 包む div の pointer-events はマウスしか止めないため、無効の属性が無いとこの押下でグラフが切り替わる
       switchTo('chartTypeBySite');
 
       expect(screen.getByTestId('daily-chart')).toBeInTheDocument();

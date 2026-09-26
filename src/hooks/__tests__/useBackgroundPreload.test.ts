@@ -9,7 +9,6 @@ vi.mock('~/constants', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/constants')>();
   return {
     ...actual,
-    // chrome.runtime に依存するため差し替える
     getBackgroundUrl: vi.fn(
       (id: string) => `chrome-extension://test/${id}.webp`
     ),
@@ -24,7 +23,6 @@ import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
 import type { DashboardDisplaySettings } from '~/types/storage';
 
-/** 画像プリロードを制御するための Image モック */
 class MockImage {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
@@ -118,7 +116,6 @@ describe('useBackgroundPreload', () => {
 
       expect(result.current.isColorBackground).toBe(true);
       expect(result.current.isBackgroundReady).toBe(true);
-      // 画像の読み込みは発生しない
       expect(MockImage.instances).toHaveLength(0);
     });
 

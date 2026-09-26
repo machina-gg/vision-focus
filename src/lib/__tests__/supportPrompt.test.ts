@@ -42,8 +42,7 @@ describe('getSupportPromptState', () => {
   });
 
   it('旧形式（文字列）が残っていても初期状態を返す', async () => {
-    // 実キーは変わらないため、旧実装が書いた JSON 文字列が同じキーに残りうる。
-    // fallback は null / undefined のときしか効かないのでガードで倒す
+    // 同じキーに古い JSON 文字列が残りうるが、fallback は null / undefined でしか効かないためガードで倒す
     mockGet.mockResolvedValue(
       '{"dismissedAt":1000,"opened":true}' as unknown as SupportPromptState
     );

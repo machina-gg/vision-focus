@@ -8,7 +8,6 @@ import {
 } from '~/lib/image';
 import { IMAGE_LIMITS } from '~/constants/limits';
 
-// Mock File objects
 function createMockFile(
   type: string,
   size: number,
@@ -20,7 +19,7 @@ function createMockFile(
 
 describe('validateImageFile', () => {
   it('有効なJPEG画像を受け入れる', () => {
-    const file = createMockFile('image/jpeg', 1024 * 1024); // 1MB
+    const file = createMockFile('image/jpeg', 1024 * 1024);
     const result = validateImageFile(file);
     expect(result.valid).toBe(true);
     expect(result.error).toBeUndefined();
@@ -103,7 +102,6 @@ describe('compressImage', () => {
   };
 
   beforeEach(() => {
-    // Mock canvas and context
     mockContext = {
       fillStyle: '',
       fillRect: vi.fn(),
@@ -128,7 +126,6 @@ describe('compressImage', () => {
       return {};
     }) as unknown as typeof document.createElement;
 
-    // Mock Image
     mockImage = {
       width: 1920,
       height: 1080,
@@ -140,13 +137,11 @@ describe('compressImage', () => {
       onerror: (() => void) | null;
     };
 
-    // ⚠ vitest 4 以降、`new` 付きで呼ばれたモックはコンストラクタとして実行される。
-    //   アロー関数はコンストラクタになれないため function 宣言で書く
+    // vitest 4 は new 付きで呼ばれたモックをコンストラクタとして実行するため、アロー関数でなく function 宣言で書く
     global.Image = vi.fn(function () {
       return mockImage;
     }) as unknown as typeof Image;
 
-    // Mock FileReader
     const mockFileReader = {
       onload: null,
       onerror: null,
@@ -155,7 +150,6 @@ describe('compressImage', () => {
           onload: ((event: ProgressEvent<FileReader>) => void) | null;
         }
       ) {
-        // Simulate successful load
         setTimeout(() => {
           if (this.onload) {
             this.onload({
@@ -170,7 +164,6 @@ describe('compressImage', () => {
       return mockFileReader;
     }) as unknown as typeof FileReader;
 
-    // Trigger image onload after src is set
     Object.defineProperty(mockImage, 'src', {
       set(_value: string) {
         setTimeout(() => {
@@ -184,7 +177,7 @@ describe('compressImage', () => {
   });
 
   it('有効な画像を圧縮できる', async () => {
-    const file = createMockFile('image/jpeg', 2 * 1024 * 1024); // 2MB
+    const file = createMockFile('image/jpeg', 2 * 1024 * 1024);
     const result = await compressImage(file);
 
     expect(result).toMatch(/^data:image\/jpeg;base64,/);
@@ -209,7 +202,6 @@ describe('compressImage', () => {
   it('画像の読み込み失敗時にエラーをスローする', async () => {
     const file = createMockFile('image/jpeg', 1024 * 1024);
 
-    // Override mock to trigger error
     Object.defineProperty(mockImage, 'src', {
       set() {
         setTimeout(() => {
@@ -232,7 +224,7 @@ describe('compressImage', () => {
 
   it('カスタム最大サイズでの圧縮', async () => {
     const file = createMockFile('image/jpeg', 1024 * 1024);
-    const customMaxSizeMB = 0.5; // 0.5MB
+    const customMaxSizeMB = 0.5;
 
     const result = await compressImage(file, customMaxSizeMB);
     expect(result).toMatch(/^data:image\/jpeg;base64,/);
@@ -241,7 +233,6 @@ describe('compressImage', () => {
   it('圧縮不可能なほど大きい画像でエラーをスローする', async () => {
     const file = createMockFile('image/jpeg', 1024 * 1024);
 
-    // Mock toDataURL to return a very large data URL
     const largeData = 'data:image/jpeg;base64,' + 'x'.repeat(10 * 1024 * 1024);
     mockCanvas.toDataURL = vi.fn(() => largeData);
 
@@ -257,7 +248,6 @@ describe('compressImage', () => {
 
     await compressImage(file);
 
-    // Canvas should be resized to maintain aspect ratio
     expect(mockCanvas.width).toBeLessThanOrEqual(IMAGE_LIMITS.MAX_WIDTH);
     expect(mockCanvas.height).toBeLessThanOrEqual(IMAGE_LIMITS.MAX_HEIGHT);
   });
@@ -280,7 +270,6 @@ describe('compressImage', () => {
 
     await compressImage(file);
 
-    // Should preserve original dimensions
     expect(mockCanvas.width).toBe(800);
     expect(mockCanvas.height).toBe(600);
   });
@@ -288,14 +277,12 @@ describe('compressImage', () => {
 
 describe('getBase64Size', () => {
   it('base64データURLのサイズを正しく計算する', () => {
-    // Base64: 4 characters = 3 bytes
     const dataUrl = 'data:image/jpeg;base64,AAAA'; // 4 chars = 3 bytes
     const size = getBase64Size(dataUrl);
     expect(size).toBe(3);
   });
 
   it('パディング付きのbase64データURLのサイズを正しく計算する', () => {
-    // With padding (=)
     const dataUrl = 'data:image/jpeg;base64,AAA='; // 3 bytes with 1 padding
     const size = getBase64Size(dataUrl);
     expect(size).toBe(2);
@@ -308,7 +295,6 @@ describe('getBase64Size', () => {
   });
 
   it('大きいbase64データのサイズを計算する', () => {
-    // Create a larger base64 string (1KB of data = 1365 base64 chars approx)
     const base64 = 'A'.repeat(1368); // ~1KB
     const dataUrl = `data:image/jpeg;base64,${base64}`;
     const size = getBase64Size(dataUrl);

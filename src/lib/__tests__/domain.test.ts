@@ -112,7 +112,6 @@ describe('parseDomainInput', () => {
 
   it('preserves query/hash without path', () => {
     // Without path, query/hash aren't removed (edge case of the regex)
-    // This is acceptable as users should input valid domains
     expect(parseDomainInput('example.com?query')).toEqual({
       domain: 'example.com?query',
       isWildcard: false

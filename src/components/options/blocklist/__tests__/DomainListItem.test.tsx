@@ -8,14 +8,6 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite } from '~/test/sites';
 import type { BlockRule } from '~/types/site';
 
-/**
- * DomainListItem の表示分岐とコールバックの検査
- *
- * ブロック回数バッジ（0 件のときは出さない）と、子の TimeLimitEditor から
- * 上がってくる更新にサイトキーが添えられることを確かめる。
- */
-
-// 置換値（ブロック回数）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
 const DOMAIN = 'example.com';
@@ -107,12 +99,10 @@ describe('DomainListItem', () => {
       const onUpdateTimeLimit = vi.fn();
       renderItem({ onUpdateTimeLimit });
 
-      // 時間制限エディタを開き、1 日あたりの制限に切り替えて保存する
       fireEvent.click(screen.getByText('alwaysBlocked'));
       fireEvent.change(screen.getAllByRole('combobox')[0], {
         target: { value: 'daily' }
       });
-      // 保存は非同期（onUpdate の await 後に保存済み表示へ状態が変わる）
       await act(async () => {
         fireEvent.click(screen.getByText('save'));
       });

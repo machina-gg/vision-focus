@@ -5,14 +5,6 @@ import { describe, it, expect } from 'vitest';
 
 import { StatsGrid } from '../StatsGrid';
 
-/**
- * StatsGrid の集計値の表示と、変化の向きの検査
- *
- * 前の期間との比較は「無駄時間が減った＝改善」なので、符号の向きと意味が逆になる。
- * 改善か悪化かは色とアイコンにしか出ていなかったため data-change-direction を足し、
- * クラス名ではなくその属性で確かめる（machina-gg/vision-focus#455）。
- */
-
 const renderGrid = (wasteTimeChangePercent: number | null) =>
   render(
     <StatsGrid

@@ -127,7 +127,6 @@ describe('downloadImage', () => {
       toDataURL: vi.fn(() => 'data:image/png;base64,test')
     } as unknown as HTMLCanvasElement;
 
-    // document.createElementをモック
     const mockLink = {
       download: '',
       href: '',
@@ -137,7 +136,6 @@ describe('downloadImage', () => {
       mockLink as unknown as HTMLAnchorElement
     );
 
-    // document.bodyのappendChild/removeChildをモック
     vi.spyOn(document.body, 'appendChild').mockImplementation(mockAppendChild);
     vi.spyOn(document.body, 'removeChild').mockImplementation(mockRemoveChild);
 

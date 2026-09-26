@@ -10,25 +10,11 @@ import type { ActivityLog } from '~/types/activity';
 const EMPTY_ACTIVITY: ActivityLog = {};
 const SITES = ['a.example'];
 
-/**
- * AnalyticsDateFilter が持つ「どの期間を見ているか」と、支援誘導の出し分けの検査
- *
- * 遡った回数（オフセット）をレポート生成へ渡し、未来へは進ませないこと、
- * 週と月のオフセットが互いに影響しないことを確かめる。週次と月次はタブで切り替え、
- * 選んだ方だけを表示し、切り替えても見ていた期間を保つことも見る。レポートの中身の描画は
- * WeeklyReportCard / MonthlyReportCard の責務なので、ここでは渡す値だけを見る。
- *
- * 支援誘導は出すかどうかの判定を親から受け取るので、受け取った値どおりに
- * 場所ごと出し入れすることと、操作がそのまま親へ返ることを見る。
- */
-
 vi.mock('~/lib/report', () => ({
   generateWeeklyReport: vi.fn(() => null),
   generateMonthlyReport: vi.fn(() => null)
 }));
 
-// レポートカードは受け取った props を読める形に差し替える
-// （中の recharts は jsdom で寸法が 0 になり描画されないため）
 vi.mock('~/components/features', () => ({
   WeeklyReportCard: (props: {
     onPrevious: () => void;
@@ -87,7 +73,6 @@ vi.mock('~/components/features', () => ({
   )
 }));
 
-/** 直近の呼び出しでレポート生成へ渡ったオフセット */
 const lastWeeklyOffset = () =>
   vi.mocked(generateWeeklyReport).mock.lastCall?.[2];
 const lastMonthlyOffset = () =>

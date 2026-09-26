@@ -7,7 +7,6 @@ vi.mock('../../blocker', () => ({
 import { updateBlockRules } from '../../blocker';
 import { setupLifecycleHandlers } from '../../listeners/lifecycleHandlers';
 
-/** ライフサイクルイベントを発火できる chrome モックを構築する */
 function setupChrome() {
   const handlers: Record<string, (() => Promise<void>) | null> = {
     installed: null,

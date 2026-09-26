@@ -5,17 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { YouTubeFeatureToggle } from '../YouTubeFeatureToggle';
 
-/**
- * YouTubeFeatureToggle の表示と、切り替えたときに渡る値の検査
- *
- * YouTube の非表示が効かない不具合（#422）は「切り替えたつもりの値が
- * 渡っていない」形で出た。ここでは入・切のどちらから押しても反転した値が
- * 渡ること、無効化中は何も渡らないことを見る。
- *
- * 入・切・無効の配色の差はクラス名にしか出ないため検査しない
- * （見た目を変えただけで落ちるテストを増やさない）。
- */
-
 type ToggleProps = Parameters<typeof YouTubeFeatureToggle>[0];
 
 function renderToggle(props: Partial<ToggleProps> = {}) {

@@ -8,19 +8,6 @@ import type { UsePresetsReturn } from '~/hooks/usePresets';
 import type { DashboardDisplaySettings } from '~/types/storage';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
-/**
- * StylesTab のプレビュー欄の出し分けと、背景の決まり方の検査
- *
- * プレビューはスタイルを編集しているときだけ出る。背景は
- * 「色 → 取り込んだ画像 → 既定の画像」の順で決まり、どれも未設定の
- * 保存データでは既定の画像へ倒れる。この優先順位を見る。
- *
- * 状態は usePresets が持つため戻り値ごと差し替える
- * （実体は chrome.storage を読みに行き、テストから値を決められない）。
- * 段組みのクラス名は検査しない。
- */
-
-// 背景画像の URL は chrome.runtime.getURL を経由する（テスト環境には無い）
 vi.mock('~/constants/backgrounds', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('~/constants/backgrounds')>();
@@ -39,7 +26,6 @@ vi.mock('~/hooks', () => ({
   useStorageItem: () => [undefined, vi.fn()]
 }));
 
-// スタイルの一覧と設定フォームは別コンポーネントの責務
 vi.mock('../styles', () => ({
   PresetSelector: () => <div data-testid="preset-selector" />,
   DisplaySettingsForm: () => <div data-testid="display-settings-form" />
@@ -56,7 +42,6 @@ vi.mock('~/components/options/modals', () => ({
   )
 }));
 
-/** usePresets の戻り値。テストで見るものだけ上書きする */
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS },
@@ -97,7 +82,6 @@ function renderTab(overrides: Partial<UsePresetsReturn> = {}) {
   return render(<StylesTab />);
 }
 
-/** 表示設定だけを差し替えた draftDisplaySettings */
 const displayWith = (
   overrides: Partial<DashboardDisplaySettings>
 ): DashboardDisplaySettings => ({ ...DEFAULT_DISPLAY_SETTINGS, ...overrides });

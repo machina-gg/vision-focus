@@ -7,16 +7,6 @@ import { BySiteChart } from '../BySiteChart';
 import type { BySiteChartData } from '../BySiteChart';
 import { SITE_COLORS } from '../chartUtils';
 
-/**
- * BySiteChart の空表示と、グラフへ渡すデータ・色・ツールチップの検査
- *
- * グラフ本体は recharts に任せており jsdom では寸法が 0 で描画されないため、
- * 受け取った props を読める形に差し替えて「何を渡したか」を見る。
- *
- * 色はサイト数がパレットを超えたときに先頭へ戻す。ツールチップは短縮した
- * ドメインではなく元のドメインを出すため、その受け渡しも見る。
- */
-
 const chart = vi.hoisted(() => ({
   data: undefined as BySiteChartData[] | undefined,
   cellFills: [] as (string | undefined)[],

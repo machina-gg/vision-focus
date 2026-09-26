@@ -1,7 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// 依存モジュールをモック
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
 }));
@@ -108,9 +107,7 @@ describe('useCurrentDomain', () => {
       expect(result.current.currentDomain).toBeUndefined();
     });
 
-    // 既知の挙動: extractDomain は URL の hostname をそのまま返すため、
-    // chrome:// などの内部ページでもドメイン扱いになる（ブロック対象としては不正）。
-    // クイックブロックの入力欄に無意味な値が初期表示される問題につながる。
+    // 望ましくない既知の挙動: chrome:// の内部ページもドメイン扱いになり、クイックブロックの入力欄に無意味な値が出る
     it('chrome:// ページでは hostname がそのまま返る（既知の挙動）', async () => {
       vi.mocked(getActiveTab).mockResolvedValue({
         url: 'chrome://settings'

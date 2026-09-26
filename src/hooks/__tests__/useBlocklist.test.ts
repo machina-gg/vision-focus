@@ -5,7 +5,6 @@ import { useBlocklist } from '~/hooks/useBlocklist';
 import type { AppSettings, TimeLimit } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
-// Mock dependencies
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
 }));
@@ -256,7 +255,6 @@ describe('useBlocklist', () => {
         });
       });
 
-      // エラーがスローされないことを確認
       await waitFor(() => {
         expect(mockSetSettings).not.toHaveBeenCalled();
       });

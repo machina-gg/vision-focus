@@ -17,10 +17,7 @@ vi.mock('~/lib/storage', () => ({
 import { sendMessage } from '~/lib/messaging';
 import { activityItem, sitesItem } from '~/lib/storage';
 
-/**
- * 分析タブの操作はどれも background へのメッセージで依頼する。
- * 追跡中のサイト・事実の表を画面から書くと、background の直列化を外れて変更が消える
- */
+// 追跡中のサイト・事実の表を画面から書くと、background の直列化を外れて変更が消える
 describe('useAnalytics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -122,7 +119,6 @@ describe('useAnalytics', () => {
         'm.x.com は追跡中の x.com に含まれるため追加できません'
       );
 
-      // 次の追加が通れば理由は消える
       vi.mocked(sendMessage).mockResolvedValue({ success: true });
       await act(async () => {
         await result.current.handleAddSiteToTrack('y.com');

@@ -9,16 +9,6 @@ import type { Schedule } from '~/types/storage';
 import type { DashboardPreset, VisionSettings } from '~/types/vision';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/vision';
 
-/**
- * ScheduleModal の新規・編集の出し分けと、フォームの変更で渡る値の検査
- *
- * 入力の状態は親が持つ（onFormChange で丸ごと返す）ため、「どのキーだけを
- * 差し替えて返すか」を見る。曜日の選択中は aria-pressed に出ている。
- *
- * 終了時刻の 24:00 は保存の内部表現で、入力欄には 00:00 として出す。
- * この読み替えが片方向（表示のみ）であることも含めて見る。
- */
-
 const BASE_FORM: ScheduleFormData = {
   name: '朝の集中',
   startTime: '09:00',

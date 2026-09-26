@@ -5,14 +5,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { Input } from '../Input';
 
-/**
- * Input の表示分岐とコールバックの検査
- *
- * onChange がイベントではなく「入力値の文字列」を受け取る点と、
- * label / error が未指定のときに余分な要素を出さない点を確かめる。
- * URL 入力欄の不具合（#278 / #370）のように、この土台が崩れると
- * 使っている画面すべてに波及する。
- */
 describe('Input', () => {
   describe('ラベル', () => {
     it('label を渡すと入力欄と紐づく', () => {
