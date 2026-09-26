@@ -219,6 +219,18 @@ describe('update-youtube-settings ハンドラ', () => {
       });
     });
 
+    it('保存より先に記録する（保存後は youtube.com が追跡中の集合から外れうる）', async () => {
+      givenStoredYouTube(youtube({ enabled: true, blockAccess: true }));
+
+      await invoke(handler, {
+        youtube: youtube({ enabled: false, blockAccess: true })
+      });
+
+      expect(
+        vi.mocked(appendActivity).mock.invocationCallOrder[0]
+      ).toBeLessThan(vi.mocked(setSettings).mock.invocationCallOrder[0]);
+    });
+
     it('YouTube 機能ごと無効にしてアクセスブロックが外れたときも記録する', async () => {
       givenStoredYouTube(youtube({ enabled: true, blockAccess: true }));
 

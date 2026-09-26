@@ -36,6 +36,19 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     );
     const blocksAccess = youtube.enabled && youtube.blockAccess;
 
+    // アクセスブロックが効かなくなる操作を 1 回の解除として記録する
+    // （機能全体の無効化でアクセスブロックが外れる場合も含む）。
+    // ⚠ 保存より先に記録する。追跡中の集合は YouTube 機能が有効かどうかで youtube.com を
+    // 含めるため、機能ごと無効にした設定を保存した後では youtube.com が集合から外れ、
+    // 書き手に捨てられる
+    if (wasBlockingAccess && !blocksAccess) {
+      await appendActivity({
+        kind: 'unblock',
+        site: YOUTUBE_DOMAIN,
+        at: new Date()
+      });
+    }
+
     await setSettings({ ...settings, youtube });
 
     // declarativeNetRequest のルールを設定に追従させる
@@ -44,16 +57,6 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     // ルール更新は新規の遷移にしか効かないため、開いているタブは明示的にブロックする
     if (!wasBlockingAccess && blocksAccess) {
       await blockExistingTabs();
-    }
-
-    // アクセスブロックが効かなくなった操作を 1 回の解除として記録する
-    // （機能全体の無効化でアクセスブロックが外れる場合も含む）
-    if (wasBlockingAccess && !blocksAccess) {
-      await appendActivity({
-        kind: 'unblock',
-        site: YOUTUBE_DOMAIN,
-        at: new Date()
-      });
     }
 
     return { success: true };
