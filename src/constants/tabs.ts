@@ -17,16 +17,6 @@ export const TABS = {
 /** 設定画面のタブの名前のいずれか */
 export type TabName = (typeof TABS)[keyof typeof TABS];
 
-/** 設定画面にタブを並べる順 */
-export const TAB_ORDER: TabName[] = [
-  TABS.BLOCKLIST,
-  TABS.STYLES,
-  TABS.SCHEDULES,
-  TABS.ANALYTICS,
-  TABS.SETTINGS,
-  TABS.HELP
-];
-
 /** ハッシュが無い・タブの名前でないときに開くタブ */
 export const DEFAULT_TAB: TabName = TABS.BLOCKLIST;
 

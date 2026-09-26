@@ -1,29 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  DEFAULT_TAB,
-  TABS,
-  TAB_ORDER,
-  getTabFromHash,
-  isValidTab
-} from '../tabs';
-
-describe('TAB_ORDER', () => {
-  it('ブロックリスト / スタイル / スケジュール / 分析 / 設定 / ヘルプの順に並ぶ', () => {
-    expect(TAB_ORDER).toEqual([
-      TABS.BLOCKLIST,
-      TABS.STYLES,
-      TABS.SCHEDULES,
-      TABS.ANALYTICS,
-      TABS.SETTINGS,
-      TABS.HELP
-    ]);
-  });
-
-  it('定義したタブをすべて含む', () => {
-    expect([...TAB_ORDER].sort()).toEqual(Object.values(TABS).sort());
-  });
-});
+import { DEFAULT_TAB, TABS, getTabFromHash, isValidTab } from '../tabs';
 
 describe('isValidTab', () => {
   it('設定タブの名前を受け付ける', () => {
