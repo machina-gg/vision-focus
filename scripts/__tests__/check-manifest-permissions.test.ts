@@ -124,6 +124,7 @@ describe('isStaticManifest', () => {
 
 describe('CLI として起動したとき', () => {
   // tsx は "type": "module" が無いと .ts を CJS に変換し、top-level await で起動時に落ちるため実際に起動して確かめる
+  // new URL(..., import.meta.url) は Vite がアセット参照として書き換え file スキームでなくなるため使わない
   const repoRoot = path.resolve(__dirname, '../..');
   const scriptPath = path.resolve(
     __dirname,
