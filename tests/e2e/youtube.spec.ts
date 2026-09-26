@@ -1,12 +1,20 @@
 import { test, expect } from './fixtures/extension';
-import { openExternalSite, openStoragePage } from './helpers/pages';
 import {
+  holdUnblockConfirm,
+  openExternalSite,
+  openOptions,
+  openStoragePage,
+  toggleAfter
+} from './helpers/pages';
+import {
+  getStorageData,
   setStorageData,
   setSettings,
+  makeSettings,
   makeYouTubeSettings,
   clearStorageFromExtension
 } from './helpers/storage';
-import { TEST_DOMAINS } from './helpers/constants';
+import { SELECTORS, TEST_DOMAINS, UI_TEXT } from './helpers/constants';
 import { triggerBlockRuleRecompute, waitForBlockRules } from './helpers/sw';
 
 // 非表示 CSS の SSOT。テストから期待値を組み立てるために実装と同じ関数を使う。
@@ -470,5 +478,48 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     expect(youtubePage.url()).toContain('newtab.html');
 
     await youtubePage.close();
+  });
+  test('YT-011: YouTube ブロックの有効化を OFF にすると確認が出て、長押しで解除される', async ({
+    context,
+    extensionId
+  }) => {
+    // YouTube 設定はフィールドが欠けるとスキーマ検証に落ちて保存されないため、
+    // 完全な形を書く makeYouTubeSettings を使う。パスワード保護は無し
+    const setupPage = await openStoragePage(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'settings',
+      makeSettings({ youtube: makeYouTubeSettings({ enabled: true }) })
+    );
+    await setupPage.close();
+
+    const page = await openOptions(context, extensionId, 'blocklist');
+
+    // トグルはラベルを button の外に描画するため、見出しからたどる
+    const masterToggle = toggleAfter(
+      page.getByRole('heading', { name: UI_TEXT.youtube.enable })
+    );
+    await expect(masterToggle).toHaveAttribute('aria-checked', 'true');
+
+    await masterToggle.click();
+
+    // 確認が出ている間は、トグルも保存値も ON のまま
+    const dialog = page.locator(SELECTORS.modal.unblockConfirm);
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(TEST_DOMAINS.youtube);
+    await expect(masterToggle).toHaveAttribute('aria-checked', 'true');
+
+    // 既定の 5 秒の長押しで確定する
+    await holdUnblockConfirm(page);
+
+    await expect(masterToggle).toHaveAttribute('aria-checked', 'false');
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData(page, 'settings');
+        return settings?.youtube?.enabled;
+      })
+      .toBe(false);
+
+    await page.close();
   });
 });

@@ -1,10 +1,13 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { BlocklistTab } from '../BlocklistTab';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_UNBLOCK_CONFIRM_SETTINGS
+} from '~/types/storage';
 import type { AppSettings, BlockItem } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
@@ -38,6 +41,25 @@ vi.mock('~/contexts/SettingsContext', () => ({
     setVision: vi.fn()
   })
 }));
+
+// 設定に長押し秒数が無ければ既定値で確認が走る
+const DEFAULT_HOLD_MS = DEFAULT_UNBLOCK_CONFIRM_SETTINGS.holdSeconds * 1000;
+
+/**
+ * 見出しの文言から、それに対応するトグルを引く
+ *
+ * YouTube のトグルには data-testid が無いため、見出しの要素から祖先をたどり
+ * 最初に見つかったトグルを返す（見出しに最も近いものが対応するトグル）。
+ */
+function switchNear(text: string): HTMLElement {
+  let node: HTMLElement | null = screen.getByText(text);
+  while (node) {
+    const found = node.querySelector('[role="switch"]');
+    if (found) return found as HTMLElement;
+    node = node.parentElement;
+  }
+  throw new Error(`${text} に対応するトグルが見つからない`);
+}
 
 const itemOf = (overrides: Partial<BlockItem> = {}): BlockItem => ({
   id: 'item-1',
@@ -360,6 +382,133 @@ describe('BlocklistTab', () => {
       });
 
       expect(screen.getByText('youtubeBlockAccess')).toBeInTheDocument();
+    });
+  });
+
+  // YouTube を弱める操作も、ブロックリストと同じ確認の経路を通ることを確かめる
+  describe('YouTube のブロックを弱める操作', () => {
+    const youtubeOn = {
+      ...DEFAULT_SETTINGS.youtube,
+      enabled: true,
+      blockAccess: true
+    };
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('主トグルを OFF にすると youtube.com の長押し確認が開き、まだ切らない', () => {
+      const handlers = renderTab({ youtube: youtubeOn });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+
+      expect(
+        screen.getByTestId('unblock-confirm-hold-button')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/unblockConfirmDescription/)).toHaveTextContent(
+        'youtube.com'
+      );
+      expect(screen.getByText(/unblockConfirmBlockStyle/)).toHaveTextContent(
+        'alwaysBlocked'
+      );
+      expect(handlers.onYouTubeChange).not.toHaveBeenCalled();
+    });
+
+    it('時間制限があればブロック方式を 1 日の上限と表示する', () => {
+      renderTab({
+        youtube: {
+          ...youtubeOn,
+          timeLimit: { type: 'daily', limitSeconds: 1800 }
+        }
+      });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+
+      expect(screen.getByText(/unblockConfirmBlockStyle/)).toHaveTextContent(
+        'dailyLimit'
+      );
+    });
+
+    it('確認をキャンセルするとトグルは ON のまま残り、設定は変わらない', () => {
+      const handlers = renderTab({ youtube: youtubeOn });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+      fireEvent.click(screen.getByTestId('unblock-confirm-cancel'));
+
+      expect(
+        screen.queryByTestId('unblock-confirm-hold-button')
+      ).not.toBeInTheDocument();
+      expect(switchNear('youtubeBlockAccess')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+      expect(handlers.onYouTubeChange).not.toHaveBeenCalled();
+    });
+
+    it('長押しを最後まで続けると enabled だけが false になって返る', () => {
+      vi.useFakeTimers();
+      const handlers = renderTab({ youtube: youtubeOn });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+      fireEvent.pointerDown(screen.getByTestId('unblock-confirm-hold-button'));
+      act(() => {
+        vi.advanceTimersByTime(DEFAULT_HOLD_MS + 100);
+      });
+
+      expect(handlers.onYouTubeChange).toHaveBeenCalledTimes(1);
+      expect(handlers.onYouTubeChange).toHaveBeenCalledWith({
+        ...youtubeOn,
+        enabled: false
+      });
+    });
+
+    it('ON にする操作は確認なしで反映する', () => {
+      const handlers = renderTab({
+        youtube: { ...youtubeOn, blockAccess: false }
+      });
+
+      fireEvent.click(switchNear('youtubeBlockAccess'));
+
+      expect(
+        screen.queryByTestId('unblock-confirm-hold-button')
+      ).not.toBeInTheDocument();
+      expect(handlers.onYouTubeChange).toHaveBeenCalledWith({
+        ...youtubeOn,
+        blockAccess: true
+      });
+    });
+
+    it('パスワード保護中はパスワード入力が開き、まだ切らない', () => {
+      setSettings({
+        blockList: [],
+        password: { enabled: true, passwordHash: 'hash' }
+      });
+      const handlers = renderTab({ youtube: youtubeOn });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+
+      expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('unblock-confirm-hold-button')
+      ).not.toBeInTheDocument();
+      expect(handlers.onYouTubeChange).not.toHaveBeenCalled();
+    });
+
+    it('パスワード入力を閉じるとトグルは ON のまま残る', () => {
+      setSettings({
+        blockList: [],
+        password: { enabled: true, passwordHash: 'hash' }
+      });
+      const handlers = renderTab({ youtube: youtubeOn });
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+      fireEvent.click(screen.getByTestId('password-modal-cancel'));
+
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'true'
+      );
+      expect(handlers.onYouTubeChange).not.toHaveBeenCalled();
     });
   });
 });
