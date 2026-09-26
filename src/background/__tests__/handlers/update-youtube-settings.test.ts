@@ -12,8 +12,13 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
+vi.mock('~/lib/activityService', () => ({
+  appendActivity: vi.fn()
+}));
+
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
+import { appendActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
 import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 import type { YouTubeSettings } from '~/types/storage';
@@ -191,5 +196,61 @@ describe('update-youtube-settings ハンドラ', () => {
       error: 'Failed to update YouTube settings'
     });
     expect(blockExistingTabs).not.toHaveBeenCalled();
+  });
+
+  describe('事実の表（activity）への解除の記録', () => {
+    beforeEach(() => {
+      // 前のテストが差し替えた保存失敗を戻す（clearAllMocks は実装を戻さない）
+      vi.mocked(setSettings).mockResolvedValue(undefined);
+    });
+
+    it('アクセスブロックが有効から無効になったら 1 回の解除を記録する', async () => {
+      givenStoredYouTube(youtube({ enabled: true, blockAccess: true }));
+
+      await invoke(handler, {
+        youtube: youtube({ enabled: true, blockAccess: false })
+      });
+
+      expect(appendActivity).toHaveBeenCalledOnce();
+      expect(appendActivity).toHaveBeenCalledWith({
+        kind: 'unblock',
+        site: 'youtube.com',
+        at: expect.any(Date)
+      });
+    });
+
+    it('YouTube 機能ごと無効にしてアクセスブロックが外れたときも記録する', async () => {
+      givenStoredYouTube(youtube({ enabled: true, blockAccess: true }));
+
+      await invoke(handler, {
+        youtube: youtube({ enabled: false, blockAccess: true })
+      });
+
+      expect(appendActivity).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      [
+        '無効から有効',
+        youtube({ enabled: true, blockAccess: false }),
+        youtube({ enabled: true, blockAccess: true })
+      ],
+      [
+        '有効のまま',
+        youtube({ enabled: true, blockAccess: true }),
+        youtube({ enabled: true, blockAccess: true, hideShorts: true })
+      ],
+      [
+        '無効のまま',
+        youtube({ enabled: true, blockAccess: false }),
+        youtube({ enabled: false, blockAccess: false })
+      ]
+    ])('アクセスブロックが%sなら記録しない', async (_label, stored, next) => {
+      givenStoredYouTube(stored);
+
+      await invoke(handler, { youtube: next });
+
+      expect(appendActivity).not.toHaveBeenCalled();
+    });
   });
 });

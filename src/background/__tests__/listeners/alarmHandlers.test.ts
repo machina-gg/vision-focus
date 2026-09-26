@@ -21,8 +21,14 @@ vi.mock('../../notifications', () => ({
   clearExpiredNotifications: vi.fn()
 }));
 
+vi.mock('~/lib/activityService', () => ({
+  pruneBefore: vi.fn()
+}));
+
 import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { sendDailyActive } from '~/lib/analytics';
+import { pruneBefore } from '~/lib/activityService';
+import { toDateKey } from '~/lib/time';
 import { updateBlockRules } from '../../blocker';
 import { resetExpiredUsage } from '../../time-limit';
 import { clearExpiredNotifications } from '../../notifications';
@@ -155,6 +161,19 @@ describe('setupAlarmHandlers', () => {
       expect(setAnalytics).not.toHaveBeenCalled();
     });
 
+    it('事実の表から保持期間を超えた日の行を消す（境界はローカル日付）', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 8, 26, 0, 30));
+      setupAlarmHandlers();
+
+      await harness.fire('daily-cleanup');
+
+      const cutoff = new Date(2026, 8, 26, 0, 30);
+      cutoff.setDate(cutoff.getDate() - MAX_HISTORY_DAYS_FALLBACK);
+      expect(pruneBefore).toHaveBeenCalledOnce();
+      expect(pruneBefore).toHaveBeenCalledWith(toDateKey(cutoff));
+    });
+
     it('日次アクティブを送信する', async () => {
       setupAlarmHandlers();
 
@@ -179,6 +198,7 @@ describe('setupAlarmHandlers', () => {
       await harness.fire('check-schedule');
 
       expect(setAnalytics).not.toHaveBeenCalled();
+      expect(pruneBefore).not.toHaveBeenCalled();
       expect(resetExpiredUsage).not.toHaveBeenCalled();
       expect(clearExpiredNotifications).not.toHaveBeenCalled();
     });

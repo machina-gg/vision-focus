@@ -6,6 +6,8 @@ import {
   setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules } from '../blocker';
+import { appendActivity } from '~/lib/activityService';
+import { normalizeSiteKey } from '~/lib/siteKey';
 
 export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
   data
@@ -53,6 +55,14 @@ export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
       };
     }
     await setUnblockHistory(history);
+
+    // ブロックリストから外したサイトも解除履歴に残るので追跡は続き、解除として記録できる。
+    // 解除履歴を書く前に記録すると、追跡中の集合に無いサイトとして捨てられうる
+    await appendActivity({
+      kind: 'unblock',
+      site: normalizeSiteKey(removedItem.domain),
+      at: new Date()
+    });
   }
 
   return { success: true };

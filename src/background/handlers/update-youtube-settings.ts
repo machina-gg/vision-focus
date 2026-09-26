@@ -2,6 +2,8 @@ import type { MessageHandler } from '~/lib/messaging';
 import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
+import { appendActivity } from '~/lib/activityService';
+import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 
 /**
  * YouTube 設定を保存するメッセージハンドラ。
@@ -42,6 +44,16 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     // ルール更新は新規の遷移にしか効かないため、開いているタブは明示的にブロックする
     if (!wasBlockingAccess && blocksAccess) {
       await blockExistingTabs();
+    }
+
+    // アクセスブロックが効かなくなった操作を 1 回の解除として記録する
+    // （機能全体の無効化でアクセスブロックが外れる場合も含む）
+    if (wasBlockingAccess && !blocksAccess) {
+      await appendActivity({
+        kind: 'unblock',
+        site: YOUTUBE_DOMAIN,
+        at: new Date()
+      });
     }
 
     return { success: true };

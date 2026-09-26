@@ -24,6 +24,15 @@ vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
 
+// 事実の表（activity）への記録はこの検査の対象外（タブの置き換えを見る）
+vi.mock('~/lib/activityService', () => ({
+  appendActivity: vi.fn()
+}));
+
+vi.mock('~/lib/siteService', () => ({
+  getTrackedSiteKeys: vi.fn(async () => [])
+}));
+
 import {
   getSettings,
   setSettings,

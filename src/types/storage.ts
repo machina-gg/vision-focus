@@ -56,6 +56,7 @@ import type { AnalyticsData } from './analytics';
 import type { UnblockHistory } from './analytics';
 import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from './analytics';
 import { DEFAULT_VISION } from './vision';
+import type { ActivityLog } from './activity';
 
 // Block list item
 export interface BlockItem {
@@ -147,6 +148,7 @@ export interface StorageSchema {
   vision: VisionSettings;
   analytics: AnalyticsData;
   unblockHistory: UnblockHistory;
+  activity: ActivityLog;
 }
 
 // Default notification settings
@@ -193,9 +195,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   unblockConfirm: DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 };
 
+// 事実の表の初期状態（まだ何も記録していない）。
+// 書き手は読み出した値を複製してから書き換えるので、この値そのものは変更されない
+export const DEFAULT_ACTIVITY: ActivityLog = {};
+
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
   analytics: DEFAULT_ANALYTICS,
-  unblockHistory: DEFAULT_UNBLOCK_HISTORY
+  unblockHistory: DEFAULT_UNBLOCK_HISTORY,
+  activity: DEFAULT_ACTIVITY
 };

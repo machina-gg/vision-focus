@@ -7,6 +7,14 @@ vi.mock('~/lib/storage', () => ({
   setLastBlockedDomain: vi.fn()
 }));
 
+vi.mock('~/lib/activityService', () => ({
+  appendActivity: vi.fn()
+}));
+
+vi.mock('~/lib/siteService', () => ({
+  getTrackedSiteKeys: vi.fn()
+}));
+
 import {
   getAnalytics,
   setAnalytics,
@@ -14,6 +22,8 @@ import {
   setLastBlockedDomain
 } from '~/lib/storage';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
+import { appendActivity } from '~/lib/activityService';
+import { getTrackedSiteKeys } from '~/lib/siteService';
 import { DEFAULT_ANALYTICS } from '~/types/storage';
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -24,6 +34,7 @@ beforeEach(() => {
     ...DEFAULT_ANALYTICS,
     dailyStats: {}
   });
+  vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
 });
 
 describe('recordBlockedDomain', () => {
@@ -121,5 +132,44 @@ describe('recordBlockedDomain', () => {
     expect(
       vi.mocked(setLastBlockedDomain).mock.invocationCallOrder[0]
     ).toBeLessThan(vi.mocked(setAnalytics).mock.invocationCallOrder[0]);
+  });
+
+  describe('事実の表（activity）', () => {
+    it('追跡中のサイトに 1 回のブロックを記録する', async () => {
+      await recordBlockedDomain('example.com');
+
+      expect(appendActivity).toHaveBeenCalledOnce();
+      expect(appendActivity).toHaveBeenCalledWith({
+        kind: 'block',
+        site: 'example.com',
+        at: expect.any(Date)
+      });
+    });
+
+    it('サブドメイン・www 付きのホスト名は追跡中のサイトに引き直す', async () => {
+      await recordBlockedDomain('www.example.com');
+      await recordBlockedDomain('m.example.com');
+
+      expect(vi.mocked(appendActivity).mock.calls).toEqual([
+        [expect.objectContaining({ kind: 'block', site: 'example.com' })],
+        [expect.objectContaining({ kind: 'block', site: 'example.com' })]
+      ]);
+    });
+
+    it('追跡中のサイトに属さないホスト名なら記録しない', async () => {
+      await recordBlockedDomain('other.com');
+
+      expect(appendActivity).not.toHaveBeenCalled();
+      // 旧データへの記録は従来どおり行う
+      expect(incrementSiteBlockCount).toHaveBeenCalledWith('other.com');
+    });
+
+    it('ブロック画面が読む値は、事実の表の書き込みより先に保存する', async () => {
+      await recordBlockedDomain('example.com');
+
+      expect(
+        vi.mocked(setLastBlockedDomain).mock.invocationCallOrder[0]
+      ).toBeLessThan(vi.mocked(appendActivity).mock.invocationCallOrder[0]);
+    });
   });
 });

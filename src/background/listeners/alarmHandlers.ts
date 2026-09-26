@@ -9,6 +9,8 @@ import {
 import { updateBlockRules } from '../blocker';
 import { resetExpiredUsage } from '../time-limit';
 import { clearExpiredNotifications } from '../notifications';
+import { pruneBefore } from '~/lib/activityService';
+import { toDateKey } from '~/lib/time';
 
 /**
  * 保持期間を超えた analytics データをクリーンアップする
@@ -40,6 +42,16 @@ async function cleanupOldAnalytics(): Promise<void> {
 }
 
 /**
+ * 保持期間を超えた事実の行を消す。
+ * 事実の表の日付はローカル日付なので、境界もローカル日付で作る
+ */
+async function pruneOldActivity(): Promise<void> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - MAX_HISTORY_DAYS_FALLBACK);
+  await pruneBefore(toDateKey(cutoff));
+}
+
+/**
  * アラームリスナーを登録する
  * - daily-cleanup: 古いデータの削除と日次アクティブ送信
  * - check-schedule: スケジュール変更のチェック
@@ -49,6 +61,7 @@ export function setupAlarmHandlers(): void {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'daily-cleanup') {
       await cleanupOldAnalytics();
+      await pruneOldActivity();
       await sendDailyActive();
     }
     if (alarm.name === 'check-schedule') {

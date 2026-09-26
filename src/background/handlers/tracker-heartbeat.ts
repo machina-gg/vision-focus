@@ -19,6 +19,10 @@ import { hasExceededTimeLimit } from '~/lib/timeLimitService';
 import { getYouTubeBlockItem } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { TrackerHeartbeatBodySchema } from '~/types/messageSchemas';
+import { appendActivity } from '~/lib/activityService';
+import { getTrackedSiteKeys } from '~/lib/siteService';
+import { resolveSiteKey } from '~/lib/siteKey';
+import type { SiteKey } from '~/types/site';
 
 // Track active pages and their last heartbeat
 interface ActivePage {
@@ -39,6 +43,8 @@ function ensureRecordingTimer() {
 
   recordingTimer = setInterval(async () => {
     const now = Date.now();
+    const seconds = Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000);
+    const visibleHosts: string[] = [];
 
     // Record time for all active pages
     for (const [_key, page] of activePages.entries()) {
@@ -50,10 +56,8 @@ function ensureRecordingTimer() {
         timeSinceHeartbeat <= TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS
       ) {
         // Record 5 seconds of time for this page
-        await recordTime(
-          page.domain,
-          Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000)
-        );
+        await recordTime(page.domain, seconds);
+        visibleHosts.push(page.domain);
       } else if (timeSinceHeartbeat > TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS) {
         // Page is stale, mark as inactive
         page.isActive = false;
@@ -72,7 +76,33 @@ function ensureRecordingTimer() {
       clearInterval(recordingTimer);
       recordingTimer = null;
     }
+
+    // 旧データの記録とタイマーの後始末を済ませてから書く（失敗しても旧データ側を巻き込まない）
+    await recordStay(visibleHosts, seconds);
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS);
+}
+
+/**
+ * 表示中のホスト名を追跡中のサイトに引き直し、サイトごとに 1 回分の滞在を記録する。
+ * 同じサイトを www 付きと m. 付きのように別ホストで同時に表示していても、
+ * 表示されていた実時間は 1 回分なので、サイトキーで重複を除いてから足す。
+ * 解除中かどうかでは絞らない（追跡中のサイトの表示時間はすべて事実として残す）
+ */
+async function recordStay(hosts: string[], seconds: number): Promise<void> {
+  if (hosts.length === 0) return;
+
+  const tracked = await getTrackedSiteKeys();
+  const sites = new Set<SiteKey>();
+  for (const host of hosts) {
+    const site = resolveSiteKey(host, tracked);
+    if (site) sites.add(site);
+  }
+  if (sites.size === 0) return;
+
+  const at = new Date();
+  await appendActivity(
+    ...[...sites].map((site) => ({ kind: 'stay' as const, site, seconds, at }))
+  );
 }
 
 // Normalize domain by removing www prefix
