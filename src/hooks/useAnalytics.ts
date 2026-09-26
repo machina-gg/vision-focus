@@ -49,18 +49,10 @@ export function useAnalytics(): UseAnalyticsReturn {
     }
   }, []);
 
-  // 追跡を止める（サイトとその事実を消す）。stop-tracking はブロック設定を持つサイトを拒否するので、
-  // 無効にしたブロック設定は先にブロックリストから外す。
-  // 効いているブロックはここでは外さない（解除の確認を通らずにブロックが外れるため）
+  // 追跡を止める（サイトとその事実を消す）。ブロック設定か YouTube 機能を持つサイトは background が拒否する
+  // （ブロック設定を消すのはブロックリストタブの確認つきの経路だけにする）
   const handleStopTracking = useCallback(async (site: TrackedSite) => {
-    if (site.block?.enabled) return;
     try {
-      if (site.block !== null) {
-        const removed = await sendMessage('remove-block', {
-          domain: site.domain
-        });
-        if (!removed.success) return;
-      }
       await sendMessage('stop-tracking', { domain: site.domain });
     } catch {
       // Silently handle error

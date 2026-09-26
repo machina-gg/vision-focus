@@ -74,7 +74,7 @@ interface AnalyticsSummaryProps {
   trackedSites: TrackedSites;
   /** ブロックを効かせ直す（追跡だけならブロックリストに入れ、無効ならトグルを ON に戻す） */
   onReblock: (site: TrackedSite) => void;
-  /** 追跡を止める（無効のブロック設定はブロックリストから外してから止める） */
+  /** 追跡を止める（追跡だけのサイトにだけ出す） */
   onStopTracking: (site: TrackedSite) => void;
 }
 
@@ -200,8 +200,9 @@ function TrackedSiteItem({
 }: TrackedSiteItemProps) {
   const { site, status } = row;
   const isBlocked = status === 'blocked';
-  // YouTube 機能を持つサイトは止めない（止めると非表示の設定が画面の操作なしに消える）
-  const canStopTracking = site.youtube === null;
+  // 追跡の停止は追跡だけのサイトにだけ出す。ブロック設定（無効を含む）を消すのはブロックリストタブの
+  // 確認つきの経路だけにし、YouTube 機能を持つサイトは止めない（非表示の設定が画面の操作なしに消える）
+  const canStopTracking = site.block === null && site.youtube === null;
   const bgColor = isBlocked ? 'bg-success-50' : 'bg-block-50';
   const borderColor = isBlocked ? 'border-success-100' : 'border-block-100';
   const dotColor = isBlocked ? 'bg-success-500' : 'bg-block-500';

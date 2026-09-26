@@ -167,15 +167,16 @@ describe('AnalyticsSummary', () => {
       expect(screen.getByText('11m')).toBeInTheDocument();
     });
 
-    it('再ブロックと追跡停止のボタンを出し、押すとそのサイトが渡る', () => {
+    it('再ブロックだけを出し、押すとそのサイトが渡る（追跡停止は出さない）', () => {
       const site = siteOf({ domain: 'paused.example', status: 'disabled' });
-      const { onReblock, onStopTracking } = renderSummary([site]);
+      const { onReblock } = renderSummary([site]);
 
       fireEvent.click(screen.getByTestId('analytics-reblock-button'));
-      fireEvent.click(screen.getByTestId('analytics-stop-tracking-button'));
 
       expect(onReblock).toHaveBeenCalledWith(site);
-      expect(onStopTracking).toHaveBeenCalledWith(site);
+      expect(
+        screen.queryByTestId('analytics-stop-tracking-button')
+      ).not.toBeInTheDocument();
     });
 
     it('解除後の時間の合計に数える', () => {

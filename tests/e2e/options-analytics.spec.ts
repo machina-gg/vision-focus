@@ -179,13 +179,14 @@ test.describe('Options - Analytics Tab', () => {
     await expect(rows.nth(2)).toHaveAttribute('data-status', 'tracking');
     await expect(rows.nth(2)).toContainText('youtube.com');
 
-    // トグルで無効にしたサイトは、再ブロックと追跡停止を出す（ブロック中の行には出ない）
+    // トグルで無効にしたサイトは再ブロックだけを出す（ブロック設定を消すのはブロックリストタブの経路だけ）。
+    // ブロック中の行には再ブロックも出さない
     await expect(
       rows.nth(1).locator(SELECTORS.analytics.reblockButton)
     ).toBeVisible();
     await expect(
       rows.nth(1).locator(SELECTORS.analytics.stopTrackingButton)
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       rows.nth(0).locator(SELECTORS.analytics.reblockButton)
     ).toHaveCount(0);
@@ -278,6 +279,7 @@ test.describe('Options - Analytics Tab', () => {
     extensionId
   }) => {
     // ブロックリストから外した（追跡だけの）サイトと、ブロックをトグルで無効にしたサイトを置く
+    // （停止できるのは追跡だけのサイト。無効のサイトはブロック設定ごと残る）
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -317,23 +319,21 @@ test.describe('Options - Analytics Tab', () => {
       )
       .not.toContain('reddit.com');
 
-    // 無効にしたサイトも止められる（ブロックリストから外してから止める）
-    await stopButtonOf('paused.com').click();
-    await expect
-      .poll(async () =>
-        Object.keys((await getStorageData(page, 'sites')) ?? {})
-      )
-      .toEqual([]);
+    // 無効にしたサイトには停止ボタンを出さず、保存値にもブロック設定ごと残る
+    await expect(stopButtonOf('paused.com')).toHaveCount(0);
+    expect(
+      (await getStorageData(page, 'sites'))?.['paused.com']?.block
+    ).toEqual(expect.objectContaining({ enabled: false }));
 
     // 保存内容から描き直させて、画面からも消えていることを確かめる
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
-    // 追跡中のサイトが 0 件になると一覧そのものが描画されない
-    // （AnalyticsSummary は hasTrackedSites が false なら空状態を出す）
-    await expect(
-      page.locator(SELECTORS.analytics.trackedSitesList)
-    ).toHaveCount(0);
+    // 一覧には無効にしたサイトだけが残る
+    await expect(page.locator(SELECTORS.analytics.trackedSite)).toHaveCount(1);
+    await expect(page.locator(SELECTORS.analytics.trackedSite)).toContainText(
+      'paused.com'
+    );
 
     await page.close();
   });

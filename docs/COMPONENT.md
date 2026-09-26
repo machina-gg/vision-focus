@@ -484,7 +484,7 @@ function usePresets(props: {
 
 分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）。
 返す値は追加を拒否した理由（`addSiteError`）だけ（一覧の行は `sites` から、数値は `activity` から画面が導出する）。
-どの操作もメッセージ（`add-block` / `toggle-block` / `remove-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
+どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
 （追跡中のサイトと事実の表を書けるのは background だけ）。
 
 ```typescript
@@ -499,7 +499,7 @@ function useAnalytics(): {
 ```
 
 - `handleReblock`: ブロック設定が無ければ `add-block`、無効なら `toggle-block`（ON）。ブロック中なら何もしない
-- `handleStopTracking`: ブロック中なら何もしない（解除の確認を通らずにブロックが外れるため）。無効のブロック設定は `remove-block` で外してから `stop-tracking`
+- `handleStopTracking`: `stop-tracking` を依頼するだけ（ブロック設定か YouTube 機能を持つサイトは background が拒否する。ブロック設定を消すのはブロックリストタブの確認つきの経路だけ）
 - `handleAddSiteToTrack`: 追加できたら true。拒否されたらハンドラの `error` を `addSiteError` に入れて false
 
 ---

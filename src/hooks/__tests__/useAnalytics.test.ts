@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { useAnalytics } from '~/hooks/useAnalytics';
-import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
+import { blockedSite, trackedSite } from '~/test/sites';
 
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
@@ -69,7 +69,7 @@ describe('useAnalytics', () => {
   });
 
   describe('handleStopTracking', () => {
-    it('追跡だけのサイトは追跡の停止だけを依頼する', async () => {
+    it('追跡の停止だけを依頼する', async () => {
       const { result } = renderHook(() => useAnalytics());
       await act(async () => {
         await result.current.handleStopTracking(trackedSite('x.com'));
@@ -79,50 +79,17 @@ describe('useAnalytics', () => {
       ]);
     });
 
-    it('無効にしたサイトはブロックリストから外してから追跡を止める', async () => {
+    it('ブロック設定を持つサイトでもブロックリストからは外さない（消すのはブロックリストタブの確認つきの経路だけ）', async () => {
       const { result } = renderHook(() => useAnalytics());
       await act(async () => {
         await result.current.handleStopTracking(
           blockedSite('x.com', { enabled: false })
         );
       });
-      expect(vi.mocked(sendMessage).mock.calls).toEqual([
-        ['remove-block', { domain: 'x.com' }],
-        ['stop-tracking', { domain: 'x.com' }]
-      ]);
-    });
-
-    it('ブロックリストから外せなければ追跡の停止を依頼しない', async () => {
-      vi.mocked(sendMessage).mockResolvedValue({ success: false });
-      const { result } = renderHook(() => useAnalytics());
-      await act(async () => {
-        await result.current.handleStopTracking(
-          blockedSite('x.com', { enabled: false })
-        );
-      });
-      expect(vi.mocked(sendMessage).mock.calls).toEqual([
-        ['remove-block', { domain: 'x.com' }]
-      ]);
-    });
-
-    it('効いているブロックは外さない（解除の確認を通らずにブロックが外れるため）', async () => {
-      const { result } = renderHook(() => useAnalytics());
-      await act(async () => {
-        await result.current.handleStopTracking(blockedSite('x.com'));
-      });
-      expect(sendMessage).not.toHaveBeenCalled();
-    });
-
-    it('YouTube 機能を持つサイトも依頼は送る（止めるかは background が決める）', async () => {
-      const { result } = renderHook(() => useAnalytics());
-      await act(async () => {
-        await result.current.handleStopTracking(
-          trackedSite('youtube.com', { youtube: youtubeFeatures() })
-        );
-      });
-      expect(sendMessage).toHaveBeenCalledWith('stop-tracking', {
-        domain: 'youtube.com'
-      });
+      expect(sendMessage).not.toHaveBeenCalledWith(
+        'remove-block',
+        expect.anything()
+      );
     });
   });
 
