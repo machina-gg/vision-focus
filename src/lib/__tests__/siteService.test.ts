@@ -6,7 +6,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 import { getSettings, getUnblockHistory } from '~/lib/storage';
-import { getTrackedSiteKeys } from '~/lib/siteService';
+import { getTrackedSiteKeys, trackedSiteKeys } from '~/lib/siteService';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_UNBLOCK_HISTORY,
@@ -95,5 +95,26 @@ describe('getTrackedSiteKeys', () => {
     given({ blockList: ['', 'www.'] });
 
     expect(await getTrackedSiteKeys()).toEqual([]);
+  });
+});
+
+describe('trackedSiteKeys', () => {
+  it('渡した設定と解除履歴から、保存値を読む getTrackedSiteKeys と同じ集合を作る', async () => {
+    given({
+      history: ['www.reddit.com'],
+      blockList: ['*.x.com'],
+      youtubeEnabled: true
+    });
+    const settings = await getSettings();
+    const history = await getUnblockHistory();
+
+    expect(sorted(trackedSiteKeys(settings, history))).toEqual(
+      sorted(await getTrackedSiteKeys())
+    );
+    expect(sorted(trackedSiteKeys(settings, history))).toEqual([
+      'reddit.com',
+      'x.com',
+      'youtube.com'
+    ]);
   });
 });

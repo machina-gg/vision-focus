@@ -1,6 +1,10 @@
 import type { Page, BrowserContext } from '@playwright/test';
 import { TEST_DATA } from './constants';
 
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog, DailySiteActivity } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
+
 import type {
   AnalyticsData,
   AppSettings,
@@ -397,6 +401,33 @@ export function makeSiteBlockCounts(
       { domain, count, lastBlocked: now }
     ])
   );
+}
+
+/**
+ * 事実の表（`activity`）を作る
+ *
+ * 画面の数値は追跡中のサイト（ブロックリスト・解除履歴・YouTube 機能）の行だけから
+ * 導出される。種に置くサイトは、同じテストでブロックリストか解除履歴にも入れておく。
+ * 日付はローカル日付（アプリの `toDateKey` と同じ）で、既定は今日。
+ *
+ * @param entries - [サイトキー, 事実の一部, 何日前か（既定 0）] の配列
+ * @param now - 基準の時刻（既定は現在）
+ */
+export function makeActivity(
+  entries: [SiteKey, Partial<DailySiteActivity>, number?][],
+  now: Date = new Date()
+): ActivityLog {
+  const log: ActivityLog = {};
+  for (const [site, values, daysAgo = 0] of entries) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - daysAgo);
+    const key = toDateKey(date);
+    log[key] = {
+      ...log[key],
+      [site]: { seconds: 0, blocks: 0, unblocks: 0, ...values }
+    };
+  }
+  return log;
 }
 
 /**

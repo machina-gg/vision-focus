@@ -8,6 +8,7 @@ import {
   setStorageData,
   setSettings,
   getStorageData,
+  makeActivity,
   SELECTORS,
   TEST_DATA,
   TEST_DOMAINS
@@ -91,21 +92,39 @@ test.describe('Popup 画面', () => {
     context,
     extensionId
   }) => {
+    // サマリーは追跡中のサイトの今日の activity から導出される。
+    // 昨日の行を多めに置き、全期間ではなく今日の中で数えていることも見る
+    const setupPage = await openPopup(context, extensionId);
+    await setupTestStorage(setupPage, {
+      withGoal: true,
+      withBlockList: true,
+      withAnalyticsOptIn: true
+    });
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 2 }],
+        ['example.com', { blocks: 9 }, 1]
+      ])
+    );
+    await setupPage.close();
+
     const page = await openPopup(context, extensionId);
 
     // 今日のサマリー見出しが表示される
     await expect(page.locator(SELECTORS.summary.heading)).toBeVisible();
 
-    // ブロック回数が表示される
+    // ブロック回数は今日の行だけの合計。
+    // toContainText だと 12 / 20 でも通るため、表示そのものと突き合わせる
     const blockCount = page.locator(SELECTORS.summary.blockCount);
     await expect(blockCount).toBeVisible();
-    // デフォルトは 0。
-    // toContainText だと 10 / 20 / 100 でも通るため、表示そのものと突き合わせる
-    await expect(blockCount).toHaveText('0');
+    await expect(blockCount).toHaveText('2');
 
-    // トップブロックサイトセクションが表示される
-    // データがない場合は "No blocked sites yet" メッセージ
-    await expect(page.locator(SELECTORS.summary.noBlockedSites)).toBeVisible();
+    // トップブロックサイトは今日いちばんブロックされたサイト
+    await expect(
+      page.locator(SELECTORS.summary.topBlockedSiteDomain)
+    ).toHaveText('example.com');
 
     await page.close();
   });

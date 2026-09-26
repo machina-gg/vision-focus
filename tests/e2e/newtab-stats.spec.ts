@@ -5,6 +5,8 @@ import {
   clearStorage,
   setSettings,
   setSessionStorageData,
+  setStorageData,
+  makeActivity,
   SELECTORS,
   UI_TEXT
 } from './helpers';
@@ -31,6 +33,24 @@ test.describe('NewTab 画面 - 統計カード', () => {
     context,
     extensionId
   }) => {
+    // 今日のブロック数は追跡中のサイトの今日の activity から出る。
+    // 昨日の行も置き、今日の分だけを数えていることを見る
+    const setupPage = await openNewTab(context, extensionId);
+    await setupTestStorage(setupPage, {
+      withGoal: true,
+      withBlockList: true,
+      withAnalyticsOptIn: true
+    });
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 3 }],
+        ['example.com', { blocks: 5 }, 1]
+      ])
+    );
+    await setupPage.close();
+
     const page = await openNewTab(context, extensionId);
 
     // ブロック回数カードが表示される
@@ -39,12 +59,11 @@ test.describe('NewTab 画面 - 統計カード', () => {
       .first();
     await expect(blockCountCard).toBeVisible();
 
-    // デフォルト値は 0。
-    // toContainText だと 10 / 20 / 100 でも通るため、表示そのものと突き合わせる
+    // toContainText だと 13 / 30 でも通るため、表示そのものと突き合わせる
     const blockCount = page.locator(SELECTORS.newtab.miniStats.blockCount);
     await expect(blockCount).toHaveCount(1);
     await expect(blockCount).toBeVisible();
-    await expect(blockCount).toHaveText('0');
+    await expect(blockCount).toHaveText('3');
 
     await page.close();
   });

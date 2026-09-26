@@ -10,23 +10,22 @@ import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
 import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
-import { NEWTAB_STATS_POLLING_MS } from '~/constants/intervals';
 import { calculateBlockingDays } from '~/lib/blockingDays';
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
+  blockCountsByDomain,
+  blockedHostTotals,
+  todayStats,
+  useActivitySources,
   useBackgroundPreload,
-  useBackgroundStats,
   useResolvedPreset,
   useStorageItem
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { formatTimeLocalized } from '~/lib/time';
 import {
-  analyticsItem,
   clearLastBlockedDomain,
   getLastBlockedDomain,
-  getSiteBlockCount,
-  getSiteWastedTime,
   settingsItem,
   visionItem
 } from '~/lib/storage';
@@ -36,18 +35,14 @@ import '~/styles/globals.css';
 export function NewtabApp() {
   const [vision, setVision] = useStorageItem(visionItem);
   const [settings] = useStorageItem(settingsItem);
-  const [analytics] = useStorageItem(analyticsItem);
-  const stats = useBackgroundStats(NEWTAB_STATS_POLLING_MS);
+  const { activity, sites } = useActivitySources();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Blocked site info (shown when redirected from a blocked site)
-  const [blockedInfo, setBlockedInfo] = useState<{
-    domain: string;
-    count: number;
-    wastedTime: number; // 浪費時間（秒）
-  } | null>(null);
+  // ブロックされて飛んできたときのホスト名。数値は下で activity から導出する
+  // （ブロックの記録はリダイレクトと前後するので、読んだ時点の値で固定しない）
+  const [blockedDomain, setBlockedDomain] = useState<string | null>(null);
 
   // Block reason (from URL parameter)
   const [blockReason, setBlockReason] = useState<string | null>(null);
@@ -68,14 +63,24 @@ export function NewtabApp() {
 
       const domain = await getLastBlockedDomain();
       if (domain) {
-        const count = await getSiteBlockCount(domain);
-        const wastedTime = await getSiteWastedTime(domain);
-        setBlockedInfo({ domain, count, wastedTime });
+        setBlockedDomain(domain);
         await clearLastBlockedDomain();
       }
     };
     loadBlockedInfo();
   }, []);
+
+  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
+  const now = new Date();
+  const today = todayStats(activity, sites, now);
+  const blockList = settings?.blockList ?? [];
+  const blockCounts = blockCountsByDomain(activity, blockList, now);
+  const blockedInfo = blockedDomain
+    ? {
+        domain: blockedDomain,
+        ...blockedHostTotals(activity, sites, blockedDomain, now)
+      }
+    : null;
 
   const goalText = displaySettings.goalText;
   const goalSubText = displaySettings.goalSubText;
@@ -83,10 +88,10 @@ export function NewtabApp() {
 
   // Calculate blocking days for the blocked site
   const blockingDays = useMemo(() => {
-    if (!blockedInfo?.domain || !settings?.blockList) return null;
+    if (!blockedDomain || !settings?.blockList) return null;
 
-    return calculateBlockingDays(blockedInfo.domain, settings.blockList);
-  }, [blockedInfo?.domain, settings?.blockList]);
+    return calculateBlockingDays(blockedDomain, settings.blockList);
+  }, [blockedDomain, settings?.blockList]);
 
   const handleAnalyticsClick = useCallback(() => {
     openExtensionPage('options.html#analytics');
@@ -194,13 +199,16 @@ export function NewtabApp() {
                 ) : (
                   <div className="space-y-0.5">
                     <p className="text-danger-200 text-sm">
-                      {getMessage('blockedTimes', blockedInfo.count.toString())}
+                      {getMessage(
+                        'blockedTimes',
+                        blockedInfo.blocks.toString()
+                      )}
                     </p>
-                    {blockedInfo.wastedTime > 0 && (
+                    {blockedInfo.seconds > 0 && (
                       <p className="text-danger-100 text-sm">
                         {getMessage(
                           'wastedTime',
-                          formatTimeLocalized(blockedInfo.wastedTime)
+                          formatTimeLocalized(blockedInfo.seconds)
                         )}
                       </p>
                     )}
@@ -231,16 +239,13 @@ export function NewtabApp() {
 
         {/* Mini Stats */}
         <MiniStats
-          blockCount={stats.blockCount}
+          blockCount={today.blocks}
           blockingDays={blockingDays}
           onAnalyticsClick={handleAnalyticsClick}
         />
 
         {/* Blocked Sites List */}
-        <BlockedSitesList
-          blockList={settings?.blockList || []}
-          blockCounts={analytics?.siteBlockCounts || {}}
-        />
+        <BlockedSitesList blockList={blockList} blockCounts={blockCounts} />
 
         {/* Setup CTA - スタイルが 1 つも無いときだけ出す。壁紙には写さない */}
         {!hasPresets && (

@@ -1,3 +1,4 @@
+export * from './useActivityStats';
 export * from './useAnalytics';
 export * from './useBackgroundPreload';
 export * from './useBackgroundStats';

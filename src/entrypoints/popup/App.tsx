@@ -12,9 +12,9 @@ import {
   AnalyticsOptInModal,
   PasswordModal
 } from '~/components/options/modals';
-import { POPUP_STATS_POLLING_MS } from '~/constants/intervals';
 import {
-  useBackgroundStats,
+  todayStats,
+  useActivitySources,
   useCurrentDomain,
   usePasswordVerification,
   usePopupActions,
@@ -30,7 +30,9 @@ import '~/styles/globals.css';
 
 function PopupAppContent() {
   const { settings, setSettings, vision } = useSettings();
-  const stats = useBackgroundStats(POPUP_STATS_POLLING_MS);
+  const { activity, sites } = useActivitySources();
+  // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
+  const stats = todayStats(activity, sites, new Date());
   const { displaySettings } = useResolvedPreset({ vision, settings });
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
 
@@ -129,7 +131,7 @@ function PopupAppContent() {
                 className="text-2xl font-bold text-block-600"
                 data-testid="summary-block-count"
               >
-                {stats.blockCount}
+                {stats.blocks}
               </p>
             </div>
 
@@ -144,15 +146,15 @@ function PopupAppContent() {
                 <div>
                   <p
                     className="text-sm font-bold text-info-600 truncate"
-                    title={stats.topBlockedSite.domain}
+                    title={stats.topBlockedSite}
                     data-testid="summary-top-blocked-site"
                   >
-                    {stats.topBlockedSite.domain}
+                    {stats.topBlockedSite}
                   </p>
                   <p className="text-xs text-info-500">
                     {getMessage(
                       'blockedTimesShort',
-                      stats.topBlockedSite.count.toString()
+                      stats.topBlockedCount.toString()
                     )}
                   </p>
                 </div>
@@ -177,7 +179,7 @@ function PopupAppContent() {
                 className="text-2xl font-bold text-warning-600"
                 data-testid="summary-wasted-time"
               >
-                {formatTimeLocalized(stats.wasteTime)}
+                {formatTimeLocalized(stats.seconds)}
               </p>
             </div>
 
@@ -192,7 +194,7 @@ function PopupAppContent() {
                 className="text-2xl font-bold text-success-600"
                 data-testid="summary-unblock-count"
               >
-                {stats.unblockCount}
+                {stats.unblocks}
               </p>
             </div>
           </div>

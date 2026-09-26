@@ -5,13 +5,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { NewtabApp } from '../App';
 import { openOptionsPage } from '~/lib/chromeApi';
+import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
 import type {
   AppSettings,
+  BlockItem,
   DashboardPreset,
   VisionSettings
 } from '~/types/storage';
-import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
+import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS } from '~/types/storage';
 
 /**
  * 新規タブ（ブロック画面）の出し分けの検査
@@ -26,20 +30,17 @@ import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 stubI18nWithSubstitutions();
 
 const storageState = vi.hoisted(() => ({
-  blockedDomain: null as string | null,
-  blockCount: 0,
-  wastedTime: 0
+  blockedDomain: null as string | null
 }));
 
 // ストレージの実体は chrome.storage を読みに行くため、値をテストから決められない
 vi.mock('~/lib/storage', () => ({
   visionItem: { key: 'local:vision' },
   settingsItem: { key: 'local:settings' },
-  analyticsItem: { key: 'local:analytics' },
+  activityItem: { key: 'local:activity' },
+  unblockHistoryItem: { key: 'local:unblockHistory' },
   hasStoredVision: async () => true,
   getLastBlockedDomain: async () => storageState.blockedDomain,
-  getSiteBlockCount: async () => storageState.blockCount,
-  getSiteWastedTime: async () => storageState.wastedTime,
   clearLastBlockedDomain: async () => undefined
 }));
 
@@ -64,12 +65,15 @@ vi.mock('~/constants/backgrounds', async (importOriginal) => {
 });
 
 const hooksState = vi.hoisted(() => ({
-  values: {} as Record<string, unknown>
+  values: {} as Record<string, unknown>,
+  activity: {} as ActivityLog,
+  sites: [] as SiteKey[]
 }));
 
 // 表示の出し分けは vision / settings の中身で決まるため、値を差し替える。
 // useResolvedPreset と useBackgroundPreload は実体のまま使う
-// （スタイル不在で既定値へ落ちることが検査対象のため）
+// （スタイル不在で既定値へ落ちることが検査対象のため）。
+// 事実と追跡中のサイトは入力だけを差し替え、導出（todayStats など）は実体を通す
 vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
   return {
@@ -78,12 +82,9 @@ vi.mock('~/hooks', async (importOriginal) => {
       hooksState.values[item.key],
       vi.fn()
     ],
-    useBackgroundStats: () => ({
-      wasteTime: 0,
-      investTime: 0,
-      blockCount: 0,
-      unblockCount: 0,
-      topBlockedSite: null
+    useActivitySources: () => ({
+      activity: hooksState.activity,
+      sites: hooksState.sites
     })
   };
 });
@@ -115,38 +116,58 @@ function makePreset(overrides: Partial<DashboardPreset> = {}): DashboardPreset {
   };
 }
 
+const TODAY = toDateKey(new Date());
+
+function row(
+  overrides: Partial<ActivityLog[string][string]> = {}
+): ActivityLog[string][string] {
+  return { seconds: 0, blocks: 0, unblocks: 0, ...overrides };
+}
+
+function blockItem(domain: string): BlockItem {
+  return {
+    id: `id-${domain}`,
+    domain,
+    isWildcard: false,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    enabled: true
+  };
+}
+
 function renderApp(
   options: {
     vision?: VisionSettings;
     settings?: AppSettings;
+    activity?: ActivityLog;
+    sites?: SiteKey[];
   } = {}
 ) {
   hooksState.values = {
     'local:vision': options.vision,
-    'local:settings': options.settings,
-    'local:analytics': undefined
+    'local:settings': options.settings
   };
+  hooksState.activity = options.activity ?? {};
+  hooksState.sites = options.sites ?? [];
   return render(<NewtabApp />);
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   storageState.blockedDomain = null;
-  storageState.blockCount = 0;
-  storageState.wastedTime = 0;
 });
 
 describe('スタイルが 1 つも無いとき', () => {
   it('ブロックされたサイトから来たら、説明文と目印が出る', async () => {
     storageState.blockedDomain = 'example.com';
-    storageState.blockCount = 3;
 
     renderApp({
       vision: {
         defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
         presets: [],
         activePresetId: null
-      }
+      },
+      activity: { [TODAY]: { 'example.com': row({ blocks: 3 }) } },
+      sites: ['example.com']
     });
 
     expect(await screen.findByTestId('newtab-block-info')).toBeInTheDocument();
@@ -216,7 +237,6 @@ describe('スタイルがあるとき', () => {
 
   it('ブロックされたサイトから来たら、説明文と目印が出る', async () => {
     storageState.blockedDomain = 'example.com';
-    storageState.blockCount = 1;
 
     renderApp({
       vision: {
@@ -230,5 +250,103 @@ describe('スタイルがあるとき', () => {
     expect(screen.getByTestId('newtab-block-info-message')).toHaveTextContent(
       'siteBlockedMessage(example.com)'
     );
+  });
+});
+
+describe('数値は activity から導出する', () => {
+  function daysAgo(n: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return toDateKey(d);
+  }
+
+  const vision: VisionSettings = {
+    defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    presets: [makePreset()],
+    activePresetId: 'preset-1'
+  };
+
+  it('ミニ統計の今日のブロック数は、追跡中のサイトの今日の行だけを数える', async () => {
+    renderApp({
+      vision,
+      activity: {
+        [TODAY]: {
+          'example.com': row({ blocks: 2 }),
+          'x.com': row({ blocks: 1 }),
+          'untracked.com': row({ blocks: 5 })
+        },
+        [daysAgo(1)]: { 'example.com': row({ blocks: 7 }) }
+      },
+      sites: ['example.com', 'x.com']
+    });
+
+    expect(await screen.findByTestId('newtab-block-count')).toHaveTextContent(
+      /^3$/
+    );
+  });
+
+  it('今日のブロックが 0 件ならミニ統計は 0 を出す', async () => {
+    renderApp({
+      vision,
+      activity: { [daysAgo(1)]: { 'example.com': row({ blocks: 4 }) } },
+      sites: ['example.com']
+    });
+
+    expect(await screen.findByTestId('newtab-block-count')).toHaveTextContent(
+      /^0$/
+    );
+  });
+
+  it('ブロック画面の回数と浪費時間は、ホスト名が属するサイトの保持期間全体の合計', async () => {
+    // www. 付きのホスト名でも、書き手と同じ規則で追跡中のサイトに引き直す
+    storageState.blockedDomain = 'www.example.com';
+
+    renderApp({
+      vision,
+      activity: {
+        [TODAY]: { 'example.com': row({ blocks: 1, seconds: 60 }) },
+        [daysAgo(365)]: { 'example.com': row({ blocks: 2, seconds: 60 }) },
+        // 保持期間の外（daily-cleanup が消す日）は数えない
+        [daysAgo(366)]: { 'example.com': row({ blocks: 100, seconds: 999 }) }
+      },
+      sites: ['example.com']
+    });
+
+    const banner = await screen.findByTestId('newtab-block-info');
+    expect(banner).toHaveTextContent('blockedTimes(3)');
+    expect(banner).toHaveTextContent('wastedTime(');
+  });
+
+  it('追跡中のどのサイトにも属さないホスト名なら回数は 0 で、浪費時間は出さない', async () => {
+    storageState.blockedDomain = 'other.com';
+
+    renderApp({
+      vision,
+      activity: { [TODAY]: { 'example.com': row({ blocks: 1, seconds: 60 }) } },
+      sites: ['example.com']
+    });
+
+    const banner = await screen.findByTestId('newtab-block-info');
+    expect(banner).toHaveTextContent('blockedTimes(0)');
+    expect(banner).not.toHaveTextContent('wastedTime(');
+  });
+
+  it('ブロック中のサイト一覧の回数は、項目の表記を正規化したサイトの保持期間全体の合計', async () => {
+    renderApp({
+      vision,
+      settings: {
+        ...DEFAULT_SETTINGS,
+        blockList: [blockItem('*.example.com')]
+      },
+      activity: {
+        [TODAY]: { 'example.com': row({ blocks: 1 }) },
+        [daysAgo(30)]: { 'example.com': row({ blocks: 4 }) }
+      },
+      sites: ['example.com']
+    });
+
+    fireEvent.click(await screen.findByTestId('newtab-blocked-sites-toggle'));
+
+    expect(screen.getByText('blockedTimesShort(5)')).toBeInTheDocument();
   });
 });
