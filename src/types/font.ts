@@ -1,3 +1,4 @@
+/** ダッシュボードの目標文に使えるフォントの ID */
 export type FontFamily =
   | 'system'
   | 'inter'
@@ -20,12 +21,14 @@ export type FontFamily =
   | 'notoserifjp'
   | 'mplusrounded';
 
+/** フォント選択画面の分類 */
 export type FontCategory =
   'system' | 'modern' | 'elegant' | 'impact' | 'handwriting' | 'japanese';
 
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 
+/** ダッシュボードの目標文のフォント */
 export interface FontSettings {
   family: FontFamily;
   size: FontSize;
@@ -34,11 +37,15 @@ export interface FontSettings {
 
 export interface FontDefinition {
   family: FontFamily;
+  /** 画面に出す表示名 */
   name: string;
+  /** CSS の font-family に渡す値 */
   css: string;
+  /** Google Fonts の family 指定（空白は +）。無ければ読み込み不要 */
   googleFont?: string;
 }
 
+/** フォント選択画面に並べる分類ごとのフォント一覧。フォントの定義の置き場はここだけ */
 export const FONT_CATEGORIES: Record<
   FontCategory,
   { name: string; fonts: FontDefinition[] }
@@ -194,6 +201,7 @@ export const FONT_CATEGORIES: Record<
   }
 };
 
+/** family の定義を返す。見つからなければシステムフォントの定義 */
 export function getFontDefinition(family: FontFamily): FontDefinition {
   for (const category of Object.values(FONT_CATEGORIES)) {
     const font = category.fonts.find((f) => f.family === family);
@@ -202,6 +210,7 @@ export function getFontDefinition(family: FontFamily): FontDefinition {
   return FONT_CATEGORIES.system.fonts[0];
 }
 
+/** family が属する分類を返す。見つからなければ 'system' */
 export function getFontCategory(family: FontFamily): FontCategory {
   for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
     if (category.fonts.some((f) => f.family === family)) {
@@ -211,16 +220,19 @@ export function getFontCategory(family: FontFamily): FontCategory {
   return 'system';
 }
 
+/** CSS の font-family に渡す値を返す */
 export const getFontFamilyCSS = (family: FontFamily): string => {
   return getFontDefinition(family).css;
 };
 
+/** family → CSS の font-family の値 */
 export const FONT_FAMILY_MAP: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )
   .flatMap((cat) => cat.fonts)
   .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {});
 
+/** 文字サイズ → Tailwind のクラス */
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
   sm: 'text-2xl',
   md: 'text-3xl',
@@ -228,6 +240,7 @@ export const FONT_SIZE_MAP: Record<FontSize, string> = {
   xl: 'text-5xl'
 };
 
+/** 太さ → Tailwind のクラス */
 export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   normal: 'font-normal',
   medium: 'font-medium',
@@ -235,6 +248,7 @@ export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   bold: 'font-bold'
 };
 
+/** family → 画面に出す表示名 */
 export const FONT_FAMILY_NAMES: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )

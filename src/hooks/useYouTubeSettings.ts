@@ -7,6 +7,7 @@ interface UseYouTubeSettingsReturn {
   handleYouTubeChange: (youtube: YouTubeSettingsInput) => Promise<void>;
 }
 
+/** YouTube 設定の変更を background へ保存依頼する */
 export function useYouTubeSettings(): UseYouTubeSettingsReturn {
   const handleYouTubeChange = useCallback(
     async (youtube: YouTubeSettingsInput) => {

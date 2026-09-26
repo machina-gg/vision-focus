@@ -30,6 +30,7 @@ interface UseBlocklistReturn {
   ) => Promise<void>;
 }
 
+/** ブロックリスト画面の操作（追加・削除・有効切り替え・時間制限・通知設定）と追加欄の入力状態を提供する */
 export function useBlocklist({
   settings,
   setSettings

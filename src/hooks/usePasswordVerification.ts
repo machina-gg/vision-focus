@@ -21,6 +21,7 @@ interface UsePasswordVerificationReturn {
   handleSubmit: () => Promise<void>;
 }
 
+/** パスワード確認モーダルの状態と、照合に成功したら onSuccess を呼ぶ送信処理を提供する */
 export function usePasswordVerification({
   passwordHash,
   onSuccess
