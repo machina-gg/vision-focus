@@ -10,8 +10,7 @@ const mocks = vi.hoisted(() => ({
   setupAlarmHandlers: vi.fn(),
   setupNavigationTracking: vi.fn(),
   createAlarms: vi.fn(),
-  registerMessageHandlers: vi.fn(),
-  startTracking: vi.fn()
+  registerMessageHandlers: vi.fn()
 }));
 
 vi.mock('../handlers', () => ({
@@ -35,10 +34,6 @@ vi.mock('../listeners/navigationTracking', () => ({
   setupNavigationTracking: mocks.setupNavigationTracking
 }));
 
-vi.mock('../tracker', () => ({
-  startTracking: mocks.startTracking
-}));
-
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -57,14 +52,21 @@ describe('initBackground', () => {
     expect(mocks.createAlarms).toHaveBeenCalledOnce();
   });
 
-  it('滞在時間の計測を開始する', async () => {
-    // ⚠ エントリは service worker の起動のたびに評価される。ここで開始しないと、
-    // onInstalled / onStartup でしか始まらず、最初のアイドル停止以降は
-    // ブラウザを再起動するまで計測が動かない（#440）
+  it('前面のウィンドウ・タブを見る計測は始めない', async () => {
+    // 滞在時間は表示中のページの heartbeat だけで数える。
+    // ウィンドウ・タブの切り替えを購読する計測が加わると、同じ時間が二重に数えられる
+    const addListener = vi.fn();
+    (globalThis as Record<string, unknown>).chrome = {
+      tabs: {
+        onActivated: { addListener },
+        onUpdated: { addListener }
+      },
+      windows: { onFocusChanged: { addListener } }
+    };
     const { initBackground } = await import('../init');
 
     initBackground();
 
-    expect(mocks.startTracking).toHaveBeenCalledOnce();
+    expect(addListener).not.toHaveBeenCalled();
   });
 });

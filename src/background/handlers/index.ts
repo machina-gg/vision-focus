@@ -7,9 +7,9 @@
 import { onMessage } from '~/lib/messaging';
 import { addBlockHandler } from './add-block';
 import { getRemainingTimeHandler } from './get-remaining-time';
-import { getStatsHandler } from './get-stats';
 import { importSettingsHandler } from './import-settings';
 import { removeBlockHandler } from './remove-block';
+import { resetActivityHandler } from './reset-activity';
 import { toggleBlockHandler } from './toggle-block';
 import { togglePauseHandler } from './toggle-pause';
 import { trackerHeartbeatHandler } from './tracker-heartbeat';
@@ -20,9 +20,9 @@ import { updateYouTubeSettingsHandler } from './update-youtube-settings';
 export function registerMessageHandlers(): void {
   onMessage('add-block', addBlockHandler);
   onMessage('get-remaining-time', getRemainingTimeHandler);
-  onMessage('get-stats', getStatsHandler);
   onMessage('import-settings', importSettingsHandler);
   onMessage('remove-block', removeBlockHandler);
+  onMessage('reset-activity', resetActivityHandler);
   onMessage('toggle-block', toggleBlockHandler);
   onMessage('toggle-pause', togglePauseHandler);
   onMessage('tracker-heartbeat', trackerHeartbeatHandler);

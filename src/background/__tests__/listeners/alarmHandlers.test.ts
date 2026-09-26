@@ -1,10 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('~/lib/storage', () => ({
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn()
-}));
-
 vi.mock('~/lib/analytics', () => ({
   sendDailyActive: vi.fn()
 }));
@@ -21,7 +16,6 @@ vi.mock('~/lib/activityService', () => ({
   pruneBefore: vi.fn()
 }));
 
-import { getAnalytics, setAnalytics } from '~/lib/storage';
 import { sendDailyActive } from '~/lib/analytics';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
@@ -31,13 +25,11 @@ import {
   setupAlarmHandlers,
   createAlarms
 } from '../../listeners/alarmHandlers';
-import { DEFAULT_ANALYTICS } from '~/types/storage';
 import {
   ALARM_DAILY_CLEANUP_MINUTES,
   ALARM_CHECK_SCHEDULE_MINUTES,
   MAX_HISTORY_DAYS_FALLBACK
 } from '~/constants/intervals';
-import type { DailyStat } from '~/types/storage';
 
 /** アラームリスナーを捕捉できる chrome モックを構築する */
 function setupChrome() {
@@ -66,30 +58,11 @@ function setupChrome() {
   };
 }
 
-/** 指定日数前の日付キー（YYYY-MM-DD）を作る */
-function dateKeyDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
-const stat = (date: string): DailyStat => ({
-  date,
-  wasteTime: 60,
-  investTime: 0,
-  blockCount: 1,
-  unblockCount: 0
-});
-
 let harness: ReturnType<typeof setupChrome>;
 
 beforeEach(() => {
   vi.clearAllMocks();
   harness = setupChrome();
-  vi.mocked(getAnalytics).mockResolvedValue({
-    ...DEFAULT_ANALYTICS,
-    dailyStats: {}
-  });
 });
 
 afterEach(() => {
@@ -112,47 +85,6 @@ describe('createAlarms', () => {
 
 describe('setupAlarmHandlers', () => {
   describe('daily-cleanup', () => {
-    it('保持期間を超えた日次データを削除する', async () => {
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        dailyStats: {
-          [dateKeyDaysAgo(0)]: stat(dateKeyDaysAgo(0)),
-          [dateKeyDaysAgo(3)]: stat(dateKeyDaysAgo(3)),
-          [dateKeyDaysAgo(30)]: stat(dateKeyDaysAgo(30)),
-          [dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)]: stat(
-            dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
-          )
-        }
-      });
-      setupAlarmHandlers();
-
-      await harness.fire('daily-cleanup');
-
-      const saved = vi.mocked(setAnalytics).mock.calls[0][0];
-      // 保持期間は MAX_HISTORY_DAYS_FALLBACK 日。30 日前は保持される
-      expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(0));
-      expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(3));
-      expect(Object.keys(saved.dailyStats)).toContain(dateKeyDaysAgo(30));
-      // 保持期間を超えたものは削除される
-      expect(Object.keys(saved.dailyStats)).not.toContain(
-        dateKeyDaysAgo(MAX_HISTORY_DAYS_FALLBACK + 10)
-      );
-    });
-
-    it('削除対象が無ければ保存しない（無駄な書き込みを避ける）', async () => {
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        dailyStats: {
-          [dateKeyDaysAgo(0)]: stat(dateKeyDaysAgo(0))
-        }
-      });
-      setupAlarmHandlers();
-
-      await harness.fire('daily-cleanup');
-
-      expect(setAnalytics).not.toHaveBeenCalled();
-    });
-
     it('事実の表から保持期間を超えた日の行を消す（境界はローカル日付）', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date(2026, 8, 26, 0, 30));
@@ -197,7 +129,6 @@ describe('setupAlarmHandlers', () => {
 
       await harness.fire('check-schedule');
 
-      expect(setAnalytics).not.toHaveBeenCalled();
       expect(pruneBefore).not.toHaveBeenCalled();
       expect(clearExpiredNotifications).not.toHaveBeenCalled();
     });
@@ -208,7 +139,7 @@ describe('setupAlarmHandlers', () => {
 
     await harness.fire('unknown-alarm');
 
-    expect(setAnalytics).not.toHaveBeenCalled();
+    expect(pruneBefore).not.toHaveBeenCalled();
     expect(sendDailyActive).not.toHaveBeenCalled();
     expect(updateBlockRules).not.toHaveBeenCalled();
   });

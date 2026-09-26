@@ -18,9 +18,6 @@ const activityStore = vi.hoisted(() => ({
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn(),
-  incrementSiteBlockCount: vi.fn(),
   setLastBlockedDomain: vi.fn(),
   activityItem: {
     getValue: vi.fn(async () => structuredClone(activityStore.value ?? {})),
@@ -46,13 +43,11 @@ vi.mock('~/lib/siteService', () => ({
   getTrackedSiteKeys: vi.fn()
 }));
 
-import { getAnalytics } from '~/lib/storage';
 import { getBlockState, shouldTrackBlockForDomain } from '~/lib/blockService';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import { blockExistingTabs } from '../blocker';
 import { setupNavigationTracking } from '../listeners/navigationTracking';
-import { DEFAULT_ANALYTICS } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
 
 type NavigateListener = (
@@ -107,10 +102,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   activityStore.value = undefined;
   activityStore.failWrites = false;
-  vi.mocked(getAnalytics).mockResolvedValue({
-    ...DEFAULT_ANALYTICS,
-    dailyStats: {}
-  });
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
   vi.mocked(shouldTrackBlockForDomain).mockResolvedValue(true);
   vi.mocked(getBlockState).mockResolvedValue({ blocked: true, reason: null });

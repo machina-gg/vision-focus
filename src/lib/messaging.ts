@@ -19,11 +19,11 @@ import type {
   AddBlockResponse,
   GetRemainingTimeRequest,
   GetRemainingTimeResponse,
-  GetStatsResponse,
   ImportSettingsRequest,
   ImportSettingsResponse,
   RemoveBlockRequest,
   RemoveBlockResponse,
+  ResetActivityResponse,
   ToggleBlockRequest,
   ToggleBlockResponse,
   TogglePauseRequest,
@@ -40,14 +40,14 @@ import type {
  * メッセージ名 → 引数と戻り値の対応。
  *
  * 関数シグネチャで書くと引数が data の型、戻り値が応答の型になる。
- * 引数を取らないメッセージは引数なしの関数として書く（`get-stats`）
+ * 引数を取らないメッセージは引数なしの関数として書く（`reset-activity`）
  */
 export interface ProtocolMap {
   'add-block'(data: AddBlockRequest): AddBlockResponse;
   'get-remaining-time'(data: GetRemainingTimeRequest): GetRemainingTimeResponse;
-  'get-stats'(): GetStatsResponse;
   'import-settings'(data: ImportSettingsRequest): ImportSettingsResponse;
   'remove-block'(data: RemoveBlockRequest): RemoveBlockResponse;
+  'reset-activity'(): ResetActivityResponse;
   'toggle-block'(data: ToggleBlockRequest): ToggleBlockResponse;
   'toggle-pause'(data: TogglePauseRequest): TogglePauseResponse;
   'tracker-heartbeat'(data: TrackerHeartbeatRequest): TrackerHeartbeatResponse;

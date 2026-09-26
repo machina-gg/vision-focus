@@ -4,18 +4,12 @@ import { invoke } from './helpers';
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  setSettings: vi.fn(),
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn()
+  setSettings: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
-}));
-
-vi.mock('~/lib/time', () => ({
-  getTodayKey: vi.fn(() => '2026-08-11')
 }));
 
 vi.mock('~/lib/analytics', () => ({
@@ -26,17 +20,12 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
-import {
-  getSettings,
-  setSettings,
-  getAnalytics,
-  setAnalytics
-} from '~/lib/storage';
+import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
 import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
-import { DEFAULT_SETTINGS, DEFAULT_ANALYTICS } from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
 
 interface Response {
   success: boolean;
@@ -57,11 +46,6 @@ describe('toggle-block ハンドラ', () => {
     vi.mocked(getSettings).mockResolvedValue({
       ...DEFAULT_SETTINGS,
       blockList: [{ ...blockItem }]
-    });
-    vi.mocked(getAnalytics).mockResolvedValue({
-      ...DEFAULT_ANALYTICS,
-      siteUnblockCounts: {},
-      dailyStats: {}
     });
   });
 
@@ -129,10 +113,9 @@ describe('toggle-block ハンドラ', () => {
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
 
-    it('解除カウントは増やさない', async () => {
+    it('解除として送信しない', async () => {
       await invoke(handler, { id: 'item-1', enabled: true });
 
-      expect(setAnalytics).not.toHaveBeenCalled();
       expect(trackEvent).not.toHaveBeenCalled();
     });
   });
@@ -156,95 +139,6 @@ describe('toggle-block ハンドラ', () => {
       await invoke(handler, { id: 'item-1', enabled: false });
 
       expect(blockExistingTabs).not.toHaveBeenCalled();
-    });
-
-    it('サイト別の解除カウントを 1 増やす', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          siteUnblockCounts: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              domain: 'example.com',
-              count: 1
-            })
-          })
-        })
-      );
-    });
-
-    it('既存の解除カウントに加算する', async () => {
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        siteUnblockCounts: {
-          'example.com': {
-            domain: 'example.com',
-            count: 3,
-            lastUnblocked: '2026-01-01T00:00:00.000Z'
-          }
-        },
-        dailyStats: {}
-      });
-
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          siteUnblockCounts: expect.objectContaining({
-            'example.com': expect.objectContaining({ count: 4 })
-          })
-        })
-      );
-    });
-
-    it('当日の解除カウントを増やし、他の集計値は保持する', async () => {
-      vi.mocked(getAnalytics).mockResolvedValue({
-        ...DEFAULT_ANALYTICS,
-        siteUnblockCounts: {},
-        dailyStats: {
-          '2026-08-11': {
-            date: '2026-08-11',
-            wasteTime: 600,
-            investTime: 1200,
-            blockCount: 5,
-            unblockCount: 2
-          }
-        }
-      });
-
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dailyStats: expect.objectContaining({
-            '2026-08-11': {
-              date: '2026-08-11',
-              wasteTime: 600,
-              investTime: 1200,
-              blockCount: 5,
-              unblockCount: 3
-            }
-          })
-        })
-      );
-    });
-
-    it('当日分の集計が無い場合は 0 から作成する', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(setAnalytics).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dailyStats: expect.objectContaining({
-            '2026-08-11': {
-              date: '2026-08-11',
-              wasteTime: 0,
-              investTime: 0,
-              blockCount: 0,
-              unblockCount: 1
-            }
-          })
-        })
-      );
     });
 
     it('GA4 へはドメインをハッシュ化して送信する（生ドメインを送らない）', async () => {
@@ -295,12 +189,6 @@ describe('toggle-block ハンドラ', () => {
       await invoke(handler, { id: 'item-1', enabled: true });
 
       expect(recordActivity).not.toHaveBeenCalled();
-    });
-
-    it('旧データの解除カウントも従来どおり増やす', async () => {
-      await invoke(handler, { id: 'item-1', enabled: false });
-
-      expect(setAnalytics).toHaveBeenCalledOnce();
     });
   });
 });

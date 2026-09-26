@@ -24,18 +24,12 @@ export { type WeeklyReport, type MonthlyReport } from './report';
 
 // Re-export from analytics.ts for backwards compatibility
 export {
-  type DailyStat,
-  type SiteTime,
-  type SiteBlockCount,
-  type SiteUnblockCount,
   type TimeLimitType,
   type TimeLimit,
-  type AnalyticsData,
   type TrackedSite,
   type UnblockedSite,
   type UnblockHistory,
   type AnalyticsOptIn,
-  DEFAULT_ANALYTICS,
   DEFAULT_UNBLOCK_HISTORY
 } from './analytics';
 
@@ -51,9 +45,8 @@ export {
 // Import types needed for this file
 import type { TimeLimit } from './analytics';
 import type { VisionSettings } from './vision';
-import type { AnalyticsData } from './analytics';
 import type { UnblockHistory } from './analytics';
-import { DEFAULT_ANALYTICS, DEFAULT_UNBLOCK_HISTORY } from './analytics';
+import { DEFAULT_UNBLOCK_HISTORY } from './analytics';
 import { DEFAULT_VISION } from './vision';
 import type { ActivityLog } from './activity';
 
@@ -145,7 +138,6 @@ export interface SupportPromptState {
 export interface StorageSchema {
   settings: AppSettings;
   vision: VisionSettings;
-  analytics: AnalyticsData;
   unblockHistory: UnblockHistory;
   activity: ActivityLog;
 }
@@ -201,7 +193,6 @@ export const DEFAULT_ACTIVITY: ActivityLog = {};
 export const DEFAULT_STORAGE: StorageSchema = {
   settings: DEFAULT_SETTINGS,
   vision: DEFAULT_VISION,
-  analytics: DEFAULT_ANALYTICS,
   unblockHistory: DEFAULT_UNBLOCK_HISTORY,
   activity: DEFAULT_ACTIVITY
 };

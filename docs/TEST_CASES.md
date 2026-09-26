@@ -217,16 +217,16 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 ### アナリティクス機能
 
-| ID     | シナリオ                                          | 優先度 |
-| ------ | ------------------------------------------------- | ------ |
-| AN-001 | サイト別ブロック回数が記録される                  | P1     |
-| AN-002 | Unblock History（ブロック解除サイト）が記録される | P1     |
-| AN-003 | 解除サイトの滞在時間が Heartbeat で記録される     | P1     |
-| AN-004 | トラッキング中サイトの滞在時間が記録される        | P2     |
-| AN-005 | Analytics Opt-In モーダルで許可/拒否を選択できる  | P1     |
-| AN-006 | Opt-Out でもブロック回数の集計は続く              | P2     |
-| AN-007 | Analytics データをリセットできる                  | P2     |
-| AN-010 | Opt-Out でも解除履歴は記録される                  | P1     |
+| ID     | シナリオ                                                         | 優先度 |
+| ------ | ---------------------------------------------------------------- | ------ |
+| AN-001 | サイト別ブロック回数が記録される                                 | P1     |
+| AN-002 | Unblock History（ブロック解除サイト）が記録される                | P1     |
+| AN-003 | 解除サイトの滞在時間が Heartbeat で記録される                    | P1     |
+| AN-004 | 追跡中サイトのサブドメインで見ている時間はサイトの行に記録される | P2     |
+| AN-005 | Analytics Opt-In モーダルで許可/拒否を選択できる                 | P1     |
+| AN-006 | Opt-Out でもブロック回数の集計は続く                             | P2     |
+| AN-007 | Analytics データをリセットできる                                 | P2     |
+| AN-010 | Opt-Out でも解除履歴は記録される                                 | P1     |
 
 ### 多言語対応
 
@@ -262,8 +262,8 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - 分析タブ（OPT-A02 / A04 / A08 / A10 / A11 / A12、PR-006）の数値も `activity` から導出される（ランキング・CSV・X シェアは保持期間全体、利用時間の推移は直近 14 日、週次・月次はその週・その月、解除後の時間は最後に解除した日から今日まで）。種は `makeActivity()` で置き、対象のサイトを解除履歴かブロックリストにも入れて追跡中にする
 - fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
 - storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
-- 解除後の時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に `status: 'unblocked'` で載っているドメインだけ**。履歴に無い／再ブロック中のドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する
-- ⚠ `analytics.siteTime` を書くのは `src/background/tracker.ts` だけで、`tracker-heartbeat` は書かない。`tracker.ts` はウィンドウが前面のときだけ記録するが、xvfb 上の並列 Chromium でも各 worker のブラウザは 1 ウィンドウであり、それが前面と判定されることは実測済み（machina-gg/vision-focus#463）。`siteTime` を合否に使うテストは、前提として `getWindowFocusStateViaSW`（`tests/e2e/helpers/sw.ts`）で前面であることを確かめてから poll する（AN-004 がこの形）。heartbeat が書く `unblockHistory.sites[domain].timeAfterUnblock` は前面かどうかに依存しない
+- 滞在時間を書くのは heartbeat（`tracker-heartbeat`。表示されているページ）の 1 本だけで、書く先は `activity` の今日の行の `seconds`。記録されるのは追跡中のサイトだけなので、`makeUnblockHistory()` かブロックリストで前提データを用意する。前面のウィンドウかどうかには依存しない。ブロック回数・解除回数も同じ行（`blocks` / `unblocks`）に入り、今日の行の 1 サイト分は `getTodayActivityViaSW`（`tests/e2e/helpers/sw.ts`）で読む
+- 分析データのリセット（AN-007 / OPT-A09）は background が `activity` を今日の分も含めて消す（キーごと無くなる）。リセット前に種が入っていることを確かめてから、消えるのを poll で待つ
 - 「存在しない要素が無いこと」で合否を決めない。実装に一度も無かったセレクタや削除済みのセレクタの不在は、何を壊しても成立する。実装にある要素・値を正面から確かめる
 - テストが自分で `chrome.storage.local` に書いて同じキーを読み返すだけのテストは置かない。`src/` を全削除しても通る（確かめているのは Chrome のストレージであって本製品ではない）
 - 失敗を合格に変換しない。`isVisible()` を catch で包んで真偽値にすると、strict mode 違反（一致が複数）もタイムアウトも「表示されていない」として飲み込む。一致が 1 件になる範囲まで絞ってから判定する
@@ -664,6 +664,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **期待結果**
 
 - 解除履歴（`unblockHistory.sites`）に「example.com」が記録される
+- 事実の表（`activity`）の今日の行に「example.com」の解除が 1 回記録される
 
 ⚠ `analyticsOptIn` が止めるのは **GA4 への送信だけ**で、手元の集計（ブロック回数・使用時間・解除履歴）は
 拒否しても続く（machina-gg/vision-focus#431 の判断）。AN-006 / INT-005 も同じ主題。
@@ -758,7 +759,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **前提条件**
 
 - Analytics Opt-In が拒否（`analyticsOptIn.enabled` が false）されている
-- 解除履歴に「example.com」が載っている（滞在時間は 0）
+- 解除履歴に「example.com」が載っている（追跡中のサイト）
 
 **手順**
 
@@ -766,7 +767,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 **期待結果**
 
-- 解除履歴の `timeAfterUnblock` が増える
+- 事実の表（`activity`）の今日の行の「example.com」の滞在秒数が増える（解除後の時間はここから導出される）
 
 ⚠ `analyticsOptIn` が止めるのは GA4 への送信だけで、手元の集計は拒否しても続く
 （machina-gg/vision-focus#431 の判断。AN-006 / AN-010 も同じ主題）。
@@ -884,7 +885,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 2. OPT-ST10, OPT-ST12, OPT-ST13, OPT-ST14, OPT-ST15: スタイル機能
 3. NEW-011: 壁紙ダウンロードボタン
 
-**Analytics 詳細機能** 8. AN-004: トラッキング中サイト滞在時間 9. AN-006, AN-007: Opt-Out 時の集計継続・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
+**Analytics 詳細機能** 8. AN-004: 追跡中サイトのサブドメインの滞在時間 9. AN-006, AN-007: Opt-Out 時の集計継続・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
 
 **その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-SET07: 通知設定 19. OPT-H01, OPT-H02, OPT-H03: ヘルプタブ全般 20. OPT-SET01, OPT-SET06, OPT-SET08, OPT-SET09, OPT-SET10, OPT-SET11: 設定タブ全般
 

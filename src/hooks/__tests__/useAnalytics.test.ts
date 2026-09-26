@@ -3,11 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useAnalytics } from '~/hooks/useAnalytics';
 import type { UnblockHistory } from '~/types/storage';
-import {
-  DEFAULT_ANALYTICS,
-  DEFAULT_SETTINGS,
-  DEFAULT_UNBLOCK_HISTORY
-} from '~/types/storage';
+import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 // 依存モジュールをモック
 vi.mock('~/lib/messaging', () => ({
@@ -23,12 +19,8 @@ vi.mock('~/lib/domain', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  getAnalytics: vi.fn(),
   getSettings: vi.fn(),
   getUnblockHistory: vi.fn(),
-  analyticsItem: {
-    setValue: vi.fn()
-  },
   unblockHistoryItem: {
     setValue: vi.fn()
   }
@@ -37,26 +29,20 @@ vi.mock('~/lib/storage', () => ({
 import { sendMessage } from '~/lib/messaging';
 import { isValidDomain } from '~/lib/domain';
 import {
-  analyticsItem,
-  getAnalytics,
   getSettings,
   getUnblockHistory,
   unblockHistoryItem
 } from '~/lib/storage';
 
-const mockGetAnalytics = vi.mocked(getAnalytics);
 const mockGetUnblockHistory = vi.mocked(getUnblockHistory);
-const mockSetAnalytics = vi.mocked(analyticsItem.setValue);
 const mockSetUnblockHistory = vi.mocked(unblockHistoryItem.setValue);
 const mockSendMessage = vi.mocked(sendMessage);
 
 beforeEach(() => {
   vi.clearAllMocks();
   // 未保存のときの読み出しは項目定義の fallback（既定値）になる
-  mockGetAnalytics.mockResolvedValue(DEFAULT_ANALYTICS);
   mockGetUnblockHistory.mockResolvedValue(DEFAULT_UNBLOCK_HISTORY);
   vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
-  mockSetAnalytics.mockResolvedValue(undefined);
   mockSetUnblockHistory.mockResolvedValue(undefined);
 });
 
@@ -104,13 +90,13 @@ describe('useAnalytics', () => {
       });
 
       expect(result.current.unblockHistory).toEqual(history);
-      // 数値は activity から導出するので、旧い集計は読みに行かない
-      expect(mockGetAnalytics).not.toHaveBeenCalled();
     });
   });
 
   describe('handleResetAnalytics', () => {
-    it('アナリティクスをリセットする', async () => {
+    it('事実の表の消去を background に依頼する', async () => {
+      // 事実の表の書き手は background だけ。画面から直接書くと加算と競合して消える
+      mockSendMessage.mockResolvedValue({ success: true });
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
       );
@@ -119,31 +105,11 @@ describe('useAnalytics', () => {
         await result.current.handleResetAnalytics();
       });
 
-      // analytics を空に設定
-      expect(mockSetAnalytics).toHaveBeenCalledWith({
-        dailyStats: {},
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {},
-        siteUnblockCounts: {}
-      });
+      expect(mockSendMessage).toHaveBeenCalledWith('reset-activity');
     });
 
-    it('アンブロック履歴の時間をリセットする', async () => {
-      const mockHistory: UnblockHistory = {
-        sites: {
-          'youtube.com': {
-            domain: 'youtube.com',
-            status: 'unblocked',
-            blockedAt: '2024-01-01T00:00:00Z',
-            unblockedAt: '2024-02-01T00:00:00Z',
-            timeAfterUnblock: 3600,
-            lastActivity: '2024-06-12T00:00:00Z'
-          }
-        }
-      };
-      mockGetUnblockHistory.mockResolvedValue(mockHistory);
-
+    it('追跡中のサイトの一覧（解除履歴）は書き換えない', async () => {
+      mockSendMessage.mockResolvedValue({ success: true });
       const { result } = renderHook(() =>
         useAnalytics({ setSettings: mockSetSettings })
       );
@@ -152,10 +118,20 @@ describe('useAnalytics', () => {
         await result.current.handleResetAnalytics();
       });
 
-      // unblockHistoryの時間がリセットされたか確認
-      const savedHistory = mockSetUnblockHistory.mock.calls[0][0];
-      expect(savedHistory.sites['youtube.com'].timeAfterUnblock).toBe(0);
-      expect(savedHistory.sites['youtube.com'].lastActivity).toBeNull();
+      expect(mockSetUnblockHistory).not.toHaveBeenCalled();
+    });
+
+    it('依頼に失敗しても例外を画面へ投げない', async () => {
+      mockSendMessage.mockRejectedValue(new Error('送信失敗'));
+      const { result } = renderHook(() =>
+        useAnalytics({ setSettings: mockSetSettings })
+      );
+
+      await expect(
+        act(async () => {
+          await result.current.handleResetAnalytics();
+        })
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -198,9 +174,8 @@ describe('useAnalytics', () => {
         await result.current.handleRefreshAnalytics();
       });
 
-      // 解除履歴を読み直す（数値は activity から導出するので旧い集計は読まない）
+      // 解除履歴を読み直す（数値は activity から導出する）
       expect(mockGetUnblockHistory).toHaveBeenCalled();
-      expect(mockGetAnalytics).not.toHaveBeenCalled();
     });
   });
 

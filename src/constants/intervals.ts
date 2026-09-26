@@ -9,15 +9,6 @@
 //  Polling intervals (UI)
 // ---------------------------------------------------------------------------
 
-/** Polling interval for background stats in the popup (ms) */
-export const POPUP_STATS_POLLING_MS = 5_000;
-
-/** Polling interval for background stats in the new-tab page (ms) */
-export const NEWTAB_STATS_POLLING_MS = 10_000;
-
-/** Default polling interval for useBackgroundStats hook (ms) */
-export const DEFAULT_STATS_POLLING_MS = 10_000;
-
 /** Polling interval for current-domain / time-limit info in popup (ms) */
 export const DOMAIN_POLLING_MS = 10_000;
 
@@ -33,16 +24,6 @@ export const STORAGE_SETTLE_DELAY_MS = 100;
 
 /** Timeout to mark storage as loaded for first-time users (ms) */
 export const STORAGE_LOADED_TIMEOUT_MS = 100;
-
-/**
- * Background tracker update interval (ms)
- *
- * 加算する秒数は前回書き出しからの経過時間の引き算で求めるため、
- * この間隔を変えても記録される合計時間は変わらない（まとめて 1 回で書く）。
- * ⚠ 短くすると集計データ全体の読み書きがその頻度で走り、
- * Service Worker のアイドル停止も妨げる（#440）
- */
-export const TRACKING_UPDATE_INTERVAL_MS = 15_000;
 
 /** Timeout threshold for stale heartbeat entries (ms) */
 export const STALE_ENTRY_TIMEOUT_MS = 60 * 1_000;

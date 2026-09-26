@@ -3,18 +3,12 @@
 
 // Analytics types
 export {
-  type DailyStat,
-  type SiteTime,
-  type SiteBlockCount,
-  type SiteUnblockCount,
   type TimeLimitType,
   type TimeLimit,
-  type AnalyticsData,
   type TrackedSite,
   type UnblockedSite,
   type UnblockHistory,
   type AnalyticsOptIn,
-  DEFAULT_ANALYTICS,
   DEFAULT_UNBLOCK_HISTORY
 } from './analytics';
 
@@ -57,9 +51,7 @@ export {
   type RemoveBlockResponse,
   type GetRemainingTimeRequest,
   type GetRemainingTimeResponse,
-  type GetStatsResponse,
-  type SetSiteCategoryRequest,
-  type SetSiteCategoryResponse,
+  type ResetActivityResponse,
   type ToggleBlockRequest,
   type ToggleBlockResponse,
   type TogglePauseRequest,

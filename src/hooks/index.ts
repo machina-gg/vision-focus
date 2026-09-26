@@ -1,7 +1,6 @@
 export * from './useActivityStats';
 export * from './useAnalytics';
 export * from './useBackgroundPreload';
-export * from './useBackgroundStats';
 export * from './useBlocklist';
 export * from './useCurrentDomain';
 export * from './usePasswordVerification';

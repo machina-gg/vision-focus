@@ -4,12 +4,10 @@ import { isStoredObject, objectOrFallback } from './storedValue';
 
 import {
   DEFAULT_ACTIVITY,
-  DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
   DEFAULT_SUPPORT_PROMPT_STATE,
   DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_VISION,
-  type AnalyticsData,
   type AppSettings,
   type StorageSchema,
   type SupportPromptState,
@@ -37,11 +35,6 @@ export const settingsItem = extensionStorage.defineItem<AppSettings>(
 export const visionItem = extensionStorage.defineItem<VisionSettings>(
   'local:vision',
   { fallback: DEFAULT_VISION }
-);
-
-export const analyticsItem = extensionStorage.defineItem<AnalyticsData>(
-  'local:analytics',
-  { fallback: DEFAULT_ANALYTICS }
 );
 
 export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
@@ -106,16 +99,6 @@ export async function hasStoredVision(): Promise<boolean> {
   );
 }
 
-// Get analytics data
-export async function getAnalytics(): Promise<AnalyticsData> {
-  return objectOrFallback(await analyticsItem.getValue(), DEFAULT_ANALYTICS);
-}
-
-// Set analytics data
-export async function setAnalytics(analytics: AnalyticsData): Promise<void> {
-  await analyticsItem.setValue(analytics);
-}
-
 // Get unblock history
 export async function getUnblockHistory(): Promise<UnblockHistory> {
   return objectOrFallback(
@@ -133,19 +116,16 @@ export async function setUnblockHistory(
 
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, analytics, unblockHistory, activity] =
-    await Promise.all([
-      getSettings(),
-      getVision(),
-      getAnalytics(),
-      getUnblockHistory(),
-      activityItem.getValue()
-    ]);
+  const [settings, vision, unblockHistory, activity] = await Promise.all([
+    getSettings(),
+    getVision(),
+    getUnblockHistory(),
+    activityItem.getValue()
+  ]);
 
   return {
     settings,
     vision,
-    analytics,
     unblockHistory,
     activity: objectOrFallback(activity, DEFAULT_ACTIVITY)
   };
@@ -156,46 +136,9 @@ export async function clearAllStorage(): Promise<void> {
   await Promise.all([
     settingsItem.removeValue(),
     visionItem.removeValue(),
-    analyticsItem.removeValue(),
     unblockHistoryItem.removeValue(),
     activityItem.removeValue()
   ]);
-}
-
-// Increment site block count
-export async function incrementSiteBlockCount(domain: string): Promise<void> {
-  const analytics = await getAnalytics();
-  const now = new Date().toISOString();
-
-  const existing = analytics.siteBlockCounts?.[domain];
-  const updated: AnalyticsData = {
-    ...analytics,
-    siteBlockCounts: {
-      ...analytics.siteBlockCounts,
-      [domain]: {
-        domain,
-        count: (existing?.count ?? 0) + 1,
-        lastBlocked: now
-      }
-    }
-  };
-
-  await setAnalytics(updated);
-}
-
-// Get site block count
-export async function getSiteBlockCount(domain: string): Promise<number> {
-  const analytics = await getAnalytics();
-  return analytics.siteBlockCounts?.[domain]?.count ?? 0;
-}
-
-// Get all site block counts sorted by count (descending)
-export async function getAllSiteBlockCounts(): Promise<
-  Array<{ domain: string; count: number; lastBlocked: string }>
-> {
-  const analytics = await getAnalytics();
-  const counts = Object.values(analytics.siteBlockCounts ?? {});
-  return counts.sort((a, b) => b.count - a.count);
 }
 
 // Session storage for last blocked domain (for newtab display)
@@ -218,20 +161,4 @@ export async function getLastBlockedDomain(): Promise<string | null> {
 
 export async function clearLastBlockedDomain(): Promise<void> {
   await chrome.storage.session.remove(SESSION_KEYS.lastBlockedDomain);
-}
-
-// Get site wasted time in seconds
-export async function getSiteWastedTime(domain: string): Promise<number> {
-  const analytics = await getAnalytics();
-  const siteTime = analytics.siteTime?.[domain];
-
-  // 浪費カテゴリまたは未分類のサイトの時間を返す
-  if (
-    siteTime &&
-    (siteTime.category === 'waste' || siteTime.category === 'neutral')
-  ) {
-    return siteTime.time;
-  }
-
-  return 0;
 }

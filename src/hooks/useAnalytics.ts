@@ -4,17 +4,11 @@ import { sendMessage } from '~/lib/messaging';
 
 import { parseDomainInput, isValidDomain } from '~/lib/domain';
 import {
-  analyticsItem,
-  getAnalytics,
   getSettings,
   getUnblockHistory,
   unblockHistoryItem
 } from '~/lib/storage';
-import type {
-  AppSettings,
-  AnalyticsData,
-  UnblockHistory
-} from '~/types/storage';
+import type { AppSettings, UnblockHistory } from '~/types/storage';
 import { DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 interface UseAnalyticsOptions {
@@ -88,31 +82,11 @@ export function useAnalytics({
     [setSettings, reloadAnalyticsData]
   );
 
-  // Reset analytics handler (reset time only, keep site list)
+  // 分析データのリセット（今日の分も含めて事実をすべて消す。追跡中のサイトの一覧は残す）。
+  // 事実の表を書けるのは background だけなので、消去はメッセージで依頼する
   const handleResetAnalytics = useCallback(async () => {
     try {
-      // Reset time for all sites but keep the list
-      const currentHistory = await getUnblockHistory();
-      const resetHistory: UnblockHistory = {
-        sites: Object.fromEntries(
-          Object.entries(currentHistory.sites).map(([domain, site]) => [
-            domain,
-            { ...site, timeAfterUnblock: 0, lastActivity: null }
-          ])
-        )
-      };
-      await unblockHistoryItem.setValue(resetHistory);
-      setUnblockHistory(resetHistory);
-
-      // Clear analytics data
-      const emptyAnalytics: AnalyticsData = {
-        dailyStats: {},
-        siteTime: {},
-        siteCategories: {},
-        siteBlockCounts: {},
-        siteUnblockCounts: {}
-      };
-      await analyticsItem.setValue(emptyAnalytics);
+      await sendMessage('reset-activity');
     } catch {
       // Silently handle error
     }
@@ -127,18 +101,6 @@ export function useAnalytics({
         const updatedHistory: UnblockHistory = { sites: remainingSites };
         await unblockHistoryItem.setValue(updatedHistory);
         setUnblockHistory(updatedHistory);
-
-        // Also remove from analytics siteTime
-        const currentAnalytics = await getAnalytics();
-        if (currentAnalytics.siteTime[domain]) {
-          const { [domain]: __, ...remainingSiteTime } =
-            currentAnalytics.siteTime;
-          const updatedAnalytics: AnalyticsData = {
-            ...currentAnalytics,
-            siteTime: remainingSiteTime
-          };
-          await analyticsItem.setValue(updatedAnalytics);
-        }
       }
     } catch {
       // Silently handle error

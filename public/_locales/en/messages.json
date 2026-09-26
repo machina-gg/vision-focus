@@ -777,10 +777,6 @@
     "message": "Reports",
     "description": "Reports section title"
   },
-  "siteCategories": {
-    "message": "Site Categories",
-    "description": "Site categories section title"
-  },
   "noSiteData": {
     "message": "No sites visited yet. Start browsing to see your site data.",
     "description": "Empty site data message"

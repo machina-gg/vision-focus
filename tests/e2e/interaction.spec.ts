@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures/extension';
 import { openExternalSite, openOptions, openPopup } from './helpers/pages';
 import {
-  getStorageViaSW,
+  getTodayActivityViaSW,
   setupStorageViaSW,
   triggerBlockRuleRecompute,
   waitForBlockRules,
@@ -10,7 +10,6 @@ import {
 import {
   clearStorageFromExtension,
   makeActivity,
-  makeAnalytics,
   makeSettings,
   makeUnblockHistory,
   setStorageDataFromExtension,
@@ -270,8 +269,7 @@ test.describe('Interaction - 機能間相互作用', () => {
         paused: false,
         analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
       }),
-      analytics: makeAnalytics(),
-      // 解除履歴に載っているドメインだけが計測対象になる（sites は
+      // 追跡中のサイトだけが記録の対象になる（解除履歴の sites は
       // ドメインをキーにしたレコードで、entries という配列は実装に無い）
       unblockHistory: makeUnblockHistory([TEST_DOMAINS.example])
     });
@@ -283,14 +281,14 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     await externalPage.waitForLoadState('domcontentloaded');
 
+    // 解除後の時間は事実の表の滞在秒数から導出される。
     // 読み出しは SW 経由で行う（拡張機能のページを開くと前面のタブが
     // 入れ替わり、コンテンツスクリプトの heartbeat が止まる）
     await expect
       .poll(
-        async () => {
-          const history = await getStorageViaSW(context, 'unblockHistory');
-          return history?.sites?.[TEST_DOMAINS.example]?.timeAfterUnblock ?? 0;
-        },
+        async () =>
+          (await getTodayActivityViaSW(context, TEST_DOMAINS.example))
+            ?.seconds ?? 0,
         { timeout: 60_000 }
       )
       .toBeGreaterThan(0);

@@ -4,9 +4,7 @@ import {
   getSettings,
   setSettings,
   getUnblockHistory,
-  setUnblockHistory,
-  getAnalytics,
-  setAnalytics
+  setUnblockHistory
 } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 
@@ -73,21 +71,6 @@ export const addBlockHandler: MessageHandler<'add-block'> = async ({
     };
   }
   await setUnblockHistory(history);
-
-  // Initialize analytics tracking for this domain as 'waste' category
-  const analytics = await getAnalytics();
-  if (!analytics.siteTime[parsedDomain]) {
-    analytics.siteTime[parsedDomain] = {
-      domain: parsedDomain,
-      time: 0,
-      category: 'waste',
-      lastUpdated: now
-    };
-  } else {
-    analytics.siteTime[parsedDomain].category = 'waste';
-  }
-  analytics.siteCategories[parsedDomain] = 'waste';
-  await setAnalytics(analytics);
 
   return { success: true };
 };

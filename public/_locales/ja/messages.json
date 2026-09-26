@@ -777,10 +777,6 @@
     "message": "レポート",
     "description": "レポートセクションタイトル"
   },
-  "siteCategories": {
-    "message": "サイトカテゴリ",
-    "description": "サイトカテゴリセクションタイトル"
-  },
   "noSiteData": {
     "message": "まだサイトを訪問していません。ブラウジングを開始してデータを記録しましょう。",
     "description": "サイトデータなしメッセージ"

@@ -13,7 +13,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 const store = vi.hoisted(() => ({
   settings: undefined as unknown,
   unblockHistory: undefined as unknown,
-  analytics: undefined as unknown,
   activity: undefined as unknown,
   failActivityWrites: false
 }));
@@ -26,10 +25,6 @@ vi.mock('~/lib/storage', () => ({
   getUnblockHistory: vi.fn(async () => structuredClone(store.unblockHistory)),
   setUnblockHistory: vi.fn(async (value: unknown) => {
     store.unblockHistory = structuredClone(value);
-  }),
-  getAnalytics: vi.fn(async () => structuredClone(store.analytics)),
-  setAnalytics: vi.fn(async (value: unknown) => {
-    store.analytics = structuredClone(value);
   }),
   activityItem: {
     getValue: vi.fn(async () => structuredClone(store.activity ?? {})),
@@ -58,7 +53,6 @@ import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-setting
 import { invoke } from './handlers/helpers';
 import { toDateKey } from '~/lib/time';
 import {
-  DEFAULT_ANALYTICS,
   DEFAULT_SETTINGS,
   DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_YOUTUBE_SETTINGS
@@ -88,11 +82,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   store.settings = structuredClone(DEFAULT_SETTINGS);
   store.unblockHistory = { ...DEFAULT_UNBLOCK_HISTORY, sites: {} };
-  store.analytics = {
-    ...DEFAULT_ANALYTICS,
-    dailyStats: {},
-    siteUnblockCounts: {}
-  };
   store.activity = undefined;
   store.failActivityWrites = false;
 });

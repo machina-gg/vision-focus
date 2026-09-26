@@ -1,7 +1,5 @@
 import type { MessageHandler } from '~/lib/messaging';
-import { extractDomain, matchesDomain } from '~/lib/domain';
-import { getUnblockHistory, setUnblockHistory } from '~/lib/storage';
-import type { BlockItem, UnblockHistory } from '~/types/storage';
+import { extractDomain } from '~/lib/domain';
 import { TRACKER_CONFIG } from '~/constants/limits';
 import { STALE_ENTRY_TIMEOUT_MS } from '~/constants/intervals';
 import { checkTimeLimitNotification } from '../notifications';
@@ -32,7 +30,7 @@ function ensureRecordingTimer() {
     const seconds = Math.floor(TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000);
     const visibleHosts: string[] = [];
 
-    // Record time for all active pages
+    // 直近に heartbeat が届いた（表示中の）ページを集める
     for (const [_key, page] of activePages.entries()) {
       // Check if page is still active (received heartbeat recently)
       const timeSinceHeartbeat = now - page.lastHeartbeat;
@@ -41,7 +39,6 @@ function ensureRecordingTimer() {
         page.isActive &&
         timeSinceHeartbeat <= TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS
       ) {
-        await recordTimeAfterUnblock(page.domain, seconds);
         visibleHosts.push(page.domain);
       } else if (timeSinceHeartbeat > TRACKER_CONFIG.HEARTBEAT_TIMEOUT_MS) {
         // Page is stale, mark as inactive
@@ -62,6 +59,7 @@ function ensureRecordingTimer() {
       recordingTimer = null;
     }
 
+    // 滞在時間を記録する経路はここだけ（ほかに書き手を足すと同じ時間が二重に数えられる）。
     // 表示中のページの滞在を、追跡中のサイトごとに 1 回分記録する
     // （同じサイトの別ホストを同時に表示していても 1 回分。解除中かどうかでは絞らない）
     const at = new Date();
@@ -75,56 +73,6 @@ function ensureRecordingTimer() {
     // 時間制限の使用量は上で書いた今日の行なので、記録の後に判定する
     await enforceTimeLimits(visibleHosts);
   }, TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-}
-
-// Normalize domain by removing www prefix
-function normalizeDomain(domain: string): string {
-  return domain.startsWith('www.') ? domain.slice(4) : domain;
-}
-
-// Check if two domains match (considering www variants)
-function domainsMatch(domain1: string, domain2: string): boolean {
-  return normalizeDomain(domain1) === normalizeDomain(domain2);
-}
-
-// Find matching unblocked site (supports wildcards and www variants)
-// ⚠ 解除履歴は再ブロックしたエントリも保持し続けるため、
-// 「履歴にある」ではなく status === 'unblocked' で絞る（#440）
-function findUnblockedSite(
-  domain: string,
-  history: UnblockHistory
-): string | null {
-  const isUnblocked = (key: string): boolean =>
-    history.sites[key]?.status === 'unblocked';
-
-  // Direct match first
-  if (isUnblocked(domain)) {
-    return domain;
-  }
-
-  // Check all unblocked domains for matches
-  for (const unblockedDomain of Object.keys(history.sites)) {
-    if (!isUnblocked(unblockedDomain)) continue;
-    // Create a BlockItem-like object for matching
-    const blockItem: BlockItem = {
-      id: '',
-      domain: unblockedDomain,
-      isWildcard: unblockedDomain.startsWith('*.'),
-      createdAt: '',
-      enabled: true
-    };
-
-    if (matchesDomain(domain, blockItem)) {
-      return unblockedDomain;
-    }
-
-    // Check www variant match (youtube.com ↔ www.youtube.com)
-    if (domainsMatch(domain, unblockedDomain)) {
-      return unblockedDomain;
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -144,30 +92,6 @@ async function enforceTimeLimits(hosts: readonly string[]): Promise<void> {
     await updateBlockRules();
     await blockExistingTabs();
   }
-}
-
-// 解除中のサイトの「解除後の時間」を加算する
-async function recordTimeAfterUnblock(
-  domain: string,
-  seconds: number
-): Promise<void> {
-  if (seconds <= 0 || !domain) return;
-
-  // Only track sites that are currently unblocked
-  const history = await getUnblockHistory();
-  const matchedDomain = findUnblockedSite(domain, history);
-
-  if (!matchedDomain) return;
-
-  const unblockedSite = history.sites[matchedDomain];
-
-  // Update unblock history time
-  // ⚠ analytics（siteTime / dailyStats）はここで更新しない。
-  // 使用時間の記録者は src/background/tracker.ts の 1 本だけで、
-  // 両方が書くと同じ滞在時間が二重に加算される（#440）
-  unblockedSite.timeAfterUnblock += seconds;
-  unblockedSite.lastActivity = new Date().toISOString();
-  await setUnblockHistory(history);
 }
 
 // Message handler

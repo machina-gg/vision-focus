@@ -66,7 +66,7 @@ describe('sendMessage', () => {
   it('応答が無いときは例外を投げる', async () => {
     respondWith = undefined;
 
-    await expect(sendMessage('get-stats')).rejects.toThrow();
+    await expect(sendMessage('reset-activity')).rejects.toThrow();
   });
 });
 
@@ -79,7 +79,7 @@ describe('onMessage', () => {
     const sender = {} as chrome.runtime.MessageSender;
 
     const other = rootListener(
-      { type: 'get-stats', data: undefined, timestamp: Date.now() },
+      { type: 'reset-activity', data: undefined, timestamp: Date.now() },
       sender,
       vi.fn()
     );

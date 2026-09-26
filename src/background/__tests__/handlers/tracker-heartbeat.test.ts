@@ -10,8 +10,6 @@ const activityStore = vi.hoisted(() => ({ value: undefined as unknown }));
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  getAnalytics: vi.fn(),
-  setAnalytics: vi.fn(),
   getUnblockHistory: vi.fn(),
   setUnblockHistory: vi.fn(),
   activityItem: {
@@ -38,8 +36,6 @@ vi.mock('~/lib/siteService', () => ({
 
 import {
   getSettings,
-  getAnalytics,
-  setAnalytics,
   getUnblockHistory,
   setUnblockHistory
 } from '~/lib/storage';
@@ -49,7 +45,6 @@ import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import {
-  DEFAULT_ANALYTICS,
   DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_SETTINGS,
   DEFAULT_YOUTUBE_SETTINGS
@@ -142,11 +137,6 @@ describe('tracker-heartbeat ハンドラ', () => {
     vi.mocked(getUnblockHistory).mockResolvedValue({
       ...DEFAULT_UNBLOCK_HISTORY,
       sites: {}
-    });
-    vi.mocked(getAnalytics).mockResolvedValue({
-      ...DEFAULT_ANALYTICS,
-      siteTime: {},
-      dailyStats: {}
     });
     vi.mocked(getTrackedSiteKeys).mockResolvedValue([]);
     activityStore.value = undefined;
@@ -457,146 +447,6 @@ describe('tracker-heartbeat ハンドラ', () => {
     });
   });
 
-  describe('ブロック解除済みサイトの計測', () => {
-    it('解除履歴のあるサイトは解除後の滞在時間を更新する', async () => {
-      vi.useFakeTimers();
-      givenUnblockHistory({ status: 'unblocked', timeAfterUnblock: 100 });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              timeAfterUnblock: 100 + RECORDED_SECONDS
-            })
-          })
-        })
-      );
-    });
-
-    it('使用時間・日次集計（analytics）は書かない', async () => {
-      // 記録者は src/background/tracker.ts の 1 本だけ。ここでも書くと
-      // 同じ滞在時間が二重に加算される（#440）
-      vi.useFakeTimers();
-      givenUnblockHistory({ status: 'unblocked', timeAfterUnblock: 0 });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(
-        TRACKER_CONFIG.RECORDING_INTERVAL_MS * 3
-      );
-
-      expect(setUnblockHistory).toHaveBeenCalled();
-      expect(setAnalytics).not.toHaveBeenCalled();
-    });
-
-    it('再ブロック中（status が blocked）のサイトは計測しない', async () => {
-      // 解除履歴は再ブロックしてもエントリを残すため、status を見ないと
-      // 一時停止中・スケジュール外の閲覧まで解除後の時間に入る（#440）
-      vi.useFakeTimers();
-      givenUnblockHistory({ status: 'blocked', timeAfterUnblock: 0 });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(setUnblockHistory).not.toHaveBeenCalled();
-    });
-
-    it('再ブロック中のエントリは www 違い・ワイルドカードでも計測しない', async () => {
-      // 直接一致だけでなく、突き合わせのループ側でも status で絞る
-      vi.useFakeTimers();
-      vi.mocked(getUnblockHistory).mockResolvedValue({
-        ...DEFAULT_UNBLOCK_HISTORY,
-        sites: {
-          'youtube.com': {
-            domain: 'youtube.com',
-            status: 'blocked',
-            blockedAt: '2026-01-01T00:00:00.000Z',
-            unblockedAt: null,
-            timeAfterUnblock: 0,
-            lastActivity: null
-          }
-        }
-      });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(setUnblockHistory).not.toHaveBeenCalled();
-    });
-
-    it('www 有無が異なっても解除履歴と突き合わせる', async () => {
-      vi.useFakeTimers();
-      vi.mocked(getUnblockHistory).mockResolvedValue({
-        ...DEFAULT_UNBLOCK_HISTORY,
-        sites: {
-          'youtube.com': {
-            domain: 'youtube.com',
-            status: 'unblocked',
-            blockedAt: '2026-01-01T00:00:00.000Z',
-            unblockedAt: '2026-01-02T00:00:00.000Z',
-            timeAfterUnblock: 0,
-            lastActivity: null
-          }
-        }
-      });
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://www.youtube.com/watch?v=abc',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'youtube.com': expect.objectContaining({
-              timeAfterUnblock: RECORDED_SECONDS
-            })
-          })
-        })
-      );
-    });
-
-    it('解除履歴に無いサイトは何も更新しない', async () => {
-      vi.useFakeTimers();
-      const handler = await loadHandler();
-
-      await invoke(handler, {
-        url: 'https://example.com',
-        status: 'active',
-        timestamp: Date.now()
-      });
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(setUnblockHistory).not.toHaveBeenCalled();
-      expect(setAnalytics).not.toHaveBeenCalled();
-    });
-  });
-
   describe('事実の表（activity）への滞在の記録', () => {
     /** 今日の行に記録された滞在秒数（サイトごと）。記録が無ければ空 */
     function todaySeconds(): Record<string, number> {
@@ -636,8 +486,6 @@ describe('tracker-heartbeat ハンドラ', () => {
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
       expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
-      // 旧データ（解除後の時間）は従来どおり解除中のサイトだけ
-      expect(setUnblockHistory).not.toHaveBeenCalled();
     });
 
     it('同じサイトを別ホストで同時に表示していても 1 回分にする', async () => {
@@ -692,7 +540,8 @@ describe('tracker-heartbeat ハンドラ', () => {
       expect(activityStore.value).toBeUndefined();
     });
 
-    it('旧データ（解除後の時間）への書き込みも続ける', async () => {
+    it('解除中のサイトも activity にだけ記録し、解除履歴は書かない', async () => {
+      // 解除後の時間は activity から導出する。解除履歴にも足すと記録者が 2 本になる
       vi.useFakeTimers();
       givenUnblockHistory({ status: 'unblocked', timeAfterUnblock: 100 });
       vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
@@ -700,16 +549,8 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
 
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              timeAfterUnblock: 100 + RECORDED_SECONDS
-            })
-          })
-        })
-      );
       expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
+      expect(setUnblockHistory).not.toHaveBeenCalled();
     });
 
     it('記録に失敗しても次の記録間隔の計測は続く', async () => {

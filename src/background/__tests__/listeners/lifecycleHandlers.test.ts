@@ -4,12 +4,7 @@ vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn()
 }));
 
-vi.mock('../../tracker', () => ({
-  startTracking: vi.fn()
-}));
-
 import { updateBlockRules } from '../../blocker';
-import { startTracking } from '../../tracker';
 import { setupLifecycleHandlers } from '../../listeners/lifecycleHandlers';
 
 /** ライフサイクルイベントを発火できる chrome モックを構築する */
@@ -62,28 +57,25 @@ describe('setupLifecycleHandlers', () => {
     expect(chrome.runtime.onStartup.addListener).toHaveBeenCalled();
   });
 
-  it('インストール時にブロックルールを初期化し計測を開始する', async () => {
+  it('インストール時にブロックルールを初期化する', async () => {
     setupLifecycleHandlers();
 
     await harness.fireInstalled();
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
-    expect(startTracking).toHaveBeenCalledOnce();
   });
 
-  it('ブラウザ起動時にもブロックルールを更新し計測を開始する', async () => {
+  it('ブラウザ起動時にもブロックルールを更新する', async () => {
     setupLifecycleHandlers();
 
     await harness.fireStartup();
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
-    expect(startTracking).toHaveBeenCalledOnce();
   });
 
   it('購読するだけでは何も実行しない', () => {
     setupLifecycleHandlers();
 
     expect(updateBlockRules).not.toHaveBeenCalled();
-    expect(startTracking).not.toHaveBeenCalled();
   });
 });
