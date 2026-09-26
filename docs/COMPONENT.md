@@ -343,7 +343,7 @@ graph TD
 | onChange  | `(tabId: string) => void`                                    | 必須   | 押されたタブの id を受け取る |
 | className | `string`                                                     | `''`   | 外側の div に足すクラス      |
 
-各タブの `data-testid` は `tab-${id}` になる。同じ画面に `Tabs` を複数置くときは id を重ねない。
+各タブの `data-testid` は `tab-${id}` になる。
 
 ---
 
@@ -485,7 +485,7 @@ Esc で編集を取り消す。
 
 ### WeeklyReportCard
 
-`src/components/features/ReportCard/ReportCard.tsx`。レポートは `AnalyticsDateFilter` が `src/lib/report.ts` で組み、このカードは描くだけ。
+`src/components/features/ReportCard/ReportCard.tsx`。このカードと `MonthlyReportCard` はレポートを描くだけで、レポートは `AnalyticsDateFilter` が `src/lib/report.ts` で組む。
 
 | Prop          | 型                     | 省略時  | 説明                                        |
 | ------------- | ---------------------- | ------- | ------------------------------------------- |
@@ -499,7 +499,7 @@ Esc で編集を取り消す。
 
 ### MonthlyReportCard
 
-`src/components/features/ReportCard/ReportCard.tsx`。レポートは `AnalyticsDateFilter` が `src/lib/report.ts` で組み、このカードは描くだけ。
+`src/components/features/ReportCard/ReportCard.tsx`
 
 | Prop           | 型                      | 省略時  | 説明                                        |
 | -------------- | ----------------------- | ------- | ------------------------------------------- |
@@ -658,7 +658,7 @@ Esc で編集を取り消す。
 
 ### BlocklistTab
 
-`src/components/options/BlocklistTab.tsx`。無効化と削除は `useUnblockGuard` を通し、パスワードの照合（`PasswordModal`）か長押しの確認（`UnblockConfirmModal`）を挟む。一覧は `blockListSites`、YouTube の節へは `trackedSites` の youtube.com（無ければ null）を渡す。
+`src/components/options/BlocklistTab.tsx`。一覧は `blockListSites` で導く。無効化・削除の確認は [useUnblockGuard](#useunblockguard)、YouTube の設定の保存は [useYouTubeSettings](#useyoutubesettings) を参照。
 
 | Prop              | 型                                                       | 省略時 | 説明                                                       |
 | ----------------- | -------------------------------------------------------- | ------ | ---------------------------------------------------------- |
@@ -677,7 +677,7 @@ Esc で編集を取り消す。
 
 ### StylesTab
 
-`src/components/options/StylesTab.tsx`。Props は無い（設定は保存領域から直接読み書きし、編集の状態は `usePresets` が持つ）。
+`src/components/options/StylesTab.tsx`。Props は無い（設定は保存領域から直接読み書きし、編集の状態は [usePresets](#usepresets) が持つ）。
 
 ---
 
@@ -704,7 +704,7 @@ Esc で編集を取り消す。
 | vision          | `VisionSettings \| undefined`  | 必須   | プリセット名を引くための表示設定（undefined ならプリセット名を出さない） |
 | onScheduleClick | `(schedule: Schedule) => void` | 必須   | カレンダー上の枠で選ばれたスケジュールを受け取る                         |
 
-日曜から土曜の列に時間帯の枠を重ね、今日の列に現在時刻の線を引く。無効なスケジュールは薄く取り消し線つきで出す。
+今日の列に現在時刻の線を引く。無効なスケジュールは薄く取り消し線つきで出す。
 
 ---
 
@@ -896,7 +896,7 @@ Esc で編集を取り消す。
 
 ### NotificationSettingsSection
 
-`src/components/options/blocklist/NotificationSettingsSection.tsx`。置き場所は `blocklist/` だが、描画するのは `SettingsTab`。
+`src/components/options/blocklist/NotificationSettingsSection.tsx`
 
 | Prop          | 型                                              | 省略時 | 説明                                                               |
 | ------------- | ----------------------------------------------- | ------ | ------------------------------------------------------------------ |
@@ -907,7 +907,7 @@ Esc で編集を取り消す。
 
 ### YouTubeSection
 
-`src/components/options/blocklist/YouTubeSection.tsx`。送る値 `YouTubeSettingsInput` は `site` から組み立てる。
+`src/components/options/blocklist/YouTubeSection.tsx`。送る値と保存の流れは [useYouTubeSettings](#useyoutubesettings) を参照。
 
 | Prop             | 型                                        | 省略時 | 説明                                                                 |
 | ---------------- | ----------------------------------------- | ------ | -------------------------------------------------------------------- |
@@ -1332,13 +1332,23 @@ interface UnblockRequest {
 
 ## 5. 型定義
 
-Props に出てくる保存値の型の定義と各フィールドの意味は [DATA_MODEL.md](./DATA_MODEL.md) を正とする。
+3 章・4 章に出てくる型のうち、保存値の型の定義と各フィールドの意味は [DATA_MODEL.md](./DATA_MODEL.md) を正とする。
 
-| 型                       | 定義の場所             | 説明                                                                                          |
-| ------------------------ | ---------------------- | --------------------------------------------------------------------------------------------- |
-| TrackedSite              | `src/types/site.ts`    | [DATA_MODEL.md の TrackedSite](./DATA_MODEL.md#trackedsite追跡中のサイト)                     |
-| Schedule                 | `src/types/storage.ts` | [DATA_MODEL.md の Schedule](./DATA_MODEL.md#scheduleスケジュール)                             |
-| VisionSettings           | `src/types/vision.ts`  | [DATA_MODEL.md の VisionSettings](./DATA_MODEL.md#visionsettingsダッシュボード設定)           |
-| DashboardDisplaySettings | `src/types/vision.ts`  | [DATA_MODEL.md の DashboardDisplaySettings](./DATA_MODEL.md#dashboarddisplaysettings表示設定) |
-| DashboardPreset          | `src/types/vision.ts`  | [DATA_MODEL.md の DashboardPreset](./DATA_MODEL.md#dashboardpresetスタイル)                   |
-| FontSettings             | `src/types/font.ts`    | [DATA_MODEL.md の FontSettings](./DATA_MODEL.md#fontsettingsフォント設定)                     |
+| 型                       | 定義の場所               | DATA_MODEL.md の節                                                                                      |
+| ------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| AppSettings              | `src/types/storage.ts`   | [AppSettings](./DATA_MODEL.md#appsettings全サイトに共通の設定)                                          |
+| Schedule                 | `src/types/storage.ts`   | [Schedule](./DATA_MODEL.md#scheduleスケジュール)                                                        |
+| NotificationSettings     | `src/types/storage.ts`   | [NotificationSettings](./DATA_MODEL.md#notificationsettings通知)                                        |
+| PasswordSettings         | `src/types/storage.ts`   | [PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)                                      |
+| UnblockConfirmSettings   | `src/types/storage.ts`   | [UnblockConfirmSettings](./DATA_MODEL.md#unblockconfirmsettingsブロック解除の長押し確認)                |
+| UnblockHoldSeconds       | `src/types/storage.ts`   | [UnblockConfirmSettings の holdSeconds](./DATA_MODEL.md#unblockconfirmsettingsブロック解除の長押し確認) |
+| AnalyticsOptIn           | `src/types/analytics.ts` | [AnalyticsOptIn](./DATA_MODEL.md#analyticsoptinga4-の同意)                                              |
+| SiteKey                  | `src/types/site.ts`      | [サイトキー](./DATA_MODEL.md#サイトキー)                                                                |
+| TrackedSite              | `src/types/site.ts`      | [TrackedSite](./DATA_MODEL.md#trackedsite追跡中のサイト)                                                |
+| TrackedSites             | `src/types/site.ts`      | [TrackedSite](./DATA_MODEL.md#trackedsite追跡中のサイト)（`Record<SiteKey, TrackedSite>`）              |
+| TimeLimit                | `src/types/site.ts`      | [TimeLimit](./DATA_MODEL.md#timelimit時間制限)                                                          |
+| ActivityLog              | `src/types/activity.ts`  | [ActivityLog](./DATA_MODEL.md#activitylog事実)                                                          |
+| VisionSettings           | `src/types/vision.ts`    | [VisionSettings](./DATA_MODEL.md#visionsettingsダッシュボード設定)                                      |
+| DashboardDisplaySettings | `src/types/vision.ts`    | [DashboardDisplaySettings](./DATA_MODEL.md#dashboarddisplaysettings表示設定)                            |
+| DashboardPreset          | `src/types/vision.ts`    | [DashboardPreset](./DATA_MODEL.md#dashboardpresetスタイル)                                              |
+| FontSettings             | `src/types/font.ts`      | [FontSettings](./DATA_MODEL.md#fontsettingsフォント設定)                                                |
