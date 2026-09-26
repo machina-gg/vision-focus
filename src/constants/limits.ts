@@ -15,17 +15,11 @@ export const IMAGE_LIMITS = {
 /** declarativeNetRequest のブロックのルールの設定 */
 export const BLOCKER_CONFIG = {
   /** 動的ルールの id の開始値（ブロック対象の並び順を足して id にする） */
-  RULE_ID_OFFSET: 1000,
-  /** 本体とすべてのサブドメインに一致させる urlFilter の接頭辞 */
-  URL_FILTER_PREFIX: '||'
+  RULE_ID_OFFSET: 1000
 } as const;
 
 /** 滞在時間の記録の設定 */
 export const TRACKER_CONFIG = {
-  /** ページを操作していないとみなすまでの時間（ms） */
-  ACTIVITY_TIMEOUT_MS: 30 * 1000,
-  /** コンテンツスクリプトがハートビートを送る間隔（ms） */
-  HEARTBEAT_INTERVAL_MS: 5 * 1000,
   /** 表示中のサイトの滞在時間を記録する間隔（ms。1 回の記録で足す秒数もこれから出す） */
   RECORDING_INTERVAL_MS: 5 * 1000,
   /** 最後のハートビートからこの時間を過ぎたページは表示中とみなさない（ms） */
@@ -34,10 +28,6 @@ export const TRACKER_CONFIG = {
 
 /** 時間制限の設定 */
 export const TIME_LIMIT_CONFIG = {
-  /** 設定できる最小の制限時間（秒） */
-  MIN_LIMIT_SECONDS: 60,
-  /** 設定できる最大の制限時間（秒） */
-  MAX_LIMIT_SECONDS: 24 * 60 * 60,
   /** 1 日の制限時間の既定値（秒） */
   DEFAULT_DAILY_LIMIT: 30 * 60,
   /** 残り時間の割合がこれ以下になったら警告の表示にする（0〜1） */

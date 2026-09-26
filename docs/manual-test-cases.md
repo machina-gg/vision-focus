@@ -246,7 +246,7 @@
 
 - [ ] Heartbeat 送信の頻度
   - 手順: ブラウザの開発者ツールでネットワークタブを開き、サイトにアクセス
-  - 期待: Heartbeat が `TRACKER_CONFIG.HEARTBEAT_INTERVAL_MS`（`src/constants/limits.ts`）の間隔で送信される
+  - 期待: Heartbeat が `HEARTBEAT_INTERVAL_MS`（`src/entrypoints/tracker.content.ts`）の間隔で送信される
 
 ---
 
