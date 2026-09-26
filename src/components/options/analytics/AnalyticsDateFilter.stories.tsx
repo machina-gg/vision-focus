@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { Meta, StoryObj } from '@storybook/react';
+import { userEvent, within } from '@storybook/test';
 
 import { AnalyticsDateFilter } from './AnalyticsDateFilter';
 import type { AnalyticsData } from '~/types/storage';
@@ -80,9 +81,10 @@ const meta = {
     layout: 'padded'
   },
   tags: ['autodocs'],
+  // 設定画面の本文と同じ幅（max-w-6xl）で、全幅表示のレポートを確かめる
   decorators: [
     (Story) => (
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div className="max-w-6xl mx-auto">
         <Story />
       </div>
     )
@@ -99,6 +101,20 @@ export const WithData: Story = {
     isSupportPromptVisible: true,
     onSupport: async () => alert('Open Buy Me a Coffee'),
     onDismissSupport: async () => alert('Dismiss')
+  }
+};
+
+// 月次のタブを選んだ場合
+export const MonthlyTab: Story = {
+  args: {
+    analyticsData: mockAnalytics,
+    isSupportPromptVisible: true,
+    onSupport: async () => alert('Open Buy Me a Coffee'),
+    onDismissSupport: async () => alert('Dismiss')
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByTestId('tab-report-monthly'));
   }
 };
 

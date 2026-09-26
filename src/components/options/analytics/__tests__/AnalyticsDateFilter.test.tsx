@@ -11,7 +11,8 @@ import { DEFAULT_ANALYTICS } from '~/types/analytics';
  * AnalyticsDateFilter が持つ「どの期間を見ているか」と、支援誘導の出し分けの検査
  *
  * 遡った回数（オフセット）をレポート生成へ渡し、未来へは進ませないこと、
- * 週と月のオフセットが互いに影響しないことを確かめる。レポートの中身の描画は
+ * 週と月のオフセットが互いに影響しないことを確かめる。週次と月次はタブで切り替え、
+ * 選んだ方だけを表示し、切り替えても見ていた期間を保つことも見る。レポートの中身の描画は
  * WeeklyReportCard / MonthlyReportCard の責務なので、ここでは渡す値だけを見る。
  *
  * 支援誘導は出すかどうかの判定を親から受け取るので、受け取った値どおりに
@@ -32,7 +33,7 @@ vi.mock('~/components/features', () => ({
     canGoNext: boolean;
     isCurrentWeek: boolean;
   }) => (
-    <div>
+    <div data-testid="weekly-report-card">
       <button data-testid="weekly-previous" onClick={props.onPrevious}>
         前の週
       </button>
@@ -49,7 +50,7 @@ vi.mock('~/components/features', () => ({
     canGoNext: boolean;
     isCurrentMonth: boolean;
   }) => (
-    <div>
+    <div data-testid="monthly-report-card">
       <button data-testid="monthly-previous" onClick={props.onPrevious}>
         前の月
       </button>
@@ -91,6 +92,9 @@ const lastMonthlyOffset = () =>
 
 const click = (testId: string) => fireEvent.click(screen.getByTestId(testId));
 
+const showWeekly = () => click('tab-report-weekly');
+const showMonthly = () => click('tab-report-monthly');
+
 const onSupport = vi.fn(async () => undefined);
 const onDismissSupport = vi.fn(async () => undefined);
 
@@ -128,6 +132,9 @@ describe('AnalyticsDateFilter', () => {
       expect(screen.getByTestId('weekly-can-go-next')).toHaveTextContent(
         'false'
       );
+
+      showMonthly();
+
       expect(screen.getByTestId('monthly-is-current')).toHaveTextContent(
         'true'
       );
@@ -141,6 +148,58 @@ describe('AnalyticsDateFilter', () => {
 
       expect(screen.getByTestId('analytics-reports-heading')).toHaveTextContent(
         'reportsSection'
+      );
+    });
+  });
+
+  describe('週次と月次の切り替え', () => {
+    it('最初は週次だけを表示する', () => {
+      renderFilter();
+
+      expect(screen.getByTestId('weekly-report-card')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('monthly-report-card')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('tab-report-weekly')).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+    });
+
+    it('月次のタブを選ぶと月次だけを表示する', () => {
+      renderFilter();
+
+      showMonthly();
+
+      expect(screen.getByTestId('monthly-report-card')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('weekly-report-card')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('tab-report-monthly')).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+    });
+
+    it('タブを行き来しても見ていた週と月を保つ', () => {
+      renderFilter();
+
+      click('weekly-previous');
+      click('weekly-previous');
+      showMonthly();
+      click('monthly-previous');
+      showWeekly();
+
+      expect(lastWeeklyOffset()).toBe(-2);
+      expect(screen.getByTestId('weekly-can-go-next')).toHaveTextContent(
+        'true'
+      );
+
+      showMonthly();
+
+      expect(lastMonthlyOffset()).toBe(-1);
+      expect(screen.getByTestId('monthly-is-current')).toHaveTextContent(
+        'false'
       );
     });
   });
@@ -186,6 +245,7 @@ describe('AnalyticsDateFilter', () => {
   describe('月の移動', () => {
     it('前の月へ戻るとオフセットが 1 つ減る', () => {
       renderFilter();
+      showMonthly();
 
       click('monthly-previous');
 
@@ -200,6 +260,7 @@ describe('AnalyticsDateFilter', () => {
 
     it('今月より先へは進まない', () => {
       renderFilter();
+      showMonthly();
 
       click('monthly-next');
 
@@ -212,6 +273,7 @@ describe('AnalyticsDateFilter', () => {
       renderFilter();
 
       click('weekly-previous');
+      showMonthly();
 
       expect(lastMonthlyOffset()).toBe(0);
       expect(screen.getByTestId('monthly-is-current')).toHaveTextContent(
@@ -221,8 +283,10 @@ describe('AnalyticsDateFilter', () => {
 
     it('月を戻しても週のオフセットは変わらない', () => {
       renderFilter();
+      showMonthly();
 
       click('monthly-previous');
+      showWeekly();
 
       expect(lastWeeklyOffset()).toBe(0);
       expect(screen.getByTestId('weekly-is-current')).toHaveTextContent('true');

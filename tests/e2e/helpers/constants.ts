@@ -200,7 +200,10 @@ export const SELECTORS = {
     reblockButton: '[data-testid="analytics-reblock-button"]',
     stopTrackingButton: '[data-testid="analytics-stop-tracking-button"]',
     addSiteInput: '[data-testid="analytics-add-site-input"]',
-    addSiteButton: '[data-testid="analytics-add-site-button"]'
+    addSiteButton: '[data-testid="analytics-add-site-button"]',
+    // 週次 / 月次レポートの切り替えタブ（Tabs が `tab-${id}` を付ける）
+    weeklyReportTab: '[data-testid="tab-report-weekly"]',
+    monthlyReportTab: '[data-testid="tab-report-monthly"]'
   },
 
   // Options - Help Tab
@@ -293,6 +296,13 @@ export const UI_TEXT = {
   notifications: {
     heading: 'Notification Settings',
     minutesLabel: 'Notify before limit'
+  },
+  // レポートカードの期間移動ボタン（aria-label）。カードに目印が無いため、
+  // どちらのカードが表示されているかもこの名前で見分ける
+  reports: {
+    previousWeek: 'Previous week',
+    nextWeek: 'Next week',
+    previousMonth: 'Previous month'
   },
   font: {
     sizeSmall: 'Small',
