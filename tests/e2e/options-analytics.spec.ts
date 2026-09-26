@@ -10,7 +10,8 @@ import {
   makeAnalytics,
   makeSiteBlockCounts,
   getStorageData,
-  SELECTORS
+  SELECTORS,
+  UI_TEXT
 } from './helpers';
 
 // 表示される滞在時間の期待値は実装と同じ関数で組み立てる
@@ -21,7 +22,7 @@ import { formatTime } from '~/lib/time';
 /**
  * E2Eテスト: Options - Analytics Tab
  *
- * OPT-A01 ~ OPT-A11 のテストケースを実装
+ * OPT-A01 ~ OPT-A12 のテストケースを実装
  */
 
 /**
@@ -547,6 +548,47 @@ test.describe('Options - Analytics Tab', () => {
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain('.csv');
+
+    await page.close();
+  });
+
+  test('OPT-A12: 週次・月次レポートをタブで切り替え、見ていた期間を保つ', async ({
+    context,
+    extensionId
+  }) => {
+    const page = await openOptions(context, extensionId, 'analytics');
+
+    const weeklyTab = page.locator(SELECTORS.analytics.weeklyReportTab);
+    const monthlyTab = page.locator(SELECTORS.analytics.monthlyReportTab);
+    const previousWeek = page.getByRole('button', {
+      name: UI_TEXT.reports.previousWeek
+    });
+    const nextWeek = page.getByRole('button', {
+      name: UI_TEXT.reports.nextWeek
+    });
+    const previousMonth = page.getByRole('button', {
+      name: UI_TEXT.reports.previousMonth
+    });
+
+    // 最初は週次だけが表示される
+    await expect(weeklyTab).toHaveAttribute('aria-selected', 'true');
+    await expect(previousWeek).toBeVisible();
+    await expect(previousMonth).toHaveCount(0);
+
+    // 前の週へ戻ると次の週へ進めるようになる（= 今週以外を見ている）
+    await expect(nextWeek).toBeDisabled();
+    await previousWeek.click();
+    await expect(nextWeek).toBeEnabled();
+
+    // 月次へ切り替えると週次は表示されない
+    await monthlyTab.click();
+    await expect(monthlyTab).toHaveAttribute('aria-selected', 'true');
+    await expect(previousMonth).toBeVisible();
+    await expect(previousWeek).toHaveCount(0);
+
+    // 週次へ戻っても戻した週のまま
+    await weeklyTab.click();
+    await expect(nextWeek).toBeEnabled();
 
     await page.close();
   });
