@@ -1,6 +1,3 @@
-// URL からのホスト名の取り出しと入力検証。ホスト名とサイトの照合は `siteKey.ts` が持つ
-
-// Extract domain from URL
 export function extractDomain(url: string): string | null {
   try {
     const urlObj = new URL(url);
@@ -10,52 +7,41 @@ export function extractDomain(url: string): string | null {
   }
 }
 
-// Parse domain input (detect wildcards)
 export function parseDomainInput(input: string): {
   domain: string;
   isWildcard: boolean;
 } {
   const trimmed = input.trim().toLowerCase();
 
-  // Remove protocol if present
-  const domain = trimmed.replace(/^https?:\/\//, '').replace(/\/.*$/, ''); // Remove path
+  const domain = trimmed.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 
   const isWildcard = domain.startsWith('*.');
 
   return { domain, isWildcard };
 }
 
-// Validate domain format
 export function isValidDomain(domain: string): boolean {
-  // Remove wildcard prefix for validation
   const cleanDomain = domain.replace(/^\*\./, '');
 
-  // Check length limits (max 253 chars total, max 63 per label)
   if (cleanDomain.length > 253) return false;
 
   const labels = cleanDomain.split('.');
 
-  // Must have at least 2 labels (e.g., "example.com")
   if (labels.length < 2) return false;
 
-  // Each label validation
   const labelRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
 
   for (const label of labels) {
-    // Each label max 63 chars
     if (label.length === 0 || label.length > 63) return false;
-    // Labels cannot be all numbers (except for IP, but we don't allow IPs)
     if (!labelRegex.test(label)) return false;
   }
 
-  // TLD must be at least 2 chars and only letters
   const tld = labels[labels.length - 1];
   if (!/^[a-zA-Z]{2,}$/.test(tld)) return false;
 
   return true;
 }
 
-// Generate cryptographically secure unique ID
 export function generateId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);

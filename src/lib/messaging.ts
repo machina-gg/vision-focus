@@ -1,11 +1,3 @@
-/**
- * background と画面・コンテンツスクリプトの間のメッセージング。
- *
- * name ごとの引数と戻り値を ProtocolMap で 1 箇所に定義し、送信側
- * （`sendMessage`）と受信側（`onMessage`）の双方を型で縛る。
- * Request / Response の実体は `~/types/messages` にあり、ここでは束ねるだけ
- */
-
 import {
   defineExtensionMessaging,
   type ExtensionMessage,
@@ -40,12 +32,6 @@ import type {
   UpdateYouTubeSettingsResponse
 } from '~/types/messages';
 
-/**
- * メッセージ名 → 引数と戻り値の対応。
- *
- * 関数シグネチャで書くと引数が data の型、戻り値が応答の型になる。
- * 引数を取らないメッセージは引数なしの関数として書く（`reset-activity`）
- */
 export interface ProtocolMap {
   'add-block'(data: AddBlockRequest): AddBlockResponse;
   'add-tracked-site'(data: AddTrackedSiteRequest): AddTrackedSiteResponse;
@@ -63,12 +49,7 @@ export interface ProtocolMap {
   ): UpdateYouTubeSettingsResponse;
 }
 
-/**
- * background 側のハンドラの型。
- *
- * `onMessage(name, handler)` に渡せる形を name から導く。data は ProtocolMap の
- * 引数型になるが、外部から届く値なので実行時の検証（zod）はハンドラ側で行う
- */
+/** data は外部から届く値で型どおりとは限らないため、実行時の検証（zod）はハンドラ側で行う */
 export type MessageHandler<TName extends keyof ProtocolMap> = (
   message: Message<ProtocolMap, TName> & ExtensionMessage
 ) => MaybePromise<GetReturnType<ProtocolMap[TName]>>;

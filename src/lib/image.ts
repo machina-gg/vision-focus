@@ -1,7 +1,3 @@
-/**
- * Image utilities for custom background uploads
- */
-
 import { IMAGE_LIMITS } from '~/constants/limits';
 
 export interface ImageValidationResult {
@@ -9,9 +5,6 @@ export interface ImageValidationResult {
   error?: string;
 }
 
-/**
- * Validate an image file before processing
- */
 export function validateImageFile(file: File): ImageValidationResult {
   if (!file) {
     return { valid: false, error: 'No file provided' };
@@ -38,9 +31,6 @@ export function validateImageFile(file: File): ImageValidationResult {
   return { valid: true };
 }
 
-/**
- * Load an image from a file
- */
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -56,9 +46,6 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-/**
- * Calculate new dimensions while maintaining aspect ratio
- */
 function calculateDimensions(
   width: number,
   height: number,
@@ -81,9 +68,6 @@ function calculateDimensions(
   return { width: Math.round(newWidth), height: Math.round(newHeight) };
 }
 
-/**
- * Compress an image to fit within target size
- */
 export async function compressImage(
   file: File,
   maxSizeMB: number = IMAGE_LIMITS.TARGET_SIZE / 1024 / 1024
@@ -110,12 +94,10 @@ export async function compressImage(
     throw new Error('Failed to get canvas context');
   }
 
-  // Draw image with white background (for transparency)
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
 
-  // Try different quality levels to get under target size
   const targetSize = maxSizeMB * 1024 * 1024;
   let quality = 0.9;
   let dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -134,22 +116,14 @@ export async function compressImage(
   return dataUrl;
 }
 
-/**
- * Get the size of a base64 data URL in bytes
- */
 export function getBase64Size(dataUrl: string): number {
-  // Remove data URL prefix (data:image/jpeg;base64,)
   const base64 = dataUrl.split(',')[1];
   if (!base64) return 0;
 
-  // Calculate size: base64 represents 3 bytes per 4 characters
   const padding = (base64.match(/=/g) || []).length;
   return Math.floor((base64.length * 3) / 4) - padding;
 }
 
-/**
- * Format bytes to human readable string
- */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

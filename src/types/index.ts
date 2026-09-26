@@ -1,10 +1,5 @@
-// Centralized type exports for vision-focus
-// All types are organized by domain and re-exported here for convenience
-
-// Analytics types
 export { type AnalyticsOptIn } from './analytics';
 
-// Site types（追跡中のサイトとサイトごとの設定）
 export {
   type SiteKey,
   type TimeLimitType,
@@ -15,7 +10,6 @@ export {
   type YouTubeFeatures
 } from './site';
 
-// Vision/Dashboard types
 export {
   type DashboardDisplaySettings,
   type DashboardPreset,
@@ -24,7 +18,6 @@ export {
   DEFAULT_VISION
 } from './vision';
 
-// Font types
 export {
   type FontFamily,
   type FontCategory,
@@ -43,10 +36,8 @@ export {
   DEFAULT_FONT_SETTINGS
 } from './font';
 
-// Report types
 export { type WeeklyReport, type MonthlyReport } from './report';
 
-// Message types
 export {
   type AddBlockRequest,
   type AddBlockResponse,
@@ -71,7 +62,6 @@ export {
   type UpdateYouTubeSettingsResponse
 } from './messages';
 
-// Storage types (AppSettings and related)
 export {
   type Schedule,
   type SupportedLanguage,

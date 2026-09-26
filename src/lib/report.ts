@@ -1,10 +1,3 @@
-/**
- * 週次・月次レポートを組み立てる。
- * 期間を 1 つ作り、合計・内訳・トップ・前期比をすべてその期間と同じ母集団（sites）で
- * activityStats から引く。ここで集計を書くと、合計とトップが別の期間・別の母集団から
- * 出て食い違う
- */
-
 import {
   dailySeries,
   monthRange,
@@ -24,10 +17,8 @@ import type {
 } from '~/types/report';
 import type { SiteKey } from '~/types/site';
 
-/** トップに並べるサイトの数 */
 export const REPORT_TOP_SITES_LIMIT = 5;
 
-/** 前半と後半の差がこの割合を超えたら傾向ありとみなす */
 const TREND_THRESHOLD = 0.05;
 
 const PERCENT = 100;
@@ -62,12 +53,10 @@ function topSites(
   };
 }
 
-/** 過去の期間で何も無ければレポートを出さない（今の期間は 0 でも出す） */
 function isEmpty(totals: ActivityTotals): boolean {
   return totals.seconds === 0 && totals.blocks === 0;
 }
 
-/** 前半より後半の浪費時間が減っていれば改善 */
 function calculateTrend(seconds: number[]): ReportTrend {
   if (seconds.length < 2) return 'stable';
 
@@ -84,16 +73,11 @@ function calculateTrend(seconds: number[]): ReportTrend {
   return 'stable';
 }
 
-/** 前期比（%）。前期が 0 なら比べられないので null */
 function changePercent(current: number, previous: number): number | null {
   if (previous === 0) return null;
   return ((current - previous) / previous) * PERCENT;
 }
 
-/**
- * 週次レポート。weekOffset は 0 = 今週、-1 = 先週。
- * 過去の週に何も無ければ null
- */
 export function generateWeeklyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -118,10 +102,6 @@ export function generateWeeklyReport(
   };
 }
 
-/**
- * 月次レポート。monthOffset は 0 = 今月、-1 = 先月。
- * 過去の月に何も無ければ null
- */
 export function generateMonthlyReport(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -139,7 +119,6 @@ export function generateMonthlyReport(
   const previous = sumRange(log, sites, monthRange(now, monthOffset - 1));
 
   return {
-    // monthRange の from は YYYY-MM-01
     month: range.from.slice(0, 7),
     totals,
     weeklyBreakdown,
@@ -149,7 +128,6 @@ export function generateMonthlyReport(
   };
 }
 
-/** 週の範囲の表示（例: "Jun 10 - 16" / "Jun 24 - Jul 7"）。日付キーはローカル日付として読む */
 export function formatWeekRange(weekStart: string, weekEnd: string): string {
   const start = parseDateKey(weekStart);
   const end = parseDateKey(weekEnd);
@@ -162,7 +140,6 @@ export function formatWeekRange(weekStart: string, weekEnd: string): string {
   return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}`;
 }
 
-/** 月の表示（YYYY-MM → "June 2024" など） */
 export function formatMonth(monthKey: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);

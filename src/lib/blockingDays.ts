@@ -2,9 +2,6 @@ import { MS_PER_DAY } from '~/constants/intervals';
 import { resolveSiteKey } from '~/lib/siteKey';
 import type { TrackedSites } from '~/types/site';
 
-// 遮られたホスト名が何日ブロックリストに載っているかを求める。
-// ホスト名は判定・記録と同じ `resolveSiteKey` で追跡中のサイトに引き直す
-// （www. / m. 付きのサブドメインも、ブロックを掛けたサイトの日数になる）
 export function calculateBlockingDays(
   hostname: string,
   sites: TrackedSites,

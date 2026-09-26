@@ -1,9 +1,4 @@
-/**
- * GA4 Analytics via Measurement Protocol
- *
- * Sends anonymous usage events only when the user has opted in.
- * No personal data (domains, goals, browsing history) is ever collected.
- */
+// 計測に個人データ（ドメイン・目標・閲覧履歴）を含めない
 
 import { getSettings } from '~/lib/storage';
 import { getUILanguage } from '~/lib/i18n';
@@ -16,13 +11,12 @@ const MP_ENDPOINT = `https://www.google-analytics.com/mp/collect?measurement_id=
 const CLIENT_ID_KEY = 'ga_client_id';
 const SESSION_ID_KEY = 'ga_session_id';
 const SESSION_START_KEY = 'ga_session_start';
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 interface EventParams {
   [key: string]: string | number | boolean;
 }
 
-/** Get or create a persistent client ID */
 async function getClientId(): Promise<string> {
   const result = await chrome.storage.local.get(CLIENT_ID_KEY);
   if (result[CLIENT_ID_KEY]) {
@@ -33,7 +27,6 @@ async function getClientId(): Promise<string> {
   return clientId;
 }
 
-/** Get or create a session ID (resets after 30 min inactivity) */
 async function getSessionId(): Promise<string> {
   const result = await chrome.storage.local.get([
     SESSION_ID_KEY,
@@ -47,7 +40,6 @@ async function getSessionId(): Promise<string> {
     return result[SESSION_ID_KEY] as string;
   }
 
-  // New session
   const sessionId = String(Date.now());
   await chrome.storage.local.set({
     [SESSION_ID_KEY]: sessionId,
@@ -56,13 +48,7 @@ async function getSessionId(): Promise<string> {
   return sessionId;
 }
 
-/**
- * 計測処理を実行し、失敗しても呼び出し元へ例外を伝えない。
- *
- * 計測の可否を読むストレージアクセスもこの中で行う。外に出すと、
- * 結果を捨てている呼び出し側（`void trackFeatureUse(...)` 等）で
- * 未処理の rejection になる（machina-gg/vision-focus#469）。
- */
+// 計測の可否を読むストレージアクセスもこの中で行う（外に出すと、結果を捨てる呼び出し側で未処理の rejection になる）
 async function runSilently(task: () => Promise<void>): Promise<void> {
   try {
     await task();
@@ -71,14 +57,12 @@ async function runSilently(task: () => Promise<void>): Promise<void> {
   }
 }
 
-/** Check if analytics is enabled (user opted in) */
 export async function isAnalyticsEnabled(): Promise<boolean> {
   if (!GA_MEASUREMENT_ID || !GA_API_SECRET) return false;
   const settings = await getSettings();
   return settings.analyticsOptIn?.enabled === true;
 }
 
-/** Send a GA4 event via Measurement Protocol */
 export async function trackEvent(
   name: string,
   params: EventParams = {}
@@ -113,26 +97,19 @@ export async function trackEvent(
   });
 }
 
-// 以下の公開関数は trackEvent に委譲するが、受け取る側で例外を止める
-// （委譲先が投げないことに依存しない）
-
-/** Track a feature usage event */
 export async function trackFeatureUse(feature: string): Promise<void> {
   await runSilently(() => trackEvent('use_feature', { feature }));
 }
 
-/** Track an error event */
 export async function trackError(type: string): Promise<void> {
   await runSilently(() => trackEvent('error', { type }));
 }
 
-/** Send a daily_active event (called from background alarm) */
 export async function sendDailyActive(): Promise<void> {
   await runSilently(async () => {
     const enabled = await isAnalyticsEnabled();
     if (!enabled) return;
 
-    // Check if extension context is still valid
     if (!isExtensionContextValid()) {
       return;
     }
@@ -140,7 +117,6 @@ export async function sendDailyActive(): Promise<void> {
     const version = chrome.runtime.getManifest().version;
     const language = getUILanguage();
 
-    // 全機能を全ユーザーに開放したため、ユーザー種別は送信しない
     await trackEvent('daily_active', { version, language });
   });
 }

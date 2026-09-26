@@ -1,33 +1,24 @@
-/**
- * Wallpaper capture and download utilities using html2canvas
- */
-
 import html2canvas from 'html2canvas';
 
 export type Resolution = '1080p' | '1440p' | '4k';
 
 export interface CaptureOptions {
   resolution: Resolution;
-  quality?: number; // 0-1 for JPEG quality
+  quality?: number;
 }
 
-// Resolution presets
 const RESOLUTIONS: Record<Resolution, { width: number; height: number }> = {
   '1080p': { width: 1920, height: 1080 },
   '1440p': { width: 2560, height: 1440 },
   '4k': { width: 3840, height: 2160 }
 };
 
-/**
- * Capture an element as a canvas
- */
 async function captureElement(
   element: HTMLElement,
   options: CaptureOptions
 ): Promise<HTMLCanvasElement> {
   const { width, height } = RESOLUTIONS[options.resolution];
 
-  // Get the element's current dimensions
   const rect = element.getBoundingClientRect();
   const scale = Math.max(width / rect.width, height / rect.height);
 
@@ -41,7 +32,6 @@ async function captureElement(
     logging: false
   });
 
-  // Create a new canvas with the target resolution
   const outputCanvas = document.createElement('canvas');
   outputCanvas.width = width;
   outputCanvas.height = height;
@@ -51,11 +41,9 @@ async function captureElement(
     throw new Error('Failed to get canvas context');
   }
 
-  // Fill with black background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
 
-  // Calculate centering
   const _scaledWidth = canvas.width * (width / canvas.width);
   const _scaledHeight = canvas.height * (height / canvas.height);
   const useScale = Math.min(width / canvas.width, height / canvas.height);
@@ -64,15 +52,11 @@ async function captureElement(
   const offsetX = (width - finalWidth) / 2;
   const offsetY = (height - finalHeight) / 2;
 
-  // Draw the captured canvas centered
   ctx.drawImage(canvas, offsetX, offsetY, finalWidth, finalHeight);
 
   return outputCanvas;
 }
 
-/**
- * Capture an element as a Blob
- */
 export async function captureWallpaper(
   element: HTMLElement,
   options: CaptureOptions = { resolution: '1080p', quality: 0.95 }
@@ -94,9 +78,6 @@ export async function captureWallpaper(
   });
 }
 
-/**
- * Capture and download wallpaper
- */
 export async function downloadWallpaper(
   element: HTMLElement,
   filename: string = 'visionfocus-wallpaper',
@@ -105,24 +86,18 @@ export async function downloadWallpaper(
   const blob = await captureWallpaper(element, options);
   const { width, height } = RESOLUTIONS[options.resolution];
 
-  // Create download link
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = `${filename}-${width}x${height}.png`;
 
-  // Trigger download
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 
-  // Clean up
   URL.revokeObjectURL(url);
 }
 
-/**
- * Get available resolutions with labels
- */
 export function getResolutionOptions(): {
   value: Resolution;
   label: string;
@@ -135,9 +110,6 @@ export function getResolutionOptions(): {
   ];
 }
 
-/**
- * Get resolution dimensions
- */
 export function getResolutionDimensions(resolution: Resolution): {
   width: number;
   height: number;

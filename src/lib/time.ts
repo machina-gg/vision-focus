@@ -2,7 +2,6 @@ import { MS_PER_DAY } from '~/constants/intervals';
 import { getUILanguage } from '~/lib/i18n';
 import type { DateKey } from '~/types/activity';
 
-// Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}s`;
@@ -18,7 +17,6 @@ export function formatTime(seconds: number): string {
   return `${minutes}m`;
 }
 
-// ローカライズされた時間表記（例: "23分" / "23 min"）
 export function formatTimeLocalized(seconds: number): string {
   const language = getUILanguage();
 
@@ -40,7 +38,6 @@ export function formatTimeLocalized(seconds: number): string {
   return language === 'ja' ? `${minutes}分` : `${minutes} min`;
 }
 
-// Format seconds to short format (e.g., "1:23:45")
 export function formatTimeShort(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -53,16 +50,11 @@ export function formatTimeShort(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Get today's date in YYYY-MM-DD format
 export function getTodayKey(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-/**
- * ローカル時刻の日付キー（YYYY-MM-DD）。
- * toISOString は UTC の日付になり、UTC より東のタイムゾーンでは
- * 0 時〜時差ぶんの時刻が前日に入ってしまうため、ローカルの年月日から組み立てる
- */
+// toISOString は UTC の日付になり、UTC より東のタイムゾーンでは前日にずれるため、ローカルの年月日から組み立てる
 export function toDateKey(date: Date): DateKey {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,12 +62,10 @@ export function toDateKey(date: Date): DateKey {
   return `${year}-${month}-${day}`;
 }
 
-// Get date key for a specific date
 export function getDateKey(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-// Check if a date string is within the last N days
 export function isWithinDays(dateKey: string, days: number): boolean {
   const date = new Date(dateKey);
   const now = new Date();
@@ -84,7 +74,6 @@ export function isWithinDays(dateKey: string, days: number): boolean {
   return diffDays <= days;
 }
 
-// Get dates for the last N days
 export function getLastNDays(n: number): string[] {
   const dates: string[] = [];
   const today = new Date();
@@ -98,8 +87,6 @@ export function getLastNDays(n: number): string[] {
   return dates;
 }
 
-// Validate time string format (HH:mm)
-// Accepts 00:00-23:59 and 24:00 (end of day)
 export function isValidTimeString(time: string): boolean {
   if (!time || typeof time !== 'string') return false;
   if (time === '24:00') return true;
@@ -107,21 +94,16 @@ export function isValidTimeString(time: string): boolean {
   return match !== null;
 }
 
-// Parse time string (HH:mm) to minutes from midnight
-// Returns 0 if invalid time string
-// "24:00" returns 1440 (end of day)
 export function parseTimeToMinutes(time: string): number {
   if (!isValidTimeString(time)) return 0;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-// Normalize end time: convert "00:00" to "24:00" for end-of-day semantics
 export function normalizeEndTime(endTime: string): string {
   return endTime === '00:00' ? '24:00' : endTime;
 }
 
-// Check if current time is within schedule
 export function isWithinSchedule(
   startTime: string,
   endTime: string,
@@ -129,7 +111,6 @@ export function isWithinSchedule(
 ): boolean {
   const normalizedEndTime = normalizeEndTime(endTime);
 
-  // Validate inputs
   if (!isValidTimeString(startTime) || !isValidTimeString(normalizedEndTime)) {
     return false;
   }
@@ -140,7 +121,6 @@ export function isWithinSchedule(
   const now = new Date();
   const currentDay = now.getDay();
 
-  // Check if today is in the schedule days
   if (!days.includes(currentDay)) {
     return false;
   }
@@ -149,7 +129,6 @@ export function isWithinSchedule(
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(normalizedEndTime);
 
-  // Handle overnight schedules (e.g., 22:00 - 06:00)
   if (endMinutes <= startMinutes) {
     return currentMinutes >= startMinutes || currentMinutes < endMinutes;
   }

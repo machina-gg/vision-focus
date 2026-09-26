@@ -1,15 +1,4 @@
-/**
- * SiteService - 追跡中のサイト（`sites`）の読み書き
- *
- * 追跡中のサイトは分析の母集団で、サイトごとの設定（ブロック・時間制限・YouTube 機能）の
- * 置き場でもある。事実の表（`activity`）に記録してよいサイトの集合もここのキーで決まる。
- *
- * 書き込みはすべて 1 本の待ち行列で直列化する。「読む → 変える → 書く」の間に
- * 別の書き込みが割り込むと、先に書いた側の変更が後から書いた側に上書きされて消えるため。
- *
- * ⚠ 待ち行列はこのモジュールの中にしかないので、background（Service Worker）以外から
- * 書き込み関数を呼ぶと直列化が効かない。画面は background へメッセージで依頼する。
- */
+// 書き込みはモジュール内の待ち行列で直列化する。background 以外から書き込み関数を呼ぶと直列化が効かず変更が消える
 
 import { isValidDomain, parseDomainInput } from '~/lib/domain';
 import { getSites, sitesItem } from '~/lib/storage';
@@ -28,7 +17,6 @@ import type {
   YouTubeFeatures
 } from '~/types/site';
 
-/** 直前に積まれた処理の完了を表す。失敗しても後続を止めないよう、ここは常に解決する */
 let tail: Promise<void> = Promise.resolve();
 
 async function enqueue<T>(task: () => Promise<T>): Promise<T> {
@@ -41,16 +29,13 @@ async function enqueue<T>(task: () => Promise<T>): Promise<T> {
     try {
       await run;
     } catch {
-      // 失敗は呼び出し元へ run で返す。ここで握るのは後続の処理を止めないためだけ
+      // 後続の処理を止めないためだけに握る（失敗は run で呼び出し元へ返す）
     }
   })();
   return await run;
 }
 
-/**
- * 追跡中のサイトを読んで変更し、変更があれば書く（待ち行列の中で行う）。
- * `change` は読み出した値を書き換えず、変更後の値を `next` で返す（変更が無ければ null）
- */
+/** `change` は読み出した値を書き換えず、変更後の値を `next` で返す（変更が無ければ null） */
 async function mutateSites<T>(
   change: (current: TrackedSites) => { next: TrackedSites | null; result: T }
 ): Promise<T> {
@@ -61,32 +46,24 @@ async function mutateSites<T>(
   });
 }
 
-/** 保存済みの追跡中のサイトからサイトキーの一覧を作る（順序に意味は無い） */
 export function trackedSiteKeys(sites: TrackedSites): SiteKey[] {
   return Object.keys(sites);
 }
 
-/** 追跡中のサイトキーを返す（順序に意味は無い） */
 export async function getTrackedSiteKeys(): Promise<SiteKey[]> {
   return trackedSiteKeys(await getSites());
 }
 
-/** 追加を拒否した理由 */
 export type AddSiteRejection =
   | { reason: 'invalid' }
   | { reason: 'duplicate' }
   | { reason: 'nested'; nested: NestedSite };
 
-/** 追加の結果。`rejection` が null なら `site` に追加した（足した）サイトキーが入る */
 export interface AddSiteResult {
   site: SiteKey | null;
   rejection: AddSiteRejection | null;
 }
 
-/**
- * 入力（URL・`*.` / `www.` 付きの表記を含む）をサイトキーにし、追加してよいかを確かめる。
- * `isDuplicate` は同じキーのサイトが既にあるときに、それを重複として拒否するかを決める
- */
 function checkAddition(
   input: string,
   sites: TrackedSites,
@@ -117,15 +94,10 @@ function newSite(site: SiteKey, now: Date): TrackedSite {
   };
 }
 
-/** ブロックリストに入れた直後のブロック設定（有効な常時ブロック） */
 function newBlockRule(now: Date): BlockRule {
   return { enabled: true, addedAt: now.toISOString(), timeLimit: null };
 }
 
-/**
- * ブロックリストに追加する。サイトが無ければ作り、あれば `block` を足す。
- * 既にブロック設定を持つサイト・既存のサイトと入れ子になるキーは拒否する
- */
 export async function addBlock(
   input: string,
   now: Date
@@ -147,9 +119,6 @@ export async function addBlock(
   });
 }
 
-/**
- * 追跡だけを始める（`block: null`）。既に追跡中のサイト・入れ子になるキーは拒否する
- */
 export async function addTrackedSite(
   input: string,
   now: Date
@@ -166,7 +135,6 @@ export async function addTrackedSite(
   });
 }
 
-/** サイトの 1 件を差し替える。サイトが無ければ何もせず null を返す */
 async function updateSite(
   site: SiteKey,
   change: (current: TrackedSite) => TrackedSite
@@ -179,10 +147,6 @@ async function updateSite(
   });
 }
 
-/**
- * ブロックリストから外す（`block = null`。追跡は続く）。
- * 外す前のブロック設定を返す（ブロック設定が無ければ null）
- */
 export async function removeBlock(site: SiteKey): Promise<BlockRule | null> {
   const changed = await updateSite(site, (current) => ({
     ...current,
@@ -191,9 +155,6 @@ export async function removeBlock(site: SiteKey): Promise<BlockRule | null> {
   return changed?.before.block ?? null;
 }
 
-/**
- * ブロックリストのトグル。切り替える前のブロック設定を返す（ブロック設定が無ければ何もせず null）
- */
 export async function setBlockEnabled(
   site: SiteKey,
   enabled: boolean
@@ -211,7 +172,6 @@ export async function setBlockEnabled(
   });
 }
 
-/** 時間制限を変える。ブロック設定を持たないサイトなら何もせず false を返す */
 export async function setTimeLimit(
   site: SiteKey,
   timeLimit: TimeLimit | null
@@ -229,22 +189,11 @@ export async function setTimeLimit(
   });
 }
 
-/** youtube.com に書く値。`youtube` は非表示機能（null = 使わない）、`block` はアクセスブロック */
 export interface YouTubeSiteUpdate {
   youtube: YouTubeFeatures | null;
-  /**
-   * アクセスブロック。null = ブロック設定ごと外す。
-   * `enabled: false` は既存のブロック設定を無効にする（ブロック設定が無ければ作らない）
-   */
   block: Pick<BlockRule, 'enabled' | 'timeLimit'> | null;
 }
 
-/**
- * youtube.com の YouTube 機能とアクセスブロックを書く。サイトが無ければ作る。
- * ブロックリストに入れた時刻（`addedAt`）は既存のブロック設定があれば引き継ぐ。
- * 無効のブロック設定は新しく作らない（非表示だけを使うサイトにブロック設定を生やさない）。
- * 変更前のサイト（無ければ null）を返す
- */
 export async function updateYouTubeSite(
   update: YouTubeSiteUpdate,
   now: Date
@@ -272,13 +221,9 @@ export async function updateYouTubeSite(
   });
 }
 
-/** 追跡を止めたときの結果。ブロック設定か YouTube 機能が残るサイトは止めない */
 export type StopTrackingResult = 'stopped' | 'not-found' | 'in-use';
 
-/**
- * 追跡を止める（サイトを消す）。ブロック設定か YouTube 機能を持つサイトは消さない
- * （消すとブロックや非表示が画面の操作なしに外れる）。事実の行は呼び出し側で消す
- */
+/** 事実の行（activity）は消さない。呼び出し側で消す */
 export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   return mutateSites((sites) => {
     const current = sites[site];
@@ -293,18 +238,10 @@ export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
 }
 
 export interface ImportSitesResult {
-  /** 新しく追跡を始めた・設定を足したサイト */
   changed: SiteKey[];
-  /** 既存のサイトや先に取り込んだサイトと入れ子になるため取り込まなかったもの */
   skipped: { input: string; nested: NestedSite }[];
 }
 
-/**
- * 設定ファイルの追跡中のサイトを取り込む（書き込みは 1 回）。
- * 既存のサイトの設定は上書きせず、無い設定（ブロック設定・YouTube 機能）だけを足す
- * （重ねて取り込んでも増えず、手元で変えた設定が戻らない）。
- * 形式の誤りは黙って読み飛ばし、入れ子になるものは取り込まずに理由を返す
- */
 export async function importSites(
   imported: readonly TrackedSite[],
   now: Date
@@ -326,7 +263,6 @@ export async function importSites(
       }
       const { site } = checked;
       const current = next[site];
-      // YouTube 機能は youtube.com だけが持てる
       const youtube = site === YOUTUBE_DOMAIN ? entry.youtube : null;
       const merged: TrackedSite = current
         ? {
