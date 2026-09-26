@@ -341,3 +341,20 @@ describe('数値は activity から導出する', () => {
     expect(screen.getByText('blockedTimesShort(5)')).toBeInTheDocument();
   });
 });
+
+describe('壁紙のダウンロードボタン', () => {
+  it('表示の準備ができた最初の描画から出ている（後続の再描画を待たない）', async () => {
+    renderApp({
+      vision: {
+        defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+        presets: [],
+        activePresetId: null
+      }
+    });
+
+    // 準備完了後の画面が出た時点で、同じ描画の中にボタンがあること。
+    // findBy で待つと、無関係な再描画が起きたときだけ出る実装でも通ってしまう
+    await screen.findByTestId('newtab-setup-cta');
+    expect(screen.getByTestId('newtab-download-button')).toBeInTheDocument();
+  });
+});

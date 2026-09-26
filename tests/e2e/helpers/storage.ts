@@ -6,6 +6,7 @@ import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type {
   BlockRule,
   SiteKey,
+  TrackedSite,
   TrackedSites,
   YouTubeFeatures
 } from '~/types/site';
@@ -374,6 +375,28 @@ export async function setSitesFromExtension(
     'sites',
     makeSites(seeds)
   );
+}
+
+/** 追跡中のサイトに行そのものが無いことを示す値 */
+export const SITE_ROW_MISSING = 'missing';
+
+/**
+ * 保存済みの追跡中のサイトの 1 行から、ブロック設定か YouTube 機能を読む
+ *
+ * 行が無いときだけ `SITE_ROW_MISSING` を返す。`row?.[field] ?? 'missing'` の形で
+ * 書くと、設定を外した行（値が null）まで「行が無い」に化け、
+ * 「外しても追跡は続く（値が null の行が残る）」の検査が必ず落ちる。
+ */
+export async function readSiteSetting(
+  page: Page,
+  domain: SiteKey,
+  field: 'block' | 'youtube'
+): Promise<
+  TrackedSite['block'] | TrackedSite['youtube'] | typeof SITE_ROW_MISSING
+> {
+  const sites = await getStorageData(page, 'sites');
+  const row = sites?.[domain];
+  return row === undefined ? SITE_ROW_MISSING : row[field];
 }
 
 /**

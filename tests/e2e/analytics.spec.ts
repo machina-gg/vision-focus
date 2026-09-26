@@ -14,7 +14,8 @@ import {
   getStorageData,
   makeActivity,
   makeAppSettings,
-  makeSites
+  makeSites,
+  readSiteSetting
 } from './helpers/storage';
 import {
   getStorageViaSW,
@@ -360,10 +361,7 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     // 解除したサイトは追跡中に残る（書き込みは非同期なので反映を待つ）
     await expect
-      .poll(async () => {
-        const sites = await getStorageData(optionsPage, 'sites');
-        return sites?.[TEST_DOMAINS.example]?.block ?? 'missing';
-      })
+      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'block'))
       .toBeNull();
 
     // 解除の回数も事実の表に残る

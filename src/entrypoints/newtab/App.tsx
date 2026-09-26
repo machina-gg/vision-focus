@@ -281,12 +281,14 @@ export function NewtabApp() {
         className="absolute bottom-6 right-6 flex items-center gap-3"
         data-html2canvas-ignore="true"
       >
-        {/* Download Wallpaper Button */}
-        {containerRef.current && (
-          <DownloadButton
-            targetRef={containerRef as React.RefObject<HTMLElement>}
-          />
-        )}
+        {/*
+          壁紙のダウンロード。ref は描画の後に入るので、描画中に containerRef.current で
+          出し分けると、後続の再描画が起きない限りボタンが出ない。
+          撮影対象はボタン側が押された時点の ref から読む
+        */}
+        <DownloadButton
+          targetRef={containerRef as React.RefObject<HTMLElement>}
+        />
 
         {/* Settings Button */}
         <button

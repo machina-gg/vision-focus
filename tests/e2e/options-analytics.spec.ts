@@ -367,6 +367,12 @@ test.describe('Options - Analytics Tab', () => {
     await expect(addSiteInput).toHaveValue('');
     await expect(page.locator(SELECTORS.analytics.addSiteError)).toHaveCount(0);
 
+    // 拒否されたら追跡中のサイトは増えも減りもしない。beforeEach の種
+    // （seedBlockRanking）も含むので、期待値は拒否の前に読んだ集合で持つ
+    const keysBeforeRejection = Object.keys(
+      (await getStorageData(page, 'sites')) ?? {}
+    ).sort();
+
     // 追跡中のサイトに含まれるサブドメインは入れ子として拒否され、理由が画面に出る
     await addSiteInput.fill('m.example.com');
     await addButton.click();
@@ -377,9 +383,9 @@ test.describe('Options - Analytics Tab', () => {
     await expect(error).toContainText('example.com');
     // 理由を読んで直せるよう、入力は残る
     await expect(addSiteInput).toHaveValue('m.example.com');
-    expect(Object.keys((await getStorageData(page, 'sites')) ?? {})).toEqual([
-      'example.com'
-    ]);
+    expect(
+      Object.keys((await getStorageData(page, 'sites')) ?? {}).sort()
+    ).toEqual(keysBeforeRejection);
 
     await page.close();
   });
