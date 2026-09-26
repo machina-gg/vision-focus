@@ -1156,8 +1156,14 @@
     "description": "Total time on unblocked sites label"
   },
   "totalTimeOnTrackedSites": {
-    "message": "Total time on tracked sites",
-    "description": "Total time on tracked sites label"
+    "message": "Total time on tracked sites (last $DAYS$ days)",
+    "description": "Heading of the usage chart. The number of days is the chart period",
+    "placeholders": {
+      "days": {
+        "content": "$1",
+        "example": "14"
+      }
+    }
   },
   "yesterday": {
     "message": "Yesterday",

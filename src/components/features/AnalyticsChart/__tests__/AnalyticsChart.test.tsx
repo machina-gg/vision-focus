@@ -98,7 +98,10 @@ describe('AnalyticsChart', () => {
     it('直近 14 日・追跡中のサイトの合計時間と件数を出す', () => {
       renderChart(activity, sites);
 
-      expect(screen.getByText('totalTimeOnTrackedSites')).toBeInTheDocument();
+      // 見出しの日数はグラフの期間と同じ定数から渡る
+      expect(
+        screen.getByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
+      ).toBeInTheDocument();
       // 600 + 1200 + 3000 + 600 = 5400 秒
       expect(screen.getByText('1h 30m')).toBeInTheDocument();
       expect(screen.getByText('chartSiteCount(2)')).toBeInTheDocument();

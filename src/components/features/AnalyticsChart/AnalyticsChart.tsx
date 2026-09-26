@@ -18,7 +18,7 @@ import { CumulativeChart } from './CumulativeChart';
 
 export type ChartType = 'daily' | 'bySite' | 'cumulative';
 
-/** 3 系列と見出しの合計が共有する期間（今日を含む直近の日数） */
+/** 3 系列と見出しの合計が共有する期間（今日を含む直近の日数）。見出しの文言にもこの値を渡す */
 export const CHART_DAYS = 14;
 /** サイト別グラフに並べるサイトの数 */
 const BY_SITE_LIMIT = 8;
@@ -107,7 +107,7 @@ export function AnalyticsChart({
       {/* Summary */}
       <div className="p-4 bg-block-50 rounded-lg border border-block-100">
         <p className="text-sm text-block-600 font-medium">
-          {getMessage('totalTimeOnTrackedSites')}
+          {getMessage('totalTimeOnTrackedSites', String(CHART_DAYS))}
         </p>
         <p className="text-2xl font-bold text-block-700">
           {formatTime(totalSeconds)}
