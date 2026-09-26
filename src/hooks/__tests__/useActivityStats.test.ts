@@ -1,0 +1,212 @@
+import { describe, expect, it, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
+
+import {
+  blockCountsByDomain,
+  blockedHostTotals,
+  retentionRange,
+  todayStats,
+  useActivitySources
+} from '../useActivityStats';
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog, DailySiteActivity } from '~/types/activity';
+import type { AppSettings, BlockItem, UnblockHistory } from '~/types/storage';
+import {
+  DEFAULT_ACTIVITY,
+  DEFAULT_SETTINGS,
+  DEFAULT_UNBLOCK_HISTORY,
+  DEFAULT_YOUTUBE_SETTINGS
+} from '~/types/storage';
+
+/**
+ * 画面が activity から数値を出すときの組み立ての検査。
+ * 集計そのもの（sumRange / rankSites など）は activityStats の単体テストが見るので、
+ * ここでは「どの期間・どの母集団・どのキーで引くか」を見る
+ */
+
+const storedValues = vi.hoisted(() => ({
+  values: {} as Record<string, unknown>
+}));
+
+// 実物の項目は chrome.storage を読むため、キーで値を返すだけの形に差し替える
+vi.mock('~/lib/storage', () => ({
+  activityItem: { key: 'local:activity' },
+  settingsItem: { key: 'local:settings' },
+  unblockHistoryItem: { key: 'local:unblockHistory' }
+}));
+
+vi.mock('../useStorageItem', () => ({
+  useStorageItem: (item: { key: string }) => [
+    storedValues.values[item.key],
+    vi.fn()
+  ]
+}));
+
+// 月末・年末をまたがない日を基準にし、日付の加減算の検査を 1 つに絞る
+const NOW = new Date(2026, 5, 15, 10, 0, 0);
+const TODAY = toDateKey(NOW);
+
+function daysBefore(n: number): string {
+  const d = new Date(NOW);
+  d.setDate(d.getDate() - n);
+  return toDateKey(d);
+}
+
+function row(overrides: Partial<DailySiteActivity> = {}): DailySiteActivity {
+  return { seconds: 0, blocks: 0, unblocks: 0, ...overrides };
+}
+
+function blockItem(domain: string): BlockItem {
+  return {
+    id: `id-${domain}`,
+    domain,
+    isWildcard: domain.startsWith('*.'),
+    createdAt: '2026-01-01T00:00:00.000Z',
+    enabled: true
+  };
+}
+
+describe('retentionRange', () => {
+  it('daily-cleanup が残す最古の日（今日 - 保持日数）から今日まで', () => {
+    expect(retentionRange(NOW)).toEqual({ from: daysBefore(365), to: TODAY });
+  });
+});
+
+describe('todayStats', () => {
+  it('今日の行だけを数え、トップのサイトとその今日の回数を返す', () => {
+    const log: ActivityLog = {
+      [TODAY]: {
+        'a.com': row({ blocks: 2, seconds: 30, unblocks: 1 }),
+        'b.com': row({ blocks: 3, seconds: 10 })
+      },
+      // 昨日の回数は多くても今日の順位に効かない
+      [daysBefore(1)]: { 'a.com': row({ blocks: 50 }) }
+    };
+
+    expect(todayStats(log, ['a.com', 'b.com'], NOW)).toEqual({
+      seconds: 40,
+      blocks: 5,
+      unblocks: 1,
+      topBlockedSite: 'b.com',
+      topBlockedCount: 3
+    });
+  });
+
+  it('追跡中でないサイトの行は数えない', () => {
+    const log: ActivityLog = {
+      [TODAY]: { 'a.com': row({ blocks: 1 }), 'z.com': row({ blocks: 9 }) }
+    };
+
+    const stats = todayStats(log, ['a.com'], NOW);
+
+    expect(stats.blocks).toBe(1);
+    expect(stats.topBlockedSite).toBe('a.com');
+  });
+
+  it('今日のブロックが 0 件ならトップは null で回数は 0', () => {
+    const log: ActivityLog = {
+      [TODAY]: { 'a.com': row({ seconds: 120 }) },
+      [daysBefore(1)]: { 'a.com': row({ blocks: 4 }) }
+    };
+
+    expect(todayStats(log, ['a.com'], NOW)).toEqual({
+      seconds: 120,
+      blocks: 0,
+      unblocks: 0,
+      topBlockedSite: null,
+      topBlockedCount: 0
+    });
+  });
+});
+
+describe('blockedHostTotals', () => {
+  const log: ActivityLog = {
+    [TODAY]: { 'example.com': row({ blocks: 1, seconds: 60 }) },
+    [daysBefore(365)]: { 'example.com': row({ blocks: 2, seconds: 30 }) },
+    [daysBefore(366)]: { 'example.com': row({ blocks: 100, seconds: 999 }) }
+  };
+
+  it('サブドメインのホスト名を追跡中のサイトに引き直し、保持期間全体で合計する', () => {
+    expect(
+      blockedHostTotals(log, ['example.com'], 'm.example.com', NOW)
+    ).toEqual({ seconds: 90, blocks: 3, unblocks: 0 });
+  });
+
+  it('どのサイトにも属さないホスト名はすべて 0', () => {
+    expect(blockedHostTotals(log, ['example.com'], 'other.com', NOW)).toEqual({
+      seconds: 0,
+      blocks: 0,
+      unblocks: 0
+    });
+  });
+});
+
+describe('blockCountsByDomain', () => {
+  it('項目の表記のまま引けるよう、キーは項目の domain で値は正規化したサイトの回数', () => {
+    const log: ActivityLog = {
+      [TODAY]: { 'example.com': row({ blocks: 1 }) },
+      [daysBefore(10)]: { 'example.com': row({ blocks: 2 }) },
+      [daysBefore(400)]: { 'x.com': row({ blocks: 5 }) }
+    };
+
+    expect(
+      blockCountsByDomain(
+        log,
+        [blockItem('*.example.com'), blockItem('x.com')],
+        NOW
+      )
+    ).toEqual({ '*.example.com': 3, 'x.com': 0 });
+  });
+});
+
+describe('useActivitySources', () => {
+  it('保存値の activity と、設定・解除履歴から作った追跡中のサイトを返す', () => {
+    const activity: ActivityLog = {
+      [TODAY]: { 'x.com': row({ blocks: 1 }) }
+    };
+    const settings: AppSettings = {
+      ...DEFAULT_SETTINGS,
+      blockList: [blockItem('www.x.com')],
+      youtube: { ...DEFAULT_YOUTUBE_SETTINGS, enabled: true }
+    };
+    const history: UnblockHistory = {
+      ...DEFAULT_UNBLOCK_HISTORY,
+      sites: {
+        'reddit.com': {
+          domain: 'reddit.com',
+          status: 'unblocked',
+          blockedAt: '2026-01-01T00:00:00.000Z',
+          unblockedAt: '2026-01-02T00:00:00.000Z',
+          timeAfterUnblock: 0,
+          lastActivity: null
+        }
+      }
+    };
+    storedValues.values = {
+      'local:activity': activity,
+      'local:settings': settings,
+      'local:unblockHistory': history
+    };
+
+    const { result } = renderHook(() => useActivitySources());
+
+    expect(result.current.activity).toBe(activity);
+    expect([...result.current.sites].sort()).toEqual([
+      'reddit.com',
+      'x.com',
+      'youtube.com'
+    ]);
+  });
+
+  it('何も保存されていなければ activity は空で、追跡中のサイトも無い', () => {
+    storedValues.values = {
+      'local:activity': DEFAULT_ACTIVITY,
+      'local:settings': DEFAULT_SETTINGS,
+      'local:unblockHistory': DEFAULT_UNBLOCK_HISTORY
+    };
+
+    const { result } = renderHook(() => useActivitySources());
+
+    expect(result.current).toEqual({ activity: {}, sites: [] });
+  });
+});

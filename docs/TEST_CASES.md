@@ -257,6 +257,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - HTTPS で待ち受けるのは、`youtube.com` が HSTS プリロード済みで http:// が内部昇格されるため。証明書は実行時に自己署名で生成する（リポジトリには含めない）
 - storage の書き込みは Service Worker 経由（`tests/e2e/helpers/sw.ts`）で行う。options を開いて書くとアプリの hydration が state を書き戻して上書きしたり、UI が時間制限値をプリセットに丸めたりするため、意図した状態にならない
 - 時間制限の超過判定は `analytics` を見るが、analytics の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` / `time-limit-reset` アラーム）を即時発火させて待つ
+- ポップアップの今日のサマリー（POP-004）・新しいタブのミニ統計（NEW-004）・ブロック情報とブロック中のサイト一覧の回数（NEW-009 / NEW-010）は `activity` から導出される。前 2 つは今日の行だけ、後 2 つは保持期間全体を数える。種は `makeActivity()` で置き、**母集団は追跡中のサイト**なので、対象のサイトを同じテストでブロックリストか解除履歴にも入れる（入れないと行が読み飛ばされて 0 になる）
 - fixture の settings は必ず `makeSettings()` / `makeYouTubeSettings()` / `makeTimeLimitUsage()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる
 - storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
 - 解除後の時間の記録（`tracker-heartbeat`）が働くのは**解除履歴に `status: 'unblocked'` で載っているドメインだけ**。履歴に無い／再ブロック中のドメインでは途中で return するため、`makeUnblockHistory()` で前提データを用意する

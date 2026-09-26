@@ -15,14 +15,16 @@ import { getSettings, getUnblockHistory } from '~/lib/storage';
 import { normalizeSiteKey } from '~/lib/siteKey';
 import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 import type { SiteKey } from '~/types/site';
+import type { AppSettings, UnblockHistory } from '~/types/storage';
 
-/** 追跡中のサイトキーを重複なしで返す（順序に意味は無い） */
-export async function getTrackedSiteKeys(): Promise<SiteKey[]> {
-  const [history, settings] = await Promise.all([
-    getUnblockHistory(),
-    getSettings()
-  ]);
-
+/**
+ * 保存済みの設定と解除履歴から追跡中のサイトキーを作る（順序に意味は無い）。
+ * 画面は `useStorageItem` で読んだ値をそのまま渡し、background と同じ集合を得る
+ */
+export function trackedSiteKeys(
+  settings: Pick<AppSettings, 'blockList' | 'youtube'>,
+  history: UnblockHistory
+): SiteKey[] {
   const sources = [
     ...Object.keys(history.sites),
     ...settings.blockList.map((item) => item.domain),
@@ -36,4 +38,13 @@ export async function getTrackedSiteKeys(): Promise<SiteKey[]> {
     if (key) keys.add(key);
   }
   return [...keys];
+}
+
+/** 追跡中のサイトキーを重複なしで返す（順序に意味は無い） */
+export async function getTrackedSiteKeys(): Promise<SiteKey[]> {
+  const [history, settings] = await Promise.all([
+    getUnblockHistory(),
+    getSettings()
+  ]);
+  return trackedSiteKeys(settings, history);
 }

@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GoalDisplay, MiniStats, BlockedSitesList } from '~/components/newtab';
 import { DownloadButton } from '~/components/features';
-import type { BlockItem, SiteBlockCount } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 
 import '~/styles/globals.css';
 
@@ -35,22 +35,10 @@ const mockBlockList: BlockItem[] = [
   }
 ];
 
-const mockBlockCounts: Record<string, SiteBlockCount> = {
-  'twitter.com': {
-    domain: 'twitter.com',
-    count: 15,
-    lastBlocked: '2026-02-15T10:00:00Z'
-  },
-  'youtube.com': {
-    domain: 'youtube.com',
-    count: 8,
-    lastBlocked: '2026-02-15T11:00:00Z'
-  },
-  'reddit.com': {
-    domain: 'reddit.com',
-    count: 23,
-    lastBlocked: '2026-02-15T12:00:00Z'
-  }
+const mockBlockCounts: Record<string, number> = {
+  'twitter.com': 15,
+  'youtube.com': 8,
+  'reddit.com': 23
 };
 
 function NewtabDemo() {

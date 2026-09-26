@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { BlockedSitesList } from '../BlockedSitesList';
-import type { BlockItem, SiteBlockCount } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -26,16 +26,6 @@ const itemOf = (domain: string, enabled = true): BlockItem => ({
   createdAt: '2026-01-01T00:00:00.000Z',
   enabled
 });
-
-const countsOf = (
-  counts: Record<string, number>
-): Record<string, SiteBlockCount> =>
-  Object.fromEntries(
-    Object.entries(counts).map(([domain, count]) => [
-      domain,
-      { domain, count, lastBlocked: '2026-01-01T00:00:00.000Z' }
-    ])
-  );
 
 /** 開閉ボタンを押して一覧を開く（もう一度押すと閉じる） */
 function expand() {
@@ -292,7 +282,7 @@ describe('BlockedSitesList', () => {
       render(
         <BlockedSitesList
           blockList={[itemOf('a.example')]}
-          blockCounts={countsOf({ 'a.example': 3 })}
+          blockCounts={{ 'a.example': 3 }}
         />
       );
 
@@ -305,7 +295,7 @@ describe('BlockedSitesList', () => {
       render(
         <BlockedSitesList
           blockList={[itemOf('a.example')]}
-          blockCounts={countsOf({ 'a.example': 0 })}
+          blockCounts={{ 'a.example': 0 }}
         />
       );
 

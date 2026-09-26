@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Shield } from 'lucide-react';
 
 import { getMessage } from '~/lib/i18n';
-import type { BlockItem, SiteBlockCount } from '~/types/storage';
+import type { BlockItem } from '~/types/storage';
 
 interface BlockedSitesListProps {
   blockList: BlockItem[];
-  blockCounts: Record<string, SiteBlockCount>;
+  /** 項目の domain ごとのブロック回数（無い項目は 0 回として扱う） */
+  blockCounts: Record<string, number>;
   maxVisible?: number;
 }
 
@@ -69,7 +70,7 @@ export function BlockedSitesList({
         <div className="mt-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
           <ul className="divide-y divide-white/5">
             {visibleSites.map((item) => {
-              const count = blockCounts[item.domain]?.count ?? 0;
+              const count = blockCounts[item.domain] ?? 0;
               return (
                 <li
                   key={item.id}
