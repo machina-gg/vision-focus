@@ -1,9 +1,13 @@
 import html2canvas from 'html2canvas';
 
+/** 壁紙の解像度の選択肢 */
 export type Resolution = '1080p' | '1440p' | '4k';
 
+/** 壁紙の書き出しの指定 */
 export interface CaptureOptions {
+  /** 出力する解像度 */
   resolution: Resolution;
+  /** canvas.toBlob に渡す画質（0〜1） */
   quality?: number;
 }
 
@@ -79,7 +83,12 @@ async function captureWallpaper(
   });
 }
 
-/** 要素を壁紙の PNG でダウンロードする（ファイル名に寸法が付く） */
+/**
+ * 要素を壁紙の PNG でダウンロードする（ファイル名に寸法が付く）
+ * @param element 壁紙にする要素
+ * @param filename 拡張子と寸法を除いたファイル名
+ * @param options 解像度と画質
+ */
 export async function downloadWallpaper(
   element: HTMLElement,
   filename: string = 'visionfocus-wallpaper',
@@ -100,7 +109,10 @@ export async function downloadWallpaper(
   URL.revokeObjectURL(url);
 }
 
-/** 解像度の選択肢（表示名と寸法つき） */
+/**
+ * 解像度の選択肢（表示名と寸法つき）
+ * @returns value は解像度、label は表示名、dimensions は "幅 x 高さ" の表示
+ */
 export function getResolutionOptions(): {
   value: Resolution;
   label: string;
@@ -113,6 +125,11 @@ export function getResolutionOptions(): {
   ];
 }
 
+/**
+ * 解像度のピクセル寸法
+ * @param resolution 解像度
+ * @returns 幅と高さ（ピクセル）
+ */
 export function getResolutionDimensions(resolution: Resolution): {
   width: number;
   height: number;

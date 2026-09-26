@@ -1,7 +1,11 @@
 import { getMessage } from '~/lib/i18n';
 import type { MessageError } from '~/types/messages';
 
-/** background が返した失敗の種類を表示する文言にする（種類が無い・送れなかった失敗は汎用の文言） */
+/**
+ * background が返した失敗の種類を表示する文言にする（種類が無い・送れなかった失敗は汎用の文言）
+ * @param error background が返した失敗（届かなかったときは undefined）
+ * @returns 画面に出す翻訳済みの文言
+ */
 export function messageErrorText(error: MessageError | undefined): string {
   switch (error?.code) {
     case 'invalid-domain':

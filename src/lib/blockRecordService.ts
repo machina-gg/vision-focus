@@ -3,7 +3,10 @@
 import { setLastBlockedDomain } from '~/lib/storage';
 import { recordHostActivity } from '~/lib/activityService';
 
-/** ブロックが成立したドメインを、ブロック画面の表示用と事実の表の両方に記録する。呼び出し側がブロック成立を確認してから呼ぶ（ここでは判定しない） */
+/**
+ * ブロックが成立したドメインを、ブロック画面の表示用と事実の表の両方に記録する。呼び出し側がブロック成立を確認してから呼ぶ（ここでは判定しない）
+ * @param domain ブロックが成立したホスト名
+ */
 export async function recordBlockedDomain(domain: string): Promise<void> {
   await setLastBlockedDomain(domain);
 

@@ -1,6 +1,14 @@
 import { formatTime } from './time';
 
-/** SNS に共有するレポート文を作る（totalWasteTime は秒。0 や未指定の項目は省く） */
+/**
+ * SNS に共有するレポート文を作る（totalWasteTime は秒。0 や未指定の項目は省く）
+ * @param data 文に入れる値
+ * @param data.totalBlockCount ブロック回数の合計（0 なら行を省く）
+ * @param data.totalWasteTime 浪費時間の合計秒数（0 なら行を省く）
+ * @param data.wasteTimeChangePercent 前の期間からの浪費時間の増減（%。null か未指定なら行を省く）
+ * @param data.topBlockedSite 最もブロックされたサイト（未指定か空なら行を省く）
+ * @returns 改行区切りのレポート文（ハッシュタグ付き）
+ */
 export function generateShareText(data: {
   totalBlockCount: number;
   totalWasteTime: number;
@@ -42,14 +50,21 @@ export function generateShareText(data: {
   return lines.join('\n');
 }
 
-/** X の投稿画面を、文を入れた状態で新しいタブに開く */
+/**
+ * X の投稿画面を、文を入れた状態で新しいタブに開く
+ * @param text 投稿欄に入れる文
+ */
 export function shareToX(text: string): void {
   const encodedText = encodeURIComponent(text);
   const url = `https://twitter.com/intent/tweet?text=${encodedText}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-/** canvas を PNG でクリップボードに写す（できなければ false） */
+/**
+ * canvas を PNG でクリップボードに写す（できなければ false）
+ * @param canvas 写す canvas
+ * @returns 写せたら true
+ */
 export async function copyImageToClipboard(
   canvas: HTMLCanvasElement
 ): Promise<boolean> {
@@ -84,7 +99,11 @@ export async function copyImageToClipboard(
   }
 }
 
-/** canvas を PNG でダウンロードする */
+/**
+ * canvas を PNG でダウンロードする
+ * @param canvas 保存する canvas
+ * @param filename 保存するファイル名
+ */
 export function downloadImage(
   canvas: HTMLCanvasElement,
   filename: string
@@ -98,7 +117,11 @@ export function downloadImage(
   document.body.removeChild(link);
 }
 
-/** 要素を画像化した canvas を返す（失敗したか大きさが 0 なら null） */
+/**
+ * 要素を画像化した canvas を返す（失敗したか大きさが 0 なら null）
+ * @param element 画像化する要素
+ * @returns 2 倍の解像度で描いた canvas
+ */
 export async function captureElementAsCanvas(
   element: HTMLElement
 ): Promise<HTMLCanvasElement | null> {
