@@ -57,7 +57,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       context,
       extensionId,
       'activity',
-      makeActivity({ [TEST_DOMAINS.example]: { seconds: 10 } }) // 超過
+      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]]) // 超過
     );
 
     // 実装と同じ経路（check-schedule アラーム）で再計算させ、
@@ -161,7 +161,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     // 未超過（30秒 / 上限60秒）。スケジュールは有効時間帯
     await setupStorageViaSW(context, {
       settings: makeSettings(settings),
-      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 30 } })
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 30 }]])
     });
     await triggerBlockRuleRecompute(context);
 
@@ -179,7 +179,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     // 超過させると、同じ設定でブロックされる
     await setupStorageViaSW(context, {
       settings: makeSettings(settings),
-      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 100 } })
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
     });
     await triggerBlockRuleRecompute(context);
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
@@ -233,7 +233,7 @@ test.describe('Interaction - 機能間相互作用', () => {
       context,
       extensionId,
       'activity',
-      makeActivity({ [TEST_DOMAINS.example]: { seconds: 10 } }) // 超過
+      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]]) // 超過
     );
 
     // 実装と同じ経路（check-schedule アラーム）で再計算させ、

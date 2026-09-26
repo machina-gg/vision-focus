@@ -12,7 +12,6 @@ import type {
   DashboardPreset,
   SiteBlockCount,
   StorageSchema,
-  TimeLimitUsage,
   UnblockedSite,
   UnblockHistory,
   VisionSettings,
@@ -314,30 +313,6 @@ export function makeYouTubeSettings(
 }
 
 /**
- * Time Limit の使用実績を作る
- *
- * 実装は `analytics.timeLimitUsage[domain]` に
- * `{ domain, dailyUsedSeconds, lastDailyReset }`
- * の形で持つ。トップレベルの `timeLimitUsage` キーや
- * `{ daily: { used, resetAt } }` という形は実装に存在しない。
- */
-export function makeTimeLimitUsage(
-  domain: string,
-  used: { daily?: number } = {},
-  now: Date = new Date()
-): Record<string, TimeLimitUsage> {
-  const todayKey = now.toISOString().slice(0, 10);
-
-  return {
-    [domain]: {
-      domain,
-      dailyUsedSeconds: used.daily ?? 0,
-      lastDailyReset: todayKey
-    }
-  };
-}
-
-/**
  * AppSettings の完全な形を作る
  *
  * 必須フィールドを欠くとアプリ側の参照が壊れる。また analyticsOptIn を
@@ -381,7 +356,6 @@ export function makeAnalytics(
     siteCategories: {},
     siteBlockCounts: {},
     siteUnblockCounts: {},
-    timeLimitUsage: {},
     ...overrides
   };
 }

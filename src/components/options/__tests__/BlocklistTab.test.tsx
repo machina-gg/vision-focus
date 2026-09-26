@@ -173,7 +173,7 @@ describe('BlocklistTab', () => {
       };
     }
 
-    it('ブロック回数は全期間の合計をその項目に表示する', () => {
+    it('ブロック回数は保持期間全体の合計をその項目に表示する', () => {
       setSettings({ blockList: [itemOf({ domain: 'example.com' })] });
       const lastWeek = new Date();
       lastWeek.setDate(lastWeek.getDate() - 7);

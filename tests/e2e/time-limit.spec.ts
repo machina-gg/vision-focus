@@ -44,9 +44,9 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      activity: makeActivity({
-        [TEST_DOMAINS.example]: { seconds: 100 } // 60秒を超過
-      })
+      activity: makeActivity([
+        [TEST_DOMAINS.example, { seconds: 100 }] // 60秒を超過
+      ])
     });
 
     // 超過判定は activity を見るが、activity の変更は再計算のトリガーに
@@ -88,7 +88,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 30 } })
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 30 }]])
     });
 
     // 外部サイトを開いてからポップアップを開く
@@ -133,7 +133,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 60 } })
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 60 }]])
     });
 
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
@@ -162,7 +162,7 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      activity: makeActivity({ [TEST_DOMAINS.example]: { seconds: 100 } })
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
     });
 
     await triggerBlockRuleRecompute(context);
@@ -182,9 +182,6 @@ test.describe('TimeLimit - Time Limit 機能', () => {
   test('TL-009: Daily の使用実績は日付が変わるとリセットされる', async ({
     context
   }) => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
     // 前日（ローカル日付）の行だけが上限を超えている状態を作る。
     // 使用量は今日の行だけを読むので、リセット処理を経ずに今日は 0 秒になる
     await setupStorageViaSW(context, {
@@ -209,10 +206,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
           }
         ]
       }),
-      activity: makeActivity(
-        { [TEST_DOMAINS.example]: { seconds: 100 } },
-        yesterday
-      )
+      // 3 つ目の要素は「何日前の行か」
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }, 1]])
     });
 
     // 今日は超過していないため、実装と同じ経路（check-schedule アラーム）で
@@ -255,10 +250,10 @@ test.describe('TimeLimit - Time Limit 機能', () => {
         ]
       }),
       // example.com は超過（70/60）、reddit.com は未超過（10/300）
-      activity: makeActivity({
-        [TEST_DOMAINS.example]: { seconds: 70 },
-        [TEST_DOMAINS.reddit]: { seconds: 10 }
-      })
+      activity: makeActivity([
+        [TEST_DOMAINS.example, { seconds: 70 }],
+        [TEST_DOMAINS.reddit, { seconds: 10 }]
+      ])
     });
 
     await triggerBlockRuleRecompute(context);

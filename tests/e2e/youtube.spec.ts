@@ -232,7 +232,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await setStorageData(
       page,
       'activity',
-      makeActivity({ [YOUTUBE_SITE]: { seconds: 10 } })
+      makeActivity([[YOUTUBE_SITE, { seconds: 10 }]])
     );
 
     await page.close();
@@ -372,7 +372,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await setStorageData(
       page,
       'activity',
-      makeActivity({ [YOUTUBE_SITE]: { seconds: 30 } })
+      makeActivity([[YOUTUBE_SITE, { seconds: 30 }]])
     );
 
     await page.close();
@@ -430,7 +430,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await setStorageData(
       page,
       'activity',
-      makeActivity({ [YOUTUBE_SITE]: { seconds: 120 } })
+      makeActivity([[YOUTUBE_SITE, { seconds: 120 }]])
     );
 
     await page.close();

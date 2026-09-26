@@ -35,7 +35,6 @@ vi.mock('~/lib/storage', () => ({
 vi.mock('~/lib/blockService', () => ({
   getBlockState: vi.fn(),
   getActiveBlockedDomains: vi.fn(),
-  findBlockItemForDomain: vi.fn(),
   shouldTrackBlockForDomain: vi.fn()
 }));
 

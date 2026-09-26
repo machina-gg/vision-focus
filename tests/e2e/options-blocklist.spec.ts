@@ -325,13 +325,15 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       withAnalyticsOptIn: true
     });
 
-    // ブロック回数は activity の blocks を全期間で合計した値（今日 8 回 + 前日 4 回）
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    await setStorageData(setupPage, 'activity', {
-      ...makeActivity({ 'example.com': { blocks: 8 } }),
-      ...makeActivity({ 'example.com': { blocks: 4 } }, yesterday)
-    });
+    // ブロック回数は activity の blocks を保持期間全体で合計した値（今日 8 回 + 前日 4 回）
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 8 }],
+        ['example.com', { blocks: 4 }, 1]
+      ])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'blocklist');
