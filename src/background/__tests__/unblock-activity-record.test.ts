@@ -149,6 +149,61 @@ describe('解除の事実が保存される', () => {
   });
 });
 
+describe('効いていないブロックを外す操作は解除として数えない', () => {
+  it('トグル OFF → 削除でも解除は 1 回', async () => {
+    givenSettings({ blockList: [blockItem] });
+
+    await invoke(toggleBlockHandler, { id: 'item-1', enabled: false });
+    await invoke(removeBlockHandler, { id: 'item-1' });
+
+    expect(todayUnblocks('example.com')).toBe(1);
+  });
+
+  it('無効化済みの項目の削除は 0 回', async () => {
+    givenSettings({ blockList: [{ ...blockItem, enabled: false }] });
+
+    await invoke(removeBlockHandler, { id: 'item-1' });
+
+    expect(todayUnblocks('example.com')).toBeUndefined();
+  });
+
+  it('アクセスブロックが OFF の状態で YouTube 機能を無効にしても 0 回', async () => {
+    givenSettings({
+      youtube: {
+        ...DEFAULT_YOUTUBE_SETTINGS,
+        enabled: true,
+        blockAccess: false
+      }
+    });
+
+    await invoke(updateYouTubeSettingsHandler, {
+      youtube: {
+        ...DEFAULT_YOUTUBE_SETTINGS,
+        enabled: false,
+        blockAccess: false
+      }
+    });
+
+    expect(todayUnblocks('youtube.com')).toBeUndefined();
+  });
+
+  it('アクセスブロックが効いている状態から機能を無効にしたら 1 回', async () => {
+    givenSettings({
+      youtube: { ...DEFAULT_YOUTUBE_SETTINGS, enabled: true, blockAccess: true }
+    });
+
+    await invoke(updateYouTubeSettingsHandler, {
+      youtube: {
+        ...DEFAULT_YOUTUBE_SETTINGS,
+        enabled: false,
+        blockAccess: true
+      }
+    });
+
+    expect(todayUnblocks('youtube.com')).toBe(1);
+  });
+});
+
 describe('事実の記録に失敗しても、本体の操作は成功する', () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
 

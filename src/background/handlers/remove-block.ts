@@ -56,13 +56,17 @@ export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
     }
     await setUnblockHistory(history);
 
+    // 解除は「利用者の操作でブロックが効かなくなったこと」なので、効いていた項目の削除だけ数える
+    // （無効化済みの項目を消しても効かなくなるブロックは無く、トグル OFF と二重に数えてしまう）。
     // ブロックリストから外したサイトも解除履歴に残るので追跡は続き、解除として記録できる。
     // 解除履歴を書く前に記録すると、追跡中の集合に無いサイトとして捨てられうる
-    await recordActivity({
-      kind: 'unblock',
-      site: normalizeSiteKey(removedItem.domain),
-      at: new Date()
-    });
+    if (removedItem.enabled) {
+      await recordActivity({
+        kind: 'unblock',
+        site: normalizeSiteKey(removedItem.domain),
+        at: new Date()
+      });
+    }
   }
 
   return { success: true };

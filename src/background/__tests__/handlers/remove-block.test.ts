@@ -202,6 +202,20 @@ describe('remove-block ハンドラ', () => {
       );
     });
 
+    it('無効化済みの項目の削除は記録しない（効いていないブロックを外しても解除ではない）', async () => {
+      vi.mocked(getSettings).mockResolvedValue({
+        ...DEFAULT_SETTINGS,
+        blockList: [{ ...blockItem, enabled: false }]
+      });
+
+      await invoke(handler, { id: 'item-1' });
+
+      expect(setSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ blockList: [] })
+      );
+      expect(recordActivity).not.toHaveBeenCalled();
+    });
+
     it('該当項目が無ければ記録しない', async () => {
       await invoke(handler, { id: 'not-exists' });
 
