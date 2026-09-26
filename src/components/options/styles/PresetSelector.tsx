@@ -112,14 +112,25 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   );
 }
 
+/** PresetButtons に渡すプリセットの一覧と操作 */
 interface PresetButtonsProps {
+  /** ボタンとして並べるプリセットの下書き（上限に達していれば新規作成ボタンを出さない） */
   draftPresets: UsePresetsReturn['draftPresets'];
+  /** 適用中のプリセットにチェックを付けるための表示設定（読み込み前は undefined で、チェックを付けない） */
   vision: VisionSettings | undefined;
+  /** 編集のために選んでいるプリセットの id（null なら未選択） */
   selectedPresetId: string | null;
+  /** プリセットのボタンが押されたときに、その id を受け取る */
   onSelectPreset: (presetId: string) => void;
+  /** 新規作成ボタンが押されたときに呼ぶ */
   onCreateClick: () => void;
 }
 
+/**
+ * プリセットを選ぶボタンの並びと、新規作成ボタンを表示する
+ * @param props プリセットの一覧と操作（各フィールドは PresetButtonsProps）
+ * @returns プリセットのボタンの並び
+ */
 function PresetButtons({
   draftPresets,
   vision,
@@ -171,19 +182,35 @@ function PresetButtons({
   );
 }
 
+/** EditingIndicator に渡す編集中のプリセットの状態と操作 */
 interface EditingIndicatorProps {
+  /** 編集中のプリセットの id と名前 */
   selectedPreset: { id: string; name: string };
+  /** 編集のために選んでいるプリセットの id（適用中かの判定に使う） */
   selectedPresetId: string | null;
+  /** true なら未保存の変更がある印を出す。false なら保存ボタンを押せない */
   isDirty: boolean;
+  /** true なら保存ボタンの文言を「保存しました」にする */
   visionSaved: boolean;
+  /** 編集中の表示設定の下書き（目標が空白だけなら保存ボタンを押せない） */
   draftDisplaySettings: DashboardDisplaySettings;
+  /** 編集中のプリセット名（空白だけなら保存ボタンを押せない） */
   editingPresetName: string;
+  /** 適用中のプリセットを引く表示設定（編集中のものが適用中なら、適用ボタンの代わりに適用中の印を出す） */
   vision: VisionSettings | undefined;
+  /** 削除ボタンが押されたときに、編集中のプリセットの id を受け取る */
   onDeletePreset: (id: string) => Promise<void>;
+  /** 適用ボタンが押されたときに呼ぶ */
   onApplyPreset: () => Promise<void>;
+  /** 保存ボタンが押されたときに呼ぶ */
   onSavePreset: () => Promise<void>;
 }
 
+/**
+ * 編集中のプリセット名と未保存の印、削除・適用・保存のボタンを帯で表示する
+ * @param props 編集中のプリセットの状態と操作（各フィールドは EditingIndicatorProps）
+ * @returns 編集中のプリセットの帯
+ */
 function EditingIndicator({
   selectedPreset,
   selectedPresetId,

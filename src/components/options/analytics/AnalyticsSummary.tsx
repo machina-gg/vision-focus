@@ -177,13 +177,23 @@ export function AnalyticsSummary({
   );
 }
 
+/** TrackedSiteItem に渡す 1 行分のサイトと操作 */
 interface TrackedSiteItemProps {
+  /** 行に出すサイトと、その状態・最後に解除した日・解除してからの時間 */
   row: TrackedSiteRow;
+  /** 今日の日付キー（「何日前」の表記の基準） */
   today: DateKey;
+  /** ブロックに戻すボタンが押されたときに、そのサイトを受け取る */
   onReblock: (site: TrackedSite) => void;
+  /** 計測をやめるボタンが押されたときに、そのサイトを受け取る */
   onStopTracking: (site: TrackedSite) => void;
 }
 
+/**
+ * 計測中のサイト 1 件を、状態・ブロックした日・解除した日と解除してからの時間とともに表示する（ブロック中でなければ再ブロックのボタンを出し、ブロックも YouTube の設定も無いサイトには計測をやめるボタンも出す）
+ * @param props 1 行分のサイトと操作（各フィールドは TrackedSiteItemProps）
+ * @returns 計測中のサイトの 1 行
+ */
 function TrackedSiteItem({
   row,
   today,
