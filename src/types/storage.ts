@@ -108,6 +108,19 @@ export interface PasswordSettings {
   passwordHash: string | null; // SHA-256 hash of the password (null if not set)
 }
 
+// ブロック解除の長押し確認に要る秒数。選べる値だけを型で縛る
+export type UnblockHoldSeconds = 5 | 10 | 30 | 60;
+
+// 設定画面の選択肢と取り込み時の検証が同じ値の集合を見るよう、ここだけに並べる
+export const UNBLOCK_HOLD_SECONDS_OPTIONS: readonly UnblockHoldSeconds[] = [
+  5, 10, 30, 60
+];
+
+// パスワード保護が無効なときのブロック解除確認（長押し）の設定
+export interface UnblockConfirmSettings {
+  holdSeconds: UnblockHoldSeconds;
+}
+
 export interface AppSettings {
   blockList: BlockItem[];
   schedules: Schedule[];
@@ -115,6 +128,8 @@ export interface AppSettings {
   notifications: NotificationSettings; // Notification preferences
   youtube: YouTubeSettings; // YouTube in-app blocking settings
   password: PasswordSettings; // Password protection for unblock operations
+  // この項目を持たない保存データがあるため、読み出しは src/lib/unblockConfirm.ts を通す
+  unblockConfirm: UnblockConfirmSettings;
   analyticsOptIn?: import('./analytics').AnalyticsOptIn | null; // null = not yet decided (show modal)
 }
 
@@ -158,6 +173,10 @@ export const DEFAULT_PASSWORD_SETTINGS: PasswordSettings = {
   passwordHash: null
 };
 
+export const DEFAULT_UNBLOCK_CONFIRM_SETTINGS: UnblockConfirmSettings = {
+  holdSeconds: 5
+};
+
 // 支援誘導の初期状態（未操作）
 export const DEFAULT_SUPPORT_PROMPT_STATE: SupportPromptState = {
   dismissedAt: null,
@@ -171,7 +190,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   paused: false,
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
   youtube: DEFAULT_YOUTUBE_SETTINGS,
-  password: DEFAULT_PASSWORD_SETTINGS
+  password: DEFAULT_PASSWORD_SETTINGS,
+  unblockConfirm: DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 };
 
 export const DEFAULT_STORAGE: StorageSchema = {

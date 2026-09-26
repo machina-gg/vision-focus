@@ -3,8 +3,9 @@ import { ShieldOff, Trash2 } from 'lucide-react';
 
 import { Modal, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
+import type { UnblockHoldSeconds } from '~/types/storage';
 
-const HOLD_DURATION_MS = 5000;
+const MS_PER_SECOND = 1000;
 
 type UnblockAction = 'toggle' | 'delete';
 
@@ -15,6 +16,8 @@ interface UnblockConfirmModalProps {
   domain: string;
   blockStyle: string;
   action: UnblockAction;
+  /** 確定までに押し続ける秒数。説明文・残り秒数の表示もこの値に従う */
+  holdSeconds: UnblockHoldSeconds;
 }
 
 export function UnblockConfirmModal({
@@ -23,8 +26,10 @@ export function UnblockConfirmModal({
   onConfirm,
   domain,
   blockStyle,
-  action
+  action,
+  holdSeconds
 }: UnblockConfirmModalProps) {
+  const holdDurationMs = holdSeconds * MS_PER_SECOND;
   const [progress, setProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const startTimeRef = useRef<number | null>(null);
@@ -51,7 +56,7 @@ export function UnblockConfirmModal({
     if (startTimeRef.current === null) return;
 
     const elapsed = Date.now() - startTimeRef.current;
-    const newProgress = Math.min((elapsed / HOLD_DURATION_MS) * 100, 100);
+    const newProgress = Math.min((elapsed / holdDurationMs) * 100, 100);
     setProgress(newProgress);
 
     if (newProgress >= 100) {
@@ -62,7 +67,7 @@ export function UnblockConfirmModal({
     }
 
     animationFrameRef.current = requestAnimationFrame(updateProgress);
-  }, [onConfirm, onClose, resetProgress]);
+  }, [holdDurationMs, onConfirm, onClose, resetProgress]);
 
   const handlePointerDown = useCallback(() => {
     startTimeRef.current = Date.now();
@@ -87,10 +92,11 @@ export function UnblockConfirmModal({
     };
   }, []);
 
-  const description =
+  const descriptionKey =
     action === 'delete'
-      ? getMessage('deleteBlockConfirmDescription', domain)
-      : getMessage('unblockConfirmDescription', domain);
+      ? 'deleteBlockConfirmDescription'
+      : 'unblockConfirmDescription';
+  const description = getMessage(descriptionKey, [domain, String(holdSeconds)]);
 
   const Icon = action === 'delete' ? Trash2 : ShieldOff;
 
@@ -136,7 +142,8 @@ export function UnblockConfirmModal({
                 className={`text-sm font-medium ${isHolding ? 'text-danger-700' : 'text-danger-600'}`}
               >
                 {getMessage('unblockConfirmHoldButton')}
-                {isHolding && ` (${Math.ceil(((100 - progress) / 100) * 5)}s)`}
+                {isHolding &&
+                  ` (${Math.ceil(((100 - progress) / 100) * holdSeconds)}s)`}
               </span>
             </div>
           </button>

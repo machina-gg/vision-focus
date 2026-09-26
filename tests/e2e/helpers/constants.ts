@@ -209,6 +209,10 @@ export const SELECTORS = {
     faq: '[data-testid="help-faq"]',
     troubleshooting: '[data-testid="help-troubleshooting"]',
     passwordSection: '[data-testid="help-password-section"]',
+    unblockProtectionSection: '[data-testid="help-unblock-protection-section"]',
+    // 共通の Select は目印を受け取らないため、枠の目印から select を指す
+    unblockHoldSecondsSelect:
+      '[data-testid="unblock-hold-seconds-field"] select',
     // パスワード保護はボタンではなくトグルで有効化する
     passwordEnableToggle: '[data-testid="password-enable-toggle"]',
     // パスワード欄の目印は欄ごとに別の値になっている。数・表示の確認は前方一致で

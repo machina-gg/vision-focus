@@ -354,6 +354,7 @@ export function makeSettings(
     // 落ちて無言で既定値になるため、完全な形を作る 1 箇所に寄せる
     youtube: makeYouTubeSettings({ enabled: false }),
     password: { enabled: false, passwordHash: null },
+    unblockConfirm: { holdSeconds: 5 },
     analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
     ...overrides
   };

@@ -5,6 +5,7 @@ import {
   clearStorage,
   setStorageData,
   getStorageData,
+  holdUnblockConfirm,
   makeSettings,
   makeDisplaySettings,
   SELECTORS,
@@ -294,6 +295,59 @@ test.describe('Options - Help Tab', () => {
 
     // エラーではないことを確認する
     await expect(resultMessage).not.toContainText(/error|失敗|不正/i);
+
+    await page.close();
+  });
+  test('OPT-H12: 長押しの秒数を変えると、ブロック解除にその秒数の長押しが要る', async ({
+    context,
+    extensionId
+  }) => {
+    // 既定（5 秒）と区別でき、かつテストが長くなりすぎない秒数を選ぶ
+    const HOLD_SECONDS = 10;
+    // 押し始めの記録と描画の遅れで、実測は設定値より少し短く出ることがある
+    const MEASUREMENT_SLACK_MS = 1000;
+    test.setTimeout(60 * 1000);
+
+    const setupPage = await openOptions(context, extensionId);
+    await setupTestStorage(setupPage, {
+      withGoal: true,
+      withBlockList: true,
+      withAnalyticsOptIn: true
+    });
+    await setupPage.close();
+
+    const page = await openOptions(context, extensionId, 'help');
+
+    // ヘルプタブの「ブロック解除の保護」で秒数を変える
+    await expect(
+      page.locator(SELECTORS.help.unblockProtectionSection)
+    ).toBeVisible();
+    await page
+      .locator(SELECTORS.help.unblockHoldSecondsSelect)
+      .selectOption(String(HOLD_SECONDS));
+
+    await expect
+      .poll(async () => {
+        const settings = await getStorageData(page, 'settings');
+        return settings?.unblockConfirm?.holdSeconds;
+      })
+      .toBe(HOLD_SECONDS);
+
+    // ブロックリストタブで項目を無効化しようとすると、変えた秒数の長押しが求められる
+    await page.locator(SELECTORS.options.blocklistTab).click();
+    const toggle = page.locator(SELECTORS.options.itemToggle).first();
+    await toggle.click();
+
+    const modal = page.locator(SELECTORS.modal.unblockConfirm);
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(`${HOLD_SECONDS} seconds`);
+
+    const elapsedMs = await holdUnblockConfirm(page, HOLD_SECONDS);
+    expect(elapsedMs).toBeGreaterThanOrEqual(
+      HOLD_SECONDS * 1000 - MEASUREMENT_SLACK_MS
+    );
+
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
 
     await page.close();
   });

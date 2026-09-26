@@ -20,7 +20,9 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // 置換値（ドメイン名・スタイル名）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-const HOLD_DURATION_MS = 5000;
+// 既定の秒数で描画し、既存の検査はこの長さを前提にする
+const HOLD_SECONDS = 5;
+const HOLD_DURATION_MS = HOLD_SECONDS * 1000;
 
 function renderModal(
   overrides: Partial<React.ComponentProps<typeof UnblockConfirmModal>> = {}
@@ -35,6 +37,7 @@ function renderModal(
       domain="example.com"
       blockStyle="集中モード"
       action="toggle"
+      holdSeconds={HOLD_SECONDS}
       {...overrides}
     />
   );
@@ -72,10 +75,10 @@ describe('UnblockConfirmModal', () => {
       renderModal({ action: 'toggle' });
 
       expect(
-        screen.getByText('unblockConfirmDescription(example.com)')
+        screen.getByText('unblockConfirmDescription(example.com,5)')
       ).toBeInTheDocument();
       expect(
-        screen.queryByText('deleteBlockConfirmDescription(example.com)')
+        screen.queryByText('deleteBlockConfirmDescription(example.com,5)')
       ).not.toBeInTheDocument();
     });
 
@@ -83,10 +86,10 @@ describe('UnblockConfirmModal', () => {
       renderModal({ action: 'delete' });
 
       expect(
-        screen.getByText('deleteBlockConfirmDescription(example.com)')
+        screen.getByText('deleteBlockConfirmDescription(example.com,5)')
       ).toBeInTheDocument();
       expect(
-        screen.queryByText('unblockConfirmDescription(example.com)')
+        screen.queryByText('unblockConfirmDescription(example.com,5)')
       ).not.toBeInTheDocument();
     });
 
@@ -209,6 +212,59 @@ describe('UnblockConfirmModal', () => {
       });
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('長押しの秒数', () => {
+    // 秒数を既定から変えたとき、確定までの時間・残り秒数・説明文のどれもが
+    // その値に従うこと。どれかが既定のままだと、表示と実際の必要時間が食い違う
+    const LONG_HOLD_SECONDS = 30;
+    const LONG_HOLD_MS = LONG_HOLD_SECONDS * 1000;
+
+    it('説明文に秒数を渡す', () => {
+      renderModal({ holdSeconds: LONG_HOLD_SECONDS, action: 'delete' });
+
+      expect(
+        screen.getByText('deleteBlockConfirmDescription(example.com,30)')
+      ).toBeInTheDocument();
+    });
+
+    it('残り秒数は指定した秒数から数える', () => {
+      renderModal({ holdSeconds: LONG_HOLD_SECONDS });
+
+      fireEvent.pointerDown(holdButton());
+      // 残り 10.5 秒の時点で見る。進捗は約 16ms 刻みで進むため、整数秒の
+      // 境目を避けて切り上げの結果が 1 つに決まる時刻を選ぶ
+      act(() => {
+        vi.advanceTimersByTime(19500);
+      });
+
+      expect(holdButton().textContent).toContain('(11s)');
+    });
+
+    it('既定の 5 秒を過ぎても、指定した秒数に届くまでは確定しない', () => {
+      const { onConfirm } = renderModal({ holdSeconds: LONG_HOLD_SECONDS });
+
+      fireEvent.pointerDown(holdButton());
+      act(() => {
+        vi.advanceTimersByTime(LONG_HOLD_MS - 100);
+      });
+
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
+
+    it('指定した秒数だけ押し続けると確定する', () => {
+      const { onConfirm, onClose } = renderModal({
+        holdSeconds: LONG_HOLD_SECONDS
+      });
+
+      fireEvent.pointerDown(holdButton());
+      act(() => {
+        vi.advanceTimersByTime(LONG_HOLD_MS + 100);
+      });
+
+      expect(onConfirm).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 

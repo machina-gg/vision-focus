@@ -1,6 +1,11 @@
 import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { EXTENSION_URLS } from './constants';
 
+// アプリの既定の長押し秒数（DEFAULT_UNBLOCK_CONFIRM_SETTINGS と同じ値）
+const DEFAULT_HOLD_SECONDS = 5;
+// 長押しの秒数に足す待機の余裕（描画とモーダルが閉じるまでの遅れを吸収する）
+const HOLD_TIMEOUT_MARGIN_MS = 3000;
+
 /**
  * 拡張機能の各ページを開くヘルパー関数
  */
@@ -57,12 +62,17 @@ export async function openNewTab(
 /**
  * Unblock 確認モーダルの長押しボタンを、確定するまで押し続ける
  *
- * 実装は 5 秒間の長押しで確定する（UnblockConfirmModal の HOLD_DURATION_MS）。
+ * 実装は設定した秒数（既定 5 秒）の長押しで確定する（UnblockConfirmModal の holdSeconds）。
  * 単純なクリックでは確定しないため、ポインタを押したまま待機する。
  *
  * @param page - モーダルが表示されているページ
+ * @param holdSeconds - 設定している長押しの秒数（待機の上限をこれに合わせる）
+ * @returns 押し始めてからモーダルが閉じるまでの経過ミリ秒
  */
-export async function holdUnblockConfirm(page: Page): Promise<void> {
+export async function holdUnblockConfirm(
+  page: Page,
+  holdSeconds = DEFAULT_HOLD_SECONDS
+): Promise<number> {
   const button = page.locator('[data-testid="unblock-confirm-hold-button"]');
   await button.waitFor({ state: 'visible' });
 
@@ -71,11 +81,16 @@ export async function holdUnblockConfirm(page: Page): Promise<void> {
 
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
+  const startedAt = Date.now();
 
-  // 確定するとモーダルが閉じるので、それを待つ（最長 8 秒）。
+  // 確定するとモーダルが閉じるので、それを待つ（上限は秒数 + 余裕）。
   // 固定待機だと進捗の進み方に左右されるため、状態で待つ
   try {
-    await button.waitFor({ state: 'detached', timeout: 8000 });
+    await button.waitFor({
+      state: 'detached',
+      timeout: holdSeconds * 1000 + HOLD_TIMEOUT_MARGIN_MS
+    });
+    return Date.now() - startedAt;
   } finally {
     await page.mouse.up();
   }

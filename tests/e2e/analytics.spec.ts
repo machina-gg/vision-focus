@@ -149,7 +149,7 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
 
-    // ブロックリストから削除する = ブロック解除。5 秒の長押しで確定する
+    // ブロックリストから削除する = ブロック解除。既定の 5 秒の長押しで確定する
     await optionsPage.locator(SELECTORS.options.deleteButton).first().click();
     await expect(
       optionsPage.locator(SELECTORS.modal.unblockConfirm)

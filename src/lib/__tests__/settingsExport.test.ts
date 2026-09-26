@@ -14,7 +14,8 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
   DEFAULT_DISPLAY_SETTINGS,
-  DEFAULT_NOTIFICATION_SETTINGS
+  DEFAULT_NOTIFICATION_SETTINGS,
+  DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 } from '~/types/storage';
 
 // テスト用のエクスポートデータを作成するヘルパー
@@ -377,5 +378,78 @@ describe('createDefaultExportData', () => {
     expect(data.data.schedules).toEqual([]);
     expect(data.data.presets).toEqual([]);
     expect(data.data.activePresetId).toBeNull();
+  });
+});
+
+describe('長押しの秒数のエクスポート・インポート', () => {
+  // 書き出したファイルを読み戻したとき、秒数が変わらないこと。
+  // 選べない値のファイルは形式エラーで拒み、秒数の項目が無い古いファイルは既定値に倒す
+  const settingsWith30s: AppSettings = {
+    ...DEFAULT_SETTINGS,
+    unblockConfirm: { holdSeconds: 30 }
+  };
+
+  it('書き出して読み戻すと同じ秒数が適用される', () => {
+    const { data } = exportSettings(settingsWith30s, DEFAULT_VISION);
+    expect(data.data.unblockConfirm).toEqual({ holdSeconds: 30 });
+
+    const imported = validateImportedData(JSON.stringify(data));
+    expect(imported.success).toBe(true);
+
+    const { settings } = applyImportedSettings(
+      imported.data as ExportedSettings['data'],
+      DEFAULT_SETTINGS,
+      DEFAULT_VISION
+    );
+    expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
+  });
+
+  it('秒数の項目を持たない保存データからは既定の秒数を書き出す', () => {
+    const { unblockConfirm: _omitted, ...legacy } = DEFAULT_SETTINGS;
+
+    const { data } = exportSettings(
+      legacy as unknown as AppSettings,
+      DEFAULT_VISION
+    );
+
+    expect(data.data.unblockConfirm).toEqual(DEFAULT_UNBLOCK_CONFIRM_SETTINGS);
+  });
+
+  it.each([5, 10, 30, 60])('%i 秒は受け付ける', (holdSeconds) => {
+    const json = JSON.stringify({
+      ...createValidExportData(),
+      data: { ...createValidExportData().data, unblockConfirm: { holdSeconds } }
+    });
+
+    expect(validateImportedData(json).success).toBe(true);
+  });
+
+  it.each([0, 1, 15, 3600, '5'])(
+    '選べない値（%s）は形式エラーで拒む',
+    (holdSeconds) => {
+      const json = JSON.stringify({
+        ...createValidExportData(),
+        data: {
+          ...createValidExportData().data,
+          unblockConfirm: { holdSeconds }
+        }
+      });
+
+      const result = validateImportedData(json);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('importErrorInvalidFormat');
+    }
+  );
+
+  it('秒数の項目が無いファイルを読み込むと既定の秒数になる', () => {
+    const importData = createValidExportData().data;
+
+    const { settings } = applyImportedSettings(
+      importData,
+      settingsWith30s,
+      DEFAULT_VISION
+    );
+
+    expect(settings.unblockConfirm).toEqual(DEFAULT_UNBLOCK_CONFIRM_SETTINGS);
   });
 });
