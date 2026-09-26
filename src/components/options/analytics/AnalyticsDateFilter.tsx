@@ -8,7 +8,8 @@ import {
 } from '~/components/features';
 import { generateWeeklyReport, generateMonthlyReport } from '~/lib/report';
 import { getMessage } from '~/lib/i18n';
-import type { AnalyticsData } from '~/types/storage';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
 
 /** Tabs の data-testid は `tab-${id}` になるため、設定画面上部のタブの id と重ならない名前にする */
 const REPORT_TABS = {
@@ -22,7 +23,10 @@ const isReportTab = (tabId: string): tabId is ReportTab =>
   tabId === REPORT_TABS.WEEKLY || tabId === REPORT_TABS.MONTHLY;
 
 interface AnalyticsDateFilterProps {
-  analyticsData: AnalyticsData;
+  /** 事実の表 */
+  activity: ActivityLog;
+  /** 母集団（追跡中のサイト）。合計・内訳・トップのすべてをこの集合から出す */
+  sites: readonly SiteKey[];
   /** 支援誘導を出すか */
   isSupportPromptVisible: boolean;
   /** 支援ページを開く */
@@ -32,7 +36,8 @@ interface AnalyticsDateFilterProps {
 }
 
 export function AnalyticsDateFilter({
-  analyticsData,
+  activity,
+  sites,
   isSupportPromptVisible,
   onSupport,
   onDismissSupport
@@ -45,12 +50,12 @@ export function AnalyticsDateFilter({
   const [monthlyOffset, setMonthlyOffset] = useState(0);
 
   const weeklyReport = useMemo(() => {
-    return generateWeeklyReport(analyticsData, weeklyOffset);
-  }, [analyticsData, weeklyOffset]);
+    return generateWeeklyReport(activity, sites, weeklyOffset);
+  }, [activity, sites, weeklyOffset]);
 
   const monthlyReport = useMemo(() => {
-    return generateMonthlyReport(analyticsData, monthlyOffset);
-  }, [analyticsData, monthlyOffset]);
+    return generateMonthlyReport(activity, sites, monthlyOffset);
+  }, [activity, sites, monthlyOffset]);
 
   const handlePreviousWeek = useCallback(() => {
     setWeeklyOffset((prev) => prev - 1);

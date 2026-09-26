@@ -91,9 +91,9 @@ export function WeeklyReportCard({
 
           {/* Stats */}
           <StatsGrid
-            wasteTime={report.totalWasteTime}
-            blockCount={report.totalBlockCount}
-            unblockCount={report.totalUnblockCount}
+            wasteTime={report.totals.seconds}
+            blockCount={report.totals.blocks}
+            unblockCount={report.totals.unblocks}
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
@@ -104,10 +104,10 @@ export function WeeklyReportCard({
             </h4>
             <WeeklyChart
               dailyBreakdown={report.dailyBreakdown.map((d) => ({
-                wasteTime: d.wasteTime,
-                blockCount: d.blockCount
+                wasteTime: d.seconds,
+                blockCount: d.blocks
               }))}
-              dailyBlockCounts={report.dailyBlockCounts}
+              dailyBlockCounts={report.dailyBreakdown.map((d) => d.blocks)}
             />
           </div>
 
@@ -118,10 +118,7 @@ export function WeeklyReportCard({
                 {getMessage('topWasteSites')}
               </h4>
               <RankedList
-                items={report.topWasteSites.map((site) => ({
-                  domain: site.domain,
-                  value: site.time
-                }))}
+                items={report.topWasteSites}
                 valueType="time"
                 bgColor="bg-danger-50"
                 textColor="text-danger-600"
@@ -132,10 +129,7 @@ export function WeeklyReportCard({
                 {getMessage('topBlockedSites')}
               </h4>
               <RankedList
-                items={report.topBlockedSites.map((site) => ({
-                  domain: site.domain,
-                  value: site.count
-                }))}
+                items={report.topBlockedSites}
                 valueType="count"
                 bgColor="bg-info-50"
                 textColor="text-info-600"
@@ -208,9 +202,9 @@ export function MonthlyReportCard({
 
           {/* Stats */}
           <StatsGrid
-            wasteTime={report.totalWasteTime}
-            blockCount={report.totalBlockCount}
-            unblockCount={report.totalUnblockCount}
+            wasteTime={report.totals.seconds}
+            blockCount={report.totals.blocks}
+            unblockCount={report.totals.unblocks}
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
@@ -219,7 +213,13 @@ export function MonthlyReportCard({
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getMessage('weeklyTrend')}
             </h4>
-            <MonthlyTrendChart weeklyBreakdown={report.weeklyBreakdown} />
+            <MonthlyTrendChart
+              weeklyBreakdown={report.weeklyBreakdown.map((w) => ({
+                weekStart: w.weekStart,
+                wasteTime: w.seconds,
+                blockCount: w.blocks
+              }))}
+            />
           </div>
 
           {/* Top Sites */}
@@ -229,10 +229,7 @@ export function MonthlyReportCard({
                 {getMessage('topWasteSites')}
               </h4>
               <RankedList
-                items={report.topWasteSites.map((site) => ({
-                  domain: site.domain,
-                  value: site.time
-                }))}
+                items={report.topWasteSites}
                 valueType="time"
                 bgColor="bg-danger-50"
                 textColor="text-danger-600"
@@ -243,10 +240,7 @@ export function MonthlyReportCard({
                 {getMessage('topBlockedSites')}
               </h4>
               <RankedList
-                items={report.topBlockedSites.map((site) => ({
-                  domain: site.domain,
-                  value: site.count
-                }))}
+                items={report.topBlockedSites}
                 valueType="count"
                 bgColor="bg-info-50"
                 textColor="text-info-600"

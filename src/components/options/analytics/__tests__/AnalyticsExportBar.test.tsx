@@ -4,24 +4,21 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AnalyticsExportBar } from '../AnalyticsExportBar';
-import { REFRESH_SPINNER_DELAY_MS } from '~/constants/intervals';
 import {
-  DEFAULT_ANALYTICS,
-  DEFAULT_SETTINGS,
-  DEFAULT_UNBLOCK_HISTORY
-} from '~/types/storage';
-import type {
-  AnalyticsData,
-  AppSettings,
-  BlockItem,
-  UnblockHistory
-} from '~/types/storage';
+  MAX_HISTORY_DAYS_FALLBACK,
+  REFRESH_SPINNER_DELAY_MS
+} from '~/constants/intervals';
+import { toDateKey } from '~/lib/time';
+import type { ActivityLog, DailySiteActivity } from '~/types/activity';
+import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { AppSettings, BlockItem } from '~/types/storage';
 
 /**
  * AnalyticsExportBar の表示分岐とコールバックの検査
  *
  * CSV の書き出しは「そのデータがあるときだけ押せる」決まりなので、
- * データの有無ごとに押せるかどうかを確かめる。シェア・画像保存は
+ * データの有無ごとに押せるかどうかを確かめる。CSV と X シェア文の数値は、
+ * 保持期間全体・追跡中のサイトの activity から出る。シェア・画像保存は
  * 途中で失敗しても成功表示を出さないことを見る。
  *
  * グラフ本体（AnalyticsChart）は描画に外部ライブラリを使い、ここでの
@@ -33,9 +30,9 @@ import type {
 
 const exportLib = vi.hoisted(() => ({
   exportBlockList: vi.fn(),
-  exportBlockCounts: vi.fn(),
-  exportDailyStats: vi.fn(),
-  exportUnblockedSites: vi.fn()
+  exportSiteBlockCounts: vi.fn(),
+  exportDailyActivity: vi.fn(),
+  exportUnblockedSiteTimes: vi.fn()
 }));
 
 const share = vi.hoisted(() => ({
@@ -73,26 +70,18 @@ const settingsWithBlockList = (domains: string[]): AppSettings => ({
   blockList: domains.map(blockItem)
 });
 
-const analyticsWith = (overrides: Partial<AnalyticsData>): AnalyticsData => ({
-  ...DEFAULT_ANALYTICS,
-  ...overrides
+const row = (values: Partial<DailySiteActivity>): DailySiteActivity => ({
+  seconds: 0,
+  blocks: 0,
+  unblocks: 0,
+  ...values
 });
 
-const historyWith = (domains: string[]): UnblockHistory => ({
-  sites: Object.fromEntries(
-    domains.map((domain) => [
-      domain,
-      {
-        domain,
-        status: 'unblocked' as const,
-        blockedAt: '2026-01-01T00:00:00.000Z',
-        unblockedAt: '2026-01-02T00:00:00.000Z',
-        timeAfterUnblock: 0,
-        lastActivity: null
-      }
-    ])
-  )
-});
+const daysAgo = (days: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return toDateKey(d);
+};
 
 function renderBar(
   overrides: Partial<React.ComponentProps<typeof AnalyticsExportBar>> = {}
@@ -102,8 +91,8 @@ function renderBar(
   const result = render(
     <AnalyticsExportBar
       settings={null}
-      analyticsData={DEFAULT_ANALYTICS}
-      unblockHistory={DEFAULT_UNBLOCK_HISTORY}
+      activity={{}}
+      sites={[]}
       onRefresh={onRefresh}
       onReset={onReset}
       {...overrides}
@@ -148,10 +137,22 @@ describe('AnalyticsExportBar', () => {
       expect(screen.getByTestId('analytics-export-button')).toBeEnabled();
     });
 
-    it('解除履歴だけでも書き出しボタンは押せる', () => {
-      renderBar({ unblockHistory: historyWith(['example.com']) });
+    it('解除の記録だけでも書き出しボタンは押せる', () => {
+      renderBar({
+        activity: { [daysAgo(0)]: { 'example.com': row({ unblocks: 1 }) } },
+        sites: ['example.com']
+      });
 
       expect(screen.getByTestId('analytics-export-button')).toBeEnabled();
+    });
+
+    it('母集団の外のサイトの記録しか無ければデータ無しとして扱う', () => {
+      renderBar({
+        activity: { [daysAgo(0)]: { 'untracked.com': row({ blocks: 3 }) } },
+        sites: ['example.com']
+      });
+
+      expect(screen.getByTestId('analytics-export-button')).toBeDisabled();
     });
 
     it('ブロックリストが空配列ならデータ無しとして扱う', () => {
@@ -199,50 +200,42 @@ describe('AnalyticsExportBar', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('ブロック回数を書き出すとその集計が渡る', () => {
-      const siteBlockCounts = {
-        'example.com': {
-          domain: 'example.com',
-          count: 3,
-          lastBlocked: '2026-01-01T00:00:00.000Z'
+    it('ブロック回数・日別統計・解除サイトは activity と母集団と保持期間で書き出す', () => {
+      const activity: ActivityLog = {
+        [daysAgo(0)]: {
+          'example.com': row({ seconds: 60, blocks: 3, unblocks: 1 })
         }
       };
-      renderBar({ analyticsData: analyticsWith({ siteBlockCounts }) });
+      const sites = ['example.com'];
+      renderBar({ activity, sites });
+      const retention = {
+        from: daysAgo(MAX_HISTORY_DAYS_FALLBACK),
+        to: daysAgo(0)
+      };
 
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-block-counts'));
-
-      expect(exportLib.exportBlockCounts).toHaveBeenCalledWith(siteBlockCounts);
-    });
-
-    it('日別統計を書き出すとその集計が渡る', () => {
-      const dailyStats = {
-        '2026-01-01': {
-          date: '2026-01-01',
-          wasteTime: 60,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      };
-      renderBar({ analyticsData: analyticsWith({ dailyStats }) });
-
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-daily-stats'));
-
-      expect(exportLib.exportDailyStats).toHaveBeenCalledWith(dailyStats);
-    });
-
-    it('解除履歴を書き出すと履歴ごと渡る', () => {
-      const unblockHistory = historyWith(['example.com']);
-      renderBar({ unblockHistory });
-
       openExportMenu();
       fireEvent.click(screen.getByTestId('analytics-export-unblocked'));
 
-      expect(exportLib.exportUnblockedSites).toHaveBeenCalledWith(
-        unblockHistory
+      expect(exportLib.exportSiteBlockCounts).toHaveBeenCalledWith(
+        activity,
+        sites,
+        retention
       );
+      expect(exportLib.exportDailyActivity).toHaveBeenCalledWith(
+        activity,
+        sites,
+        retention
+      );
+      expect(exportLib.exportUnblockedSiteTimes).toHaveBeenCalledWith(
+        activity,
+        sites,
+        daysAgo(0)
+      );
+      expect(analytics.trackFeatureUse).toHaveBeenCalledTimes(3);
     });
 
     it('もう一度押すとメニューは閉じる', () => {
@@ -285,38 +278,20 @@ describe('AnalyticsExportBar', () => {
   });
 
   describe('X へのシェア', () => {
-    it('集計した値でシェア文を作り、成功を伝える', async () => {
+    it('保持期間・追跡中のサイトの合計でシェア文を作り、成功を伝える', async () => {
       renderBar({
-        analyticsData: analyticsWith({
-          siteBlockCounts: {
-            'a.example': {
-              domain: 'a.example',
-              count: 2,
-              lastBlocked: '2026-01-01T00:00:00.000Z'
-            },
-            'b.example': {
-              domain: 'b.example',
-              count: 5,
-              lastBlocked: '2026-01-01T00:00:00.000Z'
-            }
+        activity: {
+          [daysAgo(0)]: {
+            'a.example': row({ seconds: 60, blocks: 2 }),
+            'untracked.com': row({ seconds: 999, blocks: 99 })
           },
-          dailyStats: {
-            '2026-01-01': {
-              date: '2026-01-01',
-              wasteTime: 60,
-              investTime: 0,
-              blockCount: 1,
-              unblockCount: 0
-            },
-            '2026-01-02': {
-              date: '2026-01-02',
-              wasteTime: 30,
-              investTime: 0,
-              blockCount: 1,
-              unblockCount: 0
-            }
+          [daysAgo(1)]: { 'b.example': row({ seconds: 30, blocks: 5 }) },
+          // 保持期間より古い日は数えない
+          [daysAgo(MAX_HISTORY_DAYS_FALLBACK + 1)]: {
+            'a.example': row({ seconds: 999, blocks: 99 })
           }
-        })
+        },
+        sites: ['a.example', 'b.example']
       });
 
       await act(async () => {

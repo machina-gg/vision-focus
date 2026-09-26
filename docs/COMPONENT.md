@@ -18,23 +18,23 @@
 
 ### 機能コンポーネント
 
-| コンポーネント名    | 種別    | 説明                       |
-| ------------------- | ------- | -------------------------- |
-| Header              | layout  | ヘッダー（ロゴ + ナビ）    |
-| GoalCard            | feature | 目標表示カード             |
-| StatsCard           | feature | 統計表示カード             |
-| BlockListItem       | feature | ブロックリスト項目         |
-| SiteTimeChart       | feature | サイト利用時間グラフ       |
-| ChallengeModal      | feature | 解除チャレンジモーダル     |
-| LockdownButton      | feature | ロックダウンモードボタン   |
-| QuickBlockButton    | feature | クイックブロックボタン     |
-| ScheduleEditor      | feature | スケジュール編集           |
-| ImageUploader       | feature | 背景画像アップロード       |
-| FontPicker          | feature | フォント選択（20種類以上） |
-| AnalyticsChart      | feature | 分析グラフ（recharts）     |
-| ReportCard          | feature | 週次/月次レポート表示      |
-| DownloadButton      | feature | 壁紙ダウンロード           |
-| SiteCategoryManager | feature | サイトカテゴリ管理UI       |
+| コンポーネント名    | 種別    | 説明                                                                    |
+| ------------------- | ------- | ----------------------------------------------------------------------- |
+| Header              | layout  | ヘッダー（ロゴ + ナビ）                                                 |
+| GoalCard            | feature | 目標表示カード                                                          |
+| StatsCard           | feature | 統計表示カード                                                          |
+| BlockListItem       | feature | ブロックリスト項目                                                      |
+| SiteTimeChart       | feature | サイト利用時間グラフ                                                    |
+| ChallengeModal      | feature | 解除チャレンジモーダル                                                  |
+| LockdownButton      | feature | ロックダウンモードボタン                                                |
+| QuickBlockButton    | feature | クイックブロックボタン                                                  |
+| ScheduleEditor      | feature | スケジュール編集                                                        |
+| ImageUploader       | feature | 背景画像アップロード                                                    |
+| FontPicker          | feature | フォント選択（20種類以上）                                              |
+| AnalyticsChart      | feature | 利用時間の推移（直近 14 日の日別・サイト別・累積。recharts）            |
+| ReportCard          | feature | 週次/月次レポート表示（`src/lib/report.ts` が組んだレポートを描くだけ） |
+| DownloadButton      | feature | 壁紙ダウンロード                                                        |
+| SiteCategoryManager | feature | サイトカテゴリ管理UI                                                    |
 
 ### 新規タブ用コンポーネント
 
@@ -45,18 +45,22 @@
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名  | 種別    | 説明                                                                     |
-| ----------------- | ------- | ------------------------------------------------------------------------ |
-| GeneralTab        | options | スタイル設定（スタイル管理）                                             |
-| BlocklistTab      | options | ブロックリスト管理                                                       |
-| SchedulesTab      | options | スケジュール管理                                                         |
-| WeeklyCalendar    | options | 週間カレンダー表示                                                       |
-| AnalyticsTab      | options | 分析タブ                                                                 |
-| SettingsTab       | options | 設定タブ（ブロック解除の保護・通知・データとプライバシー・バックアップ） |
-| HelpTab           | options | ヘルプタブ（読むものだけ）                                               |
-| ScheduleModal     | modal   | スケジュール編集モーダル                                                 |
-| NewPresetModal    | modal   | 新規スタイル作成モーダル                                                 |
-| DeletePresetModal | modal   | スタイル削除確認モーダル                                                 |
+| コンポーネント名    | 種別    | 説明                                                                     |
+| ------------------- | ------- | ------------------------------------------------------------------------ |
+| GeneralTab          | options | スタイル設定（スタイル管理）                                             |
+| BlocklistTab        | options | ブロックリスト管理                                                       |
+| SchedulesTab        | options | スケジュール管理                                                         |
+| WeeklyCalendar      | options | 週間カレンダー表示                                                       |
+| AnalyticsTab        | options | 分析タブ。`activity` と追跡中のサイト（母集団）を子へそのまま渡す        |
+| AnalyticsExportBar  | options | 分析タブの見出し・CSV エクスポート・X シェア・利用時間の推移             |
+| SiteRankingList     | options | ブロック回数のランキング（保持期間全体）                                 |
+| AnalyticsSummary    | options | 追跡中のサイト一覧（解除日・解除後の時間・合計）                         |
+| AnalyticsDateFilter | options | 週次/月次レポートの切り替えと期間の移動                                  |
+| SettingsTab         | options | 設定タブ（ブロック解除の保護・通知・データとプライバシー・バックアップ） |
+| HelpTab             | options | ヘルプタブ（読むものだけ）                                               |
+| ScheduleModal       | modal   | スケジュール編集モーダル                                                 |
+| NewPresetModal      | modal   | 新規スタイル作成モーダル                                                 |
+| DeletePresetModal   | modal   | スタイル削除確認モーダル                                                 |
 
 ### ユーティリティ（lib）
 
@@ -521,15 +525,34 @@ function usePresets(props: {
 
 ### useAnalytics
 
-分析データ取得フック。
+分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）と、一覧が使う解除履歴の読み出し。
+数値は返さない（分析タブの数値は `useActivitySources` の `activity` から導出する）。
 
 ```typescript
-function useAnalytics(period: 'today' | 'week' | 'month'): {
-  dailyStats: DailyStat[];
-  siteRanking: SiteTime[];
-  totalWasteTime: number;
-  totalInvestTime: number;
-  loading: boolean;
+function useAnalytics(options: {
+  setSettings: (settings: AppSettings) => void;
+}): {
+  unblockHistory: UnblockHistory;
+  reloadAnalyticsData: () => Promise<void>;
+  handleReblock: (domain: string) => Promise<void>;
+  handleResetAnalytics: () => Promise<void>;
+  handleStopTracking: (domain: string) => Promise<void>;
+  handleRefreshAnalytics: () => Promise<void>;
+  handleAddSiteToTrack: (domain: string) => Promise<void>;
+};
+```
+
+---
+
+### useActivitySources
+
+画面が導出に使う入力（事実の表 `activity` と、その母集団である追跡中のサイト）を保存値から読むフック（`src/hooks/useActivityStats.ts`）。
+どちらも保存値の変更に追従する。数値の集計は画面に書かず、`src/lib/activityStats.ts` の純粋関数に通す。
+
+```typescript
+function useActivitySources(): {
+  activity: ActivityLog;
+  sites: SiteKey[];
 };
 ```
 

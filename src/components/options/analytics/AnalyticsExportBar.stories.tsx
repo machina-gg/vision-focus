@@ -3,11 +3,8 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AnalyticsExportBar } from './AnalyticsExportBar';
-import type {
-  AnalyticsData,
-  AppSettings,
-  UnblockHistory
-} from '~/types/storage';
+import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
+import type { AppSettings } from '~/types/storage';
 
 const mockSettings: AppSettings = {
   blockList: [
@@ -42,51 +39,6 @@ const mockSettings: AppSettings = {
   }
 };
 
-const mockAnalytics: AnalyticsData = {
-  dailyStats: {
-    '2026-02-15': {
-      date: '2026-02-15',
-      wasteTime: 3600,
-      investTime: 7200,
-      blockCount: 5,
-      unblockCount: 0
-    }
-  },
-  siteTime: {},
-  siteCategories: {},
-  siteBlockCounts: {
-    'twitter.com': {
-      domain: 'twitter.com',
-      count: 5,
-      lastBlocked: '2026-02-15T10:00:00Z'
-    }
-  },
-  siteUnblockCounts: {}
-};
-
-const mockUnblockHistory: UnblockHistory = {
-  sites: {
-    'twitter.com': {
-      domain: 'twitter.com',
-      status: 'unblocked',
-      blockedAt: '2026-02-08T10:00:00Z',
-      unblockedAt: '2026-02-10T10:00:00Z',
-      timeAfterUnblock: 3600,
-      lastActivity: '2026-02-15T12:00:00Z'
-    }
-  }
-};
-
-const emptyAnalytics: AnalyticsData = {
-  dailyStats: {},
-  siteTime: {},
-  siteCategories: {},
-  siteBlockCounts: {},
-  siteUnblockCounts: {}
-};
-
-const emptyUnblockHistory: UnblockHistory = { sites: {} };
-
 const meta = {
   title: 'Options/Analytics/AnalyticsExportBar',
   component: AnalyticsExportBar,
@@ -110,8 +62,8 @@ type Story = StoryObj<typeof meta>;
 export const WithData: Story = {
   args: {
     settings: mockSettings,
-    analyticsData: mockAnalytics,
-    unblockHistory: mockUnblockHistory,
+    activity: storyActivity(),
+    sites: STORY_SITES,
     onRefresh: async () => {},
     onReset: () => {}
   }
@@ -121,8 +73,8 @@ export const WithData: Story = {
 export const Empty: Story = {
   args: {
     settings: null,
-    analyticsData: emptyAnalytics,
-    unblockHistory: emptyUnblockHistory,
+    activity: {},
+    sites: [],
     onRefresh: async () => {},
     onReset: () => {}
   }

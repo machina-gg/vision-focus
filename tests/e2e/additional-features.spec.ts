@@ -3,7 +3,7 @@ import { openOptions, openNewTab, openStoragePage } from './helpers/pages';
 import { SELECTORS } from './helpers/constants';
 import {
   clearStorageFromExtension,
-  makeAnalytics,
+  makeActivity,
   makeDisplaySettings,
   makePreset,
   setStorageData,
@@ -140,32 +140,16 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     context,
     extensionId
   }) => {
+    // ブロックリストの example.com を追跡中にし、7 日より前の日を含む activity を置く
     const setupPage = await openStoragePage(context, extensionId);
-    await setupTestStorage(setupPage, {});
-
-    // 7 日より前のデータを含む履歴を用意する
+    await setupTestStorage(setupPage, { withBlockList: true });
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        // 日次の集計は analytics.dailyStats に日付をキーにして入る
-        dailyStats: {
-          '2026-01-01': {
-            date: '2026-01-01',
-            wasteTime: 0,
-            investTime: 0,
-            blockCount: 3,
-            unblockCount: 0
-          },
-          '2026-06-01': {
-            date: '2026-06-01',
-            wasteTime: 0,
-            investTime: 0,
-            blockCount: 5,
-            unblockCount: 0
-          }
-        }
-      })
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 3 }, 60],
+        ['example.com', { blocks: 5 }, 10]
+      ])
     );
     await setupPage.close();
 

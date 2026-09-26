@@ -3,17 +3,22 @@ import { describe, expect, it } from 'vitest';
 import {
   cumulativeSeries,
   dailySeries,
+  daysBetween,
   lastActiveOn,
+  lastBlockedOn,
   lastNDaysRange,
   lastUnblockedOn,
   monthRange,
+  parseDateKey,
   rankSites,
   secondsOnDay,
   secondsSinceUnblock,
   siteTotals,
   sumRange,
   todaySummary,
-  weekRange
+  totalSecondsSinceUnblock,
+  weekRange,
+  weeksIn
 } from '~/lib/activityStats';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 
@@ -316,5 +321,76 @@ describe('lastNDaysRange', () => {
   it('n が 1 未満なら空の範囲', () => {
     const range = lastNDaysRange(new Date(2026, 8, 23, 10), 0);
     expect(dailySeries(log, sites, range)).toEqual([]);
+  });
+});
+
+describe('lastBlockedOn', () => {
+  it('ブロックが 1 回以上あった最後の日', () => {
+    expect(lastBlockedOn(log, 'youtube.com')).toBe('2026-09-28');
+    expect(lastBlockedOn(log, 'reddit.com')).toBe('2026-09-23');
+  });
+
+  it('ブロックされたことが無ければ null', () => {
+    expect(lastBlockedOn(log, 'x.com')).toBeNull();
+  });
+});
+
+describe('totalSecondsSinceUnblock', () => {
+  it('各サイトの secondsSinceUnblock の和', () => {
+    const today = '2026-09-28';
+    const expected =
+      secondsSinceUnblock(log, 'youtube.com', today) +
+      secondsSinceUnblock(log, 'x.com', today);
+    expect(totalSecondsSinceUnblock(log, ['youtube.com', 'x.com'], today)).toBe(
+      expected
+    );
+    // youtube.com は 09-21 から（300 + 7777）、x.com は 09-23 から（50）
+    expect(expected).toBe(300 + 7777 + 50);
+  });
+
+  it('サイトが空なら 0', () => {
+    expect(totalSecondsSinceUnblock(log, [], '2026-09-28')).toBe(0);
+  });
+});
+
+describe('weeksIn', () => {
+  it('範囲と重なる月曜〜日曜の週を、範囲の内側に切り詰めて古い順に返す', () => {
+    // 2026-09-01 は火曜、2026-09-30 は水曜
+    expect(weeksIn({ from: '2026-09-01', to: '2026-09-30' })).toEqual([
+      { from: '2026-09-01', to: '2026-09-06' },
+      { from: '2026-09-07', to: '2026-09-13' },
+      { from: '2026-09-14', to: '2026-09-20' },
+      { from: '2026-09-21', to: '2026-09-27' },
+      { from: '2026-09-28', to: '2026-09-30' }
+    ]);
+  });
+
+  it('週ちょうどの範囲は 1 週', () => {
+    expect(weeksIn(week)).toEqual([week]);
+  });
+
+  it('from > to なら空', () => {
+    expect(weeksIn({ from: '2026-09-27', to: '2026-09-21' })).toEqual([]);
+  });
+});
+
+describe('daysBetween / parseDateKey', () => {
+  it('日付キーをローカルの年月日として読む', () => {
+    const d = parseDateKey('2026-03-01');
+    expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2026, 2, 1]);
+  });
+
+  it('日数の差（同じ日は 0、月・年をまたいでも暦の日数）', () => {
+    expect(daysBetween('2026-09-21', '2026-09-21')).toBe(0);
+    expect(daysBetween('2026-09-21', '2026-09-28')).toBe(7);
+    expect(daysBetween('2026-02-27', '2026-03-01')).toBe(2);
+    expect(daysBetween('2025-12-31', '2026-01-01')).toBe(1);
+    expect(daysBetween('2026-09-28', '2026-09-21')).toBe(-7);
+  });
+
+  it('夏時間の切り替えをまたいでも暦の日数', () => {
+    // 米国は 2026-03-08、欧州は 2026-03-29 に切り替わる
+    expect(daysBetween('2026-03-07', '2026-03-09')).toBe(2);
+    expect(daysBetween('2026-10-31', '2026-11-02')).toBe(2);
   });
 });

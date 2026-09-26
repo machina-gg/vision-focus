@@ -1,402 +1,257 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
   generateWeeklyReport,
   generateMonthlyReport,
   formatWeekRange,
-  formatMonth
+  formatMonth,
+  REPORT_TOP_SITES_LIMIT
 } from '~/lib/report';
-import type { AnalyticsData } from '~/types/storage';
-import { DEFAULT_ANALYTICS } from '~/types/storage';
+import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 
-// 固定日時でテストするためにDateをモック
-const FIXED_DATE = new Date('2024-06-12T12:00:00Z'); // 水曜日
+/**
+ * 週次・月次レポートは、合計・日別（週別）・トップ・前期比をすべて
+ * 同じ期間・同じ母集団（追跡中のサイト）の activity から出す。
+ * 日付はローカル日付なので、TZ=Asia/Tokyo と TZ=America/Los_Angeles の両方で通ることを前提に、
+ * 基準時刻はローカル時刻（new Date(年, 月, 日, 時)）で組む
+ */
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(FIXED_DATE);
-});
+function row(seconds: number, blocks = 0, unblocks = 0): DailySiteActivity {
+  return { seconds, blocks, unblocks };
+}
 
-afterEach(() => {
-  vi.useRealTimers();
-});
+// 2024-06-12（水）。今週は 2024-06-10（月）〜 2024-06-16（日）
+const NOW = new Date(2024, 5, 12, 12);
 
-// テスト用のAnalyticsDataを生成するヘルパー
-function createAnalyticsData(
-  overrides: Partial<AnalyticsData> = {}
-): AnalyticsData {
-  return {
-    ...DEFAULT_ANALYTICS,
-    ...overrides
-  };
+const sites = ['youtube.com', 'reddit.com', 'x.com'];
+
+// 今週の外（前週・翌週・前月・翌月）の日と、母集団の外のサイト（untracked.com）を混ぜてある
+const log: ActivityLog = {
+  '2024-05-31': { 'youtube.com': row(1000, 1, 0) },
+  '2024-06-03': { 'youtube.com': row(2000, 0, 0) },
+  '2024-06-09': { 'youtube.com': row(5000, 9, 0) },
+  '2024-06-10': {
+    'youtube.com': row(1200, 2, 1),
+    'reddit.com': row(600, 1, 0),
+    'untracked.com': row(9999, 9, 9)
+  },
+  '2024-06-12': {
+    'reddit.com': row(1800, 3, 0),
+    'x.com': row(300, 0, 2)
+  },
+  '2024-06-16': { 'youtube.com': row(100, 0, 0) },
+  '2024-06-17': { 'youtube.com': row(7777, 5, 0) },
+  '2024-07-01': { 'youtube.com': row(3333, 3, 3) }
+};
+
+const sum = (values: number[]) => values.reduce((acc, v) => acc + v, 0);
+
+/** レポートがあることを確かめてから返す（null なら失敗させる） */
+function present<T>(report: T | null): T {
+  expect(report).not.toBeNull();
+  if (report === null) throw new Error('report is null');
+  return report;
 }
 
 describe('generateWeeklyReport', () => {
-  it('データなしの現在週でもnullを返さない', () => {
-    const analytics = createAnalyticsData();
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report).not.toBeNull();
+  it('週の合計 = 日別の合計 = 浪費サイトトップの合計（同じ期間・同じ母集団）', () => {
+    const { totals, dailyBreakdown, topWasteSites } = present(
+      generateWeeklyReport(log, sites, 0, NOW)
+    );
+    expect(totals).toEqual({ seconds: 4000, blocks: 6, unblocks: 3 });
+    expect(sum(dailyBreakdown.map((d) => d.seconds))).toBe(totals.seconds);
+    expect(sum(dailyBreakdown.map((d) => d.blocks))).toBe(totals.blocks);
+    expect(sum(dailyBreakdown.map((d) => d.unblocks))).toBe(totals.unblocks);
+    // 母集団のサイト数はトップの上限以下なので、トップが母集団全体を覆う
+    expect(sites.length).toBeLessThanOrEqual(REPORT_TOP_SITES_LIMIT);
+    expect(sum(topWasteSites.map((s) => s.value))).toBe(totals.seconds);
   });
 
-  it('データなしの過去週でnullを返す', () => {
-    const analytics = createAnalyticsData();
-    const report = generateWeeklyReport(analytics, -1);
-    expect(report).toBeNull();
+  it('トップはその週の中で順位を付ける（前週・翌週の値に引っ張られない）', () => {
+    const report = present(generateWeeklyReport(log, sites, 0, NOW));
+    // youtube.com は前週・翌週に大きな値があるが、今週は reddit.com の方が多い
+    expect(report.topWasteSites).toEqual([
+      { domain: 'reddit.com', value: 2400 },
+      { domain: 'youtube.com', value: 1300 },
+      { domain: 'x.com', value: 300 }
+    ]);
+    expect(report.topBlockedSites).toEqual([
+      { domain: 'reddit.com', value: 4 },
+      { domain: 'youtube.com', value: 2 }
+    ]);
+    expect(report.topUnblockedSites).toEqual([
+      { domain: 'x.com', value: 2 },
+      { domain: 'youtube.com', value: 1 }
+    ]);
   });
 
-  it('週の開始日と終了日が正しいフォーマットで返される', () => {
-    const analytics = createAnalyticsData();
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report).not.toBeNull();
-    // YYYY-MM-DD形式で返される
-    expect(report!.weekStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(report!.weekEnd).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    // weekEndはweekStartより後の日付
-    expect(report!.weekEnd > report!.weekStart).toBe(true);
+  it('週は月曜〜日曜の 7 日で、日別は事実の無い日も 0 で並ぶ', () => {
+    const report = present(generateWeeklyReport(log, sites, 0, NOW));
+    expect(report.weekStart).toBe('2024-06-10');
+    expect(report.weekEnd).toBe('2024-06-16');
+    expect(report.dailyBreakdown.map((d) => [d.date, d.seconds])).toEqual([
+      ['2024-06-10', 1800],
+      ['2024-06-11', 0],
+      ['2024-06-12', 2100],
+      ['2024-06-13', 0],
+      ['2024-06-14', 0],
+      ['2024-06-15', 0],
+      ['2024-06-16', 100]
+    ]);
   });
 
-  it('dailyBreakdownが7日分返される', () => {
-    const analytics = createAnalyticsData();
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.dailyBreakdown).toHaveLength(7);
+  it('前週比は前週の同じ母集団の合計と比べる', () => {
+    const report = present(generateWeeklyReport(log, sites, 0, NOW));
+    // 前週（06-03〜06-09）は 2000 + 5000
+    expect(report.wasteTimeChangePercent).toBeCloseTo(
+      ((4000 - 7000) / 7000) * 100
+    );
   });
 
-  it('dailyBlockCountsが7日分返される', () => {
-    const analytics = createAnalyticsData();
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.dailyBlockCounts).toHaveLength(7);
+  it('前週の浪費時間が 0 なら前週比は null', () => {
+    const report = present(
+      generateWeeklyReport(
+        { '2024-06-10': { 'youtube.com': row(100) } },
+        sites,
+        0,
+        NOW
+      )
+    );
+    expect(report.wasteTimeChangePercent).toBeNull();
   });
 
-  it('日別統計データが正しく集計される', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        '2024-06-10': {
-          date: '2024-06-10',
-          wasteTime: 100,
-          investTime: 200,
-          blockCount: 5,
-          unblockCount: 1
-        },
-        '2024-06-11': {
-          date: '2024-06-11',
-          wasteTime: 150,
-          investTime: 300,
-          blockCount: 3,
-          unblockCount: 2
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.totalWasteTime).toBe(250);
-    expect(report!.totalBlockCount).toBe(8);
-    expect(report!.totalUnblockCount).toBe(3);
+  it('傾向: 後半の浪費時間が減れば improving、増えれば declining、変わらなければ stable', () => {
+    const improving = present(generateWeeklyReport(log, sites, 0, NOW));
+    expect(improving.trend).toBe('improving');
+
+    const declining = present(
+      generateWeeklyReport(
+        { '2024-06-16': { 'youtube.com': row(600) } },
+        sites,
+        0,
+        NOW
+      )
+    );
+    expect(declining.trend).toBe('declining');
+
+    const stable = present(generateWeeklyReport({}, sites, 0, NOW));
+    expect(stable.trend).toBe('stable');
   });
 
-  it('topWasteSitesが正しく返される', () => {
-    const analytics = createAnalyticsData({
-      siteTime: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          time: 500,
-          category: 'waste',
-          lastUpdated: '2024-06-12T00:00:00Z'
-        },
-        'twitter.com': {
-          domain: 'twitter.com',
-          time: 300,
-          category: 'waste',
-          lastUpdated: '2024-06-12T00:00:00Z'
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.topWasteSites).toHaveLength(2);
-    expect(report!.topWasteSites[0].domain).toBe('youtube.com');
+  it('offset -1 は前週。前週に事実があればレポートを返す', () => {
+    const report = present(generateWeeklyReport(log, sites, -1, NOW));
+    expect(report.weekStart).toBe('2024-06-03');
+    expect(report.totals.seconds).toBe(7000);
   });
 
-  it('topBlockedSitesが正しくソートされる', () => {
-    const analytics = createAnalyticsData({
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 10,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        },
-        'twitter.com': {
-          domain: 'twitter.com',
-          count: 20,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.topBlockedSites[0].domain).toBe('twitter.com');
-    expect(report!.topBlockedSites[0].count).toBe(20);
+  it('事実の無い今週でも null を返さない（0 のレポート）', () => {
+    const report = present(generateWeeklyReport({}, sites, 0, NOW));
+    expect(report.totals).toEqual({ seconds: 0, blocks: 0, unblocks: 0 });
+    expect(report.dailyBreakdown).toHaveLength(7);
   });
 
-  it('topUnblockedSitesが正しく返される', () => {
-    const analytics = createAnalyticsData({
-      siteUnblockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 5,
-          lastUnblocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.topUnblockedSites).toHaveLength(1);
-    expect(report!.topUnblockedSites[0].count).toBe(5);
+  it('事実の無い過去の週は null', () => {
+    expect(generateWeeklyReport(log, sites, -3, NOW)).toBeNull();
   });
 
-  it('wasteTimeChangePercentが前週との比較で計算される', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        // 前週（6/3〜6/9）
-        '2024-06-03': {
-          date: '2024-06-03',
-          wasteTime: 100,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        // 今週（6/10〜6/16）
-        '2024-06-10': {
-          date: '2024-06-10',
-          wasteTime: 200,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    // (200 - 100) / 100 * 100 = 100%
-    expect(report!.wasteTimeChangePercent).toBe(100);
+  it('母集団の外のサイトはどこにも入らない', () => {
+    const report = present(
+      generateWeeklyReport(log, ['untracked.com'], 0, NOW)
+    );
+    expect(report.totals.seconds).toBe(9999);
+    const none = present(generateWeeklyReport(log, [], 0, NOW));
+    expect(none.totals).toEqual({ seconds: 0, blocks: 0, unblocks: 0 });
+    expect(none.topWasteSites).toEqual([]);
   });
 
-  it('前週データがない場合wasteTimeChangePercentがnull', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        '2024-06-10': {
-          date: '2024-06-10',
-          wasteTime: 200,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.wasteTimeChangePercent).toBeNull();
-  });
+  it('週の境界はローカルの 0 時（月曜 00:30 はその週、日曜 23:30 は前の週）', () => {
+    const mondayJustAfterMidnight = new Date(2024, 5, 10, 0, 30);
+    expect(
+      present(generateWeeklyReport({}, sites, 0, mondayJustAfterMidnight))
+        .weekStart
+    ).toBe('2024-06-10');
 
-  it('trendがstable/improving/decliningを正しく判定する', () => {
-    // 前半は多い、後半は少ない → improving
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        '2024-06-10': {
-          date: '2024-06-10',
-          wasteTime: 1000,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        '2024-06-11': {
-          date: '2024-06-11',
-          wasteTime: 1000,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        '2024-06-12': {
-          date: '2024-06-12',
-          wasteTime: 1000,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        '2024-06-14': {
-          date: '2024-06-14',
-          wasteTime: 10,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        '2024-06-15': {
-          date: '2024-06-15',
-          wasteTime: 10,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        '2024-06-16': {
-          date: '2024-06-16',
-          wasteTime: 10,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      }
-    });
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report!.trend).toBe('improving');
-  });
-
-  it('siteUnblockCountsがundefinedの場合でも動作する', () => {
-    const analytics = createAnalyticsData();
-    // siteUnblockCountsをundefined相当に
-    (analytics as unknown as Record<string, unknown>).siteUnblockCounts =
-      undefined;
-    const report = generateWeeklyReport(analytics, 0);
-    expect(report).not.toBeNull();
+    const sundayLateNight = new Date(2024, 5, 9, 23, 30);
+    expect(
+      present(generateWeeklyReport({}, sites, 0, sundayLateNight)).weekStart
+    ).toBe('2024-06-03');
   });
 });
 
 describe('generateMonthlyReport', () => {
-  it('データなしの現在月でもnullを返さない', () => {
-    const analytics = createAnalyticsData();
-    const report = generateMonthlyReport(analytics, 0);
-    expect(report).not.toBeNull();
+  it('月の合計 = 週別の合計 = 浪費サイトトップの合計（同じ期間・同じ母集団）', () => {
+    const report = present(generateMonthlyReport(log, sites, 0, NOW));
+    // 6 月の日: 06-03 / 06-09 / 06-10 / 06-12 / 06-16 / 06-17
+    expect(report.totals.seconds).toBe(2000 + 5000 + 4000 + 7777);
+    expect(sum(report.weeklyBreakdown.map((w) => w.seconds))).toBe(
+      report.totals.seconds
+    );
+    expect(sum(report.weeklyBreakdown.map((w) => w.blocks))).toBe(
+      report.totals.blocks
+    );
+    expect(sum(report.topWasteSites.map((s) => s.value))).toBe(
+      report.totals.seconds
+    );
   });
 
-  it('データなしの過去月でnullを返す', () => {
-    const analytics = createAnalyticsData();
-    const report = generateMonthlyReport(analytics, -1);
-    expect(report).toBeNull();
+  it('週別は月の中の日だけを数え、月をまたぐ週は月の内側に切り詰める', () => {
+    const report = present(generateMonthlyReport(log, sites, 0, NOW));
+    // 2024-06-01 は土曜。最初の週は 06-01〜06-02 の 2 日だけ
+    expect(report.weeklyBreakdown.map((w) => w.weekStart)).toEqual([
+      '2024-06-01',
+      '2024-06-03',
+      '2024-06-10',
+      '2024-06-17',
+      '2024-06-24'
+    ]);
   });
 
-  it('月のキーが正しいフォーマット（YYYY-MM）', () => {
-    const analytics = createAnalyticsData();
-    const report = generateMonthlyReport(analytics, 0);
-    // YYYY-MM形式であることを検証
-    expect(report!.month).toMatch(/^\d{4}-\d{2}$/);
+  it('月のキーは YYYY-MM', () => {
+    expect(present(generateMonthlyReport(log, sites, 0, NOW)).month).toBe(
+      '2024-06'
+    );
+    expect(present(generateMonthlyReport(log, sites, -1, NOW)).month).toBe(
+      '2024-05'
+    );
   });
 
-  it('月の集計値が正しい', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        '2024-06-01': {
-          date: '2024-06-01',
-          wasteTime: 100,
-          investTime: 50,
-          blockCount: 5,
-          unblockCount: 1
-        },
-        '2024-06-15': {
-          date: '2024-06-15',
-          wasteTime: 200,
-          investTime: 100,
-          blockCount: 10,
-          unblockCount: 3
-        }
-      }
-    });
-    const report = generateMonthlyReport(analytics, 0);
-    expect(report!.totalWasteTime).toBe(300);
-    expect(report!.totalBlockCount).toBe(15);
-    expect(report!.totalUnblockCount).toBe(4);
+  it('前月比は前月の同じ母集団の合計と比べる', () => {
+    const report = present(generateMonthlyReport(log, sites, 0, NOW));
+    expect(report.wasteTimeChangePercent).toBeCloseTo(
+      ((report.totals.seconds - 1000) / 1000) * 100
+    );
   });
 
-  it('weeklyBreakdownが少なくとも4つ以上の要素を持つ', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        '2024-06-01': {
-          date: '2024-06-01',
-          wasteTime: 100,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      }
-    });
-    const report = generateMonthlyReport(analytics, 0);
-    expect(report!.weeklyBreakdown.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it('前月のwasteTimeChangePercentが計算される', () => {
-    const analytics = createAnalyticsData({
-      dailyStats: {
-        // 前月（5月）
-        '2024-05-15': {
-          date: '2024-05-15',
-          wasteTime: 500,
-          investTime: 0,
-          blockCount: 0,
-          unblockCount: 0
-        },
-        // 今月（6月）
-        '2024-06-15': {
-          date: '2024-06-15',
-          wasteTime: 250,
-          investTime: 0,
-          blockCount: 1,
-          unblockCount: 0
-        }
-      }
-    });
-    const report = generateMonthlyReport(analytics, 0);
-    // (250 - 500) / 500 * 100 = -50%
-    expect(report!.wasteTimeChangePercent).toBe(-50);
-  });
-
-  it('topWasteSites/topBlockedSites/topUnblockedSitesが返される', () => {
-    const analytics = createAnalyticsData({
-      siteTime: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          time: 500,
-          category: 'waste',
-          lastUpdated: '2024-06-12T00:00:00Z'
-        }
-      },
-      siteBlockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 10,
-          lastBlocked: '2024-06-12T00:00:00Z'
-        }
-      },
-      siteUnblockCounts: {
-        'youtube.com': {
-          domain: 'youtube.com',
-          count: 2,
-          lastUnblocked: '2024-06-12T00:00:00Z'
-        }
-      }
-    });
-    const report = generateMonthlyReport(analytics, 0);
-    expect(report!.topWasteSites).toHaveLength(1);
-    expect(report!.topBlockedSites).toHaveLength(1);
-    expect(report!.topUnblockedSites).toHaveLength(1);
+  it('事実の無い今月でも null を返さず、事実の無い過去の月は null', () => {
+    expect(generateMonthlyReport({}, sites, 0, NOW)).not.toBeNull();
+    expect(generateMonthlyReport(log, sites, -3, NOW)).toBeNull();
   });
 });
 
 describe('formatWeekRange', () => {
-  it('同月の場合は省略形式で表示', () => {
-    const result = formatWeekRange('2024-06-10', '2024-06-16');
-    // 同月なので「Jun 10 - 16」形式
-    expect(result).toContain('10');
-    expect(result).toContain('16');
+  const shortMonth = (month: number) =>
+    new Date(2024, month, 1).toLocaleDateString(undefined, { month: 'short' });
+
+  it('同月の場合は月を 1 回だけ出す', () => {
+    expect(formatWeekRange('2024-06-10', '2024-06-16')).toBe(
+      `${shortMonth(5)} 10 - 16`
+    );
   });
 
-  it('月をまたぐ場合は両方の月を表示', () => {
-    const result = formatWeekRange('2024-06-28', '2024-07-04');
-    // 月をまたぐので両方の月名が含まれる
-    expect(result).toContain('28');
-    expect(result).toContain('4');
+  it('月をまたぐ場合は両方の月を出す（日付キーはローカル日付として読む）', () => {
+    expect(formatWeekRange('2024-06-28', '2024-07-04')).toBe(
+      `${shortMonth(5)} 28 - ${shortMonth(6)} 4`
+    );
   });
 });
 
 describe('formatMonth', () => {
   it('月キーから人間が読める月名を返す', () => {
-    const result = formatMonth('2024-06');
-    // ロケールに依存するが、年と月が含まれる
-    expect(result).toContain('2024');
-  });
-
-  it('異なる月も正しくフォーマット', () => {
-    const result = formatMonth('2024-01');
-    expect(result).toContain('2024');
+    expect(formatMonth('2024-06')).toBe(
+      new Date(2024, 5).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long'
+      })
+    );
   });
 });

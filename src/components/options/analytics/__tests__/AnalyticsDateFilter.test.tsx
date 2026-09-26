@@ -5,7 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsDateFilter } from '../AnalyticsDateFilter';
 import { generateWeeklyReport, generateMonthlyReport } from '~/lib/report';
-import { DEFAULT_ANALYTICS } from '~/types/analytics';
+import type { ActivityLog } from '~/types/activity';
+
+const EMPTY_ACTIVITY: ActivityLog = {};
+const SITES = ['a.example'];
 
 /**
  * AnalyticsDateFilter が持つ「どの期間を見ているか」と、支援誘導の出し分けの検査
@@ -86,9 +89,9 @@ vi.mock('~/components/features', () => ({
 
 /** 直近の呼び出しでレポート生成へ渡ったオフセット */
 const lastWeeklyOffset = () =>
-  vi.mocked(generateWeeklyReport).mock.lastCall?.[1];
+  vi.mocked(generateWeeklyReport).mock.lastCall?.[2];
 const lastMonthlyOffset = () =>
-  vi.mocked(generateMonthlyReport).mock.lastCall?.[1];
+  vi.mocked(generateMonthlyReport).mock.lastCall?.[2];
 
 const click = (testId: string) => fireEvent.click(screen.getByTestId(testId));
 
@@ -103,7 +106,8 @@ type FilterProps = Parameters<typeof AnalyticsDateFilter>[0];
 function renderFilter(props: Partial<FilterProps> = {}) {
   return render(
     <AnalyticsDateFilter
-      analyticsData={DEFAULT_ANALYTICS}
+      activity={EMPTY_ACTIVITY}
+      sites={SITES}
       isSupportPromptVisible={true}
       onSupport={onSupport}
       onDismissSupport={onDismissSupport}
@@ -121,8 +125,16 @@ describe('AnalyticsDateFilter', () => {
     it('今週・今月のレポートを作る', () => {
       renderFilter();
 
-      expect(generateWeeklyReport).toHaveBeenCalledWith(DEFAULT_ANALYTICS, 0);
-      expect(generateMonthlyReport).toHaveBeenCalledWith(DEFAULT_ANALYTICS, 0);
+      expect(generateWeeklyReport).toHaveBeenCalledWith(
+        EMPTY_ACTIVITY,
+        SITES,
+        0
+      );
+      expect(generateMonthlyReport).toHaveBeenCalledWith(
+        EMPTY_ACTIVITY,
+        SITES,
+        0
+      );
     });
 
     it('進行中として表示し、次の期間へは進ませない', () => {
@@ -325,26 +337,20 @@ describe('AnalyticsDateFilter', () => {
     });
   });
 
-  describe('渡された集計データ', () => {
-    it('そのままレポート生成へ渡す', () => {
-      const analyticsData = {
-        ...DEFAULT_ANALYTICS,
-        dailyStats: {
-          '2026-03-09': {
-            date: '2026-03-09',
-            wasteTime: 600,
-            investTime: 0,
-            blockCount: 1,
-            unblockCount: 0
-          }
-        }
+  describe('渡された事実と母集団', () => {
+    it('週次・月次とも同じ activity と sites をレポート生成へ渡す', () => {
+      const activity: ActivityLog = {
+        '2026-03-09': { 'a.example': { seconds: 600, blocks: 1, unblocks: 0 } }
       };
+      const sites = ['a.example', 'b.example'];
 
-      renderFilter({ analyticsData });
+      renderFilter({ activity, sites });
 
-      expect(vi.mocked(generateWeeklyReport).mock.lastCall?.[0]).toBe(
-        analyticsData
-      );
+      for (const generate of [generateWeeklyReport, generateMonthlyReport]) {
+        const call = vi.mocked(generate).mock.lastCall;
+        expect(call?.[0]).toBe(activity);
+        expect(call?.[1]).toBe(sites);
+      }
     });
   });
 });

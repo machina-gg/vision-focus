@@ -4,6 +4,7 @@
  * 数値の集計はすべてここを通す。sites に無いキーの行はどの関数でも読み飛ばす
  */
 
+import { MS_PER_DAY } from '~/constants/intervals';
 import { toDateKey } from '~/lib/time';
 import type {
   ActivityLog,
@@ -60,7 +61,8 @@ function isInRange(date: DateKey, range: DateRange): boolean {
   return date >= range.from && date <= range.to;
 }
 
-function parseDateKey(date: DateKey): Date {
+/** 日付キー（ローカル日付）をその日の正午の Date にする */
+export function parseDateKey(date: DateKey): Date {
   const [year, month, day] = date.split('-').map(Number);
   return new Date(year, month - 1, day, SAFE_HOUR);
 }
@@ -193,6 +195,11 @@ function lastDateWith(
   return last;
 }
 
+/** 最後にブロックが成立した日。ブロックされたことが無ければ null */
+export function lastBlockedOn(log: ActivityLog, site: SiteKey): DateKey | null {
+  return lastDateWith(log, site, 'blocks');
+}
+
 /** 最後にブロックを解除した日。解除したことが無ければ null */
 export function lastUnblockedOn(
   log: ActivityLog,
@@ -218,6 +225,18 @@ export function secondsSinceUnblock(
   const from = lastUnblockedOn(log, site);
   if (from === null) return 0;
   return siteTotals(log, site, { from, to: today }).seconds;
+}
+
+/** 複数サイトの secondsSinceUnblock の和（一覧の各行の値と合計が食い違わないよう同じ関数を通す） */
+export function totalSecondsSinceUnblock(
+  log: ActivityLog,
+  sites: readonly SiteKey[],
+  today: DateKey
+): number {
+  return sites.reduce(
+    (sum, site) => sum + secondsSinceUnblock(log, site, today),
+    0
+  );
 }
 
 /** 今日の合計と、今日いちばんブロックされたサイト */
@@ -272,4 +291,30 @@ export function monthRange(now: Date, offset: number): DateRange {
 export function lastNDaysRange(now: Date, n: number): DateRange {
   const to = toDateKey(now);
   return { from: addDays(to, 1 - n), to };
+}
+
+/**
+ * range と重なる週（月曜〜日曜）を古い順に並べ、それぞれ range の内側に切り詰める。
+ * 月の週別の内訳を、月の合計と同じ日の集合から出すため
+ */
+export function weeksIn(range: DateRange): DateRange[] {
+  const weeks: DateRange[] = [];
+  if (range.from > range.to) return weeks;
+  let week = weekRange(parseDateKey(range.from), 0);
+  while (week.from <= range.to) {
+    weeks.push({
+      from: week.from < range.from ? range.from : week.from,
+      to: week.to > range.to ? range.to : week.to
+    });
+    week = weekRange(parseDateKey(week.from), 1);
+  }
+  return weeks;
+}
+
+/** from から to までの日数（同じ日なら 0。to が前なら負） */
+export function daysBetween(from: DateKey, to: DateKey): number {
+  // 正午どうしの差なので、夏時間の切り替えで 1 時間ずれても丸めで吸収できる
+  return Math.round(
+    (parseDateKey(to).getTime() - parseDateKey(from).getTime()) / MS_PER_DAY
+  );
 }

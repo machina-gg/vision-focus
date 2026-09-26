@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsTab } from '../AnalyticsTab';
-import { DEFAULT_ANALYTICS } from '~/types/analytics';
+import type { ActivityLog } from '~/types/activity';
 import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
 
 /**
@@ -27,28 +27,43 @@ vi.mock('~/contexts/SettingsContext', () => ({
   })
 }));
 
+/** 子が受け取った事実と母集団を「日付|サイト」の形で読めるようにする */
+interface SourcesProps {
+  activity: ActivityLog;
+  sites: readonly string[];
+}
+const sourcesText = ({ activity, sites }: SourcesProps) =>
+  `${Object.keys(activity).join(',')}|${sites.join(',')}`;
+
 vi.mock('../analytics', () => ({
-  AnalyticsExportBar: (props: { settings?: { version?: unknown } }) => (
-    <div data-testid="export-bar">{String(props.settings !== undefined)}</div>
-  ),
-  SiteRankingList: (props: { analyticsData: { dailyStats: object } }) => (
-    <div data-testid="site-ranking">
-      {Object.keys(props.analyticsData.dailyStats).join(',')}
+  AnalyticsExportBar: (
+    props: SourcesProps & { settings?: { version?: unknown } }
+  ) => (
+    <div data-testid="export-bar">
+      {String(props.settings !== undefined)}
+      <span data-testid="export-bar-sources">{sourcesText(props)}</span>
     </div>
   ),
-  AnalyticsSummary: (props: { unblockHistory: { sites: object } }) => (
+  SiteRankingList: (props: SourcesProps) => (
+    <div data-testid="site-ranking">{sourcesText(props)}</div>
+  ),
+  AnalyticsSummary: (
+    props: SourcesProps & { unblockHistory: { sites: object } }
+  ) => (
     <div data-testid="summary">
       {Object.keys(props.unblockHistory.sites).join(',')}
+      <span data-testid="summary-sources">{sourcesText(props)}</span>
     </div>
   ),
-  AnalyticsDateFilter: (props: {
-    analyticsData: { dailyStats: object };
-    isSupportPromptVisible: boolean;
-    onSupport: () => Promise<void>;
-    onDismissSupport: () => Promise<void>;
-  }) => (
+  AnalyticsDateFilter: (
+    props: SourcesProps & {
+      isSupportPromptVisible: boolean;
+      onSupport: () => Promise<void>;
+      onDismissSupport: () => Promise<void>;
+    }
+  ) => (
     <div data-testid="date-filter">
-      {Object.keys(props.analyticsData.dailyStats).join(',')}
+      {sourcesText(props)}
       <span data-testid="date-filter-support-visible">
         {String(props.isSupportPromptVisible)}
       </span>
@@ -83,8 +98,9 @@ function renderTab(props: Partial<TabProps> = {}) {
 
   render(
     <AnalyticsTab
+      activity={{}}
+      sites={[]}
       unblockHistory={DEFAULT_UNBLOCK_HISTORY}
-      analyticsData={DEFAULT_ANALYTICS}
       isSupportPromptVisible={false}
       {...handlers}
       {...props}
@@ -191,26 +207,23 @@ describe('AnalyticsTab', () => {
   });
 
   describe('子コンポーネントへの受け渡し', () => {
-    it('集計データを一覧と期間の絞り込みの両方へ渡す', () => {
+    it('同じ事実と母集団を 4 つの子すべてへ渡す', () => {
       renderTab({
-        analyticsData: {
-          ...DEFAULT_ANALYTICS,
-          dailyStats: {
-            '2026-03-10': {
-              date: '2026-03-10',
-              wasteTime: 60,
-              investTime: 0,
-              blockCount: 1,
-              unblockCount: 0
-            }
+        activity: {
+          '2026-03-10': {
+            'a.example': { seconds: 60, blocks: 1, unblocks: 0 }
           }
-        }
+        },
+        sites: ['a.example', 'b.example']
       });
 
-      expect(screen.getByTestId('site-ranking')).toHaveTextContent(
-        '2026-03-10'
+      const expected = '2026-03-10|a.example,b.example';
+      expect(screen.getByTestId('export-bar-sources')).toHaveTextContent(
+        expected
       );
-      expect(screen.getByTestId('date-filter')).toHaveTextContent('2026-03-10');
+      expect(screen.getByTestId('site-ranking')).toHaveTextContent(expected);
+      expect(screen.getByTestId('summary-sources')).toHaveTextContent(expected);
+      expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
     });
 
     it('解除履歴を集計の要約へ渡す', () => {

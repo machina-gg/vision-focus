@@ -2,11 +2,14 @@
  * チャート共通ユーティリティ
  */
 
+import { parseDateKey } from '~/lib/activityStats';
+
 /**
- * 日付文字列をフォーマット (e.g., "Jan 1")
+ * 日付キー（ローカル日付）をフォーマット (e.g., "Jan 1")。
+ * new Date('YYYY-MM-DD') は UTC の 0 時として読まれ、UTC より西では前日になるため使わない
  */
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
+  const date = parseDateKey(dateStr);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 

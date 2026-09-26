@@ -3,21 +3,17 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { AnalyticsChart } from '../AnalyticsChart';
-import type {
-  AnalyticsData,
-  UnblockHistory,
-  TrackedSite
-} from '~/types/storage';
-import { DEFAULT_ANALYTICS } from '~/types/analytics';
+import { AnalyticsChart, CHART_DAYS } from '../AnalyticsChart';
+import type { ActivityLog } from '~/types/activity';
+import type { SiteKey } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
  * AnalyticsChart が組み立てるグラフ用データと、表示するグラフの切り替えの検査
  *
- * 日次・サイト別・累積の 3 つは、どれも「集計が無いとき」に別の経路へ落ちる
- * （現在の合計を 1 点だけ出す / 空にする）。この境界と、秒から分への丸め・
- * 並び順・件数の上限を確かめる。
+ * 日別・サイト別・累積・見出しの合計は、同じ期間（今日を含む直近 CHART_DAYS 日）・
+ * 同じ母集団（追跡中のサイト）の activity から出る。期間の外の日・母集団の外の
+ * サイトがどれにも入らないこと、4 つの値が互いに一致することを確かめる。
  *
  * グラフ本体は recharts に任せており jsdom では寸法が 0 で描画されないため、
  * 受け取ったデータを読める形に差し替えて「何を渡したか」を見る。
@@ -42,48 +38,20 @@ vi.mock('../CumulativeChart', () => ({
   )
 }));
 
-/** 「今日」の判定が現在時刻に依存するため、基準時刻を固定する */
-const NOW = new Date('2026-03-10T12:00:00.000Z');
-const TODAY = '2026-03-10';
+/** 期間が「今日」基準のため、基準時刻をローカル時刻で固定する（2026-03-10） */
+const NOW = new Date(2026, 2, 10, 12);
+/** 直近 14 日の初日 */
+const FIRST_DAY = '2026-02-25';
 
-const siteOf = (
-  domain: string,
-  timeAfterUnblock: number,
-  unblockedAt: string | null = '2026-03-01T00:00:00.000Z'
-): TrackedSite => ({
-  domain,
-  status: 'unblocked',
-  blockedAt: '2026-02-01T00:00:00.000Z',
-  unblockedAt,
-  timeAfterUnblock,
-  lastActivity: null
-});
-
-const historyOf = (sites: TrackedSite[]): UnblockHistory => ({
-  sites: Object.fromEntries(sites.map((site) => [site.domain, site]))
-});
-
-const analyticsOf = (dailyStats: Record<string, number>): AnalyticsData => ({
-  ...DEFAULT_ANALYTICS,
-  dailyStats: Object.fromEntries(
-    Object.entries(dailyStats).map(([date, wasteTime]) => [
-      date,
-      { date, wasteTime, investTime: 0, blockCount: 0, unblockCount: 0 }
-    ])
-  )
-});
+const seconds = (value: number) => ({ seconds: value, blocks: 0, unblocks: 0 });
 
 function renderChart(
-  analytics: AnalyticsData,
-  unblockHistory: UnblockHistory,
+  activity: ActivityLog,
+  sites: readonly SiteKey[],
   disabled = false
 ) {
   return render(
-    <AnalyticsChart
-      analytics={analytics}
-      unblockHistory={unblockHistory}
-      disabled={disabled}
-    />
+    <AnalyticsChart activity={activity} sites={sites} disabled={disabled} />
   );
 }
 
@@ -98,6 +66,11 @@ const pressedTexts = () =>
     .filter((el) => el.getAttribute('aria-pressed') === 'true')
     .map((el) => el.textContent);
 
+/** 差し替えたグラフが受け取ったデータ */
+function chartData<T>(testId: string): T[] {
+  return JSON.parse(screen.getByTestId(testId).textContent ?? '[]') as T[];
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
@@ -107,30 +80,60 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// 期間の外（初日の前日）と母集団の外（untracked.com）を混ぜてある
+const activity: ActivityLog = {
+  '2026-02-24': { 'a.example': seconds(99_999) },
+  [FIRST_DAY]: { 'a.example': seconds(600) },
+  '2026-03-01': {
+    'a.example': seconds(1200),
+    'b.example': seconds(3000),
+    'untracked.com': seconds(50_000)
+  },
+  '2026-03-10': { 'b.example': seconds(600) }
+};
+const sites = ['a.example', 'b.example'];
+
 describe('AnalyticsChart', () => {
   describe('合計の表示', () => {
-    it('追跡中のサイトの合計時間と件数を出す', () => {
-      renderChart(
-        DEFAULT_ANALYTICS,
-        historyOf([siteOf('a.example', 3600), siteOf('b.example', 600)])
-      );
+    it('直近 14 日・追跡中のサイトの合計時間と件数を出す', () => {
+      renderChart(activity, sites);
 
-      expect(screen.getByText('totalTimeOnTrackedSites')).toBeInTheDocument();
-      expect(screen.getByText('1h 10m')).toBeInTheDocument();
+      // 見出しの日数はグラフの期間と同じ定数から渡る
+      expect(
+        screen.getByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
+      ).toBeInTheDocument();
+      // 600 + 1200 + 3000 + 600 = 5400 秒
+      expect(screen.getByText('1h 30m')).toBeInTheDocument();
       expect(screen.getByText('chartSiteCount(2)')).toBeInTheDocument();
     });
 
     it('追跡中のサイトが無くても例外にならず 0 件と出す', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart(activity, []);
 
       expect(screen.getByText('0s')).toBeInTheDocument();
       expect(screen.getByText('chartSiteCount(0)')).toBeInTheDocument();
     });
   });
 
+  describe('3 系列と見出しの合計は同じ期間から出る', () => {
+    it('日別の和 = サイト別の和 = 累積の最後 = 見出しの合計（分）', () => {
+      renderChart(activity, sites);
+      const daily = chartData<{ time: number }>('daily-chart');
+      switchTo('chartTypeBySite');
+      const bySite = chartData<{ time: number }>('by-site-chart');
+      switchTo('chartTypeCumulative');
+      const cumulative = chartData<{ cumulative: number }>('cumulative-chart');
+
+      const totalMinutes = 5400 / 60;
+      expect(daily.reduce((acc, d) => acc + d.time, 0)).toBe(totalMinutes);
+      expect(bySite.reduce((acc, d) => acc + d.time, 0)).toBe(totalMinutes);
+      expect(cumulative[cumulative.length - 1].cumulative).toBe(totalMinutes);
+    });
+  });
+
   describe('グラフの切り替え', () => {
     it('最初は日次グラフを出す', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       expect(screen.getByTestId('daily-chart')).toBeInTheDocument();
       expect(screen.queryByTestId('by-site-chart')).not.toBeInTheDocument();
@@ -138,7 +141,7 @@ describe('AnalyticsChart', () => {
     });
 
     it('サイト別に切り替えられる', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       switchTo('chartTypeBySite');
 
@@ -147,7 +150,7 @@ describe('AnalyticsChart', () => {
     });
 
     it('累積に切り替えられる', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       switchTo('chartTypeCumulative');
 
@@ -155,13 +158,13 @@ describe('AnalyticsChart', () => {
     });
 
     it('最初は日次のボタンだけが押下状態になる', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       expect(pressedTexts()).toEqual(['chartTypeDaily']);
     });
 
     it('切り替えると押下状態も移る', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       switchTo('chartTypeCumulative');
 
@@ -169,7 +172,7 @@ describe('AnalyticsChart', () => {
     });
 
     it('日次へ戻せる', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]));
+      renderChart({}, []);
 
       switchTo('chartTypeBySite');
       switchTo('chartTypeDaily');
@@ -179,190 +182,91 @@ describe('AnalyticsChart', () => {
   });
 
   describe('日次グラフのデータ', () => {
-    it('秒を分へ丸め、日付の古い順に並べる', () => {
-      renderChart(
-        analyticsOf({ '2026-03-09': 150, '2026-03-08': 600 }),
-        historyOf([])
-      );
+    it('期間の全日を古い順に並べ、事実の無い日は 0 分', () => {
+      renderChart(activity, sites);
+      const daily = chartData<{ date: string; time: number }>('daily-chart');
 
-      expect(screen.getByTestId('daily-chart')).toHaveTextContent(
-        JSON.stringify([
-          { date: '2026-03-08', time: 10 },
-          { date: '2026-03-09', time: 3 }
-        ])
-      );
+      expect(daily).toHaveLength(CHART_DAYS);
+      expect(daily[0]).toEqual({ date: FIRST_DAY, time: 10 });
+      expect(daily[1]).toEqual({ date: '2026-02-26', time: 0 });
+      expect(daily.find((d) => d.date === '2026-03-01')).toEqual({
+        date: '2026-03-01',
+        time: 70
+      });
+      expect(daily[CHART_DAYS - 1]).toEqual({ date: '2026-03-10', time: 10 });
     });
 
-    it('分に丸めて 0 になる日は出さない', () => {
-      renderChart(
-        analyticsOf({ '2026-03-09': 20, '2026-03-08': 600 }),
-        historyOf([])
-      );
+    it('期間内に表示時間が無ければ空にする（データなしを出す）', () => {
+      renderChart({ '2026-02-24': { 'a.example': seconds(600) } }, sites);
 
-      expect(screen.getByTestId('daily-chart')).toHaveTextContent(
-        JSON.stringify([{ date: '2026-03-08', time: 10 }])
-      );
-    });
-
-    it('直近 14 日分までにする', () => {
-      const stats = Object.fromEntries(
-        Array.from({ length: 20 }, (_, i) => [
-          `2026-03-${String(i + 1).padStart(2, '0')}`,
-          600
-        ])
-      );
-
-      renderChart(analyticsOf(stats), historyOf([]));
-
-      const data = JSON.parse(
-        screen.getByTestId('daily-chart').textContent ?? '[]'
-      ) as Array<{ date: string }>;
-      expect(data).toHaveLength(14);
-      expect(data[0].date).toBe('2026-03-07');
-      expect(data[13].date).toBe('2026-03-20');
-    });
-
-    it('日別の集計が無ければ、今日の 1 点として現在の合計を出す', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([siteOf('a.example', 3600)]));
-
-      expect(screen.getByTestId('daily-chart')).toHaveTextContent(
-        JSON.stringify([{ date: TODAY, time: 60 }])
-      );
-    });
-
-    it('日別の集計も合計も無ければ空にする', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([siteOf('a.example', 0)]));
-
-      expect(screen.getByTestId('daily-chart')).toHaveTextContent('[]');
+      expect(chartData('daily-chart')).toEqual([]);
     });
   });
 
   describe('サイト別グラフのデータ', () => {
-    it('時間の多い順に並べ、秒を分へ丸める', () => {
-      renderChart(
-        DEFAULT_ANALYTICS,
-        historyOf([siteOf('small.example', 600), siteOf('big.example', 3600)])
-      );
-
+    it('期間内の時間の多い順に並べ、秒を分へ丸める', () => {
+      renderChart(activity, sites);
       switchTo('chartTypeBySite');
 
-      expect(screen.getByTestId('by-site-chart')).toHaveTextContent(
-        JSON.stringify([
-          { domain: 'big.example', fullDomain: 'big.example', time: 60 },
-          { domain: 'small.example', fullDomain: 'small.example', time: 10 }
-        ])
-      );
+      expect(chartData('by-site-chart')).toEqual([
+        { domain: 'b.example', fullDomain: 'b.example', time: 60 },
+        { domain: 'a.example', fullDomain: 'a.example', time: 30 }
+      ]);
     });
 
     it('15 文字を超えるドメインは表示用に切り詰め、元の値も残す', () => {
       const long = 'very-long-domain-name.example';
-      renderChart(DEFAULT_ANALYTICS, historyOf([siteOf(long, 600)]));
-
+      renderChart({ '2026-03-10': { [long]: seconds(600) } }, [long]);
       switchTo('chartTypeBySite');
 
-      expect(screen.getByTestId('by-site-chart')).toHaveTextContent(
-        JSON.stringify([
-          {
-            domain: 'very-long-domai...',
-            fullDomain: long,
-            time: 10
-          }
-        ])
-      );
-    });
-
-    it('時間が 0 分のサイトは出さない', () => {
-      renderChart(
-        DEFAULT_ANALYTICS,
-        historyOf([siteOf('zero.example', 20), siteOf('some.example', 600)])
-      );
-
-      switchTo('chartTypeBySite');
-
-      const chart = screen.getByTestId('by-site-chart');
-      expect(chart).toHaveTextContent('some.example');
-      expect(chart).not.toHaveTextContent('zero.example');
+      expect(chartData('by-site-chart')).toEqual([
+        { domain: 'very-long-domai...', fullDomain: long, time: 10 }
+      ]);
     });
 
     it('上位 8 件までにする', () => {
-      renderChart(
-        DEFAULT_ANALYTICS,
-        historyOf(
-          Array.from({ length: 10 }, (_, i) =>
-            siteOf(`site${i}.example`, (i + 1) * 600)
-          )
+      const many = Array.from({ length: 10 }, (_, i) => `site${i}.example`);
+      const log: ActivityLog = {
+        '2026-03-10': Object.fromEntries(
+          many.map((site, i) => [site, seconds((i + 1) * 60)])
         )
-      );
-
+      };
+      renderChart(log, many);
       switchTo('chartTypeBySite');
 
-      const data = JSON.parse(
-        screen.getByTestId('by-site-chart').textContent ?? '[]'
-      ) as unknown[];
-      expect(data).toHaveLength(8);
+      const bySite = chartData<{ fullDomain: string }>('by-site-chart');
+      expect(bySite).toHaveLength(8);
+      expect(bySite[0].fullDomain).toBe('site9.example');
     });
   });
 
   describe('累積グラフのデータ', () => {
-    it('追跡中のサイトが無ければ空にする', () => {
-      renderChart(analyticsOf({ '2026-03-09': 600 }), historyOf([]));
-
+    it('期間の初日から日ごとに足し上げて分で出す', () => {
+      renderChart(activity, sites);
       switchTo('chartTypeCumulative');
+      const cumulative = chartData<{ date: string; cumulative: number }>(
+        'cumulative-chart'
+      );
 
-      expect(screen.getByTestId('cumulative-chart')).toHaveTextContent('[]');
+      expect(cumulative).toHaveLength(CHART_DAYS);
+      expect(cumulative[0]).toEqual({ date: FIRST_DAY, cumulative: 10 });
+      expect(cumulative.find((d) => d.date === '2026-03-01')).toEqual({
+        date: '2026-03-01',
+        cumulative: 80
+      });
     });
 
-    it('日ごとの時間を足し上げて分で出す', () => {
-      renderChart(
-        analyticsOf({ '2026-03-08': 600, '2026-03-09': 1200 }),
-        historyOf([siteOf('a.example', 1800)])
-      );
-
+    it('期間内に表示時間が無ければ空にする', () => {
+      renderChart({}, sites);
       switchTo('chartTypeCumulative');
 
-      expect(screen.getByTestId('cumulative-chart')).toHaveTextContent(
-        JSON.stringify([
-          { date: '2026-03-08', cumulative: 10 },
-          { date: '2026-03-09', cumulative: 30 }
-        ])
-      );
-    });
-
-    it('解除より前の日は足し上げに含めない', () => {
-      renderChart(
-        analyticsOf({ '2026-02-01': 6000, '2026-03-08': 600 }),
-        historyOf([siteOf('a.example', 600, '2026-03-01T00:00:00.000Z')])
-      );
-
-      switchTo('chartTypeCumulative');
-
-      expect(screen.getByTestId('cumulative-chart')).toHaveTextContent(
-        JSON.stringify([{ date: '2026-03-08', cumulative: 10 }])
-      );
-    });
-
-    it('日別の集計が無ければ、今日の 1 点として現在の合計を出す', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([siteOf('a.example', 1800)]));
-
-      switchTo('chartTypeCumulative');
-
-      expect(screen.getByTestId('cumulative-chart')).toHaveTextContent(
-        JSON.stringify([{ date: TODAY, cumulative: 30 }])
-      );
-    });
-
-    it('日別の集計も合計も無ければ空にする', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([siteOf('a.example', 0)]));
-
-      switchTo('chartTypeCumulative');
-
-      expect(screen.getByTestId('cumulative-chart')).toHaveTextContent('[]');
+      expect(chartData('cumulative-chart')).toEqual([]);
     });
   });
 
   describe('disabled のとき', () => {
     it('切り替えのボタンをすべて押せなくする', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]), true);
+      renderChart({}, [], true);
 
       screen.getAllByRole('button').forEach((button) => {
         expect(button).toBeDisabled();
@@ -370,7 +274,7 @@ describe('AnalyticsChart', () => {
     });
 
     it('キーボードから届いてもグラフは切り替わらない', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]), true);
+      renderChart({}, [], true);
 
       // ⚠ 包む div の pointer-events はマウスしか止めない。
       // 無効の属性が無いと、この押下でグラフが切り替わる
@@ -381,7 +285,7 @@ describe('AnalyticsChart', () => {
     });
 
     it('disabled を渡さなければ押せる', () => {
-      renderChart(DEFAULT_ANALYTICS, historyOf([]), false);
+      renderChart({}, [], false);
 
       screen.getAllByRole('button').forEach((button) => {
         expect(button).toBeEnabled();

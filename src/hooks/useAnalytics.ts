@@ -22,7 +22,6 @@ interface UseAnalyticsOptions {
 }
 
 interface UseAnalyticsReturn {
-  analyticsData: AnalyticsData;
   unblockHistory: UnblockHistory;
   reloadAnalyticsData: () => Promise<void>;
   handleReblock: (domain: string) => Promise<void>;
@@ -35,26 +34,14 @@ interface UseAnalyticsReturn {
 export function useAnalytics({
   setSettings
 }: UseAnalyticsOptions): UseAnalyticsReturn {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
-    dailyStats: {},
-    siteTime: {},
-    siteCategories: {},
-    siteBlockCounts: {},
-    siteUnblockCounts: {}
-  });
-
   const [unblockHistory, setUnblockHistory] = useState<UnblockHistory>(
     DEFAULT_UNBLOCK_HISTORY
   );
 
-  // Helper function to reload analytics data
+  // 画面が読むのは解除履歴（一覧のブロック状態・操作の宛先）だけ。
+  // 数値は activity から導出するので、ここでは旧い集計を読まない
   const reloadAnalyticsData = useCallback(async () => {
-    const [analyticsResult, unblockResult] = await Promise.all([
-      getAnalytics(),
-      getUnblockHistory()
-    ]);
-    setAnalyticsData(analyticsResult);
-    setUnblockHistory(unblockResult);
+    setUnblockHistory(await getUnblockHistory());
   }, []);
 
   // Load analytics and unblock history on mount
@@ -62,8 +49,7 @@ export function useAnalytics({
     reloadAnalyticsData();
   }, [reloadAnalyticsData]);
 
-  // Listen for storage changes to unblockHistory and analytics
-  // This ensures UI updates when background scripts modify the data
+  // background や他の画面が解除履歴を書き換えたら一覧を読み直す
   useEffect(() => {
     // Check if chrome.storage is available (not in test environment)
     if (typeof chrome === 'undefined' || !chrome?.storage?.local) {
@@ -73,8 +59,7 @@ export function useAnalytics({
     const handleStorageChange = (
       changes: Record<string, chrome.storage.StorageChange>
     ) => {
-      // Check if unblockHistory or analytics changed
-      if (changes.unblockHistory || changes.analytics) {
+      if (changes.unblockHistory) {
         reloadAnalyticsData();
       }
     };
@@ -128,7 +113,6 @@ export function useAnalytics({
         siteUnblockCounts: {}
       };
       await analyticsItem.setValue(emptyAnalytics);
-      setAnalyticsData(emptyAnalytics);
     } catch {
       // Silently handle error
     }
@@ -154,7 +138,6 @@ export function useAnalytics({
             siteTime: remainingSiteTime
           };
           await analyticsItem.setValue(updatedAnalytics);
-          setAnalyticsData(updatedAnalytics);
         }
       }
     } catch {
@@ -209,7 +192,6 @@ export function useAnalytics({
   }, []);
 
   return {
-    analyticsData,
     unblockHistory,
     reloadAnalyticsData,
     handleReblock,
