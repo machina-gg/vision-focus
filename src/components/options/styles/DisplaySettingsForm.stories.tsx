@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DisplaySettingsForm } from './DisplaySettingsForm';
 import type { UsePresetsReturn } from '~/hooks/usePresets';

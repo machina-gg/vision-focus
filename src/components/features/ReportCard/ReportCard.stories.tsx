@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { WeeklyReportCard, MonthlyReportCard } from './ReportCard';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';

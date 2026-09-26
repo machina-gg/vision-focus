@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Ban, Calendar, HelpCircle, Settings } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';

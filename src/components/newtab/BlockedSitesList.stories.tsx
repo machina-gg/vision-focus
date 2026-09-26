@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlockedSitesList } from './BlockedSitesList';
 import type { BlockItem, SiteBlockCount } from '~/types/storage';
@@ -93,11 +93,10 @@ const meta = {
   title: 'Newtab/BlockedSitesList',
   component: BlockedSitesList,
   parameters: {
-    layout: 'centered',
-    backgrounds: {
-      default: 'dark',
-      values: [{ name: 'dark', value: '#1f2937' }]
-    }
+    layout: 'centered'
+  },
+  globals: {
+    backgrounds: { value: 'dark' }
   },
   tags: ['autodocs'],
   decorators: [

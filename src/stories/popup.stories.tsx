@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Ban, Clock, TrendingUp } from 'lucide-react';
 
 import {
@@ -69,10 +69,10 @@ const meta = {
   title: 'Pages/Popup',
   component: PopupDemo,
   parameters: {
-    layout: 'centered',
-    backgrounds: {
-      default: 'gray'
-    }
+    layout: 'centered'
+  },
+  globals: {
+    backgrounds: { value: 'gray' }
   },
   tags: ['autodocs']
 } satisfies Meta<typeof PopupDemo>;

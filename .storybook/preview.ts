@@ -1,4 +1,4 @@
-import type { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/react-vite';
 
 import '../src/styles/globals.css';
 import enMessages from '../public/_locales/en/messages.json';
@@ -61,15 +61,22 @@ const preview: Preview = {
         date: /Date$/i
       }
     },
+    // 背景の選択肢はここだけに置く。story は globals.backgrounds.value にキーを書いて既定を選ぶ
+    // （キーが options に無いと、ビルドは通ったまま背景色だけが効かなくなる）
     backgrounds: {
-      default: 'light',
-      values: [
-        { name: 'light', value: '#ffffff' },
-        { name: 'dark', value: '#1f2937' },
-        { name: 'gray', value: '#f3f4f6' }
-      ]
+      options: {
+        light: { name: 'light', value: '#ffffff' },
+        dark: { name: 'dark', value: '#1f2937' },
+        gray: { name: 'gray', value: '#f3f4f6' }
+      }
     },
     layout: 'centered'
+  },
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'light'
+    }
   }
 };
 
