@@ -14,7 +14,7 @@ export interface BlockState {
 export interface BlockContext {
   /** 全体の一時停止 */
   paused: boolean;
-  /** isAnyScheduleActive(settings.schedules) の結果（スケジュールが 0 件なら true） */
+  /** ブロックが効く時間帯か（isBlockingWindowOpen(settings.schedules)。有効なスケジュールが 0 件なら true） */
   scheduleActive: boolean;
   /** 今日（ローカル日付）そのサイトが表示されていた秒数 */
   todaySeconds: number;

@@ -1,10 +1,16 @@
 /**
  * BlockService - ブロック判定とルール生成の入口
  *
- * 流れはどちらも「ホスト名 → サイトキー → `evaluateBlock`」の 1 本だけ。
+ * 流れはどちらも「登録（ブロック設定）ごとに `evaluateBlock` → ホスト名を覆う登録のどれかが
+ * ブロックならブロック」の 1 本だけ。
  * 条件（一時停止・スケジュール・有効フラグ・時間制限）を並べるのは `evaluateBlock` だけで、
- * このモジュールは保存値を読んで `evaluateBlock` に渡す材料を揃えるだけにする。
+ * このモジュールは保存値を読んで `evaluateBlock` に渡す材料を揃え、結論を束ねるだけにする。
  * ここで条件を足すと、開いているページの判定と新しい遷移を止めるルールの結論が食い違う。
+ *
+ * ルールは登録のサイトキーごとに `||キー` を作り、本体とすべてのサブドメインを止める。
+ * 判定も同じ範囲（ホスト名がキーと一致するか `.キー` で終わる登録すべて）で結論を出す。
+ * 最も具体的な登録だけを見ると、親の登録がブロックしているのに子の登録で「許可」と判定し、
+ * ルールと結論が割れる。
  *
  * @see docs/BLOCK_STATE_MACHINE.md
  */
@@ -12,7 +18,7 @@
 import { getSettings, activityItem } from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
 import { isWithinSchedule, toDateKey } from '~/lib/time';
-import { normalizeSiteKey, resolveSiteKey } from '~/lib/siteKey';
+import { normalizeSiteKey } from '~/lib/siteKey';
 import { secondsOnDay } from '~/lib/activityStats';
 import { evaluateBlock, type BlockState } from '~/lib/blockRule';
 import { objectOrFallback } from '~/lib/storedValue';
@@ -27,7 +33,7 @@ export type { BlockReason, BlockState } from '~/lib/blockRule';
 /** `evaluateBlock` が見るブロック設定 */
 export type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
 
-/** 1 サイトの判定結果 */
+/** 1 件の登録（ブロック設定）の判定結果 */
 export interface SiteBlockStatus {
   site: SiteKey;
   rule: BlockRuleInput;
@@ -41,24 +47,39 @@ interface BlockInputs {
   now: Date;
 }
 
+/** 1 件の登録。同じサイトキーの登録が複数あってもまとめない（どれかがブロックならブロック） */
+interface Registration {
+  site: SiteKey;
+  rule: BlockRuleInput;
+}
+
 const NOT_BLOCKED: BlockState = { blocked: false, reason: null };
 
-/**
- * Check if any schedule is currently active
- * No schedules = always active (return true)
- */
+/** 有効かつ現在時刻が範囲内のスケジュールが 1 件以上あるか */
 export function isAnyScheduleActive(
   schedules: Schedule[] | undefined
 ): boolean {
-  // 旧バージョンの設定や部分的なインポートで schedules が欠けている場合がある。
-  // ここで例外を投げるとブロックルールの再計算が丸ごと止まり、
-  // ブロックが一切効かなくなるため、未設定は「常時有効」として扱う
-  if (!schedules || schedules.length === 0) return true;
-  return schedules.some(
+  return (schedules ?? []).some(
     (schedule) =>
       schedule.enabled &&
       isWithinSchedule(schedule.startTime, schedule.endTime, schedule.days)
   );
+}
+
+/**
+ * ブロックが効く時間帯か（`evaluateBlock` の `scheduleActive` に渡す値）。
+ * 有効なスケジュールが 1 件も無ければ常に効く（すべて無効にしたスケジュールは「スケジュール無し」と同じ）。
+ * 有効なスケジュールがあれば、そのどれかの範囲内だけ効く
+ */
+export function isBlockingWindowOpen(
+  schedules: Schedule[] | undefined
+): boolean {
+  // 旧バージョンの設定や部分的なインポートで schedules が欠けている場合がある。
+  // ここで例外を投げるとブロックルールの再計算が丸ごと止まり、
+  // ブロックが一切効かなくなるため、未設定は「スケジュール無し」として扱う
+  const enabled = (schedules ?? []).filter((schedule) => schedule.enabled);
+  if (enabled.length === 0) return true;
+  return isAnyScheduleActive(enabled);
 }
 
 async function loadInputs(): Promise<BlockInputs> {
@@ -74,75 +95,104 @@ async function loadInputs(): Promise<BlockInputs> {
 }
 
 /**
- * サイトキー → ブロック設定。
- *
- * ブロックリストの項目を先に入れ、同じキーの 2 件目以降は捨てる（並び順で先の項目が優先）。
+ * ブロック設定を登録の単位で並べる（ブロックリストの並び順、最後に YouTube）。
  * YouTube のアクセスブロックは保存形がブロックリストの外にあるので、ここで同じ形に組み立てて
- * youtube.com のキーに入れる。ブロックリストに youtube.com と同じキーの項目があれば
- * そちらを優先する（YouTube 側の設定は使わない）
+ * youtube.com の登録として加える
  */
-function collectRules(settings: AppSettings): Map<SiteKey, BlockRuleInput> {
-  const rules = new Map<SiteKey, BlockRuleInput>();
+function collectRegistrations(settings: AppSettings): Registration[] {
+  const registrations: Registration[] = [];
 
   for (const item of settings.blockList) {
     const site = normalizeSiteKey(item.domain);
     // 空のキーはどのサイトも表さないので判定にもルールにも入れない
-    if (!site || rules.has(site)) continue;
-    rules.set(site, {
-      enabled: item.enabled,
-      timeLimit: item.timeLimit ?? null
+    if (!site) continue;
+    registrations.push({
+      site,
+      rule: { enabled: item.enabled, timeLimit: item.timeLimit ?? null }
     });
   }
 
   const youtube = settings.youtube;
-  if (youtube.enabled && youtube.blockAccess && !rules.has(YOUTUBE_DOMAIN)) {
-    rules.set(YOUTUBE_DOMAIN, {
-      enabled: true,
-      timeLimit: youtube.timeLimit ?? null
+  if (youtube.enabled && youtube.blockAccess) {
+    registrations.push({
+      site: YOUTUBE_DOMAIN,
+      rule: { enabled: true, timeLimit: youtube.timeLimit ?? null }
     });
   }
 
-  return rules;
+  return registrations;
 }
 
-function evaluateSite(
-  site: SiteKey,
-  rule: BlockRuleInput,
+function evaluate(
+  registration: Registration,
   inputs: BlockInputs
-): BlockState {
-  return evaluateBlock(rule, {
+): SiteBlockStatus {
+  const { site, rule } = registration;
+  const state = evaluateBlock(rule, {
     paused: inputs.settings.paused,
-    scheduleActive: isAnyScheduleActive(inputs.settings.schedules),
+    scheduleActive: isBlockingWindowOpen(inputs.settings.schedules),
     todaySeconds: secondsOnDay(inputs.activity, site, toDateKey(inputs.now))
   });
+  return { site, rule, state };
 }
 
-function statusForHostname(
-  hostname: string,
-  rules: Map<SiteKey, BlockRuleInput>,
-  inputs: BlockInputs
-): SiteBlockStatus | null {
-  const site = resolveSiteKey(hostname, [...rules.keys()]);
-  if (!site) return null;
-  const rule = rules.get(site);
-  if (!rule) return null;
-  return { site, rule, state: evaluateSite(site, rule, inputs) };
+/** ホスト名が `||キー` の範囲に入るか（キーと一致するか `.キー` で終わる） */
+function covers(site: SiteKey, hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  return host === site || host.endsWith(`.${site}`);
 }
 
 /**
- * ホスト名が属するサイトのブロック設定と判定結果を返す。
- * ブロック設定を持つサイトに属さないホスト名は null
+ * ホスト名を覆う登録を、具体的な順（キーが長い順。同じ長さなら登録順）に並べて判定する
+ */
+function statusesForHostname(
+  hostname: string,
+  registrations: readonly Registration[],
+  inputs: BlockInputs
+): SiteBlockStatus[] {
+  return registrations
+    .filter((registration) => covers(registration.site, hostname))
+    .sort((a, b) => b.site.length - a.site.length)
+    .map((registration) => evaluate(registration, inputs));
+}
+
+/**
+ * 同じホスト名を覆う登録の判定結果から、そのホスト名の代表を 1 件選ぶ。
+ * ブロックしている登録があればその中で最も具体的なもの（ルールが止めるので結論はブロック）。
+ * 無ければ残り秒数がいちばん少ないもの（先に上限に達する制限）、それも無ければ最も具体的なもの
+ */
+function representative(
+  statuses: readonly SiteBlockStatus[]
+): SiteBlockStatus | null {
+  const blocked = statuses.find((status) => status.state.blocked);
+  if (blocked) return blocked;
+
+  let tightest: SiteBlockStatus | null = null;
+  for (const status of statuses) {
+    const remaining = status.state.remainingSeconds;
+    if (remaining === undefined) continue;
+    const current = tightest?.state.remainingSeconds;
+    if (current === undefined || remaining < current) tightest = status;
+  }
+  return tightest ?? statuses[0] ?? null;
+}
+
+/**
+ * ホスト名の判定結果を代表 1 件で返す（ブロックの有無は、覆う登録のどれかがブロックか）。
+ * ブロック設定の登録に覆われないホスト名は null
  */
 export async function getSiteBlockStatus(
   hostname: string
 ): Promise<SiteBlockStatus | null> {
-  const [status] = await getSiteBlockStatuses([hostname]);
-  return status ?? null;
+  const inputs = await loadInputs();
+  return representative(
+    statusesForHostname(hostname, collectRegistrations(inputs.settings), inputs)
+  );
 }
 
 /**
- * 複数のホスト名をまとめて判定する（保存値の読み出しは 1 回）。
- * 同じサイトに属するホスト名は 1 件にまとめ、どのサイトにも属さないホスト名は結果に入れない
+ * 複数のホスト名を覆う登録すべての判定結果（保存値の読み出しは 1 回）。
+ * 同じ登録は 1 件にまとめる。どの登録にも覆われないホスト名は結果に何も足さない
  */
 export async function getSiteBlockStatuses(
   hostnames: readonly string[]
@@ -150,13 +200,14 @@ export async function getSiteBlockStatuses(
   if (hostnames.length === 0) return [];
 
   const inputs = await loadInputs();
-  const rules = collectRules(inputs.settings);
-  const bySite = new Map<SiteKey, SiteBlockStatus>();
+  const registrations = collectRegistrations(inputs.settings);
+  const covering = new Set<Registration>();
   for (const hostname of hostnames) {
-    const status = statusForHostname(hostname, rules, inputs);
-    if (status && !bySite.has(status.site)) bySite.set(status.site, status);
+    for (const registration of registrations) {
+      if (covers(registration.site, hostname)) covering.add(registration);
+    }
   }
-  return [...bySite.values()];
+  return [...covering].map((registration) => evaluate(registration, inputs));
 }
 
 /**
@@ -174,7 +225,7 @@ export async function getBlockState(url: string): Promise<BlockState> {
  * ホスト名のブロック判定。
  *
  * ⚠ 判定（`getBlockState`）も記録（`shouldTrackBlockForDomain`）もここを通り、
- * ルール生成（`getActiveBlockedDomains`）も同じ `evaluateSite` を通る。
+ * ルール生成（`getActiveBlockedDomains`）も同じ `evaluate` を通る。
  * 経路ごとに条件を書くと片方だけが条件を取りこぼし、ブロックされていないのに
  * ブロック回数が増える・開いているタブと新しい遷移で結果がずれる
  */
@@ -205,15 +256,17 @@ export async function shouldTrackBlockForDomain(
 }
 
 /**
- * declarativeNetRequest で止めるサイトキーの一覧。
- * すべてのサイトを判定と同じ `evaluateSite` に通し、ブロックするものだけを返す
+ * declarativeNetRequest で止めるサイトキーの一覧（重複なし）。
+ * すべての登録を判定と同じ `evaluate` に通し、ブロックする登録のキーを返す
  * （返したキーは `||キー` のルールになり、本体とすべてのサブドメインを止める）
  */
 export async function getActiveBlockedDomains(): Promise<SiteKey[]> {
   const inputs = await loadInputs();
-  const blocked: SiteKey[] = [];
-  for (const [site, rule] of collectRules(inputs.settings)) {
-    if (evaluateSite(site, rule, inputs).blocked) blocked.push(site);
+  const blocked = new Set<SiteKey>();
+  for (const registration of collectRegistrations(inputs.settings)) {
+    if (evaluate(registration, inputs).state.blocked) {
+      blocked.add(registration.site);
+    }
   }
-  return blocked;
+  return [...blocked];
 }

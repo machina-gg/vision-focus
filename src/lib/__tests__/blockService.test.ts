@@ -16,6 +16,7 @@ import { getSettings, activityItem } from '~/lib/storage';
 import { isWithinSchedule, toDateKey } from '~/lib/time';
 import {
   isAnyScheduleActive,
+  isBlockingWindowOpen,
   getBlockState,
   getBlockStateForDomain,
   getSiteBlockStatus,
@@ -109,60 +110,72 @@ const OUT_OF_SCHEDULE: Schedule[] = [
   }
 ];
 
-describe('isAnyScheduleActive', () => {
-  it('schedules が未設定でも例外を投げず true を返す', () => {
-    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、
-    // ここで落ちないことを保証する
-    expect(isAnyScheduleActive(undefined)).toBe(true);
-  });
+function schedule(overrides: Partial<Schedule> = {}): Schedule {
+  return {
+    id: 's1',
+    name: 'Test',
+    startTime: '09:00',
+    endTime: '17:00',
+    days: [1, 2, 3, 4, 5],
+    enabled: true,
+    ...overrides
+  };
+}
 
-  it('スケジュールが空の場合はtrueを返す', () => {
-    expect(isAnyScheduleActive([])).toBe(true);
-  });
+describe('isAnyScheduleActive（有効かつ範囲内のスケジュールがあるか）', () => {
+  it.each([
+    ['未設定', undefined, true, false],
+    ['空', [], true, false],
+    ['有効で範囲内', [schedule()], true, true],
+    ['無効（範囲内でも）', [schedule({ enabled: false })], true, false],
+    ['有効で範囲外', [schedule()], false, false]
+  ] satisfies [string, Schedule[] | undefined, boolean, boolean][])(
+    '%s',
+    (_label, schedules, within, expected) => {
+      mockIsWithinSchedule.mockReturnValue(within);
+      expect(isAnyScheduleActive(schedules)).toBe(expected);
+    }
+  );
+});
 
-  it('有効なスケジュールがスケジュール内の場合はtrue', () => {
-    mockIsWithinSchedule.mockReturnValue(true);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: true
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(true);
-  });
+describe('isBlockingWindowOpen（ブロックが効く時間帯か）', () => {
+  it.each([
+    // 設定が欠けているとブロックルールの再計算が丸ごと止まるため、ここで落ちないことを保証する
+    ['未設定なら常に効く', undefined, false, true],
+    ['スケジュールが無ければ常に効く', [], false, true],
+    [
+      'すべて無効なら「スケジュール無し」と同じく常に効く',
+      [schedule({ enabled: false }), schedule({ id: 's2', enabled: false })],
+      false,
+      true
+    ],
+    ['有効なスケジュールの範囲内なら効く', [schedule()], true, true],
+    [
+      '有効なスケジュールの範囲外なら効かない（無効なものは数えない）',
+      [schedule(), schedule({ id: 's2', enabled: false })],
+      false,
+      false
+    ]
+  ] satisfies [string, Schedule[] | undefined, boolean, boolean][])(
+    '%s',
+    (_label, schedules, within, expected) => {
+      mockIsWithinSchedule.mockReturnValue(within);
+      expect(isBlockingWindowOpen(schedules)).toBe(expected);
+    }
+  );
 
-  it('スケジュールが無効の場合はfalse', () => {
-    mockIsWithinSchedule.mockReturnValue(true);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: false
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(false);
-  });
-
-  it('スケジュール外の場合はfalse', () => {
+  it('全部無効のスケジュールがあっても常時ブロックの項目はブロックする', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
-    const schedules: Schedule[] = [
-      {
-        id: 's1',
-        name: 'Test',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        enabled: true
-      }
-    ];
-    expect(isAnyScheduleActive(schedules)).toBe(false);
+    givenSettings({
+      blockList: [item()],
+      schedules: [schedule({ enabled: false })]
+    });
+
+    expect(await getBlockState('https://example.com')).toEqual({
+      blocked: true,
+      reason: 'always_blocked'
+    });
+    expect(await getActiveBlockedDomains()).toEqual(['example.com']);
   });
 });
 
@@ -269,15 +282,59 @@ describe('getBlockState', () => {
     expect((await getBlockState('https://m.reddit.com')).blocked).toBe(true);
   });
 
-  it('同じサイトキーの項目が複数あれば、ブロックリストで先の項目を使う', async () => {
+  it('同じサイトキーの項目が複数あれば、どれかがブロックならブロックする', async () => {
     givenSettings({
       blockList: [
-        item({ enabled: false }),
-        item({ id: '2', domain: 'www.example.com', enabled: true })
+        item({ domain: 'reddit.com', enabled: false }),
+        item({ id: '2', domain: 'www.reddit.com', enabled: true })
       ]
     });
-    const result = await getBlockState('https://www.example.com');
-    expect(result).toEqual({ blocked: false, reason: null });
+    const result = await getBlockState('https://www.reddit.com');
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
+    expect(await getActiveBlockedDomains()).toEqual(['reddit.com']);
+  });
+
+  it('親の登録がブロックしていれば、子の登録が無効でもサブドメインをブロックする', async () => {
+    givenSettings({
+      blockList: [
+        item({ domain: 'google.com' }),
+        item({ id: '2', domain: 'mail.google.com', enabled: false })
+      ]
+    });
+    expect(await getBlockState('https://mail.google.com')).toEqual({
+      blocked: true,
+      reason: 'always_blocked'
+    });
+  });
+
+  it('子の登録だけがブロックなら、親のホスト名はブロックしない', async () => {
+    givenSettings({
+      blockList: [
+        item({ domain: 'google.com', enabled: false }),
+        item({ id: '2', domain: 'mail.google.com' })
+      ]
+    });
+    expect((await getBlockState('https://google.com')).blocked).toBe(false);
+    expect((await getBlockState('https://mail.google.com')).blocked).toBe(true);
+  });
+
+  it('覆う登録がどれもブロックでなければ、残り秒数がいちばん少ない制限の値を返す', async () => {
+    givenSettings({
+      blockList: [
+        limitedItem({ domain: 'google.com' }),
+        limitedItem({
+          id: '2',
+          domain: 'mail.google.com',
+          timeLimit: { type: 'daily', limitSeconds: 600 }
+        })
+      ]
+    });
+    givenSeconds({ 'google.com': 100, 'mail.google.com': 500 });
+    expect(await getBlockState('https://mail.google.com')).toEqual({
+      blocked: false,
+      reason: null,
+      remainingSeconds: 100
+    });
   });
 });
 
@@ -388,14 +445,15 @@ describe('YouTube（旧保存形から組み立てたブロック設定）', () 
     });
   });
 
-  it('ブロックリストに youtube.com と同じキーの項目があればそちらの設定を使う', async () => {
+  it('ブロックリストの youtube.com が無効でも、YouTube のアクセスブロックが有効ならブロックする', async () => {
+    // 覆う登録のどれかがブロックならブロック（YouTube の設定も 1 件の登録として数える）
     givenSettings({
       blockList: [item({ domain: 'www.youtube.com', enabled: false })],
       youtube: youtubeSettings()
     });
     const result = await getBlockState('https://www.youtube.com/');
-    expect(result).toEqual({ blocked: false, reason: null });
-    expect(await getActiveBlockedDomains()).toEqual([]);
+    expect(result).toEqual({ blocked: true, reason: 'always_blocked' });
+    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
   });
 });
 
@@ -470,8 +528,17 @@ describe('getActiveBlockedDomains', () => {
 
 describe('判定とルール生成の一致', () => {
   // 開いているページの判定（getBlockStateForDomain）と新しい遷移を止めるルール
-  // （getActiveBlockedDomains）は同じ入力で同じ結論にする。
-  // どちらかが条件を独自に並べると、開いているタブと新しい遷移で結果がずれる
+  // （getActiveBlockedDomains の各キーの `||キー`）は同じ入力で同じ結論にする。
+  // どちらかが条件や範囲を独自に持つと、開いているタブと新しい遷移で結果がずれる
+  const PARENT = 'example.com';
+  const CHILD = 'mail.example.com';
+  const HOSTS = [PARENT, `www.${PARENT}`, CHILD, `a.${CHILD}`, 'other.test'];
+
+  /** ルールの集合がホスト名を `||キー` の範囲で覆うか */
+  function ruleCovers(ruleDomains: readonly string[], host: string): boolean {
+    return ruleDomains.some((key) => host === key || host.endsWith(`.${key}`));
+  }
+
   const cases: [
     string,
     Partial<AppSettings>,
@@ -488,22 +555,63 @@ describe('判定とルール生成の一致', () => {
     [
       '上限に達した時間制限',
       { blockList: [limitedItem({ domain: 'www.example.com' })] },
-      { 'example.com': LIMIT_SECONDS },
+      { [PARENT]: LIMIT_SECONDS },
       false
     ],
     [
       '上限未満の時間制限',
       { blockList: [limitedItem()] },
-      { 'example.com': 1 },
+      { [PARENT]: 1 },
       false
     ],
     [
       'スケジュール外で上限に達した時間制限',
       { blockList: [limitedItem()], schedules: OUT_OF_SCHEDULE },
-      { 'example.com': LIMIT_SECONDS },
+      { [PARENT]: LIMIT_SECONDS },
       true
     ],
-    ['一時停止中', { paused: true, blockList: [item()] }, {}, false]
+    ['一時停止中', { paused: true, blockList: [item()] }, {}, false],
+    [
+      '親ブロック + 子無効',
+      {
+        blockList: [item(), item({ id: '2', domain: CHILD, enabled: false })]
+      },
+      {},
+      false
+    ],
+    [
+      '親無効 + 子ブロック',
+      {
+        blockList: [item({ enabled: false }), item({ id: '2', domain: CHILD })]
+      },
+      {},
+      false
+    ],
+    [
+      '親に時間制限（上限未満）+ 子常時',
+      { blockList: [limitedItem(), item({ id: '2', domain: CHILD })] },
+      { [PARENT]: 1 },
+      false
+    ],
+    [
+      '親に時間制限（上限到達）+ 子に時間制限（上限未満）',
+      {
+        blockList: [limitedItem(), limitedItem({ id: '2', domain: CHILD })]
+      },
+      { [PARENT]: LIMIT_SECONDS, [CHILD]: 1 },
+      false
+    ],
+    [
+      '同じサイトキーの重複登録（無効 + 有効）',
+      {
+        blockList: [
+          item({ enabled: false }),
+          item({ id: '2', domain: `www.${PARENT}` })
+        ]
+      },
+      {},
+      false
+    ]
   ];
 
   it.each(cases)('%s', async (_label, settings, seconds, outOfSchedule) => {
@@ -511,9 +619,13 @@ describe('判定とルール生成の一致', () => {
     givenSettings(settings);
     givenSeconds(seconds);
 
-    const state = await getBlockStateForDomain('m.example.com');
     const ruleDomains = await getActiveBlockedDomains();
-
-    expect(new Set(ruleDomains).has('example.com')).toBe(state.blocked);
+    for (const host of HOSTS) {
+      const state = await getBlockStateForDomain(host);
+      expect({ host, blocked: state.blocked }).toEqual({
+        host,
+        blocked: ruleCovers(ruleDomains, host)
+      });
+    }
   });
 });
