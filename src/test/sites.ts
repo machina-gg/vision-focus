@@ -7,14 +7,8 @@ import type {
   YouTubeFeatures
 } from '~/types/site';
 
-/**
- * テスト用の追跡中のサイトの組み立て。保存形（`TrackedSite`）の必須項目を
- * 各テストで書き直さないよう、ここに 1 箇所だけ置く
- */
-
 const ADDED_AT = '2024-01-01T00:00:00.000Z';
 
-/** 追跡だけのサイト（`block: null`） */
 export function trackedSite(
   domain: SiteKey,
   overrides: Partial<TrackedSite> = {}
@@ -28,7 +22,6 @@ export function trackedSite(
   };
 }
 
-/** ブロック設定を持つサイト（既定は有効な常時ブロック） */
 export function blockedSite(
   domain: SiteKey,
   block: Partial<BlockRule> = {},
@@ -40,7 +33,6 @@ export function blockedSite(
   };
 }
 
-/** YouTube 機能（既定はすべて OFF） */
 export function youtubeFeatures(
   overrides: Partial<YouTubeFeatures> = {}
 ): YouTubeFeatures {
@@ -53,7 +45,6 @@ export function youtubeFeatures(
   };
 }
 
-/** サイトの並びを保存形（サイトキー → サイト）にする */
 export function sitesOf(...sites: TrackedSite[]): TrackedSites {
   return Object.fromEntries(sites.map((site) => [site.domain, site]));
 }

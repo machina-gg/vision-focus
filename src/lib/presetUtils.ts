@@ -3,10 +3,6 @@ import type {
   DashboardDisplaySettings
 } from '~/types/storage';
 
-/**
- * Convert a preset to display settings
- * Extracts only the display-related properties from a preset
- */
 export function presetToDisplaySettings(
   preset: DashboardPreset
 ): DashboardDisplaySettings {

@@ -1,10 +1,6 @@
-// Vision/Dashboard-related type definitions
-
-// Import types needed for this file
 import type { FontSettings } from './font';
 import { DEFAULT_FONT_SETTINGS } from './font';
 
-// Dashboard display settings (shared between default and presets)
 export interface DashboardDisplaySettings {
   goalText: string;
   goalSubText: string;
@@ -16,24 +12,18 @@ export interface DashboardDisplaySettings {
   fontSettings: FontSettings;
 }
 
-// Dashboard preset - saves all dashboard settings as a set
 export interface DashboardPreset extends DashboardDisplaySettings {
   id: string;
   name: string;
   createdAt: string;
 }
 
-// Vision/Dashboard settings
 export interface VisionSettings {
-  // Default display settings (used when no preset is active)
   defaultSettings: DashboardDisplaySettings;
-  // User-created presets
   presets: DashboardPreset[];
-  // Currently active preset ID (null = use defaultSettings)
   activePresetId: string | null;
 }
 
-// Default values
 export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   goalText: '',
   goalSubText: '',

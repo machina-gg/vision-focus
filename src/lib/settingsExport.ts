@@ -1,14 +1,3 @@
-/**
- * Settings Export/Import utilities
- *
- * Exports and imports user settings including:
- * - Tracked sites（ブロック設定・時間制限・YouTube 機能を含む）
- * - Schedules
- * - Presets (with optional custom background images)
- *
- * Note: Premium status is NOT included for security reasons
- */
-
 import * as z from 'zod';
 
 import { TrackedSiteSchema } from '~/types/messageSchemas';
@@ -28,19 +17,13 @@ import {
   UNBLOCK_HOLD_SECONDS_OPTIONS
 } from '~/types/storage';
 
-// 形式の版。保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む
-// （旧い形式の読み替えは持たない）
+// 保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む
 export const EXPORT_VERSION = 2;
 
-// Maximum file size for import (5MB)
 const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
 
-// Size threshold for warning about large exports (1MB)
 const LARGE_EXPORT_WARNING_SIZE = 1 * 1024 * 1024;
 
-/**
- * Exported settings data structure
- */
 export interface ExportedSettings {
   version: number;
   exportedAt: string;
@@ -55,9 +38,6 @@ export interface ExportedSettings {
   };
 }
 
-/**
- * Import result
- */
 export interface ImportResult {
   success: boolean;
   error?: string;
@@ -65,9 +45,6 @@ export interface ImportResult {
   data?: ExportedSettings['data'];
 }
 
-/**
- * Zod schema for validating imported data
- */
 const fontSettingsSchema = z.object({
   family: z.string(),
   size: z.enum(['sm', 'md', 'lg', 'xl']),
@@ -111,8 +88,6 @@ const notificationSettingsSchema = z.object({
   ])
 });
 
-// 選べる秒数以外を取り込むと、確認が効かない・解除できないほど長押しの時間が
-// ずれるため、設定画面の選択肢と同じ値だけを受け付ける
 const unblockConfirmSettingsSchema = z.object({
   holdSeconds: z.literal(UNBLOCK_HOLD_SECONDS_OPTIONS)
 });
@@ -131,32 +106,20 @@ const exportDataSchema = z.object({
   })
 });
 
-/**
- * Calculate the size of exported data
- */
 export function calculateExportSize(data: ExportedSettings): number {
   return new Blob([JSON.stringify(data)]).size;
 }
 
-/**
- * Check if exported data contains large custom backgrounds
- */
 export function hasLargeCustomBackgrounds(data: ExportedSettings): boolean {
   const size = calculateExportSize(data);
   return size > LARGE_EXPORT_WARNING_SIZE;
 }
 
-/**
- * Get date string for filename
- */
 function getDateString(): string {
   const now = new Date();
-  return now.toISOString().split('T')[0]; // YYYY-MM-DD
+  return now.toISOString().split('T')[0];
 }
 
-/**
- * Export settings to JSON file
- */
 export function exportSettings(
   settings: AppSettings,
   vision: VisionSettings,
@@ -181,9 +144,6 @@ export function exportSettings(
   return { data: exportData, isLarge };
 }
 
-/**
- * Download settings as JSON file
- */
 export function downloadSettings(data: ExportedSettings): void {
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -199,11 +159,7 @@ export function downloadSettings(data: ExportedSettings): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Validate and parse imported JSON
- */
 export function validateImportedData(jsonString: string): ImportResult {
-  // Check file size
   if (jsonString.length > MAX_IMPORT_SIZE) {
     return {
       success: false,
@@ -221,7 +177,6 @@ export function validateImportedData(jsonString: string): ImportResult {
     };
   }
 
-  // Validate schema
   const result = exportDataSchema.safeParse(parsed);
   if (!result.success) {
     return {
@@ -232,26 +187,22 @@ export function validateImportedData(jsonString: string): ImportResult {
 
   const warnings: string[] = [];
 
-  // Check version compatibility
   if (result.data.version > EXPORT_VERSION) {
     warnings.push('importWarningNewerVersion');
   }
 
-  // Check for orphaned preset references in schedules
   const presetIds = new Set(result.data.data.presets.map((p) => p.id));
   const orphanedSchedules = result.data.data.schedules.filter(
     (s) => s.presetId && !presetIds.has(s.presetId)
   );
   if (orphanedSchedules.length > 0) {
     warnings.push('importWarningOrphanedPresets');
-    // Clear orphaned preset references
     result.data.data.schedules = result.data.data.schedules.map((s) => ({
       ...s,
       presetId: s.presetId && presetIds.has(s.presetId) ? s.presetId : undefined
     }));
   }
 
-  // Check if active preset exists
   if (
     result.data.data.activePresetId &&
     !presetIds.has(result.data.data.activePresetId)
@@ -267,9 +218,6 @@ export function validateImportedData(jsonString: string): ImportResult {
   };
 }
 
-/**
- * Read file and return as string
- */
 export function readFileAsString(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -279,17 +227,11 @@ export function readFileAsString(file: File): Promise<string> {
   });
 }
 
-/**
- * Apply imported settings
- * Returns the new settings and vision objects.
- * 追跡中のサイトのマージは background（import-settings ハンドラ）が行うので、ここでは扱わない
- */
 export function applyImportedSettings(
   data: ExportedSettings['data'],
   currentSettings: AppSettings,
   currentVision: VisionSettings
 ): { settings: AppSettings; vision: VisionSettings } {
-  // Merge schedules (avoid duplicates by id)
   const existingScheduleIds = new Set(
     currentSettings.schedules.map((s) => s.id)
   );
@@ -298,7 +240,6 @@ export function applyImportedSettings(
   );
   const mergedSchedules = [...currentSettings.schedules, ...newSchedules];
 
-  // Merge presets (avoid duplicates by id)
   const existingPresetIds = new Set(currentVision.presets.map((p) => p.id));
   const newPresets = data.presets.filter((p) => !existingPresetIds.has(p.id));
   const mergedPresets = [...currentVision.presets, ...newPresets];
@@ -320,9 +261,6 @@ export function applyImportedSettings(
   return { settings: newSettings, vision: newVision };
 }
 
-/**
- * Create empty/default export data
- */
 export function createDefaultExportData(): ExportedSettings {
   return {
     version: EXPORT_VERSION,

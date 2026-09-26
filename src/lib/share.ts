@@ -1,10 +1,5 @@
-// Share utilities for X (Twitter) sharing
-
 import { formatTime } from './time';
 
-/**
- * Generate share text for analytics data
- */
 export function generateShareText(data: {
   totalBlockCount: number;
   totalWasteTime: number;
@@ -20,11 +15,9 @@ export function generateShareText(data: {
 
   const lines: string[] = [];
 
-  // Header
   lines.push('📊 VisionFocus Report');
   lines.push('');
 
-  // Stats
   if (totalBlockCount > 0) {
     lines.push(`🚫 Blocked: ${totalBlockCount} times`);
   }
@@ -48,18 +41,12 @@ export function generateShareText(data: {
   return lines.join('\n');
 }
 
-/**
- * Open X (Twitter) intent with pre-filled text
- */
 export function shareToX(text: string): void {
   const encodedText = encodeURIComponent(text);
   const url = `https://twitter.com/intent/tweet?text=${encodedText}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-/**
- * Copy image to clipboard from canvas element
- */
 export async function copyImageToClipboard(
   canvas: HTMLCanvasElement
 ): Promise<boolean> {
@@ -79,13 +66,10 @@ export async function copyImageToClipboard(
     });
 
     if (!blob) {
-      // Blob生成に失敗
       return false;
     }
 
-    // クリップボードAPIの利用可能性をチェック
     if (!navigator.clipboard || !navigator.clipboard.write) {
-      // クリップボードAPIが利用できない場合は失敗として扱う
       return false;
     }
 
@@ -93,14 +77,10 @@ export async function copyImageToClipboard(
 
     return true;
   } catch {
-    // クリップボードへの書き込みに失敗
     return false;
   }
 }
 
-/**
- * Download image from canvas element
- */
 export function downloadImage(
   canvas: HTMLCanvasElement,
   filename: string
@@ -114,30 +94,23 @@ export function downloadImage(
   document.body.removeChild(link);
 }
 
-/**
- * Capture DOM element as canvas using html2canvas
- * Note: Handles SVG elements from Recharts
- */
 export async function captureElementAsCanvas(
   element: HTMLElement
 ): Promise<HTMLCanvasElement | null> {
   try {
-    // html2canvasを動的にインポート
     const html2canvasModule = await import('html2canvas');
     const html2canvas = html2canvasModule.default;
 
-    // 要素が完全にレンダリングされるまで少し待機
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 2, // 高解像度
+      scale: 2,
       logging: false,
       useCORS: true,
       allowTaint: true,
-      foreignObjectRendering: true, // 複雑な要素のサポート向上
+      foreignObjectRendering: true,
       onclone: (clonedDoc) => {
-        // SVG要素のサイズをクローン内で適切に設定
         const svgs = clonedDoc.querySelectorAll('svg');
         svgs.forEach((svg) => {
           const bbox = svg.getBoundingClientRect();
@@ -149,15 +122,12 @@ export async function captureElementAsCanvas(
       }
     });
 
-    // キャンバスが有効なコンテンツで作成されたかを検証
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
-      // キャンバスの生成に失敗（無効なサイズ）
       return null;
     }
 
     return canvas;
   } catch {
-    // 要素のキャンバス化に失敗
     return null;
   }
 }

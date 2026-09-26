@@ -16,17 +16,7 @@ import {
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
-/**
- * ストレージ項目の定義。local 領域のキーはこの一覧だけが持つ。
- *
- * `local:` は @wxt-dev/storage が保存領域を選ぶための接頭辞であり、
- * chrome.storage.local 上の実キーは接頭辞を除いた `settings` などになる。
- * 値は生のオブジェクトのまま保存される（JSON 文字列ではない）。
- *
- * `fallback` は値が未保存のときに `getValue()` / `watch()` が返す既定値で、
- * 呼び出し側でのデフォルト補完は不要になる。
- * `watch` を張る側（background / content script）はこの項目を直接使う。
- */
+/** `local:` は @wxt-dev/storage の領域の指定で、chrome.storage.local 上の実キーは接頭辞を除いた名前になる */
 export const settingsItem = extensionStorage.defineItem<AppSettings>(
   'local:settings',
   { fallback: DEFAULT_SETTINGS }
@@ -37,19 +27,13 @@ export const visionItem = extensionStorage.defineItem<VisionSettings>(
   { fallback: DEFAULT_VISION }
 );
 
-/**
- * 追跡中のサイトとサイトごとの設定。書くのは background の `src/lib/siteService.ts` だけ
- * （読む → 変える → 書くを 1 本の待ち行列で直列化しているため、他から書くと変更が消える）
- */
+/** 書くのは `siteService` だけ（待ち行列の外から書くと変更が消える） */
 export const sitesItem = extensionStorage.defineItem<TrackedSites>(
   'local:sites',
   { fallback: DEFAULT_SITES }
 );
 
-/**
- * 日 × サイトの事実。書くのは `src/lib/activityService.ts` だけ
- * （読む → 足す → 書くを 1 本の待ち行列で直列化しているため、他から書くと加算が消える）
- */
+/** 書くのは `activityService` だけ（待ち行列の外から書くと加算が消える） */
 export const activityItem = extensionStorage.defineItem<ActivityLog>(
   'local:activity',
   { fallback: DEFAULT_ACTIVITY }
@@ -60,17 +44,14 @@ export const supportPromptItem =
     fallback: DEFAULT_SUPPORT_PROMPT_STATE
   });
 
-// Get settings
 export async function getSettings(): Promise<AppSettings> {
   return objectOrFallback(await settingsItem.getValue(), DEFAULT_SETTINGS);
 }
 
-// Set settings
 export async function setSettings(settings: AppSettings): Promise<void> {
   await settingsItem.setValue(settings);
 }
 
-// Update settings partially
 export async function updateSettings(
   update: Partial<AppSettings>
 ): Promise<AppSettings> {
@@ -80,35 +61,25 @@ export async function updateSettings(
   return updated;
 }
 
-// Get vision settings
 export async function getVision(): Promise<VisionSettings> {
   return objectOrFallback(await visionItem.getValue(), DEFAULT_VISION);
 }
 
-// Set vision settings
 export async function setVision(vision: VisionSettings): Promise<void> {
   await visionItem.setValue(vision);
 }
 
-/**
- * vision が保存済みかどうか。
- *
- * 項目定義の `getValue()` は未保存でも `fallback` を返すため、
- * 「未保存」と「既定値が保存されている」を区別したい呼び出し側はこちらを使う
- * （旧形式で残った値も未保存として扱う）。
- */
+/** `getValue()` は未保存でも fallback を返すので、未保存と既定値の保存済みを区別するときはこちらを使う */
 export async function hasStoredVision(): Promise<boolean> {
   return isStoredObject(
     await extensionStorage.getItem<VisionSettings>(visionItem.key)
   );
 }
 
-/** 追跡中のサイトを読む（書き込みは `siteService` の関数だけが行う） */
 export async function getSites(): Promise<TrackedSites> {
   return objectOrFallback(await sitesItem.getValue(), DEFAULT_SITES);
 }
 
-// Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
   const [settings, vision, sites, activity] = await Promise.all([
     getSettings(),
@@ -125,7 +96,6 @@ export async function getAllStorage(): Promise<StorageSchema> {
   };
 }
 
-// Clear all storage (for debugging)
 export async function clearAllStorage(): Promise<void> {
   await Promise.all([
     settingsItem.removeValue(),
@@ -135,7 +105,6 @@ export async function clearAllStorage(): Promise<void> {
   ]);
 }
 
-// Session storage for last blocked domain (for newtab display)
 const SESSION_KEYS = {
   lastBlockedDomain: 'lastBlockedDomain'
 } as const;

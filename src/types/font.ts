@@ -1,29 +1,21 @@
-// Font type definitions and utilities
-
-// Font family options
 export type FontFamily =
   | 'system'
-  // Modern
   | 'inter'
   | 'roboto'
   | 'poppins'
   | 'lato'
   | 'opensans'
   | 'nunito'
-  // Elegant
   | 'playfair'
   | 'merriweather'
   | 'lora'
   | 'crimsontext'
-  // Impact
   | 'montserrat'
   | 'oswald'
   | 'bebasneue'
   | 'raleway'
-  // Handwriting
   | 'dancingscript'
   | 'caveat'
-  // Japanese
   | 'notosansjp'
   | 'notoserifjp'
   | 'mplusrounded';
@@ -40,12 +32,11 @@ export interface FontSettings {
   weight: FontWeight;
 }
 
-// Font category definitions
 export interface FontDefinition {
   family: FontFamily;
   name: string;
   css: string;
-  googleFont?: string; // Google Fonts name for loading
+  googleFont?: string;
 }
 
 export const FONT_CATEGORIES: Record<
@@ -203,7 +194,6 @@ export const FONT_CATEGORIES: Record<
   }
 };
 
-// Helper to get font definition by family
 export function getFontDefinition(family: FontFamily): FontDefinition {
   for (const category of Object.values(FONT_CATEGORIES)) {
     const font = category.fonts.find((f) => f.family === family);
@@ -212,7 +202,6 @@ export function getFontDefinition(family: FontFamily): FontDefinition {
   return FONT_CATEGORIES.system.fonts[0];
 }
 
-// Helper to get category for a font family
 export function getFontCategory(family: FontFamily): FontCategory {
   for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
     if (category.fonts.some((f) => f.family === family)) {
@@ -222,19 +211,16 @@ export function getFontCategory(family: FontFamily): FontCategory {
   return 'system';
 }
 
-// Font family CSS mappings (uses FONT_CATEGORIES)
 export const getFontFamilyCSS = (family: FontFamily): string => {
   return getFontDefinition(family).css;
 };
 
-// Legacy compatibility - dynamically generated
 export const FONT_FAMILY_MAP: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )
   .flatMap((cat) => cat.fonts)
   .reduce((acc, font) => ({ ...acc, [font.family]: font.css }), {});
 
-// Font size Tailwind class mappings
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
   sm: 'text-2xl',
   md: 'text-3xl',
@@ -242,7 +228,6 @@ export const FONT_SIZE_MAP: Record<FontSize, string> = {
   xl: 'text-5xl'
 };
 
-// Font weight Tailwind class mappings
 export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   normal: 'font-normal',
   medium: 'font-medium',
@@ -250,14 +235,12 @@ export const FONT_WEIGHT_MAP: Record<FontWeight, string> = {
   bold: 'font-bold'
 };
 
-// Font family display names (uses FONT_CATEGORIES)
 export const FONT_FAMILY_NAMES: Record<string, string> = Object.values(
   FONT_CATEGORIES
 )
   .flatMap((cat) => cat.fonts)
   .reduce((acc, font) => ({ ...acc, [font.family]: font.name }), {});
 
-// Default font settings
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
   family: 'system',
   size: 'md',

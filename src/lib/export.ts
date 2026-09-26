@@ -1,7 +1,3 @@
-/**
- * CSV Export utilities
- */
-
 import { blockListSites } from '~/lib/blockList';
 import {
   dailySeries,
@@ -16,12 +12,8 @@ import type { ActivityLog, DateKey, DateRange } from '~/types/activity';
 import type { SiteKey, TrackedSites } from '~/types/site';
 import { formatTime, toDateKey } from './time';
 
-/**
- * Convert data to CSV string
- */
 function toCSV(headers: string[], rows: string[][]): string {
   const escape = (value: string) => {
-    // Escape quotes and wrap in quotes if contains comma, quote, or newline
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
       return `"${value.replace(/"/g, '""')}"`;
     }
@@ -34,11 +26,8 @@ function toCSV(headers: string[], rows: string[][]): string {
   return [headerLine, ...dataLines].join('\n');
 }
 
-/**
- * Download CSV file
- */
 function downloadCSV(filename: string, content: string): void {
-  // Add BOM for Excel compatibility with Japanese characters
+  // Excel が日本語を正しく読めるよう BOM を付ける
   const bom = '\uFEFF';
   const blob = new Blob([bom + content], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -53,22 +42,14 @@ function downloadCSV(filename: string, content: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Get current date string for filename
- */
 function getDateString(): string {
-  // ファイル名の日付も画面と同じローカル日付にする
   return toDateKey(new Date());
 }
 
-/** 日付キーを表示用の日付にする。無ければ "-" */
 function formatDateKey(date: DateKey | null): string {
   return date === null ? '-' : parseDateKey(date).toLocaleDateString();
 }
 
-/**
- * ブロックリストの CSV の行（画面の「ブロック中のサイト」一覧と同じサイト・同じ順。無効にしたサイトも含める）
- */
 export function blockListRows(sites: TrackedSites): string[][] {
   return blockListSites(sites).map((site) => [
     site.domain,
@@ -76,16 +57,12 @@ export function blockListRows(sites: TrackedSites): string[][] {
   ]);
 }
 
-/** ブロックリストを CSV でダウンロードする */
 export function exportBlockList(sites: TrackedSites): void {
   const headers = ['Domain', 'Added Date'];
   const csv = toCSV(headers, blockListRows(sites));
   downloadCSV(`visionfocus-blocklist-${getDateString()}.csv`, csv);
 }
 
-/**
- * サイト別ブロック回数の CSV の行（期間内の多い順。0 回のサイトは含めない）
- */
 export function blockCountRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -100,7 +77,6 @@ export function blockCountRows(
   );
 }
 
-/** activity から出したサイト別ブロック回数を CSV でダウンロードする */
 export function exportSiteBlockCounts(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -111,9 +87,6 @@ export function exportSiteBlockCounts(
   downloadCSV(`visionfocus-block-counts-${getDateString()}.csv`, csv);
 }
 
-/**
- * 日別統計の CSV の行（新しい日から。浪費時間もブロックも解除も 0 の日は含めない）
- */
 export function dailyActivityRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -125,7 +98,6 @@ export function dailyActivityRows(
     .map((day) => [day.date, formatTime(day.seconds), String(day.blocks)]);
 }
 
-/** activity から出した日別統計を CSV でダウンロードする */
 export function exportDailyActivity(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -136,9 +108,6 @@ export function exportDailyActivity(
   downloadCSV(`visionfocus-daily-stats-${getDateString()}.csv`, csv);
 }
 
-/**
- * 解除したサイトの CSV の行（解除後の時間の多い順。解除したことが無いサイトは含めない）
- */
 export function unblockedSiteRows(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -160,7 +129,6 @@ export function unblockedSiteRows(
     ]);
 }
 
-/** activity から出した解除サイトの時間を CSV でダウンロードする */
 export function exportUnblockedSiteTimes(
   log: ActivityLog,
   sites: readonly SiteKey[],

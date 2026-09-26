@@ -1,48 +1,28 @@
-/**
- * YouTube の「非表示」設定から注入する CSS を組み立てる
- *
- * コンテンツスクリプト（`src/entrypoints/youtube.content.ts`）から使う。
- * DOM にも chrome API にも触れない純粋関数なので、単体テストで固定できる。
- */
-
 import type { YouTubeFeatures } from '~/types/site';
 import { getMessage } from '~/lib/i18n';
 
-// CSS selectors for YouTube elements
 export const YOUTUBE_SELECTORS = {
-  // Shorts
   shortsShelf: 'ytd-rich-shelf-renderer[is-shorts]',
   shortsTab: 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
   shortsSection: 'ytd-reel-shelf-renderer',
   shortsSidebarTab:
     'ytd-guide-entry-renderer a[title="Shorts"], ytd-guide-entry-renderer a[href="/shorts"]',
 
-  // Recommendations (Home page)
-  // ホームフィードの動画一覧を確実に非表示にするため、複数のセレクタを使用
   homeFeed: 'ytd-browse[page-subtype="home"] ytd-rich-grid-renderer',
   homeFeedContents: 'ytd-browse[page-subtype="home"] #contents',
   homeChips: 'ytd-feed-filter-chip-bar-renderer',
 
-  // Recommendations (Watch page)
   relatedVideos: '#related',
   endScreen: '.ytp-endscreen-content',
   autoplayToggle: '.ytp-autonav-toggle-button',
 
-  // Comments
   comments: 'ytd-comments#comments',
   liveChat: 'ytd-live-chat-frame#chat',
 
-  // 動画再生ページのサイドバー領域（hideRecommendations のルールから使う）
   secondaryInner: '#secondary-inner'
 } as const;
 
-/**
- * youtube.com の YouTube 機能から非表示用の CSS を生成する（null = 機能を使わない）
- *
- * ⚠ アクセスブロック（youtube.com の `block`）は見ない。アクセスブロックに 1 日の制限を
- * 併用していると上限までは YouTube を開けるため、ブロック ON でも非表示は効いている必要がある
- * （リダイレクトされるページでは CSS が効く前に遷移するので害は無い）
- */
+// アクセスブロック（block）は見ない。1 日の制限つきブロックでは上限まで YouTube を開けるため、ブロック中でも非表示を効かせる
 export function generateYouTubeHideCSS(
   settings: YouTubeFeatures | null
 ): string {

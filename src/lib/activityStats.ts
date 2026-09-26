@@ -1,9 +1,3 @@
-/**
- * 事実（ActivityLog）から画面に出す数値を導出する純粋関数。
- * 合計・ランキング・日別が同じ母集団（sites）と同じ期間（range）から出るよう、
- * 数値の集計はすべてここを通す。sites に無いキーの行はどの関数でも読み飛ばす
- */
-
 import { MS_PER_DAY } from '~/constants/intervals';
 import { toDateKey } from '~/lib/time';
 import type {
@@ -37,7 +31,6 @@ export interface CumulativePoint {
 }
 
 export interface TodaySummary extends ActivityTotals {
-  /** 今日いちばんブロックされたサイト。今日 1 回もブロックが無ければ null */
   topBlockedSite: SiteKey | null;
 }
 
@@ -61,7 +54,6 @@ function isInRange(date: DateKey, range: DateRange): boolean {
   return date >= range.from && date <= range.to;
 }
 
-/** 日付キー（ローカル日付）をその日の正午の Date にする */
 export function parseDateKey(date: DateKey): Date {
   const [year, month, day] = date.split('-').map(Number);
   return new Date(year, month - 1, day, SAFE_HOUR);
@@ -73,7 +65,6 @@ function addDays(date: DateKey, days: number): DateKey {
   return toDateKey(d);
 }
 
-/** 範囲内の日付を古い順に並べる。from > to なら空 */
 function datesIn(range: DateRange): DateKey[] {
   const dates: DateKey[] = [];
   for (let d = range.from; d <= range.to; d = addDays(d, 1)) {
@@ -82,7 +73,6 @@ function datesIn(range: DateRange): DateKey[] {
   return dates;
 }
 
-/** 期間内・母集団内の行を 1 行ずつ渡す */
 function forEachRow(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -99,7 +89,6 @@ function forEachRow(
   }
 }
 
-/** 期間内の合計 */
 export function sumRange(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -110,10 +99,6 @@ export function sumRange(
   return totals;
 }
 
-/**
- * 期間内の指標でサイトを並べる（多い順。同値はドメインの昇順）。
- * 期間内に値が 0 のサイトは含めない
- */
 export function rankSites(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -132,7 +117,6 @@ export function rankSites(
     .slice(0, Math.max(0, limit));
 }
 
-/** 範囲内の日ごとの合計（古い順。事実の無い日も 0 で埋める） */
 export function dailySeries(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -150,7 +134,6 @@ export function dailySeries(
   }));
 }
 
-/** 範囲の初日からの累積秒（古い順） */
 export function cumulativeSeries(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -163,7 +146,6 @@ export function cumulativeSeries(
   });
 }
 
-/** 1 サイトの期間内の合計 */
 export function siteTotals(
   log: ActivityLog,
   site: SiteKey,
@@ -172,7 +154,6 @@ export function siteTotals(
   return sumRange(log, [site], range);
 }
 
-/** 1 サイトのその日の表示秒数（時間制限の今日の使用量） */
 export function secondsOnDay(
   log: ActivityLog,
   site: SiteKey,
@@ -181,7 +162,6 @@ export function secondsOnDay(
   return log[date]?.[site]?.seconds ?? 0;
 }
 
-/** 指標が 1 以上だった最後の日 */
 function lastDateWith(
   log: ActivityLog,
   site: SiteKey,
@@ -195,12 +175,10 @@ function lastDateWith(
   return last;
 }
 
-/** 最後にブロックが成立した日。ブロックされたことが無ければ null */
 export function lastBlockedOn(log: ActivityLog, site: SiteKey): DateKey | null {
   return lastDateWith(log, site, 'blocks');
 }
 
-/** 最後にブロックを解除した日。解除したことが無ければ null */
 export function lastUnblockedOn(
   log: ActivityLog,
   site: SiteKey
@@ -208,15 +186,10 @@ export function lastUnblockedOn(
   return lastDateWith(log, site, 'unblocks');
 }
 
-/** 最後にページが表示されていた日。表示されたことが無ければ null */
 export function lastActiveOn(log: ActivityLog, site: SiteKey): DateKey | null {
   return lastDateWith(log, site, 'seconds');
 }
 
-/**
- * 最後に解除した日から today までの表示秒数。解除したことが無ければ 0。
- * 日単位で数えるので、解除した日の解除前の時間も入る
- */
 export function secondsSinceUnblock(
   log: ActivityLog,
   site: SiteKey,
@@ -227,7 +200,6 @@ export function secondsSinceUnblock(
   return siteTotals(log, site, { from, to: today }).seconds;
 }
 
-/** 複数サイトの secondsSinceUnblock の和（一覧の各行の値と合計が食い違わないよう同じ関数を通す） */
 export function totalSecondsSinceUnblock(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -239,7 +211,6 @@ export function totalSecondsSinceUnblock(
   );
 }
 
-/** 今日の合計と、今日いちばんブロックされたサイト */
 export function todaySummary(
   log: ActivityLog,
   sites: readonly SiteKey[],
@@ -253,7 +224,6 @@ export function todaySummary(
   };
 }
 
-/** now を含む週（月曜〜日曜）。offset は 0 = 今週、-1 = 先週 */
 export function weekRange(now: Date, offset: number): DateRange {
   const start = new Date(
     now.getFullYear(),
@@ -261,7 +231,6 @@ export function weekRange(now: Date, offset: number): DateRange {
     now.getDate(),
     SAFE_HOUR
   );
-  // getDay は日曜 = 0。月曜を週の始まりにするため日曜は 6 日戻す
   const sinceMonday =
     (start.getDay() - MONDAY_INDEX + DAYS_PER_WEEK) % DAYS_PER_WEEK;
   start.setDate(start.getDate() - sinceMonday + offset * DAYS_PER_WEEK);
@@ -269,7 +238,6 @@ export function weekRange(now: Date, offset: number): DateRange {
   return { from, to: addDays(from, DAYS_PER_WEEK - 1) };
 }
 
-/** now を含む月（1 日〜末日）。offset は 0 = 今月、-1 = 先月 */
 export function monthRange(now: Date, offset: number): DateRange {
   const first = new Date(
     now.getFullYear(),
@@ -287,16 +255,11 @@ export function monthRange(now: Date, offset: number): DateRange {
   return { from: toDateKey(first), to: toDateKey(last) };
 }
 
-/** 今日を含む直近 n 日（n が 1 未満なら空の範囲） */
 export function lastNDaysRange(now: Date, n: number): DateRange {
   const to = toDateKey(now);
   return { from: addDays(to, 1 - n), to };
 }
 
-/**
- * range と重なる週（月曜〜日曜）を古い順に並べ、それぞれ range の内側に切り詰める。
- * 月の週別の内訳を、月の合計と同じ日の集合から出すため
- */
 export function weeksIn(range: DateRange): DateRange[] {
   const weeks: DateRange[] = [];
   if (range.from > range.to) return weeks;
@@ -311,7 +274,6 @@ export function weeksIn(range: DateRange): DateRange[] {
   return weeks;
 }
 
-/** from から to までの日数（同じ日なら 0。to が前なら負） */
 export function daysBetween(from: DateKey, to: DateKey): number {
   // 正午どうしの差なので、夏時間の切り替えで 1 時間ずれても丸めで吸収できる
   return Math.round(

@@ -1,4 +1,3 @@
-// Font size in pixels
 export const FONT_SIZE_PX: Record<string, number> = {
   sm: 24,
   md: 30,
@@ -6,7 +5,6 @@ export const FONT_SIZE_PX: Record<string, number> = {
   xl: 48
 };
 
-// Font weight values
 export const FONT_WEIGHT_VALUE: Record<string, number> = {
   normal: 400,
   medium: 500,
@@ -14,7 +12,6 @@ export const FONT_WEIGHT_VALUE: Record<string, number> = {
   bold: 700
 };
 
-// Load Google Font dynamically
 export function loadGoogleFont(fontName: string): void {
   const linkId = `google-font-${fontName.replace(/\+/g, '-')}`;
   if (document.getElementById(linkId)) return;

@@ -1,19 +1,5 @@
-/**
- * BlockService - ブロック判定とルール生成の入口
- *
- * 流れはどちらも「登録（ブロック設定）ごとに `evaluateBlock` → ホスト名を覆う登録のどれかが
- * ブロックならブロック」の 1 本だけ。
- * 条件（一時停止・スケジュール・有効フラグ・時間制限）を並べるのは `evaluateBlock` だけで、
- * このモジュールは保存値を読んで `evaluateBlock` に渡す材料を揃え、結論を束ねるだけにする。
- * ここで条件を足すと、開いているページの判定と新しい遷移を止めるルールの結論が食い違う。
- *
- * ルールは登録のサイトキーごとに `||キー` を作り、本体とすべてのサブドメインを止める。
- * 判定も同じ範囲（ホスト名がキーと一致するか `.キー` で終わる登録すべて）で結論を出す。
- * 最も具体的な登録だけを見ると、親の登録がブロックしているのに子の登録で「許可」と判定し、
- * ルールと結論が割れる。
- *
- * @see docs/BLOCK_STATE_MACHINE.md
- */
+// 条件は evaluateBlock にだけ置き、ここは材料を揃えて結論を束ねるだけにする（足すと判定とルールが食い違う）
+// 判定はホスト名を覆う登録すべてで行う（最も具体的な登録だけを見ると、親の `||キー` ルールが止めているのに許可と判定する）
 
 import { getSettings, getSites, activityItem } from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
@@ -28,17 +14,14 @@ import type { BlockRule, SiteKey, TrackedSites } from '~/types/site';
 
 export type { BlockReason, BlockState } from '~/lib/blockRule';
 
-/** `evaluateBlock` が見るブロック設定 */
 export type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
 
-/** 1 件の登録（ブロック設定）の判定結果 */
 export interface SiteBlockStatus {
   site: SiteKey;
   rule: BlockRuleInput;
   state: BlockState;
 }
 
-/** 判定に使う保存値。1 回の判定の中では同じ値を使う */
 interface BlockInputs {
   settings: AppSettings;
   sites: TrackedSites;
@@ -46,10 +29,6 @@ interface BlockInputs {
   now: Date;
 }
 
-/**
- * 1 件の登録（ブロック設定を持つ追跡中のサイト）。サイト同士は入れ子にしない（追加時に拒否する）が、
- * 崩れた保存値でも判定とルールが割れないよう、ホスト名を覆う登録すべてを見る
- */
 interface Registration {
   site: SiteKey;
   rule: BlockRuleInput;
@@ -57,7 +36,6 @@ interface Registration {
 
 const NOT_BLOCKED: BlockState = { blocked: false, reason: null };
 
-/** 有効かつ現在時刻が範囲内のスケジュールが 1 件以上あるか */
 export function isAnyScheduleActive(
   schedules: Schedule[] | undefined
 ): boolean {
@@ -68,17 +46,9 @@ export function isAnyScheduleActive(
   );
 }
 
-/**
- * ブロックが効く時間帯か（`evaluateBlock` の `scheduleActive` に渡す値）。
- * 有効なスケジュールが 1 件も無ければ常に効く（すべて無効にしたスケジュールは「スケジュール無し」と同じ）。
- * 有効なスケジュールがあれば、そのどれかの範囲内だけ効く
- */
 export function isBlockingWindowOpen(
   schedules: Schedule[] | undefined
 ): boolean {
-  // 旧バージョンの設定や部分的なインポートで schedules が欠けている場合がある。
-  // ここで例外を投げるとブロックルールの再計算が丸ごと止まり、
-  // ブロックが一切効かなくなるため、未設定は「スケジュール無し」として扱う
   const enabled = (schedules ?? []).filter((schedule) => schedule.enabled);
   if (enabled.length === 0) return true;
   return isAnyScheduleActive(enabled);
@@ -98,7 +68,6 @@ async function loadInputs(): Promise<BlockInputs> {
   };
 }
 
-/** ブロック設定を持つ追跡中のサイトを登録として並べる（youtube.com も他のサイトと同じ） */
 function collectRegistrations(sites: TrackedSites): Registration[] {
   const registrations: Registration[] = [];
   for (const site of Object.values(sites)) {
@@ -124,15 +93,11 @@ function evaluate(
   return { site, rule, state };
 }
 
-/** ホスト名が `||キー` の範囲に入るか（キーと一致するか `.キー` で終わる） */
 function covers(site: SiteKey, hostname: string): boolean {
   const host = hostname.trim().toLowerCase();
   return host === site || host.endsWith(`.${site}`);
 }
 
-/**
- * ホスト名を覆う登録を、具体的な順（キーが長い順。同じ長さなら登録順）に並べて判定する
- */
 function statusesForHostname(
   hostname: string,
   registrations: readonly Registration[],
@@ -144,11 +109,6 @@ function statusesForHostname(
     .map((registration) => evaluate(registration, inputs));
 }
 
-/**
- * 同じホスト名を覆う登録の判定結果から、そのホスト名の代表を 1 件選ぶ。
- * ブロックしている登録があればその中で最も具体的なもの（ルールが止めるので結論はブロック）。
- * 無ければ残り秒数がいちばん少ないもの（先に上限に達する制限）、それも無ければ最も具体的なもの
- */
 function representative(
   statuses: readonly SiteBlockStatus[]
 ): SiteBlockStatus | null {
@@ -165,10 +125,6 @@ function representative(
   return tightest ?? statuses[0] ?? null;
 }
 
-/**
- * ホスト名の判定結果を代表 1 件で返す（ブロックの有無は、覆う登録のどれかがブロックか）。
- * ブロック設定の登録に覆われないホスト名は null
- */
 export async function getSiteBlockStatus(
   hostname: string
 ): Promise<SiteBlockStatus | null> {
@@ -178,10 +134,6 @@ export async function getSiteBlockStatus(
   );
 }
 
-/**
- * 複数のホスト名を覆う登録すべての判定結果（保存値の読み出しは 1 回）。
- * 同じ登録は 1 件にまとめる。どの登録にも覆われないホスト名は結果に何も足さない
- */
 export async function getSiteBlockStatuses(
   hostnames: readonly string[]
 ): Promise<SiteBlockStatus[]> {
@@ -198,10 +150,6 @@ export async function getSiteBlockStatuses(
   return [...covering].map((registration) => evaluate(registration, inputs));
 }
 
-/**
- * Determine the block state for a URL
- * 判定の本体は `getBlockStateForDomain`（URL からホスト名を取り出すだけ）
- */
 export async function getBlockState(url: string): Promise<BlockState> {
   const domain = extractDomain(url);
   if (!domain) return NOT_BLOCKED;
@@ -209,14 +157,6 @@ export async function getBlockState(url: string): Promise<BlockState> {
   return getBlockStateForDomain(domain);
 }
 
-/**
- * ホスト名のブロック判定。
- *
- * ⚠ 判定（`getBlockState`）も記録（`shouldTrackBlockForDomain`）もここを通り、
- * ルール生成（`getActiveBlockedDomains`）も同じ `evaluate` を通る。
- * 経路ごとに条件を書くと片方だけが条件を取りこぼし、ブロックされていないのに
- * ブロック回数が増える・開いているタブと新しい遷移で結果がずれる
- */
 export async function getBlockStateForDomain(
   domain: string
 ): Promise<BlockState> {
@@ -224,18 +164,11 @@ export async function getBlockStateForDomain(
   return status?.state ?? NOT_BLOCKED;
 }
 
-/**
- * Check if a URL should be blocked (convenience method)
- */
 export async function shouldBlockUrl(url: string): Promise<boolean> {
   const state = await getBlockState(url);
   return state.blocked;
 }
 
-/**
- * ブロック回数として記録するか。
- * 記録するかどうかは「ブロックされたかどうか」と同じなので、判定の結論をそのまま使う
- */
 export async function shouldTrackBlockForDomain(
   domain: string
 ): Promise<boolean> {
@@ -243,11 +176,6 @@ export async function shouldTrackBlockForDomain(
   return state.blocked;
 }
 
-/**
- * declarativeNetRequest で止めるサイトキーの一覧（重複なし）。
- * すべての登録を判定と同じ `evaluate` に通し、ブロックする登録のキーを返す
- * （返したキーは `||キー` のルールになり、本体とすべてのサブドメインを止める）
- */
 export async function getActiveBlockedDomains(): Promise<SiteKey[]> {
   const inputs = await loadInputs();
   const blocked = new Set<SiteKey>();
