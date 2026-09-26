@@ -69,14 +69,14 @@ describe('usePresets', () => {
     ...overrides
   });
 
-  const makeSettings = (schedules: Schedule[] = []): AppSettings => ({
+  const settingsWith = (schedules: Schedule[] = []): AppSettings => ({
     ...DEFAULT_SETTINGS,
     schedules
   });
 
   const renderUsePresets = (
     vision: VisionSettings | undefined,
-    settings: AppSettings = makeSettings()
+    settings: AppSettings = settingsWith()
   ) =>
     renderHook(() =>
       usePresets({
@@ -729,7 +729,7 @@ describe('usePresets', () => {
     });
 
     it('参照が無ければ確認を出さず、スケジュールも保存し直さない', async () => {
-      const settings = makeSettings([makeSchedule({ presetId: 'preset-2' })]);
+      const settings = settingsWith([makeSchedule({ presetId: 'preset-2' })]);
       const { result } = renderUsePresets(mockVision, settings);
 
       await vi.waitFor(() => {
@@ -760,7 +760,7 @@ describe('usePresets', () => {
         makeSchedule({ id: 'schedule-3', presetId: 'other-preset' })
       ]
     ) => {
-      const settings = makeSettings(schedules);
+      const settings = settingsWith(schedules);
       const rendered = renderUsePresets(mockVision, settings);
 
       await vi.waitFor(() => {

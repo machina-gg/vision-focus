@@ -32,7 +32,7 @@ flowchart TD
 ```
 
 一時停止から時間制限までの条件を並べるのは `src/lib/blockRule.ts` の `evaluateBlock()` だけである。
-`src/lib/blockService.ts` は保存値（`settings` と `activity`）を読み、登録（ブロック設定）ごとに
+`src/lib/blockService.ts` は保存値（`settings` と `sites` と `activity`）を読み、登録（ブロック設定を持つ追跡中のサイト）ごとに
 今日の表示秒数を添えて `evaluateBlock()` に渡し、ホスト名を覆う登録の結論を束ねるだけにする。
 
 - 判定（`getBlockStateForDomain()` / URL 起点の `getBlockState()`）、記録（`shouldTrackBlockForDomain()`）、
@@ -51,14 +51,16 @@ flowchart TD
 
 ### サイトキー
 
-ブロックリストの項目は、`*.` と `www.` を除いて小文字にしたドメイン（サイトキー）に揃えてから照合する
+追跡中のサイトは、`*.` と `www.` を除いて小文字にしたドメイン（サイトキー）で保存し、そのキーで照合する
 （`src/lib/siteKey.ts`）。
 
-- `*.example.com` / `www.example.com` / `example.com` はどれも `example.com` になる
-- 同じサイトキーの項目が複数あっても 1 つにまとめない。どれかがブロックならブロックする
-- 時間制限の使用量は登録のサイトキーの行で数える。`www.example.com` と `m.example.com` の滞在は
-  同じ枠に入る。滞在はホスト名が属する最も長い追跡中のキーの行に記録されるので、親子を両方登録すると
-  子のサブドメインでの滞在は親の使用量に入らない（サイト同士の入れ子の登録を拒否するのは別の段階で扱う）
+- `*.example.com` / `www.example.com` / `example.com` はどれも `example.com` になる（追加時に正規化する）
+- 時間制限の使用量はサイトキーの行で数える。`www.example.com` と `m.example.com` の滞在は同じ枠に入る
+- 追跡中のサイト同士は入れ子にしない。追加（`add-block` / `add-tracked-site` / `import-settings`）のときに、
+  既存のキーの祖先・子孫になるキーは拒否する。入れ子を許すと子のサブドメインでの滞在が親の使用量に入らず、
+  子を登録するだけで親の時間制限を回避できる
+- 判定は保存値が入れ子になっていても上のとおり「覆う登録のどれかがブロックならブロック」で結論を出す
+  （ルールの `||キー` と範囲を揃えるため）
 
 ## 状態遷移図
 
@@ -66,7 +68,7 @@ flowchart TD
 stateDiagram-v2
     [*] --> Unknown: ドメイン初期状態
 
-    Unknown --> NotInBlocklist: ブロックリストに未登録
+    Unknown --> NotInBlocklist: 追跡していない / 追跡だけ（block が null）
     Unknown --> InBlocklist: add-block で追加 / import-settings で取り込み
 
     state InBlocklist {
@@ -99,7 +101,7 @@ stateDiagram-v2
         }
     }
 
-    InBlocklist --> NotInBlocklist: remove-block で削除
+    InBlocklist --> NotInBlocklist: remove-block で削除（block を null にし、追跡は続く）
     NotInBlocklist --> InBlocklist: add-block で追加 / import-settings で取り込み
 
     NotInBlocklist --> [*]: 許可（常に）
@@ -118,32 +120,25 @@ stateDiagram-v2
 | 要素               | 保存場所                             | 型                  | 説明                           |
 | ------------------ | ------------------------------------ | ------------------- | ------------------------------ |
 | グローバル一時停止 | `settings.paused`                    | `boolean`           | 拡張機能全体の一時停止         |
-| ブロックリスト     | `settings.blockList`                 | `BlockItem[]`       | ブロック対象ドメインリスト     |
-| サイト別有効/無効  | `blockItem.enabled`                  | `boolean`           | 個別サイトのブロック ON/OFF    |
-| サイト別時間制限   | `blockItem.timeLimit`                | `TimeLimit \| null` | 「1日30分まで」などの設定      |
+| ブロック設定       | `sites[サイトキー].block`            | `BlockRule \| null` | null ならブロック対象ではない  |
+| サイト別有効/無効  | `sites[サイトキー].block.enabled`    | `boolean`           | 個別サイトのブロック ON/OFF    |
+| サイト別時間制限   | `sites[サイトキー].block.timeLimit`  | `TimeLimit \| null` | 「1日30分まで」などの設定      |
 | スケジュール       | `settings.schedules`                 | `Schedule[]`        | ブロック有効時間帯             |
 | 時間制限使用量     | `activity[今日][サイトキー].seconds` | `number`            | 今日（ローカル日付）の表示秒数 |
-| YouTube 設定       | `settings.youtube`                   | `YouTubeSettings`   | アクセスブロックと時間制限     |
 
 ### YouTube の扱い
 
-YouTube のアクセスブロックと時間制限はブロックリストの外（`settings.youtube`）に保存されている。
-`blockService` はこれを `youtube.com` のサイトキーのブロック設定に組み立て、
-ブロックリストの項目と同じ `evaluateBlock()` に通す。
+`youtube.com` も普通の追跡中のサイトで、アクセスブロックと時間制限は `sites['youtube.com'].block` が持つ。
+判定は他のサイトと同じ `evaluateBlock()` を通り、YouTube だけの条件は無い。
 
-| `settings.youtube`                         | 結果                                            |
-| ------------------------------------------ | ----------------------------------------------- |
-| `enabled && blockAccess`、`timeLimit` なし | 常時ブロック（`always_blocked`）                |
-| `enabled && blockAccess`、`timeLimit` あり | 上限に達したらブロック（`time_limit_exceeded`） |
-| `blockAccess` が無効                       | ブロックしない（時間制限も使わない）            |
-
-- YouTube の設定も 1 件の登録として数える。ブロックリストに `youtube.com` と同じサイトキーの項目があっても、
-  どちらかがブロックならブロックする
+- 設定画面の YouTube の節で機能全体を無効にすると、非表示機能（`youtube`）とブロック設定（`block`）の両方が
+  null になる。アクセスブロックを OFF にすると `block.enabled` が false になる（ブロックリストのトグル OFF と同じ。
+  時間制限は残り、ON に戻せば復元される）
+- 節の「有効」表示は `youtube` があるか、ブロック設定が有効なとき。無効のブロック設定だけの youtube.com は有効に数えない
 - 使用量は `youtube.com` の今日の行を読む（`www.youtube.com` / `m.youtube.com` の滞在も同じ行に入る）。
-  滞在は YouTube 機能が有効なら常に記録されるが、ブロックと通知に使うのはアクセスブロックと時間制限が
-  有効なときだけで、アクセスブロックが無効ならコンテンツスクリプトが画面を隠すこともない
+  滞在は追跡中なら常に記録されるが、ブロックと通知に使うのはブロック設定が有効なときだけ
 - 非表示の設定（Shorts / おすすめ / コメント / ホームフィード）はこの状態遷移とは独立で、
-  `enabled` なら `blockAccess` の値に関わらず適用される。制限を併用していると上限までは
+  `sites['youtube.com'].youtube` があればブロック設定の値に関わらず適用される。制限を併用していると上限までは
   YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`）
 
 ## ブロックの記録とブロック画面

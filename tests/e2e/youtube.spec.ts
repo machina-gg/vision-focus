@@ -10,9 +10,10 @@ import {
   getStorageData,
   setStorageData,
   setSettings,
+  setSites,
   makeActivity,
-  makeSettings,
-  makeYouTubeSettings,
+  makeAppSettings,
+  makeSites,
   clearStorageFromExtension
 } from './helpers/storage';
 import { SELECTORS, TEST_DOMAINS, UI_TEXT } from './helpers/constants';
@@ -25,7 +26,18 @@ import {
   YOUTUBE_SELECTORS,
   generateYouTubeHideCSS
 } from '~/lib/youtubeHideStyles';
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeFeatures } from '~/types/site';
+
+/** YouTube 機能（非表示の各項目）。既定はすべて OFF */
+const features = (
+  overrides: Partial<YouTubeFeatures> = {}
+): YouTubeFeatures => ({
+  hideShorts: false,
+  hideRecommendations: false,
+  hideComments: false,
+  hideHomeFeed: false,
+  ...overrides
+});
 
 // 時間制限の使用量を引くサイトキー（ホスト名ではない。www. 付きで開いても同じ行を読む）
 const YOUTUBE_SITE = 'youtube.com';
@@ -48,16 +60,10 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube Shorts を非表示に設定
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: true,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: null
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [
+      { domain: YOUTUBE_SITE, youtube: { hideShorts: true } }
+    ]);
 
     await page.close();
 
@@ -90,16 +96,10 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: false,
-        hideRecommendations: true,
-        hideComments: false,
-        timeLimit: null
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [
+      { domain: YOUTUBE_SITE, youtube: { hideRecommendations: true } }
+    ]);
 
     await page.close();
 
@@ -132,16 +132,10 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: true,
-        timeLimit: null
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [
+      { domain: YOUTUBE_SITE, youtube: { hideComments: true } }
+    ]);
 
     await page.close();
 
@@ -174,16 +168,8 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // YouTube を完全ブロック
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: true,
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: null
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [{ domain: YOUTUBE_SITE, youtube: {}, block: {} }]);
 
     await page.close();
 
@@ -210,25 +196,15 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    // アクセスブロックは無効のまま Time Limit だけ残っている状態（#407）。
+    // YouTube 機能だけを使い、アクセスブロック（youtube.com のブロック設定）は無い状態。
     // 注入される CSS の期待値を同じ設定から組み立てるため、変数に取る
-    const youtubeSettings = makeYouTubeSettings({
-      blockAccess: false,
-      hideShorts: true, // コンテンツスクリプトが動いたことを確かめるための目印
-      hideRecommendations: false,
-      hideComments: false,
-      timeLimit: {
-        type: 'daily',
-        limitSeconds: 1 // 1秒
-      }
-    }) as unknown as YouTubeSettings;
+    // （hideShorts はコンテンツスクリプトが動いたことを確かめるための目印）
+    const youtubeFeatures = features({ hideShorts: true });
 
-    await setSettings(page, {
-      paused: false,
-      youtube: youtubeSettings
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [{ domain: YOUTUBE_SITE, youtube: youtubeFeatures }]);
 
-    // 既に超過（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 1）
+    // 滞在時間は長く記録されていても、ブロック設定が無いので何も止めない
     await setStorageData(
       page,
       'activity',
@@ -270,7 +246,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
       const style = document.getElementById('vision-focus-youtube-blocker');
       return style?.textContent ?? null;
     });
-    expect(injectedCss).toBe(generateYouTubeHideCSS(youtubeSettings));
+    expect(injectedCss).toBe(generateYouTubeHideCSS(youtubeFeatures));
 
     await youtubePage.close();
   });
@@ -283,18 +259,10 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // 最初は Shorts 非表示なし。注入される CSS の期待値を同じ設定から
     // 組み立てるため、変数に取る
-    const initialSettings = makeYouTubeSettings({
-      blockAccess: false,
-      hideShorts: false,
-      hideRecommendations: false,
-      hideComments: false,
-      timeLimit: null
-    });
+    const initialSettings = features();
 
-    await setSettings(page, {
-      paused: false,
-      youtube: initialSettings
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [{ domain: YOUTUBE_SITE, youtube: initialSettings }]);
 
     await page.close();
 
@@ -325,19 +293,13 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     // page.evaluate はページのメインワールドで実行されるため、コンテンツ
     // スクリプトと違い chrome.storage を参照できない。拡張機能ページ経由で更新する
     const updatePage = await openStoragePage(context, extensionId);
-    await setSettings(updatePage, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: false,
-        hideShorts: true, // 有効化
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: null
-      })
-    });
+    await setSettings(updatePage, { paused: false });
+    await setSites(updatePage, [
+      { domain: YOUTUBE_SITE, youtube: { hideShorts: true } }
+    ]);
     await updatePage.close();
 
-    // settings の watch が反応して CSS が差し替わるまで待つ。
+    // sites の watch が反応して CSS が差し替わるまで待つ。
     // 待つ対象は「Shorts 非表示のルールが入ったか」そのもので、
     // これを書くのは設定変更を受け取ったコンテンツスクリプトだけ
     await expect
@@ -354,19 +316,14 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // アクセスブロックと制限を併用しても、上限に達するまでは非表示が効く（#422）
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: true,
-        hideShorts: true, // Shorts 非表示
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 60
-        }
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [
+      {
+        domain: YOUTUBE_SITE,
+        youtube: { hideShorts: true },
+        block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+      }
+    ]);
 
     // Time Limit は未超過（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 60）
     await setStorageData(
@@ -411,19 +368,14 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     const page = await openStoragePage(context, extensionId);
 
     // blockAccess と Time Limit を両方設定
-    await setSettings(page, {
-      paused: false,
-      youtube: makeYouTubeSettings({
-        blockAccess: true, // 完全ブロック
-        hideShorts: false,
-        hideRecommendations: false,
-        hideComments: false,
-        timeLimit: {
-          type: 'daily',
-          limitSeconds: 60
-        }
-      })
-    });
+    await setSettings(page, { paused: false });
+    await setSites(page, [
+      {
+        domain: YOUTUBE_SITE,
+        youtube: {},
+        block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+      }
+    ]);
 
     // Time Limit を超過させる（activity の今日の行に youtube.com の表示秒数を設定。limitSeconds: 60）。
     // blockAccess に時間制限を併用した場合は、ブロックリストと同じく超過後にブロックする
@@ -457,13 +409,14 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     context,
     extensionId
   }) => {
-    // YouTube 設定はフィールドが欠けるとスキーマ検証に落ちて保存されないため、
-    // 完全な形を書く makeYouTubeSettings を使う。パスワード保護は無し
+    // YouTube 機能を有効にした youtube.com を置く（完全な形を書く makeSites を使う）。
+    // パスワード保護は無し
     const setupPage = await openStoragePage(context, extensionId);
+    await setStorageData(setupPage, 'settings', makeAppSettings());
     await setStorageData(
       setupPage,
-      'settings',
-      makeSettings({ youtube: makeYouTubeSettings({ enabled: true }) })
+      'sites',
+      makeSites([{ domain: YOUTUBE_SITE, youtube: {} }])
     );
     await setupPage.close();
 
@@ -487,12 +440,13 @@ test.describe('YouTube - YouTube ブロック機能', () => {
     await holdUnblockConfirm(page);
 
     await expect(masterToggle).toHaveAttribute('aria-checked', 'false');
+    // YouTube 機能が外れる（youtube.com は追跡中に残る）
     await expect
       .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        return settings?.youtube?.enabled;
+        const sites = await getStorageData(page, 'sites');
+        return sites?.[YOUTUBE_SITE]?.youtube ?? 'missing';
       })
-      .toBe(false);
+      .toBeNull();
 
     await page.close();
   });

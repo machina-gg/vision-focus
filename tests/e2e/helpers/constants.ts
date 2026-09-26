@@ -188,7 +188,6 @@ export const SELECTORS = {
   analytics: {
     siteRankingList: '[data-testid="analytics-top-sites-heading"]',
     trackedSitesList: '[data-testid="analytics-tracked-sites-heading"]',
-    unblockHistory: '[data-testid="analytics-tracked-sites-heading"]',
     wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
     exportButton: '[data-testid="analytics-export-button"]',
     exportBlocklist: '[data-testid="analytics-export-blocklist"]',

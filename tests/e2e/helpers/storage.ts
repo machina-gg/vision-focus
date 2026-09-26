@@ -3,17 +3,19 @@ import { TEST_DATA } from './constants';
 
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
+import type {
+  BlockRule,
+  SiteKey,
+  TrackedSites,
+  YouTubeFeatures
+} from '~/types/site';
 
 import type {
   AppSettings,
   DashboardDisplaySettings,
   DashboardPreset,
   StorageSchema,
-  UnblockedSite,
-  UnblockHistory,
-  VisionSettings,
-  YouTubeSettings
+  VisionSettings
 } from '~/types/storage';
 
 /**
@@ -22,7 +24,7 @@ import type {
  * E2Eテストで chrome.storage.local を直接操作するためのユーティリティ。
  *
  * ⚠ 値は `unknown` では受けない。キーごとに実装の型（`StorageSchema`）で受ける
- * ことで、保存形と違うキー名（`siteStats` / `unblockHistory.entries` など）を
+ * ことで、保存形と違うキー名（`siteStats` など）を
  * 型検査で止める。テスト側に対応表を作り直すと実装のキーが変わっても気づけない
  * ため、キーの一覧は実装の `StorageSchema` をそのまま使う（#437）。
  *
@@ -270,7 +272,7 @@ export async function setSettings(
   page: Page,
   overrides: Partial<AppSettings> = {}
 ): Promise<void> {
-  await setStorageData(page, 'settings', makeSettings(overrides));
+  await setStorageData(page, 'settings', makeAppSettings(overrides));
 }
 
 /** 拡張機能のページを開いて settings を書き込む（完全な形で書く） */
@@ -283,31 +285,8 @@ export async function setSettingsFromExtension(
     context,
     extensionId,
     'settings',
-    makeSettings(overrides)
+    makeAppSettings(overrides)
   );
-}
-
-/**
- * YouTube 設定を「欠けたフィールドのない完全な形」で作る
- *
- * 実装は保存された youtube 設定をスキーマ検証しており、フィールドが欠けていると
- * 検証に失敗して既定値（enabled: false）にフォールバックする。その結果
- * コンテンツスクリプトが CSS を一切注入せず、テストからは「設定したのに
- * 効かない」としか見えない。
- */
-export function makeYouTubeSettings(
-  overrides: Partial<YouTubeSettings> = {}
-): YouTubeSettings {
-  return {
-    enabled: true,
-    blockAccess: false,
-    hideShorts: false,
-    hideRecommendations: false,
-    hideComments: false,
-    hideHomeFeed: false,
-    timeLimit: null,
-    ...overrides
-  };
 }
 
 /**
@@ -319,17 +298,13 @@ export function makeYouTubeSettings(
  *
  * @param overrides - 上書きする値
  */
-export function makeSettings(
+export function makeAppSettings(
   overrides: Partial<AppSettings> = {}
 ): AppSettings {
   return {
-    blockList: [],
     schedules: [],
     paused: false,
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
-    // YouTube 設定の既定値はここで組み立て直さない。書き漏らすとスキーマ検証に
-    // 落ちて無言で既定値になるため、完全な形を作る 1 箇所に寄せる
-    youtube: makeYouTubeSettings({ enabled: false }),
     password: { enabled: false, passwordHash: null },
     unblockConfirm: { holdSeconds: 5 },
     analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
@@ -337,11 +312,75 @@ export function makeSettings(
   };
 }
 
+/** 追跡中のサイト 1 件の種。省略した設定は「無い」（null）として作る */
+export interface SiteSeed {
+  domain: SiteKey;
+  /** ブロック設定。`{}` なら有効な常時ブロック。省略・null ならブロックしない（追跡だけ） */
+  block?: Partial<BlockRule> | null;
+  /** YouTube 機能（youtube.com のときだけ）。`{}` ならすべて OFF で有効。省略・null なら使わない */
+  youtube?: Partial<YouTubeFeatures> | null;
+  trackedAt?: string;
+}
+
+/**
+ * 追跡中のサイト（`sites`）を「欠けたフィールドのない完全な形」で作る
+ *
+ * 実装は保存された値をスキーマ検証する箇所があり（YouTube のコンテンツスクリプト）、
+ * フィールドが欠けると機能を使わない扱いになる。その結果テストからは
+ * 「設定したのに効かない」としか見えないため、sites は必ずこれで作る。
+ * キーはサイトキー（小文字・`*.` / `www.` なし）で書く。
+ *
+ * @param seeds - サイトごとの種
+ */
+export function makeSites(seeds: SiteSeed[]): TrackedSites {
+  const now = new Date().toISOString();
+  return Object.fromEntries(
+    seeds.map(({ domain, block, youtube, trackedAt = now }) => [
+      domain,
+      {
+        domain,
+        trackedAt,
+        block: block
+          ? { enabled: true, addedAt: now, timeLimit: null, ...block }
+          : null,
+        youtube: youtube
+          ? {
+              hideShorts: false,
+              hideRecommendations: false,
+              hideComments: false,
+              hideHomeFeed: false,
+              ...youtube
+            }
+          : null
+      }
+    ])
+  );
+}
+
+/** 追跡中のサイトを書き込む（完全な形で書く） */
+export async function setSites(page: Page, seeds: SiteSeed[]): Promise<void> {
+  await setStorageData(page, 'sites', makeSites(seeds));
+}
+
+/** 拡張機能のページを開いて追跡中のサイトを書き込む（完全な形で書く） */
+export async function setSitesFromExtension(
+  context: BrowserContext,
+  extensionId: string,
+  seeds: SiteSeed[]
+): Promise<void> {
+  await setStorageDataFromExtension(
+    context,
+    extensionId,
+    'sites',
+    makeSites(seeds)
+  );
+}
+
 /**
  * 事実の表（`activity`）を作る
  *
- * 画面の数値は追跡中のサイト（ブロックリスト・解除履歴・YouTube 機能）の行だけから
- * 導出される。種に置くサイトは、同じテストでブロックリストか解除履歴にも入れておく。
+ * 画面の数値は追跡中のサイト（`sites`）の行だけから導出され、書き手も
+ * 追跡中でないサイトの出来事を捨てる。種に置くサイトは、同じテストで `makeSites` にも入れておく。
  * 日付はローカル日付（アプリの `toDateKey` と同じ）で、既定は今日。
  *
  * @param entries - [サイトキー, 事実の一部, 何日前か（既定 0）] の配列
@@ -365,40 +404,6 @@ export function makeActivity(
 }
 
 /**
- * 解除済みサイトの履歴を作る
- *
- * 解除履歴のキーは追跡中のサイトの集合に入り、事実の表（`activity`）はその集合の
- * サイトしか記録しない。滞在・ブロック・解除の記録を検証するテストは、
- * 対象ドメインをここ（かブロックリスト）へ先に入れておく。
- *
- * @param domains - 解除済みとして扱うドメイン
- * @param overrides - 各サイトに与える上書き（滞在時間の初期値など）
- */
-export function makeUnblockHistory(
-  domains: string[],
-  overrides: Partial<UnblockedSite> = {}
-): UnblockHistory {
-  const now = new Date().toISOString();
-
-  // タプルの型を明示する。推論に任せると値の型が union に広がり、
-  // UnblockedSite との不一致を型検査が見逃す
-  const entries: [string, UnblockedSite][] = domains.map((domain) => [
-    domain,
-    {
-      domain,
-      status: 'unblocked',
-      blockedAt: now,
-      unblockedAt: now,
-      timeAfterUnblock: 0,
-      lastActivity: null,
-      ...overrides
-    }
-  ]);
-
-  return { sites: Object.fromEntries(entries) };
-}
-
-/**
  * テスト用の初期設定をセットする
  *
  * @param page - Playwright Page オブジェクト
@@ -415,9 +420,9 @@ export interface TestStorageOptions {
 /**
  * テスト用の storage データを組み立てる（書き込みは行わない）
  *
- * AppSettings の必須フィールドを欠くと、実装側で settings.blockList.length の
+ * AppSettings の必須フィールドを欠くと、実装側で settings.schedules の
  * ような参照が例外になる（アプリはストレージに保存済みの値をそのまま使う）。
- * 必須フィールドの充足は `makeSettings` に任せ、ここでは差分だけを与える。
+ * 必須フィールドの充足は `makeAppSettings` に任せ、ここでは差分だけを与える。
  */
 export function makeTestStorage(
   options: TestStorageOptions = {}
@@ -460,23 +465,14 @@ export function makeTestStorage(
     ];
   }
 
-  // ブロックリストは settings.blockList に保持される
-  // （トップレベルの blockList キーではない）
-  if (withBlockList) {
-    overrides.blockList = [
-      {
-        id: '1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: new Date().toISOString(),
-        enabled: true
-      }
-    ];
-  }
-
   const data: Pick<StorageSchema, 'settings'> & Partial<StorageSchema> = {
-    settings: makeSettings(overrides)
+    settings: makeAppSettings(overrides)
   };
+
+  // ブロックリストは追跡中のサイト（sites）のブロック設定に保持される
+  if (withBlockList) {
+    data.sites = makeSites([{ domain: 'example.com', block: {} }]);
+  }
 
   // Vision 設定（目標テキスト）。
   // DashboardDisplaySettings / DashboardPreset の全フィールドを満たすこと。
@@ -503,6 +499,9 @@ export async function setupTestStorage(
   const data = makeTestStorage(options);
 
   await setStorageData(page, 'settings', data.settings);
+  if (data.sites) {
+    await setStorageData(page, 'sites', data.sites);
+  }
   if (data.vision) {
     await setStorageData(page, 'vision', data.vision);
   }

@@ -2,11 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn(),
-  getUnblockHistory: vi.fn(),
-  setUnblockHistory: vi.fn()
+vi.mock('~/lib/siteService', () => ({
+  removeBlock: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
@@ -17,209 +14,76 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
-import {
-  getSettings,
-  setSettings,
-  getUnblockHistory,
-  setUnblockHistory
-} from '~/lib/storage';
+import { removeBlock } from '~/lib/siteService';
 import { updateBlockRules } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
 import { removeBlockHandler as handler } from '../../handlers/remove-block';
-import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
+import type { BlockRule } from '~/types/site';
 
-const blockItem = {
-  id: 'item-1',
-  domain: 'example.com',
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled: true
-};
+const rule = (enabled: boolean): BlockRule => ({
+  enabled,
+  addedAt: '2026-01-01T00:00:00.000Z',
+  timeLimit: null
+});
 
 describe('remove-block ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSettings).mockResolvedValue({
-      ...DEFAULT_SETTINGS,
-      blockList: [blockItem]
-    });
-    vi.mocked(getUnblockHistory).mockResolvedValue({
-      ...DEFAULT_UNBLOCK_HISTORY,
-      sites: {}
-    });
+    vi.mocked(removeBlock).mockResolvedValue(rule(true));
   });
 
-  describe('入力検証', () => {
-    it.each([
-      ['id が空文字', ''],
-      ['id が undefined', undefined],
-      ['id が文字列以外', 123],
-      ['id が 100 文字超', 'a'.repeat(101)]
-    ])('%s の場合は失敗し、設定を変更しない', async (_label, id) => {
-      const result = await invoke<{ success: boolean }>(handler, { id });
+  it.each([
+    ['domain が空文字', { domain: '' }],
+    ['domain が無い', {}],
+    ['domain が文字列以外', { domain: 123 }],
+    ['domain が長すぎる', { domain: 'a'.repeat(254) }]
+  ])('%s の場合は失敗し、何も変えない', async (_label, data) => {
+    const result = await invoke<{ success: boolean }>(handler, data);
 
-      expect(result).toEqual({ success: false });
-      expect(setSettings).not.toHaveBeenCalled();
-      expect(updateBlockRules).not.toHaveBeenCalled();
-    });
-
-    it('id が 100 文字ちょうどなら処理を試行する', async () => {
-      const result = await invoke<{ success: boolean }>(handler, {
-        id: 'a'.repeat(100)
-      });
-
-      // 存在しない id なので削除は起きないが、入力検証は通過して success を返す
-      expect(result).toEqual({ success: true });
-    });
+    expect(result).toEqual({ success: false });
+    expect(removeBlock).not.toHaveBeenCalled();
+    expect(updateBlockRules).not.toHaveBeenCalled();
   });
 
-  describe('削除', () => {
-    it('該当項目をブロックリストから削除する', async () => {
-      const result = await invoke<{ success: boolean }>(handler, {
-        id: 'item-1'
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({ blockList: [] })
-      );
-      expect(updateBlockRules).toHaveBeenCalledOnce();
+  it('ブロック設定を外し、ルールを作り直す（サイトは追跡中に残る）', async () => {
+    const result = await invoke<{ success: boolean }>(handler, {
+      domain: 'example.com'
     });
 
-    it('該当項目が無い場合は保存もルール更新も行わない', async () => {
-      const result = await invoke<{ success: boolean }>(handler, {
-        id: 'not-exists'
-      });
-
-      // 呼び出し自体は成功扱い（冪等）
-      expect(result).toEqual({ success: true });
-      expect(setSettings).not.toHaveBeenCalled();
-      expect(updateBlockRules).not.toHaveBeenCalled();
-      expect(setUnblockHistory).not.toHaveBeenCalled();
-    });
-
-    it('複数登録されていても対象のみ削除する', async () => {
-      const other = { ...blockItem, id: 'item-2', domain: 'other.com' };
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [blockItem, other]
-      });
-
-      await invoke(handler, { id: 'item-1' });
-
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({ blockList: [other] })
-      );
-    });
+    expect(result).toEqual({ success: true });
+    expect(removeBlock).toHaveBeenCalledWith('example.com');
+    expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  describe('追跡履歴の更新', () => {
-    it('既存履歴を unblocked に更新し計測をリセットする', async () => {
-      vi.mocked(getUnblockHistory).mockResolvedValue({
-        ...DEFAULT_UNBLOCK_HISTORY,
-        sites: {
-          'example.com': {
-            domain: 'example.com',
-            status: 'blocked',
-            blockedAt: '2026-01-01T00:00:00.000Z',
-            unblockedAt: null,
-            timeAfterUnblock: 999,
-            lastActivity: '2026-01-01T10:00:00.000Z'
-          }
-        }
-      });
+  it('効いていたブロックを外したら、保存の後に解除を 1 回記録する', async () => {
+    await invoke(handler, { domain: 'example.com' });
 
-      await invoke(handler, { id: 'item-1' });
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              status: 'unblocked',
-              timeAfterUnblock: 0,
-              lastActivity: null,
-              // 元のブロック日時は保持する
-              blockedAt: '2026-01-01T00:00:00.000Z'
-            })
-          })
-        })
-      );
-      expect(
-        vi.mocked(setUnblockHistory).mock.calls[0][0].sites['example.com']
-          .unblockedAt
-      ).not.toBeNull();
+    expect(recordActivity).toHaveBeenCalledWith({
+      kind: 'unblock',
+      site: 'example.com',
+      at: expect.any(Date)
     });
-
-    it('履歴が無い場合は元のブロック日時を使って新規作成する', async () => {
-      await invoke(handler, { id: 'item-1' });
-
-      expect(setUnblockHistory).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sites: expect.objectContaining({
-            'example.com': expect.objectContaining({
-              domain: 'example.com',
-              status: 'unblocked',
-              blockedAt: blockItem.createdAt,
-              timeAfterUnblock: 0,
-              lastActivity: null
-            })
-          })
-        })
-      );
-    });
+    expect(vi.mocked(removeBlock).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(recordActivity).mock.invocationCallOrder[0]
+    );
   });
 
-  describe('事実の表（activity）への解除の記録', () => {
-    it('ブロックリストからの削除で 1 回の解除を記録する', async () => {
-      await invoke(handler, { id: 'item-1' });
+  it('無効化済みのブロックを外しても解除は記録しない', async () => {
+    vi.mocked(removeBlock).mockResolvedValue(rule(false));
 
-      expect(recordActivity).toHaveBeenCalledOnce();
-      expect(recordActivity).toHaveBeenCalledWith({
-        kind: 'unblock',
-        site: 'example.com',
-        at: expect.any(Date)
-      });
-    });
+    await invoke(handler, { domain: 'example.com' });
 
-    it('解除履歴を書いてから記録する（削除したサイトを追跡中として扱えるように）', async () => {
-      await invoke(handler, { id: 'item-1' });
+    expect(updateBlockRules).toHaveBeenCalledOnce();
+    expect(recordActivity).not.toHaveBeenCalled();
+  });
 
-      expect(
-        vi.mocked(setUnblockHistory).mock.invocationCallOrder[0]
-      ).toBeLessThan(vi.mocked(recordActivity).mock.invocationCallOrder[0]);
-    });
+  it('ブロック設定が無ければ何もせず成功を返す', async () => {
+    vi.mocked(removeBlock).mockResolvedValue(null);
 
-    it('www 付きの項目はサイトキーに正規化して記録する', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [{ ...blockItem, domain: 'www.example.com' }]
-      });
+    const result = await invoke(handler, { domain: 'example.com' });
 
-      await invoke(handler, { id: 'item-1' });
-
-      expect(recordActivity).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: 'unblock', site: 'example.com' })
-      );
-    });
-
-    it('無効化済みの項目の削除は記録しない（効いていないブロックを外しても解除ではない）', async () => {
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [{ ...blockItem, enabled: false }]
-      });
-
-      await invoke(handler, { id: 'item-1' });
-
-      expect(setSettings).toHaveBeenCalledWith(
-        expect.objectContaining({ blockList: [] })
-      );
-      expect(recordActivity).not.toHaveBeenCalled();
-    });
-
-    it('該当項目が無ければ記録しない', async () => {
-      await invoke(handler, { id: 'not-exists' });
-
-      expect(recordActivity).not.toHaveBeenCalled();
-    });
+    expect(result).toEqual({ success: true });
+    expect(updateBlockRules).not.toHaveBeenCalled();
+    expect(recordActivity).not.toHaveBeenCalled();
   });
 });

@@ -218,13 +218,13 @@
 ### E2E カバー済み
 
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-001: サイト別ブロック回数が記録される
-- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-002: Unblock History（ブロック解除サイト）が記録される
+- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-002: ブロックリストから外したサイトは追跡中に残る
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-003: 解除サイトの滞在時間が Heartbeat で記録される
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-004: トラッキング中サイトの滞在時間が記録される
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-005: Analytics Opt-In モーダルで許可/拒否を選択できる
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-006: Opt-Out でもブロック回数の集計は続く
 - 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-007: Analytics データをリセットできる
-- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-010: Opt-Out でも解除履歴は記録される
+- 📎 E2E 参照: `tests/e2e/analytics.spec.ts` — AN-010: Opt-Out でも解除したサイトの追跡と解除の記録は残る
 
 ### 手動確認項目
 

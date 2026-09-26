@@ -8,7 +8,7 @@ import {
   makeDisplaySettings,
   makeVision,
   makePreset,
-  makeSettings,
+  makeAppSettings,
   getStorageData,
   SELECTORS,
   UI_TEXT
@@ -212,7 +212,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -275,7 +275,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -318,7 +318,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -390,7 +390,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -418,7 +418,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       disablePage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -450,7 +450,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -530,7 +530,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',
@@ -606,7 +606,7 @@ test.describe('Options - Schedule Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
+      makeAppSettings({
         schedules: [
           {
             id: 'schedule1',

@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DomainListItem } from './DomainListItem';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
-const baseItem: BlockItem = {
+const baseItem: BlockListRow = {
   id: '1',
   domain: 'twitter.com',
-  isWildcard: false,
   createdAt: '2026-02-01T10:00:00Z',
   enabled: true,
   timeLimit: null
@@ -36,19 +35,6 @@ export const Basic: Story = {
   }
 };
 
-// ワイルドカードドメインの場合
-export const WithWildcard: Story = {
-  args: {
-    item: { ...baseItem, id: '2', domain: 'example.com', isWildcard: true },
-    blockCount: 0,
-    usedSeconds: 0,
-    onToggle: () => {},
-    onRemove: () => {},
-    onUpdateTimeLimit: () => {}
-  }
-};
-
-// 時間制限が設定され、利用状況の記録がある場合
 export const WithTimeLimit: Story = {
   args: {
     item: {

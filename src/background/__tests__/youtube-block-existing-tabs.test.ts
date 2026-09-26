@@ -12,8 +12,9 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 // ストレージだけをモックする（blocker / blockService は実物）
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
+  getSites: vi.fn(),
+  sitesItem: { setValue: vi.fn() },
   activityItem: { getValue: vi.fn() },
-  setSettings: vi.fn(),
   // blockExistingTabs はリダイレクト前にブロックを記録する（#351）
   setLastBlockedDomain: vi.fn()
 }));
@@ -30,7 +31,8 @@ vi.mock('~/lib/activityService', () => ({
 
 import {
   getSettings,
-  setSettings,
+  getSites,
+  sitesItem,
   activityItem,
   setLastBlockedDomain
 } from '~/lib/storage';
@@ -38,8 +40,10 @@ import { recordHostActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
 import { invoke } from './handlers/helpers';
 import { toDateKey } from '~/lib/time';
-import { DEFAULT_SETTINGS, DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
-import type { AppSettings, YouTubeSettings, TimeLimit } from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { TimeLimit } from '~/types/storage';
+import type { TrackedSites } from '~/types/site';
+import { sitesOf, trackedSite, youtubeFeatures } from '~/test/sites';
 
 const YOUTUBE_TAB = { id: 1, url: 'https://www.youtube.com/watch?v=abc' };
 const OTHER_TAB = { id: 2, url: 'https://example.com/' };
@@ -70,16 +74,21 @@ function setupChrome() {
   return chromeMock;
 }
 
-/** 保存前の設定を用意し、保存された設定が以降の判定に反映されるようにする */
-function givenStoredSettings(youtube: Partial<YouTubeSettings>) {
-  let stored: AppSettings = {
-    ...DEFAULT_SETTINGS,
-    youtube: { ...DEFAULT_YOUTUBE_SETTINGS, ...youtube }
-  };
-  vi.mocked(getSettings).mockImplementation(async () => stored);
-  vi.mocked(setSettings).mockImplementation(async (next: AppSettings) => {
-    stored = next;
-  });
+/**
+ * 保存前の追跡中のサイト（YouTube 機能は有効・アクセスブロックは無効）を用意し、
+ * 保存された値が以降の判定に反映されるようにする
+ */
+function givenStoredSites() {
+  let stored: TrackedSites = sitesOf(
+    trackedSite('youtube.com', { youtube: youtubeFeatures() })
+  );
+  vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
+  vi.mocked(getSites).mockImplementation(async () => stored);
+  vi.mocked(sitesItem.setValue).mockImplementation(
+    async (next: TrackedSites) => {
+      stored = next;
+    }
+  );
 }
 
 /** YouTube の今日の表示秒数を用意する（サイトキーは 'youtube.com'） */
@@ -95,9 +104,12 @@ function givenYouTubeUsage(seconds: number) {
 async function turnOnBlockAccess(timeLimit: TimeLimit | null = null) {
   return invoke(updateYouTubeSettingsHandler, {
     youtube: {
-      ...DEFAULT_YOUTUBE_SETTINGS,
       enabled: true,
       blockAccess: true,
+      hideShorts: false,
+      hideRecommendations: false,
+      hideComments: false,
+      hideHomeFeed: false,
       timeLimit
     }
   });
@@ -110,7 +122,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     vi.clearAllMocks();
     chromeMock = setupChrome();
     vi.mocked(activityItem.getValue).mockResolvedValue({});
-    givenStoredSettings({ enabled: true, blockAccess: false });
+    givenStoredSites();
   });
 
   it('時間制限なしなら、開いている YouTube のタブを newtab へ置き換える', async () => {

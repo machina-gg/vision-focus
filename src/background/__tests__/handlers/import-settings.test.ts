@@ -7,6 +7,10 @@ vi.mock('~/lib/storage', () => ({
   setSettings: vi.fn()
 }));
 
+vi.mock('~/lib/siteService', () => ({
+  importSites: vi.fn()
+}));
+
 vi.mock('~/lib/blockService', () => ({
   getActiveBlockedDomains: vi.fn()
 }));
@@ -17,32 +21,25 @@ vi.mock('../../blocker', () => ({
 }));
 
 import { getSettings, setSettings } from '~/lib/storage';
+import { importSites } from '~/lib/siteService';
 import { getActiveBlockedDomains } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
+import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import { DEFAULT_SETTINGS } from '~/types/storage';
-import type { AppSettings, BlockItem } from '~/types/storage';
+import type { AppSettings } from '~/types/storage';
 
 interface Response {
   success: boolean;
   error?: string;
+  skipped?: { domain: string; conflict: string }[];
 }
-
-const blockItem = (overrides: Partial<BlockItem> = {}): BlockItem => ({
-  id: 'block-1',
-  domain: 'example.com',
-  isWildcard: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  enabled: true,
-  ...overrides
-});
 
 /** 画面側が applyImportedSettings で組み立てた「適用後の設定」に相当する値 */
 const importedSettings = (
   overrides: Partial<AppSettings> = {}
 ): AppSettings => ({
   ...DEFAULT_SETTINGS,
-  blockList: [blockItem()],
   ...overrides
 });
 
@@ -63,26 +60,31 @@ describe('import-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
+    vi.mocked(importSites).mockResolvedValue({ changed: [], skipped: [] });
     givenBlockedDomains([], []);
   });
 
   describe('入力検証', () => {
+    const settings = importedSettings();
     it.each([
       ['body が空', {}],
-      ['settings が null', { settings: null }],
-      ['blockList が無い', { settings: { schedules: [] } }],
-      ['schedules が無い', { settings: { blockList: [] } }],
+      ['settings が null', { settings: null, sites: [] }],
+      ['sites が無い', { settings }],
       [
-        'blockList の項目が不正',
-        { settings: { blockList: [{ domain: 'example.com' }], schedules: [] } }
+        'schedules が無い',
+        { settings: { ...settings, schedules: undefined }, sites: [] }
+      ],
+      [
+        '追跡中のサイトの形が不正',
+        { settings, sites: [{ domain: 'example.com' }] }
       ],
       [
         'schedules の項目が不正',
-        { settings: { blockList: [], schedules: [{ id: 'a' }] } }
+        { settings: { ...settings, schedules: [{ id: 'a' }] }, sites: [] }
       ],
       [
         'paused が boolean でない',
-        { settings: { blockList: [], schedules: [], paused: 'yes' } }
+        { settings: { ...settings, paused: 'yes' }, sites: [] }
       ]
     ])('%s なら Invalid request body を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
@@ -92,14 +94,14 @@ describe('import-settings ハンドラ', () => {
         error: 'Invalid request body'
       });
       expect(setSettings).not.toHaveBeenCalled();
+      expect(importSites).not.toHaveBeenCalled();
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
   });
 
-  it('インポートした設定を保存してブロックルールを更新する', async () => {
+  it('全体の設定を保存し、追跡中のサイトを取り込んでブロックルールを更新する', async () => {
     const settings = importedSettings({
-      blockList: [blockItem({ domain: 'sns.example' })],
       schedules: [
         {
           id: 'schedule-1',
@@ -111,36 +113,51 @@ describe('import-settings ハンドラ', () => {
         }
       ]
     });
+    const sites = [
+      blockedSite('sns.example', {
+        timeLimit: { type: 'daily', limitSeconds: 600 }
+      }),
+      trackedSite('youtube.com', { youtube: youtubeFeatures() })
+    ];
 
-    const result = await invoke<Response>(handler, { settings });
+    const result = await invoke<Response>(handler, { settings, sites });
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, skipped: [] });
     expect(setSettings).toHaveBeenCalledWith(
       expect.objectContaining({
-        blockList: [expect.objectContaining({ domain: 'sns.example' })],
         schedules: [expect.objectContaining({ id: 'schedule-1' })]
       })
     );
+    expect(importSites).toHaveBeenCalledWith(sites, expect.any(Date));
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  it('enabled を持たない項目は有効として保存する', async () => {
-    const { enabled: _enabled, ...withoutEnabled } = blockItem();
-
-    await invoke(handler, {
-      settings: { ...importedSettings(), blockList: [withoutEnabled] }
+  it('入れ子で取り込まなかったサイトを返す', async () => {
+    vi.mocked(importSites).mockResolvedValue({
+      changed: [],
+      skipped: [
+        {
+          input: 'm.youtube.com',
+          nested: { site: 'youtube.com', relation: 'ancestor' }
+        }
+      ]
     });
 
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        blockList: [expect.objectContaining({ enabled: true })]
-      })
-    );
+    const result = await invoke<Response>(handler, {
+      settings: importedSettings(),
+      sites: [blockedSite('m.youtube.com')]
+    });
+
+    expect(result).toEqual({
+      success: true,
+      skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }]
+    });
   });
 
   it('検証の対象にしていない項目も落とさずに保存する', async () => {
     await invoke(handler, {
-      settings: { ...importedSettings(), futureSetting: 'keep me' }
+      settings: { ...importedSettings(), futureSetting: 'keep me' },
+      sites: []
     });
 
     expect(setSettings).toHaveBeenCalledWith(
@@ -153,10 +170,9 @@ describe('import-settings ハンドラ', () => {
       ...DEFAULT_SETTINGS,
       password: { enabled: true, passwordHash: 'hash' }
     });
+    const { password: _password, ...withoutPassword } = importedSettings();
 
-    await invoke(handler, {
-      settings: { blockList: [blockItem()], schedules: [] }
-    });
+    await invoke(handler, { settings: withoutPassword, sites: [] });
 
     expect(setSettings).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -169,7 +185,7 @@ describe('import-settings ハンドラ', () => {
     it('ブロック対象のドメインが増えたとき', async () => {
       givenBlockedDomains([], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings() });
+      await invoke(handler, { settings: importedSettings(), sites: [] });
 
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
@@ -177,7 +193,7 @@ describe('import-settings ハンドラ', () => {
     it('元からあった対象に加えて別の対象が増えたとき', async () => {
       givenBlockedDomains(['example.com'], ['example.com', 'sns.example']);
 
-      await invoke(handler, { settings: importedSettings() });
+      await invoke(handler, { settings: importedSettings(), sites: [] });
 
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
@@ -187,7 +203,7 @@ describe('import-settings ハンドラ', () => {
     it('ブロック対象が変わらないとき', async () => {
       givenBlockedDomains(['example.com'], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings() });
+      await invoke(handler, { settings: importedSettings(), sites: [] });
 
       expect(updateBlockRules).toHaveBeenCalledOnce();
       expect(blockExistingTabs).not.toHaveBeenCalled();
@@ -196,7 +212,7 @@ describe('import-settings ハンドラ', () => {
     it('ブロック対象が減ったとき', async () => {
       givenBlockedDomains(['example.com', 'sns.example'], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings() });
+      await invoke(handler, { settings: importedSettings(), sites: [] });
 
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
@@ -206,7 +222,8 @@ describe('import-settings ハンドラ', () => {
     vi.mocked(setSettings).mockRejectedValue(new Error('storage full'));
 
     const result = await invoke<Response>(handler, {
-      settings: importedSettings()
+      settings: importedSettings(),
+      sites: []
     });
 
     expect(result).toEqual({
@@ -217,10 +234,12 @@ describe('import-settings ハンドラ', () => {
   });
 
   it('ブロックルールの更新に失敗した場合もエラーを返す', async () => {
+    vi.mocked(setSettings).mockResolvedValue(undefined);
     vi.mocked(updateBlockRules).mockRejectedValue(new Error('rules failed'));
 
     const result = await invoke<Response>(handler, {
-      settings: importedSettings()
+      settings: importedSettings(),
+      sites: []
     });
 
     expect(result).toEqual({

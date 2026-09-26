@@ -6,12 +6,12 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
-  makeSettings,
+  makeAppSettings,
   makeActivity,
-  makeUnblockHistory,
   getStorageData,
   SELECTORS,
-  UI_TEXT
+  UI_TEXT,
+  makeSites
 } from './helpers';
 
 // 表示される滞在時間の期待値は実装と同じ関数で組み立てる
@@ -61,14 +61,17 @@ function rankingDomainAt(page: Page, rank: number): Locator {
 /**
  * サイト別ランキングの種（youtube.com: 10 回 > reddit.com: 5 回）を置く
  *
- * ランキングは追跡中のサイトの activity から出る。種に置くサイトは解除履歴にも
- * 入れて追跡中にする（ブロック中として置き、再ブロック・停止のボタンは出さない）。
+ * ランキングは追跡中のサイトの activity から出る。種に置くサイトは追跡中のサイトにも
+ * 入れる（ブロック中として置き、再ブロック・停止のボタンは出さない）。
  */
 async function seedBlockRanking(page: Page): Promise<void> {
   await setStorageData(
     page,
-    'unblockHistory',
-    makeUnblockHistory(['youtube.com', 'reddit.com'], { status: 'blocked' })
+    'sites',
+    makeSites([
+      { domain: 'youtube.com', block: {} },
+      { domain: 'reddit.com', block: {} }
+    ])
   );
   await setStorageData(
     page,
@@ -142,12 +145,12 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の解除履歴データを追加（一覧の行は追跡中のサイト）
+    // 追跡だけのサイトを置く（一覧の行は追跡中のサイト）
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
-      'unblockHistory',
-      makeUnblockHistory(['youtube.com'])
+      'sites',
+      makeSites([{ domain: 'youtube.com' }])
     );
     await setupPage.close();
 
@@ -175,8 +178,8 @@ test.describe('Options - Analytics Tab', () => {
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
-      'unblockHistory',
-      makeUnblockHistory(['reddit.com'])
+      'sites',
+      makeSites([{ domain: 'reddit.com' }])
     );
     await setStorageData(
       setupPage,
@@ -213,25 +216,18 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の解除履歴データを追加
+    // ブロックリストから外した（追跡だけの）サイトを置く
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'unblockHistory', {
-      sites: {
-        'twitter.com': {
-          domain: 'twitter.com',
-          status: 'unblocked',
-          blockedAt: '2024-01-01T00:00:00.000Z',
-          unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: 1800,
-          lastActivity: '2024-01-01T10:30:00.000Z'
-        }
-      }
-    });
+    await setStorageData(
+      setupPage,
+      'sites',
+      makeSites([{ domain: 'twitter.com' }])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // twitter.com の解除履歴が表示される
+    // twitter.com が追跡中のサイト一覧に表示される
     const unblockItem = page.locator('text=/twitter.com/i').first();
     await expect(unblockItem).toBeVisible();
 
@@ -241,20 +237,13 @@ test.describe('Options - Analytics Tab', () => {
       .first();
     await reblockButton.click();
 
-    // サイトがブロックリストに追加される
-    // ブロックリストは独立したキーではなく settings 配下にある
-    const settings = (await getStorageData(page, 'settings')) as {
-      blockList?: unknown[];
-    } | null;
-
-    expect(settings?.blockList ?? []).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          domain: 'twitter.com',
-          enabled: true
-        })
-      ])
-    );
+    // 追跡中のサイトに有効なブロック設定が足される（保存は background なので反映を待つ）
+    await expect
+      .poll(async () => {
+        const sites = await getStorageData(page, 'sites');
+        return sites?.['twitter.com']?.block?.enabled ?? null;
+      })
+      .toBe(true);
 
     await page.close();
   });
@@ -263,20 +252,13 @@ test.describe('Options - Analytics Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用の解除履歴データを追加
+    // ブロックリストから外した（追跡だけの）サイトを置く
     const setupPage = await openOptions(context, extensionId);
-    await setStorageData(setupPage, 'unblockHistory', {
-      sites: {
-        'reddit.com': {
-          domain: 'reddit.com',
-          status: 'unblocked',
-          blockedAt: '2024-01-01T00:00:00.000Z',
-          unblockedAt: '2024-01-01T10:00:00.000Z',
-          timeAfterUnblock: 1800,
-          lastActivity: '2024-01-01T10:30:00.000Z'
-        }
-      }
-    });
+    await setStorageData(
+      setupPage,
+      'sites',
+      makeSites([{ domain: 'reddit.com' }])
+    );
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'analytics');
@@ -297,13 +279,12 @@ test.describe('Options - Analytics Tab', () => {
       .first();
     await stopButton.click();
 
-    // 解除履歴から当該ドメインが消える。
-    // このキーを消すのは停止ボタンの経路だけ（useAnalytics の handleStopTracking）
+    // 追跡中のサイトから当該ドメインが消える。
+    // 消すのは停止ボタンの経路だけ（stop-tracking ハンドラ）
     await expect
-      .poll(async () => {
-        const history = await getStorageData(page, 'unblockHistory');
-        return Object.keys(history?.sites ?? {});
-      })
+      .poll(async () =>
+        Object.keys((await getStorageData(page, 'sites')) ?? {})
+      )
       .not.toContain('reddit.com');
 
     // 保存内容から描き直させて、画面からも消えていることを確かめる
@@ -339,10 +320,7 @@ test.describe('Options - Analytics Tab', () => {
     // ストレージに保存されたことを確認（保存は非同期なので反映を待つ）
     await expect
       .poll(
-        async () => {
-          const history = await getStorageData(page, 'unblockHistory');
-          return Object.keys(history?.sites ?? {});
-        },
+        async () => Object.keys((await getStorageData(page, 'sites')) ?? {}),
         { timeout: 10000 }
       )
       .toContain('example.com');
@@ -362,8 +340,8 @@ test.describe('Options - Analytics Tab', () => {
     });
     await setStorageData(
       setupPage,
-      'unblockHistory',
-      makeUnblockHistory(['youtube.com'], { status: 'blocked' })
+      'sites',
+      makeSites([{ domain: 'youtube.com', block: {} }])
     );
     await setStorageData(
       setupPage,
@@ -395,8 +373,8 @@ test.describe('Options - Analytics Tab', () => {
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
-      'unblockHistory',
-      makeUnblockHistory(['youtube.com', 'reddit.com'])
+      'sites',
+      makeSites([{ domain: 'youtube.com' }, { domain: 'reddit.com' }])
     );
     await setStorageData(
       setupPage,
@@ -443,7 +421,7 @@ test.describe('Options - Analytics Tab', () => {
     extensionId
   }) => {
     // テスト用のデータを追加。
-    // ブロックリストは settings 配下、エクスポートは分析セクション内
+    // ブロックリストは追跡中のサイト（sites）のブロック設定、エクスポートは分析セクション内
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
@@ -452,24 +430,21 @@ test.describe('Options - Analytics Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: 'youtube.com',
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true
-          }
-        ],
+      makeAppSettings({
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       })
     );
-    // youtube.com はブロックリストにあるので追跡中。統計の CSV はその activity から出る
+    // youtube.com はブロック中のサイト一覧に出さないので、一覧に出るサイトで確かめる
+    await setStorageData(
+      setupPage,
+      'sites',
+      makeSites([{ domain: 'reddit.com', block: {} }])
+    );
+    // reddit.com はブロックリストにあるので追跡中。統計の CSV はその activity から出る
     await setStorageData(
       setupPage,
       'activity',
-      makeActivity([['youtube.com', { seconds: 600, blocks: 3 }]])
+      makeActivity([['reddit.com', { seconds: 600, blocks: 3 }]])
     );
     await setupPage.close();
 
@@ -512,8 +487,8 @@ test.describe('Options - Analytics Tab', () => {
     // 解除サイトの CSV は activity の解除の記録から出る
     await setStorageData(
       setupPage,
-      'unblockHistory',
-      makeUnblockHistory(['youtube.com'])
+      'sites',
+      makeSites([{ domain: 'youtube.com' }])
     );
     await setStorageData(
       setupPage,

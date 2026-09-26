@@ -105,7 +105,7 @@
     "message": "カスタマイズ",
     "description": "カスタマイズ設定タブ"
   },
-  "blockList": {
+  "blocklistTab": {
     "message": "ブロックリスト",
     "description": "ブロックリストタブ"
   },
@@ -2202,5 +2202,47 @@
   "supportPromptDismiss": {
     "message": "閉じる",
     "description": "支援誘導を閉じるボタン"
+  },
+  "siteErrorInsideTrackedSite": {
+    "message": "$DOMAIN$ は追跡中の $SITE$ に含まれるため追加できません",
+    "description": "追加しようとしたドメインが追跡中のサイトのサブドメインのときのエラー",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "siteErrorContainsTrackedSite": {
+    "message": "$DOMAIN$ には追跡中の $SITE$ が含まれるため追加できません",
+    "description": "追加しようとしたドメインが追跡中のサイトの親ドメインのときのエラー",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "importWarningNestedSite": {
+    "message": "$DOMAIN$ は $SITE$ と重なるため取り込みませんでした",
+    "description": "インポート警告: 追跡中のサイトと親子関係になるサイトを読み飛ばした",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "m.youtube.com"
+      },
+      "site": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
   }
 }

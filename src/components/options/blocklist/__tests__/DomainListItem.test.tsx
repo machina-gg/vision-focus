@@ -4,7 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { DomainListItem } from '../DomainListItem';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 /**
@@ -17,17 +17,16 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // 置換値（ブロック回数）が描画結果に現れるよう chrome.i18n を差し替える
 stubI18nWithSubstitutions();
 
-const baseItem: BlockItem = {
+const baseItem: BlockListRow = {
   id: 'item-1',
   domain: 'example.com',
-  isWildcard: false,
   createdAt: '2026-01-01T00:00:00Z',
   enabled: true,
   timeLimit: null
 };
 
 function renderItem(overrides: {
-  item?: Partial<BlockItem>;
+  item?: Partial<BlockListRow>;
   blockCount?: number;
   usedSeconds?: number;
   onToggle?: (id: string, enabled: boolean) => void;
@@ -53,14 +52,6 @@ describe('DomainListItem', () => {
 
       expect(screen.getByTestId('blocklist-item-domain')).toHaveTextContent(
         'example.com'
-      );
-    });
-
-    it('ワイルドカードなら先頭に *. を添えて表示する', () => {
-      renderItem({ item: { isWildcard: true } });
-
-      expect(screen.getByTestId('blocklist-item-domain')).toHaveTextContent(
-        '*.example.com'
       );
     });
   });

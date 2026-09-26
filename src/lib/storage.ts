@@ -5,16 +5,16 @@ import { isStoredObject, objectOrFallback } from './storedValue';
 import {
   DEFAULT_ACTIVITY,
   DEFAULT_SETTINGS,
+  DEFAULT_SITES,
   DEFAULT_SUPPORT_PROMPT_STATE,
-  DEFAULT_UNBLOCK_HISTORY,
   DEFAULT_VISION,
   type AppSettings,
   type StorageSchema,
   type SupportPromptState,
-  type UnblockHistory,
   type VisionSettings
 } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
+import type { TrackedSites } from '~/types/site';
 
 /**
  * ストレージ項目の定義。local 領域のキーはこの一覧だけが持つ。
@@ -37,9 +37,13 @@ export const visionItem = extensionStorage.defineItem<VisionSettings>(
   { fallback: DEFAULT_VISION }
 );
 
-export const unblockHistoryItem = extensionStorage.defineItem<UnblockHistory>(
-  'local:unblockHistory',
-  { fallback: DEFAULT_UNBLOCK_HISTORY }
+/**
+ * 追跡中のサイトとサイトごとの設定。書くのは background の `src/lib/siteService.ts` だけ
+ * （読む → 変える → 書くを 1 本の待ち行列で直列化しているため、他から書くと変更が消える）
+ */
+export const sitesItem = extensionStorage.defineItem<TrackedSites>(
+  'local:sites',
+  { fallback: DEFAULT_SITES }
 );
 
 /**
@@ -99,34 +103,24 @@ export async function hasStoredVision(): Promise<boolean> {
   );
 }
 
-// Get unblock history
-export async function getUnblockHistory(): Promise<UnblockHistory> {
-  return objectOrFallback(
-    await unblockHistoryItem.getValue(),
-    DEFAULT_UNBLOCK_HISTORY
-  );
-}
-
-// Set unblock history
-export async function setUnblockHistory(
-  history: UnblockHistory
-): Promise<void> {
-  await unblockHistoryItem.setValue(history);
+/** 追跡中のサイトを読む（書き込みは `siteService` の関数だけが行う） */
+export async function getSites(): Promise<TrackedSites> {
+  return objectOrFallback(await sitesItem.getValue(), DEFAULT_SITES);
 }
 
 // Get all storage data
 export async function getAllStorage(): Promise<StorageSchema> {
-  const [settings, vision, unblockHistory, activity] = await Promise.all([
+  const [settings, vision, sites, activity] = await Promise.all([
     getSettings(),
     getVision(),
-    getUnblockHistory(),
+    getSites(),
     activityItem.getValue()
   ]);
 
   return {
     settings,
     vision,
-    unblockHistory,
+    sites,
     activity: objectOrFallback(activity, DEFAULT_ACTIVITY)
   };
 }
@@ -136,7 +130,7 @@ export async function clearAllStorage(): Promise<void> {
   await Promise.all([
     settingsItem.removeValue(),
     visionItem.removeValue(),
-    unblockHistoryItem.removeValue(),
+    sitesItem.removeValue(),
     activityItem.removeValue()
   ]);
 }

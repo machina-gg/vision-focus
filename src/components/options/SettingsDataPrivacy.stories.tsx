@@ -4,7 +4,6 @@ import { SettingsDataPrivacy } from './SettingsDataPrivacy';
 import type { AppSettings } from '~/types/storage';
 
 const baseSettings: AppSettings = {
-  blockList: [],
   schedules: [],
   paused: false,
   notifications: {
@@ -15,16 +14,7 @@ const baseSettings: AppSettings = {
     enabled: false,
     passwordHash: null
   },
-  unblockConfirm: { holdSeconds: 5 },
-  youtube: {
-    enabled: false,
-    blockAccess: false,
-    hideShorts: false,
-    hideRecommendations: false,
-    hideComments: false,
-    hideHomeFeed: false,
-    timeLimit: null
-  }
+  unblockConfirm: { holdSeconds: 5 }
 };
 
 const meta = {

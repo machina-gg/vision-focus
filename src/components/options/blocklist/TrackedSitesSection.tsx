@@ -3,38 +3,29 @@ import { Eye, Lock, Unlock } from 'lucide-react';
 
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import type { UnblockHistory } from '~/types/storage';
+import type { TrackedSiteListRow } from '~/lib/siteSelectors';
 
 interface TrackedSitesSectionProps {
-  unblockHistory: UnblockHistory;
+  rows: TrackedSiteListRow[];
 }
 
 /**
  * 追跡中のサイト一覧を表示するセクション
  * ブロック状態（blocked/unblocked）を分かりやすく表示する
  */
-export function TrackedSitesSection({
-  unblockHistory
-}: TrackedSitesSectionProps) {
-  const trackedSites = Object.values(unblockHistory.sites);
+export function TrackedSitesSection({ rows }: TrackedSitesSectionProps) {
+  const trackedSites = rows;
 
-  // ブロック状態でソート（blocked → unblocked の順）
-  const sortedSites = trackedSites.sort((a, b) => {
-    if (a.status === b.status) {
-      // 同じ状態の場合は最新の活動順
-      const aTime = a.lastActivity || a.blockedAt;
-      const bTime = b.lastActivity || b.blockedAt;
-      return new Date(bTime).getTime() - new Date(aTime).getTime();
+  // ブロック状態でソート（ブロック中 → 解除中。同じ状態の中では最近ブロックした順）
+  const sortedSites = [...trackedSites].sort((a, b) => {
+    if (a.isBlocked === b.isBlocked) {
+      return (b.blockedAt ?? '').localeCompare(a.blockedAt ?? '');
     }
-    return a.status === 'blocked' ? -1 : 1;
+    return a.isBlocked ? -1 : 1;
   });
 
-  const blockedCount = trackedSites.filter(
-    (s) => s.status === 'blocked'
-  ).length;
-  const unblockedCount = trackedSites.filter(
-    (s) => s.status === 'unblocked'
-  ).length;
+  const blockedCount = trackedSites.filter((s) => s.isBlocked).length;
+  const unblockedCount = trackedSites.length - blockedCount;
 
   if (trackedSites.length === 0) {
     return null;
@@ -78,14 +69,14 @@ export function TrackedSitesSection({
           <div
             key={site.domain}
             className={`p-3 rounded-lg border ${
-              site.status === 'blocked'
+              site.isBlocked
                 ? 'bg-success-50 border-success-200'
                 : 'bg-block-50 border-block-200'
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                {site.status === 'blocked' ? (
+                {site.isBlocked ? (
                   <Lock className="w-4 h-4 text-success-600 flex-shrink-0" />
                 ) : (
                   <Unlock className="w-4 h-4 text-block-500 flex-shrink-0" />
@@ -96,12 +87,12 @@ export function TrackedSitesSection({
               </div>
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
-                  site.status === 'blocked'
+                  site.isBlocked
                     ? 'bg-success-100 text-success-700'
                     : 'bg-block-100 text-block-700'
                 }`}
               >
-                {site.status === 'blocked'
+                {site.isBlocked
                   ? getMessage('statusBlocked')
                   : getMessage('statusUnblocked')}
               </span>

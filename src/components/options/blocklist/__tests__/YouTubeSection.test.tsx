@@ -4,9 +4,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { YouTubeSection } from '../YouTubeSection';
-import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
+import { selectYouTubeSection } from '~/lib/siteSelectors';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeSectionValue } from '~/lib/siteSelectors';
+
+// youtube.com が無いときの節の値（すべて OFF）
+const YOUTUBE_OFF = selectYouTubeSection({});
 
 /**
  * YouTubeSection の表示分岐とコールバックの検査
@@ -36,10 +39,10 @@ function switchNear(text: string): HTMLElement {
 }
 
 function renderSection(
-  youtube: Partial<YouTubeSettings> = {},
+  youtube: Partial<YouTubeSectionValue> = {},
   onYouTubeChange = vi.fn()
 ) {
-  const settings: YouTubeSettings = { ...DEFAULT_YOUTUBE_SETTINGS, ...youtube };
+  const settings: YouTubeSectionValue = { ...YOUTUBE_OFF, ...youtube };
   const onRequestUnblock = vi.fn<(request: UnblockRequest) => void>();
   render(
     <YouTubeSection

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 // ロゴはバンドルに含めるため ?inline（データ URL）で import する。
 // getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
@@ -29,11 +29,17 @@ import {
   useAnalytics,
   useBlocklist,
   useSchedules,
+  useStorageItem,
   useSupportPrompt,
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { getSettings, getVision, settingsItem } from '~/lib/storage';
+import {
+  selectBlockList,
+  selectTrackedSiteRows,
+  selectYouTubeSection
+} from '~/lib/siteSelectors';
+import { getSettings, getVision, settingsItem, sitesItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type {
@@ -41,7 +47,6 @@ import type {
   PasswordSettings,
   UnblockConfirmSettings
 } from '~/types/storage';
-import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 import '~/styles/globals.css';
 
@@ -59,13 +64,27 @@ function OptionsAppContent() {
   }, [activeTab]);
 
   // Custom hooks
-  const analytics = useAnalytics({ setSettings });
+  const analytics = useAnalytics();
   const blocklist = useBlocklist({ settings, setSettings });
   const schedules = useSchedules({ settings, setSettings });
-  const { handleYouTubeChange } = useYouTubeSettings({ settings, setSettings });
+  const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
   // 事実の表と母集団（追跡中のサイト）。background だけが書き、画面は読んで導出するだけ
   const { activity, sites } = useActivitySources();
+  // 追跡中のサイトの設定。各タブへは今の props の形に組み立て直して渡す
+  const [trackedSites] = useStorageItem(sitesItem);
+  const blockRows = useMemo(
+    () => selectBlockList(trackedSites),
+    [trackedSites]
+  );
+  const youtube = useMemo(
+    () => selectYouTubeSection(trackedSites),
+    [trackedSites]
+  );
+  const trackedSiteRows = useMemo(
+    () => selectTrackedSiteRows(trackedSites),
+    [trackedSites]
+  );
 
   // Password settings handler
   const handlePasswordUpdate = async (password: PasswordSettings) => {
@@ -97,7 +116,7 @@ function OptionsAppContent() {
   const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
     {
       id: TABS.BLOCKLIST,
-      label: getMessage('blockList'),
+      label: getMessage('blocklistTab'),
       icon: <Ban className="w-4 h-4" />
     },
     {
@@ -180,7 +199,8 @@ function OptionsAppContent() {
             onToggleDomain={blocklist.handleToggleDomain}
             onUpdateTimeLimit={blocklist.handleUpdateTimeLimit}
             activity={activity}
-            youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
+            blockRows={blockRows}
+            youtube={youtube}
             onYouTubeChange={handleYouTubeChange}
           />
         )}
@@ -200,7 +220,8 @@ function OptionsAppContent() {
           <AnalyticsTab
             activity={activity}
             sites={sites}
-            unblockHistory={analytics.unblockHistory}
+            blockRows={blockRows}
+            trackedSiteRows={trackedSiteRows}
             onReblock={analytics.handleReblock}
             onReset={analytics.handleResetAnalytics}
             onStopTracking={analytics.handleStopTracking}
@@ -227,7 +248,6 @@ function OptionsAppContent() {
               ]);
               setSettings(newSettings);
               setVision(newVision);
-              await analytics.reloadAnalyticsData();
             }}
           />
         )}

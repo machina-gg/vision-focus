@@ -22,11 +22,13 @@ import {
   useStorageItem
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
+import { selectBlockList } from '~/lib/siteSelectors';
 import { formatTimeLocalized } from '~/lib/time';
 import {
   clearLastBlockedDomain,
   getLastBlockedDomain,
   settingsItem,
+  sitesItem,
   visionItem
 } from '~/lib/storage';
 
@@ -35,6 +37,7 @@ import '~/styles/globals.css';
 export function NewtabApp() {
   const [vision, setVision] = useStorageItem(visionItem);
   const [settings] = useStorageItem(settingsItem);
+  const [trackedSites] = useStorageItem(sitesItem);
   const { activity, sites } = useActivitySources();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
@@ -73,8 +76,8 @@ export function NewtabApp() {
   // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも、次の描画で今日の値になる）
   const now = new Date();
   const today = todayStats(activity, sites, now);
-  const blockList = settings?.blockList ?? [];
-  const blockCounts = blockCountsByDomain(activity, blockList, now);
+  const blockRows = selectBlockList(trackedSites);
+  const blockCounts = blockCountsByDomain(activity, blockRows, now);
   const blockedInfo = blockedDomain
     ? {
         domain: blockedDomain,
@@ -88,10 +91,10 @@ export function NewtabApp() {
 
   // Calculate blocking days for the blocked site
   const blockingDays = useMemo(() => {
-    if (!blockedDomain || !settings?.blockList) return null;
+    if (!blockedDomain) return null;
 
-    return calculateBlockingDays(blockedDomain, settings.blockList);
-  }, [blockedDomain, settings?.blockList]);
+    return calculateBlockingDays(blockedDomain, trackedSites);
+  }, [blockedDomain, trackedSites]);
 
   const handleAnalyticsClick = useCallback(() => {
     openExtensionPage('options.html#analytics');
@@ -245,7 +248,7 @@ export function NewtabApp() {
         />
 
         {/* Blocked Sites List */}
-        <BlockedSitesList blockList={blockList} blockCounts={blockCounts} />
+        <BlockedSitesList blockRows={blockRows} blockCounts={blockCounts} />
 
         {/* Setup CTA - スタイルが 1 つも無いときだけ出す。壁紙には写さない */}
         {!hasPresets && (

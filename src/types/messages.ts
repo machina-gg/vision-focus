@@ -28,9 +28,19 @@ export interface AddBlockResponse {
   error?: string;
 }
 
-// Remove Block
+// Add Tracked Site（ブロックせずに追跡だけを始める）
+export interface AddTrackedSiteRequest {
+  domain: string;
+}
+
+export interface AddTrackedSiteResponse {
+  success: boolean;
+  error?: string;
+}
+
+// Remove Block（domain はサイトキー）
 export interface RemoveBlockRequest {
-  id: string;
+  domain: string;
 }
 
 export interface RemoveBlockResponse {
@@ -59,16 +69,24 @@ export interface GetRemainingTimeResponse {
 }
 
 // Import Settings
-// 送信側が渡すのは applyImportedSettings で組み立てた適用後の設定。
-// 受信側の実行時検証（ImportSettingsBodySchema）は古い保存データも受け付けるよう
-// 緩めてあるため、送信側の型にはそのまま AppSettings を使う
+// 送信側が渡すのは applyImportedSettings で組み立てた適用後の設定と、取り込む追跡中のサイト
 export interface ImportSettingsRequest {
   settings: import('./storage').AppSettings;
+  sites: import('./site').TrackedSite[];
+}
+
+/** 既存のサイトと入れ子になるため取り込まなかったサイト */
+export interface SkippedNestedSite {
+  /** ファイルに書かれていた表記 */
+  domain: string;
+  /** 入れ子の相手（既存か、先に取り込んだサイト） */
+  conflict: import('./site').SiteKey;
 }
 
 export interface ImportSettingsResponse {
   success: boolean;
   error?: string;
+  skipped?: SkippedNestedSite[];
 }
 
 // Reset Activity（引数を取らないため Request 型は持たない）
@@ -76,9 +94,19 @@ export interface ResetActivityResponse {
   success: boolean;
 }
 
-// Toggle Block
+// Stop Tracking（domain はサイトキー。ブロック設定・YouTube 機能を持つサイトは止めない）
+export interface StopTrackingRequest {
+  domain: string;
+}
+
+export interface StopTrackingResponse {
+  success: boolean;
+  error?: string;
+}
+
+// Toggle Block（domain はサイトキー）
 export interface ToggleBlockRequest {
-  id: string;
+  domain: string;
   enabled: boolean;
 }
 

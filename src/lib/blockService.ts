@@ -15,18 +15,16 @@
  * @see docs/BLOCK_STATE_MACHINE.md
  */
 
-import { getSettings, activityItem } from '~/lib/storage';
+import { getSettings, getSites, activityItem } from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
 import { isWithinSchedule, toDateKey } from '~/lib/time';
-import { normalizeSiteKey } from '~/lib/siteKey';
 import { secondsOnDay } from '~/lib/activityStats';
 import { evaluateBlock, type BlockState } from '~/lib/blockRule';
 import { objectOrFallback } from '~/lib/storedValue';
-import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 import type { AppSettings, Schedule } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
-import type { BlockRule, SiteKey } from '~/types/site';
+import type { BlockRule, SiteKey, TrackedSites } from '~/types/site';
 
 export type { BlockReason, BlockState } from '~/lib/blockRule';
 
@@ -43,11 +41,15 @@ export interface SiteBlockStatus {
 /** 判定に使う保存値。1 回の判定の中では同じ値を使う */
 interface BlockInputs {
   settings: AppSettings;
+  sites: TrackedSites;
   activity: ActivityLog;
   now: Date;
 }
 
-/** 1 件の登録。同じサイトキーの登録が複数あってもまとめない（どれかがブロックならブロック） */
+/**
+ * 1 件の登録（ブロック設定を持つ追跡中のサイト）。サイト同士は入れ子にしない（追加時に拒否する）が、
+ * 崩れた保存値でも判定とルールが割れないよう、ホスト名を覆う登録すべてを見る
+ */
 interface Registration {
   site: SiteKey;
   rule: BlockRuleInput;
@@ -83,43 +85,29 @@ export function isBlockingWindowOpen(
 }
 
 async function loadInputs(): Promise<BlockInputs> {
-  const [settings, activity] = await Promise.all([
+  const [settings, sites, activity] = await Promise.all([
     getSettings(),
+    getSites(),
     activityItem.getValue()
   ]);
   return {
     settings,
+    sites,
     activity: objectOrFallback(activity, DEFAULT_ACTIVITY),
     now: new Date()
   };
 }
 
-/**
- * ブロック設定を登録の単位で並べる（ブロックリストの並び順、最後に YouTube）。
- * YouTube のアクセスブロックは保存形がブロックリストの外にあるので、ここで同じ形に組み立てて
- * youtube.com の登録として加える
- */
-function collectRegistrations(settings: AppSettings): Registration[] {
+/** ブロック設定を持つ追跡中のサイトを登録として並べる（youtube.com も他のサイトと同じ） */
+function collectRegistrations(sites: TrackedSites): Registration[] {
   const registrations: Registration[] = [];
-
-  for (const item of settings.blockList) {
-    const site = normalizeSiteKey(item.domain);
-    // 空のキーはどのサイトも表さないので判定にもルールにも入れない
-    if (!site) continue;
+  for (const site of Object.values(sites)) {
+    if (!site.block) continue;
     registrations.push({
-      site,
-      rule: { enabled: item.enabled, timeLimit: item.timeLimit ?? null }
+      site: site.domain,
+      rule: { enabled: site.block.enabled, timeLimit: site.block.timeLimit }
     });
   }
-
-  const youtube = settings.youtube;
-  if (youtube.enabled && youtube.blockAccess) {
-    registrations.push({
-      site: YOUTUBE_DOMAIN,
-      rule: { enabled: true, timeLimit: youtube.timeLimit ?? null }
-    });
-  }
-
   return registrations;
 }
 
@@ -186,7 +174,7 @@ export async function getSiteBlockStatus(
 ): Promise<SiteBlockStatus | null> {
   const inputs = await loadInputs();
   return representative(
-    statusesForHostname(hostname, collectRegistrations(inputs.settings), inputs)
+    statusesForHostname(hostname, collectRegistrations(inputs.sites), inputs)
   );
 }
 
@@ -200,7 +188,7 @@ export async function getSiteBlockStatuses(
   if (hostnames.length === 0) return [];
 
   const inputs = await loadInputs();
-  const registrations = collectRegistrations(inputs.settings);
+  const registrations = collectRegistrations(inputs.sites);
   const covering = new Set<Registration>();
   for (const hostname of hostnames) {
     for (const registration of registrations) {
@@ -263,7 +251,7 @@ export async function shouldTrackBlockForDomain(
 export async function getActiveBlockedDomains(): Promise<SiteKey[]> {
   const inputs = await loadInputs();
   const blocked = new Set<SiteKey>();
-  for (const registration of collectRegistrations(inputs.settings)) {
+  for (const registration of collectRegistrations(inputs.sites)) {
     if (evaluate(registration, inputs).state.blocked) {
       blocked.add(registration.site);
     }

@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Shield } from 'lucide-react';
 
 import { getMessage } from '~/lib/i18n';
-import type { BlockItem } from '~/types/storage';
+import type { BlockListRow } from '~/lib/siteSelectors';
 
 interface BlockedSitesListProps {
-  blockList: BlockItem[];
+  blockRows: BlockListRow[];
   /** 項目の domain ごとのブロック回数（無い項目は 0 回として扱う） */
   blockCounts: Record<string, number>;
   maxVisible?: number;
 }
 
 export function BlockedSitesList({
-  blockList,
+  blockRows,
   blockCounts,
   maxVisible = 5
 }: BlockedSitesListProps) {
@@ -21,7 +21,7 @@ export function BlockedSitesList({
   const [showsAll, setShowsAll] = useState(false);
 
   // Filter to only show enabled blocked sites
-  const enabledBlockList = blockList.filter((item) => item.enabled !== false);
+  const enabledBlockList = blockRows.filter((item) => item.enabled !== false);
 
   if (enabledBlockList.length === 0) {
     return null;

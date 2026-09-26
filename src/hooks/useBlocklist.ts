@@ -2,8 +2,7 @@ import { useCallback, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { parseDomainInput } from '~/lib/domain';
-import { getSettings, settingsItem } from '~/lib/storage';
+import { settingsItem } from '~/lib/storage';
 import type {
   AppSettings,
   TimeLimit,
@@ -38,19 +37,10 @@ export function useBlocklist({
   const [newDomain, setNewDomain] = useState('');
   const [blockError, setBlockError] = useState('');
 
+  // 形式の誤り・重複・入れ子の検査は background が行い、理由を error で返す。
+  // 追跡中のサイトは background だけが書き、一覧は sites の監視で追従する
   const handleAddDomain = useCallback(async () => {
-    if (!settings || !newDomain.trim()) return;
-
-    const parsed = parseDomainInput(newDomain);
-    if (!parsed) {
-      setBlockError('Invalid domain format');
-      return;
-    }
-
-    if (settings.blockList.some((item) => item.domain === parsed.domain)) {
-      setBlockError('Domain already in block list');
-      return;
-    }
+    if (!newDomain.trim()) return;
 
     try {
       const response = await sendMessage('add-block', {
@@ -61,50 +51,43 @@ export function useBlocklist({
         trackFeatureUse('block_add');
         setNewDomain('');
         setBlockError('');
-        setSettings(await getSettings());
       } else {
         setBlockError(response.error || 'Failed to add domain');
       }
     } catch {
       setBlockError('Failed to add domain');
     }
-  }, [settings, newDomain, setSettings]);
+  }, [newDomain]);
 
-  const handleRemoveDomain = useCallback(
-    async (id: string) => {
-      try {
-        await sendMessage('remove-block', { id });
-        trackFeatureUse('block_remove');
-        setSettings(await getSettings());
-      } catch {
-        // Silently handle error - list will refresh on next settings change
-      }
-    },
-    [setSettings]
-  );
+  const handleRemoveDomain = useCallback(async (id: string) => {
+    try {
+      await sendMessage('remove-block', { domain: id });
+      trackFeatureUse('block_remove');
+    } catch {
+      // Silently handle error - list will refresh on next settings change
+    }
+  }, []);
 
   const handleToggleDomain = useCallback(
     async (id: string, enabled: boolean) => {
       try {
-        await sendMessage('toggle-block', { id, enabled });
-        setSettings(await getSettings());
+        await sendMessage('toggle-block', { domain: id, enabled });
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
     },
-    [setSettings]
+    []
   );
 
   const handleUpdateTimeLimit = useCallback(
     async (id: string, timeLimit: TimeLimit | null) => {
       try {
-        await sendMessage('update-time-limit', { id, timeLimit });
-        setSettings(await getSettings());
+        await sendMessage('update-time-limit', { domain: id, timeLimit });
       } catch {
         // Silently handle error - list will refresh on next settings change
       }
     },
-    [setSettings]
+    []
   );
 
   const handleUpdateNotifications = useCallback(

@@ -1,4 +1,6 @@
 import { test, expect } from './fixtures/extension';
+
+import { EXPORT_VERSION } from '~/lib/settingsExport';
 import {
   openOptions,
   setupTestStorage,
@@ -6,12 +8,14 @@ import {
   setStorageData,
   getStorageData,
   holdUnblockConfirm,
-  makeSettings,
+  makeAppSettings,
   makeDisplaySettings,
+  makeVision,
   toggleAfter,
   SELECTORS,
   TEST_DATA,
-  UI_TEXT
+  UI_TEXT,
+  makeSites
 } from './helpers';
 
 /**
@@ -255,8 +259,7 @@ test.describe('Options - Settings Tab', () => {
     await setStorageData(
       setupPage,
       'settings',
-      makeSettings({
-        blockList: [],
+      makeAppSettings({
         notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 }
       })
     );
@@ -326,6 +329,15 @@ test.describe('Options - Settings Tab', () => {
     context,
     extensionId
   }) => {
+    // 追跡中のサイトも書き出しに含まれる
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'sites',
+      makeSites([{ domain: 'reddit.com', block: {} }])
+    );
+    await setupPage.close();
+
     const page = await openOptions(context, extensionId, 'settings');
 
     // エクスポートボタンが表示される
@@ -340,6 +352,21 @@ test.describe('Options - Settings Tab', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/vision.*\.json/i);
 
+    // 書き出したファイルは今の版で、追跡中のサイトを含む
+    const exported = JSON.parse(
+      Buffer.concat(
+        await (async () => {
+          const chunks: Buffer[] = [];
+          for await (const chunk of await download.createReadStream()) {
+            chunks.push(chunk as Buffer);
+          }
+          return chunks;
+        })()
+      ).toString('utf8')
+    ) as { version: number; data: { sites: Record<string, unknown> } };
+    expect(exported.version).toBe(EXPORT_VERSION);
+    expect(Object.keys(exported.data.sites)).toEqual(['reddit.com']);
+
     await page.close();
   });
 
@@ -347,14 +374,23 @@ test.describe('Options - Settings Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用のJSONデータを準備
+    // 書き出しと同じ形（今の版）のファイルを用意する。
+    // 追跡中のサイトは background が既存とマージして取り込む
+    const settings = makeAppSettings();
+    const vision = makeVision({
+      defaultSettings: makeDisplaySettings({ goalText: 'Imported Goal' })
+    });
     const testData = {
-      version: '1.0.0',
-      settings: makeSettings(),
-      vision: {
-        defaultSettings: makeDisplaySettings({ goalText: 'Imported Goal' }),
-        presets: [],
-        activePresetId: null
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: {
+        sites: makeSites([{ domain: 'imported.example', block: {} }]),
+        schedules: settings.schedules,
+        presets: vision.presets,
+        defaultDisplaySettings: vision.defaultSettings,
+        activePresetId: vision.activePresetId,
+        notifications: settings.notifications,
+        unblockConfirm: settings.unblockConfirm
       }
     };
 
@@ -380,7 +416,15 @@ test.describe('Options - Settings Tab', () => {
     await expect(resultMessage).toBeVisible();
 
     // エラーではないことを確認する
-    await expect(resultMessage).not.toContainText(/error|失敗|不正/i);
+    await expect(resultMessage).not.toContainText(/error|invalid|失敗|不正/i);
+
+    // ファイルのブロック設定が追跡中のサイトとして取り込まれる
+    await expect
+      .poll(async () => {
+        const sites = await getStorageData(page, 'sites');
+        return sites?.['imported.example']?.block?.enabled ?? null;
+      })
+      .toBe(true);
 
     await page.close();
   });

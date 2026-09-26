@@ -7,6 +7,7 @@ import {
   clearStorage,
   setStorageData,
   setSettings,
+  setSites,
   getStorageData,
   makeActivity,
   SELECTORS,
@@ -316,27 +317,17 @@ test.describe('Popup 画面', () => {
     const blockButton = page.locator(SELECTORS.quickBlock.button);
     await blockButton.click();
 
-    // ストレージに保存されたことを確認（ブロックリストは settings 配下）。
+    // 追跡中のサイトに有効なブロック設定として保存されたことを確認する。
     // background へのメッセージ送信は非同期なので反映を待つ
     await expect
       .poll(
         async () => {
-          const settings = await getStorageData(page, 'settings');
-          return (settings?.blockList ?? []).map((item) => item.domain);
+          const sites = await getStorageData(page, 'sites');
+          return sites?.['reddit.com']?.block?.enabled ?? null;
         },
         { timeout: 10000 }
       )
-      .toContain('reddit.com');
-
-    const settings = await getStorageData(page, 'settings');
-    expect(settings?.blockList).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          domain: 'reddit.com',
-          enabled: true
-        })
-      ])
-    );
+      .toBe(true);
 
     await page.close();
   });
@@ -378,22 +369,14 @@ test.describe('Popup 画面', () => {
   }) => {
     // Time Limit 設定済みのブロックリストをセットアップ
     const setupPage = await openPopup(context, extensionId);
-    await setSettings(setupPage, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true,
-          timeLimit: {
-            type: 'daily',
-            limitSeconds: 1800 // 30分
-          }
-        }
-      ]
-    });
+    await setSettings(setupPage, { paused: false });
+    await setSites(setupPage, [
+      {
+        domain: TEST_DOMAINS.example,
+        // 30分
+        block: { timeLimit: { type: 'daily', limitSeconds: 1800 } }
+      }
+    ]);
 
     // Time Limit 使用状況をセットアップ（残り10分）。
     // 使用状況は activity の今日の行にサイトキーごとの表示秒数として保持される

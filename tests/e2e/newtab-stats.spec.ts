@@ -4,6 +4,7 @@ import {
   setupTestStorage,
   clearStorage,
   setSettings,
+  setSites,
   setSessionStorageData,
   setStorageData,
   makeActivity,
@@ -79,17 +80,12 @@ test.describe('NewTab 画面 - 統計カード', () => {
 
     await setSettings(setupPage, {
       paused: false,
-      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() },
-      blockList: [
-        {
-          id: '1',
-          domain: 'example.com',
-          isWildcard: false,
-          createdAt: createdDate.toISOString(),
-          enabled: true
-        }
-      ]
+      analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
+    // ブロック日数の起点はブロックリストに入れた時刻（block.addedAt）
+    await setSites(setupPage, [
+      { domain: 'example.com', block: { addedAt: createdDate.toISOString() } }
+    ]);
 
     await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
     await setupPage.close();

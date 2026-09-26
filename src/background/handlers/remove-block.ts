@@ -1,72 +1,31 @@
 import type { MessageHandler } from '~/lib/messaging';
-import {
-  getSettings,
-  setSettings,
-  getUnblockHistory,
-  setUnblockHistory
-} from '~/lib/storage';
 import { updateBlockRules } from '../blocker';
 import { recordActivity } from '~/lib/activityService';
-import { normalizeSiteKey } from '~/lib/siteKey';
+import { removeBlock } from '~/lib/siteService';
+import { SiteBodySchema } from '~/types/messageSchemas';
 
+/** ブロックリストから外す（`block = null`。追跡は続く） */
 export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
   data
 }) => {
-  const { id } = data;
-
-  // Validate input
-  if (!id || typeof id !== 'string' || id.length === 0 || id.length > 100) {
+  const parsed = SiteBodySchema.safeParse(data);
+  if (!parsed.success) {
     return { success: false };
   }
+  const { domain } = parsed.data;
 
-  const settings = await getSettings();
+  const removed = await removeBlock(domain);
+  if (!removed) {
+    return { success: true };
+  }
 
-  // Find the item to be removed before filtering
-  const removedItem = settings.blockList.find((item) => item.id === id);
+  await updateBlockRules();
 
-  const originalLength = settings.blockList.length;
-  settings.blockList = settings.blockList.filter((item) => item.id !== id);
-
-  // Only update if something was actually removed
-  if (settings.blockList.length < originalLength && removedItem) {
-    await setSettings(settings);
-    await updateBlockRules();
-
-    const now = new Date().toISOString();
-
-    // Update tracking history: change status to unblocked
-    const history = await getUnblockHistory();
-    if (history.sites[removedItem.domain]) {
-      // Update existing entry
-      history.sites[removedItem.domain].status = 'unblocked';
-      history.sites[removedItem.domain].unblockedAt = now;
-      // Keep blockedAt and reset time tracking
-      history.sites[removedItem.domain].timeAfterUnblock = 0;
-      history.sites[removedItem.domain].lastActivity = null;
-    } else {
-      // Create new entry (for sites blocked before this feature)
-      history.sites[removedItem.domain] = {
-        domain: removedItem.domain,
-        status: 'unblocked',
-        blockedAt: removedItem.createdAt, // Use original block date
-        unblockedAt: now,
-        timeAfterUnblock: 0,
-        lastActivity: null
-      };
-    }
-    await setUnblockHistory(history);
-
-    // 解除は「利用者の操作でブロックが効かなくなったこと」なので、効いていた項目の削除だけ数える
-    // （無効化済みの項目を消しても効かなくなるブロックは無く、トグル OFF と二重に数えてしまう）。
-    // ブロックリストから外したサイトも解除履歴に残るので追跡は続き、解除として記録できる。
-    // 解除履歴を書く前に記録すると、追跡中の集合に無いサイトとして捨てられうる
-    if (removedItem.enabled) {
-      await recordActivity({
-        kind: 'unblock',
-        site: normalizeSiteKey(removedItem.domain),
-        at: new Date()
-      });
-    }
+  // 解除は「利用者の操作でブロックが効かなくなったこと」なので、効いていた項目の削除だけ数える
+  // （無効化済みの項目を消しても効かなくなるブロックは無く、トグル OFF と二重に数えてしまう）。
+  // ブロックリストから外してもサイトは追跡中に残るので、保存の後に記録しても捨てられない
+  if (removed.enabled) {
+    await recordActivity({ kind: 'unblock', site: domain, at: new Date() });
   }
 
   return { success: true };

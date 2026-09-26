@@ -10,8 +10,7 @@ const activityStore = vi.hoisted(() => ({ value: undefined as unknown }));
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  getUnblockHistory: vi.fn(),
-  setUnblockHistory: vi.fn(),
+  getSites: vi.fn(),
   activityItem: {
     getValue: vi.fn(async () => structuredClone(activityStore.value ?? {})),
     setValue: vi.fn(async (value: unknown) => {
@@ -34,26 +33,16 @@ vi.mock('~/lib/siteService', () => ({
   getTrackedSiteKeys: vi.fn()
 }));
 
-import {
-  getSettings,
-  getUnblockHistory,
-  setUnblockHistory
-} from '~/lib/storage';
+import { getSettings, getSites } from '~/lib/storage';
 import { checkTimeLimitNotification } from '../../notifications';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
-import {
-  DEFAULT_UNBLOCK_HISTORY,
-  DEFAULT_SETTINGS,
-  DEFAULT_YOUTUBE_SETTINGS
-} from '~/types/storage';
-import type {
-  AppSettings,
-  TrackedSite,
-  YouTubeSettings
-} from '~/types/storage';
+import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { AppSettings } from '~/types/storage';
+import type { BlockRule, TrackedSite } from '~/types/site';
+import { blockedSite, sitesOf } from '~/test/sites';
 import { TRACKER_CONFIG } from '~/constants/limits';
 
 interface Response {
@@ -75,51 +64,32 @@ const RECORDED_SECONDS = Math.floor(
   TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000
 );
 
-/** example.com の解除履歴を 1 件だけ用意する */
-function givenUnblockHistory(
-  overrides: Partial<TrackedSite> & Pick<TrackedSite, 'status'>
-) {
-  vi.mocked(getUnblockHistory).mockResolvedValue({
-    ...DEFAULT_UNBLOCK_HISTORY,
-    sites: {
-      'example.com': {
-        domain: 'example.com',
-        blockedAt: '2026-01-01T00:00:00.000Z',
-        unblockedAt: '2026-01-02T00:00:00.000Z',
-        timeAfterUnblock: 0,
-        lastActivity: null,
-        ...overrides
-      }
-    }
-  });
-}
-
-/** 保存されている YouTube 設定を差し替える */
-function givenYouTubeSettings(overrides: Partial<YouTubeSettings> = {}) {
+/** 全体の設定と追跡中のサイトを差し替える */
+function given(sites: TrackedSite[], settings: Partial<AppSettings> = {}) {
   vi.mocked(getSettings).mockResolvedValue({
     ...DEFAULT_SETTINGS,
-    youtube: { ...DEFAULT_YOUTUBE_SETTINGS, ...overrides }
+    ...settings
   });
+  vi.mocked(getSites).mockResolvedValue(sitesOf(...sites));
+}
+
+/** youtube.com のブロック設定を差し替える（null = ブロックしない） */
+function givenYouTubeBlock(block: Partial<BlockRule> | null) {
+  given(block ? [blockedSite('youtube.com', block)] : []);
 }
 
 const LIMIT_SECONDS = 1800;
 
 /** example.com を時間制限つきでブロックリストに入れ、追跡中にする */
 function givenTimeLimitedExample(overrides: Partial<AppSettings> = {}) {
-  vi.mocked(getSettings).mockResolvedValue({
-    ...DEFAULT_SETTINGS,
-    blockList: [
-      {
-        id: 'item-1',
-        domain: 'example.com',
-        isWildcard: false,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        enabled: true,
+  given(
+    [
+      blockedSite('example.com', {
         timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
-      }
+      })
     ],
-    ...overrides
-  });
+    overrides
+  );
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
 }
 
@@ -134,17 +104,9 @@ function givenTodaySeconds(site: string, seconds: number) {
 describe('tracker-heartbeat ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getUnblockHistory).mockResolvedValue({
-      ...DEFAULT_UNBLOCK_HISTORY,
-      sites: {}
-    });
     vi.mocked(getTrackedSiteKeys).mockResolvedValue([]);
     activityStore.value = undefined;
-    givenYouTubeSettings({
-      enabled: true,
-      blockAccess: true,
-      timeLimit: { type: 'daily', limitSeconds: 60 }
-    });
+    givenYouTubeBlock({ timeLimit: { type: 'daily', limitSeconds: 60 } });
   });
 
   afterEach(() => {
@@ -370,19 +332,7 @@ describe('tracker-heartbeat ハンドラ', () => {
     it('常時ブロックの項目は通知もルール更新もしない', async () => {
       vi.useFakeTimers();
       givenTimeLimitedExample();
-      vi.mocked(getSettings).mockResolvedValue({
-        ...DEFAULT_SETTINGS,
-        blockList: [
-          {
-            id: 'item-1',
-            domain: 'example.com',
-            isWildcard: false,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            enabled: true,
-            timeLimit: null
-          }
-        ]
-      });
+      given([blockedSite('example.com')]);
 
       await showExampleFor();
 
@@ -406,7 +356,7 @@ describe('tracker-heartbeat ハンドラ', () => {
       vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
     });
 
-    it('上限に達したらブロックリストの項目と同じくルールを更新し開いているタブもブロックする', async () => {
+    it('上限に達したら他のサイトと同じくルールを更新し開いているタブもブロックする', async () => {
       vi.useFakeTimers();
       givenTodaySeconds('youtube.com', 60);
 
@@ -428,15 +378,11 @@ describe('tracker-heartbeat ハンドラ', () => {
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
 
-    it('アクセスブロックが無効なら上限を超えても通知もルール更新もしない', async () => {
+    it('アクセスブロックしない（ブロック設定なし）なら上限を超えても通知もルール更新もしない', async () => {
       // 超過してもブロックされない設定なので、記録間隔ごとの
       // ルール再構築と全タブ走査を繰り返さない
       vi.useFakeTimers();
-      givenYouTubeSettings({
-        enabled: true,
-        blockAccess: false,
-        timeLimit: { type: 'daily', limitSeconds: 60 }
-      });
+      givenYouTubeBlock(null);
       givenTodaySeconds('youtube.com', 600);
 
       await showYouTube();
@@ -479,7 +425,7 @@ describe('tracker-heartbeat ハンドラ', () => {
 
     it('解除中かどうかでは絞らない（ブロック中の追跡サイトも記録する）', async () => {
       vi.useFakeTimers();
-      givenUnblockHistory({ status: 'blocked', timeAfterUnblock: 0 });
+      given([blockedSite('example.com')]);
       vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
       await showPages(['https://example.com']);
 
@@ -538,19 +484,6 @@ describe('tracker-heartbeat ハンドラ', () => {
 
       expect(getTrackedSiteKeys).not.toHaveBeenCalled();
       expect(activityStore.value).toBeUndefined();
-    });
-
-    it('解除中のサイトも activity にだけ記録し、解除履歴は書かない', async () => {
-      // 解除後の時間は activity から導出する。解除履歴にも足すと記録者が 2 本になる
-      vi.useFakeTimers();
-      givenUnblockHistory({ status: 'unblocked', timeAfterUnblock: 100 });
-      vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
-      await showPages(['https://example.com/']);
-
-      await vi.advanceTimersByTimeAsync(TRACKER_CONFIG.RECORDING_INTERVAL_MS);
-
-      expect(todaySeconds()).toEqual({ 'example.com': RECORDED_SECONDS });
-      expect(setUnblockHistory).not.toHaveBeenCalled();
     });
 
     it('記録に失敗しても次の記録間隔の計測は続く', async () => {

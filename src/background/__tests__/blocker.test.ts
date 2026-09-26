@@ -120,8 +120,8 @@ describe('blocker', () => {
       ]);
     });
 
-    it('ワイルドカードドメインは *. を除いた urlFilter にする', async () => {
-      vi.mocked(getActiveBlockedDomains).mockResolvedValue(['*.example.com']);
+    it('サイトキーをそのまま ||キー の urlFilter にする（サブドメインも止める）', async () => {
+      vi.mocked(getActiveBlockedDomains).mockResolvedValue(['example.com']);
 
       await updateBlockRules();
 

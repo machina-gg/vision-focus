@@ -1,9 +1,33 @@
 import type { MessageHandler } from '~/lib/messaging';
-import { getSettings, setSettings } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
-import { UpdateYouTubeSettingsBodySchema } from '~/types/messageSchemas';
+import {
+  UpdateYouTubeSettingsBodySchema,
+  type UpdateYouTubeSettingsBody
+} from '~/types/messageSchemas';
 import { recordActivity } from '~/lib/activityService';
-import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
+import { updateYouTubeSite, type YouTubeSiteUpdate } from '~/lib/siteService';
+import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+
+/**
+ * YouTube の節の値を youtube.com の追跡中のサイトに書く形へ変える。
+ * 機能全体を無効にするとアクセスブロックも外れる（非表示もブロックも使わない状態）。
+ * アクセスブロックの OFF はブロックリストのトグル OFF と同じ意味で、ブロック設定を無効にするだけ
+ * （時間制限は残し、ON に戻せば復元される）
+ */
+function toSiteUpdate(
+  value: UpdateYouTubeSettingsBody['youtube']
+): YouTubeSiteUpdate {
+  if (!value.enabled) return { youtube: null, block: null };
+  return {
+    youtube: {
+      hideShorts: value.hideShorts,
+      hideRecommendations: value.hideRecommendations,
+      hideComments: value.hideComments,
+      hideHomeFeed: value.hideHomeFeed
+    },
+    block: { enabled: value.blockAccess, timeLimit: value.timeLimit ?? null }
+  };
+}
 
 /**
  * YouTube 設定を保存するメッセージハンドラ。
@@ -14,7 +38,7 @@ import { YOUTUBE_DOMAIN } from '~/lib/youtubeBlockService';
  *
  * どのタブを実際に置き換えるかは blockService が決める。時間制限を設定している
  * 場合は超過するまでブロックされないため、ここで blockExistingTabs() を呼んでも
- * タブは置き換わらない（#392）
+ * タブは置き換わらない
  */
 export const updateYouTubeSettingsHandler: MessageHandler<
   'update-youtube-settings'
@@ -25,22 +49,21 @@ export const updateYouTubeSettingsHandler: MessageHandler<
     return { success: false, error: 'Invalid request body' };
   }
 
-  const { youtube } = parsed.data;
+  const update = toSiteUpdate(parsed.data.youtube);
 
   try {
-    const settings = await getSettings();
+    const before = await updateYouTubeSite(update, new Date());
 
-    // 保存前の設定で判定する（保存後は新旧の区別が付かなくなる）
-    const wasBlockingAccess = Boolean(
-      settings.youtube?.enabled && settings.youtube?.blockAccess
-    );
-    const blocksAccess = youtube.enabled && youtube.blockAccess;
+    // 保存前の値と比べる（保存後は新旧の区別が付かなくなる）
+    const wasBlockingAccess = before?.block?.enabled === true;
+    const blocksAccess = update.block?.enabled === true;
+
+    // declarativeNetRequest のルールを設定に追従させる
+    await updateBlockRules();
 
     // アクセスブロックが効かなくなる操作を 1 回の解除として記録する
     // （機能全体の無効化でアクセスブロックが外れる場合も含む）。
-    // ⚠ 保存より先に記録する。追跡中の集合は YouTube 機能が有効かどうかで youtube.com を
-    // 含めるため、機能ごと無効にした設定を保存した後では youtube.com が集合から外れ、
-    // 書き手に捨てられる
+    // youtube.com は機能を無効にしても追跡中に残るので、保存の後に記録しても捨てられない
     if (wasBlockingAccess && !blocksAccess) {
       await recordActivity({
         kind: 'unblock',
@@ -48,11 +71,6 @@ export const updateYouTubeSettingsHandler: MessageHandler<
         at: new Date()
       });
     }
-
-    await setSettings({ ...settings, youtube });
-
-    // declarativeNetRequest のルールを設定に追従させる
-    await updateBlockRules();
 
     // ルール更新は新規の遷移にしか効かないため、開いているタブは明示的にブロックする
     if (!wasBlockingAccess && blocksAccess) {

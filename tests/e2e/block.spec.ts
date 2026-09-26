@@ -8,7 +8,8 @@ import {
 } from './helpers/sw';
 import {
   clearStorageFromExtension,
-  setSettingsFromExtension
+  setSettingsFromExtension,
+  setSitesFromExtension
 } from './helpers/storage';
 import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
@@ -29,17 +30,11 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストにexample.comを追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // ブロックルールが反映されるまで待つ（固定時間では足りないことがある）
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
@@ -61,21 +56,15 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    // ワイルドカードでブロックリストに追加
+    // サイトキー（*. / www. を除いた形）で追加する。サブドメインも同じサイトに属する
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: `*.${TEST_DOMAINS.example}`,
-          isWildcard: true,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
-    // ワイルドカードは `||example.com` のルールになる（先頭の *. は落ちる）
+    // サイトキーは `||example.com` のルールになり、サブドメインも止める
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // サブドメインにアクセス
@@ -97,25 +86,18 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // 最初はブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
-    // ブロックリストから削除
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: []
-    });
+    // ブロックリストから削除（ブロック設定だけを外し、追跡は続く）
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example }
+    ]);
 
     // 削除がルールに反映される（載っていたものが外れる）まで待つ
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
@@ -140,33 +122,21 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
     // Pauseを有効化
     await setSettingsFromExtension(context, extensionId, {
-      paused: true,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: true
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // Pause 中はルールが 1 件も残らない
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
@@ -190,34 +160,22 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // Pauseを有効化した状態で開始
     await setSettingsFromExtension(context, extensionId, {
-      paused: true,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: true
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     // ⚠ Pause 中はルールが 1 件も作られないため、ここで待っても観測できる
     //    変化は無い。解除後にルールが載ることが唯一の関門になる
 
     // Pauseを解除
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
@@ -241,24 +199,14 @@ test.describe('Block - ブロック機能', () => {
     // ⚠ 有効なアイテムを 1 件添える。無効なものだけだとルールが 0 件になり、
     //    「無効だから載らない」と「まだ再計算されていない」を区別できない
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: false // 無効化
-        },
-        {
-          id: '2',
-          domain: TEST_DOMAINS.reddit,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true // 再計算が走ったことの目印
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      // 無効化
+      { domain: TEST_DOMAINS.example, block: { enabled: false } },
+      // 再計算が走ったことの目印
+      { domain: TEST_DOMAINS.reddit, block: {} }
+    ]);
 
     // 有効なアイテムが載った時点で、無効なアイテムも判定済みになっている
     await waitForBlockRules(context, [TEST_DOMAINS.reddit]);
@@ -285,34 +233,19 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // 最初は無効化
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: false
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: { enabled: false } }
+    ]);
 
     // ⚠ 無効なうちはルールが 1 件も作られないため、ここで待っても観測できる
     //    変化は無い。有効化後にルールが載ることが唯一の関門になる
 
     // 有効化
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true // 有効化
-        }
-      ]
-    });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
@@ -334,17 +267,11 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
@@ -370,17 +297,11 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 
@@ -408,17 +329,11 @@ test.describe('Block - ブロック機能', () => {
   }) => {
     // ブロックリストに追加
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
-      blockList: [
-        {
-          id: '1',
-          domain: TEST_DOMAINS.example,
-          isWildcard: false,
-          createdAt: new Date().toISOString(),
-          enabled: true
-        }
-      ]
+      paused: false
     });
+    await setSitesFromExtension(context, extensionId, [
+      { domain: TEST_DOMAINS.example, block: {} }
+    ]);
 
     await waitForBlockRules(context, [TEST_DOMAINS.example]);
 

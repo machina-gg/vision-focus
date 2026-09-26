@@ -9,6 +9,10 @@ import {
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { blockedSite, sitesOf } from '~/test/sites';
+
+// 取り込むファイルの追跡中のサイト（検証済みの値）
+const IMPORTED_SITES = sitesOf(blockedSite('example.com'));
 
 /**
  * SettingsBackup の表示分岐とコールバックの検査
@@ -31,6 +35,7 @@ const settingsExport = vi.hoisted(() => ({
 
 const storage = vi.hoisted(() => ({
   getSettings: vi.fn(),
+  getSites: vi.fn(),
   getVision: vi.fn(),
   setVision: vi.fn()
 }));
@@ -64,12 +69,13 @@ beforeEach(() => {
   settingsExport.readFileAsString.mockReset().mockResolvedValue('{}');
   settingsExport.validateImportedData
     .mockReset()
-    .mockReturnValue({ success: true, data: { version: 1 } });
+    .mockReturnValue({ success: true, data: { sites: IMPORTED_SITES } });
   settingsExport.applyImportedSettings.mockReset().mockReturnValue({
     settings: DEFAULT_SETTINGS,
     vision: DEFAULT_VISION
   });
   storage.getSettings.mockReset().mockResolvedValue(DEFAULT_SETTINGS);
+  storage.getSites.mockReset().mockResolvedValue(IMPORTED_SITES);
   storage.getVision.mockReset().mockResolvedValue(DEFAULT_VISION);
   storage.setVision.mockReset().mockResolvedValue(undefined);
   messaging.sendMessage.mockReset().mockResolvedValue({ success: true });
@@ -98,7 +104,7 @@ describe('SettingsBackup', () => {
   });
 
   describe('エクスポート', () => {
-    it('現在の設定とスタイルを渡して書き出す', async () => {
+    it('現在の設定・スタイル・追跡中のサイトを渡して書き出す', async () => {
       const data = { version: 1 };
       settingsExport.exportSettings.mockReturnValue({ data, isLarge: false });
       render(<SettingsBackup />);
@@ -109,7 +115,8 @@ describe('SettingsBackup', () => {
 
       expect(settingsExport.exportSettings).toHaveBeenCalledWith(
         DEFAULT_SETTINGS,
-        DEFAULT_VISION
+        DEFAULT_VISION,
+        IMPORTED_SITES
       );
       expect(settingsExport.downloadSettings).toHaveBeenCalledWith(data);
       expect(exportButton()).toHaveTextContent('saved');
@@ -172,13 +179,29 @@ describe('SettingsBackup', () => {
       await importFile();
 
       expect(messaging.sendMessage).toHaveBeenCalledWith('import-settings', {
-        settings: DEFAULT_SETTINGS
+        settings: DEFAULT_SETTINGS,
+        sites: Object.values(IMPORTED_SITES)
       });
       expect(storage.setVision).toHaveBeenCalledWith(DEFAULT_VISION);
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importSuccessWithMerge'
       );
       expect(onSettingsChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('入れ子で取り込まれなかったサイトを警告として並べる', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: true,
+        skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }]
+      });
+      render(<SettingsBackup />);
+
+      await importFile();
+
+      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
+        'importSuccessWithMerge'
+      );
+      expect(screen.getByText('importWarningNestedSite')).toBeInTheDocument();
     });
 
     it('onSettingsChange が未指定でも例外にならない', async () => {
@@ -194,7 +217,7 @@ describe('SettingsBackup', () => {
     it('検証が警告を返したら警告として並べる', async () => {
       settingsExport.validateImportedData.mockReturnValue({
         success: true,
-        data: { version: 1 },
+        data: { sites: IMPORTED_SITES },
         warnings: ['importWarningOldVersion', 'importWarningUnknownField']
       });
       render(<SettingsBackup />);
@@ -208,7 +231,7 @@ describe('SettingsBackup', () => {
     it('警告が 0 件なら警告の欄を出さない', async () => {
       settingsExport.validateImportedData.mockReturnValue({
         success: true,
-        data: { version: 1 },
+        data: { sites: IMPORTED_SITES },
         warnings: []
       });
       render(<SettingsBackup />);
@@ -341,7 +364,7 @@ describe('SettingsBackup', () => {
       settingsExport.validateImportedData
         .mockReturnValueOnce({
           success: true,
-          data: { version: 1 },
+          data: { sites: IMPORTED_SITES },
           warnings: ['importWarningOldVersion']
         })
         .mockReturnValue({ success: false, error: 'importErrorSaveFailed' });

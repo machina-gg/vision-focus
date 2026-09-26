@@ -5,7 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsTab } from '../AnalyticsTab';
 import type { ActivityLog } from '~/types/activity';
-import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
+import { selectBlockList, selectTrackedSiteRows } from '~/lib/siteSelectors';
+import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
 /**
  * AnalyticsTab の「計測するサイトを足す」入力の検査
@@ -18,15 +19,6 @@ import { DEFAULT_SETTINGS, DEFAULT_UNBLOCK_HISTORY } from '~/types/storage';
  * そのまま渡しているかだけを見る（実体は chrome.storage を読みに行く）。
  */
 
-vi.mock('~/contexts/SettingsContext', () => ({
-  useSettings: () => ({
-    settings: { ...DEFAULT_SETTINGS },
-    setSettings: vi.fn(),
-    vision: undefined,
-    setVision: vi.fn()
-  })
-}));
-
 /** 子が受け取った事実と母集団を「日付|サイト」の形で読めるようにする */
 interface SourcesProps {
   activity: ActivityLog;
@@ -37,10 +29,10 @@ const sourcesText = ({ activity, sites }: SourcesProps) =>
 
 vi.mock('../analytics', () => ({
   AnalyticsExportBar: (
-    props: SourcesProps & { settings?: { version?: unknown } }
+    props: SourcesProps & { blockRows: { domain: string }[] }
   ) => (
     <div data-testid="export-bar">
-      {String(props.settings !== undefined)}
+      {props.blockRows.map((row) => row.domain).join(',')}
       <span data-testid="export-bar-sources">{sourcesText(props)}</span>
     </div>
   ),
@@ -48,10 +40,10 @@ vi.mock('../analytics', () => ({
     <div data-testid="site-ranking">{sourcesText(props)}</div>
   ),
   AnalyticsSummary: (
-    props: SourcesProps & { unblockHistory: { sites: object } }
+    props: SourcesProps & { trackedSiteRows: { domain: string }[] }
   ) => (
     <div data-testid="summary">
-      {Object.keys(props.unblockHistory.sites).join(',')}
+      {props.trackedSiteRows.map((row) => row.domain).join(',')}
       <span data-testid="summary-sources">{sourcesText(props)}</span>
     </div>
   ),
@@ -100,7 +92,8 @@ function renderTab(props: Partial<TabProps> = {}) {
     <AnalyticsTab
       activity={{}}
       sites={[]}
-      unblockHistory={DEFAULT_UNBLOCK_HISTORY}
+      blockRows={[]}
+      trackedSiteRows={[]}
       isSupportPromptVisible={false}
       {...handlers}
       {...props}
@@ -226,29 +219,24 @@ describe('AnalyticsTab', () => {
       expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
     });
 
-    it('解除履歴を集計の要約へ渡す', () => {
+    it('追跡中サイト一覧の行を集計の要約へ渡す', () => {
       renderTab({
-        unblockHistory: {
-          sites: {
-            'example.com': {
-              domain: 'example.com',
-              status: 'unblocked',
-              blockedAt: '2026-02-01T00:00:00.000Z',
-              unblockedAt: '2026-03-01T00:00:00.000Z',
-              timeAfterUnblock: 0,
-              lastActivity: null
-            }
-          }
-        }
+        trackedSiteRows: selectTrackedSiteRows(
+          sitesOf(trackedSite('example.com'))
+        )
       });
 
       expect(screen.getByTestId('summary')).toHaveTextContent('example.com');
     });
 
-    it('設定を書き出しの欄へ渡す', () => {
-      renderTab();
+    it('ブロックリストを書き出しの欄へ渡す', () => {
+      renderTab({
+        blockRows: selectBlockList(sitesOf(blockedSite('blocked.example')))
+      });
 
-      expect(screen.getByTestId('export-bar')).toHaveTextContent('true');
+      expect(screen.getByTestId('export-bar')).toHaveTextContent(
+        'blocked.example'
+      );
     });
 
     it('支援の案内を出すかどうかを期間の絞り込みへ渡す', () => {

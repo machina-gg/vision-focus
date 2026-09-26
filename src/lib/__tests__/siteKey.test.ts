@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeSiteKey, resolveSiteKey } from '~/lib/siteKey';
+import {
+  normalizeSiteKey,
+  resolveSiteKey,
+  findNestedSite
+} from '~/lib/siteKey';
 
 describe('normalizeSiteKey', () => {
   it('小文字にする', () => {
@@ -82,5 +86,40 @@ describe('resolveSiteKey', () => {
     expect(
       resolveSiteKey('mail.google.com', ['mail.google.com', 'google.com'])
     ).toBe('mail.google.com');
+  });
+});
+
+describe('findNestedSite', () => {
+  const SITES = ['youtube.com', 'mail.google.com'];
+
+  it.each([
+    [
+      '既存のサブドメイン（既存が祖先）',
+      'm.youtube.com',
+      'youtube.com',
+      'ancestor'
+    ],
+    ['深いサブドメイン', 'a.b.youtube.com', 'youtube.com', 'ancestor'],
+    [
+      '既存の親ドメイン（既存が子孫）',
+      'google.com',
+      'mail.google.com',
+      'descendant'
+    ]
+  ] as const)('%s', (_label, key, site, relation) => {
+    expect(findNestedSite(key, SITES)).toEqual({ site, relation });
+  });
+
+  it.each([
+    ['同じキーは入れ子に数えない', 'youtube.com'],
+    ['接尾辞が同じだけの別ドメイン', 'notyoutube.com'],
+    ['兄弟のサブドメイン', 'drive.google.com'],
+    ['関係の無いドメイン', 'x.com']
+  ])('%s', (_label, key) => {
+    expect(findNestedSite(key, SITES)).toBeNull();
+  });
+
+  it('空のキーは読み飛ばす', () => {
+    expect(findNestedSite('x.com', [''])).toBeNull();
   });
 });

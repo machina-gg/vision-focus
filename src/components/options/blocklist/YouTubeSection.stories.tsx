@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { YouTubeSection } from './YouTubeSection';
-import type { YouTubeSettings } from '~/types/storage';
+import type { YouTubeSectionValue } from '~/lib/siteSelectors';
 
-const baseYouTube: YouTubeSettings = {
+const baseYouTube: YouTubeSectionValue = {
   enabled: false,
   blockAccess: false,
   hideShorts: false,

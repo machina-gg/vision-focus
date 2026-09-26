@@ -4,21 +4,23 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlocklistTab } from './BlocklistTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';
-import type { AppSettings, BlockItem, YouTubeSettings } from '~/types/storage';
+import {
+  selectYouTubeSection,
+  type BlockListRow,
+  type YouTubeSectionValue
+} from '~/lib/siteSelectors';
 
-const mockBlockList: BlockItem[] = [
+const mockBlockList: BlockListRow[] = [
   {
-    id: '1',
+    id: 'twitter.com',
     domain: 'twitter.com',
-    isWildcard: false,
     createdAt: '2026-02-01T10:00:00Z',
     enabled: true,
     timeLimit: null
   },
   {
-    id: '2',
-    domain: 'youtube.com',
-    isWildcard: false,
+    id: 'instagram.com',
+    domain: 'instagram.com',
     createdAt: '2026-02-02T14:30:00Z',
     enabled: true,
     timeLimit: {
@@ -27,45 +29,20 @@ const mockBlockList: BlockItem[] = [
     }
   },
   {
-    id: '3',
+    id: 'reddit.com',
     domain: 'reddit.com',
-    isWildcard: false,
     createdAt: '2026-02-03T09:15:00Z',
     enabled: true,
     timeLimit: null
   }
 ];
 
-const mockSettings: AppSettings = {
-  blockList: mockBlockList,
-  schedules: [],
-  paused: false,
-  notifications: {
-    timeLimitEnabled: true,
-    timeLimitMinutes: 5
-  },
-  password: {
-    enabled: false,
-    passwordHash: null
-  },
-  unblockConfirm: { holdSeconds: 5 },
-  youtube: {
-    enabled: false,
-    blockAccess: false,
-    hideShorts: false,
-    hideRecommendations: false,
-    hideComments: false,
-    hideHomeFeed: false,
-    timeLimit: null
-  },
-  analyticsOptIn: {
-    enabled: false,
-    decidedAt: '2026-02-01T00:00:00Z'
-  }
-};
+// youtube.com が無いときの節の値（すべて OFF）
+const youtubeOff: YouTubeSectionValue = selectYouTubeSection({});
 
 const BlocklistTabWrapper = () => {
-  const [settings, setSettings] = useState(mockSettings);
+  const [blockRows, setBlockList] = useState(mockBlockList);
+  const [youtube, setYouTube] = useState(youtubeOff);
   const [newDomain, setNewDomain] = useState('');
   const [blockError, setBlockError] = useState('');
 
@@ -74,40 +51,29 @@ const BlocklistTabWrapper = () => {
       setBlockError('Please enter a domain');
       return;
     }
-    const newItem: BlockItem = {
-      id: Date.now().toString(),
-      domain: newDomain.toLowerCase().trim(),
-      isWildcard: newDomain.startsWith('*.'),
-      createdAt: new Date().toISOString(),
-      enabled: true,
-      timeLimit: null
-    };
-    setSettings({
-      ...settings,
-      blockList: [...settings.blockList, newItem]
-    });
+    const domain = newDomain.toLowerCase().trim();
+    setBlockList([
+      ...blockRows,
+      {
+        id: domain,
+        domain,
+        createdAt: new Date().toISOString(),
+        enabled: true,
+        timeLimit: null
+      }
+    ]);
     setNewDomain('');
     setBlockError('');
   };
 
   const handleRemoveDomain = (id: string) => {
-    setSettings({
-      ...settings,
-      blockList: settings.blockList.filter((item) => item.id !== id)
-    });
+    setBlockList(blockRows.filter((item) => item.id !== id));
   };
 
   const handleToggleDomain = (id: string, enabled: boolean) => {
-    setSettings({
-      ...settings,
-      blockList: settings.blockList.map((item) =>
-        item.id === id ? { ...item, enabled } : item
-      )
-    });
-  };
-
-  const handleYouTubeChange = (youtube: YouTubeSettings) => {
-    setSettings({ ...settings, youtube });
+    setBlockList(
+      blockRows.map((item) => (item.id === id ? { ...item, enabled } : item))
+    );
   };
 
   return (
@@ -121,8 +87,9 @@ const BlocklistTabWrapper = () => {
         onToggleDomain={handleToggleDomain}
         onUpdateTimeLimit={() => {}}
         activity={{}}
-        youtube={settings.youtube}
-        onYouTubeChange={handleYouTubeChange}
+        blockRows={blockRows}
+        youtube={youtube}
+        onYouTubeChange={setYouTube}
       />
     </SettingsProvider>
   );
@@ -151,7 +118,8 @@ const meta = {
     onToggleDomain: () => {},
     onUpdateTimeLimit: () => {},
     activity: {},
-    youtube: mockSettings.youtube,
+    blockRows: mockBlockList,
+    youtube: youtubeOff,
     onYouTubeChange: () => {}
   }
 } satisfies Meta<typeof BlocklistTab>;
@@ -179,7 +147,8 @@ export const LongUrlInput: Story = {
         onToggleDomain={() => {}}
         onUpdateTimeLimit={() => {}}
         activity={{}}
-        youtube={mockSettings.youtube}
+        blockRows={mockBlockList}
+        youtube={youtubeOff}
         onYouTubeChange={() => {}}
       />
     </SettingsProvider>

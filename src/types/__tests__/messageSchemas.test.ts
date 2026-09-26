@@ -1,23 +1,62 @@
 import { describe, it, expect } from 'vitest';
 
-import { YouTubeSettingsSchema } from '../messageSchemas';
-import { DEFAULT_YOUTUBE_SETTINGS } from '../storage';
+import {
+  TrackedSiteSchema,
+  YouTubeFeaturesSchema,
+  YouTubeSectionValueSchema
+} from '../messageSchemas';
+import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 
-describe('YouTubeSettingsSchema', () => {
-  it('廃止済みキーが残った保存済みデータでも parse に成功し、そのキーは落ちる', () => {
-    // 設定項目を削除したときに、削除前の保存済みデータで parse が落ちないことを守る。
-    // 落ちると content script が既定値にフォールバックし、YouTube ブロックが
-    // 無音で効かなくなる（#393 で「サイドバーを非表示」を削除した際の前提）
+describe('YouTubeFeaturesSchema', () => {
+  it('知らないキーが混ざっていても parse に成功し、そのキーは落ちる', () => {
+    // content script は youtube.com の YouTube 機能をこの検証に通す。
+    // 落ちると機能を使わない扱いになり、非表示が無音で効かなくなる
     const stored = {
-      ...DEFAULT_YOUTUBE_SETTINGS,
-      enabled: true,
-      hideRecommendations: true,
+      ...youtubeFeatures({ hideRecommendations: true }),
       removedSettingKey: true
     };
 
-    const parsed = YouTubeSettingsSchema.parse(stored);
+    const parsed = YouTubeFeaturesSchema.parse(stored);
 
     expect(parsed.hideRecommendations).toBe(true);
     expect(parsed).not.toHaveProperty('removedSettingKey');
+  });
+});
+
+describe('TrackedSiteSchema', () => {
+  it.each([
+    ['追跡だけのサイト', trackedSite('x.com')],
+    [
+      'ブロック設定と YouTube 機能を持つサイト',
+      blockedSite(
+        'youtube.com',
+        { timeLimit: { type: 'daily', limitSeconds: 600 } },
+        { youtube: youtubeFeatures() }
+      )
+    ]
+  ])('%s を受け付ける', (_label, site) => {
+    expect(TrackedSiteSchema.parse(site)).toEqual(site);
+  });
+
+  it('block / youtube が欠けた形は拒む（null で明示する）', () => {
+    const { block: _block, ...withoutBlock } = trackedSite('x.com');
+    expect(TrackedSiteSchema.safeParse(withoutBlock).success).toBe(false);
+  });
+});
+
+describe('YouTubeSectionValueSchema', () => {
+  it('時間制限は null を含めて必須', () => {
+    const value = {
+      enabled: true,
+      blockAccess: true,
+      hideShorts: false,
+      hideRecommendations: false,
+      hideComments: false,
+      hideHomeFeed: false
+    };
+    expect(YouTubeSectionValueSchema.safeParse(value).success).toBe(false);
+    expect(
+      YouTubeSectionValueSchema.safeParse({ ...value, timeLimit: null }).success
+    ).toBe(true);
   });
 });

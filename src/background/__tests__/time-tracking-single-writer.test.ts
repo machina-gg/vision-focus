@@ -14,17 +14,13 @@ import { invoke } from './handlers/helpers';
  */
 
 const store = vi.hoisted(() => ({
-  settings: undefined as unknown,
-  unblockHistory: undefined as unknown,
+  sites: undefined as unknown,
   activity: undefined as unknown
 }));
 
 vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(async () => structuredClone(store.settings)),
-  getUnblockHistory: vi.fn(async () => structuredClone(store.unblockHistory)),
-  setUnblockHistory: vi.fn(async (value: unknown) => {
-    store.unblockHistory = structuredClone(value);
-  }),
+  getSites: vi.fn(async () => structuredClone(store.sites ?? {})),
+  sitesItem: { setValue: vi.fn() },
   activityItem: {
     getValue: vi.fn(async () => structuredClone(store.activity ?? {})),
     setValue: vi.fn(async (value: unknown) => {
@@ -49,11 +45,10 @@ vi.mock('../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { setUnblockHistory } from '~/lib/storage';
+import { sitesItem } from '~/lib/storage';
 import { toDateKey } from '~/lib/time';
 import { TRACKER_CONFIG } from '~/constants/limits';
-import { DEFAULT_SETTINGS } from '~/types/storage';
-import type { UnblockHistory } from '~/types/storage';
+import { sitesOf, trackedSite } from '~/test/sites';
 import type { ActivityLog } from '~/types/activity';
 
 const SITE = 'example.com';
@@ -62,18 +57,7 @@ const SITE = 'example.com';
 const ELAPSED_MS = TRACKER_CONFIG.RECORDING_INTERVAL_MS * 12;
 const ELAPSED_SECONDS = ELAPSED_MS / 1000;
 
-const initialHistory: UnblockHistory = {
-  sites: {
-    [SITE]: {
-      domain: SITE,
-      status: 'unblocked',
-      blockedAt: '2026-01-01T00:00:00.000Z',
-      unblockedAt: '2026-01-02T00:00:00.000Z',
-      timeAfterUnblock: 0,
-      lastActivity: null
-    }
-  }
-};
+const initialSites = sitesOf(trackedSite(SITE));
 
 /** 今日の行に記録された滞在秒数（行が無ければ undefined） */
 function todaySeconds(site: string): number | undefined {
@@ -119,8 +103,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   // 0 時をまたがない時刻にする（日付はローカル時刻で決まる）
   vi.setSystemTime(new Date(2026, 7, 11, 12, 0, 0));
-  store.settings = structuredClone(DEFAULT_SETTINGS);
-  store.unblockHistory = structuredClone(initialHistory);
+  store.sites = structuredClone(initialSites);
   store.activity = undefined;
 });
 
@@ -141,12 +124,12 @@ describe('滞在時間の記録者は heartbeat の 1 本だけ', () => {
     expect(todaySeconds(SITE)).toBe(ELAPSED_SECONDS);
   });
 
-  it('解除履歴（解除後の時間・最終アクティビティ）には書かない', async () => {
-    // 解除後の時間は activity から導出する。解除履歴にも足すと 2 つ目の記録者になる
+  it('追跡中のサイト（設定）には書かない', async () => {
+    // 解除後の時間は activity から導出する。設定側に足すと 2 つ目の記録者になる
     await showPages([`https://${SITE}/page`]);
 
-    expect(setUnblockHistory).not.toHaveBeenCalled();
-    expect(store.unblockHistory).toEqual(initialHistory);
+    expect(sitesItem.setValue).not.toHaveBeenCalled();
+    expect(store.sites).toEqual(initialSites);
   });
 
   it('追跡中でないサイトの滞在は記録しない', async () => {
