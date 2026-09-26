@@ -42,15 +42,18 @@ export function RankedList({
           key={item.domain}
           className={`flex items-center justify-between p-2 ${bgColor} rounded-lg`}
         >
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 flex items-center justify-center text-xs font-medium text-gray-500 bg-white rounded-full">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="w-5 h-5 flex items-center justify-center text-xs font-medium text-gray-500 bg-white rounded-full shrink-0">
               {index + 1}
             </span>
-            <span className="text-sm font-medium text-gray-800 truncate max-w-[120px]">
+            <span
+              className="text-sm font-medium text-gray-800 truncate min-w-0 flex-1"
+              title={item.domain}
+            >
               {item.domain}
             </span>
           </div>
-          <span className={`text-sm font-medium ${textColor}`}>
+          <span className={`text-sm font-medium ${textColor} shrink-0`}>
             {valueType === 'time' ? formatTime(item.value) : item.value}
           </span>
         </div>

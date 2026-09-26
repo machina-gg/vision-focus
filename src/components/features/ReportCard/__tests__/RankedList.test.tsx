@@ -87,6 +87,34 @@ describe('RankedList', () => {
     });
   });
 
+  describe('ドメイン名の表示幅', () => {
+    it('固定幅の上限を持たず、行の残り幅いっぱいまで広がる', () => {
+      renderList(
+        itemsOf([['www.extremely-long-subdomain-name.example.com', 1]])
+      );
+
+      const domainEl = screen.getByText(
+        'www.extremely-long-subdomain-name.example.com'
+      );
+      expect(domainEl.className).not.toMatch(/max-w-\[120px\]/);
+      expect(domainEl.className).toContain('flex-1');
+    });
+
+    it('切れたときに全文が分かるよう title 属性を持つ', () => {
+      renderList(
+        itemsOf([['www.extremely-long-subdomain-name.example.com', 1]])
+      );
+
+      const domainEl = screen.getByText(
+        'www.extremely-long-subdomain-name.example.com'
+      );
+      expect(domainEl).toHaveAttribute(
+        'title',
+        'www.extremely-long-subdomain-name.example.com'
+      );
+    });
+  });
+
   describe('値の単位', () => {
     it('回数のときは数値をそのまま出す', () => {
       renderList(itemsOf([['a.example', 90]]), 'count');
