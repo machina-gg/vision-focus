@@ -1,5 +1,6 @@
 import { MS_PER_DAY } from '~/constants/intervals';
 import { getUILanguage } from '~/lib/i18n';
+import type { DateKey } from '~/types/activity';
 
 // Format seconds to human readable string (e.g., "1h 23m")
 export function formatTime(seconds: number): string {
@@ -55,6 +56,18 @@ export function formatTimeShort(seconds: number): string {
 // Get today's date in YYYY-MM-DD format
 export function getTodayKey(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * ローカル時刻の日付キー（YYYY-MM-DD）。
+ * toISOString は UTC の日付になり、UTC より東のタイムゾーンでは
+ * 0 時〜時差ぶんの時刻が前日に入ってしまうため、ローカルの年月日から組み立てる
+ */
+export function toDateKey(date: Date): DateKey {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Get date key for a specific date

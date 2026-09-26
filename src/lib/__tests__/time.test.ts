@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   formatTime,
@@ -12,7 +12,8 @@ import {
   parseTimeToMinutes,
   normalizeEndTime,
   needsDailyReset,
-  isWithinSchedule
+  isWithinSchedule,
+  toDateKey
 } from '~/lib/time';
 import * as i18n from '~/lib/i18n';
 
@@ -396,5 +397,27 @@ describe('isWithinSchedule', () => {
   it('normalizes 00:00 end time to 24:00', () => {
     mockDate(1, 23, 59); // Monday 23:59
     expect(isWithinSchedule('00:00', '00:00', [1])).toBe(true);
+  });
+});
+
+describe('toDateKey', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('JST の 08:30 はその日の日付になる（UTC では前日）', () => {
+    vi.stubEnv('TZ', 'Asia/Tokyo');
+    const at = new Date('2026-09-21T08:30:00+09:00');
+    expect(toDateKey(at)).toBe('2026-09-21');
+    // 同じ時刻を UTC の日付で切ると前日になる（toDateKey がローカルで切っていることの対照）
+    expect(getDateKey(at)).toBe('2026-09-20');
+  });
+
+  it('月と日を 2 桁に埋める', () => {
+    expect(toDateKey(new Date(2026, 0, 5, 12))).toBe('2026-01-05');
+  });
+
+  it('ローカルの 23:59 はまだその日', () => {
+    expect(toDateKey(new Date(2026, 11, 31, 23, 59))).toBe('2026-12-31');
   });
 });
