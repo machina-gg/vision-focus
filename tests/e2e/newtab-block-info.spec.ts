@@ -3,8 +3,7 @@ import {
   openNewTab,
   setupTestStorage,
   clearStorage,
-  makeAnalytics,
-  makeSiteBlockCounts,
+  makeActivity,
   setStorageData,
   setSessionStorageData,
   SELECTORS,
@@ -35,15 +34,22 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
   }) => {
     // ブロックされたドメイン情報をセットアップ
     const setupPage = await openNewTab(context, extensionId);
+    // 回数は追跡中のサイトの activity から出るため、ブロックリストに入れておく
+    await setupTestStorage(setupPage, {
+      withGoal: true,
+      withBlockList: true,
+      withAnalyticsOptIn: true
+    });
     // lastBlockedDomain は session エリアに保存される
     await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
-    // 直近のブロック時刻のキーは lastBlocked（lastBlockedAt は実装に無い）
+    // 回数は今日だけでなく保持期間全体の合計（今日 3 回 + 10 日前 2 回）
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([['example.com', 5]])
-      })
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 3 }],
+        ['example.com', { blocks: 2 }, 10]
+      ])
     );
     await setupPage.close();
 
@@ -73,6 +79,15 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
       withBlockList: true,
       withAnalyticsOptIn: true
     });
+    // 一覧の回数は保持期間全体の合計（今日 1 回 + 30 日前 1 回）
+    await setStorageData(
+      setupPage,
+      'activity',
+      makeActivity([
+        ['example.com', { blocks: 1 }],
+        ['example.com', { blocks: 1 }, 30]
+      ])
+    );
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);
@@ -86,6 +101,7 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     const blockedSitesList = page.locator(SELECTORS.newtab.blockedSiteDomain);
     await expect(blockedSitesList.first()).toBeVisible();
     await expect(blockedSitesList.first()).toContainText('example.com');
+    await expect(page.getByText(UI_TEXT.blockCount.short(2))).toBeVisible();
 
     await page.close();
   });
@@ -99,10 +115,8 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
     await setStorageData(
       setupPage,
-      'analytics',
-      makeAnalytics({
-        siteBlockCounts: makeSiteBlockCounts([['youtube.com', 3]])
-      })
+      'activity',
+      makeActivity([['youtube.com', { blocks: 3 }]])
     );
     await setupPage.close();
 
