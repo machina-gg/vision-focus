@@ -4,7 +4,14 @@ import React, { useEffect, useState } from 'react';
 // getExtensionURL 経由だと web_accessible_resources 未宣言のファイルはビルド出力に含まれず 404 になる
 import logoBase64 from '~/assets/images/logo.png?inline';
 
-import { Ban, Calendar, HelpCircle, Palette, TrendingUp } from 'lucide-react';
+import {
+  Ban,
+  Calendar,
+  HelpCircle,
+  Palette,
+  Settings,
+  TrendingUp
+} from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
 import {
@@ -12,6 +19,7 @@ import {
   BlocklistTab,
   SchedulesTab,
   AnalyticsTab,
+  SettingsTab,
   HelpTab,
   ScheduleModal
 } from '~/components/options';
@@ -105,6 +113,11 @@ function OptionsAppContent() {
       icon: <TrendingUp className="w-4 h-4" />
     },
     {
+      id: TABS.SETTINGS,
+      label: getMessage('settings'),
+      icon: <Settings className="w-4 h-4" />
+    },
+    {
       id: TABS.HELP,
       label: getMessage('help'),
       icon: <HelpCircle className="w-4 h-4" />
@@ -163,7 +176,6 @@ function OptionsAppContent() {
             onRemoveDomain={blocklist.handleRemoveDomain}
             onToggleDomain={blocklist.handleToggleDomain}
             onUpdateTimeLimit={blocklist.handleUpdateTimeLimit}
-            onUpdateNotifications={blocklist.handleUpdateNotifications}
             siteBlockCounts={analytics.analyticsData.siteBlockCounts}
             timeLimitUsage={analytics.analyticsData.timeLimitUsage}
             youtube={settings?.youtube ?? DEFAULT_YOUTUBE_SETTINGS}
@@ -197,9 +209,12 @@ function OptionsAppContent() {
           />
         )}
 
-        {/* Help Tab */}
-        {activeTab === TABS.HELP && (
-          <HelpTab
+        {/* Settings Tab */}
+        {activeTab === TABS.SETTINGS && (
+          <SettingsTab
+            onPasswordUpdate={handlePasswordUpdate}
+            onUnblockConfirmUpdate={handleUnblockConfirmUpdate}
+            onUpdateNotifications={blocklist.handleUpdateNotifications}
             onAnalyticsOptInChange={handleAnalyticsOptIn}
             onSettingsChange={async () => {
               // Reload settings and vision after import
@@ -211,10 +226,11 @@ function OptionsAppContent() {
               setVision(newVision);
               await analytics.reloadAnalyticsData();
             }}
-            onPasswordUpdate={handlePasswordUpdate}
-            onUnblockConfirmUpdate={handleUnblockConfirmUpdate}
           />
         )}
+
+        {/* Help Tab */}
+        {activeTab === TABS.HELP && <HelpTab />}
       </main>
 
       {/* Schedule Modal */}

@@ -172,7 +172,7 @@ export function PasswordSettingsSection({
         </div>
         <h2
           className="text-lg font-semibold text-gray-900"
-          data-testid="help-unblock-protection-section"
+          data-testid="settings-unblock-protection-section"
         >
           {getMessage('unblockProtection')}
         </h2>
@@ -188,7 +188,7 @@ export function PasswordSettingsSection({
         <div className="flex-1">
           <h3
             className="font-medium text-gray-900"
-            data-testid="help-password-section"
+            data-testid="settings-password-section"
           >
             {getMessage('passwordProtection')}
           </h3>

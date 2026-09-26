@@ -87,7 +87,7 @@
   },
   "settings": {
     "message": "設定",
-    "description": "設定ページタイトル"
+    "description": "設定ボタン・設定タブのラベル"
   },
   "paused": {
     "message": "一時停止",
@@ -1416,7 +1416,7 @@
     "description": "ヘルプFAQパスワード質問"
   },
   "helpFaqPasswordAnswer": {
-    "message": "パスワード保護を有効にすると、ブロック設定の変更（一時停止、サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。ヘルプタブの「パスワード保護」から設定できます。",
+    "message": "パスワード保護を有効にすると、ブロック設定の変更（一時停止、サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。設定タブの「ブロック解除の保護」から設定できます。",
     "description": "ヘルプFAQパスワード回答"
   },
   "helpFaqBackup": {
@@ -1424,7 +1424,7 @@
     "description": "ヘルプFAQバックアップ質問"
   },
   "helpFaqBackupAnswer": {
-    "message": "ヘルプタブの「設定バックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
+    "message": "設定タブの「設定のバックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
     "description": "ヘルプFAQバックアップ回答"
   },
   "helpFaqPremium": {
@@ -1750,6 +1750,10 @@
   "notificationSettings": {
     "message": "通知設定",
     "description": "通知設定セクションタイトル"
+  },
+  "notificationSettingsDescription": {
+    "message": "時間制限つきのサイトに対する設定です。ブロックリストで「1日の制限」を設定したサイトと、YouTube の時間制限に適用されます。",
+    "description": "通知設定セクションの補足（時間制限つきサイト向けの設定であることの説明）"
   },
   "notificationTimeLimitEnabled": {
     "message": "時間制限の通知",
@@ -2087,7 +2091,7 @@
   },
   "analyticsPrivacyTitle": {
     "message": "データとプライバシー",
-    "description": "ヘルプタブのプライバシーセクションタイトル"
+    "description": "設定タブのプライバシーセクションタイトル"
   },
   "analyticsPrivacyDescription": {
     "message": "匿名の使用統計を管理",

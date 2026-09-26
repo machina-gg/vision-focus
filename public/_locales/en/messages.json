@@ -87,7 +87,7 @@
   },
   "settings": {
     "message": "Settings",
-    "description": "Settings page title"
+    "description": "Label for the settings button and Settings tab"
   },
   "paused": {
     "message": "Paused",
@@ -1416,7 +1416,7 @@
     "description": "Help FAQ password question"
   },
   "helpFaqPasswordAnswer": {
-    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to pause blocking, remove sites from the block list, or disable blocking rules. Set it up in the Help tab under Password Protection.",
+    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to pause blocking, remove sites from the block list, or disable blocking rules. Set it up in the Settings tab under Unblock Protection.",
     "description": "Help FAQ password answer"
   },
   "helpFaqBackup": {
@@ -1424,7 +1424,7 @@
     "description": "Help FAQ backup question"
   },
   "helpFaqBackupAnswer": {
-    "message": "Use the Settings Backup section in the Help tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
+    "message": "Use the Settings Backup section in the Settings tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
     "description": "Help FAQ backup answer"
   },
   "helpFaqPremium": {
@@ -1750,6 +1750,10 @@
   "notificationSettings": {
     "message": "Notification Settings",
     "description": "Notification settings section title"
+  },
+  "notificationSettingsDescription": {
+    "message": "Applies to sites with a time limit: sites set to 'Daily Limit' in the block list and the YouTube time limit.",
+    "description": "Note under the notification settings heading (explains these apply to time-limited sites)"
   },
   "notificationTimeLimitEnabled": {
     "message": "Time Limit Notifications",
@@ -2087,7 +2091,7 @@
   },
   "analyticsPrivacyTitle": {
     "message": "Data & Privacy",
-    "description": "Analytics privacy section title in Help tab"
+    "description": "Analytics privacy section title in Settings tab"
   },
   "analyticsPrivacyDescription": {
     "message": "Manage anonymous usage statistics",

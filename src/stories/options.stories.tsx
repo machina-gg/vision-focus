@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { Ban, Calendar, HelpCircle } from 'lucide-react';
+import { Ban, Calendar, HelpCircle, Settings } from 'lucide-react';
 
 import { Tabs } from '~/components/ui';
-import { BlocklistTab, SchedulesTab, HelpTab } from '~/components/options';
+import {
+  BlocklistTab,
+  SchedulesTab,
+  SettingsTab,
+  HelpTab
+} from '~/components/options';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 
 import '~/styles/globals.css';
@@ -12,13 +17,18 @@ import '~/styles/globals.css';
 const tabs = [
   { id: 'blocklist', label: 'Blocklist', icon: Ban },
   { id: 'schedules', label: 'Schedules', icon: Calendar },
+  { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'help', label: 'Help', icon: HelpCircle }
 ] as const;
 
 type TabId = (typeof tabs)[number]['id'];
 
-function OptionsDemoContent() {
-  const [activeTab, setActiveTab] = useState<TabId>('blocklist');
+interface OptionsDemoProps {
+  initialTab?: TabId;
+}
+
+function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { settings } = useSettings();
 
   const renderTabContent = () => {
@@ -33,7 +43,6 @@ function OptionsDemoContent() {
             onRemoveDomain={() => {}}
             onToggleDomain={() => {}}
             onUpdateTimeLimit={() => {}}
-            onUpdateNotifications={() => {}}
             youtube={settings.youtube}
             onYouTubeChange={() => {}}
           />
@@ -47,14 +56,18 @@ function OptionsDemoContent() {
             onToggleSchedule={() => {}}
           />
         );
-      case 'help':
+      case 'settings':
         return (
-          <HelpTab
-            onSettingsChange={() => {}}
+          <SettingsTab
             onPasswordUpdate={async () => {}}
+            onUnblockConfirmUpdate={async () => {}}
+            onUpdateNotifications={() => {}}
             onAnalyticsOptInChange={async () => {}}
+            onSettingsChange={() => {}}
           />
         );
+      case 'help':
+        return <HelpTab />;
       default:
         return null;
     }
@@ -90,10 +103,10 @@ function OptionsDemoContent() {
   );
 }
 
-function OptionsDemo() {
+function OptionsDemo({ initialTab }: OptionsDemoProps) {
   return (
     <SettingsProvider>
-      <OptionsDemoContent />
+      <OptionsDemoContent initialTab={initialTab} />
     </SettingsProvider>
   );
 }
@@ -111,6 +124,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const SettingsView: Story = {
+  args: { initialTab: 'settings' }
+};
 
 const SchedulesViewWrapper = () => {
   const [activeTab, setActiveTab] = useState<TabId>('schedules');

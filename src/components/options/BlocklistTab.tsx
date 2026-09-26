@@ -7,18 +7,13 @@ import {
   UnblockConfirmModal
 } from '~/components/options/modals';
 import { getMessage } from '~/lib/i18n';
-import {
-  NotificationSettingsSection,
-  YouTubeSection,
-  DomainListItem
-} from '~/components/options/blocklist';
+import { YouTubeSection, DomainListItem } from '~/components/options/blocklist';
 import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import type {
   SiteBlockCount,
   TimeLimit,
   TimeLimitUsage,
-  NotificationSettings,
   YouTubeSettings
 } from '~/types/storage';
 
@@ -30,7 +25,6 @@ interface BlocklistTabProps {
   onRemoveDomain: (id: string) => void;
   onToggleDomain: (id: string, enabled: boolean) => void;
   onUpdateTimeLimit: (id: string, timeLimit: TimeLimit | null) => void;
-  onUpdateNotifications: (notifications: NotificationSettings) => void;
   siteBlockCounts?: Record<string, SiteBlockCount>;
   timeLimitUsage?: Record<string, TimeLimitUsage>;
   youtube: YouTubeSettings;
@@ -45,7 +39,6 @@ export function BlocklistTab({
   onRemoveDomain,
   onToggleDomain,
   onUpdateTimeLimit,
-  onUpdateNotifications,
   siteBlockCounts = {},
   timeLimitUsage = {},
   youtube,
@@ -92,21 +85,8 @@ export function BlocklistTab({
     [requestUnblock, onToggleDomain, settings?.blockList]
   );
 
-  // Check if any sites have time limits configured
-  const hasTimeLimitSites =
-    settings?.blockList.some(
-      (item) => item.timeLimit !== null && item.timeLimit !== undefined
-    ) ?? false;
-
   return (
     <div className="space-y-6">
-      {/* Notification Settings - only show if time limit sites exist */}
-      <NotificationSettingsSection
-        notifications={settings?.notifications}
-        onUpdate={onUpdateNotifications}
-        hasTimeLimitSites={hasTimeLimitSites}
-      />
-
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {getMessage('addSiteToBlock')}
