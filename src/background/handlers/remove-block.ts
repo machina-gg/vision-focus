@@ -4,6 +4,11 @@ import { recordActivity } from '~/lib/activityService';
 import { removeBlock } from '~/lib/siteService';
 import { SiteBodySchema } from '~/types/messageSchemas';
 
+/**
+ * remove-block: ドメインをブロック対象から外してルールを更新する（有効だったブロックなら解除として記録する）
+ * @param message data.domain に外すドメイン
+ * @returns 成功か（入力が不正なら success: false。ブロック対象に無いドメインは成功として扱う）
+ */
 export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
   data
 }) => {

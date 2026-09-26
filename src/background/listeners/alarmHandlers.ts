@@ -16,6 +16,7 @@ async function pruneOldActivity(): Promise<void> {
   await pruneBefore(toDateKey(cutoff));
 }
 
+/** アラームを処理する（daily-cleanup で古い記録と通知済みの記憶を消して日次の利用を送り、check-schedule でブロックのルールを作り直す） */
 export function setupAlarmHandlers(): void {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'daily-cleanup') {
@@ -29,6 +30,7 @@ export function setupAlarmHandlers(): void {
   });
 }
 
+/** daily-cleanup と check-schedule のアラームを周期付きで作る */
 export function createAlarms(): void {
   chrome.alarms.create('daily-cleanup', {
     periodInMinutes: ALARM_DAILY_CLEANUP_MINUTES

@@ -244,6 +244,10 @@ function OptionsAppContent() {
   );
 }
 
+/**
+ * 設定画面（ブロック・表示・スケジュール・分析・設定・ヘルプのタブを持つ）
+ * @returns SettingsProvider で包んだ設定画面
+ */
 export function OptionsApp() {
   return (
     <SettingsProvider>

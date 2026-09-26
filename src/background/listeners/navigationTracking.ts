@@ -2,6 +2,7 @@ import { extractDomain } from '~/lib/domain';
 import { shouldTrackBlockForDomain } from '~/lib/blockService';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 
+/** メインフレームの遷移を見て、ブロック対象のドメインへの遷移をブロックとして記録する */
 export function setupNavigationTracking(): void {
   chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     if (details.frameId !== 0) return;

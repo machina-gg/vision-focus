@@ -5,6 +5,11 @@ import { recordActivity } from '~/lib/activityService';
 import { setBlockEnabled } from '~/lib/siteService';
 import { ToggleBlockBodySchema } from '~/types/messageSchemas';
 
+/**
+ * toggle-block: ドメインのブロックを有効・無効にしてルールを更新する（有効にしたら開いているタブもブロックし、有効から無効にしたら解除として記録する）
+ * @param message data.domain に対象のドメイン、data.enabled にブロックを有効にするか
+ * @returns 成功か、失敗の種類（invalid-request / block-not-found）
+ */
 export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   data
 }) => {

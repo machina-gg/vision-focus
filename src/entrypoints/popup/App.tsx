@@ -239,6 +239,10 @@ function PopupAppContent() {
   );
 }
 
+/**
+ * ツールバーのポップアップ画面（今見ているサイトのブロック・今日の記録・一時停止を扱う）
+ * @returns SettingsProvider で包んだポップアップ画面
+ */
 export function PopupApp() {
   return (
     <SettingsProvider>
