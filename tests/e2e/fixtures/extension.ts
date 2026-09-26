@@ -16,10 +16,6 @@ export type ExtensionFixtures = {
   browserLanguage: string | undefined;
 };
 
-export type ExtensionWorkerFixtures = {
-  testServer: TestServer;
-};
-
 export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
   testServer: [
     async ({}, use) => {
