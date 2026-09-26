@@ -65,6 +65,20 @@ export const MoreThanThree: Story = {
   }
 };
 
+// 長いドメイン名が行の残り幅いっぱいまで表示され、収まらない分だけ省略される
+export const LongDomain: Story = {
+  args: {
+    items: [
+      { domain: 'www.extremely-long-subdomain-name.example.com', value: 7200 },
+      { domain: 'youtube.com', value: 5400 },
+      { domain: 'reddit.com', value: 1800 }
+    ],
+    valueType: 'time',
+    bgColor: 'bg-danger-50',
+    textColor: 'text-danger-600'
+  }
+};
+
 // データが無い場合
 export const Empty: Story = {
   args: {
