@@ -74,11 +74,12 @@ describe('openOptionsPage', () => {
   });
 
   it('コンテキストが無効な場合は何もしない', () => {
+    const openOptionsPageMock = vi.fn();
     (globalThis as Record<string, unknown>).chrome = {
-      runtime: { id: undefined, openOptionsPage: vi.fn() }
+      runtime: { id: undefined, openOptionsPage: openOptionsPageMock }
     };
     openOptionsPage();
-    // openOptionsPageは呼ばれない
+    expect(openOptionsPageMock).not.toHaveBeenCalled();
   });
 });
 
