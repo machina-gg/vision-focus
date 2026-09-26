@@ -4,6 +4,7 @@ import { setupLifecycleHandlers } from './listeners/lifecycleHandlers';
 import { setupAlarmHandlers, createAlarms } from './listeners/alarmHandlers';
 import { setupNavigationTracking } from './listeners/navigationTracking';
 
+/** background のリスナーとメッセージハンドラを登録し、定期実行のアラームを作る */
 export function initBackground(): void {
   setupSettingsWatcher();
   setupLifecycleHandlers();

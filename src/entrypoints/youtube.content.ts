@@ -133,6 +133,7 @@ async function init(): Promise<void> {
   });
 }
 
+/** YouTube で設定に応じてショート・おすすめ・コメント・ホームフィードを隠すコンテンツスクリプト（設定の変更にも追従する） */
 export default defineContentScript({
   matches: ['*://*.youtube.com/*'],
   runAt: 'document_start',

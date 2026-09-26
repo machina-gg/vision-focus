@@ -28,6 +28,11 @@ function toTrackedSite(site: ImportedSite): TrackedSite {
 }
 
 // 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
+/**
+ * import-settings: 設定ファイルの設定とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
+ * @param message data.settings に取り込む設定、data.sites に取り込むサイトの一覧
+ * @returns 成功時の skipped は既存のサイトと入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）。失敗は invalid-request / save-failed
+ */
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   data
 }) => {

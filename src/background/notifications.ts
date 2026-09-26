@@ -22,6 +22,7 @@ function markAsNotified(domain: string): void {
   notifiedDomains.set(domain, getResetKey());
 }
 
+/** 今日より前に通知済みにしたドメインの記憶を消す */
 export function clearExpiredNotifications(): void {
   const dailyKey = getResetKey();
 
@@ -74,6 +75,10 @@ async function showTimeLimitNotification(
   });
 }
 
+/**
+ * 時間制限の残りが設定の分数以下になったら、そのサイトについて 1 日 1 回だけ通知を出す
+ * @param status サイトのブロック判定（時間制限が無い・残りを使い切ったときは何もしない）
+ */
 export async function checkTimeLimitNotification(
   status: SiteBlockStatus
 ): Promise<void> {
@@ -96,6 +101,7 @@ export async function checkTimeLimitNotification(
   markAsNotified(site);
 }
 
+/** 通知済みにしたドメインの記憶をすべて消す */
 export function resetNotificationState(): void {
   notifiedDomains.clear();
 }

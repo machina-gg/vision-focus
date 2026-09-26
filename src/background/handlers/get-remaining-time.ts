@@ -30,6 +30,11 @@ async function getTimeLimitInfo(url: string): Promise<TimeLimitInfo | null> {
   };
 }
 
+/**
+ * get-remaining-time: URL のサイトに掛かっている時間制限と残り時間を返す
+ * @param message data.url に調べるページの URL
+ * @returns 成功時の data は時間制限の情報（ブロック対象でない・ブロックが無効なら null）。URL が不正なら invalid-url
+ */
 export const getRemainingTimeHandler: MessageHandler<
   'get-remaining-time'
 > = async ({ data }) => {

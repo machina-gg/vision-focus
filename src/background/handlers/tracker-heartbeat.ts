@@ -79,6 +79,11 @@ async function enforceTimeLimits(hosts: readonly string[]): Promise<void> {
   }
 }
 
+/**
+ * tracker-heartbeat: コンテンツスクリプトからページの表示状態を受け、表示中のサイトの滞在時間を一定間隔で記録して時間制限を判定する
+ * @param message data.url にページの URL、data.status に状態（active / inactive / heartbeat）、data.timestamp に送信時刻（エポックからのミリ秒）
+ * @returns 成功か、失敗の種類（invalid-request / invalid-url）
+ */
 export const trackerHeartbeatHandler: MessageHandler<
   'tracker-heartbeat'
 > = async ({ data }) => {

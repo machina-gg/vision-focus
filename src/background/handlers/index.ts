@@ -12,6 +12,7 @@ import { trackerHeartbeatHandler } from './tracker-heartbeat';
 import { updateTimeLimitHandler } from './update-time-limit';
 import { updateYouTubeSettingsHandler } from './update-youtube-settings';
 
+/** background が受けるメッセージごとにハンドラを登録する */
 export function registerMessageHandlers(): void {
   onMessage('add-block', addBlockHandler);
   onMessage('add-tracked-site', addTrackedSiteHandler);

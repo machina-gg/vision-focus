@@ -33,6 +33,10 @@ import {
 
 import '~/styles/globals.css';
 
+/**
+ * 新しいタブの画面（目標と今日の記録を出し、ブロックで移ってきたときはブロックしたサイトの情報も出す）
+ * @returns 新しいタブの画面
+ */
 export function NewtabApp() {
   const [vision, setVision] = useStorageItem(visionItem);
   const [settings] = useStorageItem(settingsItem);

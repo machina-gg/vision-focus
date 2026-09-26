@@ -9,8 +9,10 @@ import { isExtensionContextValid } from '~/lib/chromeApi';
 import { extractDomain } from '~/lib/domain';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 
+/** ブロックした理由（常時ブロック / 時間制限の超過。ブロックしていなければ null） */
 export type { BlockReason };
 
+/** 現在の設定から declarativeNetRequest の動的ルールを作り直す（一時停止中はすべて外す） */
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings();
 
@@ -53,6 +55,11 @@ export async function updateBlockRules(): Promise<void> {
   });
 }
 
+/**
+ * URL を今ブロックすべきかを判定する
+ * @param url 判定するページの URL
+ * @returns blocked がブロックするか、reason がその理由（ブロックしないときは null）
+ */
 export async function shouldBlockUrl(
   url: string
 ): Promise<{ blocked: boolean; reason: BlockReason }> {
@@ -63,6 +70,7 @@ export async function shouldBlockUrl(
   };
 }
 
+/** 開いているタブのうちブロック対象のものを、理由を付けてブロック画面（newtab.html）へ移す（chrome:// と拡張のページは除く） */
 export async function blockExistingTabs(): Promise<void> {
   if (!isExtensionContextValid()) {
     return;

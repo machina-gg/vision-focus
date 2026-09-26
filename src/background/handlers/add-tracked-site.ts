@@ -2,6 +2,11 @@ import type { MessageHandler } from '~/lib/messaging';
 import { addTrackedSite } from '~/lib/siteService';
 import { addSiteError } from './siteRejection';
 
+/**
+ * add-tracked-site: ドメインを追跡対象（滞在時間を記録するサイト）に加える
+ * @param message data.domain に加えるドメイン（入力のまま。サイトキーへの変換は siteService が行う）
+ * @returns 成功か、失敗の種類（invalid-request / nested-site / already-tracked / invalid-domain）
+ */
 export const addTrackedSiteHandler: MessageHandler<
   'add-tracked-site'
 > = async ({ data }) => {

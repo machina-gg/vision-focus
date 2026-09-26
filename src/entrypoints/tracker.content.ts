@@ -96,6 +96,7 @@ function init() {
   window.addEventListener('pagehide', handleUnload);
 }
 
+/** すべてのページで表示状態をハートビートとして background へ送り、滞在時間の記録に使わせるコンテンツスクリプト（拡張のページと about: では動かない） */
 export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_idle',

@@ -23,6 +23,11 @@ function toSiteUpdate(
   };
 }
 
+/**
+ * update-youtube-settings: YouTube の非表示機能とアクセスのブロックを保存してルールを更新する（ブロックを外したら解除として記録し、掛けたら開いているタブもブロックする）
+ * @param message data.youtube に YouTube の設定（enabled が false なら非表示機能もブロックも外す）
+ * @returns 成功か、失敗の種類（invalid-request / save-failed）
+ */
 export const updateYouTubeSettingsHandler: MessageHandler<
   'update-youtube-settings'
 > = async ({ data }) => {
