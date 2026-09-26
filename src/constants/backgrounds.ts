@@ -15,8 +15,6 @@ export const BACKGROUND_OPTIONS = [
   { id: 'sunday', name: 'Sunday' }
 ] as const;
 
-export type BackgroundOption = (typeof BACKGROUND_OPTIONS)[number];
-
 export function getBackgroundUrl(bgId: string): string {
   return getExtensionURL(`assets/images/backgrounds/${bgId}.webp`);
 }

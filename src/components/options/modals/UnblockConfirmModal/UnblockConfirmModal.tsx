@@ -2,12 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ShieldOff, Trash2 } from 'lucide-react';
 
 import { Modal, Button } from '~/components/ui';
+import type { UnblockAction } from '~/hooks/useUnblockGuard';
 import { getMessage } from '~/lib/i18n';
 import type { UnblockHoldSeconds } from '~/types/storage';
 
 const MS_PER_SECOND = 1000;
-
-type UnblockAction = 'toggle' | 'delete';
 
 interface UnblockConfirmModalProps {
   isOpen: boolean;

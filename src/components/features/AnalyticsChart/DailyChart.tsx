@@ -12,7 +12,7 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatDate, formatMinutes, getTimeAxisConfig } from './chartUtils';
 
-export interface DailyChartData {
+interface DailyChartData {
   date: string;
   time: number;
 }
