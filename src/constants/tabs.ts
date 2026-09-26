@@ -1,10 +1,16 @@
 /** 設定画面のタブの名前（URL のハッシュにも使う） */
 export const TABS = {
+  /** ブロック対象の一覧 */
   BLOCKLIST: 'blocklist',
+  /** 新しいタブの表示のスタイル */
   STYLES: 'styles',
+  /** ブロックのスケジュール */
   SCHEDULES: 'schedules',
+  /** 分析 */
   ANALYTICS: 'analytics',
+  /** 拡張全体の設定 */
   SETTINGS: 'settings',
+  /** ヘルプ */
   HELP: 'help'
 } as const;
 

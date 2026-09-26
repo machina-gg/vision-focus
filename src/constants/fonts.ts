@@ -1,16 +1,24 @@
 /** 文字サイズの選択肢（sm / md / lg / xl）ごとの大きさ（px） */
 export const FONT_SIZE_PX: Record<string, number> = {
+  /** 小（px） */
   sm: 24,
+  /** 中（px） */
   md: 30,
+  /** 大（px） */
   lg: 36,
+  /** 特大（px） */
   xl: 48
 };
 
 /** 文字の太さの選択肢（normal / medium / semibold / bold）ごとの font-weight の値 */
 export const FONT_WEIGHT_VALUE: Record<string, number> = {
+  /** 標準 */
   normal: 400,
+  /** やや太い */
   medium: 500,
+  /** 太い */
   semibold: 600,
+  /** 最も太い */
   bold: 700
 };
 
