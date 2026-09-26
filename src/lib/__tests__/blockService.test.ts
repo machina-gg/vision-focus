@@ -514,6 +514,6 @@ describe('判定とルール生成の一致', () => {
     const state = await getBlockStateForDomain('m.example.com');
     const ruleDomains = await getActiveBlockedDomains();
 
-    expect(ruleDomains.includes('example.com')).toBe(state.blocked);
+    expect(new Set(ruleDomains).has('example.com')).toBe(state.blocked);
   });
 });
