@@ -34,10 +34,11 @@ describe('export utilities', () => {
   let mockClick: ReturnType<typeof vi.fn>;
   let mockCreateObjectURL: ReturnType<typeof vi.fn>;
   let mockRevokeObjectURL: ReturnType<typeof vi.fn>;
+  let mockLink: { href: string; download: string; click: typeof mockClick };
 
   beforeEach(() => {
     mockClick = vi.fn();
-    const mockLink = {
+    mockLink = {
       href: '',
       download: '',
       click: mockClick
@@ -146,11 +147,48 @@ describe('export utilities', () => {
   });
 
   describe('filename generation', () => {
-    it('ファイル名に正しい日付が含まれる', () => {
-      exportBlockList(blockSitesOf(['reddit.com']));
-
-      expect(mockCreateElement).toHaveBeenCalledWith('a');
+    // ローカルの 0 時台にして、UTC 基準の日付だと UTC より東のタイムゾーンで前日にずれるのを捕まえる
+    beforeEach(() => {
+      vi.setSystemTime(new Date(2024, 0, 15, 0, 30));
     });
+
+    it.each([
+      [
+        'ブロックリスト',
+        () => exportBlockList(blockSitesOf(['reddit.com'])),
+        'visionfocus-blocklist-2024-01-15.csv'
+      ],
+      [
+        'ブロック回数',
+        () =>
+          exportSiteBlockCounts({}, [], {
+            from: '2024-01-01',
+            to: '2024-01-15'
+          }),
+        'visionfocus-block-counts-2024-01-15.csv'
+      ],
+      [
+        '日別統計',
+        () =>
+          exportDailyActivity({}, [], { from: '2024-01-01', to: '2024-01-15' }),
+        'visionfocus-daily-stats-2024-01-15.csv'
+      ],
+      [
+        '解除サイト',
+        () => exportUnblockedSiteTimes({}, [], '2024-01-15'),
+        'visionfocus-unblocked-sites-2024-01-15.csv'
+      ]
+    ])(
+      '%s: ローカル日付入りのファイル名でダウンロードする',
+      (_, run, filename) => {
+        run();
+
+        expect(mockCreateElement).toHaveBeenCalledWith('a');
+        expect(mockLink.download).toBe(filename);
+        expect(mockLink.href).toBe('blob:mock-url');
+        expect(mockClick).toHaveBeenCalledOnce();
+      }
+    );
   });
 
   describe('BOM for Excel compatibility', () => {
