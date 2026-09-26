@@ -5,15 +5,24 @@ import { messageErrorText } from '~/lib/messageError';
 import type { TrackedSite } from '~/types/site';
 
 interface UseAnalyticsReturn {
+  /** 追跡サイトの追加に失敗したときの文言。失敗していなければ空文字 */
   addSiteError: string;
+  /** サイトをブロックに戻す（ブロック設定が無ければ追加し、無効なら有効にする） */
   handleReblock: (site: TrackedSite) => Promise<void>;
+  /** 活動の記録をすべて消す */
   handleResetAnalytics: () => Promise<void>;
+  /** サイトの追跡をやめ、その記録を消す */
   handleStopTracking: (site: TrackedSite) => Promise<void>;
+  /** 何もしない（表示は保存値の変更に追従するため） */
   handleRefreshAnalytics: () => Promise<void>;
+  /** 入力されたドメインを追跡対象に加える。加えられたら true */
   handleAddSiteToTrack: (domain: string) => Promise<boolean>;
 }
 
-/** 分析タブの操作（再ブロック・記録のリセット・追跡の停止・追跡サイトの追加）を background へ依頼する */
+/**
+ * 分析タブの操作（再ブロック・記録のリセット・追跡の停止・追跡サイトの追加）を background へ依頼する
+ * @returns 各操作と、追跡サイトの追加の失敗の文言
+ */
 export function useAnalytics(): UseAnalyticsReturn {
   const [addSiteError, setAddSiteError] = useState('');
 
