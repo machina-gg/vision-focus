@@ -1,11 +1,18 @@
 import React from 'react';
 
+/** Toggle に渡すオン・オフの状態と見た目 */
 export interface ToggleProps {
+  /** true ならオン */
   checked: boolean;
+  /** 押されたときに切り替え後の状態を受け取る */
   onChange: (checked: boolean) => void;
+  /** スイッチの右に出す文言（省略時は出さない） */
   label?: string;
+  /** true なら切り替えられなくする */
   disabled?: boolean;
+  /** スイッチの大きさ（省略時は 'md'） */
   size?: 'sm' | 'md' | 'lg';
+  /** スイッチ本体の button に付ける data-testid */
   'data-testid'?: string;
 }
 
@@ -27,6 +34,11 @@ const sizeClasses = {
   }
 };
 
+/**
+ * オン・オフを切り替えるスイッチを表示する
+ * @param props 状態・切り替えの受け取り先・見た目（各フィールドは ToggleProps）
+ * @returns スイッチとラベルの要素
+ */
 export function Toggle({
   checked,
   onChange,

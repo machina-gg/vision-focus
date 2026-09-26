@@ -9,10 +9,17 @@ import type { DashboardPreset } from '~/types/storage';
 import { DEFAULT_FONT_SETTINGS } from '~/types/font';
 import type { UsePresetsReturn } from '~/hooks/usePresets';
 
+/** DisplaySettingsForm に渡すプリセット編集の状態と操作 */
 interface DisplaySettingsFormProps {
+  /** usePresets が返す、選択中のプリセットの下書きとそれを書き換える操作 */
   presets: UsePresetsReturn;
 }
 
+/**
+ * 選択中のプリセットの表示設定（名前・目標・補足・文字色・背景・フォント）を編集するフォームを表示する
+ * @param props プリセット編集の状態と操作（各フィールドは DisplaySettingsFormProps）
+ * @returns 表示設定のフォーム。プリセットを選んでいなければ null
+ */
 export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
   const {
     draftDisplaySettings,

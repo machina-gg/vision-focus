@@ -11,6 +11,10 @@ import {
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/**
+ * 主な機能（ブロック・スケジュール・ダッシュボード・時間制限・分析）の使い方をアイコンつきでカードに表示する
+ * @returns はじめかたのカード
+ */
 export function HelpGettingStarted() {
   return (
     <Card>

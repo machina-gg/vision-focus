@@ -38,13 +38,23 @@ import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
+/** AnalyticsExportBar に渡す集計元と操作 */
 interface AnalyticsExportBarProps {
+  /** 日別・サイト別の閲覧時間とブロック回数の記録 */
   activity: ActivityLog;
+  /** 登録済みのサイト（書き出しとグラフの対象） */
   trackedSites: TrackedSites;
+  /** 再読み込みボタンが押されたときに呼ぶ */
   onRefresh: () => Promise<void>;
+  /** 確認のモーダルで削除が選ばれたときに呼ぶ */
   onReset: () => void;
 }
 
+/**
+ * 計測データの CSV 書き出し・再読み込み・グラフ・X への共有・画像の保存・データの削除をまとめたカードを表示する
+ * @param props 集計元と操作（各フィールドは AnalyticsExportBarProps）
+ * @returns 計測データのカードと、削除の確認用のモーダル
+ */
 export function AnalyticsExportBar({
   activity,
   trackedSites,

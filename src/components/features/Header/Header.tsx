@@ -10,14 +10,25 @@ import { getMessage } from '~/lib/i18n';
 
 const VERSION = '1.0.0';
 
+/** Header に渡すボタンの出し分けと操作 */
 export interface HeaderProps {
+  /** false なら設定ボタンを出さない（省略時は出す） */
   showSettings?: boolean;
+  /** 設定ボタンが押されたときに呼ぶ */
   onSettingsClick?: () => void;
+  /** ヘルプボタンが押されたときに呼ぶ（省略時はヘルプボタンを出さない） */
   onHelpClick?: () => void;
+  /** true ならブロックを一時停止中として表示する */
   paused?: boolean;
+  /** 一時停止のスイッチが切り替わったときに停止中かを受け取る（省略時はスイッチを出さない） */
   onPausedChange?: (paused: boolean) => void;
 }
 
+/**
+ * ロゴとバージョン、一時停止のスイッチ、設定・ヘルプのボタンを並べたヘッダーを表示する
+ * @param props ボタンの出し分けと操作（各フィールドは HeaderProps）
+ * @returns header 要素
+ */
 export function Header({
   showSettings = true,
   onSettingsClick,

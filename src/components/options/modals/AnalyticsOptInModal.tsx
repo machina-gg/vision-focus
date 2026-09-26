@@ -6,11 +6,19 @@ import { Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { useSettings } from '~/contexts/SettingsContext';
 
+/** AnalyticsOptInModal に渡す選択の受け取り先 */
 interface AnalyticsOptInModalProps {
+  /** 共有を許可するボタンが押されたときに呼ぶ */
   onAllow: () => void;
+  /** 共有しないボタンが押されたときに呼ぶ */
   onDeny: () => void;
 }
 
+/**
+ * 匿名の利用統計を共有するかを尋ねるダイアログを、まだ選んでいない間だけ表示する（選んだかは設定のコンテキストから読む）
+ * @param props 選択の受け取り先（各フィールドは AnalyticsOptInModalProps）
+ * @returns 共有の確認ダイアログ。選択済みなら null
+ */
 export function AnalyticsOptInModal({
   onAllow,
   onDeny

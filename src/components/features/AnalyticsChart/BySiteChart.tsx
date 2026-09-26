@@ -13,16 +13,27 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatMinutes, SITE_COLORS } from './chartUtils';
 
+/** サイト別グラフの棒 1 本分 */
 export interface BySiteChartData {
+  /** 軸に出すドメイン（長いものは省略記号付きで切り詰めたもの） */
   domain: string;
+  /** ツールチップに出す切り詰める前のドメイン */
   fullDomain: string;
+  /** 閲覧時間（分） */
   time: number;
 }
 
+/** BySiteChart に渡す棒のデータ */
 export interface BySiteChartProps {
+  /** 上から並べる棒（空なら「データなし」を出す） */
   data: BySiteChartData[];
 }
 
+/**
+ * サイトごとの閲覧時間を横棒グラフで表示する
+ * @param props 棒のデータ（各フィールドは BySiteChartProps）
+ * @returns 横棒グラフ。データが空なら「データなし」の表示
+ */
 export function BySiteChart({ data }: BySiteChartProps) {
   if (data.length === 0) {
     return (

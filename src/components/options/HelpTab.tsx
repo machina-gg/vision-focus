@@ -10,6 +10,10 @@ import { getMessage } from '~/lib/i18n';
 
 const VERSION = '1.0.0';
 
+/**
+ * 設定画面のヘルプタブ（はじめかた・よくある質問・困ったとき・支援・問い合わせ・バージョン）を表示する
+ * @returns ヘルプタブの中身
+ */
 export function HelpTab() {
   return (
     <div className="space-y-6">

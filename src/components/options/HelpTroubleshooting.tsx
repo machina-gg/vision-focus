@@ -4,6 +4,10 @@ import { Wrench, ChevronRight } from 'lucide-react';
 import { Card } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
+/**
+ * 困ったときの症状と対処を、開閉できる一覧としてカードで表示する
+ * @returns 困ったときのカード
+ */
 export function HelpTroubleshooting() {
   return (
     <Card>

@@ -8,12 +8,21 @@ import type {
 } from '~/types/storage';
 import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
 
+/** UnblockHoldSecondsField に渡す現在の秒数と保存先 */
 interface UnblockHoldSecondsFieldProps {
+  /** 解除の確認で長押しさせる現在の秒数 */
   holdSeconds: UnblockHoldSeconds;
+  /** 選び直した秒数を確認設定として保存する（完了は待たない） */
   onUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
+  /** true なら選べなくし、パスワード保護中である旨の注記を出す */
   disabled: boolean;
 }
 
+/**
+ * 解除の確認で長押しさせる秒数を、決められた選択肢から選ぶ欄を表示する
+ * @param props 現在の秒数と保存先（各フィールドは UnblockHoldSecondsFieldProps）
+ * @returns 秒数のプルダウンと注記
+ */
 export function UnblockHoldSecondsField({
   holdSeconds,
   onUpdate,

@@ -13,10 +13,15 @@ import {
 } from '~/types/font';
 import { getMessage } from '~/lib/i18n';
 
+/** FontPicker に渡す現在のフォント設定と変更の受け取り先 */
 export interface FontPickerProps {
+  /** 選択中のフォントの種類・大きさ・太さ */
   value: FontSettings;
+  /** どれかが変わったときに変更後の設定全体を受け取る */
   onChange: (settings: FontSettings) => void;
+  /** true なら薄く表示して操作できなくする */
   disabled?: boolean;
+  /** プレビュー欄に出す文言（省略時は 'Focus on your goals'） */
   previewText?: string;
 }
 
@@ -68,6 +73,11 @@ function loadGoogleFont(fontName: string) {
   document.head.appendChild(link);
 }
 
+/**
+ * フォントのカテゴリ・種類・大きさ・太さを選ぶ欄とプレビューを表示する（カテゴリを変えるとその先頭のフォントを選ぶ）
+ * @param props 現在の設定と変更の受け取り先（各フィールドは FontPickerProps）
+ * @returns プレビューと各選択欄をまとめた要素
+ */
 export function FontPicker({
   value,
   onChange,

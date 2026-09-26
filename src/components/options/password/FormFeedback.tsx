@@ -1,11 +1,19 @@
 import React from 'react';
 import { Check, AlertTriangle } from 'lucide-react';
 
+/** FormFeedback に渡す結果の文言 */
 interface FormFeedbackProps {
+  /** 赤字で出す失敗の文言（null なら出さない） */
   error: string | null;
+  /** 緑字で出す成功の文言（null なら出さない） */
   success: string | null;
 }
 
+/**
+ * パスワードのフォームの操作結果を、失敗なら警告アイコン、成功ならチェックつきで表示する
+ * @param props 結果の文言（各フィールドは FormFeedbackProps）
+ * @returns 失敗・成功の文言。どちらも null なら何も描画しない
+ */
 export function FormFeedback({ error, success }: FormFeedbackProps) {
   return (
     <>

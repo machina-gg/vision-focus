@@ -11,12 +11,21 @@ import {
 } from '~/lib/wallpaper';
 import { getMessage } from '~/lib/i18n';
 
+/** DownloadButton に渡す画像化の対象と見た目 */
 export interface DownloadButtonProps {
+  /** 壁紙として画像化する要素（未描画で null の間は押しても何もしない） */
   targetRef: React.RefObject<HTMLElement>;
+  /** true なら押せなくする */
   disabled?: boolean;
+  /** 外側の div に足すクラス */
   className?: string;
 }
 
+/**
+ * 解像度を選んで画面を壁紙画像として保存するボタンと、解像度のメニューを表示する
+ * @param props 画像化の対象と見た目（各フィールドは DownloadButtonProps）
+ * @returns ボタン・結果の読み上げ用テキスト・解像度メニューをまとめた要素
+ */
 export function DownloadButton({
   targetRef,
   disabled = false,

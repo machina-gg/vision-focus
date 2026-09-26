@@ -10,6 +10,10 @@ import { settingsItem, visionItem } from '~/lib/storage';
 import { DeletePresetModal, NewPresetModal } from '~/components/options/modals';
 import { PresetSelector, DisplaySettingsForm } from './styles';
 
+/**
+ * 設定画面のスタイルタブ（プリセットの選択・表示設定のフォーム・編集中のプレビュー・プリセットの作成と削除のモーダル）を表示する（設定は保存領域から直接読み書きする）
+ * @returns スタイルタブの中身
+ */
 export function StylesTab() {
   const [vision, setVision] = useStorageItem(visionItem);
   const [settings, setSettings] = useStorageItem(settingsItem);

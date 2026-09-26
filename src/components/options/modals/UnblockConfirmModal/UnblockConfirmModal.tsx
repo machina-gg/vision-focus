@@ -8,16 +8,29 @@ import type { UnblockHoldSeconds } from '~/types/storage';
 
 const MS_PER_SECOND = 1000;
 
+/** UnblockConfirmModal に渡す開閉状態・解除の対象と操作 */
 interface UnblockConfirmModalProps {
+  /** false の間は表示しない。閉じると長押しの進み具合を 0 に戻す */
   isOpen: boolean;
+  /** 取消ボタンか背景が押されたとき、および解除を確定したあとに呼ぶ */
   onClose: () => void;
+  /** ボタンを holdSeconds 秒押し続けたときに呼ぶ */
   onConfirm: () => void;
+  /** 解除するサイトのドメイン */
   domain: string;
+  /** 現在のブロックのしかたを表す文言（確認文に埋め込む） */
   blockStyle: string;
+  /** 削除か無効化か（文言とアイコンを切り替える） */
   action: UnblockAction;
+  /** 確定までに押し続けさせる秒数 */
   holdSeconds: UnblockHoldSeconds;
 }
 
+/**
+ * ブロックの削除・無効化を、ボタンを一定時間押し続けさせてから確定する確認モーダルを表示する
+ * @param props 開閉状態・解除の対象と操作（各フィールドは UnblockConfirmModalProps）
+ * @returns 長押しの進み具合つきの確認モーダル
+ */
 export function UnblockConfirmModal({
   isOpen,
   onClose,

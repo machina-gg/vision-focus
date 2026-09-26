@@ -2,15 +2,27 @@ import React from 'react';
 
 import { Toggle } from '~/components/ui';
 
+/** YouTubeFeatureToggle に渡す項目の表示内容と状態 */
 interface YouTubeFeatureToggleProps {
+  /** 項目の左に出すアイコン */
   icon: React.ReactNode;
+  /** 項目の名前 */
   title: string;
+  /** 名前の下に出す説明 */
   description: string;
+  /** true ならオン（背景を赤系にする） */
   checked: boolean;
+  /** スイッチが切り替わったときに切り替え後の状態を受け取る */
   onChange: (checked: boolean) => void;
+  /** true なら薄く表示して切り替えられなくする */
   disabled?: boolean;
 }
 
+/**
+ * YouTube の機能 1 つ分を、アイコン・名前・説明・スイッチを並べた行で表示する
+ * @param props 項目の表示内容と状態（各フィールドは YouTubeFeatureToggleProps）
+ * @returns 機能の行
+ */
 export function YouTubeFeatureToggle({
   icon,
   title,

@@ -6,15 +6,27 @@ interface SelectOption {
   label: string;
 }
 
+/** Select に渡す選択中の値と選択肢 */
 interface SelectProps {
+  /** 選択中の選択肢の value */
   value: string;
+  /** 選択が変わったときに新しい value を受け取る */
   onChange: (value: string) => void;
+  /** 表示する選択肢（並び順のまま出す） */
   options: SelectOption[];
+  /** 先頭に出す選べない案内文（省略時は出さない） */
   placeholder?: string;
+  /** 外側の div に足すクラス */
   className?: string;
+  /** true なら選択できなくする */
   disabled?: boolean;
 }
 
+/**
+ * 右端に下向き矢印を付けたプルダウンを表示する
+ * @param props 選択中の値・選択肢・変更の受け取り先（各フィールドは SelectProps）
+ * @returns プルダウンの要素
+ */
 export function Select({
   value,
   onChange,

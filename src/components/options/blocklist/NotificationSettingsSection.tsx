@@ -8,11 +8,19 @@ import type {
   NotificationMinutes
 } from '~/types/storage';
 
+/** NotificationSettingsSection に渡す現在の通知設定と保存先 */
 interface NotificationSettingsSectionProps {
+  /** 現在の通知設定（読み込み前の undefined の間は、通知する・5 分前として表示する） */
   notifications: NotificationSettings | undefined;
+  /** スイッチか分数を変えたときに、変更後の通知設定全体を受け取る */
   onUpdate: (notifications: NotificationSettings) => void;
 }
 
+/**
+ * 時間制限の終わりが近づいたときに通知するかと、何分前に通知するかを選ぶ欄をカードで表示する
+ * @param props 現在の通知設定と保存先（各フィールドは NotificationSettingsSectionProps）
+ * @returns 通知設定のカード
+ */
 export function NotificationSettingsSection({
   notifications,
   onUpdate

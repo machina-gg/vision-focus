@@ -1,16 +1,26 @@
 import type { InputHTMLAttributes } from 'react';
 import React from 'react';
 
+/** Input に渡すラベル・エラー文と、input 要素にそのまま渡す属性（onChange だけは文字列を受け取る形に置き換える） */
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'onChange'
 > {
+  /** 入力欄の上に出すラベル（省略時はラベルを出さない） */
   label?: string;
+  /** 入力欄の下に赤字で出すエラー文（省略時は枠も通常色） */
   error?: string;
+  /** 入力のたびに入力欄の文字列を受け取る */
   onChange?: (value: string) => void;
+  /** ラベル・入力欄・エラー文を包む div に足すクラス */
   containerClassName?: string;
 }
 
+/**
+ * ラベルとエラー文つきの 1 行入力欄を表示する
+ * @param props ラベル・エラー文と input 要素の属性（各フィールドは InputProps。id を省略するとラベルとの対応用に自動で振る）
+ * @returns ラベル・入力欄・エラー文をまとめた要素
+ */
 export function Input({
   label,
   error,

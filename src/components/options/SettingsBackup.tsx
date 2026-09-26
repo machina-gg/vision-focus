@@ -23,10 +23,17 @@ import {
 } from '~/lib/settingsExport';
 import { getSettings, getSites, getVision, setVision } from '~/lib/storage';
 
+/** SettingsBackup に渡す読み込み後の通知先 */
 interface SettingsBackupProps {
+  /** バックアップの読み込みが保存まで済んだあとに呼ぶ */
   onSettingsChange?: () => void;
 }
 
+/**
+ * 設定を JSON ファイルに書き出す操作と、書き出したファイルから読み込む操作をカードで表示する（読み込みの保存は background に任せる）
+ * @param props 読み込み後の通知先（各フィールドは SettingsBackupProps）
+ * @returns バックアップのカード（結果・警告の表示を含む）
+ */
 export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'

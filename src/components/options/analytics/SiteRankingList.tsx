@@ -10,11 +10,19 @@ import type { SiteKey } from '~/types/site';
 
 const RANKING_LIMIT = 10;
 
+/** SiteRankingList に渡す集計元と対象サイト */
 interface SiteRankingListProps {
+  /** 日別・サイト別のブロック回数と解除回数の記録 */
   activity: ActivityLog;
+  /** 順位づけの対象にするサイト */
   sites: readonly SiteKey[];
 }
 
+/**
+ * 記録の保持期間内でブロック回数の多いサイトを上位から順に、解除回数と並べて表示する
+ * @param props 集計元と対象サイト（各フィールドは SiteRankingListProps）
+ * @returns 順位のカード。ブロックの記録が無ければ null
+ */
 export function SiteRankingList({ activity, sites }: SiteRankingListProps) {
   const { topBlockedSites, unblocksBySite } = useMemo(() => {
     const range = retentionRange(new Date());

@@ -4,11 +4,19 @@ import { X } from 'lucide-react';
 import { getMessage } from '~/lib/i18n';
 import { SupportButton } from './SupportButton';
 
+/** SupportPrompt に渡す支援と閉じる操作 */
 interface SupportPromptProps {
+  /** 支援ボタンが押されたときに呼ぶ（完了は待たない） */
   onSupport: () => Promise<void>;
+  /** 閉じるボタンが押されたときに呼ぶ（完了は待たない） */
   onDismiss: () => Promise<void>;
 }
 
+/**
+ * 支援を呼びかける文言と、支援ボタン・閉じるボタンを帯で表示する
+ * @param props 支援と閉じる操作（各フィールドは SupportPromptProps）
+ * @returns 支援の呼びかけの帯
+ */
 export function SupportPrompt({ onSupport, onDismiss }: SupportPromptProps) {
   return (
     <div

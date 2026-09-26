@@ -2,10 +2,17 @@ import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { getMessage } from '~/lib/i18n';
 
+/** TrendIcon に渡す傾向 */
 interface TrendIconProps {
+  /** 改善（緑の上向き）・悪化（赤の下向き）・横ばい（灰色）のどれか */
   trend: 'improving' | 'declining' | 'stable';
 }
 
+/**
+ * 傾向を矢印アイコンと文言で表示する
+ * @param props 傾向（各フィールドは TrendIconProps）
+ * @returns アイコンと文言の要素
+ */
 export function TrendIcon({ trend }: TrendIconProps) {
   if (trend === 'improving') {
     return (

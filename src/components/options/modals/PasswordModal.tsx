@@ -6,15 +6,27 @@ import { PasswordField } from '~/components/options/password';
 import { getMessage } from '~/lib/i18n';
 import { verifyPassword } from '~/lib/password';
 
+/** PasswordModal に渡す開閉状態・照合先と文言 */
 interface PasswordModalProps {
+  /** false の間は表示しない。開くたびに入力とエラーを空に戻す */
   isOpen: boolean;
+  /** 閉じるときに呼ぶ（照合が通ったあとにも呼ぶ） */
   onClose: () => void;
+  /** 入力したパスワードが照合を通ったときに呼ぶ */
   onSuccess: () => void;
+  /** 照合に使う保存済みのパスワードのハッシュ */
   passwordHash: string;
+  /** 見出し（省略時は「パスワードが必要です」の既定の文言） */
   title?: string;
+  /** 見出しの下の説明（省略時は既定の文言） */
   description?: string;
 }
 
+/**
+ * パスワードを入力させて保存済みのハッシュと照合するモーダルを表示する（Enter でも照合する）
+ * @param props 開閉状態・照合先と文言（各フィールドは PasswordModalProps）
+ * @returns パスワード入力のモーダル
+ */
 export function PasswordModal({
   isOpen,
   onClose,

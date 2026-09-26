@@ -5,11 +5,19 @@ import { Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { AnalyticsOptIn, AppSettings } from '~/types/storage';
 
+/** SettingsDataPrivacy に渡す現在の設定と変更の保存先 */
 interface SettingsDataPrivacyProps {
+  /** 現在の設定（読み込み前の undefined の間は共有しない側で表示する） */
   settings?: AppSettings;
+  /** 利用統計の共有を切り替えたときに、選んだ状態とその日時を保存する */
   onAnalyticsOptInChange: (optIn: AnalyticsOptIn) => Promise<void>;
 }
 
+/**
+ * 匿名の利用統計を共有するかのスイッチをカードで表示する
+ * @param props 現在の設定と変更の保存先（各フィールドは SettingsDataPrivacyProps）
+ * @returns データとプライバシーのカード
+ */
 export function SettingsDataPrivacy({
   settings,
   onAnalyticsOptInChange
