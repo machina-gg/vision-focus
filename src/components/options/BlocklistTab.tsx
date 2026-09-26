@@ -7,6 +7,7 @@ import {
   UnblockConfirmModal
 } from '~/components/options/modals';
 import { getMessage } from '~/lib/i18n';
+import { getUnblockHoldSeconds } from '~/lib/unblockConfirm';
 import {
   NotificationSettingsSection,
   YouTubeSection,
@@ -273,6 +274,7 @@ export function BlocklistTab({
           domain={pendingItem.domain}
           blockStyle={getBlockStyleLabel(pendingItem)}
           action={pendingAction}
+          holdSeconds={getUnblockHoldSeconds(settings)}
         />
       )}
     </div>

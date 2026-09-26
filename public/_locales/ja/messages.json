@@ -1903,6 +1903,28 @@
     "message": "ブロックの無効化やサイトの削除にパスワードを必要とします。家族やパートナーとの約束に最適です。",
     "description": "パスワード保護の説明"
   },
+  "unblockProtection": {
+    "message": "ブロック解除の保護",
+    "description": "ブロック解除の保護カードのタイトル"
+  },
+  "unblockHoldSeconds": {
+    "message": "長押しの秒数",
+    "description": "長押し確認の秒数の選択ラベル"
+  },
+  "unblockHoldSecondsPasswordNote": {
+    "message": "パスワード保護中は長押し確認の代わりにパスワードを求めます",
+    "description": "パスワード保護中に長押しの秒数が無効になる理由"
+  },
+  "unblockHoldSecondsOption": {
+    "message": "$COUNT$秒",
+    "description": "長押しの秒数の選択肢",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
   "passwordProtectionEnabled": {
     "message": "パスワード保護が有効です",
     "description": "パスワード保護有効状態"
@@ -2084,22 +2106,30 @@
     "description": "ブロック解除確認ダイアログタイトル"
   },
   "unblockConfirmDescription": {
-    "message": "$DOMAIN$ のブロックを解除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "message": "$DOMAIN$ のブロックを解除しようとしています。ボタンを$SECONDS$秒間長押しして確認してください。",
     "description": "ブロック解除確認の説明",
     "placeholders": {
       "domain": {
         "content": "$1",
         "example": "twitter.com"
+      },
+      "seconds": {
+        "content": "$2",
+        "example": "5"
       }
     }
   },
   "deleteBlockConfirmDescription": {
-    "message": "$DOMAIN$ のブロックを削除しようとしています。ボタンを5秒間長押しして確認してください。",
+    "message": "$DOMAIN$ のブロックを削除しようとしています。ボタンを$SECONDS$秒間長押しして確認してください。",
     "description": "ブロック削除確認の説明",
     "placeholders": {
       "domain": {
         "content": "$1",
         "example": "twitter.com"
+      },
+      "seconds": {
+        "content": "$2",
+        "example": "5"
       }
     }
   },

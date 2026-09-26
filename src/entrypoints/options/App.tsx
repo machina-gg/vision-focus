@@ -27,7 +27,11 @@ import { getMessage } from '~/lib/i18n';
 import { getSettings, getVision, settingsItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
-import type { AnalyticsOptIn, PasswordSettings } from '~/types/storage';
+import type {
+  AnalyticsOptIn,
+  PasswordSettings,
+  UnblockConfirmSettings
+} from '~/types/storage';
 import { DEFAULT_YOUTUBE_SETTINGS } from '~/types/storage';
 
 import '~/styles/globals.css';
@@ -56,6 +60,16 @@ function OptionsAppContent() {
   const handlePasswordUpdate = async (password: PasswordSettings) => {
     if (!settings) return;
     const updated = { ...settings, password };
+    await settingsItem.setValue(updated);
+    setSettings(updated);
+  };
+
+  // 長押し確認の秒数の保存（パスワード保護と同じく設定全体を書き戻す）
+  const handleUnblockConfirmUpdate = async (
+    unblockConfirm: UnblockConfirmSettings
+  ) => {
+    if (!settings) return;
+    const updated = { ...settings, unblockConfirm };
     await settingsItem.setValue(updated);
     setSettings(updated);
   };
@@ -198,6 +212,7 @@ function OptionsAppContent() {
               await analytics.reloadAnalyticsData();
             }}
             onPasswordUpdate={handlePasswordUpdate}
+            onUnblockConfirmUpdate={handleUnblockConfirmUpdate}
           />
         )}
       </main>

@@ -9,13 +9,20 @@ import {
   verifyPassword,
   validatePasswordStrength
 } from '~/lib/password';
-import type { PasswordSettings } from '~/types/storage';
+import type {
+  PasswordSettings,
+  UnblockConfirmSettings,
+  UnblockHoldSeconds
+} from '~/types/storage';
 
 import { FormActions, FormFeedback, PasswordField } from './password';
+import { UnblockHoldSecondsField } from './UnblockHoldSecondsField';
 
 interface PasswordSettingsSectionProps {
   passwordSettings: PasswordSettings;
   onUpdate: (settings: PasswordSettings) => Promise<void>;
+  holdSeconds: UnblockHoldSeconds;
+  onUnblockConfirmUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
 }
 
 type SettingMode = 'view' | 'set' | 'change' | 'remove';
@@ -28,9 +35,17 @@ type SettingMode = 'view' | 'set' | 'change' | 'remove';
  */
 type SaveResult = 'saved' | 'failed-reported' | 'failed-unreported';
 
+/**
+ * ブロック解除の保護（長押しの秒数とパスワード保護）をまとめたカード。
+ *
+ * 両者は排他で、パスワード保護が有効な間は長押し確認が出ない。片方だけを見て
+ * 「なぜ長押しが出ないのか」と迷わないよう、同じカードに並べる。
+ */
 export function PasswordSettingsSection({
   passwordSettings,
-  onUpdate
+  onUpdate,
+  holdSeconds,
+  onUnblockConfirmUpdate
 }: PasswordSettingsSectionProps) {
   const [mode, setMode] = useState<SettingMode>('view');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -155,13 +170,28 @@ export function PasswordSettingsSection({
         <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
           <Lock className="w-5 h-5 text-warning-600" />
         </div>
+        <h2
+          className="text-lg font-semibold text-gray-900"
+          data-testid="help-unblock-protection-section"
+        >
+          {getMessage('unblockProtection')}
+        </h2>
+      </div>
+
+      <UnblockHoldSecondsField
+        holdSeconds={holdSeconds}
+        onUpdate={onUnblockConfirmUpdate}
+        disabled={isEnabled}
+      />
+
+      <div className="flex items-center gap-3 mt-6 pt-6 mb-4 border-t border-gray-100">
         <div className="flex-1">
-          <h2
-            className="text-lg font-semibold text-gray-900"
+          <h3
+            className="font-medium text-gray-900"
             data-testid="help-password-section"
           >
             {getMessage('passwordProtection')}
-          </h2>
+          </h3>
           <p className="text-sm text-gray-500">
             {getMessage('passwordProtectionDescription')}
           </p>

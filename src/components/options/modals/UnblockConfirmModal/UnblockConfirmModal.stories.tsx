@@ -22,7 +22,8 @@ export const ToggleUnblock: Story = {
     onConfirm: () => {},
     domain: 'twitter.com',
     blockStyle: 'フルブロック',
-    action: 'toggle'
+    action: 'toggle',
+    holdSeconds: 5
   }
 };
 
@@ -34,7 +35,21 @@ export const DeleteBlock: Story = {
     onConfirm: () => {},
     domain: 'reddit.com',
     blockStyle: 'タイムリミット',
-    action: 'delete'
+    action: 'delete',
+    holdSeconds: 5
+  }
+};
+
+// 長押しの秒数を長くした場合（説明文と残り秒数が設定に従う）
+export const LongHold: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    onConfirm: () => {},
+    domain: 'twitter.com',
+    blockStyle: 'フルブロック',
+    action: 'toggle',
+    holdSeconds: 30
   }
 };
 
@@ -46,6 +61,7 @@ export const Closed: Story = {
     onConfirm: () => {},
     domain: 'twitter.com',
     blockStyle: 'フルブロック',
-    action: 'toggle'
+    action: 'toggle',
+    holdSeconds: 5
   }
 };

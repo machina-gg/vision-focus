@@ -14,7 +14,7 @@ import {
 /**
  * HelpTab が並べる節の出し分けと、子へ渡す値の検査
  *
- * パスワード保護とデータ・プライバシーの節は、対応するハンドラを渡された
+ * ブロック解除の保護とデータ・プライバシーの節は、対応するハンドラを渡された
  * ときだけ出す（オプション画面以外から使われたときに操作させないため）。
  * 設定が未読み込み（undefined）のときに既定値へ落ちることも確かめる。
  *
@@ -24,7 +24,13 @@ import {
 
 const received = vi.hoisted(() => ({
   password: undefined as
-    { passwordSettings: PasswordSettings; onUpdate: unknown } | undefined,
+    | {
+        passwordSettings: PasswordSettings;
+        onUpdate: unknown;
+        holdSeconds: number;
+        onUnblockConfirmUpdate: unknown;
+      }
+    | undefined,
   privacy: undefined as
     | { settings: AppSettings | undefined; onAnalyticsOptInChange: unknown }
     | undefined,
@@ -57,6 +63,8 @@ vi.mock('~/components/options/PasswordSettingsSection', () => ({
   PasswordSettingsSection: (props: {
     passwordSettings: PasswordSettings;
     onUpdate: unknown;
+    holdSeconds: number;
+    onUnblockConfirmUpdate: unknown;
   }) => {
     received.password = props;
     return <div data-testid="password-settings" />;
@@ -119,39 +127,64 @@ describe('HelpTab', () => {
     });
   });
 
-  describe('パスワード保護の節', () => {
+  describe('ブロック解除の保護の節', () => {
     it('更新の手段が渡されなければ出さない', () => {
       render(<HelpTab />);
 
       expect(screen.queryByTestId('password-settings')).not.toBeInTheDocument();
     });
 
+    it('秒数の更新の手段が欠けていれば出さない', () => {
+      render(<HelpTab onPasswordUpdate={vi.fn()} />);
+
+      expect(screen.queryByTestId('password-settings')).not.toBeInTheDocument();
+    });
+
     it('更新の手段が渡されれば出し、そのまま子へ渡す', () => {
       const onPasswordUpdate = vi.fn();
-      render(<HelpTab onPasswordUpdate={onPasswordUpdate} />);
+      const onUnblockConfirmUpdate = vi.fn();
+      render(
+        <HelpTab
+          onPasswordUpdate={onPasswordUpdate}
+          onUnblockConfirmUpdate={onUnblockConfirmUpdate}
+        />
+      );
 
       expect(screen.getByTestId('password-settings')).toBeInTheDocument();
       expect(received.password?.onUpdate).toBe(onPasswordUpdate);
+      expect(received.password?.onUnblockConfirmUpdate).toBe(
+        onUnblockConfirmUpdate
+      );
     });
 
-    it('設定が未読み込みなら既定のパスワード設定を渡す', () => {
-      render(<HelpTab onPasswordUpdate={vi.fn()} />);
+    it('設定が未読み込みなら既定のパスワード設定と秒数を渡す', () => {
+      render(
+        <HelpTab onPasswordUpdate={vi.fn()} onUnblockConfirmUpdate={vi.fn()} />
+      );
 
       expect(received.password?.passwordSettings).toEqual(
         DEFAULT_PASSWORD_SETTINGS
       );
+      expect(received.password?.holdSeconds).toBe(5);
     });
 
-    it('保存済みのパスワード設定があればそれを渡す', () => {
+    it('保存済みのパスワード設定と秒数があればそれを渡す', () => {
       const password: PasswordSettings = {
         enabled: true,
         passwordHash: 'stored-hash'
       };
-      context.settings = { ...DEFAULT_SETTINGS, password };
+      context.settings = {
+        ...DEFAULT_SETTINGS,
+        password,
+        unblockConfirm: { holdSeconds: 30 }
+      };
 
-      render(<HelpTab onPasswordUpdate={vi.fn()} />);
+      render(
+        <HelpTab onPasswordUpdate={vi.fn()} onUnblockConfirmUpdate={vi.fn()} />
+      );
 
       expect(received.password?.passwordSettings).toEqual(password);
+      expect(received.password?.holdSeconds).toBe(30);
     });
   });
 

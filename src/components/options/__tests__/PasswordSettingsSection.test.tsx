@@ -41,6 +41,8 @@ function renderSection(passwordSettings: PasswordSettings = DISABLED) {
     <PasswordSettingsSection
       passwordSettings={passwordSettings}
       onUpdate={onUpdate}
+      holdSeconds={5}
+      onUnblockConfirmUpdate={vi.fn()}
     />
   );
   return { onUpdate, ...result };
@@ -214,6 +216,8 @@ describe('PasswordSettingsSection', () => {
         <PasswordSettingsSection
           passwordSettings={DISABLED}
           onUpdate={onUpdate}
+          holdSeconds={5}
+          onUnblockConfirmUpdate={vi.fn()}
         />
       );
 
@@ -366,6 +370,8 @@ describe('PasswordSettingsSection', () => {
         <PasswordSettingsSection
           passwordSettings={ENABLED}
           onUpdate={onUpdate}
+          holdSeconds={5}
+          onUnblockConfirmUpdate={vi.fn()}
         />
       );
 
@@ -450,6 +456,8 @@ describe('PasswordSettingsSection', () => {
         <PasswordSettingsSection
           passwordSettings={ENABLED}
           onUpdate={onUpdate}
+          holdSeconds={5}
+          onUnblockConfirmUpdate={vi.fn()}
         />
       );
 
@@ -488,6 +496,52 @@ describe('PasswordSettingsSection', () => {
 
       expect(screen.queryAllByTestId(/^password-field-/)).toHaveLength(0);
       expect(screen.getByTestId('password-enable-toggle')).toBeInTheDocument();
+    });
+  });
+  describe('長押しの秒数との並び', () => {
+    // 長押しの秒数とパスワード保護は排他。保護中に秒数が選べると、
+    // 変えても効かない設定を触らせることになる
+    it('パスワード保護が無効なら秒数を選べる', () => {
+      renderSection(DISABLED);
+
+      expect(
+        screen.getByRole('combobox', { name: 'unblockHoldSeconds' })
+      ).toBeEnabled();
+      expect(
+        screen.queryByText('unblockHoldSecondsPasswordNote')
+      ).not.toBeInTheDocument();
+    });
+
+    it('パスワード保護が有効なら秒数を選べず、注記を出す', () => {
+      renderSection(ENABLED);
+
+      expect(
+        screen.getByRole('combobox', { name: 'unblockHoldSeconds' })
+      ).toBeDisabled();
+      expect(
+        screen.getByText('unblockHoldSecondsPasswordNote')
+      ).toBeInTheDocument();
+    });
+
+    it('選んだ秒数を秒数の保存へ渡し、パスワードの保存には渡さない', () => {
+      const onUpdate = vi.fn().mockResolvedValue(undefined);
+      const onUnblockConfirmUpdate = vi.fn().mockResolvedValue(undefined);
+      render(
+        <PasswordSettingsSection
+          passwordSettings={DISABLED}
+          onUpdate={onUpdate}
+          holdSeconds={5}
+          onUnblockConfirmUpdate={onUnblockConfirmUpdate}
+        />
+      );
+
+      fireEvent.change(
+        screen.getByRole('combobox', { name: 'unblockHoldSeconds' }),
+        { target: { value: '10' } }
+      );
+
+      expect(onUnblockConfirmUpdate).toHaveBeenCalledWith({ holdSeconds: 10 });
+      expect(onUpdate).not.toHaveBeenCalled();
     });
   });
 });

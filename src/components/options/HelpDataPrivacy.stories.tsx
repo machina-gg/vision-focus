@@ -15,6 +15,7 @@ const baseSettings: AppSettings = {
     enabled: false,
     passwordHash: null
   },
+  unblockConfirm: { holdSeconds: 5 },
   youtube: {
     enabled: false,
     blockAccess: false,

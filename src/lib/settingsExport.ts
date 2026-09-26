@@ -17,13 +17,17 @@ import type {
   BlockItem,
   Schedule,
   DashboardPreset,
-  NotificationSettings
+  NotificationSettings,
+  UnblockConfirmSettings
 } from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
-  DEFAULT_NOTIFICATION_SETTINGS
+  DEFAULT_NOTIFICATION_SETTINGS,
+  DEFAULT_UNBLOCK_CONFIRM_SETTINGS,
+  UNBLOCK_HOLD_SECONDS_OPTIONS
 } from '~/types/storage';
+import { getUnblockHoldSeconds } from '~/lib/unblockConfirm';
 
 // Export data version for future compatibility
 const EXPORT_VERSION = 1;
@@ -47,6 +51,7 @@ export interface ExportedSettings {
     defaultDisplaySettings: VisionSettings['defaultSettings'];
     activePresetId: string | null;
     notifications?: NotificationSettings;
+    unblockConfirm?: UnblockConfirmSettings;
   };
 }
 
@@ -120,6 +125,12 @@ const notificationSettingsSchema = z.object({
   ])
 });
 
+// 選べる秒数以外を取り込むと、確認が効かない・解除できないほど長押しの時間が
+// ずれるため、設定画面の選択肢と同じ値だけを受け付ける
+const unblockConfirmSettingsSchema = z.object({
+  holdSeconds: z.literal(UNBLOCK_HOLD_SECONDS_OPTIONS)
+});
+
 const exportDataSchema = z.object({
   version: z.number(),
   exportedAt: z.string(),
@@ -129,7 +140,8 @@ const exportDataSchema = z.object({
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
     activePresetId: z.string().nullable(),
-    notifications: notificationSettingsSchema.optional()
+    notifications: notificationSettingsSchema.optional(),
+    unblockConfirm: unblockConfirmSettingsSchema.optional()
   })
 });
 
@@ -172,7 +184,8 @@ export function exportSettings(
       presets: vision.presets,
       defaultDisplaySettings: vision.defaultSettings,
       activePresetId: vision.activePresetId,
-      notifications: settings.notifications
+      notifications: settings.notifications,
+      unblockConfirm: { holdSeconds: getUnblockHoldSeconds(settings) }
     }
   };
 
@@ -318,7 +331,9 @@ export function applyImportedSettings(
     notifications:
       data.notifications ??
       currentSettings.notifications ??
-      DEFAULT_NOTIFICATION_SETTINGS
+      DEFAULT_NOTIFICATION_SETTINGS,
+    // ファイルに無ければ既定値に戻す（書き出し元で秒数を変えていない状態を再現するため）
+    unblockConfirm: data.unblockConfirm ?? DEFAULT_UNBLOCK_CONFIRM_SETTINGS
   };
 
   const newVision: VisionSettings = {
@@ -344,7 +359,8 @@ export function createDefaultExportData(): ExportedSettings {
       presets: DEFAULT_VISION.presets,
       defaultDisplaySettings: DEFAULT_VISION.defaultSettings,
       activePresetId: DEFAULT_VISION.activePresetId,
-      notifications: DEFAULT_SETTINGS.notifications
+      notifications: DEFAULT_SETTINGS.notifications,
+      unblockConfirm: DEFAULT_SETTINGS.unblockConfirm
     }
   };
 }

@@ -1903,6 +1903,28 @@
     "message": "Require a password to disable blocking or remove sites. Great for family accountability.",
     "description": "Password protection description"
   },
+  "unblockProtection": {
+    "message": "Unblock Protection",
+    "description": "Unblock protection card title"
+  },
+  "unblockHoldSeconds": {
+    "message": "Hold duration",
+    "description": "Hold-to-confirm duration selection label"
+  },
+  "unblockHoldSecondsPasswordNote": {
+    "message": "While password protection is on, a password is required instead of holding the button",
+    "description": "Why the hold duration is disabled while password protection is on"
+  },
+  "unblockHoldSecondsOption": {
+    "message": "$COUNT$ seconds",
+    "description": "Hold duration option",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
   "passwordProtectionEnabled": {
     "message": "Password protection is enabled",
     "description": "Password protection enabled status"
@@ -2084,22 +2106,30 @@
     "description": "Unblock confirmation dialog title"
   },
   "unblockConfirmDescription": {
-    "message": "You are about to unblock $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "message": "You are about to unblock $DOMAIN$. Hold the button for $SECONDS$ seconds to confirm.",
     "description": "Unblock confirmation description",
     "placeholders": {
       "domain": {
         "content": "$1",
         "example": "twitter.com"
+      },
+      "seconds": {
+        "content": "$2",
+        "example": "5"
       }
     }
   },
   "deleteBlockConfirmDescription": {
-    "message": "You are about to delete the block for $DOMAIN$. Hold the button for 5 seconds to confirm.",
+    "message": "You are about to delete the block for $DOMAIN$. Hold the button for $SECONDS$ seconds to confirm.",
     "description": "Delete block confirmation description",
     "placeholders": {
       "domain": {
         "content": "$1",
         "example": "twitter.com"
+      },
+      "seconds": {
+        "content": "$2",
+        "example": "5"
       }
     }
   },

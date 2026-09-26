@@ -144,7 +144,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // 削除ボタンをクリック
     await page.locator(SELECTORS.options.deleteButton).first().click();
 
-    // Unblock 確認モーダルで確定する（5 秒の長押しが必要）
+    // Unblock 確認モーダルで確定する（既定の 5 秒の長押しが必要）
     await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
     await holdUnblockConfirm(page);
 
@@ -179,7 +179,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // トグルをクリックして無効化
     await toggle.click();
 
-    // Unblock 確認モーダルで確定する（5 秒の長押しが必要）
+    // Unblock 確認モーダルで確定する（既定の 5 秒の長押しが必要）
     await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
     await holdUnblockConfirm(page);
 
@@ -305,7 +305,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     // Unblock 確認モーダルが表示される
     await expect(page.locator(SELECTORS.modal.unblockConfirm)).toBeVisible();
 
-    // 長押しで確定する（5 秒の長押しが必要な実装）
+    // 長押しで確定する（既定の 5 秒の長押しが必要な実装）
     await holdUnblockConfirm(page);
 
     // トグルが無効になる
