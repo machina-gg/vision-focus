@@ -2,6 +2,7 @@ import { MS_PER_DAY } from '~/constants/intervals';
 import { resolveSiteKey } from '~/lib/siteKey';
 import type { TrackedSites } from '~/types/site';
 
+/** ホスト名が属するサイトをブロックリストに入れてからの日数（1 日未満も 1。ブロック設定が無ければ null） */
 export function calculateBlockingDays(
   hostname: string,
   sites: TrackedSites,

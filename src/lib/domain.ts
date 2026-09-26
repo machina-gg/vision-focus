@@ -1,3 +1,4 @@
+/** URL のホスト名（URL として読めなければ null） */
 export function extractDomain(url: string): string | null {
   try {
     const urlObj = new URL(url);
@@ -7,6 +8,7 @@ export function extractDomain(url: string): string | null {
   }
 }
 
+/** 入力からスキームとパスを外して小文字のドメインにし、先頭が *. かを返す */
 export function parseDomainInput(input: string): {
   domain: string;
   isWildcard: boolean;
@@ -20,6 +22,7 @@ export function parseDomainInput(input: string): {
   return { domain, isWildcard };
 }
 
+/** ドメインとして正しい形か（先頭の *. は許す。ラベルは 2 つ以上、TLD は英字のみ） */
 export function isValidDomain(domain: string): boolean {
   const cleanDomain = domain.replace(/^\*\./, '');
 
@@ -42,6 +45,7 @@ export function isValidDomain(domain: string): boolean {
   return true;
 }
 
+/** ランダムな 32 桁の 16 進文字列の ID */
 export function generateId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);

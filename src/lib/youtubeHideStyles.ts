@@ -1,6 +1,7 @@
 import type { YouTubeFeatures } from '~/types/site';
 import { getMessage } from '~/lib/i18n';
 
+/** 非表示にする YouTube の要素の CSS セレクタ */
 export const YOUTUBE_SELECTORS = {
   shortsShelf: 'ytd-rich-shelf-renderer[is-shorts]',
   shortsTab: 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
@@ -22,6 +23,7 @@ export const YOUTUBE_SELECTORS = {
   secondaryInner: '#secondary-inner'
 } as const;
 
+/** YouTube 機能の設定から、注入する非表示用の CSS を作る（null なら空文字） */
 // アクセスブロック（block）は見ない。1 日の制限つきブロックでは上限まで YouTube を開けるため、ブロック中でも非表示を効かせる
 export function generateYouTubeHideCSS(
   settings: YouTubeFeatures | null

@@ -59,6 +59,7 @@ export type AddSiteRejection =
   | { reason: 'duplicate' }
   | { reason: 'nested'; nested: NestedSite };
 
+/** 追加の結果。rejection が null なら site に追加したサイトキーが入る */
 export interface AddSiteResult {
   site: SiteKey | null;
   rejection: AddSiteRejection | null;
@@ -98,6 +99,7 @@ function newBlockRule(now: Date): BlockRule {
   return { enabled: true, addedAt: now.toISOString(), timeLimit: null };
 }
 
+/** 入力をサイトキーにしてブロックリストに追加する（サイトが無ければ作る。既にブロック設定がある・入れ子になるなら拒否） */
 export async function addBlock(
   input: string,
   now: Date
@@ -119,6 +121,7 @@ export async function addBlock(
   });
 }
 
+/** 入力をサイトキーにして追跡だけを始める（既に追跡中・入れ子になるなら拒否） */
 export async function addTrackedSite(
   input: string,
   now: Date
@@ -147,6 +150,7 @@ async function updateSite(
   });
 }
 
+/** ブロック設定を外し（追跡は続く）、外す前のブロック設定を返す（無ければ null） */
 export async function removeBlock(site: SiteKey): Promise<BlockRule | null> {
   const changed = await updateSite(site, (current) => ({
     ...current,
@@ -155,6 +159,7 @@ export async function removeBlock(site: SiteKey): Promise<BlockRule | null> {
   return changed?.before.block ?? null;
 }
 
+/** ブロック設定の有効・無効を切り替え、切り替える前の設定を返す（ブロック設定が無ければ何もせず null） */
 export async function setBlockEnabled(
   site: SiteKey,
   enabled: boolean
@@ -172,6 +177,7 @@ export async function setBlockEnabled(
   });
 }
 
+/** 時間制限を変える（null で外す）。ブロック設定を持たないサイトなら何もせず false */
 export async function setTimeLimit(
   site: SiteKey,
   timeLimit: TimeLimit | null
@@ -189,11 +195,13 @@ export async function setTimeLimit(
   });
 }
 
+/** youtube.com に書く値。youtube は非表示機能（null = 使わない）、block はアクセスブロック（null = 外す） */
 export interface YouTubeSiteUpdate {
   youtube: YouTubeFeatures | null;
   block: Pick<BlockRule, 'enabled' | 'timeLimit'> | null;
 }
 
+/** youtube.com の非表示機能とアクセスブロックを書き（サイトが無ければ作る）、変更前のサイト（無ければ null）を返す */
 export async function updateYouTubeSite(
   update: YouTubeSiteUpdate,
   now: Date
@@ -221,9 +229,10 @@ export async function updateYouTubeSite(
   });
 }
 
+/** stopTracking の結果。in-use はブロック設定か YouTube 機能が残っていて止めなかったとき */
 export type StopTrackingResult = 'stopped' | 'not-found' | 'in-use';
 
-/** 事実の行（activity）は消さない。呼び出し側で消す */
+/** 追跡を止める（ブロック設定か YouTube 機能を持つサイトは止めない）。事実の行（activity）は消さないので呼び出し側で消す */
 export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   return mutateSites((sites) => {
     const current = sites[site];
@@ -237,11 +246,13 @@ export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   });
 }
 
+/** importSites の結果。skipped は入れ子になるため取り込まなかったもの */
 export interface ImportSitesResult {
   changed: SiteKey[];
   skipped: { input: string; nested: NestedSite }[];
 }
 
+/** 設定ファイルの追跡中のサイトを取り込む（既存の設定は上書きせず、無い設定だけを足す） */
 export async function importSites(
   imported: readonly TrackedSite[],
   now: Date

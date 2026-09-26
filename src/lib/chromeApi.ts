@@ -7,6 +7,7 @@ export function isExtensionContextValid(): boolean {
   }
 }
 
+/** 現在のウィンドウのアクティブなタブ（無ければ undefined） */
 export async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
   const [tab] = await chrome.tabs.query({
     active: true,
@@ -26,6 +27,7 @@ export function createTab(url: string): void {
   chrome.tabs.create({ url });
 }
 
+/** 拡張機能内のリソースの完全な URL（拡張機能のコンテキストが無効なら空文字） */
 export function getExtensionURL(path: string): string {
   if (!isExtensionContextValid()) {
     return '';

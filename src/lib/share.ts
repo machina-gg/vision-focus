@@ -1,5 +1,6 @@
 import { formatTime } from './time';
 
+/** SNS に共有するレポート文を作る（totalWasteTime は秒。0 や未指定の項目は省く） */
 export function generateShareText(data: {
   totalBlockCount: number;
   totalWasteTime: number;
@@ -41,12 +42,14 @@ export function generateShareText(data: {
   return lines.join('\n');
 }
 
+/** X の投稿画面を、文を入れた状態で新しいタブに開く */
 export function shareToX(text: string): void {
   const encodedText = encodeURIComponent(text);
   const url = `https://twitter.com/intent/tweet?text=${encodedText}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+/** canvas を PNG でクリップボードに写す（できなければ false） */
 export async function copyImageToClipboard(
   canvas: HTMLCanvasElement
 ): Promise<boolean> {
@@ -81,6 +84,7 @@ export async function copyImageToClipboard(
   }
 }
 
+/** canvas を PNG でダウンロードする */
 export function downloadImage(
   canvas: HTMLCanvasElement,
   filename: string
@@ -94,6 +98,7 @@ export function downloadImage(
   document.body.removeChild(link);
 }
 
+/** 要素を画像化した canvas を返す（失敗したか大きさが 0 なら null） */
 export async function captureElementAsCanvas(
   element: HTMLElement
 ): Promise<HTMLCanvasElement | null> {
