@@ -11,16 +11,6 @@ import {
 } from './helpers/storage';
 import { MAX_PRESETS } from '../../src/constants/limits';
 
-/**
- * E2E Tests: 追加機能（かつて有料版限定だった機能）
- *
- * マネタイズ方針の変更（#337）により全機能が無料で使えるようになった。
- * ライセンス判定は存在しないため、「Premium を有効化してから確認する」という
- * 前提を取り除き、素の状態で使えることを検証する。
- *
- * 対応するテストケース: docs/TEST_CASES.md の「追加機能」
- */
-
 test.describe('追加機能 - 全ユーザーが利用できる', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     await clearStorageFromExtension(context, extensionId);
@@ -36,7 +26,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const optionsPage = await openOptions(context, extensionId, 'styles');
 
-    // フォントのカテゴリ・ファミリーが選択できる状態で表示される
     await expect(
       optionsPage.locator('[data-testid="font-category-button"]').first()
     ).toBeVisible();
@@ -57,13 +46,11 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const optionsPage = await openOptions(context, extensionId, 'styles');
 
-    // 背景タイプを画像に切り替えるとアップロード先が現れる
     await optionsPage.click('[data-testid="style-bg-type-image"]');
     await expect(
       optionsPage.locator('[data-testid="style-bg-upload-dropzone"]')
     ).toBeVisible();
 
-    // file input は非表示のまま存在する（ドロップゾーン経由で使う）
     await expect(
       optionsPage.locator('[data-testid="style-bg-upload"]')
     ).toHaveCount(1);
@@ -95,7 +82,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     const setupPage = await openOptions(context, extensionId);
     await setupTestStorage(setupPage, {});
 
-    // 上限（MAX_PRESETS）ちょうどのスタイルを用意する
     await setStorageData(setupPage, 'vision', {
       defaultSettings: makeDisplaySettings(),
       presets: Array.from({ length: MAX_PRESETS }, (_, i) =>
@@ -110,10 +96,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const page = await openOptions(context, extensionId, 'styles');
 
-    // 上限ちょうどまでは全て選択できる。
-    // ⚠ かつてのロックアイコンの不在では確かめない。概念ごと削除済み（#337）
-    // のセレクタは、何を壊しても不在のままで成立する。実際に選んで、その
-    // スタイルの内容が編集欄に入ることを見る
     await expect(page.locator(SELECTORS.styles.presetButton)).toHaveCount(
       MAX_PRESETS
     );
@@ -128,7 +110,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
       );
     }
 
-    // 上限に達したら新規作成ボタンは出さない（UI の都合による上限）
     await expect(
       page.locator('[data-testid="style-new-preset-button"]')
     ).toHaveCount(0);
@@ -140,7 +121,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     context,
     extensionId
   }) => {
-    // ブロックリストの example.com を追跡中にし、7 日より前の日を含む activity を置く
     const setupPage = await openStoragePage(context, extensionId);
     await setupTestStorage(setupPage, { withBlockList: true });
     await setStorageData(
@@ -155,7 +135,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const page = await openOptions(context, extensionId, 'analytics');
 
-    // レポートセクションが期間制限なしで表示される
     await expect(
       page.locator('[data-testid="analytics-reports-heading"]')
     ).toBeVisible();
@@ -175,7 +154,6 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     );
     await expect(exportButton).toBeEnabled();
 
-    // エクスポートはドロップダウンを開いてから項目を選ぶ
     await exportButton.click();
 
     // クリックより前に待ち受けを開始しないとイベントを取りこぼす

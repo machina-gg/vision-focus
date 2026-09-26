@@ -4,11 +4,6 @@ import { test } from './fixtures/extension';
 import { openOptions, setupTestStorage } from './helpers';
 import { SELECTORS } from './helpers/constants';
 
-/**
- * 開発支援（Buy Me a Coffee）の導線
- *
- * SUP-001〜: ヘルプタブの常設セクションと、レポート下の誘導（頻度制御あり）
- */
 test.describe('Support development', () => {
   test('SUP-001: ヘルプタブに支援セクションが表示される', async ({
     context,
@@ -76,7 +71,6 @@ test.describe('Support development', () => {
     await page.reload();
     await page.click(SELECTORS.options.analyticsTab);
 
-    // 30 日の猶予期間内なので再表示されない
     await expect(page.locator('[data-testid="support-prompt"]')).toBeHidden();
   });
 
@@ -88,7 +82,6 @@ test.describe('Support development', () => {
     await page.goto(`chrome-extension://${extensionId}/newtab.html`);
     await page.waitForLoadState('domcontentloaded');
 
-    // 集中させる画面なので、外部リンクへの離脱経路を作らない
     await expect(page.locator('[data-testid="support-button"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="support-prompt"]')).toHaveCount(0);
   });

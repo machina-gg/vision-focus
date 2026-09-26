@@ -14,21 +14,13 @@ import {
   UI_TEXT
 } from './helpers';
 
-/**
- * E2Eテスト: Options - Schedule Tab
- *
- * OPT-S01 ~ OPT-S14 のテストケースを実装
- */
-
 test.describe('Options - Schedule Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
-    // 各テストの前にストレージをセットアップ
     const page = await openOptions(context, extensionId);
     await clearStorage(page);
     await setupTestStorage(page, {
       withGoal: true,
       withAnalyticsOptIn: true,
-      // 週間カレンダーはスケジュールが無いと描画されないため 1 件用意する
       withSchedule: true
     });
     await page.close();
@@ -40,15 +32,12 @@ test.describe('Options - Schedule Tab', () => {
   }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュールタブが表示される
     await expect(page.locator(SELECTORS.options.schedulesTab)).toBeVisible();
 
-    // 週間カレンダーが表示される
     await expect(
       page.locator(SELECTORS.schedules.weeklyCalendar)
     ).toBeVisible();
 
-    // スケジュール追加ボタンが表示される
     await expect(
       page.locator(SELECTORS.schedules.addScheduleButton)
     ).toBeVisible();
@@ -62,12 +51,9 @@ test.describe('Options - Schedule Tab', () => {
   }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // 週間カレンダーが表示される
     const calendar = page.locator(SELECTORS.schedules.weeklyCalendar);
     await expect(calendar).toBeVisible();
 
-    // 7日分の曜日ヘッダーが表示される（日曜〜土曜）。
-    // カレンダーは時刻列を含む 8 列構成なので、曜日ヘッダーを数える
     await expect(
       page.locator(SELECTORS.schedules.weeklyCalendarDayHeader)
     ).toHaveCount(7);
@@ -81,38 +67,27 @@ test.describe('Options - Schedule Tab', () => {
   }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュール追加ボタンをクリック
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
-    // スケジュールモーダルが表示される
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
     await expect(modal).toBeVisible();
 
-    // スケジュール名を入力
     const nameInput = modal.locator(SELECTORS.schedules.scheduleNameInput);
     await nameInput.fill('Morning Focus');
 
-    // 開始時刻を設定
-    // beforeEach の seed（Work Hours 09:00〜18:00・平日）と重ならない時間帯にする
     const startTime = modal.locator(SELECTORS.schedules.startTimeInput);
     await startTime.fill('19:00');
 
-    // 終了時刻を設定
     const endTime = modal.locator(SELECTORS.schedules.endTimeInput);
     await endTime.fill('21:00');
 
-    // 曜日を選択（月曜）
-    // 曜日は checkbox ではなくトグルボタンなので click で切り替える
     const dayCheckboxes = modal.locator(SELECTORS.schedules.dayCheckbox);
     await dayCheckboxes.nth(1).click();
 
-    // 保存ボタンをクリック
     await modal.locator(SELECTORS.schedules.saveScheduleButton).click();
 
-    // モーダルが閉じる
     await expect(modal).not.toBeVisible();
 
-    // スケジュールが一覧に表示される
     const scheduleItem = page.locator(SELECTORS.schedules.scheduleItem);
     await expect(
       scheduleItem.filter({ hasText: 'Morning Focus' })
@@ -127,22 +102,18 @@ test.describe('Options - Schedule Tab', () => {
   }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュール追加ボタンをクリック
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
 
-    // 開始時刻を設定
     const startTime = modal.locator(SELECTORS.schedules.startTimeInput);
     await startTime.fill('14:00');
     await expect(startTime).toHaveValue('14:00');
 
-    // 終了時刻を設定
     const endTime = modal.locator(SELECTORS.schedules.endTimeInput);
     await endTime.fill('18:00');
     await expect(endTime).toHaveValue('18:00');
 
-    // モーダルを閉じる
     await page.locator(SELECTORS.schedules.cancelScheduleButton).click();
 
     await page.close();
@@ -151,18 +122,14 @@ test.describe('Options - Schedule Tab', () => {
   test('OPT-S05: 曜日を選択できる', async ({ context, extensionId }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュール追加ボタンをクリック
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
 
-    // 曜日ボタンが 7 つ並ぶ（ScheduleModal の DAY_KEYS が日〜土の 7 件）。
     // count() は自動リトライしないため toHaveCount で待つ
     const dayCheckboxes = modal.locator(SELECTORS.schedules.dayCheckbox);
     await expect(dayCheckboxes).toHaveCount(7);
 
-    // 曜日ボタンは初期状態で一部が選択済みのため、クリックで状態が
-    // 反転することを検証する
     for (const index of [1, 3]) {
       const day = dayCheckboxes.nth(index);
       const before = await day.getAttribute('aria-pressed');
@@ -173,7 +140,6 @@ test.describe('Options - Schedule Tab', () => {
       );
     }
 
-    // モーダルを閉じる
     await page.locator(SELECTORS.schedules.cancelScheduleButton).click();
 
     await page.close();
@@ -185,19 +151,15 @@ test.describe('Options - Schedule Tab', () => {
   }) => {
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュール追加ボタンをクリック
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
 
-    // プリセット選択セレクトが表示される
     const presetSelect = modal.locator(SELECTORS.schedules.presetSelect);
     await expect(presetSelect).toBeVisible();
 
-    // プリセットを選択
     await presetSelect.selectOption({ index: 0 });
 
-    // モーダルを閉じる
     await page.locator(SELECTORS.schedules.cancelScheduleButton).click();
 
     await page.close();
@@ -207,7 +169,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用スケジュールを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -230,7 +191,6 @@ test.describe('Options - Schedule Tab', () => {
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュールアイテムの編集ボタンをクリック
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Test Schedule' });
@@ -239,24 +199,18 @@ test.describe('Options - Schedule Tab', () => {
     const editButton = scheduleItem.locator(SELECTORS.schedules.editButton);
     await editButton.click();
 
-    // スケジュールモーダルが表示される
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
     await expect(modal).toBeVisible();
 
-    // 既存の値が入力されている
     const nameInput = modal.locator(SELECTORS.schedules.scheduleNameInput);
     await expect(nameInput).toHaveValue('Test Schedule');
 
-    // 名前を変更
     await nameInput.fill('Updated Schedule');
 
-    // 保存ボタンをクリック
     await modal.locator(SELECTORS.schedules.saveScheduleButton).click();
 
-    // モーダルが閉じる
     await expect(modal).not.toBeVisible();
 
-    // 更新されたスケジュールが表示される
     await expect(
       page
         .locator(SELECTORS.schedules.scheduleItem)
@@ -270,7 +224,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用スケジュールを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -293,17 +246,14 @@ test.describe('Options - Schedule Tab', () => {
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュールアイテムが表示される
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Delete Me' });
     await expect(scheduleItem).toBeVisible();
 
-    // 削除ボタンをクリック
     const deleteButton = scheduleItem.locator(SELECTORS.schedules.deleteButton);
     await deleteButton.click();
 
-    // スケジュールが削除される（一覧から消える）
     await expect(scheduleItem).not.toBeVisible();
 
     await page.close();
@@ -313,7 +263,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // テスト用スケジュールを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -336,24 +285,19 @@ test.describe('Options - Schedule Tab', () => {
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュールアイテムが表示される
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Toggle Schedule' });
     await expect(scheduleItem).toBeVisible();
 
-    // トグルスイッチを取得
     const toggle = scheduleItem.locator(SELECTORS.schedules.scheduleToggle);
     await expect(toggle).toBeVisible();
 
-    // 初期状態は有効
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
-    // トグルをクリックして無効化
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
 
-    // 再度クリックして有効化
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
@@ -364,8 +308,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // 現在時刻を含む窓を作り、スケジュールの時間帯内であることを保証する
-    // （夜またぎは扱わず、23 時台だけ終了時刻を 00:00 にする）
     const now = new Date();
     const currentHour = now.getHours();
     const currentDay = now.getDay();
@@ -406,14 +348,12 @@ test.describe('Options - Schedule Tab', () => {
     );
     await setupPage.close();
 
-    // 時間帯内: スケジュールのプリセットが自動適用される
     const activePage = await openNewTab(context, extensionId);
     await expect(activePage.locator(SELECTORS.newtab.goalText)).toContainText(
       'Work Mode Goal'
     );
     await activePage.close();
 
-    // スケジュールを無効化すると、時間外と同じ扱いになり activePresetId に戻る
     const disablePage = await openOptions(context, extensionId);
     await setStorageData(
       disablePage,
@@ -445,7 +385,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // 無効なスケジュールを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -468,18 +407,13 @@ test.describe('Options - Schedule Tab', () => {
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // スケジュールアイテムが表示される
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Disabled Schedule' });
     await expect(scheduleItem).toBeVisible();
 
-    // トグルが無効状態
     const toggle = scheduleItem.locator(SELECTORS.schedules.scheduleToggle);
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
-
-    // 半透明または取り消し線のスタイルが適用される（実装依存）
-    // 視覚的な確認が必要なため、ここでは表示を確認するのみ
 
     await page.close();
   });
@@ -488,7 +422,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // ロックの概念は存在しないため、作成した全スタイルが選択肢に並ぶ
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
       defaultSettings: makeDisplaySettings({ goalText: 'Focus' }),
@@ -509,7 +442,6 @@ test.describe('Options - Schedule Tab', () => {
     const presetSelect = modal.locator(SELECTORS.schedules.presetSelect);
     const options = presetSelect.locator('option');
 
-    // 3 件すべてが選択肢に並び、無効化されていない
     for (const name of ['Default', 'Second', 'Third']) {
       const option = options.filter({ hasText: name });
       await expect(option).toHaveCount(1);
@@ -525,7 +457,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // 既存のスケジュールを追加
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(
       setupPage,
@@ -537,7 +468,7 @@ test.describe('Options - Schedule Tab', () => {
             name: 'Existing Schedule',
             startTime: '09:00',
             endTime: '12:00',
-            days: [1], // 月曜
+            days: [1],
             presetId: 'default',
             enabled: true
           }
@@ -548,40 +479,32 @@ test.describe('Options - Schedule Tab', () => {
 
     const page = await openOptions(context, extensionId, 'schedules');
 
-    // 重複するスケジュールを追加しようとする
     await page.locator(SELECTORS.schedules.addScheduleButton).click();
 
     const modal = page.locator(SELECTORS.schedules.scheduleModal);
 
-    // スケジュール名を入力
     const nameInput = modal.locator(SELECTORS.schedules.scheduleNameInput);
     await nameInput.fill('Duplicate Schedule');
 
-    // 既存（月曜 09:00-12:00）と重なる時間帯を設定
     const startTime = modal.locator(SELECTORS.schedules.startTimeInput);
     await startTime.fill('10:00');
     const endTime = modal.locator(SELECTORS.schedules.endTimeInput);
     await endTime.fill('13:00');
 
-    // 既定の曜日（月〜金）から月曜だけを残す
-    // 曜日は checkbox ではなくトグルボタンなので click で切り替える
     const dayButtons = modal.locator(SELECTORS.schedules.dayCheckbox);
     for (const day of [2, 3, 4, 5]) {
       await dayButtons.nth(day).click();
     }
     await expect(dayButtons.nth(1)).toHaveAttribute('aria-pressed', 'true');
 
-    // 保存ボタンをクリック
     const saveButton = modal.locator(SELECTORS.schedules.saveScheduleButton);
     await saveButton.click();
 
-    // 重複を伝えるエラーが表示され、モーダルは閉じない
     const error = modal.locator(SELECTORS.schedules.scheduleError);
     await expect(error).toBeVisible();
     await expect(error).toHaveText(UI_TEXT.schedules.overlapError);
     await expect(modal).toBeVisible();
 
-    // 保存されていない（既存の 1 件のまま）
     const settings = await getStorageData(page, 'settings');
     expect(settings?.schedules).toHaveLength(1);
     expect(settings?.schedules[0].id).toBe('schedule1');
@@ -593,7 +516,6 @@ test.describe('Options - Schedule Tab', () => {
     context,
     extensionId
   }) => {
-    // プリセットとスケジュールを設定
     const setupPage = await openOptions(context, extensionId);
     await setStorageData(setupPage, 'vision', {
       defaultSettings: makeDisplaySettings({ goalText: 'Focus' }),
@@ -622,7 +544,6 @@ test.describe('Options - Schedule Tab', () => {
     );
     await setupPage.close();
 
-    // スタイルタブでプリセットを削除
     const page = await openOptions(context, extensionId, 'styles');
 
     const presetButton = page
@@ -633,39 +554,32 @@ test.describe('Options - Schedule Tab', () => {
     const deleteButton = page.locator(SELECTORS.styles.deleteButton);
     await deleteButton.click();
 
-    // 参照しているスケジュールがあるので確認モーダルが開き、件数が示される
     const confirmModal = page.locator(SELECTORS.styles.deletePresetModal);
     await expect(confirmModal).toBeVisible();
     await expect(
       page.locator(SELECTORS.styles.deletePresetScheduleCount)
     ).toContainText('1');
 
-    // キャンセルすると削除されない
     await page.locator(SELECTORS.styles.deletePresetCancel).click();
     await expect(confirmModal).toBeHidden();
     await expect(presetButton).toBeVisible();
 
-    // 改めて削除を確定する
     await deleteButton.click();
     await page.locator(SELECTORS.styles.deletePresetConfirm).click();
     await expect(confirmModal).toBeHidden();
     await expect(presetButton).toHaveCount(0);
 
-    // スケジュールタブに移動
     await page.locator(SELECTORS.options.schedulesTab).click();
 
     const scheduleItem = page
       .locator(SELECTORS.schedules.scheduleItem)
       .filter({ hasText: 'Linked Schedule' });
 
-    // スケジュール自体は残る
     await expect(scheduleItem).toBeVisible();
 
-    // 有効・無効の状態は削除前のまま（有効）
     const toggle = scheduleItem.locator(SELECTORS.schedules.scheduleToggle);
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
-    // スタイル連携が外れ、「不明なスタイル」の表示も出ない
     await expect(
       scheduleItem.locator(SELECTORS.schedules.scheduleItemPreset)
     ).toHaveCount(0);

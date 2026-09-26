@@ -7,15 +7,8 @@ import {
   UI_TEXT
 } from './helpers';
 
-/**
- * E2Eテスト: NewTab 画面 - 設定とプレミアム機能
- *
- * NEW-005, NEW-011 のテストケースを実装
- */
-
 test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
   test.beforeEach(async ({ context, extensionId }) => {
-    // 各テストの前にストレージをセットアップ
     const page = await openNewTab(context, extensionId);
     await clearStorage(page);
     await setupTestStorage(page, {
@@ -31,7 +24,6 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
   }) => {
     const page = await openNewTab(context, extensionId);
 
-    // 設定アイコン（右下）をクリック
     const settingsButton = page.locator(SELECTORS.newtab.settingsButton).last();
 
     // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
@@ -40,7 +32,6 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
     const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
-    // オプション画面のURLを確認
     expect(newPage.url()).toContain('options.html');
 
     await newPage.close();
@@ -60,9 +51,6 @@ test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
 
     const page = await openNewTab(context, extensionId);
 
-    // ダウンロードボタンが表示される。
-    // `^$` を含む filter は実質無条件で、count() も自動リトライしない。
-    // data-testid で 1 件に絞り、ラベルと押せる状態まで確かめる
     const downloadButton = page.locator(SELECTORS.newtab.downloadButton);
     await expect(downloadButton).toHaveCount(1);
     await expect(downloadButton).toBeVisible();

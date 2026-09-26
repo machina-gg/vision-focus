@@ -15,15 +15,8 @@ import {
   TEST_DOMAINS
 } from './helpers';
 
-/**
- * E2Eテスト: Popup 画面
- *
- * POP-001 ~ POP-014 のテストケースを実装
- */
-
 test.describe('Popup 画面', () => {
   test.beforeEach(async ({ context, extensionId }) => {
-    // 各テストの前にストレージをセットアップ
     const page = await openPopup(context, extensionId);
     await clearStorage(page);
     await setupTestStorage(page, {
@@ -39,16 +32,12 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // Header が表示される
     await expect(page.locator(SELECTORS.header.logo)).toBeVisible();
 
-    // QuickBlockButton が表示される
     await expect(page.locator(SELECTORS.quickBlock.heading)).toBeVisible();
 
-    // GoalCard が表示される
     await expect(page.locator(SELECTORS.goalCard.container)).toBeVisible();
 
-    // 今日のサマリーが表示される
     await expect(page.locator(SELECTORS.summary.heading)).toBeVisible();
     await expect(page.locator(SELECTORS.summary.blockCount)).toBeVisible();
 
@@ -61,12 +50,10 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // ロゴが表示される
     const logo = page.locator(SELECTORS.header.logo);
     await expect(logo).toBeVisible();
     await expect(logo).toHaveAttribute('alt', 'VisionFocus');
 
-    // 設定アイコンが表示される
     await expect(page.locator(SELECTORS.header.settingsButton)).toBeVisible();
 
     await page.close();
@@ -78,11 +65,9 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // 目標カードが表示される
     const goalCard = page.locator(SELECTORS.goalCard.container);
     await expect(goalCard).toBeVisible();
 
-    // 目標テキストが表示される
     const goalText = page.locator(SELECTORS.goalCard.goalText);
     await expect(goalText).toContainText('Focus on what matters');
 
@@ -93,8 +78,6 @@ test.describe('Popup 画面', () => {
     context,
     extensionId
   }) => {
-    // サマリーは追跡中のサイトの今日の activity から導出される。
-    // 昨日の行を多めに置き、全期間ではなく今日の中で数えていることも見る
     const setupPage = await openPopup(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
@@ -113,16 +96,12 @@ test.describe('Popup 画面', () => {
 
     const page = await openPopup(context, extensionId);
 
-    // 今日のサマリー見出しが表示される
     await expect(page.locator(SELECTORS.summary.heading)).toBeVisible();
 
-    // ブロック回数は今日の行だけの合計。
-    // toContainText だと 12 / 20 でも通るため、表示そのものと突き合わせる
     const blockCount = page.locator(SELECTORS.summary.blockCount);
     await expect(blockCount).toBeVisible();
     await expect(blockCount).toHaveText('2');
 
-    // トップブロックサイトは今日いちばんブロックされたサイト
     await expect(
       page.locator(SELECTORS.summary.topBlockedSiteDomain)
     ).toHaveText('example.com');
@@ -136,7 +115,6 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // 設定アイコンをクリック
     const settingsButton = page.locator(SELECTORS.header.settingsButton);
 
     // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
@@ -145,7 +123,6 @@ test.describe('Popup 画面', () => {
     const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
-    // オプション画面のURLを確認
     expect(newPage.url()).toContain('options.html');
 
     await newPage.close();
@@ -158,7 +135,6 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // 目標カードをクリック
     const goalCard = page.locator(SELECTORS.goalCard.container);
 
     // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
@@ -167,7 +143,6 @@ test.describe('Popup 画面', () => {
     const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
-    // New Tab 画面のURLを確認
     expect(newPage.url()).toContain('newtab.html');
 
     await newPage.close();
@@ -180,7 +155,6 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // ヘルプアイコンが表示される
     const helpButton = page.locator(SELECTORS.header.helpButton);
     await expect(helpButton).toBeVisible();
 
@@ -190,7 +164,6 @@ test.describe('Popup 画面', () => {
     const newPage = await newPagePromise;
     await newPage.waitForLoadState('domcontentloaded');
 
-    // オプション画面のヘルプタブが開いていることを確認
     expect(newPage.url()).toContain('options.html');
     expect(newPage.url()).toContain('#help');
 
@@ -204,24 +177,18 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // Pause トグルが表示される
     const pauseToggle = page.locator(SELECTORS.header.pauseToggle);
     await expect(pauseToggle).toBeVisible();
 
-    // 初期状態はオン（paused: false）
     await expect(pauseToggle).toHaveAttribute('aria-checked', 'true');
 
-    // トグルをクリックして一時停止
     await pauseToggle.click();
 
-    // トグルがオフになる
     await expect(pauseToggle).toHaveAttribute('aria-checked', 'false');
 
-    // ページをリロードして設定が保存されているか確認
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
-    // トグルがオフのまま
     const pauseToggleAfterReload = page.locator(SELECTORS.header.pauseToggle);
     await expect(pauseToggleAfterReload).toHaveAttribute(
       'aria-checked',
@@ -235,7 +202,6 @@ test.describe('Popup 画面', () => {
     context,
     extensionId
   }) => {
-    // パスワード設定済みのストレージをセットアップ
     const setupPage = await openPopup(context, extensionId);
     await setupTestStorage(setupPage, {
       withGoal: true,
@@ -246,29 +212,22 @@ test.describe('Popup 画面', () => {
 
     const page = await openPopup(context, extensionId);
 
-    // Pause トグルをクリック
     const pauseToggle = page.locator(SELECTORS.header.pauseToggle);
     await pauseToggle.click();
 
-    // パスワードモーダルが表示される
     const passwordModal = page.locator(SELECTORS.modal.passwordModal);
     await expect(passwordModal).toBeVisible();
 
-    // パスワード入力フィールドが表示される
     const passwordInput = passwordModal.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible();
 
-    // 正しいパスワードを入力
     await passwordInput.fill(TEST_DATA.password.valid);
 
-    // 確定ボタンをクリック
     const confirmButton = page.locator(SELECTORS.modal.passwordConfirmButton);
     await confirmButton.click();
 
-    // モーダルが閉じる
     await expect(passwordModal).not.toBeVisible();
 
-    // トグルがオフになる
     await expect(pauseToggle).toHaveAttribute('aria-checked', 'false');
 
     await page.close();
@@ -278,21 +237,17 @@ test.describe('Popup 画面', () => {
     context,
     extensionId
   }) => {
-    // 外部サイトを開いてからポップアップを開く
     const sitePage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
     const popupPage = await openPopup(context, extensionId);
 
-    // ポップアップを開いた時点ではポップアップ自身がアクティブタブに
-    // なってしまうため、サイトのタブをアクティブに戻してから
-    // ポップアップを reload してドメイン取得をやり直させる
+    // ポップアップを開くとポップアップ自身がアクティブタブになるため、サイトのタブを前面に戻して reload する
     await sitePage.bringToFront();
     await popupPage.reload();
     await popupPage.waitForLoadState('domcontentloaded');
 
-    // QuickBlock の入力フィールドに example.com が自動入力される。
     // reload で拾えなくても 10 秒ポーリングで拾えるよう timeout を長めに取る
     const input = popupPage.locator(SELECTORS.quickBlock.input);
     await expect(input).toHaveValue(TEST_DOMAINS.example, {
@@ -309,16 +264,12 @@ test.describe('Popup 画面', () => {
   }) => {
     const page = await openPopup(context, extensionId);
 
-    // QuickBlock の入力フィールドにドメインを入力
     const input = page.locator(SELECTORS.quickBlock.input);
     await input.fill('reddit.com');
 
-    // ブロックボタンをクリック
     const blockButton = page.locator(SELECTORS.quickBlock.button);
     await blockButton.click();
 
-    // 追跡中のサイトに有効なブロック設定として保存されたことを確認する。
-    // background へのメッセージ送信は非同期なので反映を待つ
     await expect
       .poll(
         async () => {
@@ -345,11 +296,9 @@ test.describe('Popup 画面', () => {
 
     const page = await openPopup(context, extensionId);
 
-    // Analytics リンクが表示される
     const analyticsLink = page.locator(SELECTORS.analyticsEntry.analyticsLink);
     await expect(analyticsLink).toBeVisible();
 
-    // クリックでオプション画面の Analytics タブが開く。
     // クリックより先に待機を張る（クリック後だとタブ生成を取りこぼす）
     const newPagePromise = context.waitForEvent('page');
     await analyticsLink.click();
@@ -367,40 +316,33 @@ test.describe('Popup 画面', () => {
     context,
     extensionId
   }) => {
-    // Time Limit 設定済みのブロックリストをセットアップ
     const setupPage = await openPopup(context, extensionId);
     await setSettings(setupPage, { paused: false });
     await setSites(setupPage, [
       {
         domain: TEST_DOMAINS.example,
-        // 30分
         block: { timeLimit: { type: 'daily', limitSeconds: 1800 } }
       }
     ]);
 
-    // Time Limit 使用状況をセットアップ（残り10分）。
-    // 使用状況は activity の今日の行にサイトキーごとの表示秒数として保持される
     await setStorageData(
       setupPage,
       'activity',
-      makeActivity([[TEST_DOMAINS.example, { seconds: 1200 }]]) // 20分使用済み
+      makeActivity([[TEST_DOMAINS.example, { seconds: 1200 }]])
     );
     await setupPage.close();
 
-    // 外部サイトを開いてからポップアップを開く
     const sitePage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
     );
     const popupPage = await openPopup(context, extensionId);
 
-    // サイトのタブをアクティブに戻してからポップアップを reload し、
-    // ドメイン取得をやり直させる
+    // ポップアップを開くとポップアップ自身がアクティブタブになるため、サイトのタブを前面に戻して reload する
     await sitePage.bringToFront();
     await popupPage.reload();
     await popupPage.waitForLoadState('domcontentloaded');
 
-    // Time Limit バッジが表示される。
     // reload で拾えなくても 10 秒ポーリングで拾えるよう timeout を長めに取る
     await expect(
       popupPage.locator('[data-testid="time-limit-badge"]')

@@ -1,10 +1,3 @@
-/**
- * E2Eテスト用定数
- *
- * テストで使用する URL パターン、セレクタ、テストデータなどを定義
- */
-
-// 拡張機能のURL
 export const EXTENSION_URLS = {
   popup: (extensionId: string) =>
     `chrome-extension://${extensionId}/popup.html`,
@@ -14,7 +7,6 @@ export const EXTENSION_URLS = {
     `chrome-extension://${extensionId}/options.html`
 };
 
-// テスト用のドメイン
 export const TEST_DOMAINS = {
   example: 'example.com',
   youtube: 'youtube.com',
@@ -22,9 +14,7 @@ export const TEST_DOMAINS = {
   twitter: 'twitter.com'
 };
 
-// セレクタ（実装に合わせて調整）
 export const SELECTORS = {
-  // Header
   header: {
     logo: '[data-testid="app-logo"]',
     container: '[data-testid="app-header"]',
@@ -33,20 +23,17 @@ export const SELECTORS = {
     pauseToggle: '[data-testid="pause-toggle"]'
   },
 
-  // GoalCard
   goalCard: {
     container: '[data-testid="goal-card"]',
     goalText: '[data-testid="goal-card-text"]'
   },
 
-  // QuickBlockButton
   quickBlock: {
     heading: '[data-testid="quick-block-heading"]',
     input: '[data-testid="quick-block-input"]',
     button: '[data-testid="quick-block-button"]'
   },
 
-  // Today's Summary
   summary: {
     heading: '[data-testid="summary-heading"]',
     blockCount: '[data-testid="summary-block-count"]',
@@ -56,17 +43,14 @@ export const SELECTORS = {
     unblockCount: '[data-testid="summary-unblock-count"]'
   },
 
-  // Time limit（ポップアップ上部の残り時間表示）
   timeLimit: {
     info: '[data-testid="time-limit-info"]'
   },
 
-  // 分析画面への導線
   analyticsEntry: {
     analyticsLink: '[data-testid="view-analytics-link"]'
   },
 
-  // Modals（Modal コンポーネントは role="dialog" を持つ）
   modal: {
     analyticsOptIn: '[data-testid="analytics-optin-modal"]',
     analyticsOptInAllow: '[data-testid="analytics-optin-allow"]',
@@ -79,7 +63,6 @@ export const SELECTORS = {
     passwordCancelButton: '[data-testid="password-modal-cancel"]'
   },
 
-  // NewTab
   newtab: {
     container: '[data-testid="newtab-container"]',
     overlay: '[data-testid="newtab-overlay"]',
@@ -101,13 +84,11 @@ export const SELECTORS = {
     settingsButton: '[data-testid="newtab-settings-button"]'
   },
 
-  // Options（共通）
   options: {
     header: '[data-testid="options-header"]',
     title: '[data-testid="options-title"]',
     tabsNav: 'nav[aria-label="Tabs"]',
     tabs: '[role="tablist"]',
-    // タブは TABS 定数（src/constants/tabs.ts）の id で識別する
     blocklistTab: '[data-testid="tab-blocklist"]',
     stylesTab: '[data-testid="tab-styles"]',
     schedulesTab: '[data-testid="tab-schedules"]',
@@ -125,7 +106,6 @@ export const SELECTORS = {
     notificationSection: 'text=/Notification|通知/i'
   },
 
-  // Options - Styles Tab
   styles: {
     presetSelector: '[data-testid="styles-section-heading"]',
     createPresetButton: '[data-testid="style-new-preset-button"]',
@@ -139,10 +119,8 @@ export const SELECTORS = {
     backgroundTypeColor: '[data-testid="style-bg-type-color"]',
     backgroundImageOption: '[data-testid="style-bg-option"]',
     backgroundColorPicker: '[data-testid="style-text-color-picker"]',
-    // ファイル入力は hidden。可視要素はドロップゾーン
     customBackgroundUpload: '[data-testid="style-bg-upload"]',
     customBackgroundDropzone: '[data-testid="style-bg-upload-dropzone"]',
-    // フォントは select ではなくボタン群で選択する
     fontCategoryButton: '[data-testid="font-category-button"]',
     fontFamilySelect: '[data-testid="font-family-button"]',
     fontSizeButton: '[data-testid="font-size-button"]',
@@ -154,14 +132,12 @@ export const SELECTORS = {
     newPresetNameInput: '[data-testid="new-preset-name-input"]',
     newPresetConfirm: '[data-testid="new-preset-confirm"]',
     newPresetCancel: '[data-testid="new-preset-cancel"]',
-    // スタイル削除の確認モーダル（参照しているスケジュールがあるときだけ開く）
     deletePresetModal: '[role="dialog"]',
     deletePresetScheduleCount: '[data-testid="delete-preset-schedule-count"]',
     deletePresetConfirm: '[data-testid="delete-preset-confirm"]',
     deletePresetCancel: '[data-testid="delete-preset-cancel"]'
   },
 
-  // Options - Schedules Tab
   schedules: {
     weeklyCalendar: '[data-testid="weekly-calendar"]',
     weeklyCalendarDayHeader: '[data-testid="weekly-calendar-day-header"]',
@@ -175,7 +151,6 @@ export const SELECTORS = {
     scheduleNameInput: '[data-testid="schedule-name-input"]',
     startTimeInput: '[data-testid="schedule-start-time"]',
     endTimeInput: '[data-testid="schedule-end-time"]',
-    // 曜日は checkbox ではなくトグルボタン
     dayCheckbox: '[data-testid="schedule-day-button"]',
     presetSelect: '[data-testid="schedule-preset-select"]',
     saveScheduleButton: '[data-testid="schedule-save-button"]',
@@ -184,11 +159,9 @@ export const SELECTORS = {
     noSchedules: 'text=/スケジュールがありません|No schedules/i'
   },
 
-  // Options - Analytics Tab
   analytics: {
     siteRankingList: '[data-testid="analytics-top-sites-heading"]',
     trackedSitesList: '[data-testid="analytics-tracked-sites-heading"]',
-    // 追跡中サイト一覧の 1 行。data-status は blocked / disabled / tracking
     trackedSite: '[data-testid="analytics-tracked-site"]',
     wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
     exportButton: '[data-testid="analytics-export-button"]',
@@ -204,12 +177,10 @@ export const SELECTORS = {
     addSiteInput: '[data-testid="analytics-add-site-input"]',
     addSiteButton: '[data-testid="analytics-add-site-button"]',
     addSiteError: '[data-testid="analytics-add-site-error"]',
-    // 週次 / 月次レポートの切り替えタブ（Tabs が `tab-${id}` を付ける）
     weeklyReportTab: '[data-testid="tab-report-weekly"]',
     monthlyReportTab: '[data-testid="tab-report-monthly"]'
   },
 
-  // Options - Help Tab
   help: {
     gettingStarted: '[data-testid="help-getting-started"]',
     faq: '[data-testid="help-faq"]',
@@ -217,18 +188,13 @@ export const SELECTORS = {
     faqItem: '[data-testid="help-faq-item"]'
   },
 
-  // Options - Settings Tab
   settings: {
     passwordSection: '[data-testid="settings-password-section"]',
     unblockProtectionSection:
       '[data-testid="settings-unblock-protection-section"]',
-    // 共通の Select は目印を受け取らないため、枠の目印から select を指す
     unblockHoldSecondsSelect:
       '[data-testid="unblock-hold-seconds-field"] select',
-    // パスワード保護はボタンではなくトグルで有効化する
     passwordEnableToggle: '[data-testid="password-enable-toggle"]',
-    // パスワード欄の目印は欄ごとに別の値になっている。数・表示の確認は前方一致で
-    // まとめて指し、入力は下の 3 つで欄を名指しする（machina-gg/vision-focus#468）
     passwordField: '[data-testid^="password-field-"]',
     passwordFieldCurrent: '[data-testid="password-field-current"]',
     passwordFieldNew: '[data-testid="password-field-new"]',
@@ -244,46 +210,27 @@ export const SELECTORS = {
   }
 };
 
-/**
- * 画面に出る文言（英語）
- *
- * data-testid を持たない要素は文言で指すしかない。文言は実装（`getMessage` が
- * 引く `public/_locales/en/messages.json`、FontPicker はコード内の定数）と
- * 一致させる必要があるため、テストごとに直書きせずここへ集める。
- * テストは既定のブラウザ言語で走るので、拡張機能は default_locale の en で表示される。
- */
 export const UI_TEXT = {
   common: {
     save: 'Save'
   },
-  // $COUNT$ のような置換を含む文言は、置換後の文字列を組み立てる関数で持つ
-  // （messages.json の message をそのまま書くと `$COUNT$` が残り、画面の
-  //   表示と一致しない）
   blockCount: {
-    /** ブロックリストとサイト別ランキングのバッジ（blockedTimesShort） */
     short: (count: number) => `${count} blocks`,
-    /** newtab のブロック情報バナー（blockedTimes） */
     long: (count: number) => `You've blocked this site ${count} times`
   },
-  // newtab のミニ統計カード（blockedForDays）。単位が付くため数値だけの
-  // 一致にしない
   blockingDays: (count: number) => `${count} days`,
   newtab: {
     download: 'Download',
     downloadWallpaper: 'Download Wallpaper'
   },
   styles: {
-    // 選択中のプリセットが適用済みなら Active の表示、未適用なら Apply ボタン
     activePreset: 'Active',
     applyPreset: 'Apply'
   },
   schedules: {
-    // 保存時に既存と時間帯が重なっていたときのエラー（scheduleOverlapError）
     overlapError: 'This time range overlaps with an existing schedule.'
   },
   help: {
-    // 「はじめに」に並ぶ手順の見出し（HelpGettingStarted）。
-    // ⚠ ここに無い手順が増えても検査は落ちない（存在の確認だけを行う）
     gettingStartedSteps: [
       'Block Distracting Sites',
       'Set Up Schedules',
@@ -293,8 +240,6 @@ export const UI_TEXT = {
     ]
   },
   timeLimit: {
-    // 時間制限の編集欄の開閉ボタンは、未設定なら現在の設定として
-    // 「Always Blocked」を表示する（"Time Limit" という文言のボタンは無い）
     alwaysBlocked: 'Always Blocked'
   },
   youtube: {
@@ -309,8 +254,6 @@ export const UI_TEXT = {
     heading: 'Notification Settings',
     minutesLabel: 'Notify before limit'
   },
-  // レポートカードの期間移動ボタン（aria-label）。カードに目印が無いため、
-  // どちらのカードが表示されているかもこの名前で見分ける
   reports: {
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
@@ -322,7 +265,6 @@ export const UI_TEXT = {
   }
 };
 
-// テストデータ
 export const TEST_DATA = {
   goal: {
     default: 'Focus on what matters',
@@ -330,8 +272,6 @@ export const TEST_DATA = {
   },
   password: {
     valid: 'test1234',
-    // SHA-256("test1234")。以前は SHA-256("password") の値が
-    // 誤って設定されており、パスワード認証のテストが常に失敗していた
     validHash:
       '937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244',
     invalid: 'wrong'

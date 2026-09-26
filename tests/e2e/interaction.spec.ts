@@ -19,12 +19,6 @@ import {
 } from './helpers/storage';
 import { TEST_DATA, TEST_DOMAINS, SELECTORS } from './helpers/constants';
 
-/**
- * E2E Tests: 機能間相互作用
- *
- * Pause、Time Limit、Schedule、Analytics、パスワード保護の組み合わせ動作をテスト
- */
-
 test.describe('Interaction - 機能間相互作用', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     await clearStorageFromExtension(context, extensionId);
@@ -34,9 +28,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    // Pause 有効 + Time Limit 超過
     await setSettingsFromExtension(context, extensionId, {
-      paused: true // Pause 有効
+      paused: true
     });
     await setSitesFromExtension(context, extensionId, [
       {
@@ -45,20 +38,16 @@ test.describe('Interaction - 機能間相互作用', () => {
       }
     ]);
 
-    // 使用実績は activity の今日の行（サイトキーごとの表示秒数）に入る
     await setStorageDataFromExtension(
       context,
       extensionId,
       'activity',
-      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]]) // 超過
+      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]])
     );
 
-    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
-    // Pause 中はルールが 1 件も作られないことを確かめる
     await triggerBlockRuleRecompute(context);
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
-    // サイトにアクセス（Pause が優先されてアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -79,9 +68,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
-    // Pause 有効 + Schedule でブロック有効化時間帯
     await setSettingsFromExtension(context, extensionId, {
-      paused: true, // Pause 有効
+      paused: true,
       schedules: [
         {
           id: 'schedule1',
@@ -97,12 +85,9 @@ test.describe('Interaction - 機能間相互作用', () => {
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
 
-    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
-    // Pause 中はルールが 1 件も作られないことを確かめる
     await triggerBlockRuleRecompute(context);
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
-    // サイトにアクセス（Pause が優先されてアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -141,7 +126,6 @@ test.describe('Interaction - 機能間相互作用', () => {
       ]
     };
 
-    // 未超過（30秒 / 上限60秒）。スケジュールは有効時間帯
     await setupStorageViaSW(context, {
       settings: makeAppSettings(settings),
       sites,
@@ -149,8 +133,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     });
     await triggerBlockRuleRecompute(context);
 
-    // 時間制限つきサイトは「超過したときだけ」ブロック対象になる。
-    // スケジュールが有効でも、未超過ならブロックしない
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
     const allowedPage = await openExternalSite(
@@ -160,7 +142,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     expect(allowedPage.url()).toContain(TEST_DOMAINS.example);
     await allowedPage.close();
 
-    // 超過させると、同じ設定でブロックされる
     await setupStorageViaSW(context, {
       settings: makeAppSettings(settings),
       sites,
@@ -185,9 +166,8 @@ test.describe('Interaction - 機能間相互作用', () => {
     const currentHour = now.getHours();
     const currentDay = now.getDay();
 
-    // Pause 有効 + Time Limit 超過 + Schedule 有効
     await setSettingsFromExtension(context, extensionId, {
-      paused: true, // Pause が最優先
+      paused: true,
       schedules: [
         {
           id: 'schedule1',
@@ -206,20 +186,16 @@ test.describe('Interaction - 機能間相互作用', () => {
       }
     ]);
 
-    // 使用実績は activity の今日の行（サイトキーごとの表示秒数）に入る
     await setStorageDataFromExtension(
       context,
       extensionId,
       'activity',
-      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]]) // 超過
+      makeActivity([[TEST_DOMAINS.example, { seconds: 10 }]])
     );
 
-    // 実装と同じ経路（check-schedule アラーム）で再計算させ、
-    // Pause 中はルールが 1 件も作られないことを確かめる
     await triggerBlockRuleRecompute(context);
     await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
 
-    // サイトにアクセス（Pause が最優先でアクセス可能）
     const unblockedPage = await openExternalSite(
       context,
       `https://${TEST_DOMAINS.example}`
@@ -232,23 +208,17 @@ test.describe('Interaction - 機能間相互作用', () => {
     await unblockedPage.close();
   });
 
-  // ⚠ analyticsOptIn が止めるのは GA4 への送信だけで、手元の集計は続く
-  // （machina-gg/vision-focus#431 の判断）。解除後の滞在時間は
-  // src/background/handlers/tracker-heartbeat.ts が analyticsOptIn を
-  // 参照せずに記録する
   test('INT-005: Analytics Opt-Out でも解除後の滞在時間は記録される', async ({
     context
   }) => {
-    // 記録は background の一定間隔のタイマーが 1 周してから入る
+    // 記録は background の一定間隔のタイマーが 1 周してから入るため、既定のテスト時間では足りない
     test.setTimeout(90_000);
 
     await setupStorageViaSW(context, {
-      // Opt-Out 状態
       settings: makeAppSettings({
         paused: false,
         analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
       }),
-      // 追跡中のサイトだけが記録の対象になる。ブロックリストから外した（追跡だけの）サイト
       sites: makeSites([{ domain: TEST_DOMAINS.example }])
     });
 
@@ -259,9 +229,7 @@ test.describe('Interaction - 機能間相互作用', () => {
 
     await externalPage.waitForLoadState('domcontentloaded');
 
-    // 解除後の時間は事実の表の滞在秒数から導出される。
-    // 読み出しは SW 経由で行う（拡張機能のページを開くと前面のタブが
-    // 入れ替わり、コンテンツスクリプトの heartbeat が止まる）
+    // 拡張機能のページを開くと前面のタブが入れ替わり heartbeat が止まるため、SW 経由で読む
     await expect
       .poll(
         async () =>
@@ -278,10 +246,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    // パスワード保護を有効化
-    // ハッシュは TEST_DATA の値を使う（SHA-256("test1234")）。
-    // 入力値と対応しないハッシュを直書きすると、認証が通らないことに
-    // 気付けないまま「モーダルが出た」だけの検査になる
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       password: {
@@ -290,18 +254,14 @@ test.describe('Interaction - 機能間相互作用', () => {
       }
     });
 
-    // Popup を開く
     const popupPage = await openPopup(context, extensionId);
 
-    // Pause トグルをクリック
     const pauseToggle = popupPage.locator('[role="switch"]');
     await pauseToggle.click();
 
-    // パスワードモーダルが表示されることを確認
     const passwordModal = popupPage.locator('[role="dialog"], .modal');
     await passwordModal.waitFor({ state: 'visible', timeout: 3000 });
 
-    // パスワード入力フィールドが表示されることを確認
     const passwordInput = passwordModal.locator('input[type="password"]');
     expect(await passwordInput.isVisible()).toBeTruthy();
 
@@ -312,10 +272,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     context,
     extensionId
   }) => {
-    // パスワード保護を有効化。
-    // ハッシュは TEST_DATA の値を使う（SHA-256("test1234")）。
-    // 入力値と対応しないハッシュを直書きすると、認証が通らないことに
-    // 気付けないまま「モーダルが出た」だけの検査になる
     await setSettingsFromExtension(context, extensionId, {
       paused: false,
       password: {
@@ -327,18 +283,12 @@ test.describe('Interaction - 機能間相互作用', () => {
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
 
-    // ブロック解除は Options のブロックリストで行う。
-    // newtab には解除の UI が無い（src/entrypoints/newtab/ に解除の導線は無く、
-    // 解除は BlocklistTab の削除・無効化だけ）
     const optionsPage = await openOptions(context, extensionId, 'blocklist');
 
     await expect(
       optionsPage.locator(SELECTORS.options.itemDomain).first()
     ).toContainText(TEST_DOMAINS.example);
 
-    // 削除ボタンをクリックするとパスワードモーダルが開く。
-    // パスワード保護時は長押しの Unblock 確認モーダルではなくこちらが出る
-    // （src/components/options/BlocklistTab.tsx の handleRemoveClick）
     await optionsPage.locator(SELECTORS.options.deleteButton).first().click();
 
     const passwordModal = optionsPage.locator(SELECTORS.modal.passwordModal);
@@ -347,7 +297,6 @@ test.describe('Interaction - 機能間相互作用', () => {
     const passwordInput = passwordModal.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible();
 
-    // 正しいパスワードを入力して確定すると削除が実行される
     await passwordInput.fill(TEST_DATA.password.valid);
     await optionsPage.locator(SELECTORS.modal.passwordConfirmButton).click();
 
@@ -356,7 +305,6 @@ test.describe('Interaction - 機能間相互作用', () => {
       0
     );
 
-    // 保存済みのサイトからもブロック設定が消える（追跡は続く）
     await expect
       .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'block'))
       .toBeNull();
