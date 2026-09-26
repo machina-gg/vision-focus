@@ -7,7 +7,6 @@ import {
   UnblockConfirmModal
 } from '~/components/options/modals';
 import { getMessage } from '~/lib/i18n';
-import { getUnblockHoldSeconds } from '~/lib/unblockConfirm';
 import {
   NotificationSettingsSection,
   YouTubeSection,
@@ -210,7 +209,7 @@ export function BlocklistTab({
       )}
 
       {/* Unblock Confirmation Modal (non-password flow) */}
-      {unblockGuard.pending && (
+      {unblockGuard.pending && settings && (
         <UnblockConfirmModal
           isOpen={unblockGuard.isConfirmModalOpen}
           onClose={unblockGuard.close}
@@ -218,7 +217,7 @@ export function BlocklistTab({
           domain={unblockGuard.pending.domain}
           blockStyle={unblockGuard.pending.blockStyle}
           action={unblockGuard.pending.action}
-          holdSeconds={getUnblockHoldSeconds(settings)}
+          holdSeconds={settings.unblockConfirm.holdSeconds}
         />
       )}
     </div>

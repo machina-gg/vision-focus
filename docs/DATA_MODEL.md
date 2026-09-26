@@ -43,12 +43,12 @@ erDiagram
 
 ### AppSettings（アプリ設定）
 
-| フィールド     | 型                     | 説明                                                                 |
-| -------------- | ---------------------- | -------------------------------------------------------------------- |
-| blockList      | BlockItem[]            | ブロックリスト                                                       |
-| schedules      | Schedule[]             | スケジュール一覧                                                     |
-| lockdownMode   | boolean                | ロックダウンモード                                                   |
-| unblockConfirm | UnblockConfirmSettings | ブロック解除の長押し確認の設定（項目が無い保存データは既定値で扱う） |
+| フィールド     | 型                     | 説明                           |
+| -------------- | ---------------------- | ------------------------------ |
+| blockList      | BlockItem[]            | ブロックリスト                 |
+| schedules      | Schedule[]             | スケジュール一覧               |
+| lockdownMode   | boolean                | ロックダウンモード             |
+| unblockConfirm | UnblockConfirmSettings | ブロック解除の長押し確認の設定 |
 
 ### UnblockConfirmSettings（ブロック解除の長押し確認）
 

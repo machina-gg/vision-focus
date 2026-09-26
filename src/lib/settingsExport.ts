@@ -23,11 +23,8 @@ import type {
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
-  DEFAULT_NOTIFICATION_SETTINGS,
-  DEFAULT_UNBLOCK_CONFIRM_SETTINGS,
   UNBLOCK_HOLD_SECONDS_OPTIONS
 } from '~/types/storage';
-import { getUnblockHoldSeconds } from '~/lib/unblockConfirm';
 
 // Export data version for future compatibility
 const EXPORT_VERSION = 1;
@@ -50,8 +47,8 @@ export interface ExportedSettings {
     presets: DashboardPreset[];
     defaultDisplaySettings: VisionSettings['defaultSettings'];
     activePresetId: string | null;
-    notifications?: NotificationSettings;
-    unblockConfirm?: UnblockConfirmSettings;
+    notifications: NotificationSettings;
+    unblockConfirm: UnblockConfirmSettings;
   };
 }
 
@@ -140,8 +137,8 @@ const exportDataSchema = z.object({
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
     activePresetId: z.string().nullable(),
-    notifications: notificationSettingsSchema.optional(),
-    unblockConfirm: unblockConfirmSettingsSchema.optional()
+    notifications: notificationSettingsSchema,
+    unblockConfirm: unblockConfirmSettingsSchema
   })
 });
 
@@ -185,7 +182,7 @@ export function exportSettings(
       defaultDisplaySettings: vision.defaultSettings,
       activePresetId: vision.activePresetId,
       notifications: settings.notifications,
-      unblockConfirm: { holdSeconds: getUnblockHoldSeconds(settings) }
+      unblockConfirm: settings.unblockConfirm
     }
   };
 
@@ -328,12 +325,8 @@ export function applyImportedSettings(
     ...currentSettings,
     blockList: mergedBlockList,
     schedules: mergedSchedules,
-    notifications:
-      data.notifications ??
-      currentSettings.notifications ??
-      DEFAULT_NOTIFICATION_SETTINGS,
-    // ファイルに無ければ既定値に戻す（書き出し元で秒数を変えていない状態を再現するため）
-    unblockConfirm: data.unblockConfirm ?? DEFAULT_UNBLOCK_CONFIRM_SETTINGS
+    notifications: data.notifications,
+    unblockConfirm: data.unblockConfirm
   };
 
   const newVision: VisionSettings = {

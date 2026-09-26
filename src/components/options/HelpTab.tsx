@@ -10,14 +10,16 @@ import { HelpTroubleshooting } from '~/components/options/HelpTroubleshooting';
 import { HelpDataPrivacy } from '~/components/options/HelpDataPrivacy';
 import { HelpSettingsBackup } from '~/components/options/HelpSettingsBackup';
 import { getMessage } from '~/lib/i18n';
-import { getUnblockHoldSeconds } from '~/lib/unblockConfirm';
 import { useSettings } from '~/contexts/SettingsContext';
 import type {
   PasswordSettings,
   AnalyticsOptIn,
   UnblockConfirmSettings
 } from '~/types/storage';
-import { DEFAULT_PASSWORD_SETTINGS } from '~/types/storage';
+import {
+  DEFAULT_PASSWORD_SETTINGS,
+  DEFAULT_UNBLOCK_CONFIRM_SETTINGS
+} from '~/types/storage';
 
 const VERSION = '1.0.0';
 
@@ -51,7 +53,10 @@ export function HelpTab({
         <PasswordSettingsSection
           passwordSettings={settings?.password ?? DEFAULT_PASSWORD_SETTINGS}
           onUpdate={onPasswordUpdate}
-          holdSeconds={getUnblockHoldSeconds(settings)}
+          holdSeconds={
+            (settings?.unblockConfirm ?? DEFAULT_UNBLOCK_CONFIRM_SETTINGS)
+              .holdSeconds
+          }
           onUnblockConfirmUpdate={onUnblockConfirmUpdate}
         />
       )}
