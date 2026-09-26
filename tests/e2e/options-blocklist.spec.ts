@@ -19,7 +19,7 @@ import {
 /**
  * E2Eテスト: Options 画面（ブロックリストタブ）
  *
- * OPT-B01 ~ OPT-B13 のテストケースを実装
+ * OPT-B01 ~ OPT-B12 のテストケースを実装
  */
 
 test.describe('Options 画面（ブロックリストタブ）', () => {
@@ -475,64 +475,6 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
         return settings?.youtube?.timeLimit;
       })
       .toEqual({ type: 'daily', limitSeconds: 15 * 60 });
-
-    await page.close();
-  });
-
-  test('OPT-B13: 通知設定を変更できる', async ({ context, extensionId }) => {
-    // 通知セクションは時間制限付きのサイトが 1 件以上ないと描画されない
-    // （NotificationSettingsSection は hasTimeLimitSites が false なら null を返す）
-    const setupPage = await openOptions(context, extensionId);
-    await setStorageData(
-      setupPage,
-      'settings',
-      makeSettings({
-        blockList: [
-          {
-            id: '1',
-            domain: 'example.com',
-            isWildcard: false,
-            createdAt: new Date().toISOString(),
-            enabled: true,
-            timeLimit: { type: 'daily', limitSeconds: 30 * 60 }
-          }
-        ],
-        notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 }
-      })
-    );
-    await setupPage.close();
-
-    const page = await openOptions(context, extensionId, 'blocklist');
-
-    const heading = page.getByRole('heading', {
-      name: UI_TEXT.notifications.heading
-    });
-    await expect(heading).toBeVisible();
-
-    // 通知のタイミングを変更する
-    await heading.locator('xpath=following::select[1]').selectOption('10');
-    await expect
-      .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        return settings?.notifications?.timeLimitMinutes;
-      })
-      .toBe(10);
-
-    // 通知を切ると、タイミングの選択欄も消える
-    const toggle = toggleAfter(heading);
-    await expect(toggle).toHaveAttribute('aria-checked', 'true');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-checked', 'false');
-    await expect(
-      page.getByText(UI_TEXT.notifications.minutesLabel)
-    ).toHaveCount(0);
-
-    await expect
-      .poll(async () => {
-        const settings = await getStorageData(page, 'settings');
-        return settings?.notifications?.timeLimitEnabled;
-      })
-      .toBe(false);
 
     await page.close();
   });

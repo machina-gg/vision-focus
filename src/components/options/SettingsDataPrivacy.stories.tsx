@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { HelpDataPrivacy } from './HelpDataPrivacy';
+import { SettingsDataPrivacy } from './SettingsDataPrivacy';
 import type { AppSettings } from '~/types/storage';
 
 const baseSettings: AppSettings = {
@@ -28,13 +28,13 @@ const baseSettings: AppSettings = {
 };
 
 const meta = {
-  title: 'Options/HelpDataPrivacy',
-  component: HelpDataPrivacy,
+  title: 'Options/SettingsDataPrivacy',
+  component: SettingsDataPrivacy,
   parameters: {
     layout: 'padded'
   },
   tags: ['autodocs']
-} satisfies Meta<typeof HelpDataPrivacy>;
+} satisfies Meta<typeof SettingsDataPrivacy>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

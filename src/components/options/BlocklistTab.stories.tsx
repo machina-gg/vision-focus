@@ -4,12 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { BlocklistTab } from './BlocklistTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';
-import type {
-  AppSettings,
-  BlockItem,
-  NotificationSettings,
-  YouTubeSettings
-} from '~/types/storage';
+import type { AppSettings, BlockItem, YouTubeSettings } from '~/types/storage';
 
 const mockBlockList: BlockItem[] = [
   {
@@ -111,10 +106,6 @@ const BlocklistTabWrapper = () => {
     });
   };
 
-  const handleUpdateNotifications = (notifications: NotificationSettings) => {
-    setSettings({ ...settings, notifications });
-  };
-
   const handleYouTubeChange = (youtube: YouTubeSettings) => {
     setSettings({ ...settings, youtube });
   };
@@ -129,7 +120,6 @@ const BlocklistTabWrapper = () => {
         onRemoveDomain={handleRemoveDomain}
         onToggleDomain={handleToggleDomain}
         onUpdateTimeLimit={() => {}}
-        onUpdateNotifications={handleUpdateNotifications}
         siteBlockCounts={{}}
         timeLimitUsage={{}}
         youtube={settings.youtube}
@@ -161,7 +151,6 @@ const meta = {
     onRemoveDomain: () => {},
     onToggleDomain: () => {},
     onUpdateTimeLimit: () => {},
-    onUpdateNotifications: () => {},
     siteBlockCounts: {},
     timeLimitUsage: {},
     youtube: mockSettings.youtube,
@@ -191,7 +180,6 @@ export const LongUrlInput: Story = {
         onRemoveDomain={() => {}}
         onToggleDomain={() => {}}
         onUpdateTimeLimit={() => {}}
-        onUpdateNotifications={() => {}}
         siteBlockCounts={{}}
         timeLimitUsage={{}}
         youtube={mockSettings.youtube}

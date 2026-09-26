@@ -45,17 +45,18 @@
 
 ### オプション画面用コンポーネント
 
-| コンポーネント名  | 種別    | 説明                         |
-| ----------------- | ------- | ---------------------------- |
-| GeneralTab        | options | スタイル設定（スタイル管理） |
-| BlocklistTab      | options | ブロックリスト管理           |
-| SchedulesTab      | options | スケジュール管理             |
-| WeeklyCalendar    | options | 週間カレンダー表示           |
-| AnalyticsTab      | options | 分析タブ                     |
-| HelpTab           | options | ヘルプタブ                   |
-| ScheduleModal     | modal   | スケジュール編集モーダル     |
-| NewPresetModal    | modal   | 新規スタイル作成モーダル     |
-| DeletePresetModal | modal   | スタイル削除確認モーダル     |
+| コンポーネント名  | 種別    | 説明                                                                     |
+| ----------------- | ------- | ------------------------------------------------------------------------ |
+| GeneralTab        | options | スタイル設定（スタイル管理）                                             |
+| BlocklistTab      | options | ブロックリスト管理                                                       |
+| SchedulesTab      | options | スケジュール管理                                                         |
+| WeeklyCalendar    | options | 週間カレンダー表示                                                       |
+| AnalyticsTab      | options | 分析タブ                                                                 |
+| SettingsTab       | options | 設定タブ（ブロック解除の保護・通知・データとプライバシー・バックアップ） |
+| HelpTab           | options | ヘルプタブ（読むものだけ）                                               |
+| ScheduleModal     | modal   | スケジュール編集モーダル                                                 |
+| NewPresetModal    | modal   | 新規スタイル作成モーダル                                                 |
+| DeletePresetModal | modal   | スタイル削除確認モーダル                                                 |
 
 ### ユーティリティ（lib）
 

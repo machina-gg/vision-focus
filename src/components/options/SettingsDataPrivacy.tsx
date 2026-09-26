@@ -5,7 +5,7 @@ import { Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { AnalyticsOptIn, AppSettings } from '~/types/storage';
 
-interface HelpDataPrivacyProps {
+interface SettingsDataPrivacyProps {
   settings?: AppSettings;
   onAnalyticsOptInChange: (optIn: AnalyticsOptIn) => Promise<void>;
 }
@@ -14,10 +14,10 @@ interface HelpDataPrivacyProps {
  * Data & Privacy セクションコンポーネント
  * 分析データの共有設定を管理
  */
-export function HelpDataPrivacy({
+export function SettingsDataPrivacy({
   settings,
   onAnalyticsOptInChange
-}: HelpDataPrivacyProps) {
+}: SettingsDataPrivacyProps) {
   return (
     <Card>
       <div className="flex items-center gap-3 mb-4">

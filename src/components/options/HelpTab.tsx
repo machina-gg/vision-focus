@@ -3,40 +3,18 @@ import { ExternalLink, Mail } from 'lucide-react';
 
 import { Card } from '~/components/ui';
 import { SupportSection } from '~/components/features';
-import { PasswordSettingsSection } from '~/components/options/PasswordSettingsSection';
 import { HelpGettingStarted } from '~/components/options/HelpGettingStarted';
 import { HelpFAQ } from '~/components/options/HelpFAQ';
 import { HelpTroubleshooting } from '~/components/options/HelpTroubleshooting';
-import { HelpDataPrivacy } from '~/components/options/HelpDataPrivacy';
-import { HelpSettingsBackup } from '~/components/options/HelpSettingsBackup';
 import { getMessage } from '~/lib/i18n';
-import { useSettings } from '~/contexts/SettingsContext';
-import type {
-  PasswordSettings,
-  AnalyticsOptIn,
-  UnblockConfirmSettings
-} from '~/types/storage';
-import {
-  DEFAULT_PASSWORD_SETTINGS,
-  DEFAULT_UNBLOCK_CONFIRM_SETTINGS
-} from '~/types/storage';
 
 const VERSION = '1.0.0';
 
-interface HelpTabProps {
-  onSettingsChange?: () => void;
-  onPasswordUpdate?: (settings: PasswordSettings) => Promise<void>;
-  onUnblockConfirmUpdate?: (settings: UnblockConfirmSettings) => Promise<void>;
-  onAnalyticsOptInChange?: (optIn: AnalyticsOptIn) => Promise<void>;
-}
-
-export function HelpTab({
-  onSettingsChange,
-  onPasswordUpdate,
-  onUnblockConfirmUpdate,
-  onAnalyticsOptInChange
-}: HelpTabProps) {
-  const { settings } = useSettings();
+/**
+ * 読むもの（使い方・FAQ・困ったとき・支援・問い合わせ）だけを並べるタブ。
+ * 値を変える項目は設定タブに置く
+ */
+export function HelpTab() {
   return (
     <div className="space-y-6">
       {/* Getting Started */}
@@ -47,30 +25,6 @@ export function HelpTab({
 
       {/* Troubleshooting */}
       <HelpTroubleshooting />
-
-      {/* Unblock Protection (hold duration + password) */}
-      {onPasswordUpdate && onUnblockConfirmUpdate && (
-        <PasswordSettingsSection
-          passwordSettings={settings?.password ?? DEFAULT_PASSWORD_SETTINGS}
-          onUpdate={onPasswordUpdate}
-          holdSeconds={
-            (settings?.unblockConfirm ?? DEFAULT_UNBLOCK_CONFIRM_SETTINGS)
-              .holdSeconds
-          }
-          onUnblockConfirmUpdate={onUnblockConfirmUpdate}
-        />
-      )}
-
-      {/* Data & Privacy */}
-      {onAnalyticsOptInChange && (
-        <HelpDataPrivacy
-          settings={settings}
-          onAnalyticsOptInChange={onAnalyticsOptInChange}
-        />
-      )}
-
-      {/* Settings Backup */}
-      <HelpSettingsBackup onSettingsChange={onSettingsChange} />
 
       {/* Support Development */}
       <SupportSection />

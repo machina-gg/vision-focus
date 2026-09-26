@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { HelpSettingsBackup } from '../HelpSettingsBackup';
+import { SettingsBackup } from '../SettingsBackup';
 import {
   EXPORT_STATUS_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
@@ -11,7 +11,7 @@ import {
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 
 /**
- * HelpSettingsBackup の表示分岐とコールバックの検査
+ * SettingsBackup の表示分岐とコールバックの検査
  *
  * インポートは「読み込み → 検証 → background への保存 → スタイルの保存」と
  * 段階があり、途中で失敗したときに成功表示を出したりスタイルだけ書き換えたり
@@ -75,10 +75,10 @@ beforeEach(() => {
   messaging.sendMessage.mockReset().mockResolvedValue({ success: true });
 });
 
-describe('HelpSettingsBackup', () => {
+describe('SettingsBackup', () => {
   describe('初期表示', () => {
     it('エクスポートとインポートの見出しを出す', () => {
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       expect(screen.getByText('settingsBackup')).toBeInTheDocument();
       expect(exportButton()).toHaveTextContent('exportSettings');
@@ -88,7 +88,7 @@ describe('HelpSettingsBackup', () => {
     });
 
     it('警告も結果も出ていない', () => {
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       expect(screen.queryByText('exportLargeWarning')).not.toBeInTheDocument();
       expect(
@@ -101,7 +101,7 @@ describe('HelpSettingsBackup', () => {
     it('現在の設定とスタイルを渡して書き出す', async () => {
       const data = { version: 1 };
       settingsExport.exportSettings.mockReturnValue({ data, isLarge: false });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -120,7 +120,7 @@ describe('HelpSettingsBackup', () => {
         data: { version: 1 },
         isLarge: true
       });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -131,7 +131,7 @@ describe('HelpSettingsBackup', () => {
 
     it('失敗したら成功表示を出さない', async () => {
       storage.getSettings.mockRejectedValue(new Error('storage error'));
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -145,7 +145,7 @@ describe('HelpSettingsBackup', () => {
   describe('インポートの開始', () => {
     it('ボタンを押すとファイル選択欄が開く', () => {
       const click = vi.spyOn(HTMLInputElement.prototype, 'click');
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       fireEvent.click(screen.getByTestId('settings-import-button'));
 
@@ -154,7 +154,7 @@ describe('HelpSettingsBackup', () => {
     });
 
     it('ファイルを選ばなかったときは何もしない', async () => {
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await act(async () => {
         fireEvent.change(importInput(), { target: { files: [] } });
@@ -167,7 +167,7 @@ describe('HelpSettingsBackup', () => {
   describe('インポートの成功', () => {
     it('background へ保存したあとスタイルを保存し、成功を伝える', async () => {
       const onSettingsChange = vi.fn();
-      render(<HelpSettingsBackup onSettingsChange={onSettingsChange} />);
+      render(<SettingsBackup onSettingsChange={onSettingsChange} />);
 
       await importFile();
 
@@ -182,7 +182,7 @@ describe('HelpSettingsBackup', () => {
     });
 
     it('onSettingsChange が未指定でも例外にならない', async () => {
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -197,7 +197,7 @@ describe('HelpSettingsBackup', () => {
         data: { version: 1 },
         warnings: ['importWarningOldVersion', 'importWarningUnknownField']
       });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -211,7 +211,7 @@ describe('HelpSettingsBackup', () => {
         data: { version: 1 },
         warnings: []
       });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -227,7 +227,7 @@ describe('HelpSettingsBackup', () => {
         success: false,
         error: 'importErrorVersionMismatch'
       });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -240,7 +240,7 @@ describe('HelpSettingsBackup', () => {
 
     it('検証が理由を返さなければ既定の理由を出す', async () => {
       settingsExport.validateImportedData.mockReturnValue({ success: false });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -251,7 +251,7 @@ describe('HelpSettingsBackup', () => {
 
     it('検証を通っても中身が無ければ失敗として扱う', async () => {
       settingsExport.validateImportedData.mockReturnValue({ success: true });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -264,7 +264,7 @@ describe('HelpSettingsBackup', () => {
     it('background への保存が失敗したらスタイルも書き換えない', async () => {
       messaging.sendMessage.mockResolvedValue({ success: false });
       const onSettingsChange = vi.fn();
-      render(<HelpSettingsBackup onSettingsChange={onSettingsChange} />);
+      render(<SettingsBackup onSettingsChange={onSettingsChange} />);
 
       await importFile();
 
@@ -277,7 +277,7 @@ describe('HelpSettingsBackup', () => {
 
     it('background からの応答が無くても失敗として扱う', async () => {
       messaging.sendMessage.mockResolvedValue(undefined);
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -289,7 +289,7 @@ describe('HelpSettingsBackup', () => {
 
     it('ファイルが読めなければ失敗として扱う', async () => {
       settingsExport.readFileAsString.mockRejectedValue(new Error('io error'));
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -300,7 +300,7 @@ describe('HelpSettingsBackup', () => {
 
     it('失敗しても同じファイルを選び直せるよう入力欄を空へ戻す', async () => {
       settingsExport.readFileAsString.mockRejectedValue(new Error('io error'));
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -322,7 +322,7 @@ describe('HelpSettingsBackup', () => {
         data: { version: 1 },
         isLarge: true
       });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -346,7 +346,7 @@ describe('HelpSettingsBackup', () => {
         })
         .mockReturnValue({ success: false, error: 'importErrorSaveFailed' });
       messaging.sendMessage.mockResolvedValue({ success: false });
-      render(<HelpSettingsBackup />);
+      render(<SettingsBackup />);
 
       await importFile();
       expect(screen.getByText('importWarningOldVersion')).toBeInTheDocument();

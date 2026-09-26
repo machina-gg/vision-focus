@@ -112,6 +112,7 @@ export const SELECTORS = {
     stylesTab: '[data-testid="tab-styles"]',
     schedulesTab: '[data-testid="tab-schedules"]',
     analyticsTab: '[data-testid="tab-analytics"]',
+    settingsTab: '[data-testid="tab-settings"]',
     helpTab: '[data-testid="tab-help"]',
     domainInput: '[data-testid="blocklist-domain-input"]',
     addButton: '[data-testid="blocklist-add-button"]',
@@ -211,8 +212,14 @@ export const SELECTORS = {
     gettingStarted: '[data-testid="help-getting-started"]',
     faq: '[data-testid="help-faq"]',
     troubleshooting: '[data-testid="help-troubleshooting"]',
-    passwordSection: '[data-testid="help-password-section"]',
-    unblockProtectionSection: '[data-testid="help-unblock-protection-section"]',
+    faqItem: '[data-testid="help-faq-item"]'
+  },
+
+  // Options - Settings Tab
+  settings: {
+    passwordSection: '[data-testid="settings-password-section"]',
+    unblockProtectionSection:
+      '[data-testid="settings-unblock-protection-section"]',
     // 共通の Select は目印を受け取らないため、枠の目印から select を指す
     unblockHoldSecondsSelect:
       '[data-testid="unblock-hold-seconds-field"] select',
@@ -231,8 +238,7 @@ export const SELECTORS = {
     exportSettingsButton: '[data-testid="settings-export-button"]',
     importSettingsButton: '[data-testid="settings-import-button"]',
     importSettingsInput: '[data-testid="settings-import-input"]',
-    importResultMessage: '[data-testid="import-result-message"]',
-    faqItem: '[data-testid="help-faq-item"]'
+    importResultMessage: '[data-testid="import-result-message"]'
   }
 };
 

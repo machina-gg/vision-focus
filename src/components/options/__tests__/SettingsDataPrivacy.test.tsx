@@ -3,12 +3,12 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { HelpDataPrivacy } from '../HelpDataPrivacy';
+import { SettingsDataPrivacy } from '../SettingsDataPrivacy';
 import type { AnalyticsOptIn } from '~/types/analytics';
 import type { AppSettings } from '~/types/storage';
 
 /**
- * HelpDataPrivacy の切り替えの初期状態と、保存に渡る値の検査
+ * SettingsDataPrivacy の切り替えの初期状態と、保存に渡る値の検査
  *
  * 未設定（設定そのものが無い / analyticsOptIn が無い / null）はすべて
  * 「共有しない」に倒れる。ここが反転すると、決めていない利用者の
@@ -27,7 +27,7 @@ const settingsOf = (
 function renderSection(settings: AppSettings | undefined) {
   const onAnalyticsOptInChange = vi.fn(async () => undefined);
   const result = render(
-    <HelpDataPrivacy
+    <SettingsDataPrivacy
       settings={settings}
       onAnalyticsOptInChange={onAnalyticsOptInChange}
     />
@@ -46,7 +46,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('HelpDataPrivacy', () => {
+describe('SettingsDataPrivacy', () => {
   describe('表示', () => {
     it('見出しと説明を出す', () => {
       renderSection(undefined);

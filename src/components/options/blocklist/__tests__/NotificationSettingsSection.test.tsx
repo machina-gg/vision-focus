@@ -10,7 +10,7 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 /**
  * NotificationSettingsSection の表示条件と保存内容の検査
  *
- * 時間制限つきのサイトが無いときは節ごと出さないこと、設定が未保存のときの
+ * 時間制限つきのサイトの有無によらず常に出すこと、設定が未保存のときの
  * 既定値（有効・5 分）、および操作で onUpdate に渡る設定の中身を確かめる。
  * 分数は数値で保存する必要があるため、文字列のまま渡っていないかまで見る。
  */
@@ -18,16 +18,12 @@ import { stubI18nWithSubstitutions } from '~/test/i18n';
 // 選択肢の分数が文言の置換値として表示に出るため、置換値の見える stub を使う
 stubI18nWithSubstitutions();
 
-function renderSection(
-  notifications: NotificationSettings | undefined,
-  hasTimeLimitSites = true
-) {
+function renderSection(notifications: NotificationSettings | undefined) {
   const onUpdate = vi.fn();
   const result = render(
     <NotificationSettingsSection
       notifications={notifications}
       onUpdate={onUpdate}
-      hasTimeLimitSites={hasTimeLimitSites}
     />
   );
   return { onUpdate, ...result };
@@ -37,23 +33,6 @@ function renderSection(
 const minutesSelect = () => screen.getByRole('combobox');
 
 describe('NotificationSettingsSection', () => {
-  describe('時間制限つきのサイトが無いとき', () => {
-    it('何も描画しない', () => {
-      const { container } = renderSection(undefined, false);
-
-      expect(container).toBeEmptyDOMElement();
-    });
-
-    it('設定が保存されていても描画しない', () => {
-      const { container } = renderSection(
-        { timeLimitEnabled: true, timeLimitMinutes: 10 },
-        false
-      );
-
-      expect(container).toBeEmptyDOMElement();
-    });
-  });
-
   describe('設定が未保存のとき', () => {
     it('通知を有効、5 分前として表示する', () => {
       renderSection(undefined);
@@ -69,6 +48,9 @@ describe('NotificationSettingsSection', () => {
       renderSection(undefined);
 
       expect(screen.getByText('notificationSettings')).toBeInTheDocument();
+      expect(
+        screen.getByText('notificationSettingsDescription')
+      ).toBeInTheDocument();
       expect(
         screen.getByText('notificationTimeLimitEnabled')
       ).toBeInTheDocument();

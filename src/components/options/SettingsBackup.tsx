@@ -23,7 +23,7 @@ import {
 } from '~/lib/settingsExport';
 import { getSettings, getVision, setVision } from '~/lib/storage';
 
-interface HelpSettingsBackupProps {
+interface SettingsBackupProps {
   onSettingsChange?: () => void;
 }
 
@@ -31,9 +31,7 @@ interface HelpSettingsBackupProps {
  * Settings Backup セクションコンポーネント
  * 設定のエクスポート・インポート機能を提供
  */
-export function HelpSettingsBackup({
-  onSettingsChange
-}: HelpSettingsBackupProps) {
+export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');

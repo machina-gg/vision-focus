@@ -18,8 +18,7 @@ type Story = StoryObj<typeof meta>;
 export const NotificationEnabled: Story = {
   args: {
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
-    onUpdate: () => {},
-    hasTimeLimitSites: true
+    onUpdate: () => {}
   }
 };
 
@@ -27,16 +26,14 @@ export const NotificationEnabled: Story = {
 export const NotificationDisabled: Story = {
   args: {
     notifications: { timeLimitEnabled: false, timeLimitMinutes: 5 },
-    onUpdate: () => {},
-    hasTimeLimitSites: true
+    onUpdate: () => {}
   }
 };
 
-// 時間制限付きサイトが無い場合（コンポーネントは何も描画しない）
-export const NoTimeLimitSites: Story = {
+// 設定が未保存の場合（既定値の有効・5 分前で表示する）
+export const NotSaved: Story = {
   args: {
     notifications: undefined,
-    onUpdate: () => {},
-    hasTimeLimitSites: false
+    onUpdate: () => {}
   }
 };

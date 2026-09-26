@@ -85,7 +85,6 @@ function renderTab(props: Partial<TabProps> = {}) {
     onRemoveDomain: vi.fn(),
     onToggleDomain: vi.fn(),
     onUpdateTimeLimit: vi.fn(),
-    onUpdateNotifications: vi.fn(),
     onYouTubeChange: vi.fn()
   };
 
@@ -239,18 +238,8 @@ describe('BlocklistTab', () => {
     });
   });
 
-  describe('通知設定の表示', () => {
-    it('時間制限つきのサイトが無ければ通知設定は出ない', () => {
-      setSettings({ blockList: [itemOf({ timeLimit: null })] });
-
-      renderTab();
-
-      expect(
-        screen.queryByText('notificationSettings')
-      ).not.toBeInTheDocument();
-    });
-
-    it('時間制限つきのサイトがあれば通知設定が出る', () => {
+  describe('通知設定', () => {
+    it('時間制限つきのサイトがあっても通知設定は出さない（設定タブの担当）', () => {
       setSettings({
         blockList: [
           itemOf({ timeLimit: { type: 'daily', limitSeconds: 1800 } })
@@ -259,7 +248,9 @@ describe('BlocklistTab', () => {
 
       renderTab();
 
-      expect(screen.getByText('notificationSettings')).toBeInTheDocument();
+      expect(
+        screen.queryByText('notificationSettings')
+      ).not.toBeInTheDocument();
     });
   });
 

@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { HelpSettingsBackup } from './HelpSettingsBackup';
+import { SettingsBackup } from './SettingsBackup';
 
 const meta = {
-  title: 'Options/HelpSettingsBackup',
-  component: HelpSettingsBackup,
+  title: 'Options/SettingsBackup',
+  component: SettingsBackup,
   parameters: {
     layout: 'padded'
   },
   tags: ['autodocs']
-} satisfies Meta<typeof HelpSettingsBackup>;
+} satisfies Meta<typeof SettingsBackup>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
