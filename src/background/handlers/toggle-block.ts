@@ -5,7 +5,6 @@ import { recordActivity } from '~/lib/activityService';
 import { setBlockEnabled } from '~/lib/siteService';
 import { ToggleBlockBodySchema } from '~/types/messageSchemas';
 
-/** ブロックリストのトグル（`block.enabled`）。domain はサイトキー */
 export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   data
 }) => {
@@ -22,11 +21,9 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
 
   await updateBlockRules();
 
-  // If re-enabling, block existing tabs that match
   if (enabled) {
     await blockExistingTabs();
   } else if (before.enabled) {
-    // 解除を利用統計に送り、事実の表に 1 回として残す（効いていたブロックを外したときだけ）
     await trackUnblockEvent(domain);
     await recordActivity({ kind: 'unblock', site: domain, at: new Date() });
   }
@@ -34,20 +31,18 @@ export const toggleBlockHandler: MessageHandler<'toggle-block'> = async ({
   return { success: true };
 };
 
-// 利用統計（GA4。オプトイン時のみ送信）に解除を送る
 async function trackUnblockEvent(domain: string): Promise<void> {
   await trackEvent('block_unblock', {
-    domain_hashed: hashDomain(domain) // Send hashed domain to avoid leaking user data
+    domain_hashed: hashDomain(domain)
   });
 }
 
-// Hash domain for privacy (SHA-256 would be better, but we use a simple hash here)
 function hashDomain(domain: string): string {
   let hash = 0;
   for (let i = 0; i < domain.length; i++) {
     const char = domain.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash).toString(36);
 }

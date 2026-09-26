@@ -20,12 +20,6 @@ interface UsePopupActionsReturn {
   isPasswordProtected: boolean;
 }
 
-/**
- * Hook to encapsulate popup navigation, block, and pause actions.
- * Password modal state is NOT managed here (kept in popup.tsx until #94 merges).
- * Instead, `handlePausedChange` calls the provided `onPasswordRequired` callback
- * when a password check is needed, which popup.tsx handles by showing the modal.
- */
 export function usePopupActions({
   settings,
   clearDomain

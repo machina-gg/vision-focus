@@ -3,10 +3,6 @@ import { addBlock } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { addSiteError } from './siteRejection';
 
-/**
- * ブロックリストに追加する。追跡中のサイトが無ければ作り、追跡だけのサイトならブロック設定を足す。
- * 既存のサイトと入れ子になるキーは拒否する
- */
 export const addBlockHandler: MessageHandler<'add-block'> = async ({
   data
 }) => {

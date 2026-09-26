@@ -12,7 +12,6 @@ import type { TrackedSite } from '~/types/site';
 
 type ImportedSite = ImportSettingsBody['sites'][number];
 
-/** 検証済みの値を保存形にそろえる（null の項目を省略形のまま保存しない） */
 function toTrackedSite(site: ImportedSite): TrackedSite {
   return {
     domain: site.domain,
@@ -28,17 +27,7 @@ function toTrackedSite(site: ImportedSite): TrackedSite {
   };
 }
 
-/**
- * インポートした設定を保存するメッセージハンドラ。
- *
- * ブロックリストの操作（add-block / toggle-block）や YouTube 設定
- * （update-youtube-settings）と同じく、保存と既存タブのブロックを background 側で
- * 完結させる（画面から保存すると開いているタブが置き換わらない）。
- *
- * 全体の設定は画面側が applyImportedSettings で組み立てた適用後の値を受け取る。
- * 追跡中のサイトは既存とのマージ（入れ子の拒否を含む）をここで行う。書き手を
- * background に 1 つに保つため。スタイル（vision）はブロック判定に関わらないため、ここでは扱わない
- */
+// 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   data
 }) => {
@@ -51,10 +40,8 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   try {
     const current = await getSettings();
 
-    // 保存前のブロック対象を控える（保存後は新旧の区別が付かなくなる）
     const blockedBefore = await getActiveBlockedDomains();
 
-    // 検証は looseObject なので、未知のキーも含めて適用後の設定として保存する
     const settings = { ...current, ...parsed.data.settings } as AppSettings;
     await setSettings(settings);
     const { skipped } = await importSites(
@@ -62,12 +49,9 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
       new Date()
     );
 
-    // declarativeNetRequest のルールを設定に追従させる
     await updateBlockRules();
 
-    // ⚠ ブロックリストの件数ではなく、実際にブロック対象になるドメインの集合で
-    //    比較する（項目の有効化・時間制限の解除・一時停止の解除・YouTube の
-    //    アクセスブロックのいずれでも対象は増えるため）
+    // 件数では比べない（有効化・時間制限や一時停止の解除でも、件数を変えずに対象が増える）
     const blockedAfter = await getActiveBlockedDomains();
     const hasNewlyBlocked = blockedAfter.some(
       (domain) => !blockedBefore.includes(domain)

@@ -54,7 +54,6 @@ export function useSchedules({
   );
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
-  // 入力が変わった時点でエラーを消す。直した内容と古いエラーが並ばないようにする
   const setScheduleForm = useCallback((form: ScheduleFormData) => {
     setScheduleFormState(form);
     setScheduleError(null);
@@ -73,7 +72,6 @@ export function useSchedules({
       presetId: scheduleForm.presetId || undefined
     };
 
-    // 重なった時間帯はどのプリセットが効くか画面から分からないため、保存の時点で弾く
     const overlapping = findOverlappingSchedule(
       newSchedule,
       settings.schedules,
@@ -128,10 +126,7 @@ export function useSchedules({
       await settingsItem.setValue(updated);
       setSettings(updated);
 
-      // スケジュールを有効化したときは一時停止も解除する。
-      // paused の切り替えは background の toggle-pause ハンドラに寄せる
-      // （ハンドラが既存タブのブロックまで行うため。画面から直接書くと
-      // 開いているタブが次の遷移までブロックされない）(#392)
+      // paused は toggle-pause 経由で解除する（画面から直接書くと開いているタブがブロックされない）
       if (enabled && settings.paused) {
         await resumeBlocking(setSettings);
       }
@@ -177,10 +172,6 @@ export function useSchedules({
   };
 }
 
-/**
- * 一時停止を解除する（background の toggle-pause ハンドラ経由）。
- * ハンドラがブロックルールの更新と既存タブのブロックまで行う
- */
 async function resumeBlocking(
   setSettings: (settings: AppSettings) => void
 ): Promise<void> {

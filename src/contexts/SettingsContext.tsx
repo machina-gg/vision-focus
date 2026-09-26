@@ -20,10 +20,6 @@ interface SettingsProviderProps {
   children: ReactNode;
 }
 
-/**
- * Settings Context Provider
- * settings と vision を Context API で管理し、options.tsx の Props Drilling を解消する
- */
 export function SettingsProvider({ children }: SettingsProviderProps) {
   const [settings, setSettings] = useStorageItem(settingsItem);
   const [vision, setVision] = useStorageItem(visionItem);
@@ -37,10 +33,6 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   );
 }
 
-/**
- * Settings Context Hook
- * settings と vision にアクセスするためのカスタムフック
- */
 export function useSettings(): SettingsContextValue {
   const context = useContext(SettingsContext);
   if (!context) {

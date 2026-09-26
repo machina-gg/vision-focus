@@ -9,22 +9,13 @@ import { clearExpiredNotifications } from '../notifications';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
 
-/**
- * 保持期間を超えた事実の行を消す。
- * 事実の表の日付はローカル日付なので、境界もローカル日付で作る
- */
+// 事実の表の日付はローカル日付なので、境界もローカル日付で作る
 async function pruneOldActivity(): Promise<void> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - MAX_HISTORY_DAYS_FALLBACK);
   await pruneBefore(toDateKey(cutoff));
 }
 
-/**
- * アラームリスナーを登録する
- * - daily-cleanup: 古いデータの削除と日次アクティブ送信
- * - check-schedule: ブロックルールの再計算。スケジュールの切り替わりと、日付が変わって
- *   時間制限の使用量（今日の行）が 0 に戻ったことをルールに反映する
- */
 export function setupAlarmHandlers(): void {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'daily-cleanup') {
@@ -38,9 +29,6 @@ export function setupAlarmHandlers(): void {
   });
 }
 
-/**
- * 定期実行アラームを作成する
- */
 export function createAlarms(): void {
   chrome.alarms.create('daily-cleanup', {
     periodInMinutes: ALARM_DAILY_CLEANUP_MINUTES

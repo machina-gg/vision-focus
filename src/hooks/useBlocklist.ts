@@ -37,8 +37,6 @@ export function useBlocklist({
   const [newDomain, setNewDomain] = useState('');
   const [blockError, setBlockError] = useState('');
 
-  // 形式の誤り・重複・入れ子の検査は background が行い、理由を error で返す。
-  // 追跡中のサイトは background だけが書き、一覧は sites の監視で追従する
   const handleAddDomain = useCallback(async () => {
     if (!newDomain.trim()) return;
 

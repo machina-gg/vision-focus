@@ -9,33 +9,18 @@ interface UsePasswordVerificationOptions {
 }
 
 interface UsePasswordVerificationReturn {
-  /** Whether the password modal is visible */
   showModal: boolean;
-  /** Current password input value */
   passwordInput: string;
-  /** Error message to display, or null */
   passwordError: string | null;
-  /** Whether the password input is shown as plain text */
   showPassword: boolean;
-  /** Whether verification is in progress */
   isVerifying: boolean;
-  /** Open the modal and reset state */
   openModal: () => void;
-  /** Close the modal and reset state */
   closeModal: () => void;
-  /** Update the password input value */
   setPasswordInput: (value: string) => void;
-  /** Toggle password visibility */
   toggleShowPassword: () => void;
-  /** Submit and verify the password */
   handleSubmit: () => Promise<void>;
 }
 
-/**
- * Hook that encapsulates password verification modal state and logic.
- * Manages modal visibility, password input, error handling, and verification
- * using the verifyPassword utility from ~/lib/password.
- */
 export function usePasswordVerification({
   passwordHash,
   onSuccess

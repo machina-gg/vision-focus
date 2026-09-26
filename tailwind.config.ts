@@ -5,7 +5,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary: Teal (集中、信頼、行動)
         primary: {
           50: '#f0fdfa',
           100: '#ccfbf1',
@@ -19,7 +18,6 @@ const config: Config = {
           900: '#134e4a',
           950: '#042f2e'
         },
-        // Success: Cyan (成長、生産的な時間)
         success: {
           50: '#ecfeff',
           100: '#cffafe',
@@ -33,7 +31,6 @@ const config: Config = {
           900: '#164e63',
           950: '#083344'
         },
-        // Warning: Amber (注意喚起、時間制限の警告)
         warning: {
           50: '#fffbeb',
           100: '#fef3c7',
@@ -47,7 +44,6 @@ const config: Config = {
           900: '#78350f',
           950: '#451a03'
         },
-        // Danger: Rose (浪費した時間、エラー、削除)
         danger: {
           50: '#fff1f2',
           100: '#ffe4e6',
@@ -61,7 +57,6 @@ const config: Config = {
           900: '#881337',
           950: '#4c0519'
         },
-        // Block: Orange (ブロック機能、サイトブロック)
         block: {
           50: '#fff7ed',
           100: '#ffedd5',
@@ -75,7 +70,6 @@ const config: Config = {
           900: '#7c2d12',
           950: '#431407'
         },
-        // Premium: Violet (プレミアム機能、特別感)
         premium: {
           50: '#f5f3ff',
           100: '#ede9fe',
@@ -89,7 +83,6 @@ const config: Config = {
           900: '#4c1d95',
           950: '#2e1065'
         },
-        // Info: Sky (情報表示、統計値)
         info: {
           50: '#f0f9ff',
           100: '#e0f2fe',

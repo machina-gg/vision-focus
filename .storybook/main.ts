@@ -14,7 +14,6 @@ const config: StorybookConfig = {
         ...config.resolve,
         alias: {
           ...config.resolve?.alias,
-          // WXT が付ける ~ エイリアス（srcDir を指す）を Storybook でも再現する
           '~': `${process.cwd()}/src`
         }
       }

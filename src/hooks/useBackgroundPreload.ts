@@ -37,7 +37,6 @@ export function useBackgroundPreload({
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isBackgroundReady, setIsBackgroundReady] = useState(false);
 
-  // Mark storage as loaded once we have vision data beyond default
   useEffect(() => {
     const checkStorageLoaded = async () => {
       if (await hasStoredVision()) {
@@ -47,7 +46,6 @@ export function useBackgroundPreload({
     checkStorageLoaded();
   }, []);
 
-  // Also mark as loaded after a short timeout to handle first-time users
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsStorageLoaded(true);
@@ -63,7 +61,6 @@ export function useBackgroundPreload({
       : getBackgroundUrl('default-1');
   const backgroundColor = displaySettings.backgroundColor;
 
-  // Preload background image to prevent flicker
   useEffect(() => {
     if (isColorBackground) {
       setIsBackgroundReady(true);
@@ -83,7 +80,6 @@ export function useBackgroundPreload({
   const fontSettings = displaySettings.fontSettings;
   const fontDef = getFontDefinition(fontSettings.family);
 
-  // Load Google Font
   useEffect(() => {
     if (fontDef.googleFont) {
       loadGoogleFont(fontDef.googleFont);

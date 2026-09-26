@@ -4,7 +4,6 @@ import { recordActivity } from '~/lib/activityService';
 import { removeBlock } from '~/lib/siteService';
 import { SiteBodySchema } from '~/types/messageSchemas';
 
-/** ブロックリストから外す（`block = null`。追跡は続く） */
 export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
   data
 }) => {
@@ -21,9 +20,7 @@ export const removeBlockHandler: MessageHandler<'remove-block'> = async ({
 
   await updateBlockRules();
 
-  // 解除は「利用者の操作でブロックが効かなくなったこと」なので、効いていた項目の削除だけ数える
-  // （無効化済みの項目を消しても効かなくなるブロックは無く、トグル OFF と二重に数えてしまう）。
-  // ブロックリストから外してもサイトは追跡中に残るので、保存の後に記録しても捨てられない
+  // 無効化済みの項目の削除まで数えると、トグル OFF の解除と二重に数えてしまう
   if (removed.enabled) {
     await recordActivity({ kind: 'unblock', site: domain, at: new Date() });
   }

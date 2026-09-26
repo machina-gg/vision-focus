@@ -31,9 +31,7 @@ export interface UsePresetsReturn {
   visionSaved: boolean;
   showSavePresetModal: boolean;
   presetName: string;
-  /** 削除の確認待ちになっているスタイルの ID（確認が不要なら null） */
   deleteTargetPresetId: string | null;
-  /** 確認待ちのスタイルを参照しているスケジュールの件数 */
   deleteTargetScheduleCount: number;
   setShowSavePresetModal: (show: boolean) => void;
   setPresetName: (name: string) => void;
@@ -54,8 +52,6 @@ export interface UsePresetsReturn {
   handleCustomBackgroundChange: (dataUrl: string | null) => void;
   handleFontSettingsChange: (fontSettings: FontSettings) => void;
 }
-
-// ============ Reducer ============
 
 interface PresetState {
   draftDisplaySettings: DashboardDisplaySettings;
@@ -181,8 +177,6 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
   }
 }
 
-// ============ Hook ============
-
 const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
 export function usePresets({
@@ -231,7 +225,6 @@ export function usePresets({
     if (fontDef.googleFont) loadGoogleFont(fontDef.googleFont);
   }, [currentFontSettings]);
 
-  // Display settings handlers -- dispatch is stable so no deps needed
   const displayHandlers = useMemo(
     () => ({
       handleGoalTextChange: (text: string) =>
@@ -266,8 +259,7 @@ export function usePresets({
     []
   );
 
-  // 保存後フィードバックを消すタイマーの ID。アンマウント後に発火すると
-  // 片付け済みの画面へ dispatch してしまうため、止められるように保持する（#480）
+  // アンマウント後に発火すると片付け済みの画面へ dispatch するので、止められるよう保持する
   const savedFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -304,7 +296,6 @@ export function usePresets({
     [state.draftPresets]
   );
 
-  // スタイルを参照しているスケジュールの件数（削除時の確認に出す）
   const countSchedulesUsingPreset = useCallback(
     (presetId: string) =>
       (settings?.schedules ?? []).filter((s) => s.presetId === presetId).length,
@@ -321,11 +312,9 @@ export function usePresets({
 
   const deletePreset = useCallback(
     async (id: string) => {
-      // スケジュール側の連携を先に外す。vision を先に書くと、途中で失敗したときに
-      // 宛先のない presetId がスケジュールに残る（#333）
+      // スケジュール側の連携を先に外す（vision を先に書くと、途中で失敗したとき宛先のない presetId が残る）
       const schedules = settings?.schedules ?? [];
       if (settings && schedules.some((s) => s.presetId === id)) {
-        // スケジュール自体（時間帯・曜日）はユーザーの資産なので enabled は変えない
         const updatedSettings: AppSettings = {
           ...settings,
           schedules: schedules.map((s) =>
@@ -362,7 +351,6 @@ export function usePresets({
     ]
   );
 
-  // 参照しているスケジュールがあるときだけ確認を挟む。0 件なら従来どおり即削除する
   const handleRequestDeletePreset = useCallback(
     async (id: string) => {
       if (countSchedulesUsingPreset(id) > 0) {
