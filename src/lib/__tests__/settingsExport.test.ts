@@ -288,6 +288,19 @@ describe('applyImportedSettings', () => {
     expect(itemAt(settings.schedules, 0).name).toBe('Existing');
   });
 
+  it('通知設定がインポートされる', () => {
+    const importData = createValidExportData({
+      notifications: {
+        timeLimitEnabled: false,
+        timeLimitMinutes: 10
+      }
+    }).data;
+
+    const settings = applyImportedSettings(importData, DEFAULT_SETTINGS);
+    expect(settings.notifications.timeLimitEnabled).toBe(false);
+    expect(settings.notifications.timeLimitMinutes).toBe(10);
+  });
+
   it('スケジュール・通知・長押し確認以外の項目は今の値のまま', () => {
     const currentSettings: AppSettings = {
       ...DEFAULT_SETTINGS,
@@ -328,19 +341,6 @@ describe('applyImportedVision', () => {
     const vision = applyImportedVision(importData, DEFAULT_VISION);
     expect(vision.presets).toHaveLength(1);
     expect(itemAt(vision.presets, 0).name).toBe('New Preset');
-  });
-
-  it('通知設定がインポートされる', () => {
-    const importData = createValidExportData({
-      notifications: {
-        timeLimitEnabled: false,
-        timeLimitMinutes: 10
-      }
-    }).data;
-
-    const settings = applyImportedSettings(importData, DEFAULT_SETTINGS);
-    expect(settings.notifications.timeLimitEnabled).toBe(false);
-    expect(settings.notifications.timeLimitMinutes).toBe(10);
   });
 
   it('既存と同じIDのプリセットは今のものを残す', () => {
@@ -443,6 +443,32 @@ describe('必須項目（notifications / unblockConfirm）が無いファイル�
     (key) => {
       const full = createValidExportData();
       const { [key]: _omitted, ...data } = full.data;
+
+      const result = validateImportedData(JSON.stringify({ ...full, data }));
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('importErrorInvalidFormat');
+    }
+  );
+});
+
+describe('背景画像の項目（customBackgroundData）が無いファイルの取り込み', () => {
+  // null で補わない
+  it.each(['defaultDisplaySettings', 'presets'] as const)(
+    '%s の customBackgroundData が無いファイルは形式エラーで拒む',
+    (target) => {
+      const { customBackgroundData: _omitted, ...display } =
+        DEFAULT_DISPLAY_SETTINGS;
+      const full = createValidExportData();
+      const data =
+        target === 'defaultDisplaySettings'
+          ? { ...full.data, defaultDisplaySettings: display }
+          : {
+              ...full.data,
+              presets: [
+                { ...display, id: 'p1', name: 'P', createdAt: '2024-01-01' }
+              ]
+            };
 
       const result = validateImportedData(JSON.stringify({ ...full, data }));
 

@@ -151,7 +151,7 @@ const DisplaySettingsSchema = z.object({
   backgroundType: z.enum(['image', 'color']),
   backgroundImage: z.string(),
   backgroundColor: z.string(),
-  customBackgroundData: z.string().nullable().default(null),
+  customBackgroundData: z.string().nullable(),
   fontSettings: FontSettingsSchema
 });
 
