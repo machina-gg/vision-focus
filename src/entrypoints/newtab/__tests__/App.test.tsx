@@ -8,6 +8,7 @@ import { openOptionsPage } from '~/lib/chromeApi';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { ActivityLog } from '~/types/activity';
+import type { LastBlocked } from '~/lib/storage';
 import type { SiteKey, TrackedSites } from '~/types/site';
 import type {
   AppSettings,
@@ -20,7 +21,7 @@ import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS } from '~/types/storage';
 stubI18nWithSubstitutions();
 
 const storageState = vi.hoisted(() => ({
-  blockedDomain: null as string | null
+  lastBlocked: null as LastBlocked | null
 }));
 
 vi.mock('~/lib/storage', () => ({
@@ -29,8 +30,8 @@ vi.mock('~/lib/storage', () => ({
   activityItem: { key: 'local:activity' },
   sitesItem: { key: 'local:sites' },
   hasStoredVision: async () => true,
-  getLastBlockedDomain: async () => storageState.blockedDomain,
-  clearLastBlockedDomain: async () => undefined
+  getLastBlocked: async () => storageState.lastBlocked,
+  clearLastBlocked: async () => undefined
 }));
 
 vi.mock('~/lib/chromeApi', async (importOriginal) => {
@@ -124,12 +125,15 @@ function renderApp(
 
 beforeEach(() => {
   vi.clearAllMocks();
-  storageState.blockedDomain = null;
+  storageState.lastBlocked = null;
 });
 
 describe('スタイルが 1 つも無いとき', () => {
   it('ブロックされたサイトから来たら、説明文と目印が出る', async () => {
-    storageState.blockedDomain = 'example.com';
+    storageState.lastBlocked = {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    };
 
     renderApp({
       vision: {
@@ -177,7 +181,10 @@ describe('スタイルが 1 つも無いとき', () => {
 
   it('保存データそのものが無くても、目標欄まで描かれる', async () => {
     // 初めて使う利用者（vision が未保存）。既定値へ落ちることを見る
-    storageState.blockedDomain = 'example.com';
+    storageState.lastBlocked = {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    };
 
     renderApp();
 
@@ -207,7 +214,10 @@ describe('スタイルがあるとき', () => {
   });
 
   it('ブロックされたサイトから来たら、説明文と目印が出る', async () => {
-    storageState.blockedDomain = 'example.com';
+    storageState.lastBlocked = {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    };
 
     renderApp({
       vision: {
@@ -221,6 +231,46 @@ describe('スタイルがあるとき', () => {
     expect(screen.getByTestId('newtab-block-info-message')).toHaveTextContent(
       'siteBlockedMessage(example.com)'
     );
+  });
+});
+
+describe('帯の文言はブロックの記録の理由で決まる', () => {
+  const vision: VisionSettings = {
+    defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    presets: [makePreset()],
+    activePresetId: 'preset-1'
+  };
+
+  it('理由が時間制限の超過なら、時間制限に達した文言を出す', async () => {
+    storageState.lastBlocked = {
+      domain: 'example.com',
+      reason: 'time_limit_exceeded'
+    };
+
+    renderApp({ vision });
+
+    expect(
+      await screen.findByTestId('newtab-block-info-message')
+    ).toHaveTextContent('timeLimitReached');
+    expect(
+      screen.getByText('timeLimitReachedDescription(example.com)')
+    ).toBeInTheDocument();
+  });
+
+  it('理由が常時ブロックなら、ブロックリストの文言を出す', async () => {
+    storageState.lastBlocked = {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    };
+
+    renderApp({ vision });
+
+    expect(
+      await screen.findByTestId('newtab-block-info-message')
+    ).toHaveTextContent('siteBlockedMessage(example.com)');
+    expect(
+      screen.queryByText('timeLimitReachedDescription(example.com)')
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -270,7 +320,10 @@ describe('数値は activity から導出する', () => {
 
   it('ブロック画面の回数と浪費時間は、ホスト名が属するサイトの保持期間全体の合計', async () => {
     // www. 付きのホスト名でも、書き手と同じ規則で追跡中のサイトに引き直す
-    storageState.blockedDomain = 'www.example.com';
+    storageState.lastBlocked = {
+      domain: 'www.example.com',
+      reason: 'always_blocked'
+    };
 
     renderApp({
       vision,
@@ -289,7 +342,10 @@ describe('数値は activity から導出する', () => {
   });
 
   it('追跡中のどのサイトにも属さないホスト名なら回数は 0 で、浪費時間は出さない', async () => {
-    storageState.blockedDomain = 'other.com';
+    storageState.lastBlocked = {
+      domain: 'other.com',
+      reason: 'always_blocked'
+    };
 
     renderApp({
       vision,

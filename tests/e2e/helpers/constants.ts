@@ -220,6 +220,7 @@ export const UI_TEXT = {
   },
   blockingDays: (count: number) => `${count} days`,
   newtab: {
+    siteBlocked: (domain: string) => `${domain} is on your block list`,
     download: 'Download',
     downloadWallpaper: 'Download Wallpaper'
   },
@@ -240,7 +241,8 @@ export const UI_TEXT = {
     ]
   },
   timeLimit: {
-    alwaysBlocked: 'Always Blocked'
+    alwaysBlocked: 'Always Blocked',
+    reached: 'Time limit reached'
   },
   youtube: {
     enable: 'Enable YouTube blocking',

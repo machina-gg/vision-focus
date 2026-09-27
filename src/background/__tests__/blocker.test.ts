@@ -21,11 +21,7 @@ import { getSettings } from '~/lib/storage';
 import { getBlockState, getActiveBlockedDomains } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
-import {
-  updateBlockRules,
-  shouldBlockUrl,
-  blockExistingTabs
-} from '../blocker';
+import { updateBlockRules, blockExistingTabs } from '../blocker';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import { itemAt, lastItem } from '~/test/items';
@@ -182,31 +178,6 @@ describe('blocker', () => {
     });
   });
 
-  describe('shouldBlockUrl', () => {
-    it('ブロック状態と理由をそのまま返す', async () => {
-      vi.mocked(getBlockState).mockResolvedValue({
-        blocked: true,
-        reason: 'time_limit_exceeded'
-      });
-
-      const result = await shouldBlockUrl('https://example.com');
-
-      expect(result).toEqual({ blocked: true, reason: 'time_limit_exceeded' });
-      expect(getBlockState).toHaveBeenCalledWith('https://example.com');
-    });
-
-    it('ブロック対象外なら blocked: false を返す', async () => {
-      vi.mocked(getBlockState).mockResolvedValue({
-        blocked: false,
-        reason: null
-      });
-
-      const result = await shouldBlockUrl('https://example.com');
-
-      expect(result).toEqual({ blocked: false, reason: null });
-    });
-  });
-
   describe('blockExistingTabs', () => {
     beforeEach(() => {
       vi.mocked(getBlockState).mockResolvedValue({
@@ -229,29 +200,13 @@ describe('blocker', () => {
       ]);
       vi.mocked(getBlockState).mockResolvedValue({
         blocked: true,
-        reason: null
+        reason: 'always_blocked'
       });
 
       await blockExistingTabs();
 
       expect(chromeMock.tabs.update).toHaveBeenCalledWith(1, {
         url: 'chrome-extension://test-id/newtab.html'
-      });
-    });
-
-    it('ブロック理由をクエリパラメータで渡す', async () => {
-      chromeMock.tabs.query.mockResolvedValue([
-        { id: 1, url: 'https://example.com' }
-      ]);
-      vi.mocked(getBlockState).mockResolvedValue({
-        blocked: true,
-        reason: 'time_limit_exceeded'
-      });
-
-      await blockExistingTabs();
-
-      expect(chromeMock.tabs.update).toHaveBeenCalledWith(1, {
-        url: 'chrome-extension://test-id/newtab.html?reason=time_limit_exceeded'
       });
     });
 
@@ -288,18 +243,34 @@ describe('blocker', () => {
       expect(chromeMock.tabs.update).not.toHaveBeenCalled();
     });
 
-    it('リダイレクトするタブのドメインをブロック記録に渡す', async () => {
+    it.each([['always_blocked' as const], ['time_limit_exceeded' as const]])(
+      'リダイレクトするタブのドメインと理由（%s）をブロック記録に渡す',
+      async (reason) => {
+        chromeMock.tabs.query.mockResolvedValue([
+          { id: 1, url: 'https://example.com/page' }
+        ]);
+        vi.mocked(getBlockState).mockResolvedValue({ blocked: true, reason });
+
+        await blockExistingTabs();
+
+        expect(recordBlockedDomain).toHaveBeenCalledWith('example.com', reason);
+      }
+    );
+
+    it('理由は URL に付けず、ブロック画面へそのまま移す', async () => {
       chromeMock.tabs.query.mockResolvedValue([
-        { id: 1, url: 'https://example.com/page' }
+        { id: 1, url: 'https://example.com' }
       ]);
       vi.mocked(getBlockState).mockResolvedValue({
         blocked: true,
-        reason: null
+        reason: 'time_limit_exceeded'
       });
 
       await blockExistingTabs();
 
-      expect(recordBlockedDomain).toHaveBeenCalledWith('example.com');
+      expect(chromeMock.tabs.update).toHaveBeenCalledWith(1, {
+        url: 'chrome-extension://test-id/newtab.html'
+      });
     });
 
     it('記録はリダイレクトより先に行う', async () => {
@@ -308,7 +279,7 @@ describe('blocker', () => {
       ]);
       vi.mocked(getBlockState).mockResolvedValue({
         blocked: true,
-        reason: null
+        reason: 'always_blocked'
       });
 
       await blockExistingTabs();
@@ -338,7 +309,7 @@ describe('blocker', () => {
       ]);
       vi.mocked(getBlockState).mockImplementation(async (url: string) =>
         url.includes('blocked.com')
-          ? { blocked: true, reason: null }
+          ? { blocked: true, reason: 'always_blocked' }
           : { blocked: false, reason: null }
       );
 

@@ -414,7 +414,6 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **期待結果**
 
 - newtab.html へリダイレクトされる
-- URL パラメータに `?reason=time_limit_exceeded` が含まれる
 - 「時間制限に達しました」メッセージが表示される
 
 ---
@@ -663,7 +662,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **期待結果**
 
 - 未超過のうちは YouTube を開ける
-- 超過後はリダイレクトされる（reason: time_limit_exceeded）
+- 超過後はリダイレクトされ、ブロック画面に時間制限の文言が出る
 - blockAccess と Time Limit を併用した場合はブロックリストと同じ意味論になる
 
 ---

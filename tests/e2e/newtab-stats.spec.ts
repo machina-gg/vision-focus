@@ -74,7 +74,10 @@ test.describe('NewTab 画面 - 統計カード', () => {
       { domain: 'example.com', block: { addedAt: createdDate.toISOString() } }
     ]);
 
-    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
+    await setSessionStorageData(setupPage, 'lastBlocked', {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    });
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);

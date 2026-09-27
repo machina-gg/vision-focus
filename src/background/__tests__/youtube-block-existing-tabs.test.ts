@@ -6,7 +6,7 @@ vi.mock('~/lib/storage', () => ({
   getSites: vi.fn(),
   sitesItem: { setValue: vi.fn() },
   activityItem: { getValue: vi.fn() },
-  setLastBlockedDomain: vi.fn()
+  setLastBlocked: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
@@ -23,7 +23,7 @@ import {
   getSites,
   sitesItem,
   activityItem,
-  setLastBlockedDomain
+  setLastBlocked
 } from '~/lib/storage';
 import { recordHostActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler } from '../handlers/update-youtube-settings';
@@ -108,11 +108,15 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     givenStoredSites();
   });
 
-  it('時間制限なしなら、開いている YouTube のタブを newtab へ置き換える', async () => {
+  it('時間制限なしなら、常時ブロックを理由に記録して、開いている YouTube のタブを newtab へ置き換える', async () => {
     await turnOnBlockAccess();
 
+    expect(setLastBlocked).toHaveBeenCalledWith({
+      domain: 'www.youtube.com',
+      reason: 'always_blocked'
+    });
     expect(chromeMock.tabs.update).toHaveBeenCalledWith(YOUTUBE_TAB.id, {
-      url: `${NEWTAB_URL}?reason=always_blocked`
+      url: NEWTAB_URL
     });
   });
 
@@ -120,7 +124,9 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     // 置き換え経路では元ドメインの webNavigation イベントが発生しないため、ここで記録しないと帯に出すドメインが残らない
     await turnOnBlockAccess();
 
-    expect(setLastBlockedDomain).toHaveBeenCalledWith('www.youtube.com');
+    expect(setLastBlocked).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: 'www.youtube.com' })
+    );
     expect(recordHostActivity).toHaveBeenCalledWith(
       ['www.youtube.com'],
       expect.any(Function)
@@ -132,7 +138,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
 
     await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
 
-    expect(setLastBlockedDomain).not.toHaveBeenCalled();
+    expect(setLastBlocked).not.toHaveBeenCalled();
     expect(recordHostActivity).not.toHaveBeenCalled();
   });
 
@@ -150,13 +156,17 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     expect(chromeMock.tabs.update).not.toHaveBeenCalled();
   });
 
-  it('時間制限を超過していれば、超過を理由に置き換える', async () => {
+  it('時間制限を超過していれば、超過を理由に記録して置き換える', async () => {
     givenYouTubeUsage(120);
 
     await turnOnBlockAccess({ type: 'daily', limitSeconds: 60 });
 
+    expect(setLastBlocked).toHaveBeenCalledWith({
+      domain: 'www.youtube.com',
+      reason: 'time_limit_exceeded'
+    });
     expect(chromeMock.tabs.update).toHaveBeenCalledWith(YOUTUBE_TAB.id, {
-      url: `${NEWTAB_URL}?reason=time_limit_exceeded`
+      url: NEWTAB_URL
     });
   });
 

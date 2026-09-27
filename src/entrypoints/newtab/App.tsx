@@ -24,11 +24,12 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { formatTimeLocalized } from '~/lib/time';
 import {
-  clearLastBlockedDomain,
-  getLastBlockedDomain,
+  clearLastBlocked,
+  getLastBlocked,
   settingsItem,
   sitesItem,
-  visionItem
+  visionItem,
+  type LastBlocked
 } from '~/lib/storage';
 
 import '~/styles/globals.css';
@@ -47,9 +48,9 @@ export function NewtabApp() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ブロックの記録はリダイレクトと前後するので、数値は読んだ時点で固定せず activity から導出する
-  const [blockedDomain, setBlockedDomain] = useState<string | null>(null);
-
-  const [blockReason, setBlockReason] = useState<string | null>(null);
+  const [blockRecord, setBlockRecord] = useState<LastBlocked | null>(null);
+  const blockedDomain = blockRecord?.domain ?? null;
+  const isTimeLimit = blockRecord?.reason === 'time_limit_exceeded';
 
   const { displaySettings } = useResolvedPreset({ vision, settings });
 
@@ -58,16 +59,10 @@ export function NewtabApp() {
 
   useEffect(() => {
     const loadBlockedInfo = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const reason = urlParams.get('reason');
-      if (reason) {
-        setBlockReason(reason);
-      }
-
-      const domain = await getLastBlockedDomain();
-      if (domain) {
-        setBlockedDomain(domain);
-        await clearLastBlockedDomain();
+      const record = await getLastBlocked();
+      if (record) {
+        setBlockRecord(record);
+        await clearLastBlocked();
       }
     };
     loadBlockedInfo();
@@ -169,12 +164,12 @@ export function NewtabApp() {
           <div className="mb-8 animate-fade-in" data-testid="newtab-block-info">
             <div
               className={`inline-flex items-center gap-3 ${
-                blockReason === 'time_limit_exceeded'
+                isTimeLimit
                   ? 'bg-warning-500/20 border-warning-500/30'
                   : 'bg-danger-500/20 border-danger-500/30'
               } backdrop-blur-sm rounded-xl px-6 py-4 border`}
             >
-              {blockReason === 'time_limit_exceeded' ? (
+              {isTimeLimit ? (
                 <Clock className="w-6 h-6 text-warning-400" />
               ) : (
                 <ShieldX className="w-6 h-6 text-danger-400" />
@@ -184,11 +179,11 @@ export function NewtabApp() {
                   className="text-white font-medium"
                   data-testid="newtab-block-info-message"
                 >
-                  {blockReason === 'time_limit_exceeded'
+                  {isTimeLimit
                     ? getMessage('timeLimitReached')
                     : getMessage('siteBlockedMessage', blockedInfo.domain)}
                 </p>
-                {blockReason === 'time_limit_exceeded' ? (
+                {isTimeLimit ? (
                   <p className="text-warning-200 text-sm">
                     {getMessage(
                       'timeLimitReachedDescription',

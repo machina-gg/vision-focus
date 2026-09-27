@@ -239,14 +239,14 @@ test.describe('TimeLimit - ブロック画面の文言（ブラウザ言語が�
     );
     await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
 
-    // 帯が出るまでを先に確かめ、下の失敗を「文言の取り違え」だけに絞る（理由は帯より先に URL から決まる）
+    // 帯が出るまでを先に確かめ、下の失敗を「文言の取り違え」だけに絞る（ドメインと理由は同じ記録から同時に読む）
     const message = blockedPage.locator(SELECTORS.newtab.blockInfoMessage);
     await expect(message).toBeVisible();
 
     const shown = await message.textContent();
     expect(
       shown,
-      `帯の文言が時間制限ではない（常時ブロックの文言か: ${shown === alwaysBlocked} / URL: ${blockedPage.url()}）`
+      `帯の文言が時間制限ではない（常時ブロックの文言か: ${shown === alwaysBlocked}）`
     ).toBe(timeLimitReached);
 
     await blockedPage.close();

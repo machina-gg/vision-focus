@@ -5,11 +5,11 @@ vi.mock('~/lib/blockRecordService', () => ({
 }));
 
 vi.mock('~/lib/blockService', () => ({
-  shouldTrackBlockForDomain: vi.fn()
+  getBlockStateForDomain: vi.fn()
 }));
 
 import { recordBlockedDomain } from '~/lib/blockRecordService';
-import { shouldTrackBlockForDomain } from '~/lib/blockService';
+import { getBlockStateForDomain } from '~/lib/blockService';
 import { setupNavigationTracking } from '../../listeners/navigationTracking';
 
 function setupChrome() {
@@ -47,18 +47,29 @@ let harness: ReturnType<typeof setupChrome>;
 beforeEach(() => {
   vi.clearAllMocks();
   harness = setupChrome();
-  vi.mocked(shouldTrackBlockForDomain).mockResolvedValue(true);
+  vi.mocked(getBlockStateForDomain).mockResolvedValue({
+    blocked: true,
+    reason: 'always_blocked'
+  });
 });
 
 describe('setupNavigationTracking', () => {
   describe('計測する場合', () => {
-    it('遷移先のドメインをブロック記録に渡す', async () => {
-      setupNavigationTracking();
+    it.each([['always_blocked' as const], ['time_limit_exceeded' as const]])(
+      '遷移先のドメインと、判定の理由（%s）をブロック記録に渡す',
+      async (reason) => {
+        vi.mocked(getBlockStateForDomain).mockResolvedValue({
+          blocked: true,
+          reason
+        });
+        setupNavigationTracking();
 
-      await harness.navigate('https://example.com/page');
+        await harness.navigate('https://example.com/page');
 
-      expect(recordBlockedDomain).toHaveBeenCalledWith('example.com');
-    });
+        expect(getBlockStateForDomain).toHaveBeenCalledWith('example.com');
+        expect(recordBlockedDomain).toHaveBeenCalledWith('example.com', reason);
+      }
+    );
 
     it('記録は 1 回の遷移につき 1 回だけ行う', async () => {
       setupNavigationTracking();
@@ -75,7 +86,7 @@ describe('setupNavigationTracking', () => {
 
       await harness.navigate('https://example.com', 1);
 
-      expect(shouldTrackBlockForDomain).not.toHaveBeenCalled();
+      expect(getBlockStateForDomain).not.toHaveBeenCalled();
       expect(recordBlockedDomain).not.toHaveBeenCalled();
     });
 
@@ -84,12 +95,15 @@ describe('setupNavigationTracking', () => {
 
       await harness.navigate('not-a-url');
 
-      expect(shouldTrackBlockForDomain).not.toHaveBeenCalled();
+      expect(getBlockStateForDomain).not.toHaveBeenCalled();
       expect(recordBlockedDomain).not.toHaveBeenCalled();
     });
 
     it('ブロック対象でないドメインは記録しない', async () => {
-      vi.mocked(shouldTrackBlockForDomain).mockResolvedValue(false);
+      vi.mocked(getBlockStateForDomain).mockResolvedValue({
+        blocked: false,
+        reason: null
+      });
       setupNavigationTracking();
 
       await harness.navigate('https://allowed.com');

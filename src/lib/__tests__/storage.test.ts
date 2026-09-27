@@ -54,9 +54,9 @@ import {
   getSites,
   getAllStorage,
   clearAllStorage,
-  setLastBlockedDomain,
-  getLastBlockedDomain,
-  clearLastBlockedDomain,
+  setLastBlocked,
+  getLastBlocked,
+  clearLastBlocked,
   hasStoredVision,
   visionItem,
   supportPromptItem
@@ -233,36 +233,39 @@ describe('supportPromptItem', () => {
   });
 });
 
-describe('setLastBlockedDomain', () => {
-  it('セッションストレージにドメインを保存する', async () => {
+describe('setLastBlocked', () => {
+  it('セッションストレージにドメインと理由を 1 つの組で保存する', async () => {
     fakeChrome.session.set.mockResolvedValue(undefined);
-    await setLastBlockedDomain('youtube.com');
+    await setLastBlocked({
+      domain: 'youtube.com',
+      reason: 'time_limit_exceeded'
+    });
     expect(fakeChrome.session.set).toHaveBeenCalledWith({
-      lastBlockedDomain: 'youtube.com'
+      lastBlocked: { domain: 'youtube.com', reason: 'time_limit_exceeded' }
     });
   });
 });
 
-describe('getLastBlockedDomain', () => {
-  it('保存されたドメインを返す', async () => {
+describe('getLastBlocked', () => {
+  it('保存されたドメインと理由を返す', async () => {
     fakeChrome.session.get.mockResolvedValue({
-      lastBlockedDomain: 'youtube.com'
+      lastBlocked: { domain: 'youtube.com', reason: 'always_blocked' }
     });
-    const result = await getLastBlockedDomain();
-    expect(result).toBe('youtube.com');
+    const result = await getLastBlocked();
+    expect(result).toEqual({ domain: 'youtube.com', reason: 'always_blocked' });
   });
 
   it('保存されていない場合はnullを返す', async () => {
     fakeChrome.session.get.mockResolvedValue({});
-    const result = await getLastBlockedDomain();
+    const result = await getLastBlocked();
     expect(result).toBeNull();
   });
 });
 
-describe('clearLastBlockedDomain', () => {
-  it('セッションストレージからドメインを削除する', async () => {
+describe('clearLastBlocked', () => {
+  it('セッションストレージから記録を削除する', async () => {
     fakeChrome.session.remove.mockResolvedValue(undefined);
-    await clearLastBlockedDomain();
-    expect(fakeChrome.session.remove).toHaveBeenCalledWith('lastBlockedDomain');
+    await clearLastBlocked();
+    expect(fakeChrome.session.remove).toHaveBeenCalledWith('lastBlocked');
   });
 });
