@@ -47,8 +47,9 @@ flowchart TB
 
 #### サイズ
 
-- 幅: 360px（固定）
-- 高さ: 480px（最大）
+- 幅: 480px（固定）
+- 高さ: 最小 500px・最大 600px（最大を超える分は縦にスクロール）
+- 定義: `src/styles/globals.css` の `.popup-container`
 
 #### レイアウト
 
