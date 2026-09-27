@@ -8,6 +8,7 @@ import type { ScheduleFormData } from '~/hooks/useSchedules';
 import type { Schedule } from '~/types/storage';
 import type { DashboardPreset, VisionSettings } from '~/types/vision';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/vision';
+import { itemAt } from '~/test/items';
 
 const BASE_FORM: ScheduleFormData = {
   name: '朝の集中',
@@ -178,7 +179,7 @@ describe('ScheduleModal', () => {
       const { onFormChange } = renderModal();
 
       // 火曜（idx=2）を押す
-      fireEvent.click(screen.getAllByTestId('schedule-day-button')[2]);
+      fireEvent.click(itemAt(screen.getAllByTestId('schedule-day-button'), 2));
 
       expect(onFormChange).toHaveBeenCalledWith({
         ...BASE_FORM,
@@ -190,7 +191,7 @@ describe('ScheduleModal', () => {
       const { onFormChange } = renderModal();
 
       // 月曜（idx=1）を押す
-      fireEvent.click(screen.getAllByTestId('schedule-day-button')[1]);
+      fireEvent.click(itemAt(screen.getAllByTestId('schedule-day-button'), 1));
 
       expect(onFormChange).toHaveBeenCalledWith({ ...BASE_FORM, days: [3] });
     });

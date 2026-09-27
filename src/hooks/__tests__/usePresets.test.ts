@@ -52,6 +52,7 @@ vi.mock('~/constants/intervals', () => ({
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { getVision, settingsItem, visionItem } from '~/lib/storage';
+import { itemAt } from '~/test/items';
 
 describe('usePresets', () => {
   const mockSetVision = vi.fn();
@@ -366,9 +367,12 @@ describe('usePresets', () => {
         await result.current.handleSaveSelectedPreset();
       });
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
-      expect(savedVision.presets[0].name).toBe('Updated Name');
-      expect(savedVision.presets[0].goalText).toBe('Updated Goal');
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
+      expect(itemAt(savedVision.presets, 0).name).toBe('Updated Name');
+      expect(itemAt(savedVision.presets, 0).goalText).toBe('Updated Goal');
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(result.current.isDirty).toBe(false);
     });
@@ -539,7 +543,10 @@ describe('usePresets', () => {
         await result.current.handleApplyPreset();
       });
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
       expect(savedVision.activePresetId).toBe('preset-1');
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(trackFeatureUse).toHaveBeenCalledWith('preset_switch');
@@ -604,10 +611,13 @@ describe('usePresets', () => {
         await result.current.handleCreatePreset();
       });
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
       expect(savedVision.presets).toHaveLength(2);
-      expect(savedVision.presets[1].id).toBe('new-preset-id');
-      expect(savedVision.presets[1].name).toBe('New Preset');
+      expect(itemAt(savedVision.presets, 1).id).toBe('new-preset-id');
+      expect(itemAt(savedVision.presets, 1).name).toBe('New Preset');
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(trackFeatureUse).toHaveBeenCalledWith('preset_create');
       expect(result.current.showSavePresetModal).toBe(false);
@@ -650,7 +660,10 @@ describe('usePresets', () => {
         await result.current.handleRequestDeletePreset('preset-1');
       });
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
       expect(savedVision.presets).toHaveLength(0);
       expect(mockSetVision).toHaveBeenCalledWith(savedVision);
       expect(result.current.selectedPresetId).toBeNull();
@@ -709,7 +722,10 @@ describe('usePresets', () => {
         await result.current.handleRequestDeletePreset('preset-1');
       });
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
       expect(savedVision.activePresetId).toBeNull();
     });
 
@@ -781,18 +797,24 @@ describe('usePresets', () => {
         await result.current.handleConfirmDeletePreset();
       });
 
-      const savedSettings = vi.mocked(settingsItem.setValue).mock.calls[0][0];
+      const savedSettings = itemAt(
+        vi.mocked(settingsItem.setValue).mock.calls,
+        0
+      )[0];
       // 参照していたスケジュールは残り、スタイル連携だけが外れる
       expect(savedSettings.schedules).toHaveLength(3);
-      expect(savedSettings.schedules[0].presetId).toBeUndefined();
-      expect(savedSettings.schedules[0].enabled).toBe(true);
-      expect(savedSettings.schedules[1].presetId).toBeUndefined();
-      expect(savedSettings.schedules[1].enabled).toBe(false);
+      expect(itemAt(savedSettings.schedules, 0).presetId).toBeUndefined();
+      expect(itemAt(savedSettings.schedules, 0).enabled).toBe(true);
+      expect(itemAt(savedSettings.schedules, 1).presetId).toBeUndefined();
+      expect(itemAt(savedSettings.schedules, 1).enabled).toBe(false);
       // 別のスタイルを参照しているスケジュールは触らない
-      expect(savedSettings.schedules[2].presetId).toBe('other-preset');
+      expect(itemAt(savedSettings.schedules, 2).presetId).toBe('other-preset');
       expect(mockSetSettings).toHaveBeenCalledWith(savedSettings);
 
-      const savedVision = vi.mocked(visionItem.setValue).mock.calls[0][0];
+      const savedVision = itemAt(
+        vi.mocked(visionItem.setValue).mock.calls,
+        0
+      )[0];
       expect(savedVision.presets).toHaveLength(0);
       expect(result.current.deleteTargetPresetId).toBeNull();
     });

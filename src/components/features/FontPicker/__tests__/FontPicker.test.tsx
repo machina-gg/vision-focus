@@ -5,6 +5,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { FontPicker } from '../FontPicker';
 import { FONT_CATEGORIES, type FontSettings } from '~/types/font';
+import { itemAt } from '~/test/items';
 
 const settingsOf = (overrides: Partial<FontSettings> = {}): FontSettings => ({
   family: 'system',
@@ -117,7 +118,7 @@ describe('FontPicker', () => {
       clickButton('Elegant');
 
       expect(onChange).toHaveBeenCalledWith({
-        family: FONT_CATEGORIES.elegant.fonts[0].family,
+        family: itemAt(FONT_CATEGORIES.elegant.fonts, 0).family,
         size: 'sm',
         weight: 'medium'
       });

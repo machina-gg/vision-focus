@@ -246,4 +246,13 @@ describe('formatMonth', () => {
       })
     );
   });
+
+  it('月が欠けた月キーは Invalid Date の表示にする', () => {
+    expect(formatMonth('2024')).toBe(
+      new Date(NaN).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long'
+      })
+    );
+  });
 });

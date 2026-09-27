@@ -52,7 +52,7 @@ export function isValidDomain(domain: string): boolean {
   }
 
   const tld = labels[labels.length - 1];
-  if (!/^[a-zA-Z]{2,}$/.test(tld)) return false;
+  if (tld === undefined || !/^[a-zA-Z]{2,}$/.test(tld)) return false;
 
   return true;
 }

@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WeeklyCalendar } from '../WeeklyCalendar';
 import type { Schedule, VisionSettings } from '~/types/storage';
 import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { itemAt } from '~/test/items';
 
 // ローカル時刻で組み立て、タイムゾーンによらず 2026-03-01（日）12:00 にする
 const NOW = new Date(2026, 2, 1, 12, 0, 0);
@@ -85,8 +86,10 @@ describe('WeeklyCalendar', () => {
 
       // 強調は色でしか表せないため、今日の列に付く装飾クラスで判別する
       const headers = screen.getAllByTestId('weekly-calendar-day-header');
-      expect(headers[SUNDAY_INDEX].className).toContain('bg-danger-50');
-      expect(headers[SUNDAY_INDEX + 1].className).not.toContain('bg-danger-50');
+      expect(itemAt(headers, SUNDAY_INDEX).className).toContain('bg-danger-50');
+      expect(itemAt(headers, SUNDAY_INDEX + 1).className).not.toContain(
+        'bg-danger-50'
+      );
     });
   });
 
@@ -114,6 +117,15 @@ describe('WeeklyCalendar', () => {
       ]);
 
       const block = screen.getByTitle(blockTitle('朝の集中', '00:00 - 12:00'));
+      expect(block).toHaveStyle({ top: '0%', height: '50%' });
+    });
+
+    it('形が不正な時刻は 0:00 として置く', () => {
+      renderCalendar([
+        scheduleOf({ startTime: '9時', endTime: '12:00', days: [0] })
+      ]);
+
+      const block = screen.getByTitle(blockTitle('朝の集中', '9時 - 12:00'));
       expect(block).toHaveStyle({ top: '0%', height: '50%' });
     });
 

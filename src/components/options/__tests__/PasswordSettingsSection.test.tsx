@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { PasswordSettingsSection } from '../PasswordSettingsSection';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
+import { itemAt } from '~/test/items';
 import type { PasswordSettings } from '~/types/storage';
 
 const password = vi.hoisted(() => ({
@@ -38,7 +39,7 @@ const fields = () => screen.getAllByTestId(/^password-field-/);
 const submit = () => screen.getByTestId('password-form-submit');
 
 function fill(index: number, value: string) {
-  fireEvent.change(fields()[index], { target: { value } });
+  fireEvent.change(itemAt(fields(), index), { target: { value } });
 }
 
 function enterSetMode() {

@@ -11,6 +11,7 @@ vi.mock('~/lib/activityService', () => ({
 import { setLastBlockedDomain } from '~/lib/storage';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 import { recordHostActivity } from '~/lib/activityService';
+import { itemAt } from '~/test/items';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -28,7 +29,10 @@ describe('recordBlockedDomain', () => {
       await recordBlockedDomain('www.example.com');
 
       expect(recordHostActivity).toHaveBeenCalledOnce();
-      const [hosts, toEvent] = vi.mocked(recordHostActivity).mock.calls[0];
+      const [hosts, toEvent] = itemAt(
+        vi.mocked(recordHostActivity).mock.calls,
+        0
+      );
       expect(hosts).toEqual(['www.example.com']);
       // ホスト名から追跡中のサイトへの引き直しは書き手側が行う
       expect(toEvent('example.com')).toEqual({
@@ -44,7 +48,9 @@ describe('recordBlockedDomain', () => {
 
       expect(
         vi.mocked(setLastBlockedDomain).mock.invocationCallOrder[0]
-      ).toBeLessThan(vi.mocked(recordHostActivity).mock.invocationCallOrder[0]);
+      ).toBeLessThan(
+        itemAt(vi.mocked(recordHostActivity).mock.invocationCallOrder, 0)
+      );
     });
   });
 });

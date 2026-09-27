@@ -72,10 +72,13 @@ function isInRange(date: DateKey, range: DateRange): boolean {
 /**
  * 日付キーを、ローカル日付でその日の正午の Date にする
  * @param date 日付キー（YYYY-MM-DD）
- * @returns その日のローカル時刻 12 時の Date
+ * @returns その日のローカル時刻 12 時の Date（年・月・日のどれかが欠けていれば Invalid Date）
  */
 export function parseDateKey(date: DateKey): Date {
   const [year, month, day] = date.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    return new Date(NaN);
+  }
   return new Date(year, month - 1, day, SAFE_HOUR);
 }
 

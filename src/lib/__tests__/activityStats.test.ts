@@ -380,6 +380,11 @@ describe('daysBetween / parseDateKey', () => {
     expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2026, 2, 1]);
   });
 
+  it('年・月・日のどれかが欠けた日付キーは Invalid Date にする', () => {
+    expect(parseDateKey('2026-03').getTime()).toBeNaN();
+    expect(parseDateKey('').getTime()).toBeNaN();
+  });
+
   it('日数の差（同じ日は 0、月・年をまたいでも暦の日数）', () => {
     expect(daysBetween('2026-09-21', '2026-09-21')).toBe(0);
     expect(daysBetween('2026-09-21', '2026-09-28')).toBe(7);

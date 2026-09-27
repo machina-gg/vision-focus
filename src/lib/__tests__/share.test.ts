@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { generateShareText, shareToX, downloadImage } from '~/lib/share';
+import { itemAt } from '~/test/items';
 
 describe('generateShareText', () => {
   it('ヘッダーとハッシュタグを含む', () => {
@@ -111,7 +112,7 @@ describe('shareToX', () => {
     vi.stubGlobal('open', mockOpen);
 
     shareToX('テスト & test');
-    const calledUrl = mockOpen.mock.calls[0][0] as string;
+    const calledUrl = itemAt(mockOpen.mock.calls, 0)[0] as string;
     expect(calledUrl).toContain(encodeURIComponent('テスト & test'));
 
     vi.unstubAllGlobals();

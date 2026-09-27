@@ -55,7 +55,10 @@ export const test = base.extend<ExtensionFixtures, { testServer: TestServer }>({
       background = await context.waitForEvent('serviceworker');
     }
 
-    const extensionId = background.url().split('/')[2];
+    const extensionId = new URL(background.url()).host;
+    if (!extensionId) {
+      throw new Error(`拡張機能の ID を読み取れない: ${background.url()}`);
+    }
     await use(extensionId);
   }
 });

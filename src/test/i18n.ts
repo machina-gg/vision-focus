@@ -41,7 +41,10 @@ function resolveLocaleMessage(
 ): string {
   const values = substitutions === undefined ? [] : [substitutions].flat();
   const fill = (text: string) =>
-    text.replace(/\$(\d)/g, (_, index: string) => values[Number(index) - 1]);
+    text.replace(
+      /\$(\d)/g,
+      (whole, index: string) => values[Number(index) - 1] ?? whole
+    );
   return fill(
     entry.message.replace(/\$([A-Za-z0-9_]+)\$/g, (whole, name: string) => {
       const placeholder = entry.placeholders?.[name.toLowerCase()];

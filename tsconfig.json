@@ -3,12 +3,6 @@
   "compilerOptions": {
     // .wxt/tsconfig.json は WXT が `wxt prepare` で生成する（postinstall で走る）。
     // パスエイリアス（~ / @）と拡張機能用の型参照はそちらが持つ。
-    //
-    // 以下の 3 項目は WXT の既定より緩める上書き。既存コードが有効化後の検査を
-    // まだ通らないため外しており、通るようにしたうえで上書きを消す
-    "noUncheckedIndexedAccess": false,
-    "noImplicitOverride": false,
-    "noFallthroughCasesInSwitch": false,
     "jsx": "preserve",
     "types": ["vitest/globals", "chrome"]
   },

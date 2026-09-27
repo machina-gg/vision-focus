@@ -25,6 +25,7 @@ vi.mock('../../blocker', () => ({
 }));
 
 import { DEFAULT_SETTINGS } from '~/types/storage';
+import { itemAt } from '~/test/items';
 
 async function load() {
   vi.resetModules();
@@ -34,10 +35,14 @@ async function load() {
   setupSettingsWatcher();
 
   return {
-    settingsWatcher: mocks.watchSettings.mock
-      .calls[0][0] as WatchCallback<AppSettings>,
-    sitesWatcher: mocks.watchSites.mock
-      .calls[0][0] as WatchCallback<TrackedSites>,
+    settingsWatcher: itemAt(
+      mocks.watchSettings.mock.calls,
+      0
+    )[0] as WatchCallback<AppSettings>,
+    sitesWatcher: itemAt(
+      mocks.watchSites.mock.calls,
+      0
+    )[0] as WatchCallback<TrackedSites>,
     updateBlockRules: mocks.updateBlockRules
   };
 }

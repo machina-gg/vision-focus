@@ -28,6 +28,7 @@ import {
 } from '../blocker';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
+import { itemAt, lastItem } from '~/test/items';
 
 interface UpdateRulesArg {
   removeRuleIds: number[];
@@ -63,7 +64,7 @@ function lastUpdateRulesArg(
   chromeMock: ReturnType<typeof setupChrome>
 ): UpdateRulesArg {
   const calls = chromeMock.declarativeNetRequest.updateDynamicRules.mock.calls;
-  return calls[calls.length - 1][0] as UpdateRulesArg;
+  return lastItem(calls)[0] as UpdateRulesArg;
 }
 
 describe('blocker', () => {
@@ -122,7 +123,9 @@ describe('blocker', () => {
       await updateBlockRules();
 
       const arg = lastUpdateRulesArg(chromeMock);
-      expect(arg.addRules[0].condition?.urlFilter).toBe('||example.com');
+      expect(itemAt(arg.addRules, 0).condition?.urlFilter).toBe(
+        '||example.com'
+      );
     });
 
     it('既存の動的ルールをすべて削除対象に含める', async () => {
@@ -312,7 +315,9 @@ describe('blocker', () => {
 
       expect(
         vi.mocked(recordBlockedDomain).mock.invocationCallOrder[0]
-      ).toBeLessThan(chromeMock.tabs.update.mock.invocationCallOrder[0]);
+      ).toBeLessThan(
+        itemAt(chromeMock.tabs.update.mock.invocationCallOrder, 0)
+      );
     });
 
     it('ブロック対象でないタブは記録しない', async () => {

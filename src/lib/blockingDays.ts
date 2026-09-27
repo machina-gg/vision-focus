@@ -15,7 +15,7 @@ export function calculateBlockingDays(
   now: Date = new Date()
 ): number | null {
   const site = resolveSiteKey(hostname, Object.keys(sites));
-  const block = site === null ? null : sites[site].block;
+  const block = site === null ? null : sites[site]?.block;
   if (!block) return null;
 
   const diffTime = now.getTime() - new Date(block.addedAt).getTime();

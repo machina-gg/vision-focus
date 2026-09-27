@@ -3,11 +3,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '~/components/ui';
 import { CURRENT_TIME_REFRESH_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
-import { normalizeEndTime } from '~/lib/time';
+import { normalizeEndTime, parseTimeToMinutes } from '~/lib/time';
 import type { Schedule, VisionSettings } from '~/types/storage';
 
+const DEFAULT_SCHEDULE_COLOR = {
+  bg: 'bg-info-100',
+  border: 'border-info-300',
+  text: 'text-info-800'
+};
+
 const SCHEDULE_COLORS = [
-  { bg: 'bg-info-100', border: 'border-info-300', text: 'text-info-800' },
+  DEFAULT_SCHEDULE_COLOR,
   {
     bg: 'bg-premium-100',
     border: 'border-premium-300',
@@ -47,10 +53,16 @@ interface ScheduleBlock {
   colorIndex: number;
 }
 
+function getScheduleColor(colorIndex: number) {
+  return (
+    SCHEDULE_COLORS[colorIndex % SCHEDULE_COLORS.length] ??
+    DEFAULT_SCHEDULE_COLOR
+  );
+}
+
 function parseTime(time: string): { hour: number; minute: number } {
-  if (time === '24:00') return { hour: 24, minute: 0 };
-  const [hour, minute] = time.split(':').map(Number);
-  return { hour, minute };
+  const minutes = parseTimeToMinutes(time);
+  return { hour: Math.floor(minutes / 60), minute: minutes % 60 };
 }
 
 function getScheduleBlocksForDay(
@@ -227,7 +239,7 @@ export function WeeklyCalendar({
                 )}
 
                 {blocks.map((block) => {
-                  const colors = SCHEDULE_COLORS[block.colorIndex];
+                  const colors = getScheduleColor(block.colorIndex);
                   const presetName = getPresetName(block.schedule.presetId);
 
                   return (
@@ -265,7 +277,7 @@ export function WeeklyCalendar({
 
       <div className="mt-4 flex flex-wrap gap-3">
         {legendItems.map((item) => {
-          const colors = SCHEDULE_COLORS[item.colorIndex];
+          const colors = getScheduleColor(item.colorIndex);
           return (
             <div
               key={item.id}

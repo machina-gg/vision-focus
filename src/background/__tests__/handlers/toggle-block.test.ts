@@ -24,6 +24,7 @@ import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
 import { recordActivity } from '~/lib/activityService';
 import { toggleBlockHandler as handler } from '../../handlers/toggle-block';
+import { itemAt } from '~/test/items';
 import type { BlockRule } from '~/types/site';
 import type { MessageError } from '~/types/messages';
 
@@ -119,7 +120,7 @@ describe('toggle-block ハンドラ', () => {
         domain_hashed: expect.any(String)
       });
 
-      const payload = vi.mocked(trackEvent).mock.calls[0][1] as {
+      const payload = itemAt(vi.mocked(trackEvent).mock.calls, 0)[1] as {
         domain_hashed: string;
       };
       expect(payload.domain_hashed).not.toContain('example.com');

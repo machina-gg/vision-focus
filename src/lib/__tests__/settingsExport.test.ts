@@ -25,6 +25,7 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_UNBLOCK_CONFIRM_SETTINGS
 } from '~/types/storage';
+import { itemAt } from '~/test/items';
 
 function createValidExportData(
   overrides: Partial<ExportedSettings['data']> = {}
@@ -287,7 +288,7 @@ describe('applyImportedSettings', () => {
     );
     // 同じIDなのでマージされない
     expect(settings.schedules).toHaveLength(1);
-    expect(settings.schedules[0].name).toBe('Existing');
+    expect(itemAt(settings.schedules, 0).name).toBe('Existing');
   });
 
   it('プリセットをマージし、重複IDを除外する', () => {
@@ -315,7 +316,7 @@ describe('applyImportedSettings', () => {
       DEFAULT_VISION
     );
     expect(vision.presets).toHaveLength(1);
-    expect(vision.presets[0].name).toBe('New Preset');
+    expect(itemAt(vision.presets, 0).name).toBe('New Preset');
   });
 
   it('通知設定がインポートされる', () => {

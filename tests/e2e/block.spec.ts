@@ -241,8 +241,9 @@ test.describe('Block - ブロック機能', () => {
     });
 
     expect(rules.length).toBeGreaterThan(0);
-    expect(rules[0].action.type).toBe('redirect');
-    expect(rules[0].action.redirect?.extensionPath).toBe('/newtab.html');
+    expect(rules[0]).toMatchObject({
+      action: { type: 'redirect', redirect: { extensionPath: '/newtab.html' } }
+    });
 
     await rulesPage.close();
   });

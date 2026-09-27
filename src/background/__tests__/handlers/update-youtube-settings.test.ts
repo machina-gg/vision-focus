@@ -22,6 +22,7 @@ import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-y
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
+import { itemAt } from '~/test/items';
 import type { TrackedSite } from '~/types/site';
 import type { MessageError } from '~/types/messages';
 
@@ -226,7 +227,9 @@ describe('update-youtube-settings ハンドラ', () => {
 
       expect(
         vi.mocked(updateYouTubeSite).mock.invocationCallOrder[0]
-      ).toBeLessThan(vi.mocked(recordActivity).mock.invocationCallOrder[0]);
+      ).toBeLessThan(
+        itemAt(vi.mocked(recordActivity).mock.invocationCallOrder, 0)
+      );
     });
 
     it.each([

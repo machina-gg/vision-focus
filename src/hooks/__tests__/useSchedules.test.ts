@@ -23,6 +23,7 @@ vi.mock('~/lib/messaging', () => ({
 import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
 import { getSettings, settingsItem } from '~/lib/storage';
+import { itemAt } from '~/test/items';
 
 describe('useSchedules', () => {
   const mockSetSettings = vi.fn();
@@ -279,8 +280,11 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(settingsItem.setValue).mock.calls[0][0];
-      expect(savedSchedule.schedules[1].presetId).toBeUndefined();
+      const savedSchedule = itemAt(
+        vi.mocked(settingsItem.setValue).mock.calls,
+        0
+      )[0];
+      expect(itemAt(savedSchedule.schedules, 1).presetId).toBeUndefined();
     });
 
     it('編集時、既存のスケジュールを更新', async () => {
@@ -346,8 +350,11 @@ describe('useSchedules', () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = vi.mocked(settingsItem.setValue).mock.calls[0][0];
-      expect(savedSchedule.schedules[1].endTime).toBe('24:00');
+      const savedSchedule = itemAt(
+        vi.mocked(settingsItem.setValue).mock.calls,
+        0
+      )[0];
+      expect(itemAt(savedSchedule.schedules, 1).endTime).toBe('24:00');
     });
 
     describe('既存のスケジュールと時間帯が重なるとき', () => {

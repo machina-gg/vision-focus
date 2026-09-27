@@ -21,6 +21,7 @@ import { getBackgroundUrl, loadGoogleFont } from '~/constants';
 import { useBackgroundPreload } from '~/hooks/useBackgroundPreload';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
+import { itemAt } from '~/test/items';
 import type { DashboardDisplaySettings } from '~/types/storage';
 
 class MockImage {
@@ -155,7 +156,7 @@ describe('useBackgroundPreload', () => {
       );
 
       await act(async () => {
-        MockImage.instances[0].onload?.();
+        itemAt(MockImage.instances, 0).onload?.();
       });
 
       await waitFor(() => {
@@ -174,7 +175,7 @@ describe('useBackgroundPreload', () => {
       );
 
       await act(async () => {
-        MockImage.instances[0].onerror?.();
+        itemAt(MockImage.instances, 0).onerror?.();
       });
 
       await waitFor(() => {

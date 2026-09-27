@@ -6,6 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { YouTubeSection } from '../YouTubeSection';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
+import { itemAt } from '~/test/items';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { BlockRule, TrackedSite, YouTubeFeatures } from '~/types/site';
@@ -72,7 +73,7 @@ function onlyRequest(
   onRequestUnblock: ReturnType<typeof renderSection>['onRequestUnblock']
 ): UnblockRequest {
   expect(onRequestUnblock).toHaveBeenCalledTimes(1);
-  return onRequestUnblock.mock.calls[0][0];
+  return itemAt(onRequestUnblock.mock.calls, 0)[0];
 }
 
 describe('YouTubeSection', () => {
@@ -366,7 +367,7 @@ describe('YouTubeSection', () => {
         blockAccess: true
       });
 
-      fireEvent.change(screen.getAllByRole('combobox')[0], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 0), {
         target: { value: 'daily' }
       });
 
@@ -388,7 +389,7 @@ describe('YouTubeSection', () => {
         timeLimit: { type: 'daily', limitSeconds: 30 * 60 }
       });
 
-      fireEvent.change(screen.getAllByRole('combobox')[1], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 1), {
         target: { value: '60' }
       });
       fireEvent.click(screen.getByText('save'));
@@ -406,7 +407,7 @@ describe('YouTubeSection', () => {
         timeLimit: { type: 'daily', limitSeconds: 30 * 60 }
       });
 
-      fireEvent.change(screen.getAllByRole('combobox')[0], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 0), {
         target: { value: 'always' }
       });
       fireEvent.click(screen.getByText('save'));

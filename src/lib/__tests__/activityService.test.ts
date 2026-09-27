@@ -56,6 +56,7 @@ import {
   recordHostActivity
 } from '~/lib/activityService';
 import { getTrackedSiteKeys } from '~/lib/siteService';
+import { activityItem } from '~/lib/storage';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 
@@ -68,7 +69,10 @@ const row = (seconds: number, blocks = 0, unblocks = 0): DailySiteActivity => ({
   unblocks
 });
 
-const stored = () => fakeChrome.localData.activity as ActivityLog | undefined;
+const stored = async (): Promise<ActivityLog> => {
+  expect(fakeChrome.localData.activity).toBeDefined();
+  return activityItem.getValue();
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -87,7 +91,7 @@ describe('appendActivity', () => {
       { kind: 'unblock', site: 'x.com', at }
     );
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-26': {
         'youtube.com': row(10, 1, 0),
         'x.com': row(0, 0, 1)
@@ -108,7 +112,7 @@ describe('appendActivity', () => {
       at: localDate(2026, 9, 26)
     });
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-25': { 'youtube.com': row(100, 2, 1) },
       '2026-09-26': { 'x.com': row(30, 0, 0), 'youtube.com': row(12, 1, 0) }
     });
@@ -128,7 +132,7 @@ describe('appendActivity', () => {
       }
     );
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-25': { 'x.com': row(0, 1, 0) },
       '2026-09-26': { 'x.com': row(0, 1, 0) }
     });
@@ -142,7 +146,7 @@ describe('appendActivity', () => {
       { kind: 'block', site: 'x.com', at }
     );
 
-    expect(stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 1, 0) } });
+    expect(await stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 1, 0) } });
   });
 
   it('記録できる出来事が 1 件も無ければ書き込まない', async () => {
@@ -152,7 +156,7 @@ describe('appendActivity', () => {
       at: localDate(2026, 9, 26)
     });
 
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
   it.each([
@@ -168,14 +172,14 @@ describe('appendActivity', () => {
       at: localDate(2026, 9, 26)
     });
 
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
   it('出来事を渡さなければ何もしない', async () => {
     await appendActivity();
 
     expect(getTrackedSiteKeys).not.toHaveBeenCalled();
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
   it('既定値（共有オブジェクト）を書き換えない', async () => {
@@ -196,7 +200,7 @@ describe('appendActivity', () => {
 
     await Promise.all(calls);
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-26': { 'youtube.com': row(100, 0, 0) }
     });
   });
@@ -212,7 +216,7 @@ describe('appendActivity', () => {
 
     await expect(failed).rejects.toThrow('読み出し失敗');
     await next;
-    expect(stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 1, 0) } });
+    expect(await stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 1, 0) } });
   });
 });
 
@@ -226,7 +230,7 @@ describe('purgeSite', () => {
 
     await purgeSite('youtube.com');
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-25': { 'x.com': row(5) },
       '2026-09-26': { 'x.com': row(1) }
     });
@@ -243,7 +247,7 @@ describe('purgeSite', () => {
       appendActivity({ kind: 'stay', site: 'youtube.com', seconds: 5, at })
     ]);
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-26': { 'youtube.com': row(5) }
     });
   });
@@ -259,7 +263,7 @@ describe('pruneBefore', () => {
 
     await pruneBefore('2025-09-26');
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2025-09-26': { 'x.com': row(2) },
       '2026-09-26': { 'x.com': row(3) }
     });
@@ -286,7 +290,7 @@ describe('clearActivity', () => {
 
     await clearActivity();
 
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
   it('加算の直後に呼んでも、加算が消去の後に書き戻されない（直列化）', async () => {
@@ -297,7 +301,7 @@ describe('clearActivity', () => {
       clearActivity()
     ]);
 
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 });
 
@@ -309,7 +313,7 @@ describe('recordActivity', () => {
       at: localDate(2026, 9, 26)
     });
 
-    expect(stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 0, 1) } });
+    expect(await stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 0, 1) } });
   });
 
   it('記録に失敗しても投げず、失敗をログに残す', async () => {
@@ -343,7 +347,7 @@ describe('recordHostActivity', () => {
   it('ホスト名を追跡中のサイトに引き直して記録する', async () => {
     await recordHostActivity(['www.youtube.com'], stay);
 
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-26': { 'youtube.com': row(5, 0, 0) }
     });
   });
@@ -360,7 +364,7 @@ describe('recordHostActivity', () => {
       'x.com',
       'youtube.com'
     ]);
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       '2026-09-26': { 'youtube.com': row(5, 0, 0), 'x.com': row(5, 0, 0) }
     });
   });
@@ -371,7 +375,7 @@ describe('recordHostActivity', () => {
     await recordHostActivity(['example.com', 'notyoutube.com'], toEvent);
 
     expect(toEvent).not.toHaveBeenCalled();
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
   it('ホストが無ければ追跡中の集合も読まない', async () => {

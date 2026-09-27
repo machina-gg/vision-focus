@@ -507,7 +507,7 @@ test.describe('Options - Schedule Tab', () => {
 
     const settings = await getStorageData(page, 'settings');
     expect(settings?.schedules).toHaveLength(1);
-    expect(settings?.schedules[0].id).toBe('schedule1');
+    expect(settings?.schedules[0]).toMatchObject({ id: 'schedule1' });
 
     await page.close();
   });
