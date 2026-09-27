@@ -1,7 +1,7 @@
 import * as z from 'zod';
 
 import { getTodayKey } from '~/lib/time';
-import { TrackedSiteSchema } from '~/types/messageSchemas';
+import { ScheduleSchema, TrackedSiteSchema } from '~/types/messageSchemas';
 import type { TrackedSites } from '~/types/site';
 import type {
   AppSettings,
@@ -79,16 +79,6 @@ const displaySettingsSchema = z.object({
   fontSettings: fontSettingsSchema
 });
 
-const scheduleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  startTime: z.string(),
-  endTime: z.string(),
-  days: z.array(z.number()),
-  enabled: z.boolean(),
-  presetId: z.string().optional()
-});
-
 const presetSchema = displaySettingsSchema.extend({
   id: z.string(),
   name: z.string(),
@@ -114,7 +104,7 @@ const exportDataSchema = z.object({
   exportedAt: z.string(),
   data: z.object({
     sites: z.record(z.string(), TrackedSiteSchema),
-    schedules: z.array(scheduleSchema),
+    schedules: z.array(ScheduleSchema),
     presets: z.array(presetSchema),
     defaultDisplaySettings: displaySettingsSchema,
     activePresetId: z.string().nullable(),

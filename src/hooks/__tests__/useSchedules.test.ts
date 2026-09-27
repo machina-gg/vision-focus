@@ -2,6 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useSchedules, type ScheduleFormData } from '~/hooks/useSchedules';
+import { ScheduleSchema } from '~/types/messageSchemas';
 import type { AppSettings, Schedule } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
@@ -754,4 +755,44 @@ describe('useSchedules', () => {
       expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
     });
   });
+});
+
+describe('画面の入力欄で選べる時刻で保存したスケジュール', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    ['00:00', '23:59'],
+    ['23:59', '00:00'],
+    ['00:00', '00:00']
+  ])(
+    '開始 %s・終了 %s で保存した値は取り込みの検証を通る',
+    async (startTime, endTime) => {
+      const settings: AppSettings = { ...DEFAULT_SETTINGS, schedules: [] };
+      const { result } = renderHook(() =>
+        useSchedules({ settings, setSettings: vi.fn() })
+      );
+
+      act(() => {
+        result.current.openAddSchedule();
+        result.current.setScheduleForm({
+          name: 'Edge',
+          startTime,
+          endTime,
+          days: [0],
+          presetId: ''
+        });
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
+      });
+
+      const saved = itemAt(
+        itemAt(vi.mocked(settingsItem.setValue).mock.calls, 0)[0].schedules,
+        0
+      );
+      expect(ScheduleSchema.safeParse(saved).success).toBe(true);
+    }
+  );
 });
