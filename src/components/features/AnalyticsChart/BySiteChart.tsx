@@ -61,10 +61,13 @@ export function BySiteChart({ data }: BySiteChartProps) {
           width={100}
         />
         <Tooltip
-          formatter={(value: number, _name: string, props) => {
-            const payload = props?.payload as
-              { fullDomain?: string } | undefined;
-            return [formatMinutes(value), payload?.fullDomain || ''];
+          formatter={(value, _name, item) => {
+            if (typeof value !== 'number') return null;
+            const fullDomain: unknown = item?.payload?.fullDomain;
+            return [
+              formatMinutes(value),
+              typeof fullDomain === 'string' ? fullDomain : ''
+            ];
           }}
           contentStyle={{
             backgroundColor: '#fff',

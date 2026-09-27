@@ -73,7 +73,8 @@ export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
             border: '1px solid #e5e7eb',
             borderRadius: '8px'
           }}
-          formatter={(value: number, name: string) => {
+          formatter={(value, name) => {
+            if (typeof value !== 'number') return null;
             if (name === 'wasteTime') {
               return [
                 formatChartMinutes(useHours ? value * 3600 : value * 60),
