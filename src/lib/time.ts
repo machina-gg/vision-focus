@@ -128,16 +128,20 @@ export function getLastNDays(n: number): string[] {
   return dates;
 }
 
+/** 1 日の中の時刻 "HH:MM"（時 00〜23・分 00〜59。どちらも 2 桁） */
+export const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+
+/** その日の終わりを表す終了時刻 */
+export const END_OF_DAY_TIME = '24:00';
+
 /**
  * "HH:MM" の形か（"24:00" も許す）
- * @param time 確かめる時刻の文字列（時は 1 桁も許す）
- * @returns 正しい形なら true
+ * @param time 確かめる時刻の文字列
+ * @returns TIME_OF_DAY_PATTERN に合うか "24:00" なら true
  */
 export function isValidTimeString(time: string): boolean {
-  if (!time || typeof time !== 'string') return false;
-  if (time === '24:00') return true;
-  const match = time.match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/);
-  return match !== null;
+  if (typeof time !== 'string') return false;
+  return time === END_OF_DAY_TIME || TIME_OF_DAY_PATTERN.test(time);
 }
 
 /**
@@ -158,7 +162,7 @@ export function parseTimeToMinutes(time: string): number {
  * @returns "00:00" なら "24:00"、それ以外はそのまま
  */
 export function normalizeEndTime(endTime: string): string {
-  return endTime === '00:00' ? '24:00' : endTime;
+  return endTime === '00:00' ? END_OF_DAY_TIME : endTime;
 }
 
 /**

@@ -241,6 +241,7 @@ describe('isValidTimeString', () => {
     expect(isValidTimeString('12:3')).toBe(false); // Single-digit minute
     expect(isValidTimeString('12-30')).toBe(false); // Wrong separator
     expect(isValidTimeString('1230')).toBe(false); // No separator
+    expect(isValidTimeString('9:30')).toBe(false);
   });
 
   it('rejects non-string inputs', () => {

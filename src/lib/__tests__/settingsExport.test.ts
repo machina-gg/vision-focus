@@ -453,3 +453,56 @@ describe('追跡中のサイトのエクスポート・インポート', () => {
     expect(imported.data?.sites).toEqual(sites);
   });
 });
+
+describe('スケジュールの時刻の取り込み', () => {
+  const schedule = {
+    id: 's1',
+    name: 'Work',
+    startTime: '09:00',
+    endTime: '17:00',
+    days: [1],
+    enabled: true
+  };
+
+  function importWith(startTime: string, endTime: string) {
+    return validateImportedData(
+      JSON.stringify(
+        createValidExportData({
+          schedules: [{ ...schedule, startTime, endTime }]
+        })
+      )
+    );
+  }
+
+  it.each([
+    ['00:00', '23:59'],
+    ['23:59', '00:00'],
+    ['00:00', '24:00']
+  ])('開始 %s・終了 %s は取り込める', (startTime, endTime) => {
+    const result = importWith(startTime, endTime);
+
+    expect(result.success).toBe(true);
+    expect(itemAt(result.data?.schedules ?? [], 0)).toMatchObject({
+      startTime,
+      endTime
+    });
+  });
+
+  it.each([
+    ['25:99', '17:00'],
+    ['09:00', 'abc'],
+    ['', '17:00'],
+    ['09:00', ''],
+    ['9:00', '17:00'],
+    ['09:00', '24:01'],
+    ['24:00', '17:00']
+  ])(
+    '開始 %s・終了 %s を含むファイルは形式エラーで拒む',
+    (startTime, endTime) => {
+      expect(importWith(startTime, endTime)).toEqual({
+        success: false,
+        error: 'importErrorInvalidFormat'
+      });
+    }
+  );
+});
