@@ -60,10 +60,14 @@ export function DailyChart({ data }: DailyChartProps) {
           tickFormatter={axisConfig.tickFormatter}
         />
         <Tooltip
-          formatter={(value: number) => [
-            formatMinutes(axisConfig.restoreValue(value)),
-            getMessage('chartDailyLabel')
-          ]}
+          formatter={(value) =>
+            typeof value === 'number'
+              ? [
+                  formatMinutes(axisConfig.restoreValue(value)),
+                  getMessage('chartDailyLabel')
+                ]
+              : null
+          }
           contentStyle={{
             backgroundColor: '#fff',
             border: '1px solid #e5e7eb',

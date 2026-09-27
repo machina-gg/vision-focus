@@ -12,10 +12,10 @@ const chart = vi.hoisted(() => ({
   cellFills: [] as (string | undefined)[],
   tooltipFormatter: undefined as
     | ((
-        value: number,
+        value: unknown,
         name: string,
-        props?: { payload?: { fullDomain?: string } }
-      ) => [string, string])
+        props?: { payload?: { fullDomain?: unknown } }
+      ) => unknown)
     | undefined
 }));
 
@@ -145,6 +145,22 @@ describe('BySiteChart', () => {
 
       expect(chart.tooltipFormatter?.(10, 'time', {})).toEqual(['10m', '']);
       expect(chart.tooltipFormatter?.(10, 'time')).toEqual(['10m', '']);
+    });
+
+    it('元のドメインが文字列でなければ空文字にする', () => {
+      render(<BySiteChart data={dataOf([['a.example', 10]])} />);
+
+      expect(
+        chart.tooltipFormatter?.(10, 'time', { payload: { fullDomain: 1 } })
+      ).toEqual(['10m', '']);
+    });
+
+    it('値が数値でなければ行を出さない（null を返す）', () => {
+      render(<BySiteChart data={dataOf([['a.example', 10]])} />);
+
+      const item = { payload: { fullDomain: 'www.a.example' } };
+      expect(chart.tooltipFormatter?.('10', 'time', item)).toBeNull();
+      expect(chart.tooltipFormatter?.(undefined, 'time', item)).toBeNull();
     });
   });
 });

@@ -56,6 +56,7 @@ import {
   updateYouTubeSite
 } from '~/lib/siteService';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { getSites } from '~/lib/storage';
 import {
   blockedSite,
   sitesOf,
@@ -67,7 +68,10 @@ import type { TrackedSites } from '~/types/site';
 const NOW = new Date('2026-09-26T03:00:00.000Z');
 const LIMIT = { type: 'daily' as const, limitSeconds: 600 };
 
-const stored = () => fakeChrome.localData.sites as TrackedSites | undefined;
+const stored = async (): Promise<TrackedSites> => {
+  expect(fakeChrome.localData.sites).toBeDefined();
+  return getSites();
+};
 const givenSites = (sites: TrackedSites) => {
   fakeChrome.localData.sites = structuredClone(sites);
 };
@@ -95,7 +99,7 @@ describe('addBlock', () => {
       site: 'reddit.com',
       rejection: null
     });
-    expect(stored()).toEqual({
+    expect(await stored()).toEqual({
       'reddit.com': {
         domain: 'reddit.com',
         trackedAt: NOW.toISOString(),
@@ -107,7 +111,7 @@ describe('addBlock', () => {
 
   it('*. の表記も同じサイトキーにする', async () => {
     await addBlock('*.example.com', NOW);
-    expect(Object.keys(stored())).toEqual(['example.com']);
+    expect(Object.keys(await stored())).toEqual(['example.com']);
   });
 
   it('追跡だけのサイトにはブロック設定を足し、追跡を始めた時刻は保つ', async () => {
@@ -116,7 +120,7 @@ describe('addBlock', () => {
     );
 
     expect((await addBlock('x.com', NOW)).rejection).toBeNull();
-    expect(stored()['x.com']).toEqual({
+    expect((await stored())['x.com']).toEqual({
       domain: 'x.com',
       trackedAt: '2026-01-01T00:00:00.000Z',
       block: { enabled: true, addedAt: NOW.toISOString(), timeLimit: null },
@@ -135,7 +139,7 @@ describe('addBlock', () => {
     expect((await addBlock('localhost', NOW)).rejection).toEqual({
       reason: 'invalid'
     });
-    expect(stored()).toBeUndefined();
+    expect(fakeChrome.localData.sites).toBeUndefined();
   });
 
   it.each([
@@ -155,7 +159,7 @@ describe('addBlock', () => {
         reason: 'nested',
         nested: { site: existing, relation }
       });
-      expect(Object.keys(stored())).toEqual([existing]);
+      expect(Object.keys(await stored())).toEqual([existing]);
     }
   );
 
@@ -170,7 +174,11 @@ describe('addBlock', () => {
       addBlock('b.com', NOW),
       addTrackedSite('c.com', NOW)
     ]);
-    expect(Object.keys(stored()).sort()).toEqual(['a.com', 'b.com', 'c.com']);
+    expect(Object.keys(await stored()).sort()).toEqual([
+      'a.com',
+      'b.com',
+      'c.com'
+    ]);
   });
 });
 
@@ -179,7 +187,7 @@ describe('addTrackedSite', () => {
     expect(
       (await addTrackedSite('news.example.org', NOW)).rejection
     ).toBeNull();
-    expect(stored()['news.example.org']).toEqual({
+    expect((await stored())['news.example.org']).toEqual({
       domain: 'news.example.org',
       trackedAt: NOW.toISOString(),
       block: null,
@@ -208,7 +216,7 @@ describe('removeBlock / setBlockEnabled / setTimeLimit', () => {
     givenSites(sitesOf(blockedSite('x.com')));
     const before = await removeBlock('x.com');
     expect(before?.enabled).toBe(true);
-    expect(stored()['x.com'].block).toBeNull();
+    expect((await stored())['x.com'].block).toBeNull();
   });
 
   it('removeBlock はサイトもブロック設定も無ければ null', async () => {
@@ -221,7 +229,7 @@ describe('removeBlock / setBlockEnabled / setTimeLimit', () => {
     givenSites(sitesOf(blockedSite('x.com', { timeLimit: LIMIT })));
     const before = await setBlockEnabled('x.com', false);
     expect(before?.enabled).toBe(true);
-    expect(stored()['x.com'].block).toEqual({
+    expect((await stored())['x.com'].block).toEqual({
       enabled: false,
       addedAt: '2024-01-01T00:00:00.000Z',
       timeLimit: LIMIT
@@ -231,13 +239,13 @@ describe('removeBlock / setBlockEnabled / setTimeLimit', () => {
   it('setBlockEnabled はブロック設定の無いサイトでは何もしない', async () => {
     givenSites(sitesOf(trackedSite('x.com')));
     expect(await setBlockEnabled('x.com', true)).toBeNull();
-    expect(stored()['x.com'].block).toBeNull();
+    expect((await stored())['x.com'].block).toBeNull();
   });
 
   it('setTimeLimit はブロック設定の時間制限を変える（無ければ false）', async () => {
     givenSites(sitesOf(blockedSite('x.com'), trackedSite('y.com')));
     expect(await setTimeLimit('x.com', LIMIT)).toBe(true);
-    expect(stored()['x.com'].block?.timeLimit).toEqual(LIMIT);
+    expect((await stored())['x.com'].block?.timeLimit).toEqual(LIMIT);
     expect(await setTimeLimit('y.com', LIMIT)).toBe(false);
   });
 });
@@ -252,7 +260,7 @@ describe('updateYouTubeSite', () => {
       NOW
     );
     expect(before).toBeNull();
-    expect(stored()[YOUTUBE_DOMAIN]).toEqual({
+    expect((await stored())[YOUTUBE_DOMAIN]).toEqual({
       domain: YOUTUBE_DOMAIN,
       trackedAt: NOW.toISOString(),
       block: { enabled: true, addedAt: NOW.toISOString(), timeLimit: LIMIT },
@@ -268,7 +276,7 @@ describe('updateYouTubeSite', () => {
       NOW
     );
     expect(before).toEqual(existing);
-    expect(stored()[YOUTUBE_DOMAIN].block?.addedAt).toBe(
+    expect((await stored())[YOUTUBE_DOMAIN].block?.addedAt).toBe(
       existing.block?.addedAt
     );
   });
@@ -289,7 +297,7 @@ describe('updateYouTubeSite', () => {
       NOW
     );
 
-    expect(stored()[YOUTUBE_DOMAIN].block).toEqual({
+    expect((await stored())[YOUTUBE_DOMAIN].block).toEqual({
       enabled: false,
       addedAt: existing.block?.addedAt,
       timeLimit: LIMIT
@@ -309,7 +317,7 @@ describe('updateYouTubeSite', () => {
       NOW
     );
 
-    expect(stored()[YOUTUBE_DOMAIN].block).toBeNull();
+    expect((await stored())[YOUTUBE_DOMAIN].block).toBeNull();
   });
 
   it('機能もブロックも外しても youtube.com は追跡中に残る', async () => {
@@ -317,7 +325,7 @@ describe('updateYouTubeSite', () => {
       sitesOf(blockedSite(YOUTUBE_DOMAIN, {}, { youtube: youtubeFeatures() }))
     );
     await updateYouTubeSite({ youtube: null, block: null }, NOW);
-    expect(stored()[YOUTUBE_DOMAIN]).toMatchObject({
+    expect((await stored())[YOUTUBE_DOMAIN]).toMatchObject({
       block: null,
       youtube: null
     });
@@ -328,7 +336,7 @@ describe('stopTracking', () => {
   it('追跡だけのサイトを消す', async () => {
     givenSites(sitesOf(trackedSite('x.com'), trackedSite('y.com')));
     expect(await stopTracking('x.com')).toBe('stopped');
-    expect(Object.keys(stored())).toEqual(['y.com']);
+    expect(Object.keys(await stored())).toEqual(['y.com']);
   });
 
   it('ブロック設定か YouTube 機能を持つサイトは消さない', async () => {
@@ -340,7 +348,10 @@ describe('stopTracking', () => {
     );
     expect(await stopTracking('x.com')).toBe('in-use');
     expect(await stopTracking(YOUTUBE_DOMAIN)).toBe('in-use');
-    expect(Object.keys(stored()).sort()).toEqual(['x.com', YOUTUBE_DOMAIN]);
+    expect(Object.keys(await stored()).sort()).toEqual([
+      'x.com',
+      YOUTUBE_DOMAIN
+    ]);
   });
 
   it('追跡中に無ければ not-found', async () => {
@@ -361,7 +372,7 @@ describe('importSites', () => {
     );
 
     expect(result).toEqual({ changed: ['new.com'], skipped: [] });
-    expect(stored()['new.com']).toEqual({
+    expect((await stored())['new.com']).toEqual({
       domain: 'new.com',
       trackedAt: NOW.toISOString(),
       block: {
@@ -371,14 +382,14 @@ describe('importSites', () => {
       },
       youtube: null
     });
-    expect(stored()['x.com'].block?.enabled).toBe(false);
+    expect((await stored())['x.com'].block?.enabled).toBe(false);
   });
 
   it('追跡だけの既存サイトにはブロック設定を足す', async () => {
     givenSites(sitesOf(trackedSite('x.com')));
     const result = await importSites([blockedSite('x.com')], NOW);
     expect(result.changed).toEqual(['x.com']);
-    expect(stored()['x.com'].block?.enabled).toBe(true);
+    expect((await stored())['x.com'].block?.enabled).toBe(true);
   });
 
   it('既存・ファイル内の先行サイトと入れ子になるものは取り込まず理由を返す', async () => {
@@ -404,7 +415,10 @@ describe('importSites', () => {
         }
       ]
     });
-    expect(Object.keys(stored()).sort()).toEqual(['google.com', 'reddit.com']);
+    expect(Object.keys(await stored()).sort()).toEqual([
+      'google.com',
+      'reddit.com'
+    ]);
   });
 
   it('YouTube 機能は youtube.com 以外では取り込まない', async () => {
@@ -417,8 +431,8 @@ describe('importSites', () => {
       ],
       NOW
     );
-    expect(stored()['x.com'].youtube).toBeNull();
-    expect(stored()[YOUTUBE_DOMAIN].youtube).toEqual(
+    expect((await stored())['x.com'].youtube).toBeNull();
+    expect((await stored())[YOUTUBE_DOMAIN].youtube).toEqual(
       youtubeFeatures({ hideComments: true })
     );
   });

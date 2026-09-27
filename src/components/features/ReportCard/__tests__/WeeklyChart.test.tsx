@@ -9,7 +9,7 @@ const chart = vi.hoisted(() => ({
   data: [] as { day: string; wasteTime: number; blockCount: number }[],
   wasteTickFormatter: undefined as ((value: number) => string) | undefined,
   tooltipFormatter: undefined as
-    ((value: number, name: string) => [unknown, string]) | undefined
+    ((value: unknown, name: string) => unknown) | undefined
 }));
 
 vi.mock('recharts', () => ({
@@ -41,7 +41,7 @@ vi.mock('recharts', () => ({
   Tooltip: ({
     formatter
   }: {
-    formatter: (value: number, name: string) => [unknown, string];
+    formatter: (value: unknown, name: string) => unknown;
   }) => {
     chart.tooltipFormatter = formatter;
     return null;
@@ -182,6 +182,13 @@ describe('WeeklyChart', () => {
         4,
         'blockedCount'
       ]);
+    });
+
+    it('値が数値でなければ行を出さない（null を返す）', () => {
+      renderChart([0]);
+
+      expect(chart.tooltipFormatter?.('90', 'wasteTime')).toBeNull();
+      expect(chart.tooltipFormatter?.(undefined, 'blockCount')).toBeNull();
     });
   });
 });

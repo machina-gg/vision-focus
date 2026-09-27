@@ -60,10 +60,14 @@ export function CumulativeChart({ data }: CumulativeChartProps) {
           tickFormatter={axisConfig.tickFormatter}
         />
         <Tooltip
-          formatter={(value: number) => [
-            formatMinutes(axisConfig.restoreValue(value)),
-            getMessage('chartCumulativeLabel')
-          ]}
+          formatter={(value) =>
+            typeof value === 'number'
+              ? [
+                  formatMinutes(axisConfig.restoreValue(value)),
+                  getMessage('chartCumulativeLabel')
+                ]
+              : null
+          }
           contentStyle={{
             backgroundColor: '#fff',
             border: '1px solid #e5e7eb',

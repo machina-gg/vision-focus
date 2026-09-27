@@ -81,12 +81,19 @@ export type AddSiteRejection =
     };
 
 /** 追加の結果。rejection が null なら site に追加したサイトキーが入る */
-export interface AddSiteResult {
-  /** 追加したサイトキー（拒否したら null） */
-  site: SiteKey | null;
-  /** 拒否した理由（追加したら null） */
-  rejection: AddSiteRejection | null;
-}
+export type AddSiteResult =
+  | {
+      /** 追加したサイトキー */
+      site: SiteKey;
+      /** 追加したので null */
+      rejection: null;
+    }
+  | {
+      /** 拒否したので null */
+      site: null;
+      /** 拒否した理由 */
+      rejection: AddSiteRejection;
+    };
 
 function checkAddition(
   input: string,
