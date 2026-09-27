@@ -2,9 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn()
+vi.mock('~/lib/settingsService', () => ({
+  setPaused: vi.fn()
 }));
 
 vi.mock('~/background/blocker', () => ({
@@ -12,44 +11,53 @@ vi.mock('~/background/blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { getSettings, setSettings } from '~/lib/storage';
+import { setPaused } from '~/lib/settingsService';
 import { updateBlockRules, blockExistingTabs } from '~/background/blocker';
 import { togglePauseHandler as handler } from '../../handlers/toggle-pause';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { MessageError } from '~/types/messages';
+
+interface Response {
+  success: boolean;
+  paused?: boolean;
+  error?: MessageError;
+}
 
 describe('toggle-pause ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSettings).mockResolvedValue({ ...DEFAULT_SETTINGS });
+    vi.mocked(setPaused).mockResolvedValue(undefined);
+  });
+
+  describe('入力検証', () => {
+    it.each([
+      ['body が空', {}],
+      ['body が null', null],
+      ['paused が boolean でない', { paused: 'true' }]
+    ])('%s なら invalid-request を返し、何も変えない', async (_label, body) => {
+      const result = await invoke<Response>(handler, body);
+
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'invalid-request' }
+      });
+      expect(setPaused).not.toHaveBeenCalled();
+      expect(updateBlockRules).not.toHaveBeenCalled();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
   });
 
   it('paused: true で一時停止状態を保存する', async () => {
-    const result = await invoke<{ success: boolean; paused: boolean }>(
-      handler,
-      { paused: true }
-    );
+    const result = await invoke<Response>(handler, { paused: true });
 
     expect(result).toEqual({ success: true, paused: true });
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ paused: true })
-    );
+    expect(setPaused).toHaveBeenCalledWith(true);
   });
 
   it('paused: false で再開状態を保存する', async () => {
-    vi.mocked(getSettings).mockResolvedValue({
-      ...DEFAULT_SETTINGS,
-      paused: true
-    });
-
-    const result = await invoke<{ success: boolean; paused: boolean }>(
-      handler,
-      { paused: false }
-    );
+    const result = await invoke<Response>(handler, { paused: false });
 
     expect(result).toEqual({ success: true, paused: false });
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ paused: false })
-    );
+    expect(setPaused).toHaveBeenCalledWith(false);
   });
 
   it('状態変更後は必ずブロックルールを更新する', async () => {
@@ -70,29 +78,16 @@ describe('toggle-pause ハンドラ', () => {
     expect(blockExistingTabs).toHaveBeenCalledOnce();
   });
 
-  it('他の設定値を壊さない', async () => {
-    const settings = {
-      ...DEFAULT_SETTINGS,
-      schedules: [
-        {
-          id: 's1',
-          name: 'Work',
-          startTime: '09:00',
-          endTime: '17:00',
-          days: [1],
-          enabled: true
-        }
-      ]
-    };
-    vi.mocked(getSettings).mockResolvedValue(settings);
+  it('保存に失敗したら save-failed を返し、ルールを更新しない', async () => {
+    vi.mocked(setPaused).mockRejectedValue(new Error('storage full'));
 
-    await invoke(handler, { paused: true });
+    const result = await invoke<Response>(handler, { paused: false });
 
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        paused: true,
-        schedules: settings.schedules
-      })
-    );
+    expect(result).toEqual({
+      success: false,
+      error: { code: 'save-failed' }
+    });
+    expect(updateBlockRules).not.toHaveBeenCalled();
+    expect(blockExistingTabs).not.toHaveBeenCalled();
   });
 });

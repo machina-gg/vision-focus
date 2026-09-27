@@ -56,28 +56,6 @@ export async function getSettings(): Promise<AppSettings> {
 }
 
 /**
- * アプリの設定を丸ごと保存する
- * @param settings 保存する設定
- */
-export async function setSettings(settings: AppSettings): Promise<void> {
-  await settingsItem.setValue(settings);
-}
-
-/**
- * 設定の一部を書き換えて保存し、保存後の設定を返す
- * @param update 書き換える項目
- * @returns 保存後の設定
- */
-export async function updateSettings(
-  update: Partial<AppSettings>
-): Promise<AppSettings> {
-  const current = await getSettings();
-  const updated = { ...current, ...update };
-  await setSettings(updated);
-  return updated;
-}
-
-/**
  * ダッシュボードの表示設定を読む
  * @returns 保存済みの表示設定（未保存か壊れていれば既定値）
  */
@@ -129,16 +107,6 @@ export async function getAllStorage(): Promise<StorageSchema> {
     sites,
     activity: objectOrFallback(activity, DEFAULT_ACTIVITY)
   };
-}
-
-/** settings / vision / sites / activity を消す（supportPrompt は残す） */
-export async function clearAllStorage(): Promise<void> {
-  await Promise.all([
-    settingsItem.removeValue(),
-    visionItem.removeValue(),
-    sitesItem.removeValue(),
-    activityItem.removeValue()
-  ]);
 }
 
 const SESSION_KEYS = {

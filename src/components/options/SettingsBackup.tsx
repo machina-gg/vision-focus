@@ -19,7 +19,7 @@ import {
   downloadSettings,
   readFileAsString,
   validateImportedData,
-  applyImportedSettings
+  applyImportedVision
 } from '~/lib/settingsExport';
 import { getSettings, getSites, getVision, setVision } from '~/lib/storage';
 
@@ -115,18 +115,9 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         throw new Error('No data');
       }
 
-      const [currentSettings, currentVision] = await Promise.all([
-        getSettings(),
-        getVision()
-      ]);
-
-      const { settings: newSettings, vision: newVision } =
-        applyImportedSettings(result.data, currentSettings, currentVision);
-
       // 保存・ブロックルールの更新・開いているタブのブロックを一続きで処理させるため、保存は background に任せる
       const response = await sendMessage('import-settings', {
-        settings: newSettings,
-        sites: Object.values(result.data.sites)
+        data: result.data
       });
 
       if (!response?.success) {
@@ -134,7 +125,7 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         return;
       }
 
-      await setVision(newVision);
+      await setVision(applyImportedVision(result.data, await getVision()));
 
       const skipped = (response.skipped ?? []).map(({ domain, conflict }) =>
         getMessage('importWarningNestedSite', [domain, conflict])

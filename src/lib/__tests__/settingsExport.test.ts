@@ -6,6 +6,7 @@ import {
   exportSettings,
   validateImportedData,
   applyImportedSettings,
+  applyImportedVision,
   createDefaultExportData,
   EXPORT_VERSION,
   type ExportedSettings
@@ -281,16 +282,30 @@ describe('applyImportedSettings', () => {
       ]
     };
 
-    const { settings } = applyImportedSettings(
-      importData,
-      currentSettings,
-      DEFAULT_VISION
-    );
+    const settings = applyImportedSettings(importData, currentSettings);
     // 同じIDなのでマージされない
     expect(settings.schedules).toHaveLength(1);
     expect(itemAt(settings.schedules, 0).name).toBe('Existing');
   });
 
+  it('スケジュール・通知・長押し確認以外の項目は今の値のまま', () => {
+    const currentSettings: AppSettings = {
+      ...DEFAULT_SETTINGS,
+      paused: true,
+      password: { enabled: true, passwordHash: 'hash' }
+    };
+
+    const settings = applyImportedSettings(
+      createValidExportData().data,
+      currentSettings
+    );
+
+    expect(settings.paused).toBe(true);
+    expect(settings.password).toEqual({ enabled: true, passwordHash: 'hash' });
+  });
+});
+
+describe('applyImportedVision', () => {
   it('プリセットをマージし、重複IDを除外する', () => {
     const importData = createValidExportData({
       presets: [
@@ -310,11 +325,7 @@ describe('applyImportedSettings', () => {
       ]
     }).data;
 
-    const { vision } = applyImportedSettings(
-      importData,
-      DEFAULT_SETTINGS,
-      DEFAULT_VISION
-    );
+    const vision = applyImportedVision(importData, DEFAULT_VISION);
     expect(vision.presets).toHaveLength(1);
     expect(itemAt(vision.presets, 0).name).toBe('New Preset');
   });
@@ -327,13 +338,28 @@ describe('applyImportedSettings', () => {
       }
     }).data;
 
-    const { settings } = applyImportedSettings(
-      importData,
-      DEFAULT_SETTINGS,
-      DEFAULT_VISION
-    );
+    const settings = applyImportedSettings(importData, DEFAULT_SETTINGS);
     expect(settings.notifications.timeLimitEnabled).toBe(false);
     expect(settings.notifications.timeLimitMinutes).toBe(10);
+  });
+
+  it('既存と同じIDのプリセットは今のものを残す', () => {
+    const existing = {
+      id: 'p1',
+      name: 'Existing',
+      createdAt: '2024-01-01T00:00:00Z',
+      ...DEFAULT_DISPLAY_SETTINGS
+    };
+    const importData = createValidExportData({
+      presets: [{ ...existing, name: 'Imported' }]
+    }).data;
+
+    const vision = applyImportedVision(importData, {
+      ...DEFAULT_VISION,
+      presets: [existing]
+    });
+
+    expect(vision.presets).toEqual([existing]);
   });
 
   it('defaultDisplaySettingsとactivePresetIdが反映される', () => {
@@ -345,11 +371,7 @@ describe('applyImportedSettings', () => {
       }
     }).data;
 
-    const { vision } = applyImportedSettings(
-      importData,
-      DEFAULT_SETTINGS,
-      DEFAULT_VISION
-    );
+    const vision = applyImportedVision(importData, DEFAULT_VISION);
     expect(vision.activePresetId).toBe('p1');
     expect(vision.defaultSettings.goalText).toBe('Imported Goal');
   });
@@ -380,10 +402,9 @@ describe('長押しの秒数のエクスポート・インポート', () => {
     const imported = validateImportedData(JSON.stringify(data));
     expect(imported.success).toBe(true);
 
-    const { settings } = applyImportedSettings(
+    const settings = applyImportedSettings(
       imported.data as ExportedSettings['data'],
-      DEFAULT_SETTINGS,
-      DEFAULT_VISION
+      DEFAULT_SETTINGS
     );
     expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
   });

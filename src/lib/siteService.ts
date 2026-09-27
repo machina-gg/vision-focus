@@ -1,6 +1,7 @@
 // 書き込みはモジュール内の待ち行列で直列化する。background 以外から書き込み関数を呼ぶと直列化が効かず変更が消える
 
 import { isValidDomain, parseDomainInput } from '~/lib/domain';
+import { createSerialQueue } from '~/lib/serialQueue';
 import { getSites, sitesItem } from '~/lib/storage';
 import {
   findNestedSite,
@@ -17,23 +18,7 @@ import type {
   YouTubeFeatures
 } from '~/types/site';
 
-let tail: Promise<void> = Promise.resolve();
-
-async function enqueue<T>(task: () => Promise<T>): Promise<T> {
-  const previous = tail;
-  const run = (async () => {
-    await previous;
-    return await task();
-  })();
-  tail = (async () => {
-    try {
-      await run;
-    } catch {
-      // 後続の処理を止めないためだけに握る（失敗は run で呼び出し元へ返す）
-    }
-  })();
-  return await run;
-}
+const enqueue = createSerialQueue();
 
 /** `change` は読み出した値を書き換えず、変更後の値を `next` で返す（変更が無ければ null） */
 async function mutateSites<T>(

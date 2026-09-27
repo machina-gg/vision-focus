@@ -2,9 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn()
+vi.mock('~/lib/settingsService', () => ({
+  importSettings: vi.fn()
 }));
 
 vi.mock('~/lib/siteService', () => ({
@@ -20,14 +19,21 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { getSettings, setSettings } from '~/lib/storage';
+import { importSettings } from '~/lib/settingsService';
 import { importSites } from '~/lib/siteService';
 import { getActiveBlockedDomains } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
-import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
-import { DEFAULT_SETTINGS } from '~/types/storage';
-import type { AppSettings } from '~/types/storage';
+import {
+  createDefaultExportData,
+  type ExportedSettings
+} from '~/lib/settingsExport';
+import {
+  blockedSite,
+  sitesOf,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 import type { MessageError } from '~/types/messages';
 
 interface Response {
@@ -36,10 +42,10 @@ interface Response {
   skipped?: { domain: string; conflict: string }[];
 }
 
-const importedSettings = (
-  overrides: Partial<AppSettings> = {}
-): AppSettings => ({
-  ...DEFAULT_SETTINGS,
+const exportedData = (
+  overrides: Partial<ExportedSettings['data']> = {}
+): ExportedSettings['data'] => ({
+  ...createDefaultExportData().data,
   ...overrides
 });
 
@@ -53,32 +59,41 @@ function givenBlockedDomains(before: string[], after: string[]) {
 describe('import-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
+    vi.mocked(importSettings).mockResolvedValue(undefined);
     vi.mocked(importSites).mockResolvedValue({ changed: [], skipped: [] });
     givenBlockedDomains([], []);
   });
 
   describe('入力検証', () => {
-    const settings = importedSettings();
+    const data = exportedData();
     it.each([
       ['body が空', {}],
-      ['settings が null', { settings: null, sites: [] }],
-      ['sites が無い', { settings }],
-      [
-        'schedules が無い',
-        { settings: { ...settings, schedules: undefined }, sites: [] }
-      ],
+      ['data が null', { data: null }],
+      ['画面が重ねた設定の形（旧本文）', { settings: data, sites: [] }],
+      ['sites が無い', { data: { ...data, sites: undefined } }],
+      ['schedules が無い', { data: { ...data, schedules: undefined } }],
       [
         '追跡中のサイトの形が不正',
-        { settings, sites: [{ domain: 'example.com' }] }
+        {
+          data: { ...data, sites: { 'example.com': { domain: 'example.com' } } }
+        }
       ],
       [
         'schedules の項目が不正',
-        { settings: { ...settings, schedules: [{ id: 'a' }] }, sites: [] }
+        { data: { ...data, schedules: [{ id: 'a' }] } }
       ],
       [
-        'paused が boolean でない',
-        { settings: { ...settings, paused: 'yes' }, sites: [] }
+        '通知設定の分数が選択肢に無い',
+        {
+          data: {
+            ...data,
+            notifications: { timeLimitEnabled: true, timeLimitMinutes: 2 }
+          }
+        }
+      ],
+      [
+        '長押しの秒数が選択肢に無い',
+        { data: { ...data, unblockConfirm: { holdSeconds: 15 } } }
       ]
     ])('%s なら invalid-request を返す', async (_label, body) => {
       const result = await invoke<Response>(handler, body);
@@ -87,39 +102,40 @@ describe('import-settings ハンドラ', () => {
         success: false,
         error: { code: 'invalid-request' }
       });
-      expect(setSettings).not.toHaveBeenCalled();
+      expect(importSettings).not.toHaveBeenCalled();
       expect(importSites).not.toHaveBeenCalled();
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
   });
 
-  it('全体の設定を保存し、追跡中のサイトを取り込んでブロックルールを更新する', async () => {
-    const settings = importedSettings({
-      schedules: [
-        {
-          id: 'schedule-1',
-          name: 'work',
-          startTime: '09:00',
-          endTime: '18:00',
-          days: [1, 2, 3, 4, 5],
-          enabled: true
-        }
-      ]
-    });
+  it('設定ファイルの中身を設定に重ねて保存し、追跡中のサイトを取り込んでブロックルールを更新する', async () => {
+    const schedules = [
+      {
+        id: 'schedule-1',
+        name: 'work',
+        startTime: '09:00',
+        endTime: '18:00',
+        days: [1, 2, 3, 4, 5],
+        enabled: true
+      }
+    ];
     const sites = [
       blockedSite('sns.example', {
         timeLimit: { type: 'daily', limitSeconds: 600 }
       }),
       trackedSite('youtube.com', { youtube: youtubeFeatures() })
     ];
+    const data = exportedData({ schedules, sites: sitesOf(...sites) });
 
-    const result = await invoke<Response>(handler, { settings, sites });
+    const result = await invoke<Response>(handler, { data });
 
     expect(result).toEqual({ success: true, skipped: [] });
-    expect(setSettings).toHaveBeenCalledWith(
+    expect(importSettings).toHaveBeenCalledWith(
       expect.objectContaining({
-        schedules: [expect.objectContaining({ id: 'schedule-1' })]
+        schedules,
+        notifications: data.notifications,
+        unblockConfirm: data.unblockConfirm
       })
     );
     expect(importSites).toHaveBeenCalledWith(sites, expect.any(Date));
@@ -138,8 +154,7 @@ describe('import-settings ハンドラ', () => {
     });
 
     const result = await invoke<Response>(handler, {
-      settings: importedSettings(),
-      sites: [blockedSite('m.youtube.com')]
+      data: exportedData({ sites: sitesOf(blockedSite('m.youtube.com')) })
     });
 
     expect(result).toEqual({
@@ -148,38 +163,11 @@ describe('import-settings ハンドラ', () => {
     });
   });
 
-  it('検証の対象にしていない項目も落とさずに保存する', async () => {
-    await invoke(handler, {
-      settings: { ...importedSettings(), futureSetting: 'keep me' },
-      sites: []
-    });
-
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ futureSetting: 'keep me' })
-    );
-  });
-
-  it('保存済みの設定のうち、インポートが触れない項目は残す', async () => {
-    vi.mocked(getSettings).mockResolvedValue({
-      ...DEFAULT_SETTINGS,
-      password: { enabled: true, passwordHash: 'hash' }
-    });
-    const { password: _password, ...withoutPassword } = importedSettings();
-
-    await invoke(handler, { settings: withoutPassword, sites: [] });
-
-    expect(setSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        password: { enabled: true, passwordHash: 'hash' }
-      })
-    );
-  });
-
   describe('既存タブをブロックする条件', () => {
     it('ブロック対象のドメインが増えたとき', async () => {
       givenBlockedDomains([], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings(), sites: [] });
+      await invoke(handler, { data: exportedData() });
 
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
@@ -187,7 +175,7 @@ describe('import-settings ハンドラ', () => {
     it('元からあった対象に加えて別の対象が増えたとき', async () => {
       givenBlockedDomains(['example.com'], ['example.com', 'sns.example']);
 
-      await invoke(handler, { settings: importedSettings(), sites: [] });
+      await invoke(handler, { data: exportedData() });
 
       expect(blockExistingTabs).toHaveBeenCalledOnce();
     });
@@ -197,7 +185,7 @@ describe('import-settings ハンドラ', () => {
     it('ブロック対象が変わらないとき', async () => {
       givenBlockedDomains(['example.com'], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings(), sites: [] });
+      await invoke(handler, { data: exportedData() });
 
       expect(updateBlockRules).toHaveBeenCalledOnce();
       expect(blockExistingTabs).not.toHaveBeenCalled();
@@ -206,19 +194,16 @@ describe('import-settings ハンドラ', () => {
     it('ブロック対象が減ったとき', async () => {
       givenBlockedDomains(['example.com', 'sns.example'], ['example.com']);
 
-      await invoke(handler, { settings: importedSettings(), sites: [] });
+      await invoke(handler, { data: exportedData() });
 
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
   });
 
   it('保存に失敗した場合はエラーを返す（例外を外に投げない）', async () => {
-    vi.mocked(setSettings).mockRejectedValue(new Error('storage full'));
+    vi.mocked(importSettings).mockRejectedValue(new Error('storage full'));
 
-    const result = await invoke<Response>(handler, {
-      settings: importedSettings(),
-      sites: []
-    });
+    const result = await invoke<Response>(handler, { data: exportedData() });
 
     expect(result).toEqual({
       success: false,
@@ -228,13 +213,9 @@ describe('import-settings ハンドラ', () => {
   });
 
   it('ブロックルールの更新に失敗した場合もエラーを返す', async () => {
-    vi.mocked(setSettings).mockResolvedValue(undefined);
     vi.mocked(updateBlockRules).mockRejectedValue(new Error('rules failed'));
 
-    const result = await invoke<Response>(handler, {
-      settings: importedSettings(),
-      sites: []
-    });
+    const result = await invoke<Response>(handler, { data: exportedData() });
 
     expect(result).toEqual({
       success: false,

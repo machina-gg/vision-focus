@@ -1,5 +1,6 @@
 import type {
   GetRemainingTimeBody,
+  TogglePauseBody,
   TrackerHeartbeatBody,
   UpdateTimeLimitBody
 } from './messageSchemas';
@@ -116,10 +117,8 @@ export interface GetRemainingTimeResponse {
 
 /** 書き出したファイルの設定と追跡中のサイトを取り込む依頼 */
 export interface ImportSettingsRequest {
-  /** 取り込むアプリ設定 */
-  settings: import('./storage').AppSettings;
-  /** 取り込む追跡中のサイト */
-  sites: import('./site').TrackedSite[];
+  /** 取り込む設定ファイルの中身（画面の取り込み前の検査を通ったもの） */
+  data: import('~/lib/settingsExport').ExportedSettings['data'];
 }
 
 /** 既存のサイトと入れ子になるため取り込まなかったサイト */
@@ -177,17 +176,16 @@ export interface ToggleBlockResponse {
 }
 
 /** すべてのブロックの一時停止を切り替える依頼 */
-export interface TogglePauseRequest {
-  /** true = 一時停止する / false = 再開する */
-  paused: boolean;
-}
+export type TogglePauseRequest = TogglePauseBody;
 
 /** 一時停止の切り替えの結果 */
 export interface TogglePauseResponse {
   /** 切り替えられたか */
   success: boolean;
-  /** 切り替え後の一時停止の状態 */
-  paused: boolean;
+  /** 切り替え後の一時停止の状態。失敗時は無い */
+  paused?: boolean;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
 }
 
 /** 開いているページの表示状態の通知 */
