@@ -1103,48 +1103,62 @@ Esc で編集を取り消す。
 
 ## 4. カスタムフック
 
+この章が扱うフックは、`src/hooks/index.ts` が公開する `use` で始まる関数である。
+各フィールドの意味は実体の JSDoc を正とし、ここにはシグネチャと、JSDoc だけでは分からない使い方を置く。
+シグネチャの型の出典は [5. 型定義](#5-型定義)（保存値の型）と、各フックの節に挙げたファイルである。
+
 ### useStorageItem
 
-ストレージ同期フック。`@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を受け取り、chrome.storage の値を React で自動同期する。初期値は項目定義の `fallback`。
+`src/hooks/useStorageItem.ts`。ストレージ項目（`src/lib/storage.ts` の `@wxt-dev/storage` の項目定義）を React の state として読み書きする。
 
 ```typescript
-import { useStorageItem } from '~/hooks';
-import { settingsItem } from '~/lib/storage';
+type StorageItemSetter<T> = (
+  value: T | undefined | ((previous: T) => T)
+) => Promise<void>;
 
-const [settings, setSettings] = useStorageItem(settingsItem);
+function useStorageItem<T, M extends Record<string, unknown>>(
+  item: WxtStorageItem<T, M>
+): [T, StorageItemSetter<T>];
 ```
+
+- 読み込み前と保存値が壊れているときは、項目定義の `fallback` を返す
 
 ---
 
 ### useBlocklist
 
-ブロックリスト管理フック。
+`src/hooks/useBlocklist.ts`。設定画面のブロックリストタブの操作と、追加欄の入力状態。
 
 ```typescript
-function useBlocklist(props: {
+function useBlocklist(options: {
   settings: AppSettings | undefined;
   setSettings: (settings: AppSettings) => void;
 }): {
   newDomain: string;
-  setNewDomain: (domain: string) => void;
+  setNewDomain: (value: string) => void;
   blockError: string;
-  handleAddDomain: () => void;
-  handleRemoveDomain: (domain: string) => void;
+  handleAddDomain: () => Promise<void>;
+  handleRemoveDomain: (id: string) => Promise<void>;
+  handleToggleDomain: (id: string, enabled: boolean) => Promise<void>;
+  handleUpdateTimeLimit: (
+    id: string,
+    timeLimit: TimeLimit | null
+  ) => Promise<void>;
+  handleUpdateNotifications: (
+    notifications: NotificationSettings
+  ) => Promise<void>;
 };
 ```
 
-**機能**
-
-- ドメインの追加・削除
-- ワイルドカード（\*.example.com）対応
-- 重複チェック
-- バリデーションエラー管理
+- 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
+- 通知設定だけは `settings` へ直接保存する
+- 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）
 
 ---
 
 ### useSchedules
 
-スケジュール管理フック。
+`src/hooks/useSchedules.ts`。設定画面のスケジュールタブの編集モーダルの状態と操作。
 
 ```typescript
 interface ScheduleFormData {
@@ -1155,7 +1169,7 @@ interface ScheduleFormData {
   presetId: string;
 }
 
-function useSchedules(props: {
+function useSchedules(options: {
   settings: AppSettings | undefined;
   setSettings: (settings: AppSettings) => void;
 }): {
@@ -1165,90 +1179,70 @@ function useSchedules(props: {
   scheduleForm: ScheduleFormData;
   setScheduleForm: (form: ScheduleFormData) => void;
   scheduleError: string | null;
-  openAddSchedule: () => void;
+  handleSaveSchedule: () => Promise<void>;
+  handleDeleteSchedule: (id: string) => Promise<void>;
+  handleToggleSchedule: (id: string, enabled: boolean) => Promise<void>;
   openEditSchedule: (schedule: Schedule) => void;
-  handleSaveSchedule: () => void;
-  handleDeleteSchedule: (id: string) => void;
-  handleToggleSchedule: (id: string) => void;
+  openAddSchedule: () => void;
 };
 ```
 
-**機能**
-
-- スケジュールの追加・編集・削除
-- 有効/無効の切り替え
-- スタイル連携（presetId）
-- 保存時の重複チェック（`findOverlappingSchedule`。重なる場合は保存せず `scheduleError` を返す）
+- 保存時に他のスケジュールとの重なりを `findOverlappingSchedule` で調べ、重なれば保存せず `scheduleError` に文言を入れる
+- 一時停止の解除は `settings` へ直接書かず、`toggle-pause` で依頼する（直接書くと開いているタブがブロックされない）
 
 ---
 
 ### usePresets
 
-スタイル管理フック。
+`src/hooks/usePresets.ts`。設定画面のスタイルタブの下書きと、スタイルの操作。戻り値の型は `UsePresetsReturn` として公開する（受け取る部品は [PresetSelector](#presetselector) と [DisplaySettingsForm](#displaysettingsform)）。
 
 ```typescript
-function usePresets(props: {
+function usePresets(options: {
   vision: VisionSettings | undefined;
   setVision: (vision: VisionSettings) => void;
-  // スタイル削除時にスケジュールのスタイル連携を外すために扱う
   settings: AppSettings | undefined;
   setSettings: (settings: AppSettings) => void;
 }): {
-  // スタイル一覧（ドラフト状態）
+  draftDisplaySettings: DashboardDisplaySettings;
   draftPresets: DashboardPreset[];
   selectedPresetId: string | null;
-  draftDisplaySettings: DashboardDisplaySettings;
   editingPresetName: string;
   isDirty: boolean;
   visionSaved: boolean;
-
-  // モーダル制御
   showSavePresetModal: boolean;
-  setShowSavePresetModal: (show: boolean) => void;
   presetName: string;
-  setPresetName: (name: string) => void;
-
-  // スタイル操作
-  handleSelectPreset: (id: string | null) => void;
-  handleCreatePreset: () => void;
-  // 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せず削除する
   deleteTargetPresetId: string | null;
   deleteTargetScheduleCount: number;
-  handleRequestDeletePreset: (id: string) => void;
-  handleConfirmDeletePreset: () => void;
-  handleCancelDeletePreset: () => void;
-  handleApplyPreset: () => void;
-  handleSaveSelectedPreset: () => void;
-
-  // 設定変更
+  setShowSavePresetModal: (show: boolean) => void;
+  setPresetName: (name: string) => void;
+  handleSelectPreset: (presetId: string) => void;
   handlePresetNameChange: (name: string) => void;
+  handleRequestDeletePreset: (id: string) => Promise<void>;
+  handleConfirmDeletePreset: () => Promise<void>;
+  handleCancelDeletePreset: () => void;
+  handleSaveSelectedPreset: () => Promise<void>;
+  handleApplyPreset: () => Promise<void>;
+  handleCreatePreset: () => Promise<void>;
   handleGoalTextChange: (text: string) => void;
   handleGoalSubTextChange: (text: string) => void;
   handleTextColorChange: (color: string) => void;
   handleBackgroundTypeChange: (type: 'image' | 'color') => void;
-  handleBackgroundChange: (imageId: string) => void;
+  handleBackgroundChange: (bgId: string) => void;
   handleBackgroundColorChange: (color: string) => void;
-  handleCustomBackgroundChange: (data: string | null) => void;
-  handleFontSettingsChange: (settings: Partial<FontSettings>) => void;
+  handleCustomBackgroundChange: (dataUrl: string | null) => void;
+  handleFontSettingsChange: (fontSettings: FontSettings) => void;
 };
 ```
 
-**機能**
-
-- スタイルの作成・選択・削除・適用
-- 削除時、参照しているスケジュールの `presetId` を外す（`enabled` は変えない）。
-  参照が 1 件以上あるときは件数を示して確認する
-- 設定変更時のドラフト管理
-- ストレージへの永続化
+- 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せずに削除する
+- 削除したスタイルを参照していたスケジュールからは `presetId` を外す（`enabled` は変えない）。`settings` / `setSettings` を受け取るのはこのため
 
 ---
 
 ### useAnalytics
 
-分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）。
-返す値は追加を拒否した理由（`addSiteError`）だけ（一覧の行は `sites` から、数値は `activity` から画面が導出する）。
-どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
-（追跡中のサイトと事実の表を書けるのは background だけ）。
+`src/hooks/useAnalytics.ts`。分析タブの追跡サイトの操作（再ブロック・追跡の追加と停止・リセット）。
+一覧の行は `sites` から、数値は `activity` から画面が導出するので、このフックが返す状態は追加を拒否した理由（`addSiteError`）だけである。
 
 ```typescript
 function useAnalytics(): {
@@ -1261,29 +1255,33 @@ function useAnalytics(): {
 };
 ```
 
+- どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する（追跡中のサイトと事実の表を書けるのは background だけ）
 - `handleReblock`: ブロック設定が無ければ `add-block`、無効なら `toggle-block`（ON）。ブロック中なら何もしない
 - `handleStopTracking`: `stop-tracking` を依頼するだけ（ブロック設定か YouTube 機能を持つサイトは background が拒否する。ブロック設定を消すのはブロックリストタブの確認つきの経路だけ）
-- `handleAddSiteToTrack`: 追加できたら true。拒否されたらハンドラの `error`（失敗の種類）を `messageErrorText` で文言にして `addSiteError` に入れ、false
+- `handleAddSiteToTrack`: 拒否されたらハンドラの `error`（失敗の種類）を `messageErrorText` で文言にして `addSiteError` に入れる
 
 ---
 
 ### useActivitySources
 
-画面が導出に使う入力（事実の表 `activity` と、その母集団である追跡中のサイト）を保存値から読むフック（`src/hooks/useActivityStats.ts`）。
-どちらも保存値の変更に追従する。数値の集計は画面に書かず、`src/lib/activityStats.ts` の純粋関数に通す。
+`src/hooks/useActivityStats.ts`。画面が導出に使う入力（事実の表 `activity` と、その母集団である追跡中のサイト）を保存値から読む。どちらも保存値の変更に追従する。
 
 ```typescript
-function useActivitySources(): {
+interface ActivitySources {
   activity: ActivityLog;
   sites: SiteKey[];
-};
+}
+
+function useActivitySources(): ActivitySources;
 ```
+
+- 数値の集計は画面に書かず、`src/lib/activityStats.ts` の純粋関数に通す（同じファイルの `todayStats` / `blockedHostTotals` / `blockCountsByDomain` はその組み合わせで、フックではない）
 
 ---
 
 ### useYouTubeSettings
 
-YouTube 設定の保存フック。
+`src/hooks/useYouTubeSettings.ts`。設定画面の YouTube の節の値の保存。
 
 ```typescript
 function useYouTubeSettings(): {
@@ -1291,19 +1289,30 @@ function useYouTubeSettings(): {
 };
 ```
 
-**機能**
-
 - 保存は background の `update-youtube-settings` ハンドラが `sites['youtube.com']` に行い、画面は `sites` の監視で表示を追従させる
 - ハンドラ側でブロックルールの更新・既存タブのブロック・解除の記録まで行うため、アクセスブロックを有効化した時点で開いている YouTube のタブもブロックされる
-- `YouTubeSettingsInput`（`src/types/messageSchemas.ts`）は YouTube の節が送る値（機能全体の有効・非表示機能・アクセスブロック・時間制限）。`YouTubeSection` が `sites['youtube.com']` から組み立て、`youtube.com` への書き方への変換はハンドラが行う
+- `YouTubeSettingsInput`（`src/types/messageSchemas.ts`）は `YouTubeSection` が `sites['youtube.com']` から組み立てる。`youtube.com` への書き方への変換はハンドラが行う
 
 ---
 
 ### useUnblockGuard
 
-ブロックを弱める操作を、確認を通してから実行するフック。
+`src/hooks/useUnblockGuard.ts`。ブロックを弱める操作を、確認を通してから実行させる。
 
 ```typescript
+type UnblockAction = 'toggle' | 'delete';
+
+interface UnblockRequest {
+  domain: string;
+  timeLimit: TimeLimit | null | undefined;
+  action: UnblockAction;
+  onConfirm: () => void;
+}
+
+interface PendingUnblock extends UnblockRequest {
+  blockStyle: string;
+}
+
 function useUnblockGuard(isPasswordProtected: boolean): {
   pending: PendingUnblock | null;
   isPasswordModalOpen: boolean;
@@ -1312,21 +1321,126 @@ function useUnblockGuard(isPasswordProtected: boolean): {
   confirm: () => void;
   close: () => void;
 };
-
-interface UnblockRequest {
-  domain: string;
-  timeLimit: TimeLimit | null | undefined;
-  action: 'toggle' | 'delete';
-  onConfirm: () => void;
-}
 ```
 
-**機能**
-
-- パスワード保護中は `PasswordModal`、それ以外は `UnblockConfirmModal`（長押し確認）へ振り分ける
+- パスワード保護中は [PasswordModal](#passwordmodal)、それ以外は [UnblockConfirmModal](#unblockconfirmmodal)（長押し確認）を開かせる
 - 確認が通ったときだけ `onConfirm` を呼ぶ。キャンセルすると何も実行しない
-- ブロック方式の表示は `timeLimit` の有無で「1 日の上限 / 常時ブロック」を出し分ける
-- 対象の操作: ブロックリストの無効化・削除、YouTube の「有効化」「アクセスをブロック」の OFF（`BlocklistTab` が持ち、`YouTubeSection` には `onRequestUnblock` として渡す）
+- 対象の操作と画面は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)。このフックを持つのは [BlocklistTab](#blocklisttab) で、[YouTubeSection](#youtubesection) には `requestUnblock` を `onRequestUnblock` として渡す
+
+---
+
+### useResolvedPreset
+
+`src/hooks/useResolvedPreset.ts`。ダッシュボードに今表示する表示設定を決める（ポップアップと新しいタブが使う）。
+
+```typescript
+function useResolvedPreset(options: {
+  vision: VisionSettings | undefined;
+  settings: AppSettings | undefined;
+}): {
+  displaySettings: DashboardDisplaySettings;
+  timeTick: number;
+};
+```
+
+- 優先順位は [SCREEN.md のダッシュボード](./SCREEN.md#ダッシュボード--新規タブnewtab)の「挙動」を正とする。タブが再表示されるたびに判定し直す
+
+---
+
+### useBackgroundPreload
+
+`src/hooks/useBackgroundPreload.ts`。新しいタブの背景画像とフォントを先読みし、表示してよいかと当てるスタイルを返す。
+
+```typescript
+function useBackgroundPreload(options: {
+  displaySettings: DashboardDisplaySettings;
+}): {
+  isStorageLoaded: boolean;
+  isBackgroundReady: boolean;
+  isColorBackground: boolean;
+  backgroundUrl: string;
+  backgroundColor: string;
+  containerStyle: React.CSSProperties;
+  fontStyle: React.CSSProperties;
+};
+```
+
+---
+
+### useCurrentDomain
+
+`src/hooks/useCurrentDomain.ts`。ポップアップが、アクティブなタブのドメインとその時間制限を定期的に取得する。
+
+```typescript
+function useCurrentDomain(): {
+  currentDomain: string | undefined;
+  timeLimitInfo: TimeLimitInfo | null;
+  clearDomain: () => void;
+};
+```
+
+- `TimeLimitInfo` は `src/types/messages.ts`（`get-remaining-time` の応答）
+
+---
+
+### usePopupActions
+
+`src/hooks/usePopupActions.ts`。ポップアップのページ遷移・ブロック追加・一時停止の切り替えと、パスワード保護の有無。
+
+```typescript
+function usePopupActions(options: {
+  settings: AppSettings | undefined;
+  clearDomain: () => void;
+}): {
+  handleSettingsClick: () => void;
+  handleHelpClick: () => void;
+  handleAnalyticsClick: () => void;
+  handleGoalClick: () => void;
+  handleBlock: (domain: string) => Promise<void>;
+  handlePausedChange: (paused: boolean) => Promise<void>;
+  isPasswordProtected: boolean;
+};
+```
+
+- `handlePausedChange` 自体はパスワードを確かめない。パスワード保護中に一時停止にするとき、`PopupApp` は [usePasswordVerification](#usepasswordverification) の `openModal` でモーダルを開くだけで、照合と `handlePausedChange(true)` の呼び出しは [PasswordModal](#passwordmodal) が行う（`PopupApp` はこのフックの `handleSubmit` を使わない）
+
+---
+
+### usePasswordVerification
+
+`src/hooks/usePasswordVerification.ts`。パスワード確認モーダルの状態と、照合に成功したら `onSuccess` を呼ぶ送信処理。
+
+```typescript
+function usePasswordVerification(options: {
+  passwordHash: string | null;
+  onSuccess: () => void | Promise<void>;
+}): {
+  showModal: boolean;
+  passwordInput: string;
+  passwordError: string | null;
+  showPassword: boolean;
+  isVerifying: boolean;
+  openModal: () => void;
+  closeModal: () => void;
+  setPasswordInput: (value: string) => void;
+  toggleShowPassword: () => void;
+  handleSubmit: () => Promise<void>;
+};
+```
+
+---
+
+### useSupportPrompt
+
+`src/hooks/useSupportPrompt.ts`。分析タブの支援誘導を出すかの判定と、支援・閉じる操作。
+
+```typescript
+function useSupportPrompt(): {
+  isVisible: boolean;
+  handleSupport: () => Promise<void>;
+  handleDismiss: () => Promise<void>;
+};
+```
 
 ---
 
