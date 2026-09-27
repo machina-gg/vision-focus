@@ -1402,7 +1402,7 @@ function usePopupActions(options: {
 };
 ```
 
-- `handlePausedChange` 自体はパスワードを確かめない。一時停止にするときのパスワード入力は `PopupApp` が [usePasswordVerification](#usepasswordverification) で挟む
+- `handlePausedChange` 自体はパスワードを確かめない。パスワード保護中に一時停止にするとき、`PopupApp` は [usePasswordVerification](#usepasswordverification) の `openModal` でモーダルを開くだけで、照合と `handlePausedChange(true)` の呼び出しは [PasswordModal](#passwordmodal) が行う（`PopupApp` はこのフックの `handleSubmit` を使わない）
 
 ---
 
