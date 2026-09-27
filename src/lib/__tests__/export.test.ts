@@ -14,6 +14,7 @@ import { parseDateKey } from '~/lib/activityStats';
 import { formatTime } from '~/lib/time';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import { itemAt } from '~/test/items';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
@@ -196,8 +197,10 @@ describe('export utilities', () => {
       exportBlockList(blockSitesOf(['reddit.com']));
 
       expect(global.Blob).toHaveBeenCalled();
-      const blobCall = (global.Blob as unknown as ReturnType<typeof vi.fn>).mock
-        .calls[0];
+      const blobCall = itemAt(
+        (global.Blob as unknown as ReturnType<typeof vi.fn>).mock.calls,
+        0
+      );
       const content = blobCall[0][0];
       expect(content.startsWith('\uFEFF')).toBe(true);
     });

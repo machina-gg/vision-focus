@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { GoalDisplay } from '../GoalDisplay';
+import { itemAt } from '~/test/items';
 
 const baseProps = {
   goalText: '今日の目標',
@@ -123,7 +124,9 @@ describe('GoalDisplay', () => {
       });
 
       expect(onKeyDown).toHaveBeenCalledTimes(1);
-      expect(onKeyDown.mock.calls[0][0]).toMatchObject({ key: 'Enter' });
+      expect(itemAt(onKeyDown.mock.calls, 0)[0]).toMatchObject({
+        key: 'Enter'
+      });
     });
 
     it('保存ボタンで onSave、取消ボタンで onCancel が呼ばれる', () => {

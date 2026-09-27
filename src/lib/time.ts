@@ -70,7 +70,7 @@ export function formatTimeShort(seconds: number): string {
  * @returns UTC の日付の文字列
  */
 export function getTodayKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return getDateKey(new Date());
 }
 
 /**
@@ -92,7 +92,8 @@ export function toDateKey(date: Date): DateKey {
  * @returns UTC の日付の文字列
  */
 export function getDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const iso = date.toISOString();
+  return iso.slice(0, iso.indexOf('T'));
 }
 
 /**
@@ -147,6 +148,7 @@ export function isValidTimeString(time: string): boolean {
 export function parseTimeToMinutes(time: string): number {
   if (!isValidTimeString(time)) return 0;
   const [hours, minutes] = time.split(':').map(Number);
+  if (hours === undefined || minutes === undefined) return 0;
   return hours * 60 + minutes;
 }
 

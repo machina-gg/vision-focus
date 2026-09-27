@@ -15,6 +15,7 @@ import {
   toDateKey
 } from '~/lib/time';
 import * as i18n from '~/lib/i18n';
+import { itemAt } from '~/test/items';
 
 describe('formatTime', () => {
   it('formats seconds less than 60', () => {
@@ -194,9 +195,9 @@ describe('getLastNDays', () => {
 
   it('returns dates in descending order', () => {
     const days = getLastNDays(3);
-    const today = new Date(days[0]);
-    const yesterday = new Date(days[1]);
-    const twoDaysAgo = new Date(days[2]);
+    const today = new Date(itemAt(days, 0));
+    const yesterday = new Date(itemAt(days, 1));
+    const twoDaysAgo = new Date(itemAt(days, 2));
     expect(today > yesterday).toBe(true);
     expect(yesterday > twoDaysAgo).toBe(true);
   });

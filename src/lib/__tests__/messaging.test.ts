@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { sendMessage, onMessage, removeAllListeners } from '~/lib/messaging';
+import { itemAt } from '~/test/items';
 
 interface RuntimeMessage {
   type: string;
@@ -70,7 +71,7 @@ describe('onMessage', () => {
     const handler = vi.fn(() => ({ success: true, paused: true }));
     onMessage('toggle-pause', handler);
 
-    const rootListener = listeners[0];
+    const rootListener = itemAt(listeners, 0);
     const sender = {} as chrome.runtime.MessageSender;
 
     const other = rootListener(

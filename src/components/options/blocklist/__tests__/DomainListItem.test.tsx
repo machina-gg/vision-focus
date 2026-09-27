@@ -6,6 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { DomainListItem } from '../DomainListItem';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite } from '~/test/sites';
+import { itemAt } from '~/test/items';
 import type { BlockRule } from '~/types/site';
 
 stubI18nWithSubstitutions();
@@ -100,7 +101,7 @@ describe('DomainListItem', () => {
       renderItem({ onUpdateTimeLimit });
 
       fireEvent.click(screen.getByText('alwaysBlocked'));
-      fireEvent.change(screen.getAllByRole('combobox')[0], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 0), {
         target: { value: 'daily' }
       });
       await act(async () => {

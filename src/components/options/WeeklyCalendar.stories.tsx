@@ -70,26 +70,27 @@ const mockVision: VisionSettings = {
   activePresetId: null
 };
 
-const mockSchedules: Schedule[] = [
-  {
-    id: '1',
-    name: 'Work Hours',
-    startTime: '09:00',
-    endTime: '18:00',
-    days: [1, 2, 3, 4, 5],
-    enabled: true,
-    presetId: 'work-preset'
-  },
-  {
-    id: '2',
-    name: 'Evening Focus',
-    startTime: '20:00',
-    endTime: '23:00',
-    days: [0, 1, 2, 3, 4, 5, 6],
-    enabled: true,
-    presetId: 'focus-preset'
-  }
-];
+const workSchedule: Schedule = {
+  id: '1',
+  name: 'Work Hours',
+  startTime: '09:00',
+  endTime: '18:00',
+  days: [1, 2, 3, 4, 5],
+  enabled: true,
+  presetId: 'work-preset'
+};
+
+const eveningSchedule: Schedule = {
+  id: '2',
+  name: 'Evening Focus',
+  startTime: '20:00',
+  endTime: '23:00',
+  days: [0, 1, 2, 3, 4, 5, 6],
+  enabled: true,
+  presetId: 'focus-preset'
+};
+
+const mockSchedules: Schedule[] = [workSchedule, eveningSchedule];
 
 export const Default: Story = {
   args: {
@@ -103,7 +104,7 @@ export const Default: Story = {
 
 export const SingleSchedule: Story = {
   args: {
-    schedules: [mockSchedules[0]],
+    schedules: [workSchedule],
     vision: mockVision,
     onScheduleClick: (schedule) => {
       alert(`Clicked: ${schedule.name}`);
@@ -142,9 +143,9 @@ export const ManySchedules: Story = {
 export const WithDisabledSchedule: Story = {
   args: {
     schedules: [
-      mockSchedules[0],
+      workSchedule,
       {
-        ...mockSchedules[1],
+        ...eveningSchedule,
         enabled: false
       }
     ],

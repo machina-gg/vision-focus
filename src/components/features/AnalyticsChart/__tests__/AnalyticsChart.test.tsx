@@ -7,6 +7,7 @@ import { AnalyticsChart, CHART_DAYS } from '../AnalyticsChart';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
+import { itemAt, lastItem } from '~/test/items';
 
 stubI18nWithSubstitutions();
 
@@ -110,7 +111,7 @@ describe('AnalyticsChart', () => {
       const totalMinutes = 5400 / 60;
       expect(daily.reduce((acc, d) => acc + d.time, 0)).toBe(totalMinutes);
       expect(bySite.reduce((acc, d) => acc + d.time, 0)).toBe(totalMinutes);
-      expect(cumulative[cumulative.length - 1].cumulative).toBe(totalMinutes);
+      expect(lastItem(cumulative).cumulative).toBe(totalMinutes);
     });
   });
 
@@ -219,7 +220,7 @@ describe('AnalyticsChart', () => {
 
       const bySite = chartData<{ fullDomain: string }>('by-site-chart');
       expect(bySite).toHaveLength(8);
-      expect(bySite[0].fullDomain).toBe('site9.example');
+      expect(itemAt(bySite, 0).fullDomain).toBe('site9.example');
     });
   });
 

@@ -234,11 +234,10 @@ export function usePresets({
       const visionData = await getVision();
       const presets = visionData.presets || [];
 
-      if (presets.length > 0) {
-        const activePreset = visionData.activePresetId
-          ? presets.find((p) => p.id === visionData.activePresetId)
-          : presets[0];
-        const target = activePreset || presets[0];
+      const target =
+        presets.find((p) => p.id === visionData.activePresetId) ?? presets[0];
+
+      if (target) {
         dispatch({
           type: 'INITIALIZE',
           presets,

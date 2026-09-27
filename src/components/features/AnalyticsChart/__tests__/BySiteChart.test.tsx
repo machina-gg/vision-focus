@@ -86,7 +86,7 @@ describe('BySiteChart', () => {
       render(<BySiteChart data={dataOf([['a.example', 0]])} />);
 
       expect(chart.data).toHaveLength(1);
-      expect(chart.data?.[0].time).toBe(0);
+      expect(chart.data?.[0]?.time).toBe(0);
     });
   });
 

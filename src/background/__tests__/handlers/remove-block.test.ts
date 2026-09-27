@@ -18,6 +18,7 @@ import { removeBlock } from '~/lib/siteService';
 import { updateBlockRules } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
 import { removeBlockHandler as handler } from '../../handlers/remove-block';
+import { itemAt } from '~/test/items';
 import type { BlockRule } from '~/types/site';
 
 const rule = (enabled: boolean): BlockRule => ({
@@ -64,7 +65,7 @@ describe('remove-block ハンドラ', () => {
       at: expect.any(Date)
     });
     expect(vi.mocked(removeBlock).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(recordActivity).mock.invocationCallOrder[0]
+      itemAt(vi.mocked(recordActivity).mock.invocationCallOrder, 0)
     );
   });
 

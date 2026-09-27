@@ -10,6 +10,7 @@ import {
   type AppSettings,
   type PasswordSettings
 } from '~/types/storage';
+import { itemAt } from '~/test/items';
 
 const received = vi.hoisted(() => ({
   password: undefined as
@@ -94,7 +95,7 @@ describe('SettingsTab', () => {
       ];
       for (let i = 1; i < cards.length; i++) {
         expect(
-          cards[i - 1].compareDocumentPosition(cards[i]) &
+          itemAt(cards, i - 1).compareDocumentPosition(itemAt(cards, i)) &
             Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy();
       }

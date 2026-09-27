@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { PasswordField } from '../PasswordField';
+import { itemAt } from '~/test/items';
 
 function renderField(
   overrides: Partial<React.ComponentProps<typeof PasswordField>> = {}
@@ -216,7 +217,9 @@ describe('PasswordField', () => {
       fireEvent.keyDown(field(), { key: 'Enter' });
 
       expect(onKeyDown).toHaveBeenCalledTimes(1);
-      expect(onKeyDown.mock.calls[0][0]).toMatchObject({ key: 'Enter' });
+      expect(itemAt(onKeyDown.mock.calls, 0)[0]).toMatchObject({
+        key: 'Enter'
+      });
     });
 
     it('キー操作を渡さなくても例外にならない', () => {

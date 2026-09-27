@@ -33,6 +33,7 @@ import { DEFAULT_SETTINGS } from '~/types/storage';
 import type { TimeLimit } from '~/types/storage';
 import type { TrackedSites } from '~/types/site';
 import { sitesOf, trackedSite, youtubeFeatures } from '~/test/sites';
+import { lastItem } from '~/test/items';
 
 const YOUTUBE_TAB = { id: 1, url: 'https://www.youtube.com/watch?v=abc' };
 const OTHER_TAB = { id: 2, url: 'https://example.com/' };
@@ -166,7 +167,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
 
     const calls =
       chromeMock.declarativeNetRequest.updateDynamicRules.mock.calls;
-    const arg = calls[calls.length - 1][0] as {
+    const arg = lastItem(calls)[0] as {
       addRules: chrome.declarativeNetRequest.Rule[];
     };
     expect(arg.addRules).toEqual([]);
@@ -179,7 +180,7 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
 
     const calls =
       chromeMock.declarativeNetRequest.updateDynamicRules.mock.calls;
-    const arg = calls[calls.length - 1][0] as {
+    const arg = lastItem(calls)[0] as {
       addRules: chrome.declarativeNetRequest.Rule[];
     };
     // ||youtube.com は www. を含むすべてのサブドメインを止める

@@ -11,6 +11,7 @@ import {
 import { toDateKey } from '~/lib/time';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import { itemAt } from '~/test/items';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 
@@ -276,7 +277,7 @@ describe('AnalyticsExportBar', () => {
       });
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('shareToX')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
       });
 
       expect(share.generateShareText).toHaveBeenCalledWith({
@@ -292,7 +293,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('shareToX')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
       });
 
       expect(share.generateShareText).toHaveBeenCalledWith({
@@ -307,7 +308,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('shareToX')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
       });
 
       expect(screen.getByText('shareError')).toBeInTheDocument();
@@ -319,7 +320,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('shareToX')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
       });
 
       expect(screen.getByText('shareError')).toBeInTheDocument();
@@ -331,7 +332,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('shareToX')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
       });
 
       expect(screen.getByText('shareError')).toBeInTheDocument();
@@ -345,7 +346,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('downloadImage')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('downloadImage'), 0));
       });
 
       expect(share.downloadImage).toHaveBeenCalledWith(
@@ -360,7 +361,7 @@ describe('AnalyticsExportBar', () => {
       renderBar();
 
       await act(async () => {
-        fireEvent.click(screen.getAllByTitle('downloadImage')[0]);
+        fireEvent.click(itemAt(screen.getAllByTitle('downloadImage'), 0));
       });
 
       expect(screen.getByText('shareError')).toBeInTheDocument();

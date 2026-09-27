@@ -7,6 +7,7 @@ import { TimeLimitEditor } from '../TimeLimitEditor';
 import type { TimeLimit } from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite } from '~/test/sites';
+import { itemAt } from '~/test/items';
 
 stubI18nWithSubstitutions();
 
@@ -89,7 +90,7 @@ describe('TimeLimitEditor', () => {
       const onUpdate = renderEditor({ timeLimit: null });
 
       expand();
-      fireEvent.change(screen.getAllByRole('combobox')[0], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 0), {
         target: { value: 'daily' }
       });
 
@@ -112,7 +113,7 @@ describe('TimeLimitEditor', () => {
       });
 
       expand();
-      fireEvent.change(screen.getAllByRole('combobox')[1], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 1), {
         target: { value: '15' }
       });
 
@@ -132,7 +133,7 @@ describe('TimeLimitEditor', () => {
       });
 
       expand();
-      fireEvent.change(screen.getAllByRole('combobox')[0], {
+      fireEvent.change(itemAt(screen.getAllByRole('combobox'), 0), {
         target: { value: 'always' }
       });
 

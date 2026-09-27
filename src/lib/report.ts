@@ -169,7 +169,6 @@ export function formatWeekRange(weekStart: string, weekEnd: string): string {
  * @returns ブラウザのロケールの年と月の表示
  */
 export function formatMonth(monthKey: string): string {
-  const [year, month] = monthKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1);
+  const date = parseDateKey(`${monthKey}-01`);
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
 }

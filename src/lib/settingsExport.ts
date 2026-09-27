@@ -1,5 +1,6 @@
 import * as z from 'zod';
 
+import { getTodayKey } from '~/lib/time';
 import { TrackedSiteSchema } from '~/types/messageSchemas';
 import type { TrackedSites } from '~/types/site';
 import type {
@@ -141,11 +142,6 @@ export function hasLargeCustomBackgrounds(data: ExportedSettings): boolean {
   return size > LARGE_EXPORT_WARNING_SIZE;
 }
 
-function getDateString(): string {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
-}
-
 /**
  * 今の設定から設定ファイルの中身を作る（isLarge は大きすぎる警告を出すか）
  * @param settings 今のアプリの設定
@@ -188,7 +184,7 @@ export function downloadSettings(data: ExportedSettings): void {
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = `visionfocus-settings-${getDateString()}.json`;
+  link.download = `visionfocus-settings-${getTodayKey()}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

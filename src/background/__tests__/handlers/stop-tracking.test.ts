@@ -13,6 +13,7 @@ vi.mock('~/lib/activityService', () => ({
 import { stopTracking } from '~/lib/siteService';
 import { purgeSite } from '~/lib/activityService';
 import { stopTrackingHandler as handler } from '../../handlers/stop-tracking';
+import { itemAt } from '~/test/items';
 import type { MessageError } from '~/types/messages';
 
 interface Response {
@@ -41,7 +42,7 @@ describe('stop-tracking ハンドラ', () => {
     expect(stopTracking).toHaveBeenCalledWith('x.com');
     expect(purgeSite).toHaveBeenCalledWith('x.com');
     expect(vi.mocked(stopTracking).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(purgeSite).mock.invocationCallOrder[0]
+      itemAt(vi.mocked(purgeSite).mock.invocationCallOrder, 0)
     );
   });
 

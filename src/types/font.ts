@@ -53,6 +53,12 @@ export interface FontDefinition {
   googleFont?: string;
 }
 
+const SYSTEM_FONT: FontDefinition = {
+  family: 'system',
+  name: 'System Default',
+  css: 'ui-sans-serif, system-ui, sans-serif'
+};
+
 /** フォント選択画面に並べる分類ごとのフォント一覧（name は分類の表示名）。フォントの定義の置き場はここだけ */
 export const FONT_CATEGORIES: Record<
   FontCategory,
@@ -60,13 +66,7 @@ export const FONT_CATEGORIES: Record<
 > = {
   system: {
     name: 'System',
-    fonts: [
-      {
-        family: 'system',
-        name: 'System Default',
-        css: 'ui-sans-serif, system-ui, sans-serif'
-      }
-    ]
+    fonts: [SYSTEM_FONT]
   },
   modern: {
     name: 'Modern',
@@ -219,7 +219,7 @@ export function getFontDefinition(family: FontFamily): FontDefinition {
     const font = category.fonts.find((f) => f.family === family);
     if (font) return font;
   }
-  return FONT_CATEGORIES.system.fonts[0];
+  return SYSTEM_FONT;
 }
 
 /**
