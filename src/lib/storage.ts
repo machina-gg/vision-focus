@@ -15,6 +15,7 @@ import {
 } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
+import type { BlockedReason } from '~/lib/blockRule';
 
 /** アプリの設定の保存項目。`local:` は @wxt-dev/storage の領域の指定で、chrome.storage.local 上の実キーは接頭辞を除いた名前になる */
 export const settingsItem = extensionStorage.defineItem<AppSettings>(
@@ -141,31 +142,37 @@ export async function clearAllStorage(): Promise<void> {
 }
 
 const SESSION_KEYS = {
-  lastBlockedDomain: 'lastBlockedDomain'
+  lastBlocked: 'lastBlocked'
 } as const;
 
+/** 最後にブロックしたドメインと、そのときのブロックの理由（ブロック画面の帯に出す） */
+export interface LastBlocked {
+  /** ブロックしたホスト名 */
+  domain: string;
+  /** ブロックの理由 */
+  reason: BlockedReason;
+}
+
 /**
- * 最後にブロックしたドメインを session 領域に残す（ブロック画面の表示に使う）
- * @param domain ブロックしたホスト名
+ * 最後にブロックしたドメインと理由を session 領域に残す（ブロック画面の表示に使う）
+ * @param record ブロックしたホスト名と理由
  */
-export async function setLastBlockedDomain(domain: string): Promise<void> {
+export async function setLastBlocked(record: LastBlocked): Promise<void> {
   await chrome.storage.session.set({
-    [SESSION_KEYS.lastBlockedDomain]: domain
+    [SESSION_KEYS.lastBlocked]: record
   });
 }
 
 /**
- * 最後にブロックしたドメインを session 領域から読む
- * @returns ブロックしたホスト名（残っていなければ null）
+ * 最後にブロックしたドメインと理由を session 領域から読む
+ * @returns ブロックしたホスト名と理由（残っていなければ null）
  */
-export async function getLastBlockedDomain(): Promise<string | null> {
-  const result = await chrome.storage.session.get(
-    SESSION_KEYS.lastBlockedDomain
-  );
-  return result[SESSION_KEYS.lastBlockedDomain] ?? null;
+export async function getLastBlocked(): Promise<LastBlocked | null> {
+  const result = await chrome.storage.session.get(SESSION_KEYS.lastBlocked);
+  return (result[SESSION_KEYS.lastBlocked] as LastBlocked | undefined) ?? null;
 }
 
-/** 最後にブロックしたドメインを session 領域から消す */
-export async function clearLastBlockedDomain(): Promise<void> {
-  await chrome.storage.session.remove(SESSION_KEYS.lastBlockedDomain);
+/** 最後にブロックしたドメインと理由を session 領域から消す */
+export async function clearLastBlocked(): Promise<void> {
+  await chrome.storage.session.remove(SESSION_KEYS.lastBlocked);
 }

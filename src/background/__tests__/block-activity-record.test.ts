@@ -9,7 +9,7 @@ const activityStore = vi.hoisted(() => ({
 
 vi.mock('~/lib/storage', () => ({
   getSettings: vi.fn(),
-  setLastBlockedDomain: vi.fn(),
+  setLastBlocked: vi.fn(),
   activityItem: {
     getValue: vi.fn(async () => structuredClone(activityStore.value ?? {})),
     setValue: vi.fn(async (value: unknown) => {
@@ -22,8 +22,8 @@ vi.mock('~/lib/storage', () => ({
 
 vi.mock('~/lib/blockService', () => ({
   getBlockState: vi.fn(),
-  getActiveBlockedDomains: vi.fn(),
-  shouldTrackBlockForDomain: vi.fn()
+  getBlockStateForDomain: vi.fn(),
+  getActiveBlockedDomains: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
@@ -34,7 +34,8 @@ vi.mock('~/lib/siteService', () => ({
   getTrackedSiteKeys: vi.fn()
 }));
 
-import { getBlockState, shouldTrackBlockForDomain } from '~/lib/blockService';
+import { getBlockState, getBlockStateForDomain } from '~/lib/blockService';
+import { setLastBlocked } from '~/lib/storage';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import { blockExistingTabs } from '../blocker';
@@ -92,8 +93,9 @@ beforeEach(() => {
   activityStore.value = undefined;
   activityStore.failWrites = false;
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com']);
-  vi.mocked(shouldTrackBlockForDomain).mockResolvedValue(true);
-  vi.mocked(getBlockState).mockResolvedValue({ blocked: true, reason: null });
+  const blocked = { blocked: true, reason: 'always_blocked' } as const;
+  vi.mocked(getBlockStateForDomain).mockResolvedValue(blocked);
+  vi.mocked(getBlockState).mockResolvedValue(blocked);
 });
 
 describe('ブロック成立時の事実の記録', () => {
@@ -125,12 +127,43 @@ describe('ブロック成立時の事実の記録', () => {
     expect(todayBlocks('youtube.com')).toBe(2);
   });
 
-  it('ブロックが成立しなければどちらの経路でも記録しない', async () => {
-    vi.mocked(shouldTrackBlockForDomain).mockResolvedValue(false);
-    vi.mocked(getBlockState).mockResolvedValue({
-      blocked: false,
-      reason: null
+  it('遷移イベントの経路では、ブロック画面用にドメインと時間制限の理由を残す', async () => {
+    vi.mocked(getBlockStateForDomain).mockResolvedValue({
+      blocked: true,
+      reason: 'time_limit_exceeded',
+      remainingSeconds: 0
     });
+    const harness = setupChrome();
+    setupNavigationTracking();
+
+    await harness.navigate('https://www.youtube.com/watch?v=abc');
+
+    expect(setLastBlocked).toHaveBeenCalledWith({
+      domain: 'www.youtube.com',
+      reason: 'time_limit_exceeded'
+    });
+  });
+
+  it('既存タブを飛ばす経路では、ブロック画面用にドメインと時間制限の理由を残す', async () => {
+    vi.mocked(getBlockState).mockResolvedValue({
+      blocked: true,
+      reason: 'time_limit_exceeded',
+      remainingSeconds: 0
+    });
+    setupChrome([tab(1, 'https://www.youtube.com/watch?v=abc')]);
+
+    await blockExistingTabs();
+
+    expect(setLastBlocked).toHaveBeenCalledWith({
+      domain: 'www.youtube.com',
+      reason: 'time_limit_exceeded'
+    });
+  });
+
+  it('ブロックが成立しなければどちらの経路でも記録しない', async () => {
+    const notBlocked = { blocked: false, reason: null } as const;
+    vi.mocked(getBlockStateForDomain).mockResolvedValue(notBlocked);
+    vi.mocked(getBlockState).mockResolvedValue(notBlocked);
     const harness = setupChrome([tab(1, 'https://www.youtube.com/')]);
     setupNavigationTracking();
 

@@ -6,7 +6,7 @@ import {
   clearStorageFromExtension,
   makeSites
 } from './helpers/storage';
-import { TEST_DOMAINS } from './helpers/constants';
+import { SELECTORS, TEST_DOMAINS } from './helpers/constants';
 import {
   getBlockRuleFilters,
   setupStorageViaSW,
@@ -203,5 +203,52 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     expect(unblockedPage.url()).toContain(TEST_DOMAINS.reddit);
     expect(unblockedPage.url()).not.toContain('newtab.html');
     await unblockedPage.close();
+  });
+});
+
+test.describe('TimeLimit - ブロック画面の文言（ブラウザ言語が日本語）', () => {
+  test.use({ browserLanguage: 'ja' });
+
+  test.beforeEach(async ({ context, extensionId }) => {
+    await clearStorageFromExtension(context, extensionId);
+  });
+
+  test('TL-012: Time Limit 超過後に新しく開いたページで、時間制限の文言が表示される', async ({
+    context
+  }) => {
+    const timeLimitReached = '時間制限に達しました';
+    const alwaysBlocked = `${TEST_DOMAINS.example} はブロックリストに登録されています`;
+
+    await setupStorageViaSW(context, {
+      settings: makeAppSettings(),
+      sites: makeSites([
+        {
+          domain: TEST_DOMAINS.example,
+          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
+        }
+      ]),
+      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
+    });
+
+    await triggerBlockRuleRecompute(context);
+    await waitForBlockRules(context, [TEST_DOMAINS.example]);
+
+    const blockedPage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.example}`
+    );
+    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
+
+    // 帯が出るまでを先に確かめ、下の失敗を「文言の取り違え」だけに絞る（ドメインと理由は同じ記録から同時に読む）
+    const message = blockedPage.locator(SELECTORS.newtab.blockInfoMessage);
+    await expect(message).toBeVisible();
+
+    const shown = await message.textContent();
+    expect(
+      shown,
+      `帯の文言が時間制限ではない（常時ブロックの文言か: ${shown === alwaysBlocked}）`
+    ).toBe(timeLimitReached);
+
+    await blockedPage.close();
   });
 });

@@ -192,14 +192,15 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 ### Time Limit 機能
 
-| ID     | シナリオ                                             | 優先度 |
-| ------ | ---------------------------------------------------- | ------ |
-| TL-003 | Time Limit 超過時に newtab.html へリダイレクトされる | P0     |
-| TL-006 | 残り時間がポップアップで表示される                   | P1     |
-| TL-007 | Time Limit の残り時間がブロックリストに表示される    | P2     |
-| TL-008 | Pause 有効中は Time Limit 超過してもブロックされない | P1     |
-| TL-009 | Daily の使用実績は日付が変わるとリセットされる       | P1     |
-| TL-011 | 複数サイトで異なる Time Limit が同時に動作する       | P1     |
+| ID     | シナリオ                                                            | 優先度 |
+| ------ | ------------------------------------------------------------------- | ------ |
+| TL-003 | Time Limit 超過時に newtab.html へリダイレクトされる                | P0     |
+| TL-006 | 残り時間がポップアップで表示される                                  | P1     |
+| TL-007 | Time Limit の残り時間がブロックリストに表示される                   | P2     |
+| TL-008 | Pause 有効中は Time Limit 超過してもブロックされない                | P1     |
+| TL-009 | Daily の使用実績は日付が変わるとリセットされる                      | P1     |
+| TL-011 | 複数サイトで異なる Time Limit が同時に動作する                      | P1     |
+| TL-012 | Time Limit 超過後に新しく開いたページで、時間制限の文言が表示される | P1     |
 
 ### YouTube ブロック機能
 
@@ -413,7 +414,6 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **期待結果**
 
 - newtab.html へリダイレクトされる
-- URL パラメータに `?reason=time_limit_exceeded` が含まれる
 - 「時間制限に達しました」メッセージが表示される
 
 ---
@@ -586,6 +586,25 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 ---
 
+### TL-012: Time Limit 超過後に新しく開いたページで、時間制限の文言が表示される
+
+**前提条件**
+
+- ブラウザ言語が日本語
+- ブロックリストに「example.com」が Daily Time Limit 60秒 で登録されている（常時ブロックではない）
+- example.com の今日の使用量が 60秒 を超えている
+
+**手順**
+
+1. 新しいタブで example.com へ移動する（開いているタブが移される経路ではなく、新しい遷移）
+
+**期待結果**
+
+- newtab.html へリダイレクトされる
+- ブロック画面の帯が「時間制限に達しました」になる（「example.com はブロックリストに登録されています」ではない）
+
+---
+
 ### YT-006: アクセスブロック無効時は Time Limit 超過でも隠さない
 
 **前提条件**
@@ -643,7 +662,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 **期待結果**
 
 - 未超過のうちは YouTube を開ける
-- 超過後はリダイレクトされる（reason: time_limit_exceeded）
+- 超過後はリダイレクトされ、ブロック画面に時間制限の文言が出る
 - blockAccess と Time Limit を併用した場合はブロックリストと同じ意味論になる
 
 ---
@@ -856,7 +875,8 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 4. TL-008: Pause 有効中の Time Limit 挙動
 5. TL-009: リセット境界値テスト
 6. TL-011: 複数サイトでの Time Limit 動作
-7. OPT-B06: Time Limit 設定（オプション）
+7. TL-012: Time Limit 超過後の新しい遷移での帯の文言
+8. OPT-B06: Time Limit 設定（オプション）
 
 **YouTube ブロック機能** 6. YT-001: YouTube Shorts 非表示 7. YT-002: YouTube Recommendations 非表示 8. YT-004: YouTube 完全ブロック（blockAccess）10. YT-006: アクセスブロック無効時の Time Limit 不適用 12. YT-009, YT-010: YouTube 複合モード・時間制限との併用 13. OPT-B10, OPT-B11, OPT-B12: YouTube セクション表示・設定・Time Limit
 

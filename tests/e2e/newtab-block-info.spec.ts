@@ -31,7 +31,10 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
       withBlockList: true,
       withAnalyticsOptIn: true
     });
-    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'example.com');
+    await setSessionStorageData(setupPage, 'lastBlocked', {
+      domain: 'example.com',
+      reason: 'always_blocked'
+    });
     await setStorageData(
       setupPage,
       'activity',
@@ -93,7 +96,10 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     extensionId
   }) => {
     const setupPage = await openNewTab(context, extensionId);
-    await setSessionStorageData(setupPage, 'lastBlockedDomain', 'youtube.com');
+    await setSessionStorageData(setupPage, 'lastBlocked', {
+      domain: 'youtube.com',
+      reason: 'time_limit_exceeded'
+    });
     await setStorageData(
       setupPage,
       'activity',
@@ -101,13 +107,12 @@ test.describe('NewTab 画面 - ブロック情報表示', () => {
     );
     await setupPage.close();
 
-    const url = `chrome-extension://${extensionId}/newtab.html?reason=time_limit_exceeded`;
-    const page = await context.newPage();
-    await page.goto(url);
-    await page.waitForLoadState('domcontentloaded');
+    const page = await openNewTab(context, extensionId);
 
     const timeLimitMessage = page.locator(SELECTORS.newtab.blockInfoMessage);
-    await expect(timeLimitMessage.first()).toBeVisible();
+    await expect(timeLimitMessage.first()).toHaveText(
+      UI_TEXT.timeLimit.reached
+    );
 
     await page.close();
   });

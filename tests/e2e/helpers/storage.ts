@@ -1,6 +1,7 @@
 import type { Page, BrowserContext } from '@playwright/test';
 import { TEST_DATA } from './constants';
 
+import type { LastBlocked } from '~/lib/storage';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type {
@@ -22,7 +23,7 @@ import type {
 export type LocalStorageKey = keyof StorageSchema;
 
 export interface SessionStorageSchema {
-  lastBlockedDomain: string;
+  lastBlocked: LastBlocked;
 }
 
 export async function setStorageData<K extends LocalStorageKey>(

@@ -25,7 +25,7 @@ chrome.storage に保存するデータ構造の設計。
 | 領域    | キー                                                  | 持ち主                                                               |
 | ------- | ----------------------------------------------------- | -------------------------------------------------------------------- |
 | local   | `ga_client_id` / `ga_session_id` / `ga_session_start` | `src/lib/analytics.ts`（GA4。詳細は [ANALYTICS.md](./ANALYTICS.md)） |
-| session | `lastBlockedDomain`                                   | `src/lib/storage.ts`。ブロック画面の帯に出すホスト名                 |
+| session | `lastBlocked`                                         | `src/lib/storage.ts`。ブロック画面の帯に出すホスト名とブロックの理由 |
 
 ## エンティティ関連図
 

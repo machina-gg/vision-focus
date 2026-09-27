@@ -21,7 +21,6 @@ import {
   getSiteBlockStatus,
   getSiteBlockStatuses,
   shouldBlockUrl,
-  shouldTrackBlockForDomain,
   getActiveBlockedDomains
 } from '~/lib/blockService';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
@@ -347,26 +346,6 @@ describe('shouldBlockUrl', () => {
     expect(await shouldBlockUrl('https://example.com')).toBe(true);
     expect(await shouldBlockUrl('https://google.com')).toBe(false);
   });
-});
-
-describe('shouldTrackBlockForDomain', () => {
-  it.each([
-    ['一時停止中', { settings: { paused: true }, sites: [site()] }, false],
-    ['追跡中のサイトにない', { sites: [] }, false],
-    [
-      '無効なブロック設定',
-      { sites: [site('example.com', { enabled: false })] },
-      false
-    ],
-    ['有効な常時ブロック', { sites: [site()] }, true],
-    ['時間制限の上限未満', { sites: [limitedSite()] }, false]
-  ] satisfies [string, Given, boolean][])(
-    '%s',
-    async (_label, input, expected) => {
-      given(input);
-      expect(await shouldTrackBlockForDomain('example.com')).toBe(expected);
-    }
-  );
 });
 
 describe('YouTube（youtube.com も普通の追跡中のサイト）', () => {

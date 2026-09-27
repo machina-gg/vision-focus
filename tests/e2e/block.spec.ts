@@ -11,7 +11,7 @@ import {
   setSettingsFromExtension,
   setSitesFromExtension
 } from './helpers/storage';
-import { TEST_DOMAINS, SELECTORS } from './helpers/constants';
+import { TEST_DOMAINS, SELECTORS, UI_TEXT } from './helpers/constants';
 
 test.describe('Block - ブロック機能', () => {
   test.beforeEach(async ({ context, extensionId }) => {
@@ -271,6 +271,9 @@ test.describe('Block - ブロック機能', () => {
     const blockInfo = blockedPage.locator(SELECTORS.newtab.blockInfo);
     await expect(blockInfo).toBeVisible();
     await expect(blockInfo).toContainText(TEST_DOMAINS.example);
+    await expect(
+      blockedPage.locator(SELECTORS.newtab.blockInfoMessage)
+    ).toHaveText(UI_TEXT.newtab.siteBlocked(TEST_DOMAINS.example));
 
     await blockedPage.close();
   });

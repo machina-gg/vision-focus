@@ -210,18 +210,6 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
 }
 
 /**
- * ブロック回数として記録するか（ブロック判定の結論と同じ）
- * @param domain 判定するホスト名
- * @returns 記録するなら true
- */
-export async function shouldTrackBlockForDomain(
-  domain: string
-): Promise<boolean> {
-  const state = await getBlockStateForDomain(domain);
-  return state.blocked;
-}
-
-/**
  * 今ブロックしている登録のサイトキー一覧（declarativeNetRequest のルールの元になる）
  * @returns ブロック中の登録のサイトキー
  */

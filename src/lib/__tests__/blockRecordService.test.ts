@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 vi.mock('~/lib/storage', () => ({
-  setLastBlockedDomain: vi.fn()
+  setLastBlocked: vi.fn()
 }));
 
 vi.mock('~/lib/activityService', () => ({
   recordHostActivity: vi.fn()
 }));
 
-import { setLastBlockedDomain } from '~/lib/storage';
+import { setLastBlocked } from '~/lib/storage';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 import { recordHostActivity } from '~/lib/activityService';
 import { itemAt } from '~/test/items';
@@ -18,15 +18,21 @@ beforeEach(() => {
 });
 
 describe('recordBlockedDomain', () => {
-  it('ブロック画面の表示用に最後にブロックしたドメインを保存する', async () => {
-    await recordBlockedDomain('example.com');
+  it.each([['always_blocked' as const], ['time_limit_exceeded' as const]])(
+    'ブロック画面の表示用に、最後にブロックしたドメインと理由（%s）を 1 つの組で保存する',
+    async (reason) => {
+      await recordBlockedDomain('example.com', reason);
 
-    expect(setLastBlockedDomain).toHaveBeenCalledWith('example.com');
-  });
+      expect(setLastBlocked).toHaveBeenCalledWith({
+        domain: 'example.com',
+        reason
+      });
+    }
+  );
 
   describe('事実の表（activity）', () => {
     it('ブロックしたホスト名で 1 回のブロックを記録する', async () => {
-      await recordBlockedDomain('www.example.com');
+      await recordBlockedDomain('www.example.com', 'always_blocked');
 
       expect(recordHostActivity).toHaveBeenCalledOnce();
       const [hosts, toEvent] = itemAt(
@@ -43,11 +49,11 @@ describe('recordBlockedDomain', () => {
     });
 
     it('ブロック画面が読む値は、事実の表の書き込みより先に保存する', async () => {
-      // 記録より後回しにすると、ブロック画面が「最後にブロックしたドメイン」を読み出す時点で未設定になりうる
-      await recordBlockedDomain('example.com');
+      // 記録より後回しにすると、ブロック画面が「最後にブロックしたドメインと理由」を読み出す時点で未設定になりうる
+      await recordBlockedDomain('example.com', 'always_blocked');
 
       expect(
-        vi.mocked(setLastBlockedDomain).mock.invocationCallOrder[0]
+        vi.mocked(setLastBlocked).mock.invocationCallOrder[0]
       ).toBeLessThan(
         itemAt(vi.mocked(recordHostActivity).mock.invocationCallOrder, 0)
       );

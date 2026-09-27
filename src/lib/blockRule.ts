@@ -3,15 +3,27 @@ import type { BlockRule } from '~/types/site';
 /** ブロックの理由。null = ブロックしていない */
 export type BlockReason = 'always_blocked' | 'time_limit_exceeded' | null;
 
-/** ブロックの判定結果。remainingSeconds は時間制限が効いているときの今日の残り秒数 */
-export interface BlockState {
-  /** ブロックするなら true */
-  blocked: boolean;
-  /** ブロックの理由（ブロックしないなら null） */
-  reason: BlockReason;
-  /** 時間制限が効いているときの今日の残り秒数（使い切ったら 0。時間制限が効いていなければ無い） */
-  remainingSeconds?: number;
-}
+/** ブロックが成立したときの理由 */
+export type BlockedReason = NonNullable<BlockReason>;
+
+/** ブロックの判定結果。ブロックするときは必ず理由を持ち、しないときは理由を持たない */
+export type BlockState =
+  | {
+      /** ブロックする */
+      blocked: true;
+      /** ブロックの理由 */
+      reason: BlockedReason;
+      /** 時間制限が効いているときの今日の残り秒数（使い切ったら 0。時間制限が効いていなければ無い） */
+      remainingSeconds?: number;
+    }
+  | {
+      /** ブロックしない */
+      blocked: false;
+      /** ブロックしないので理由は無い */
+      reason: null;
+      /** 時間制限が効いているときの今日の残り秒数（時間制限が効いていなければ無い） */
+      remainingSeconds?: number;
+    };
 
 /** evaluateBlock に渡す、サイトの設定以外の判定材料。todaySeconds は今日そのサイトが表示されていた秒数 */
 export interface BlockContext {
