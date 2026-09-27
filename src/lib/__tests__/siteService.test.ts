@@ -68,7 +68,6 @@ import type { TrackedSites } from '~/types/site';
 const NOW = new Date('2026-09-26T03:00:00.000Z');
 const LIMIT = { type: 'daily' as const, limitSeconds: 600 };
 
-// 未保存のまま既定値で比べると書き込み漏れを見逃すので、先に保存済みであることを確かめる
 const stored = async (): Promise<TrackedSites> => {
   expect(fakeChrome.localData.sites).toBeDefined();
   return getSites();
