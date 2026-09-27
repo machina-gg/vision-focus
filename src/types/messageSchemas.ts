@@ -1,5 +1,7 @@
 import * as z from 'zod';
 
+import { END_OF_DAY_TIME, TIME_OF_DAY_PATTERN } from '~/lib/time';
+
 /** 開いているページのサイトの時間制限を問い合わせる本文 */
 export const GetRemainingTimeBodySchema = z.object({
   /** 開いているページの URL */
@@ -100,11 +102,21 @@ export const TrackedSiteSchema = z.object({
   youtube: YouTubeFeaturesSchema.nullable()
 });
 
-const ScheduleSchema = z.object({
+/** スケジュールの開始時刻（"HH:MM"。"24:00" は拒む） */
+export const ScheduleStartTimeSchema = z.string().regex(TIME_OF_DAY_PATTERN);
+
+/** スケジュールの終了時刻（"HH:MM" か、その日の終わりの "24:00"） */
+export const ScheduleEndTimeSchema = z.union([
+  ScheduleStartTimeSchema,
+  z.literal(END_OF_DAY_TIME)
+]);
+
+/** スケジュールの保存値の形（Schedule と対応する。設定の書き出し・取り込みの検証に使う） */
+export const ScheduleSchema = z.object({
   id: z.string(),
   name: z.string(),
-  startTime: z.string(),
-  endTime: z.string(),
+  startTime: ScheduleStartTimeSchema,
+  endTime: ScheduleEndTimeSchema,
   days: z.array(z.number()),
   enabled: z.boolean(),
   presetId: z.string().optional()

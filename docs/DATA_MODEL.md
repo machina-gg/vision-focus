@@ -82,15 +82,17 @@ erDiagram
 
 ### Schedule（スケジュール）
 
-| フィールド | 型       | 説明                                       |
-| ---------- | -------- | ------------------------------------------ |
-| id         | string   | 一意識別子                                 |
-| name       | string   | スケジュール名                             |
-| startTime  | string   | 開始時刻（HH:mm、ローカル）                |
-| endTime    | string   | 終了時刻（HH:mm。`00:00` は `24:00` 扱い） |
-| days       | number[] | 曜日（0=日〜6=土）                         |
-| enabled    | boolean  | 有効/無効                                  |
-| presetId   | string?  | 適用するダッシュボードのスタイル           |
+| フィールド | 型       | 説明                                                  |
+| ---------- | -------- | ----------------------------------------------------- |
+| id         | string   | 一意識別子                                            |
+| name       | string   | スケジュール名                                        |
+| startTime  | string   | 開始時刻（HH:mm、ローカル）                           |
+| endTime    | string   | 終了時刻（HH:mm か `24:00`。`00:00` は `24:00` 扱い） |
+| days       | number[] | 曜日（0=日〜6=土）                                    |
+| enabled    | boolean  | 有効/無効                                             |
+| presetId   | string?  | 適用するダッシュボードのスタイル                      |
+
+時刻の書式: `src/lib/time.ts` の `TIME_OF_DAY_PATTERN`。設定の取り込みはこの書式に合わない時刻を含むファイルを拒む（`src/types/messageSchemas.ts` の `ScheduleSchema`）
 
 ### NotificationSettings（通知）
 
