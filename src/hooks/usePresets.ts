@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { getVision, settingsItem, visionItem } from '~/lib/storage';
+import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
+import type { MessageError } from '~/types/messages';
 import type {
   AppSettings,
   VisionSettings,
@@ -12,27 +14,23 @@ import type {
   DashboardDisplaySettings
 } from '~/types/storage';
 import type { FontSettings } from '~/types/font';
-import { DEFAULT_FONT_SETTINGS, getFontDefinition } from '~/types/font';
+import { getFontDefinition } from '~/types/font';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
 interface UsePresetsOptions {
-  /** 保存済みのダッシュボードの設定。読み込み前は undefined */
+  /** 保存済みのダッシュボードの設定（保存値の購読）。読み込み前は undefined */
   vision: VisionSettings | undefined;
-  /** 保存したあと画面側のダッシュボードの設定を差し替える */
-  setVision: (vision: VisionSettings) => void;
-  /** 今のアプリ設定（スケジュールの参照の確認に使う）。読み込み前は undefined */
+  /** 今のアプリ設定（削除の確認に出すスケジュールの参照の件数に使う）。読み込み前は undefined */
   settings: AppSettings | undefined;
-  /** スケジュールの参照を外したあと画面側のアプリ設定を差し替える */
-  setSettings: (settings: AppSettings) => void;
 }
 
 /** usePresets が返す値 */
 export interface UsePresetsReturn {
   /** 選択中のスタイルの、保存前の表示設定 */
   draftDisplaySettings: DashboardDisplaySettings;
-  /** 画面に並べるスタイルの一覧（保存した操作は即座に反映される） */
+  /** 画面に並べるスタイルの一覧（保存値の変更に追従する） */
   draftPresets: DashboardPreset[];
-  /** 選択中のスタイルの ID。スタイルが無い・選択中のものを削除したときは null */
+  /** 選択中のスタイルの ID。スタイルが無い・選択中のものが消えたときは null */
   selectedPresetId: string | null;
   /** 選択中のスタイルの、保存前の名前 */
   editingPresetName: string;
@@ -48,25 +46,29 @@ export interface UsePresetsReturn {
   deleteTargetPresetId: string | null;
   /** 確認待ちのスタイルを参照しているスケジュールの件数 */
   deleteTargetScheduleCount: number;
-  /** 新規作成モーダルを開閉する */
+  /** 保存・適用・削除を background が拒んだときの文言。失敗していなければ null */
+  presetError: string | null;
+  /** 作成を background が拒んだときの文言（新規作成モーダルに出す）。失敗していなければ null */
+  createPresetError: string | null;
+  /** 新規作成モーダルを開閉する（作成の失敗の文言は消える） */
   setShowSavePresetModal: (show: boolean) => void;
-  /** 新規作成モーダルの名前の入力を変える */
+  /** 新規作成モーダルの名前の入力を変える（作成の失敗の文言は消える） */
   setPresetName: (name: string) => void;
   /** presetId のスタイルを選択し、下書きをその表示設定にする（保存していない変更は捨てる） */
   handleSelectPreset: (presetId: string) => void;
   /** 選択中のスタイルの名前の下書きを変える */
   handlePresetNameChange: (name: string) => void;
-  /** スケジュールが参照していれば確認待ちにし、参照が無ければすぐ削除する */
+  /** スケジュールが参照していれば確認待ちにし、参照が無ければすぐ削除を依頼する */
   handleRequestDeletePreset: (id: string) => Promise<void>;
-  /** 確認待ちのスタイルを削除し、参照していたスケジュールから外す */
+  /** 確認待ちのスタイルの削除を background に依頼する（参照していたスケジュールからは background が外す） */
   handleConfirmDeletePreset: () => Promise<void>;
   /** 削除の確認待ちを取り消す */
   handleCancelDeletePreset: () => void;
-  /** 下書きを選択中のスタイルへ保存する。目標文か名前が空なら何もしない */
+  /** 下書きで選択中のスタイルの置き換えを background に依頼する。目標文か名前が空白だけなら何もしない */
   handleSaveSelectedPreset: () => Promise<void>;
-  /** 選択中のスタイルをダッシュボードに表示するスタイルにする */
+  /** 選択中のスタイルをダッシュボードに表示するスタイルにするよう background に依頼する */
   handleApplyPreset: () => Promise<void>;
-  /** presetName の名前で既定の表示設定のスタイルを作り、選択する */
+  /** presetName の名前でスタイルの作成を background に依頼し、作れたら選択する。名前が空白だけなら何もしない */
   handleCreatePreset: () => Promise<void>;
   /** 下書きの目標文を変える */
   handleGoalTextChange: (text: string) => void;
@@ -86,123 +88,151 @@ export interface UsePresetsReturn {
   handleFontSettingsChange: (fontSettings: FontSettings) => void;
 }
 
-interface PresetState {
-  draftDisplaySettings: DashboardDisplaySettings;
-  draftPresets: DashboardPreset[];
-  selectedPresetId: string | null;
-  editingPresetName: string;
+interface PresetDraft {
+  presetId: string;
+  base: DashboardPreset;
+  name: string;
+  display: DashboardDisplaySettings;
   isDirty: boolean;
+}
+
+interface PresetState {
+  initialized: boolean;
+  selectedPresetId: string | null;
+  draft: PresetDraft | null;
   visionSaved: boolean;
   showSavePresetModal: boolean;
   presetName: string;
   deleteTargetPresetId: string | null;
+  presetError: string | null;
+  createPresetError: string | null;
 }
 
 type PresetAction =
+  | { type: 'INITIALIZE'; presetId: string | null }
+  | { type: 'SELECT_PRESET'; presetId: string }
   | {
-      type: 'INITIALIZE';
-      presets: DashboardPreset[];
-      selectedPresetId: string | null;
-      editingPresetName: string;
-      displaySettings: DashboardDisplaySettings;
+      type: 'EDIT';
+      base: DashboardPreset;
+      name?: string;
+      display?: Partial<DashboardDisplaySettings>;
     }
-  | { type: 'UPDATE_DISPLAY'; patch: Partial<DashboardDisplaySettings> }
-  | {
-      type: 'SELECT_PRESET';
-      presetId: string;
-      name: string;
-      displaySettings: DashboardDisplaySettings;
-    }
-  | { type: 'UPDATE_PRESET_NAME'; name: string }
-  | {
-      type: 'DELETE_PRESET';
-      remainingPresets: DashboardPreset[];
-      wasSelected: boolean;
-      fallbackSettings: DashboardDisplaySettings;
-    }
-  | { type: 'SAVE_PRESETS'; updatedPresets: DashboardPreset[] }
+  | { type: 'SAVED'; presetId: string }
+  | { type: 'CREATED'; presetId: string }
+  | { type: 'DELETED'; presetId: string }
+  | { type: 'FAILED'; error: string }
+  | { type: 'CREATE_FAILED'; error: string }
+  | { type: 'CLEAR_ERROR' }
   | { type: 'SET_VISION_SAVED'; saved: boolean }
-  | {
-      type: 'CREATE_PRESET';
-      preset: DashboardPreset;
-      updatedPresets: DashboardPreset[];
-    }
   | { type: 'SET_SHOW_MODAL'; show: boolean }
   | { type: 'SET_PRESET_NAME'; name: string }
   | { type: 'REQUEST_DELETE_PRESET'; presetId: string }
   | { type: 'CLEAR_DELETE_TARGET' };
 
 const INITIAL_STATE: PresetState = {
-  draftDisplaySettings: DEFAULT_DISPLAY_SETTINGS,
-  draftPresets: [],
+  initialized: false,
   selectedPresetId: null,
-  editingPresetName: '',
-  isDirty: false,
+  draft: null,
   visionSaved: false,
   showSavePresetModal: false,
   presetName: '',
-  deleteTargetPresetId: null
+  deleteTargetPresetId: null,
+  presetError: null,
+  createPresetError: null
 };
+
+function draftFor(
+  draft: PresetDraft | null,
+  preset: DashboardPreset | undefined
+): PresetDraft | null {
+  if (!draft || !preset || draft.presetId !== preset.id) return null;
+  return draft.isDirty || draft.base === preset ? draft : null;
+}
+
+function initialSelection(vision: VisionSettings | undefined): string | null {
+  if (!vision) return null;
+  const target =
+    vision.presets.find((p) => p.id === vision.activePresetId) ??
+    vision.presets[0];
+  return target?.id ?? null;
+}
 
 function presetReducer(state: PresetState, action: PresetAction): PresetState {
   switch (action.type) {
     case 'INITIALIZE':
+      if (state.initialized) return state;
       return {
         ...state,
-        draftPresets: action.presets,
-        selectedPresetId: action.selectedPresetId,
-        editingPresetName: action.editingPresetName,
-        draftDisplaySettings: action.displaySettings
-      };
-    case 'UPDATE_DISPLAY':
-      return {
-        ...state,
-        draftDisplaySettings: {
-          ...state.draftDisplaySettings,
-          ...action.patch
-        },
-        isDirty: true
+        initialized: true,
+        selectedPresetId: action.presetId
       };
     case 'SELECT_PRESET':
       return {
         ...state,
+        initialized: true,
         selectedPresetId: action.presetId,
-        editingPresetName: action.name,
-        draftDisplaySettings: action.displaySettings,
-        isDirty: false
+        draft: null,
+        presetError: null
       };
-    case 'UPDATE_PRESET_NAME':
-      return { ...state, editingPresetName: action.name, isDirty: true };
-    case 'DELETE_PRESET':
+    case 'EDIT': {
+      const current = draftFor(state.draft, action.base);
       return {
         ...state,
-        draftPresets: action.remainingPresets,
-        selectedPresetId: action.wasSelected ? null : state.selectedPresetId,
-        draftDisplaySettings: action.wasSelected
-          ? action.fallbackSettings
-          : state.draftDisplaySettings,
-        isDirty: false,
-        deleteTargetPresetId: null
+        presetError: null,
+        draft: {
+          presetId: action.base.id,
+          base: action.base,
+          name: action.name ?? current?.name ?? action.base.name,
+          display: {
+            ...(current?.display ?? presetToDisplaySettings(action.base)),
+            ...action.display
+          },
+          isDirty: true
+        }
       };
-    case 'SAVE_PRESETS':
-      return { ...state, draftPresets: action.updatedPresets, isDirty: false };
-    case 'SET_VISION_SAVED':
-      return { ...state, visionSaved: action.saved };
-    case 'CREATE_PRESET':
+    }
+    case 'SAVED':
+      if (state.draft?.presetId !== action.presetId) return state;
+      return { ...state, draft: { ...state.draft, isDirty: false } };
+    case 'CREATED':
       return {
         ...state,
-        draftPresets: action.updatedPresets,
-        selectedPresetId: action.preset.id,
-        editingPresetName: action.preset.name,
-        draftDisplaySettings: presetToDisplaySettings(action.preset),
+        initialized: true,
+        selectedPresetId: action.presetId,
+        draft: null,
         showSavePresetModal: false,
         presetName: '',
-        isDirty: false
+        createPresetError: null
       };
+    case 'DELETED': {
+      const wasSelected = state.selectedPresetId === action.presetId;
+      return {
+        ...state,
+        selectedPresetId: wasSelected ? null : state.selectedPresetId,
+        draft: wasSelected ? null : state.draft,
+        deleteTargetPresetId: null
+      };
+    }
+    case 'FAILED':
+      return {
+        ...state,
+        presetError: action.error,
+        deleteTargetPresetId: null
+      };
+    case 'CREATE_FAILED':
+      return { ...state, createPresetError: action.error };
+    case 'CLEAR_ERROR':
+      return { ...state, presetError: null };
+    case 'SET_VISION_SAVED':
+      return { ...state, visionSaved: action.saved };
     case 'SET_SHOW_MODAL':
-      return { ...state, showSavePresetModal: action.show };
+      return {
+        ...state,
+        showSavePresetModal: action.show,
+        createPresetError: null
+      };
     case 'SET_PRESET_NAME':
-      return { ...state, presetName: action.name };
+      return { ...state, presetName: action.name, createPresetError: null };
     case 'REQUEST_DELETE_PRESET':
       return { ...state, deleteTargetPresetId: action.presetId };
     case 'CLEAR_DELETE_TARGET':
@@ -210,88 +240,96 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
   }
 }
 
+interface PresetResponse {
+  success: boolean;
+  id?: string;
+  error?: MessageError;
+}
+
+async function requestPreset(
+  send: () => Promise<PresetResponse>
+): Promise<PresetResponse> {
+  try {
+    return await send();
+  } catch {
+    return { success: false };
+  }
+}
+
 const SAVED_FEEDBACK_MS = STATUS_RESET_DELAY_MS;
 
+const NO_PRESETS: DashboardPreset[] = [];
+
 /**
- * スタイル編集画面の下書きと、スタイルの選択・保存・適用・作成・削除の操作を提供する
+ * スタイル編集画面の下書きと、スタイルの選択・保存・適用・作成・削除を background へ依頼する操作を提供する（一覧は保存値の購読で追従し、選択中のスタイルの保存していない変更は保つ）
  * @param options フックの入力（下記の項目）
  * @param options.vision 保存済みのダッシュボードの設定。読み込み前は undefined
- * @param options.setVision 保存したあと画面側のダッシュボードの設定を差し替える関数
  * @param options.settings 今のアプリ設定。読み込み前は undefined
- * @param options.setSettings スケジュールの参照を外したあと画面側のアプリ設定を差し替える関数
  * @returns 下書きの状態と、スタイルと下書きへの各操作
  */
 export function usePresets({
   vision,
-  setVision,
-  settings,
-  setSettings
+  settings
 }: UsePresetsOptions): UsePresetsReturn {
   const [state, dispatch] = useReducer(presetReducer, INITIAL_STATE);
 
   useEffect(() => {
-    const initialize = async () => {
-      const visionData = await getVision();
-      const presets = visionData.presets || [];
+    if (!vision || state.initialized) return;
+    dispatch({ type: 'INITIALIZE', presetId: initialSelection(vision) });
+  }, [vision, state.initialized]);
 
-      const target =
-        presets.find((p) => p.id === visionData.activePresetId) ?? presets[0];
+  const presets = vision?.presets ?? NO_PRESETS;
+  const selectedId = state.initialized
+    ? state.selectedPresetId
+    : initialSelection(vision);
+  const selectedPreset = presets.find((p) => p.id === selectedId);
+  const activeDraft = draftFor(state.draft, selectedPreset);
 
-      if (target) {
-        dispatch({
-          type: 'INITIALIZE',
-          presets,
-          selectedPresetId: target.id,
-          editingPresetName: target.name,
-          displaySettings: presetToDisplaySettings(target)
-        });
-      } else {
-        dispatch({
-          type: 'INITIALIZE',
-          presets: [],
-          selectedPresetId: null,
-          editingPresetName: '',
-          displaySettings:
-            visionData.defaultSettings || DEFAULT_DISPLAY_SETTINGS
-        });
-      }
-    };
-    initialize();
-  }, []);
+  const draftDisplaySettings = useMemo(() => {
+    if (activeDraft) return activeDraft.display;
+    if (selectedPreset) return presetToDisplaySettings(selectedPreset);
+    return vision?.defaultSettings ?? DEFAULT_DISPLAY_SETTINGS;
+  }, [activeDraft, selectedPreset, vision]);
+  const editingPresetName = activeDraft?.name ?? selectedPreset?.name ?? '';
 
-  const { fontSettings: currentFontSettings } = state.draftDisplaySettings;
+  const { fontSettings: currentFontSettings } = draftDisplaySettings;
   useEffect(() => {
     if (!currentFontSettings) return;
     const fontDef = getFontDefinition(currentFontSettings.family);
     if (fontDef.googleFont) loadGoogleFont(fontDef.googleFont);
   }, [currentFontSettings]);
 
-  const displayHandlers = useMemo(
-    () => ({
+  const displayHandlers = useMemo(() => {
+    const edit = (patch: {
+      name?: string;
+      display?: Partial<DashboardDisplaySettings>;
+    }) => {
+      if (!selectedPreset) return;
+      dispatch({ type: 'EDIT', base: selectedPreset, ...patch });
+    };
+    return {
       handleGoalTextChange: (text: string) =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { goalText: text } }),
+        edit({ display: { goalText: text } }),
       handleGoalSubTextChange: (text: string) =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { goalSubText: text } }),
+        edit({ display: { goalSubText: text } }),
       handleTextColorChange: (color: string) =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { textColor: color } }),
+        edit({ display: { textColor: color } }),
       handleBackgroundTypeChange: (type: 'image' | 'color') =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { backgroundType: type } }),
+        edit({ display: { backgroundType: type } }),
       handleBackgroundChange: (bgId: string) =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { backgroundImage: bgId } }),
+        edit({ display: { backgroundImage: bgId } }),
       handleBackgroundColorChange: (color: string) =>
-        dispatch({
-          type: 'UPDATE_DISPLAY',
-          patch: { backgroundColor: color }
-        }),
+        edit({ display: { backgroundColor: color } }),
       handleCustomBackgroundChange: (dataUrl: string | null) =>
-        dispatch({
-          type: 'UPDATE_DISPLAY',
-          patch: { customBackgroundData: dataUrl }
-        }),
+        edit({ display: { customBackgroundData: dataUrl } }),
       handleFontSettingsChange: (fontSettings: FontSettings) =>
-        dispatch({ type: 'UPDATE_DISPLAY', patch: { fontSettings } }),
-      handlePresetNameChange: (name: string) =>
-        dispatch({ type: 'UPDATE_PRESET_NAME', name }),
+        edit({ display: { fontSettings } }),
+      handlePresetNameChange: (name: string) => edit({ name })
+    };
+  }, [selectedPreset]);
+
+  const modalHandlers = useMemo(
+    () => ({
       setShowSavePresetModal: (show: boolean) =>
         dispatch({ type: 'SET_SHOW_MODAL', show }),
       setPresetName: (name: string) =>
@@ -325,16 +363,10 @@ export function usePresets({
 
   const handleSelectPreset = useCallback(
     (presetId: string) => {
-      const preset = state.draftPresets.find((p) => p.id === presetId);
-      if (!preset) return;
-      dispatch({
-        type: 'SELECT_PRESET',
-        presetId,
-        name: preset.name,
-        displaySettings: presetToDisplaySettings(preset)
-      });
+      if (!presets.some((p) => p.id === presetId)) return;
+      dispatch({ type: 'SELECT_PRESET', presetId });
     },
-    [state.draftPresets]
+    [presets]
   );
 
   const countSchedulesUsingPreset = useCallback(
@@ -351,46 +383,17 @@ export function usePresets({
     [state.deleteTargetPresetId, countSchedulesUsingPreset]
   );
 
-  const deletePreset = useCallback(
-    async (id: string) => {
-      // スケジュール側の連携を先に外す（vision を先に書くと、途中で失敗したとき宛先のない presetId が残る）
-      const schedules = settings?.schedules ?? [];
-      if (settings && schedules.some((s) => s.presetId === id)) {
-        const updatedSettings: AppSettings = {
-          ...settings,
-          schedules: schedules.map((s) =>
-            s.presetId === id ? { ...s, presetId: undefined } : s
-          )
-        };
-        await settingsItem.setValue(updatedSettings);
-        setSettings(updatedSettings);
-      }
-
-      const remainingPresets = state.draftPresets.filter((p) => p.id !== id);
-      dispatch({
-        type: 'DELETE_PRESET',
-        remainingPresets,
-        wasSelected: id === state.selectedPresetId,
-        fallbackSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS
-      });
-      const toSave: VisionSettings = {
-        defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
-        presets: remainingPresets,
-        activePresetId:
-          vision?.activePresetId === id ? null : vision?.activePresetId || null
-      };
-      await visionItem.setValue(toSave);
-      setVision(toSave);
-    },
-    [
-      state.draftPresets,
-      state.selectedPresetId,
-      vision,
-      setVision,
-      settings,
-      setSettings
-    ]
-  );
+  const deletePreset = useCallback(async (id: string) => {
+    dispatch({ type: 'CLEAR_ERROR' });
+    const response = await requestPreset(() =>
+      sendMessage('delete-preset', { id })
+    );
+    if (!response.success) {
+      dispatch({ type: 'FAILED', error: messageErrorText(response.error) });
+      return;
+    }
+    dispatch({ type: 'DELETED', presetId: id });
+  }, []);
 
   const handleRequestDeletePreset = useCallback(
     async (id: string) => {
@@ -413,84 +416,79 @@ export function usePresets({
   }, []);
 
   const handleSaveSelectedPreset = useCallback(async () => {
-    const { selectedPresetId, draftDisplaySettings, editingPresetName } = state;
     if (
-      !selectedPresetId ||
+      !selectedPreset ||
       !draftDisplaySettings.goalText.trim() ||
       !editingPresetName.trim()
     )
       return;
 
-    const updatedPresets = state.draftPresets.map((p) =>
-      p.id === selectedPresetId
-        ? {
-            ...p,
-            name: editingPresetName.trim(),
-            goalText: draftDisplaySettings.goalText.trim(),
-            goalSubText: draftDisplaySettings.goalSubText.trim(),
-            textColor: draftDisplaySettings.textColor,
-            backgroundType: draftDisplaySettings.backgroundType,
-            backgroundImage: draftDisplaySettings.backgroundImage,
-            backgroundColor: draftDisplaySettings.backgroundColor,
-            customBackgroundData: draftDisplaySettings.customBackgroundData,
-            fontSettings: draftDisplaySettings.fontSettings
-          }
-        : p
+    dispatch({ type: 'CLEAR_ERROR' });
+    const response = await requestPreset(() =>
+      sendMessage('update-preset', {
+        id: selectedPreset.id,
+        name: editingPresetName,
+        display: draftDisplaySettings
+      })
     );
-    dispatch({ type: 'SAVE_PRESETS', updatedPresets });
-    const toSave: VisionSettings = {
-      defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
-      presets: updatedPresets,
-      activePresetId: vision?.activePresetId || null
-    };
-    await visionItem.setValue(toSave);
-    setVision(toSave);
+    if (!response.success) {
+      dispatch({ type: 'FAILED', error: messageErrorText(response.error) });
+      return;
+    }
+    dispatch({ type: 'SAVED', presetId: selectedPreset.id });
     showSavedFeedback();
-  }, [state, vision, setVision, showSavedFeedback]);
+  }, [
+    selectedPreset,
+    draftDisplaySettings,
+    editingPresetName,
+    showSavedFeedback
+  ]);
 
   const handleApplyPreset = useCallback(async () => {
-    if (!state.selectedPresetId || !vision) return;
-    const toSave: VisionSettings = {
-      ...vision,
-      activePresetId: state.selectedPresetId
-    };
-    await visionItem.setValue(toSave);
-    setVision(toSave);
+    if (!selectedPreset) return;
+    dispatch({ type: 'CLEAR_ERROR' });
+    const response = await requestPreset(() =>
+      sendMessage('apply-preset', { id: selectedPreset.id })
+    );
+    if (!response.success) {
+      dispatch({ type: 'FAILED', error: messageErrorText(response.error) });
+      return;
+    }
     showSavedFeedback();
     trackFeatureUse('preset_switch');
-  }, [state.selectedPresetId, vision, setVision, showSavedFeedback]);
+  }, [selectedPreset, showSavedFeedback]);
 
   const handleCreatePreset = useCallback(async () => {
     if (!state.presetName.trim()) return;
-    const newPreset: DashboardPreset = {
-      id: crypto.randomUUID(),
-      name: state.presetName.trim(),
-      goalText: DEFAULT_DISPLAY_SETTINGS.goalText,
-      goalSubText: DEFAULT_DISPLAY_SETTINGS.goalSubText,
-      textColor: DEFAULT_DISPLAY_SETTINGS.textColor,
-      backgroundType: DEFAULT_DISPLAY_SETTINGS.backgroundType,
-      backgroundImage: DEFAULT_DISPLAY_SETTINGS.backgroundImage,
-      backgroundColor: DEFAULT_DISPLAY_SETTINGS.backgroundColor,
-      customBackgroundData: null,
-      fontSettings: DEFAULT_FONT_SETTINGS,
-      createdAt: new Date().toISOString()
-    };
-    const updatedPresets = [...state.draftPresets, newPreset];
-    dispatch({ type: 'CREATE_PRESET', preset: newPreset, updatedPresets });
-    const toSave: VisionSettings = {
-      defaultSettings: vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS,
-      presets: updatedPresets,
-      activePresetId: vision?.activePresetId || null
-    };
-    await visionItem.setValue(toSave);
-    setVision(toSave);
+    const response = await requestPreset(() =>
+      sendMessage('create-preset', { name: state.presetName })
+    );
+    if (!response.success || !response.id) {
+      dispatch({
+        type: 'CREATE_FAILED',
+        error: messageErrorText(response.error)
+      });
+      return;
+    }
+    dispatch({ type: 'CREATED', presetId: response.id });
     trackFeatureUse('preset_create');
-  }, [state.presetName, state.draftPresets, vision, setVision]);
+  }, [state.presetName]);
 
   return {
-    ...state,
-    ...displayHandlers,
+    draftDisplaySettings,
+    draftPresets: presets,
+    selectedPresetId: selectedPreset?.id ?? null,
+    editingPresetName,
+    isDirty: activeDraft?.isDirty ?? false,
+    visionSaved: state.visionSaved,
+    showSavePresetModal: state.showSavePresetModal,
+    presetName: state.presetName,
+    deleteTargetPresetId: state.deleteTargetPresetId,
     deleteTargetScheduleCount,
+    presetError: state.presetError,
+    createPresetError: state.createPresetError,
+    ...displayHandlers,
+    ...modalHandlers,
     handleSelectPreset,
     handleRequestDeletePreset,
     handleConfirmDeletePreset,

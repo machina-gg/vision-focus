@@ -53,6 +53,8 @@ function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
     presetName: '',
     deleteTargetPresetId: null,
     deleteTargetScheduleCount: 0,
+    presetError: null,
+    createPresetError: null,
     setShowSavePresetModal: vi.fn(),
     setPresetName: vi.fn(),
     handleSelectPreset: vi.fn(),

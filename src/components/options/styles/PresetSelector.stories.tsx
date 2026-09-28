@@ -74,6 +74,8 @@ const emptyPresets: UsePresetsReturn = {
   presetName: '',
   deleteTargetPresetId: null,
   deleteTargetScheduleCount: 0,
+  presetError: null,
+  createPresetError: null,
   ...noopHandlers
 };
 
@@ -154,5 +156,15 @@ export const ActivePreset: Story = {
   args: {
     presets: activePreset,
     vision: activeVision
+  }
+};
+
+export const SaveFailed: Story = {
+  args: {
+    presets: {
+      ...editingDirty,
+      presetError: '操作できませんでした。もう一度お試しください'
+    },
+    vision: inactiveVision
   }
 };

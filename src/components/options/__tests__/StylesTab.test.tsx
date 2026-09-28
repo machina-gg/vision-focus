@@ -32,8 +32,10 @@ vi.mock('../styles', () => ({
 }));
 
 vi.mock('~/components/options/modals', () => ({
-  NewPresetModal: (props: { isOpen: boolean }) => (
-    <div data-testid="new-preset-modal">{String(props.isOpen)}</div>
+  NewPresetModal: (props: { isOpen: boolean; error?: string | null }) => (
+    <div data-testid="new-preset-modal">
+      {String(props.isOpen)}:{props.error ?? ''}
+    </div>
   ),
   DeletePresetModal: (props: { isOpen: boolean; scheduleCount: number }) => (
     <div data-testid="delete-preset-modal">
@@ -54,6 +56,8 @@ function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
     presetName: '',
     deleteTargetPresetId: null,
     deleteTargetScheduleCount: 0,
+    presetError: null,
+    createPresetError: null,
     setShowSavePresetModal: vi.fn(),
     setPresetName: vi.fn(),
     handleSelectPreset: vi.fn(),
@@ -214,10 +218,23 @@ describe('StylesTab', () => {
       expect(screen.getByTestId('new-preset-modal')).toHaveTextContent('true');
     });
 
+    it('作成の失敗の文言を作成のモーダルに渡す', () => {
+      renderTab({
+        showSavePresetModal: true,
+        createPresetError: '上限です'
+      });
+
+      expect(screen.getByTestId('new-preset-modal')).toHaveTextContent(
+        'true:上限です'
+      );
+    });
+
     it('保存の確認は既定では閉じている', () => {
       renderTab({ showSavePresetModal: false });
 
-      expect(screen.getByTestId('new-preset-modal')).toHaveTextContent('false');
+      expect(screen.getByTestId('new-preset-modal')).toHaveTextContent(
+        'false:'
+      );
     });
 
     it('削除の確認は対象が決まっていないときは閉じている', () => {

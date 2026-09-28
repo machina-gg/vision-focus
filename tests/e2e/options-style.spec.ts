@@ -397,4 +397,56 @@ test.describe('Options - Style Tab', () => {
 
     await page.close();
   });
+
+  test('OPT-ST17: 別画面で増えたスタイルが一覧に出て、保存しても消えない', async ({
+    context,
+    extensionId
+  }) => {
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(setupPage, 'vision', {
+      defaultSettings: makeDisplaySettings(),
+      presets: [makePreset('default', 'Default')],
+      activePresetId: 'default'
+    });
+    await setupPage.close();
+
+    const page = await openOptions(context, extensionId, 'styles');
+
+    await page
+      .locator(SELECTORS.styles.presetButton)
+      .filter({ hasText: 'Default' })
+      .click();
+    const goalInput = page.locator(SELECTORS.styles.goalTextInput);
+    await goalInput.fill('Draft Goal');
+
+    const otherPage = await openOptions(context, extensionId);
+    const current = await getStorageData(otherPage, 'vision');
+    if (!current) throw new Error('vision が保存されていない');
+    await setStorageData(otherPage, 'vision', {
+      ...current,
+      presets: [...current.presets, makePreset('added', 'Added Elsewhere')]
+    });
+    await otherPage.close();
+
+    await expect(
+      page
+        .locator(SELECTORS.styles.presetButton)
+        .filter({ hasText: 'Added Elsewhere' })
+    ).toBeVisible();
+    await expect(goalInput).toHaveValue('Draft Goal');
+
+    await page.locator(SELECTORS.styles.saveButton).click();
+
+    await expect
+      .poll(async () => {
+        const vision = await getStorageData(page, 'vision');
+        return vision?.presets.map((p) => [p.id, p.goalText]);
+      })
+      .toEqual([
+        ['default', 'Draft Goal'],
+        ['added', 'Focus on what matters']
+      ]);
+
+    await page.close();
+  });
 });

@@ -69,6 +69,8 @@ const editingPresets: UsePresetsReturn = {
   presetName: '',
   deleteTargetPresetId: null,
   deleteTargetScheduleCount: 0,
+  presetError: null,
+  createPresetError: null,
   ...noopHandlers
 };
 

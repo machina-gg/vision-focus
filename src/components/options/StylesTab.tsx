@@ -11,14 +11,14 @@ import { DeletePresetModal, NewPresetModal } from '~/components/options/modals';
 import { PresetSelector, DisplaySettingsForm } from './styles';
 
 /**
- * 設定画面のスタイルタブ（プリセットの選択・表示設定のフォーム・編集中のプレビュー・プリセットの作成と削除のモーダル）を表示する（設定は保存領域から直接読み書きする）
+ * 設定画面のスタイルタブ（プリセットの選択・表示設定のフォーム・編集中のプレビュー・プリセットの作成と削除のモーダル）を表示する（保存値は購読で読み、書き込みは usePresets が background に依頼する）
  * @returns スタイルタブの中身
  */
 export function StylesTab() {
-  const [vision, setVision] = useStorageItem(visionItem);
-  const [settings, setSettings] = useStorageItem(settingsItem);
+  const [vision] = useStorageItem(visionItem);
+  const [settings] = useStorageItem(settingsItem);
 
-  const presets = usePresets({ vision, setVision, settings, setSettings });
+  const presets = usePresets({ vision, settings });
 
   const { draftDisplaySettings, selectedPresetId } = presets;
   const isEditing = !!selectedPresetId;
@@ -123,6 +123,7 @@ export function StylesTab() {
         presetName={presets.presetName}
         onPresetNameChange={presets.setPresetName}
         onCreate={presets.handleCreatePreset}
+        error={presets.createPresetError}
       />
 
       <DeletePresetModal

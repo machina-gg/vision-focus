@@ -147,5 +147,21 @@ describe('GoalDisplay', () => {
       fireEvent.click(screen.getByTestId('newtab-goal-cancel'));
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
+
+    it('error があれば入力欄の下に出す', () => {
+      render(
+        <GoalDisplay {...baseProps} isEditing error="保存できませんでした" />
+      );
+
+      expect(screen.getByTestId('newtab-goal-error')).toHaveTextContent(
+        '保存できませんでした'
+      );
+    });
+
+    it('error が無ければ何も出さない', () => {
+      render(<GoalDisplay {...baseProps} isEditing error={null} />);
+
+      expect(screen.queryByTestId('newtab-goal-error')).not.toBeInTheDocument();
+    });
   });
 });

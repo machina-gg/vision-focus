@@ -30,6 +30,8 @@ interface GoalDisplayProps {
   onCancel: () => void;
   /** 入力欄でキーが押されたときに受け取る */
   onKeyDown: (e: React.KeyboardEvent) => void;
+  /** 保存できなかった理由（編集中だけ出す。null か省略なら出さない） */
+  error?: string | null;
 }
 
 /**
@@ -49,7 +51,8 @@ export function GoalDisplay({
   onStartEdit,
   onSave,
   onCancel,
-  onKeyDown
+  onKeyDown,
+  error
 }: GoalDisplayProps) {
   if (isEditing) {
     return (
@@ -63,6 +66,14 @@ export function GoalDisplay({
           className="text-center text-2xl bg-white/90"
           autoFocus
         />
+        {error && (
+          <p
+            className="text-sm text-danger-200 drop-shadow"
+            data-testid="newtab-goal-error"
+          >
+            {error}
+          </p>
+        )}
         <div className="flex justify-center gap-2">
           <Button
             variant="secondary"

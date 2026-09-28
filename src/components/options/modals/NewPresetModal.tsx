@@ -16,6 +16,8 @@ interface NewPresetModalProps {
   onPresetNameChange: (name: string) => void;
   /** 追加ボタンが押されたときに呼ぶ */
   onCreate: () => void;
+  /** 作成できなかった理由（null か省略なら出さない） */
+  error?: string | null;
 }
 
 /**
@@ -28,7 +30,8 @@ export function NewPresetModal({
   onClose,
   presetName,
   onPresetNameChange,
-  onCreate
+  onCreate,
+  error
 }: NewPresetModalProps) {
   const handleClose = () => {
     onClose();
@@ -49,6 +52,11 @@ export function NewPresetModal({
           onChange={onPresetNameChange}
           placeholder={getMessage('presetNamePlaceholder')}
         />
+        {error && (
+          <p className="text-sm text-danger-600" data-testid="new-preset-error">
+            {error}
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           <Button
             variant="secondary"
