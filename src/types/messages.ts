@@ -1,8 +1,15 @@
 import type {
+  AddScheduleBody,
   GetRemainingTimeBody,
+  RemoveScheduleBody,
+  ToggleScheduleBody,
   TogglePauseBody,
   TrackerHeartbeatBody,
-  UpdateTimeLimitBody
+  UpdateAnalyticsOptInBody,
+  UpdateNotificationsBody,
+  UpdateScheduleBody,
+  UpdateTimeLimitBody,
+  UpdateUnblockConfirmBody
 } from './messageSchemas';
 import type { NestedSite } from '~/lib/siteKey';
 import type { TimeLimitType } from './site';
@@ -46,9 +53,50 @@ export type MessageError =
       code: 'site-in-use';
     }
   | {
+      /** 曜日を共有し時間帯が交差するスケジュールが既にある */
+      code: 'schedule-overlap';
+    }
+  | {
+      /** 指定された ID のスケジュールが無い */
+      code: 'schedule-not-found';
+    }
+  | {
+      /** スケジュールが指すスタイルが無い */
+      code: 'preset-not-found';
+    }
+  | {
       /** 保存に失敗した */
       code: 'save-failed';
     };
+
+/** 設定を書き換える依頼の結果（スケジュール・通知・長押し確認・利用状況の送信への同意で共通） */
+export interface SettingsChangeResponse {
+  /** 書き換えられたか */
+  success: boolean;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
+}
+
+/** スケジュールを足す依頼 */
+export type AddScheduleRequest = AddScheduleBody;
+
+/** スケジュールの入力値を置き換える依頼 */
+export type UpdateScheduleRequest = UpdateScheduleBody;
+
+/** スケジュールを消す依頼 */
+export type RemoveScheduleRequest = RemoveScheduleBody;
+
+/** スケジュールの有効・無効を切り替える依頼 */
+export type ToggleScheduleRequest = ToggleScheduleBody;
+
+/** 残り時間の通知の設定を保存する依頼 */
+export type UpdateNotificationsRequest = UpdateNotificationsBody;
+
+/** 長押し確認の設定を保存する依頼 */
+export type UpdateUnblockConfirmRequest = UpdateUnblockConfirmBody;
+
+/** 利用状況の送信への同意・拒否を保存する依頼 */
+export type UpdateAnalyticsOptInRequest = UpdateAnalyticsOptInBody;
 
 /** サイトをブロックリストに加える依頼 */
 export interface AddBlockRequest {

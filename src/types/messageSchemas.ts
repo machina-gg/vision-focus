@@ -112,16 +112,72 @@ export const ScheduleEndTimeSchema = z.union([
   z.literal(END_OF_DAY_TIME)
 ]);
 
-/** スケジュールの保存値の形（Schedule と対応する。設定の書き出し・取り込みの検証に使う） */
+/** スケジュールの保存値の形（Schedule と対応する。設定の取り込みと、画面からの追加・更新の検証に使う） */
 export const ScheduleSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  /** 空白以外を 1 文字以上含む */
+  name: z.string().regex(/\S/),
   startTime: ScheduleStartTimeSchema,
   endTime: ScheduleEndTimeSchema,
-  days: z.array(z.number()),
+  /** 0（日曜）〜 6（土曜）を重複なく 1 つ以上 */
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1)
+    .refine((days) => new Set(days).size === days.length),
   enabled: z.boolean(),
   presetId: z.string().optional()
 });
+
+/** 画面が送るスケジュールの入力値（ScheduleSchema から background が決める id / enabled を除いたもの） */
+export const ScheduleInputSchema = ScheduleSchema.omit({
+  id: true,
+  enabled: true
+});
+
+/** スケジュールの入力値（ScheduleInputSchema を通った値） */
+export type ScheduleInput = z.infer<typeof ScheduleInputSchema>;
+
+const ScheduleIdSchema = z.string().min(1);
+
+/** スケジュールを足す本文 */
+export const AddScheduleBodySchema = z.object({
+  /** 足すスケジュールの入力値 */
+  schedule: ScheduleInputSchema
+});
+
+/** スケジュールの追加の本文（AddScheduleBodySchema を通った値） */
+export type AddScheduleBody = z.infer<typeof AddScheduleBodySchema>;
+
+/** スケジュールの入力値を置き換える本文 */
+export const UpdateScheduleBodySchema = z.object({
+  /** 置き換えるスケジュールの ID */
+  id: ScheduleIdSchema,
+  /** 新しい入力値 */
+  schedule: ScheduleInputSchema
+});
+
+/** スケジュールの更新の本文（UpdateScheduleBodySchema を通った値） */
+export type UpdateScheduleBody = z.infer<typeof UpdateScheduleBodySchema>;
+
+/** スケジュールを消す本文 */
+export const RemoveScheduleBodySchema = z.object({
+  /** 消すスケジュールの ID */
+  id: ScheduleIdSchema
+});
+
+/** スケジュールの削除の本文（RemoveScheduleBodySchema を通った値） */
+export type RemoveScheduleBody = z.infer<typeof RemoveScheduleBodySchema>;
+
+/** スケジュールの有効・無効を切り替える本文 */
+export const ToggleScheduleBodySchema = z.object({
+  /** 切り替えるスケジュールの ID */
+  id: ScheduleIdSchema,
+  /** true = 有効にする / false = 無効にする */
+  enabled: z.boolean()
+});
+
+/** スケジュールの有効・無効の切り替えの本文（ToggleScheduleBodySchema を通った値） */
+export type ToggleScheduleBody = z.infer<typeof ToggleScheduleBodySchema>;
 
 /** 残り時間の通知の設定の形（NotificationSettings と対応する） */
 export const NotificationSettingsSchema = z.object({
@@ -137,6 +193,39 @@ export const UnblockConfirmSettingsSchema = z.object({
   /** 押し続ける秒数（UNBLOCK_HOLD_SECONDS_OPTIONS のどれか） */
   holdSeconds: z.literal(UNBLOCK_HOLD_SECONDS_OPTIONS)
 });
+
+/** 残り時間の通知の設定を保存する本文 */
+export const UpdateNotificationsBodySchema = z.object({
+  /** 新しい通知の設定 */
+  notifications: NotificationSettingsSchema
+});
+
+/** 通知の設定の保存の本文（UpdateNotificationsBodySchema を通った値） */
+export type UpdateNotificationsBody = z.infer<
+  typeof UpdateNotificationsBodySchema
+>;
+
+/** 長押し確認の設定を保存する本文 */
+export const UpdateUnblockConfirmBodySchema = z.object({
+  /** 新しい長押し確認の設定 */
+  unblockConfirm: UnblockConfirmSettingsSchema
+});
+
+/** 長押し確認の設定の保存の本文（UpdateUnblockConfirmBodySchema を通った値） */
+export type UpdateUnblockConfirmBody = z.infer<
+  typeof UpdateUnblockConfirmBodySchema
+>;
+
+/** 利用状況の送信への同意・拒否を保存する本文（選んだ時刻は background が決める） */
+export const UpdateAnalyticsOptInBodySchema = z.object({
+  /** true = 同意する / false = 拒否する */
+  enabled: z.boolean()
+});
+
+/** 同意・拒否の保存の本文（UpdateAnalyticsOptInBodySchema を通った値） */
+export type UpdateAnalyticsOptInBody = z.infer<
+  typeof UpdateAnalyticsOptInBodySchema
+>;
 
 const FontSettingsSchema = z.object({
   family: z.string(),
