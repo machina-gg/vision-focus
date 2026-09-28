@@ -7,8 +7,9 @@ import {
   YouTubeFeaturesSchema,
   YouTubeSettingsInputSchema
 } from '../messageSchemas';
+import { createDefaultExportData } from '~/lib/settingsExport';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
-import { DEFAULT_SETTINGS, type Schedule } from '~/types/storage';
+import type { Schedule } from '~/types/storage';
 
 describe('YouTubeFeaturesSchema', () => {
   it('知らないキーが混ざっていても parse に成功し、そのキーは落ちる', () => {
@@ -76,11 +77,10 @@ describe('ScheduleSchema の時刻', () => {
 
   function importBody(overrides: Partial<Schedule>) {
     return {
-      settings: {
-        ...DEFAULT_SETTINGS,
+      data: {
+        ...createDefaultExportData().data,
         schedules: [{ ...schedule, ...overrides }]
-      },
-      sites: []
+      }
     };
   }
 

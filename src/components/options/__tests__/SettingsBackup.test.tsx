@@ -12,13 +12,14 @@ import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
 import { blockedSite, sitesOf } from '~/test/sites';
 
 const IMPORTED_SITES = sitesOf(blockedSite('example.com'));
+const IMPORTED_VISION = { ...DEFAULT_VISION, activePresetId: 'imported' };
 
 const settingsExport = vi.hoisted(() => ({
   exportSettings: vi.fn(),
   downloadSettings: vi.fn(),
   readFileAsString: vi.fn(),
   validateImportedData: vi.fn(),
-  applyImportedSettings: vi.fn()
+  applyImportedVision: vi.fn()
 }));
 
 const storage = vi.hoisted(() => ({
@@ -57,10 +58,9 @@ beforeEach(() => {
   settingsExport.validateImportedData
     .mockReset()
     .mockReturnValue({ success: true, data: { sites: IMPORTED_SITES } });
-  settingsExport.applyImportedSettings.mockReset().mockReturnValue({
-    settings: DEFAULT_SETTINGS,
-    vision: DEFAULT_VISION
-  });
+  settingsExport.applyImportedVision
+    .mockReset()
+    .mockReturnValue(IMPORTED_VISION);
   storage.getSettings.mockReset().mockResolvedValue(DEFAULT_SETTINGS);
   storage.getSites.mockReset().mockResolvedValue(IMPORTED_SITES);
   storage.getVision.mockReset().mockResolvedValue(DEFAULT_VISION);
@@ -159,17 +159,20 @@ describe('SettingsBackup', () => {
   });
 
   describe('インポートの成功', () => {
-    it('background へ保存したあとスタイルを保存し、成功を伝える', async () => {
+    it('設定ファイルの中身を background へ送ったあと、保存済みの表示設定に重ねたスタイルを保存し、成功を伝える', async () => {
       const onSettingsChange = vi.fn();
       render(<SettingsBackup onSettingsChange={onSettingsChange} />);
 
       await importFile();
 
       expect(messaging.sendMessage).toHaveBeenCalledWith('import-settings', {
-        settings: DEFAULT_SETTINGS,
-        sites: Object.values(IMPORTED_SITES)
+        data: { sites: IMPORTED_SITES }
       });
-      expect(storage.setVision).toHaveBeenCalledWith(DEFAULT_VISION);
+      expect(settingsExport.applyImportedVision).toHaveBeenCalledWith(
+        { sites: IMPORTED_SITES },
+        DEFAULT_VISION
+      );
+      expect(storage.setVision).toHaveBeenCalledWith(IMPORTED_VISION);
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importSuccessWithMerge'
       );

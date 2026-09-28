@@ -12,13 +12,13 @@ chrome.storage に保存するデータ構造の設計。
 
 読み書きは `@wxt-dev/storage` の項目定義（`src/lib/storage.ts`）を通す。値は生のオブジェクトのまま保存される（JSON 文字列ではない）。`local:` は保存領域を選ぶ接頭辞で、chrome.storage.local 上の実キーには含まれない。
 
-| 項目定義のキー        | 実キー          | 型                 | 書き手                                     | 説明                             |
-| --------------------- | --------------- | ------------------ | ------------------------------------------ | -------------------------------- |
-| `local:settings`      | `settings`      | AppSettings        | 画面・background                           | 全サイトに共通の設定             |
-| `local:sites`         | `sites`         | TrackedSites       | background（`src/lib/siteService.ts`）     | 追跡中のサイトとサイトごとの設定 |
-| `local:activity`      | `activity`      | ActivityLog        | background（`src/lib/activityService.ts`） | 日 × サイトの事実                |
-| `local:vision`        | `vision`        | VisionSettings     | 画面                                       | ダッシュボードの表示設定         |
-| `local:supportPrompt` | `supportPrompt` | SupportPromptState | 画面                                       | 支援誘導の表示状態               |
+| 項目定義のキー        | 実キー          | 型                 | 書き手                                           | 説明                             |
+| --------------------- | --------------- | ------------------ | ------------------------------------------------ | -------------------------------- |
+| `local:settings`      | `settings`      | AppSettings        | background（`src/lib/settingsService.ts`）・画面 | 全サイトに共通の設定             |
+| `local:sites`         | `sites`         | TrackedSites       | background（`src/lib/siteService.ts`）           | 追跡中のサイトとサイトごとの設定 |
+| `local:activity`      | `activity`      | ActivityLog        | background（`src/lib/activityService.ts`）       | 日 × サイトの事実                |
+| `local:vision`        | `vision`        | VisionSettings     | 画面                                             | ダッシュボードの表示設定         |
+| `local:supportPrompt` | `supportPrompt` | SupportPromptState | 画面                                             | 支援誘導の表示状態               |
 
 項目定義を通さないもの:
 

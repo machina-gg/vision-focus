@@ -1,7 +1,7 @@
 import * as z from 'zod';
 
 import { getTodayKey } from '~/lib/time';
-import { ScheduleSchema, TrackedSiteSchema } from '~/types/messageSchemas';
+import { ExportedDataSchema } from '~/types/messageSchemas';
 import type { TrackedSites } from '~/types/site';
 import type {
   AppSettings,
@@ -14,8 +14,7 @@ import type {
 import {
   DEFAULT_SETTINGS,
   DEFAULT_SITES,
-  DEFAULT_VISION,
-  UNBLOCK_HOLD_SECONDS_OPTIONS
+  DEFAULT_VISION
 } from '~/types/storage';
 
 /** 設定ファイルの形式の版。保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む */
@@ -62,55 +61,10 @@ export interface ImportResult {
   data?: ExportedSettings['data'];
 }
 
-const fontSettingsSchema = z.object({
-  family: z.string(),
-  size: z.enum(['sm', 'md', 'lg', 'xl']),
-  weight: z.enum(['normal', 'medium', 'semibold', 'bold'])
-});
-
-const displaySettingsSchema = z.object({
-  goalText: z.string(),
-  goalSubText: z.string(),
-  textColor: z.string(),
-  backgroundType: z.enum(['image', 'color']),
-  backgroundImage: z.string(),
-  backgroundColor: z.string(),
-  customBackgroundData: z.string().nullable().default(null),
-  fontSettings: fontSettingsSchema
-});
-
-const presetSchema = displaySettingsSchema.extend({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.string()
-});
-
-const notificationSettingsSchema = z.object({
-  timeLimitEnabled: z.boolean(),
-  timeLimitMinutes: z.union([
-    z.literal(1),
-    z.literal(3),
-    z.literal(5),
-    z.literal(10)
-  ])
-});
-
-const unblockConfirmSettingsSchema = z.object({
-  holdSeconds: z.literal(UNBLOCK_HOLD_SECONDS_OPTIONS)
-});
-
-const exportDataSchema = z.object({
+const exportFileSchema = z.object({
   version: z.number().int().min(EXPORT_VERSION),
   exportedAt: z.string(),
-  data: z.object({
-    sites: z.record(z.string(), TrackedSiteSchema),
-    schedules: z.array(ScheduleSchema),
-    presets: z.array(presetSchema),
-    defaultDisplaySettings: displaySettingsSchema,
-    activePresetId: z.string().nullable(),
-    notifications: notificationSettingsSchema,
-    unblockConfirm: unblockConfirmSettingsSchema
-  })
+  data: ExportedDataSchema
 });
 
 /**
@@ -205,7 +159,7 @@ export function validateImportedData(jsonString: string): ImportResult {
     };
   }
 
-  const result = exportDataSchema.safeParse(parsed);
+  const result = exportFileSchema.safeParse(parsed);
   if (!result.success) {
     return {
       success: false,
@@ -261,44 +215,55 @@ export function readFileAsString(file: File): Promise<string> {
 }
 
 /**
- * 取り込んだ設定を今の設定に重ねる（スケジュール・プリセットは無いものだけ足し、他は上書き。追跡中のサイトは扱わない）
- * @param data 取り込む設定ファイルの中身
+ * 取り込んだ設定をアプリの設定に重ねる（スケジュールは無いものだけ足し、通知と長押し確認は上書き。他の項目は今の値のまま）
+ * @param data 取り込む設定ファイルの中身（使うのはスケジュール・通知・長押し確認）
  * @param currentSettings 今のアプリの設定
- * @param currentVision 今のダッシュボードの表示設定
- * @returns 重ねた後のアプリの設定と表示設定（引数は書き換えない）
+ * @returns 重ねた後のアプリの設定（引数は書き換えない）
  */
 export function applyImportedSettings(
-  data: ExportedSettings['data'],
-  currentSettings: AppSettings,
-  currentVision: VisionSettings
-): { settings: AppSettings; vision: VisionSettings } {
+  data: Pick<
+    ExportedSettings['data'],
+    'schedules' | 'notifications' | 'unblockConfirm'
+  >,
+  currentSettings: AppSettings
+): AppSettings {
   const existingScheduleIds = new Set(
     currentSettings.schedules.map((s) => s.id)
   );
   const newSchedules = data.schedules.filter(
     (s) => !existingScheduleIds.has(s.id)
   );
-  const mergedSchedules = [...currentSettings.schedules, ...newSchedules];
 
-  const existingPresetIds = new Set(currentVision.presets.map((p) => p.id));
-  const newPresets = data.presets.filter((p) => !existingPresetIds.has(p.id));
-  const mergedPresets = [...currentVision.presets, ...newPresets];
-
-  const newSettings: AppSettings = {
+  return {
     ...currentSettings,
-    schedules: mergedSchedules,
+    schedules: [...currentSettings.schedules, ...newSchedules],
     notifications: data.notifications,
     unblockConfirm: data.unblockConfirm
   };
+}
 
-  const newVision: VisionSettings = {
+/**
+ * 取り込んだ表示設定を今の表示設定に重ねる（スタイルは無いものだけ足し、既定の表示設定と適用中のスタイルは上書き）
+ * @param data 取り込む設定ファイルの中身（使うのはスタイル・既定の表示設定・適用中のスタイル）
+ * @param currentVision 今のダッシュボードの表示設定
+ * @returns 重ねた後の表示設定（引数は書き換えない）
+ */
+export function applyImportedVision(
+  data: Pick<
+    ExportedSettings['data'],
+    'presets' | 'defaultDisplaySettings' | 'activePresetId'
+  >,
+  currentVision: VisionSettings
+): VisionSettings {
+  const existingPresetIds = new Set(currentVision.presets.map((p) => p.id));
+  const newPresets = data.presets.filter((p) => !existingPresetIds.has(p.id));
+
+  return {
     ...currentVision,
-    presets: mergedPresets,
+    presets: [...currentVision.presets, ...newPresets],
     defaultSettings: data.defaultDisplaySettings,
     activePresetId: data.activePresetId
   };
-
-  return { settings: newSettings, vision: newVision };
 }
 
 /**

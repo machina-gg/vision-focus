@@ -47,13 +47,10 @@ const fakeChrome = vi.hoisted(() => {
 
 import {
   getSettings,
-  setSettings,
-  updateSettings,
   getVision,
   setVision,
   getSites,
   getAllStorage,
-  clearAllStorage,
   setLastBlocked,
   getLastBlocked,
   clearLastBlocked,
@@ -76,11 +73,11 @@ beforeEach(() => {
 
 describe('保存形式', () => {
   it('chrome.storage.local に生のオブジェクトを保存する（キーに local: は付かない）', async () => {
-    const settings = { ...DEFAULT_SETTINGS, paused: true };
-    await setSettings(settings);
+    const vision = { ...DEFAULT_VISION, activePresetId: 'test' };
+    await setVision(vision);
 
-    expect(fakeChrome.localData).toEqual({ settings });
-    expect(fakeChrome.localData['local:settings']).toBeUndefined();
+    expect(fakeChrome.localData).toEqual({ vision });
+    expect(fakeChrome.localData['local:vision']).toBeUndefined();
   });
 
   it('旧形式（JSON 文字列）が残っていても初期値を返す', async () => {
@@ -110,26 +107,6 @@ describe('getSettings', () => {
   it('データがない場合はデフォルトを返す', async () => {
     const result = await getSettings();
     expect(result).toEqual(DEFAULT_SETTINGS);
-  });
-});
-
-describe('setSettings', () => {
-  it('設定をストレージに保存する', async () => {
-    await setSettings(DEFAULT_SETTINGS);
-    expect(fakeChrome.localData.settings).toEqual(DEFAULT_SETTINGS);
-  });
-});
-
-describe('updateSettings', () => {
-  it('部分的に設定を更新する', async () => {
-    fakeChrome.localData.settings = DEFAULT_SETTINGS;
-    const result = await updateSettings({ paused: true });
-
-    expect(result.paused).toBe(true);
-    expect(fakeChrome.localData.settings).toEqual({
-      ...DEFAULT_SETTINGS,
-      paused: true
-    });
   });
 });
 
@@ -179,21 +156,6 @@ describe('getAllStorage', () => {
     expect(result.vision).toEqual(DEFAULT_VISION);
     expect(result.sites).toEqual(DEFAULT_SITES);
     expect(result.activity).toEqual(DEFAULT_ACTIVITY);
-  });
-});
-
-describe('clearAllStorage', () => {
-  it('全ストレージキーを削除する', async () => {
-    fakeChrome.localData.settings = DEFAULT_SETTINGS;
-    fakeChrome.localData.vision = DEFAULT_VISION;
-    fakeChrome.localData.sites = {};
-    fakeChrome.localData.activity = {
-      '2024-06-12': { 'youtube.com': { seconds: 60, blocks: 1, unblocks: 0 } }
-    };
-
-    await clearAllStorage();
-
-    expect(fakeChrome.localData).toEqual({});
   });
 });
 

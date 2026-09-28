@@ -1,16 +1,15 @@
 import type { MessageHandler } from '~/lib/messaging';
-import { getSettings, setSettings } from '~/lib/storage';
 import { getActiveBlockedDomains } from '~/lib/blockService';
+import { importSettings } from '~/lib/settingsService';
 import { importSites } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
 import {
   ImportSettingsBodySchema,
   type ImportSettingsBody
 } from '~/types/messageSchemas';
-import type { AppSettings } from '~/types/storage';
 import type { TrackedSite } from '~/types/site';
 
-type ImportedSite = ImportSettingsBody['sites'][number];
+type ImportedSite = ImportSettingsBody['data']['sites'][string];
 
 function toTrackedSite(site: ImportedSite): TrackedSite {
   return {
@@ -30,7 +29,7 @@ function toTrackedSite(site: ImportedSite): TrackedSite {
 // 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
 /**
  * import-settings: 設定ファイルの設定とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
- * @param message data.settings に取り込む設定、data.sites に取り込むサイトの一覧
+ * @param message data.data に設定ファイルの中身（設定への重ね合わせは保存済みの最新の値に対して行う）
  * @returns 成功時の skipped は既存のサイトと入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）。失敗は invalid-request / save-failed
  */
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
@@ -43,14 +42,13 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   }
 
   try {
-    const current = await getSettings();
+    const imported = parsed.data.data;
 
     const blockedBefore = await getActiveBlockedDomains();
 
-    const settings = { ...current, ...parsed.data.settings } as AppSettings;
-    await setSettings(settings);
+    await importSettings(imported);
     const { skipped } = await importSites(
-      parsed.data.sites.map(toTrackedSite),
+      Object.values(imported.sites).map(toTrackedSite),
       new Date()
     );
 

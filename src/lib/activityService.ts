@@ -1,5 +1,6 @@
 // 書き込みはモジュール内の待ち行列で直列化する。background 以外から呼ぶと直列化が効かず加算が消える
 
+import { createSerialQueue } from '~/lib/serialQueue';
 import { activityItem } from '~/lib/storage';
 import { getTrackedSiteKeys } from '~/lib/siteService';
 import { resolveSiteKey } from '~/lib/siteKey';
@@ -14,23 +15,7 @@ import type {
 import type { SiteKey } from '~/types/site';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 
-let tail: Promise<void> = Promise.resolve();
-
-async function enqueue<T>(task: () => Promise<T>): Promise<T> {
-  const previous = tail;
-  const run = (async () => {
-    await previous;
-    return await task();
-  })();
-  tail = (async () => {
-    try {
-      await run;
-    } catch {
-      // 後続の処理を止めないためだけに握る（失敗は run で呼び出し元へ返す）
-    }
-  })();
-  return await run;
-}
+const enqueue = createSerialQueue();
 
 async function readLog(): Promise<ActivityLog> {
   return objectOrFallback(await activityItem.getValue(), DEFAULT_ACTIVITY);

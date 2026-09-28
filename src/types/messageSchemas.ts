@@ -1,6 +1,7 @@
 import * as z from 'zod';
 
 import { END_OF_DAY_TIME, TIME_OF_DAY_PATTERN } from '~/lib/time';
+import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
 
 /** 開いているページのサイトの時間制限を問い合わせる本文 */
 export const GetRemainingTimeBodySchema = z.object({
@@ -122,29 +123,82 @@ export const ScheduleSchema = z.object({
   presetId: z.string().optional()
 });
 
-const NotificationSettingsSchema = z.object({
+/** 残り時間の通知の設定の形（NotificationSettings と対応する） */
+export const NotificationSettingsSchema = z.object({
+  /** 残り時間の通知を出すか */
   timeLimitEnabled: z.boolean(),
   // z.union([z.literal(1), ...]) だと推論でキーが省略可能になるため、z.literal に配列で渡す
+  /** 残り時間がこの分数以下になったら通知する */
   timeLimitMinutes: z.literal([1, 3, 5, 10])
 });
 
-/** 設定の取り込みの本文。未知のキーを落とすと AppSettings に項目が増えたとき保存から抜け落ちるため、settings は looseObject にする */
+/** 長押し確認の設定の形（UnblockConfirmSettings と対応する） */
+export const UnblockConfirmSettingsSchema = z.object({
+  /** 押し続ける秒数（UNBLOCK_HOLD_SECONDS_OPTIONS のどれか） */
+  holdSeconds: z.literal(UNBLOCK_HOLD_SECONDS_OPTIONS)
+});
+
+const FontSettingsSchema = z.object({
+  family: z.string(),
+  size: z.enum(['sm', 'md', 'lg', 'xl']),
+  weight: z.enum(['normal', 'medium', 'semibold', 'bold'])
+});
+
+const DisplaySettingsSchema = z.object({
+  goalText: z.string(),
+  goalSubText: z.string(),
+  textColor: z.string(),
+  backgroundType: z.enum(['image', 'color']),
+  backgroundImage: z.string(),
+  backgroundColor: z.string(),
+  customBackgroundData: z.string().nullable(),
+  fontSettings: FontSettingsSchema
+});
+
+const PresetSchema = DisplaySettingsSchema.extend({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.string()
+});
+
+/** 設定ファイルの中身（data）の形。画面の取り込み前の検査と background の取り込みが同じものを使う */
+export const ExportedDataSchema = z.object({
+  /** 追跡中のサイト（キーはサイトキー） */
+  sites: z.record(z.string(), TrackedSiteSchema),
+  /** ブロックが効く時間帯 */
+  schedules: z.array(ScheduleSchema),
+  /** ダッシュボードのスタイル */
+  presets: z.array(PresetSchema),
+  /** スタイルを適用していないときの表示設定 */
+  defaultDisplaySettings: DisplaySettingsSchema,
+  /** 適用中のスタイルの ID（null = defaultDisplaySettings を使う） */
+  activePresetId: z.string().nullable(),
+  /** 残り時間の通知の設定 */
+  notifications: NotificationSettingsSchema,
+  /** 長押し確認の設定 */
+  unblockConfirm: UnblockConfirmSettingsSchema
+});
+
+/** 設定ファイルの中身（ExportedDataSchema を通った値） */
+export type ExportedData = z.infer<typeof ExportedDataSchema>;
+
+/** 設定の取り込みの本文 */
 export const ImportSettingsBodySchema = z.object({
-  /** 取り込むアプリ設定 */
-  settings: z.looseObject({
-    /** 取り込むスケジュール */
-    schedules: z.array(ScheduleSchema),
-    /** true = すべてのブロックを一時停止中 */
-    paused: z.boolean(),
-    /** 取り込む通知設定 */
-    notifications: NotificationSettingsSchema
-  }),
-  /** 取り込む追跡中のサイト */
-  sites: z.array(TrackedSiteSchema)
+  /** 取り込む設定ファイルの中身 */
+  data: ExportedDataSchema
 });
 
 /** 設定の取り込みの本文（ImportSettingsBodySchema を通った値） */
 export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
+
+/** すべてのブロックの一時停止を切り替える本文 */
+export const TogglePauseBodySchema = z.object({
+  /** true = 一時停止する / false = 再開する */
+  paused: z.boolean()
+});
+
+/** 一時停止の切り替えの本文（TogglePauseBodySchema を通った値） */
+export type TogglePauseBody = z.infer<typeof TogglePauseBodySchema>;
 
 /** domain だけを持つメッセージ本文（ドメイン名の長さの上限 253 文字まで） */
 export const SiteBodySchema = z.object({

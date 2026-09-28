@@ -149,7 +149,7 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 - キーの接頭辞 `local:` は保存領域の指定で、`chrome.storage.local` 上の実キーは接頭辞を除いた名前になる
 - 値は JSON 文字列ではなく生のオブジェクトのまま保存される
-- 読み書きは同ファイルの公開関数（`getSettings()` / `updateSettings()` など）を通す。
+- 読み出しは同ファイルの公開関数（`getSettings()` など）を通す。項目ごとの書き手は [DATA_MODEL.md](./DATA_MODEL.md) の「ストレージキー一覧」を参照。
   変更の監視（`watch`）を張る background / Content Script は項目定義を直接使う
 
 ### 補足
