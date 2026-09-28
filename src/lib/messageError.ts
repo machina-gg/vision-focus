@@ -25,10 +25,14 @@ export function messageErrorText(error: MessageError | undefined): string {
       return getMessage('siteErrorBlockNotFound');
     case 'site-in-use':
       return getMessage('siteErrorInUse');
+    case 'schedule-overlap':
+      return getMessage('scheduleOverlapError');
     case 'save-failed':
       return getMessage('errorSaveFailed');
     case 'invalid-request':
     case 'invalid-url':
+    case 'schedule-not-found':
+    case 'preset-not-found':
     case undefined:
       return getMessage('errorOperationFailed');
   }

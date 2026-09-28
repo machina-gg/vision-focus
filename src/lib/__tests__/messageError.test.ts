@@ -17,6 +17,9 @@ const ALL_ERRORS: MessageError[] = [
   },
   { code: 'block-not-found' },
   { code: 'site-in-use' },
+  { code: 'schedule-overlap' },
+  { code: 'schedule-not-found' },
+  { code: 'preset-not-found' },
   { code: 'save-failed' }
 ];
 
@@ -32,6 +35,7 @@ describe('messageErrorText（ja）', () => {
       { code: 'site-in-use' },
       'ブロック設定か YouTube の機能が残っているため、追跡を止められません'
     ],
+    [{ code: 'schedule-overlap' }, '既存のスケジュールと重複しています。'],
     [{ code: 'save-failed' }, '保存できませんでした。もう一度お試しください']
   ] satisfies [MessageError, string][])('%o は「%s」', (error, text) => {
     expect(messageErrorText(error)).toBe(text);
@@ -59,6 +63,8 @@ describe('messageErrorText（ja）', () => {
   it.each([
     [{ code: 'invalid-request' }],
     [{ code: 'invalid-url' }],
+    [{ code: 'schedule-not-found' }],
+    [{ code: 'preset-not-found' }],
     [undefined]
   ] satisfies [MessageError | undefined][])(
     '利用者に理由を見せない失敗（%o）は汎用の文言にする',

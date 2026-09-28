@@ -92,7 +92,7 @@ erDiagram
 | enabled    | boolean  | 有効/無効                                             |
 | presetId   | string?  | 適用するダッシュボードのスタイル                      |
 
-時刻の書式: `src/lib/time.ts` の `TIME_OF_DAY_PATTERN`。設定の取り込みはこの書式に合わない時刻を含むファイルを拒む（`src/types/messageSchemas.ts` の `ScheduleSchema`）
+検証: `src/types/messageSchemas.ts` の `ScheduleSchema`。名前は空白以外を 1 文字以上含む、曜日は 0〜6 の整数を重複なく 1 つ以上、時刻の書式は `src/lib/time.ts` の `TIME_OF_DAY_PATTERN`。設定の取り込みと background のスケジュールの追加・更新（`add-schedule` / `update-schedule`）が同じスキーマを使い、合わない値は保存しない
 
 ### NotificationSettings（通知）
 

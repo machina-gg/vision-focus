@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   ImportSettingsBodySchema,
+  ScheduleInputSchema,
   ScheduleSchema,
   TrackedSiteSchema,
   YouTubeFeaturesSchema,
@@ -132,6 +133,80 @@ describe('ScheduleSchema の時刻', () => {
   it('開始時刻の 24:00 は拒む', () => {
     expect(
       ScheduleSchema.safeParse({ ...schedule, startTime: '24:00' }).success
+    ).toBe(false);
+  });
+});
+
+describe('ScheduleSchema の名前と曜日', () => {
+  const schedule: Schedule = {
+    id: 's1',
+    name: 'Work',
+    startTime: '09:00',
+    endTime: '17:00',
+    days: [1],
+    enabled: true
+  };
+
+  function importBody(overrides: Partial<Schedule>) {
+    return {
+      data: {
+        ...createDefaultExportData().data,
+        schedules: [{ ...schedule, ...overrides }]
+      }
+    };
+  }
+
+  it.each([
+    ['前後に空白を含む名前', { name: ' Work ' }],
+    ['日曜と土曜', { days: [0, 6] }],
+    ['全曜日', { days: [0, 1, 2, 3, 4, 5, 6] }]
+  ])('%s を受け付け、値を変えない', (_label, overrides) => {
+    const value = { ...schedule, ...overrides };
+    expect(ScheduleSchema.parse(value)).toEqual(value);
+  });
+
+  it.each([
+    ['名前が空', { name: '' }],
+    ['名前が空白だけ', { name: ' \t　' }],
+    ['曜日が無い', { days: [] }],
+    ['曜日が負', { days: [-1] }],
+    ['曜日が 7', { days: [7] }],
+    ['曜日が整数でない', { days: [1.5] }],
+    ['曜日が重複', { days: [1, 2, 1] }]
+  ])('%s なら拒む（取り込みも拒む）', (_label, overrides) => {
+    expect(
+      ScheduleSchema.safeParse({ ...schedule, ...overrides }).success
+    ).toBe(false);
+    expect(
+      ImportSettingsBodySchema.safeParse(importBody(overrides)).success
+    ).toBe(false);
+  });
+});
+
+describe('ScheduleInputSchema', () => {
+  it('id と enabled を持たない入力値を受け付け、渡されても落とす', () => {
+    const input = {
+      name: 'Work',
+      startTime: '09:00',
+      endTime: '17:00',
+      days: [1],
+      presetId: 'p1'
+    };
+
+    expect(ScheduleInputSchema.parse(input)).toEqual(input);
+    expect(
+      ScheduleInputSchema.parse({ ...input, id: 'x', enabled: false })
+    ).toEqual(input);
+  });
+
+  it('保存値と同じ条件で曜日なしを拒む', () => {
+    expect(
+      ScheduleInputSchema.safeParse({
+        name: 'Work',
+        startTime: '09:00',
+        endTime: '17:00',
+        days: []
+      }).success
     ).toBe(false);
   });
 });
