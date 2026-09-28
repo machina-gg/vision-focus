@@ -17,7 +17,7 @@ chrome.storage に保存するデータ構造の設計。
 | `local:settings`      | `settings`      | AppSettings        | background（`src/lib/settingsService.ts`）・画面 | 全サイトに共通の設定             |
 | `local:sites`         | `sites`         | TrackedSites       | background（`src/lib/siteService.ts`）           | 追跡中のサイトとサイトごとの設定 |
 | `local:activity`      | `activity`      | ActivityLog        | background（`src/lib/activityService.ts`）       | 日 × サイトの事実                |
-| `local:vision`        | `vision`        | VisionSettings     | 画面                                             | ダッシュボードの表示設定         |
+| `local:vision`        | `vision`        | VisionSettings     | background（`src/lib/settingsService.ts`）・画面 | ダッシュボードの表示設定         |
 | `local:supportPrompt` | `supportPrompt` | SupportPromptState | 画面                                             | 支援誘導の表示状態               |
 
 項目定義を通さないもの:
@@ -198,6 +198,8 @@ erDiagram
 | presets         | DashboardPreset[]        | スタイル一覧          |
 | activePresetId  | string \| null           | 選択中のスタイルの ID |
 
+スタイルの件数は `MAX_PRESETS` まで（「機能上限」）。スタイルの作成（`create-preset`）と設定の取り込みで `src/lib/settingsService.ts` が保存済みの最新の値に対して数える。取り込みは既存のスタイルを残し、ID が重ならないスタイルをファイルの並び順に上限まで足し、残りは取り込まずに名前を画面へ返す（取り込まなかったスタイルを指す `activePresetId` とスケジュールの `presetId` は外す）
+
 ### DashboardDisplaySettings（表示設定）
 
 | フィールド           | 型                 | 説明                     |
@@ -255,13 +257,11 @@ DashboardDisplaySettings に次を足したもの。
 
 課金による機能制限は行わない（詳細は [PRD.md](./PRD.md) のマネタイズセクションを参照）。
 
-UI の都合による上限のみ存在する。
-
 | 項目           | 上限   | 理由                                                             |
 | -------------- | ------ | ---------------------------------------------------------------- |
 | 追跡中のサイト | 無制限 | -                                                                |
 | 事実の保持     | 365日  | ストレージ肥大の防止。`daily-cleanup` アラームが古い日の行を消す |
-| スタイル       | 10件   | 選択ボタンを横並びで表示する UI の都合                           |
+| スタイル       | 10件   | [PRD.md](./PRD.md)「機能上限について」                           |
 | カスタム背景   | 無制限 | -                                                                |
 
 定義箇所: `src/constants/limits.ts`（`MAX_PRESETS`）、`src/constants/intervals.ts`（`MAX_HISTORY_DAYS_FALLBACK`）

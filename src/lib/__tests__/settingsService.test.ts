@@ -45,17 +45,23 @@ const fakeChrome = vi.hoisted(() => {
 
 import {
   addSchedule,
+  applyPreset,
+  createPreset,
+  deletePreset,
   importSettings,
   removeSchedule,
   setAnalyticsOptIn,
   setNotifications,
   setPaused,
   setScheduleEnabled,
+  setGoalText,
   setUnblockConfirm,
+  updatePreset,
   updateSchedule
 } from '~/lib/settingsService';
 import { createDefaultExportData } from '~/lib/settingsExport';
-import { getSettings } from '~/lib/storage';
+import { MAX_PRESETS } from '~/constants/limits';
+import { getSettings, getVision } from '~/lib/storage';
 import { itemAt } from '~/test/items';
 import type { ScheduleInput } from '~/types/messageSchemas';
 import {
@@ -63,6 +69,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
   type AppSettings,
+  type DashboardPreset,
   type Schedule
 } from '~/types/storage';
 
@@ -87,17 +94,22 @@ const input = (overrides: Partial<ScheduleInput> = {}): ScheduleInput => ({
   ...overrides
 });
 
+const preset = (id: string): DashboardPreset => ({
+  ...DEFAULT_DISPLAY_SETTINGS,
+  id,
+  name: id,
+  createdAt: '2026-01-01T00:00:00.000Z'
+});
+
 const givenPresets = (...ids: string[]) => {
   fakeChrome.localData.vision = {
     ...DEFAULT_VISION,
-    presets: ids.map((id) => ({
-      ...DEFAULT_DISPLAY_SETTINGS,
-      id,
-      name: id,
-      createdAt: '2026-01-01T00:00:00.000Z'
-    }))
+    presets: ids.map(preset)
   };
 };
+
+const presetIds = (count: number, prefix: string) =>
+  Array.from({ length: count }, (_, index) => `${prefix}${index + 1}`);
 
 const importedData = (schedules: Schedule[]) => ({
   ...createDefaultExportData().data,
@@ -376,6 +388,220 @@ describe('importSettings', () => {
   });
 });
 
+describe('importSettings の表示設定', () => {
+  it('既存 8 件にファイルの新しい 5 件なら、先頭の 2 件だけを足し、3 件の名前を返す', async () => {
+    givenSettings(DEFAULT_SETTINGS);
+    givenPresets(...presetIds(8, 'e'));
+
+    const result = await importSettings({
+      ...importedData([]),
+      presets: presetIds(5, 'n').map(preset)
+    });
+
+    expect(result).toEqual({
+      skippedPresets: ['n3', 'n4', 'n5'],
+      clearedActivePreset: false,
+      clearedSchedulePresets: false
+    });
+    expect((await getVision()).presets.map((p) => p.id)).toEqual([
+      ...presetIds(8, 'e'),
+      'n1',
+      'n2'
+    ]);
+  });
+
+  it('取り込まなかったスタイルを指す適用中の指定とスケジュールの参照を外し、設定と表示設定を 1 回で書く', async () => {
+    givenSettings(DEFAULT_SETTINGS);
+    givenPresets(...presetIds(9, 'e'));
+    const set = vi.spyOn(chrome.storage.local, 'set');
+
+    const result = await importSettings({
+      ...importedData([
+        { ...schedule('s1'), presetId: 'n2' },
+        { ...schedule('s2'), days: [2], presetId: 'n1' }
+      ]),
+      presets: presetIds(2, 'n').map(preset),
+      activePresetId: 'n2'
+    });
+
+    expect(result).toEqual({
+      skippedPresets: ['n2'],
+      clearedActivePreset: true,
+      clearedSchedulePresets: true
+    });
+    expect(set).toHaveBeenCalledOnce();
+    expect((await getVision()).activePresetId).toBeNull();
+    expect((await getSettings()).schedules).toEqual([
+      schedule('s1'),
+      { ...schedule('s2'), days: [2], presetId: 'n1' }
+    ]);
+    set.mockRestore();
+  });
+
+  it('上限に収まれば適用中の指定と既定の表示設定をファイルの値にする', async () => {
+    givenSettings(DEFAULT_SETTINGS);
+    givenPresets('e1');
+
+    const result = await importSettings({
+      ...importedData([]),
+      presets: [preset('n1')],
+      activePresetId: 'n1',
+      defaultDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: 'Goal' }
+    });
+
+    expect(result.skippedPresets).toEqual([]);
+    const vision = await getVision();
+    expect(vision.activePresetId).toBe('n1');
+    expect(vision.defaultSettings.goalText).toBe('Goal');
+  });
+});
+
+describe('createPreset', () => {
+  it('既定の表示設定（画像なし）のスタイルを ID を振って末尾に足す', async () => {
+    givenPresets('p1');
+
+    const result = await createPreset(
+      'Morning',
+      new Date('2026-01-02T03:04:05.000Z')
+    );
+
+    if (result.rejection) throw new Error('作れなかった');
+    const presets = (await getVision()).presets;
+    expect(presets).toHaveLength(2);
+    expect(itemAt(presets, 1)).toEqual({
+      ...DEFAULT_DISPLAY_SETTINGS,
+      id: result.id,
+      name: 'Morning',
+      createdAt: '2026-01-02T03:04:05.000Z'
+    });
+    expect(result.id).not.toBe('p1');
+  });
+
+  it(`${MAX_PRESETS} 件あれば limit で拒み、何も書かない`, async () => {
+    givenPresets(...presetIds(MAX_PRESETS, 'p'));
+
+    expect(await createPreset('11th', new Date())).toEqual({
+      rejection: 'limit'
+    });
+    expect((await getVision()).presets).toHaveLength(MAX_PRESETS);
+  });
+});
+
+describe('updatePreset', () => {
+  it('名前と表示設定を置き換え、ID と作成時刻は保つ', async () => {
+    givenPresets('p1', 'p2');
+    const display = {
+      ...DEFAULT_DISPLAY_SETTINGS,
+      goalText: 'Focus',
+      customBackgroundData: 'data:image/jpeg;base64,AAAA'
+    };
+
+    expect(
+      await updatePreset({ id: 'p1', name: 'Renamed', display })
+    ).toBeNull();
+    expect((await getVision()).presets).toEqual([
+      {
+        ...display,
+        id: 'p1',
+        name: 'Renamed',
+        createdAt: '2026-01-01T00:00:00.000Z'
+      },
+      preset('p2')
+    ]);
+  });
+
+  it('対象が無ければ not-found で拒む', async () => {
+    givenPresets('p1');
+
+    expect(
+      await updatePreset({
+        id: 'missing',
+        name: 'x',
+        display: DEFAULT_DISPLAY_SETTINGS
+      })
+    ).toBe('not-found');
+    expect((await getVision()).presets).toEqual([preset('p1')]);
+  });
+});
+
+describe('applyPreset', () => {
+  it('適用中のスタイルにする', async () => {
+    givenPresets('p1');
+
+    expect(await applyPreset('p1')).toBeNull();
+    expect((await getVision()).activePresetId).toBe('p1');
+  });
+
+  it('対象が無ければ not-found で拒む', async () => {
+    givenPresets('p1');
+
+    expect(await applyPreset('missing')).toBe('not-found');
+    expect((await getVision()).activePresetId).toBeNull();
+  });
+});
+
+describe('deletePreset', () => {
+  it('スタイルを消し、適用中の指定とスケジュールの参照を 1 回の書き込みで外す', async () => {
+    givenSettings({
+      ...DEFAULT_SETTINGS,
+      schedules: [
+        { ...schedule('s1'), presetId: 'p1' },
+        { ...schedule('s2'), days: [2], presetId: 'p2' }
+      ]
+    });
+    fakeChrome.localData.vision = {
+      ...DEFAULT_VISION,
+      presets: [preset('p1'), preset('p2')],
+      activePresetId: 'p1'
+    };
+    const set = vi.spyOn(chrome.storage.local, 'set');
+
+    expect(await deletePreset('p1')).toBeNull();
+
+    expect(set).toHaveBeenCalledOnce();
+    const vision = await getVision();
+    expect(vision.presets).toEqual([preset('p2')]);
+    expect(vision.activePresetId).toBeNull();
+    expect((await getSettings()).schedules).toEqual([
+      schedule('s1'),
+      { ...schedule('s2'), days: [2], presetId: 'p2' }
+    ]);
+    set.mockRestore();
+  });
+
+  it('適用中でないスタイルを消しても適用中の指定は残す', async () => {
+    fakeChrome.localData.vision = {
+      ...DEFAULT_VISION,
+      presets: [preset('p1'), preset('p2')],
+      activePresetId: 'p2'
+    };
+
+    expect(await deletePreset('p1')).toBeNull();
+    expect((await getVision()).activePresetId).toBe('p2');
+  });
+
+  it('対象が無ければ not-found で拒み、何も書かない', async () => {
+    givenPresets('p1');
+
+    expect(await deletePreset('missing')).toBe('not-found');
+    expect((await getVision()).presets).toEqual([preset('p1')]);
+  });
+});
+
+describe('setGoalText', () => {
+  it('既定の表示設定の目標文だけを書き換え、スタイルは残す', async () => {
+    givenPresets('p1');
+
+    await setGoalText('Ship it');
+
+    expect(await getVision()).toEqual({
+      ...DEFAULT_VISION,
+      defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: 'Ship it' },
+      presets: [preset('p1')]
+    });
+  });
+});
+
 describe('書き込みの直列化', () => {
   it('一時停止と取り込みを同時に呼んでも、両方の変更が残る', async () => {
     givenSettings(DEFAULT_SETTINGS);
@@ -437,6 +663,38 @@ describe('書き込みの直列化', () => {
 
     expect(toggled).toEqual({ rejection: 'not-found' });
     expect((await getSettings()).schedules).toEqual([]);
+  });
+
+  it('上限の 1 つ手前で同時に 2 件作っても、最新の値で数えて 2 件目を拒む', async () => {
+    givenPresets(...presetIds(MAX_PRESETS - 1, 'p'));
+
+    const results = await Promise.all([
+      createPreset('a', new Date()),
+      createPreset('b', new Date())
+    ]);
+
+    expect(results.map((r) => r.rejection)).toEqual([null, 'limit']);
+    expect((await getVision()).presets).toHaveLength(MAX_PRESETS);
+  });
+
+  it('スタイルの作成と目標文の書き換えを同時に呼んでも、両方の変更が残る', async () => {
+    givenPresets('p1');
+
+    await Promise.all([createPreset('a', new Date()), setGoalText('Goal')]);
+
+    const vision = await getVision();
+    expect(vision.presets).toHaveLength(2);
+    expect(vision.defaultSettings.goalText).toBe('Goal');
+  });
+
+  it('スタイルの削除とスケジュールの追加を同時に呼んでも、両方の変更が残る', async () => {
+    givenSettings(DEFAULT_SETTINGS);
+    givenPresets('p1', 'p2');
+
+    await Promise.all([deletePreset('p1'), addSchedule(input())]);
+
+    expect((await getVision()).presets).toEqual([preset('p2')]);
+    expect((await getSettings()).schedules).toHaveLength(1);
   });
 
   it('前の書き込みが失敗しても、後の書き込みは行う', async () => {

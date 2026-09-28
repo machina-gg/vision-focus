@@ -1,42 +1,64 @@
 // 書き込みはモジュール内の待ち行列で直列化する。background 以外から呼ぶと直列化が効かず変更が消える
 
+import { storage as extensionStorage } from '@wxt-dev/storage';
+
+import { MAX_PRESETS } from '~/constants/limits';
 import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
 import { createSerialQueue } from '~/lib/serialQueue';
-import { applyImportedSettings } from '~/lib/settingsExport';
-import { getSettings, getVision, settingsItem } from '~/lib/storage';
-import type { ExportedData, ScheduleInput } from '~/types/messageSchemas';
+import {
+  applyImportedSettings,
+  applyImportedVision
+} from '~/lib/settingsExport';
+import {
+  getSettings,
+  getVision,
+  settingsItem,
+  visionItem
+} from '~/lib/storage';
 import type {
-  AppSettings,
-  NotificationSettings,
-  Schedule,
-  UnblockConfirmSettings,
-  VisionSettings
+  ExportedData,
+  ScheduleInput,
+  UpdatePresetBody
+} from '~/types/messageSchemas';
+import {
+  DEFAULT_DISPLAY_SETTINGS,
+  type AppSettings,
+  type DashboardPreset,
+  type NotificationSettings,
+  type Schedule,
+  type UnblockConfirmSettings,
+  type VisionSettings
 } from '~/types/storage';
 
 const enqueue = createSerialQueue();
 
-interface SettingsChange<T> {
-  next: AppSettings | null;
+interface StorageChange<T> {
+  settings?: AppSettings;
+  vision?: VisionSettings;
   result: T;
 }
 
-/** `change` は読み出した値を書き換えず、変更後の値（変更が無ければ null）と呼び出し元へ返す結果を返す */
-async function mutateSettings<T>(
-  change: (current: AppSettings, vision: VisionSettings) => SettingsChange<T>
+/** `change` は読み出した値を書き換えず、変更後の値（変更の無い項目は省く）と呼び出し元へ返す結果を返す。両方の変更は 1 回の書き込みにまとめる */
+async function mutate<T>(
+  change: (current: AppSettings, vision: VisionSettings) => StorageChange<T>
 ): Promise<T> {
   return enqueue(async () => {
     const [current, vision] = await Promise.all([getSettings(), getVision()]);
-    const { next, result } = change(current, vision);
-    if (next) await settingsItem.setValue(next);
-    return result;
+    const next = change(current, vision);
+    const writes = [
+      ...(next.settings ? [{ item: settingsItem, value: next.settings }] : []),
+      ...(next.vision ? [{ item: visionItem, value: next.vision }] : [])
+    ];
+    if (writes.length > 0) await extensionStorage.setItems(writes);
+    return next.result;
   });
 }
 
 async function replaceSettings(
   change: (current: AppSettings) => AppSettings
 ): Promise<void> {
-  await mutateSettings((current) => ({
-    next: change(current),
+  await mutate((current) => ({
+    settings: change(current),
     result: undefined
   }));
 }
@@ -100,13 +122,13 @@ export async function setPaused(paused: boolean): Promise<void> {
 export async function addSchedule(
   input: ScheduleInput
 ): Promise<ScheduleRejection | null> {
-  return mutateSettings((current, vision) => {
+  return mutate((current, vision) => {
     const rejection = checkScheduleInput(input, current, vision);
-    if (rejection) return { next: null, result: rejection };
+    if (rejection) return { result: rejection };
 
     const schedule = toSchedule(crypto.randomUUID(), true, input);
     return {
-      next: { ...current, schedules: [...current.schedules, schedule] },
+      settings: { ...current, schedules: [...current.schedules, schedule] },
       result: null
     };
   });
@@ -122,16 +144,16 @@ export async function updateSchedule(
   id: string,
   input: ScheduleInput
 ): Promise<ScheduleRejection | null> {
-  return mutateSettings((current, vision) => {
+  return mutate((current, vision) => {
     const existing = current.schedules.find((schedule) => schedule.id === id);
-    if (!existing) return { next: null, result: 'not-found' };
+    if (!existing) return { result: 'not-found' };
 
     const rejection = checkScheduleInput(input, current, vision, id);
-    if (rejection) return { next: null, result: rejection };
+    if (rejection) return { result: rejection };
 
     const updated = toSchedule(id, existing.enabled, input);
     return {
-      next: {
+      settings: {
         ...current,
         schedules: current.schedules.map((schedule) =>
           schedule.id === id ? updated : schedule
@@ -150,12 +172,12 @@ export async function updateSchedule(
 export async function removeSchedule(
   id: string
 ): Promise<ScheduleRejection | null> {
-  return mutateSettings((current) => {
+  return mutate((current) => {
     if (!current.schedules.some((schedule) => schedule.id === id)) {
-      return { next: null, result: 'not-found' };
+      return { result: 'not-found' };
     }
     return {
-      next: {
+      settings: {
         ...current,
         schedules: current.schedules.filter((schedule) => schedule.id !== id)
       },
@@ -187,13 +209,13 @@ export async function setScheduleEnabled(
   id: string,
   enabled: boolean
 ): Promise<SetScheduleEnabledResult> {
-  return mutateSettings<SetScheduleEnabledResult>((current) => {
+  return mutate<SetScheduleEnabledResult>((current) => {
     if (!current.schedules.some((schedule) => schedule.id === id)) {
-      return { next: null, result: { rejection: 'not-found' } };
+      return { result: { rejection: 'not-found' } };
     }
     const resumed = enabled && current.paused;
     return {
-      next: {
+      settings: {
         ...current,
         paused: resumed ? false : current.paused,
         schedules: current.schedules.map((schedule) =>
@@ -240,12 +262,195 @@ export async function setAnalyticsOptIn(
   }));
 }
 
+/** 設定ファイルの取り込みの結果 */
+export interface ImportSettingsResult {
+  /** 上限（MAX_PRESETS）を超えるため取り込まなかったスタイルの名前（ファイルの並び順） */
+  skippedPresets: string[];
+  /** 取り込まなかったスタイルを指していたため、適用中のスタイルを外したか */
+  clearedActivePreset: boolean;
+  /** 取り込まなかったスタイルを指していたため、取り込んだスケジュールからスタイルを外したか */
+  clearedSchedulePresets: boolean;
+}
+
 /**
- * 設定ファイルのスケジュール・通知・長押し確認を、保存済みの設定に重ねて保存する（重ね方は applyImportedSettings）
+ * 設定ファイルの設定と表示設定を、保存済みの値に重ねて 1 回の書き込みで保存する（重ね方は applyImportedSettings / applyImportedVision。スタイルは既存と合わせて MAX_PRESETS 件まで）
  * @param data 取り込む設定ファイルの中身（検証済み）
+ * @returns 取り込まなかったスタイルと、それを指していた参照を外したか
  */
 export async function importSettings(
-  data: Pick<ExportedData, 'schedules' | 'notifications' | 'unblockConfirm'>
-): Promise<void> {
-  await replaceSettings((current) => applyImportedSettings(data, current));
+  data: Omit<ExportedData, 'sites'>
+): Promise<ImportSettingsResult> {
+  return mutate<ImportSettingsResult>((current, vision) => {
+    const { vision: nextVision, skippedPresets } = applyImportedVision(
+      data,
+      vision,
+      MAX_PRESETS
+    );
+    const skippedIds = new Set(skippedPresets.map((preset) => preset.id));
+    const existingScheduleIds = new Set(
+      current.schedules.map((schedule) => schedule.id)
+    );
+
+    let clearedSchedulePresets = false;
+    const schedules = data.schedules.map((schedule) => {
+      if (schedule.presetId === undefined || !skippedIds.has(schedule.presetId))
+        return schedule;
+      if (!existingScheduleIds.has(schedule.id)) clearedSchedulePresets = true;
+      const { presetId: _presetId, ...rest } = schedule;
+      return rest;
+    });
+
+    return {
+      settings: applyImportedSettings({ ...data, schedules }, current),
+      vision: nextVision,
+      result: {
+        skippedPresets: skippedPresets.map((preset) => preset.name),
+        clearedActivePreset:
+          data.activePresetId !== null && skippedIds.has(data.activePresetId),
+        clearedSchedulePresets
+      }
+    };
+  });
+}
+
+/** スタイルの書き込みを拒んだ理由 */
+export type PresetRejection =
+  /** 指定された ID のスタイルが無い */
+  | 'not-found'
+  /** スタイルが上限（MAX_PRESETS）に達している */
+  | 'limit';
+
+/** スタイルの作成の結果 */
+export type CreatePresetResult =
+  | {
+      /** 上限に達している */
+      rejection: 'limit';
+    }
+  | {
+      /** 作ったので null */
+      rejection: null;
+      /** 作ったスタイルの ID */
+      id: string;
+    };
+
+/**
+ * 既定の表示設定（画像なし）のスタイルを末尾に足す（ID はここで振る）。件数は保存済みの最新の値で数える
+ * @param name スタイルの名前（検証済み）
+ * @param createdAt 作成した時刻
+ * @returns 作ったスタイルの ID か、上限に達していたこと
+ */
+export async function createPreset(
+  name: string,
+  createdAt: Date
+): Promise<CreatePresetResult> {
+  return mutate<CreatePresetResult>((_current, vision) => {
+    if (vision.presets.length >= MAX_PRESETS) {
+      return { result: { rejection: 'limit' } };
+    }
+    const preset: DashboardPreset = {
+      ...DEFAULT_DISPLAY_SETTINGS,
+      id: crypto.randomUUID(),
+      name,
+      createdAt: createdAt.toISOString()
+    };
+    return {
+      vision: { ...vision, presets: [...vision.presets, preset] },
+      result: { rejection: null, id: preset.id }
+    };
+  });
+}
+
+/**
+ * スタイルの名前と表示設定を置き換える（ID と作成時刻は保つ）
+ * @param input 置き換える内容（検証済み）
+ * @returns 拒んだ理由（not-found）。置き換えたら null
+ */
+export async function updatePreset(
+  input: UpdatePresetBody
+): Promise<PresetRejection | null> {
+  return mutate((_current, vision) => {
+    const existing = vision.presets.find((preset) => preset.id === input.id);
+    if (!existing) return { result: 'not-found' };
+
+    const updated: DashboardPreset = {
+      ...input.display,
+      id: existing.id,
+      name: input.name,
+      createdAt: existing.createdAt
+    };
+    return {
+      vision: {
+        ...vision,
+        presets: vision.presets.map((preset) =>
+          preset.id === input.id ? updated : preset
+        )
+      },
+      result: null
+    };
+  });
+}
+
+/**
+ * スタイルを適用中にする
+ * @param id 適用するスタイルの ID
+ * @returns 拒んだ理由（not-found）。適用したら null
+ */
+export async function applyPreset(id: string): Promise<PresetRejection | null> {
+  return mutate((_current, vision) => {
+    if (!vision.presets.some((preset) => preset.id === id)) {
+      return { result: 'not-found' };
+    }
+    return { vision: { ...vision, activePresetId: id }, result: null };
+  });
+}
+
+/**
+ * スタイルを消し、適用中ならその指定を外し、参照しているスケジュールからも外す（設定と表示設定を 1 回の書き込みで保存する）
+ * @param id 消すスタイルの ID
+ * @returns 拒んだ理由（not-found）。消したら null
+ */
+export async function deletePreset(
+  id: string
+): Promise<PresetRejection | null> {
+  return mutate((current, vision) => {
+    if (!vision.presets.some((preset) => preset.id === id)) {
+      return { result: 'not-found' };
+    }
+    const referenced = current.schedules.some(
+      (schedule) => schedule.presetId === id
+    );
+    return {
+      ...(referenced && {
+        settings: {
+          ...current,
+          schedules: current.schedules.map((schedule) => {
+            if (schedule.presetId !== id) return schedule;
+            const { presetId: _presetId, ...rest } = schedule;
+            return rest;
+          })
+        }
+      }),
+      vision: {
+        ...vision,
+        presets: vision.presets.filter((preset) => preset.id !== id),
+        activePresetId:
+          vision.activePresetId === id ? null : vision.activePresetId
+      },
+      result: null
+    };
+  });
+}
+
+/**
+ * 既定の表示設定の目標文を書き換える
+ * @param goalText 新しい目標文（検証済み）
+ */
+export async function setGoalText(goalText: string): Promise<void> {
+  await mutate((_current, vision) => ({
+    vision: {
+      ...vision,
+      defaultSettings: { ...vision.defaultSettings, goalText }
+    },
+    result: undefined
+  }));
 }

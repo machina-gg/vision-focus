@@ -842,12 +842,12 @@
     "description": "スタイル名入力プレースホルダー"
   },
   "maxPresetsReached": {
-    "message": "スタイルの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "message": "スタイルは最大 $COUNT$ 件まで保存できます。",
     "description": "最大スタイル数到達メッセージ",
     "placeholders": {
       "count": {
         "content": "$1",
-        "example": "1"
+        "example": "10"
       }
     }
   },
@@ -2232,6 +2232,20 @@
       "site": {
         "content": "$2",
         "example": "youtube.com"
+      }
+    }
+  },
+  "importWarningPresetLimit": {
+    "message": "スタイルの上限（$LIMIT$件）を超えるため、次のスタイルを取り込みませんでした: $NAMES$",
+    "description": "インポート警告: スタイルの上限を超えるため読み飛ばした",
+    "placeholders": {
+      "limit": {
+        "content": "$1",
+        "example": "10"
+      },
+      "names": {
+        "content": "$2",
+        "example": "朝, 夜"
       }
     }
   },

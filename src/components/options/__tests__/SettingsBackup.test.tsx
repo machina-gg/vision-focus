@@ -8,25 +8,24 @@ import {
   EXPORT_STATUS_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
+import { MAX_PRESETS } from '~/constants/limits';
 import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite, sitesOf } from '~/test/sites';
 
 const IMPORTED_SITES = sitesOf(blockedSite('example.com'));
-const IMPORTED_VISION = { ...DEFAULT_VISION, activePresetId: 'imported' };
 
 const settingsExport = vi.hoisted(() => ({
   exportSettings: vi.fn(),
   downloadSettings: vi.fn(),
   readFileAsString: vi.fn(),
-  validateImportedData: vi.fn(),
-  applyImportedVision: vi.fn()
+  validateImportedData: vi.fn()
 }));
 
 const storage = vi.hoisted(() => ({
   getSettings: vi.fn(),
   getSites: vi.fn(),
-  getVision: vi.fn(),
-  setVision: vi.fn()
+  getVision: vi.fn()
 }));
 
 const messaging = vi.hoisted(() => ({
@@ -58,13 +57,9 @@ beforeEach(() => {
   settingsExport.validateImportedData
     .mockReset()
     .mockReturnValue({ success: true, data: { sites: IMPORTED_SITES } });
-  settingsExport.applyImportedVision
-    .mockReset()
-    .mockReturnValue(IMPORTED_VISION);
   storage.getSettings.mockReset().mockResolvedValue(DEFAULT_SETTINGS);
   storage.getSites.mockReset().mockResolvedValue(IMPORTED_SITES);
   storage.getVision.mockReset().mockResolvedValue(DEFAULT_VISION);
-  storage.setVision.mockReset().mockResolvedValue(undefined);
   messaging.sendMessage.mockReset().mockResolvedValue({ success: true });
 });
 
@@ -159,7 +154,7 @@ describe('SettingsBackup', () => {
   });
 
   describe('インポートの成功', () => {
-    it('設定ファイルの中身を background へ送ったあと、保存済みの表示設定に重ねたスタイルを保存し、成功を伝える', async () => {
+    it('設定ファイルの中身を background へ送り、成功を伝える（画面は保存領域に書かない）', async () => {
       const onSettingsChange = vi.fn();
       render(<SettingsBackup onSettingsChange={onSettingsChange} />);
 
@@ -168,11 +163,6 @@ describe('SettingsBackup', () => {
       expect(messaging.sendMessage).toHaveBeenCalledWith('import-settings', {
         data: { sites: IMPORTED_SITES }
       });
-      expect(settingsExport.applyImportedVision).toHaveBeenCalledWith(
-        { sites: IMPORTED_SITES },
-        DEFAULT_VISION
-      );
-      expect(storage.setVision).toHaveBeenCalledWith(IMPORTED_VISION);
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importSuccessWithMerge'
       );
@@ -192,6 +182,48 @@ describe('SettingsBackup', () => {
         'importSuccessWithMerge'
       );
       expect(screen.getByText('importWarningNestedSite')).toBeInTheDocument();
+    });
+
+    it('取り込まなかったスタイルへの参照を外したら既存の警告を出し、検証の警告と重ねて出さない', async () => {
+      settingsExport.validateImportedData.mockReturnValue({
+        success: true,
+        data: { sites: IMPORTED_SITES },
+        warnings: ['importWarningOrphanedPresets']
+      });
+      messaging.sendMessage.mockResolvedValue({
+        success: true,
+        skipped: [],
+        skippedPresets: ['Morning'],
+        clearedActivePreset: true,
+        clearedSchedulePresets: true
+      });
+      render(<SettingsBackup />);
+
+      await importFile();
+
+      expect(screen.getAllByText('importWarningOrphanedPresets')).toHaveLength(
+        1
+      );
+      expect(
+        screen.getByText('importWarningActivePresetNotFound')
+      ).toBeInTheDocument();
+    });
+
+    it('スタイルを取り込み切れたら上限の警告を出さない', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: true,
+        skipped: [],
+        skippedPresets: [],
+        clearedActivePreset: false,
+        clearedSchedulePresets: false
+      });
+      render(<SettingsBackup />);
+
+      await importFile();
+
+      expect(
+        screen.queryByText(/^importWarningPresetLimit/)
+      ).not.toBeInTheDocument();
     });
 
     it('onSettingsChange が未指定でも例外にならない', async () => {
@@ -234,6 +266,29 @@ describe('SettingsBackup', () => {
     });
   });
 
+  describe('上限で取り込まれなかったスタイル', () => {
+    stubI18nWithSubstitutions();
+
+    it('上限の件数と名前を添えた警告にする', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: true,
+        skipped: [],
+        skippedPresets: ['Morning', 'Night'],
+        clearedActivePreset: false,
+        clearedSchedulePresets: false
+      });
+      render(<SettingsBackup />);
+
+      await importFile();
+
+      expect(
+        screen.getByText(
+          `importWarningPresetLimit(${MAX_PRESETS},Morning, Night)`
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
   describe('インポートの失敗', () => {
     it('検証で弾かれたら理由を出し、保存へ進まない', async () => {
       settingsExport.validateImportedData.mockReturnValue({
@@ -248,7 +303,6 @@ describe('SettingsBackup', () => {
         'importErrorVersionMismatch'
       );
       expect(messaging.sendMessage).not.toHaveBeenCalled();
-      expect(storage.setVision).not.toHaveBeenCalled();
     });
 
     it('検証が理由を返さなければ既定の理由を出す', async () => {
@@ -271,10 +325,9 @@ describe('SettingsBackup', () => {
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorInvalidFormat'
       );
-      expect(storage.setVision).not.toHaveBeenCalled();
     });
 
-    it('background への保存が失敗したらスタイルも書き換えない', async () => {
+    it('background への保存が失敗したら失敗を伝え、読み込み後の通知をしない', async () => {
       messaging.sendMessage.mockResolvedValue({ success: false });
       const onSettingsChange = vi.fn();
       render(<SettingsBackup onSettingsChange={onSettingsChange} />);
@@ -284,7 +337,6 @@ describe('SettingsBackup', () => {
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorSaveFailed'
       );
-      expect(storage.setVision).not.toHaveBeenCalled();
       expect(onSettingsChange).not.toHaveBeenCalled();
     });
 
@@ -297,7 +349,6 @@ describe('SettingsBackup', () => {
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorSaveFailed'
       );
-      expect(storage.setVision).not.toHaveBeenCalled();
     });
 
     it('ファイルが読めなければ失敗として扱う', async () => {

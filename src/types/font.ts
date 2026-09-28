@@ -1,25 +1,29 @@
+/** ダッシュボードの目標文に使えるフォントの ID の一覧（保存値・取り込みの検証に使う） */
+export const FONT_FAMILIES = [
+  'system',
+  'inter',
+  'roboto',
+  'poppins',
+  'lato',
+  'opensans',
+  'nunito',
+  'playfair',
+  'merriweather',
+  'lora',
+  'crimsontext',
+  'montserrat',
+  'oswald',
+  'bebasneue',
+  'raleway',
+  'dancingscript',
+  'caveat',
+  'notosansjp',
+  'notoserifjp',
+  'mplusrounded'
+] as const;
+
 /** ダッシュボードの目標文に使えるフォントの ID */
-export type FontFamily =
-  | 'system'
-  | 'inter'
-  | 'roboto'
-  | 'poppins'
-  | 'lato'
-  | 'opensans'
-  | 'nunito'
-  | 'playfair'
-  | 'merriweather'
-  | 'lora'
-  | 'crimsontext'
-  | 'montserrat'
-  | 'oswald'
-  | 'bebasneue'
-  | 'raleway'
-  | 'dancingscript'
-  | 'caveat'
-  | 'notosansjp'
-  | 'notoserifjp'
-  | 'mplusrounded';
+export type FontFamily = (typeof FONT_FAMILIES)[number];
 
 /** フォント選択画面の分類 */
 export type FontCategory =

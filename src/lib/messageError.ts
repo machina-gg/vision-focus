@@ -1,3 +1,4 @@
+import { MAX_PRESETS } from '~/constants/limits';
 import { getMessage } from '~/lib/i18n';
 import type { MessageError } from '~/types/messages';
 
@@ -27,6 +28,8 @@ export function messageErrorText(error: MessageError | undefined): string {
       return getMessage('siteErrorInUse');
     case 'schedule-overlap':
       return getMessage('scheduleOverlapError');
+    case 'preset-limit':
+      return getMessage('maxPresetsReached', String(MAX_PRESETS));
     case 'save-failed':
       return getMessage('errorSaveFailed');
     case 'invalid-request':
