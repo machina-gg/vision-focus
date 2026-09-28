@@ -278,7 +278,7 @@ describe('ScheduleModal', () => {
   });
 
   describe('保存', () => {
-    it('名前が入っていれば保存できる', () => {
+    it('入力が background の検証を通れば保存できる', () => {
       const { onSave } = renderModal();
 
       fireEvent.click(screen.getByTestId('schedule-save-button'));
@@ -302,6 +302,26 @@ describe('ScheduleModal', () => {
 
       fireEvent.click(save);
       expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['曜日が 1 つも無い', { ...BASE_FORM, days: [] }],
+      ['開始時刻が空', { ...BASE_FORM, startTime: '' }],
+      ['終了時刻が空', { ...BASE_FORM, endTime: '' }]
+    ])('%s ときは保存ボタンを押せない', (_label, scheduleForm) => {
+      const { onSave } = renderModal({ scheduleForm });
+
+      const save = screen.getByTestId('schedule-save-button');
+      expect(save).toBeDisabled();
+
+      fireEvent.click(save);
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it('終了時刻が 00:00（その日の終わり）でも保存できる', () => {
+      renderModal({ scheduleForm: { ...BASE_FORM, endTime: '00:00' } });
+
+      expect(screen.getByTestId('schedule-save-button')).not.toBeDisabled();
     });
   });
 });

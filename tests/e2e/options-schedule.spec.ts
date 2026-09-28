@@ -586,4 +586,102 @@ test.describe('Options - Schedule Tab', () => {
 
     await page.close();
   });
+
+  test('OPT-S15: 曜日を選ばないとスケジュールを保存できない', async ({
+    context,
+    extensionId
+  }) => {
+    const page = await openOptions(context, extensionId, 'schedules');
+
+    await page.locator(SELECTORS.schedules.addScheduleButton).click();
+
+    const modal = page.locator(SELECTORS.schedules.scheduleModal);
+    await modal
+      .locator(SELECTORS.schedules.scheduleNameInput)
+      .fill('No Days Schedule');
+
+    const saveButton = modal.locator(SELECTORS.schedules.saveScheduleButton);
+    await expect(saveButton).toBeEnabled();
+
+    const dayButtons = modal.locator(SELECTORS.schedules.dayCheckbox);
+    await expect(dayButtons).toHaveCount(7);
+    for (let day = 0; day < 7; day++) {
+      const button = dayButtons.nth(day);
+      if ((await button.getAttribute('aria-pressed')) === 'true') {
+        await button.click();
+        await expect(button).toHaveAttribute('aria-pressed', 'false');
+      }
+    }
+
+    await expect(saveButton).toBeDisabled();
+
+    await dayButtons.nth(0).click();
+    await expect(saveButton).toBeEnabled();
+
+    await page.locator(SELECTORS.schedules.cancelScheduleButton).click();
+
+    await page.close();
+  });
+
+  test('OPT-S16: 無効のスケジュールを編集して保存しても無効のまま', async ({
+    context,
+    extensionId
+  }) => {
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(
+      setupPage,
+      'settings',
+      makeAppSettings({
+        schedules: [
+          {
+            id: 'schedule1',
+            name: 'Disabled Schedule',
+            startTime: '09:00',
+            endTime: '12:00',
+            days: [1],
+            enabled: false
+          }
+        ]
+      })
+    );
+    await setupPage.close();
+
+    const page = await openOptions(context, extensionId, 'schedules');
+
+    const scheduleItem = page
+      .locator(SELECTORS.schedules.scheduleItem)
+      .filter({ hasText: 'Disabled Schedule' });
+    await expect(scheduleItem).toBeVisible();
+    await expect(
+      scheduleItem.locator(SELECTORS.schedules.scheduleToggle)
+    ).toHaveAttribute('aria-checked', 'false');
+
+    await scheduleItem.locator(SELECTORS.schedules.editButton).click();
+
+    const modal = page.locator(SELECTORS.schedules.scheduleModal);
+    await expect(modal).toBeVisible();
+    await modal
+      .locator(SELECTORS.schedules.scheduleNameInput)
+      .fill('Renamed Schedule');
+    await modal.locator(SELECTORS.schedules.saveScheduleButton).click();
+    await expect(modal).not.toBeVisible();
+
+    const renamedItem = page
+      .locator(SELECTORS.schedules.scheduleItem)
+      .filter({ hasText: 'Renamed Schedule' });
+    await expect(renamedItem).toBeVisible();
+    await expect(
+      renamedItem.locator(SELECTORS.schedules.scheduleToggle)
+    ).toHaveAttribute('aria-checked', 'false');
+
+    const settings = await getStorageData(page, 'settings');
+    expect(settings?.schedules).toHaveLength(1);
+    expect(settings?.schedules[0]).toMatchObject({
+      id: 'schedule1',
+      name: 'Renamed Schedule',
+      enabled: false
+    });
+
+    await page.close();
+  });
 });

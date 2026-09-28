@@ -1,20 +1,21 @@
 import { useCallback, useState } from 'react';
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { getMessage } from '~/lib/i18n';
-import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
-import { getSettings, settingsItem } from '~/lib/storage';
-import { normalizeEndTime } from '~/lib/time';
+import {
+  ScheduleInputSchema,
+  type ScheduleInput
+} from '~/types/messageSchemas';
 import type { AppSettings, Schedule } from '~/types/storage';
 
 /** スケジュール編集モーダルの入力値 */
 export interface ScheduleFormData {
-  /** スケジュールの名前。空白だけなら保存しない */
+  /** スケジュールの名前 */
   name: string;
   /** HH:mm */
   startTime: string;
-  /** HH:mm。00:00 は保存時に 24:00（その日の終わり）へ直す */
+  /** HH:mm（00:00 はその日の終わりとして保存される） */
   endTime: string;
   /** 曜日（0 = 日曜 … 6 = 土曜） */
   days: number[];
@@ -30,11 +31,33 @@ const DEFAULT_SCHEDULE_FORM: ScheduleFormData = {
   presetId: ''
 };
 
+/**
+ * 編集モーダルの入力値を、background に送るスケジュールの入力値の形にする（検証はしない）
+ * @param form 編集モーダルの入力値
+ * @returns 送る形の入力値（スタイルを指定しないときは presetId を持たない）
+ */
+export function toScheduleInput(form: ScheduleFormData): ScheduleInput {
+  return {
+    name: form.name,
+    startTime: form.startTime,
+    endTime: form.endTime,
+    days: form.days,
+    presetId: form.presetId || undefined
+  };
+}
+
+/**
+ * 編集モーダルの入力値が、background の検証（ScheduleInputSchema）を通る形か
+ * @param form 編集モーダルの入力値
+ * @returns 通るなら true
+ */
+export function isScheduleFormValid(form: ScheduleFormData): boolean {
+  return ScheduleInputSchema.safeParse(toScheduleInput(form)).success;
+}
+
 interface UseSchedulesOptions {
   /** 今のアプリ設定。読み込み前は undefined（操作は何もしない） */
   settings: AppSettings | undefined;
-  /** 保存したあと画面側のアプリ設定を差し替える */
-  setSettings: (settings: AppSettings) => void;
 }
 
 interface UseSchedulesReturn {
@@ -50,11 +73,11 @@ interface UseSchedulesReturn {
   setScheduleForm: (form: ScheduleFormData) => void;
   /** 保存に失敗したときの文言。失敗していなければ null */
   scheduleError: string | null;
-  /** 入力値を保存する。他のスケジュールと重なるなら保存せず scheduleError に文言を入れる */
+  /** 入力値の追加・置き換えを background に依頼する。拒まれたらモーダルを開いたまま scheduleError に文言を入れる */
   handleSaveSchedule: () => Promise<void>;
-  /** id のスケジュールを消す */
+  /** id のスケジュールの削除を background に依頼する（失敗しても一覧は保存値のまま） */
   handleDeleteSchedule: (id: string) => Promise<void>;
-  /** id のスケジュールの有効・無効を切り替える。一時停止中に有効にしたら一時停止も解く */
+  /** id のスケジュールの有効・無効の切り替えを background に依頼する（失敗しても一覧は保存値のまま） */
   handleToggleSchedule: (id: string, enabled: boolean) => Promise<void>;
   /** schedule の値を入力値にして編集モーダルを開く */
   openEditSchedule: (schedule: Schedule) => void;
@@ -63,16 +86,15 @@ interface UseSchedulesReturn {
 }
 
 /**
- * スケジュール画面の編集モーダルの状態と、保存（重なりの検査つき）・削除・有効切り替えの操作を提供する
+ * スケジュール画面の編集モーダルの状態と、保存・削除・有効切り替えを background へ依頼する操作を提供する（表示は保存値の購読で追従する）
  * @param options フックの入力（下記の項目）
  * @param options.settings 今のアプリ設定。読み込み前は undefined
- * @param options.setSettings 保存したあと画面側のアプリ設定を差し替える関数
  * @returns 編集モーダルの状態と各操作
  */
 export function useSchedules({
-  settings,
-  setSettings
+  settings
 }: UseSchedulesOptions): UseSchedulesReturn {
+  const loaded = settings !== undefined;
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [scheduleForm, setScheduleFormState] = useState<ScheduleFormData>(
@@ -86,37 +108,27 @@ export function useSchedules({
   }, []);
 
   const handleSaveSchedule = useCallback(async () => {
-    if (!settings || !scheduleForm.name.trim()) return;
+    if (!loaded) return;
 
-    const newSchedule: Schedule = {
-      id: editingSchedule?.id || crypto.randomUUID(),
-      name: scheduleForm.name,
-      startTime: scheduleForm.startTime,
-      endTime: normalizeEndTime(scheduleForm.endTime),
-      days: scheduleForm.days,
-      enabled: true,
-      presetId: scheduleForm.presetId || undefined
-    };
+    const parsed = ScheduleInputSchema.safeParse(toScheduleInput(scheduleForm));
+    if (!parsed.success) return;
 
-    const overlapping = findOverlappingSchedule(
-      newSchedule,
-      settings.schedules,
-      editingSchedule?.id
-    );
-    if (overlapping) {
-      setScheduleError(getMessage('scheduleOverlapError'));
+    try {
+      const response = editingSchedule
+        ? await sendMessage('update-schedule', {
+            id: editingSchedule.id,
+            schedule: parsed.data
+          })
+        : await sendMessage('add-schedule', { schedule: parsed.data });
+
+      if (!response.success) {
+        setScheduleError(messageErrorText(response.error));
+        return;
+      }
+    } catch {
+      setScheduleError(messageErrorText(undefined));
       return;
     }
-
-    const updatedSchedules = editingSchedule
-      ? settings.schedules.map((s) =>
-          s.id === editingSchedule.id ? newSchedule : s
-        )
-      : [...settings.schedules, newSchedule];
-
-    const updated = { ...settings, schedules: updatedSchedules };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
 
     if (!editingSchedule) {
       trackFeatureUse('schedule_create');
@@ -125,41 +137,28 @@ export function useSchedules({
     setShowScheduleModal(false);
     setEditingSchedule(null);
     setScheduleForm(DEFAULT_SCHEDULE_FORM);
-  }, [settings, setSettings, scheduleForm, setScheduleForm, editingSchedule]);
+  }, [loaded, scheduleForm, setScheduleForm, editingSchedule]);
 
   const handleDeleteSchedule = useCallback(
     async (id: string) => {
-      if (!settings) return;
-      const updated = {
-        ...settings,
-        schedules: settings.schedules.filter((s) => s.id !== id)
-      };
-      await settingsItem.setValue(updated);
-      setSettings(updated);
+      if (!loaded) return;
+      await sendMessage('remove-schedule', { id }).catch(() => undefined);
     },
-    [settings, setSettings]
+    [loaded]
   );
 
   const handleToggleSchedule = useCallback(
     async (id: string, enabled: boolean) => {
-      if (!settings) return;
-      const updated = {
-        ...settings,
-        schedules: settings.schedules.map((s) =>
-          s.id === id ? { ...s, enabled } : s
-        )
-      };
-      await settingsItem.setValue(updated);
-      setSettings(updated);
-
-      // paused は toggle-pause 経由で解除する（画面から直接書くと開いているタブがブロックされない）
-      if (enabled && settings.paused) {
-        await resumeBlocking(setSettings);
+      if (!loaded) return;
+      const response = await sendMessage('toggle-schedule', {
+        id,
+        enabled
+      }).catch(() => undefined);
+      if (response?.success) {
+        trackFeatureUse('schedule_toggle');
       }
-
-      trackFeatureUse('schedule_toggle');
     },
-    [settings, setSettings]
+    [loaded]
   );
 
   const openEditSchedule = useCallback(
@@ -196,15 +195,4 @@ export function useSchedules({
     openEditSchedule,
     openAddSchedule
   };
-}
-
-async function resumeBlocking(
-  setSettings: (settings: AppSettings) => void
-): Promise<void> {
-  try {
-    await sendMessage('toggle-pause', { paused: false });
-    setSettings(await getSettings());
-  } catch {
-    // 送信に失敗しても、スケジュールの変更自体は保存済みのため表示は保つ
-  }
 }

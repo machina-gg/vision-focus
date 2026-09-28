@@ -1001,16 +1001,16 @@ Esc で編集を取り消す。
 
 `src/components/options/modals/ScheduleModal.tsx`
 
-| Prop            | 型                                 | 省略時   | 説明                                                           |
-| --------------- | ---------------------------------- | -------- | -------------------------------------------------------------- |
-| isOpen          | `boolean`                          | 必須     | false の間は表示しない                                         |
-| onClose         | `() => void`                       | 必須     | 取消ボタンか背景が押されたときに呼ぶ                           |
-| editingSchedule | `Schedule \| null`                 | 必須     | 編集中のスケジュール（null なら新規追加）                      |
-| scheduleForm    | `ScheduleFormData`                 | 必須     | フォームの名前・時間帯・曜日・プリセット                       |
-| onFormChange    | `(form: ScheduleFormData) => void` | 必須     | 変更後のフォーム全体を受け取る（曜日は昇順に並べ直す）         |
-| onSave          | `() => void`                       | 必須     | 保存ボタンが押されたときに呼ぶ                                 |
-| vision          | `VisionSettings \| undefined`      | 必須     | プリセットの選択肢を引く表示設定（undefined なら「なし」だけ） |
-| error           | `string \| null`                   | 出さない | 保存できない理由                                               |
+| Prop            | 型                                 | 省略時   | 説明                                                                                  |
+| --------------- | ---------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| isOpen          | `boolean`                          | 必須     | false の間は表示しない                                                                |
+| onClose         | `() => void`                       | 必須     | 取消ボタンか背景が押されたときに呼ぶ                                                  |
+| editingSchedule | `Schedule \| null`                 | 必須     | 編集中のスケジュール（null なら新規追加）                                             |
+| scheduleForm    | `ScheduleFormData`                 | 必須     | フォームの名前・時間帯・曜日・プリセット                                              |
+| onFormChange    | `(form: ScheduleFormData) => void` | 必須     | 変更後のフォーム全体を受け取る（曜日は昇順に並べ直す）                                |
+| onSave          | `() => void`                       | 必須     | 保存ボタンが押されたときに呼ぶ（入力が `isScheduleFormValid` を通らない間は押せない） |
+| vision          | `VisionSettings \| undefined`      | 必須     | プリセットの選択肢を引く表示設定（undefined なら「なし」だけ）                        |
+| error           | `string \| null`                   | 出さない | 保存できない理由                                                                      |
 
 ---
 
@@ -1169,10 +1169,7 @@ interface ScheduleFormData {
   presetId: string;
 }
 
-function useSchedules(options: {
-  settings: AppSettings | undefined;
-  setSettings: (settings: AppSettings) => void;
-}): {
+function useSchedules(options: { settings: AppSettings | undefined }): {
   showScheduleModal: boolean;
   setShowScheduleModal: (show: boolean) => void;
   editingSchedule: Schedule | null;
@@ -1187,8 +1184,9 @@ function useSchedules(options: {
 };
 ```
 
-- 保存時に他のスケジュールとの重なりを `findOverlappingSchedule` で調べ、重なれば保存せず `scheduleError` に文言を入れる
-- 一時停止の解除は `settings` へ直接書かず、`toggle-pause` で依頼する（直接書くと開いているタブがブロックされない）
+- 保存領域には書かず、保存・削除・有効切り替えを `add-schedule` / `update-schedule` / `remove-schedule` / `toggle-schedule` で background に依頼する。一覧は保存値の購読で追従する
+- 拒まれた保存（重なりなど）は `messageErrorText` の文言を `scheduleError` に入れ、モーダルを開いたままにする
+- `toScheduleInput` / `isScheduleFormValid` を公開する（送る形への変換と、background と同じ `ScheduleInputSchema` での検証。[ScheduleModal](#schedulemodal) の保存ボタンが使う）
 
 ---
 
