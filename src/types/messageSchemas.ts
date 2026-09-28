@@ -1,6 +1,7 @@
 import * as z from 'zod';
 
 import { END_OF_DAY_TIME, TIME_OF_DAY_PATTERN } from '~/lib/time';
+import { FONT_FAMILIES } from '~/types/font';
 import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
 
 /** 開いているページのサイトの時間制限を問い合わせる本文 */
@@ -227,28 +228,89 @@ export type UpdateAnalyticsOptInBody = z.infer<
   typeof UpdateAnalyticsOptInBodySchema
 >;
 
-const FontSettingsSchema = z.object({
-  family: z.string(),
+/** 目標文のフォントの形（FontSettings と対応する） */
+export const FontSettingsSchema = z.object({
+  /** 使うフォント（FONT_FAMILIES のどれか） */
+  family: z.enum(FONT_FAMILIES),
+  /** 文字サイズの段階 */
   size: z.enum(['sm', 'md', 'lg', 'xl']),
+  /** 文字の太さの段階 */
   weight: z.enum(['normal', 'medium', 'semibold', 'bold'])
 });
 
-const DisplaySettingsSchema = z.object({
+/** 表示設定の形（DashboardDisplaySettings と対応する。設定の取り込みとスタイルの更新の検証に使う） */
+export const DashboardDisplaySettingsSchema = z.object({
+  /** 大きく出す目標文 */
   goalText: z.string(),
+  /** 目標文の下に出す補足の文 */
   goalSubText: z.string(),
+  /** CSS の色の値 */
   textColor: z.string(),
+  /** image = 背景画像を使う / color = 単色の背景を使う */
   backgroundType: z.enum(['image', 'color']),
+  /** 同梱の背景画像の ID */
   backgroundImage: z.string(),
+  /** backgroundType が color のときの CSS の色の値 */
   backgroundColor: z.string(),
+  /** 利用者が選んだ画像の data URL。null = 使わない */
   customBackgroundData: z.string().nullable(),
+  /** 目標文のフォント */
   fontSettings: FontSettingsSchema
 });
 
-const PresetSchema = DisplaySettingsSchema.extend({
+/** スタイルの保存値の形（DashboardPreset と対応する。設定の取り込みの検証に使う） */
+export const DashboardPresetSchema = DashboardDisplaySettingsSchema.extend({
+  /** スタイルの ID */
   id: z.string(),
+  /** 画面に出すスタイルの名前 */
   name: z.string(),
+  /** 作成した時刻（ISO8601） */
   createdAt: z.string()
 });
+
+const PresetIdSchema = z.string().min(1);
+
+const NonBlankStringSchema = z.string().regex(/\S/);
+
+/** 既定の表示設定でスタイルを作る本文（ID は background が振る） */
+export const CreatePresetBodySchema = z.object({
+  /** 作るスタイルの名前（空白以外を 1 文字以上含む） */
+  name: NonBlankStringSchema
+});
+
+/** スタイルの作成の本文（CreatePresetBodySchema を通った値） */
+export type CreatePresetBody = z.infer<typeof CreatePresetBodySchema>;
+
+/** スタイルの名前と表示設定を置き換える本文 */
+export const UpdatePresetBodySchema = z.object({
+  /** 置き換えるスタイルの ID */
+  id: PresetIdSchema,
+  /** 新しい名前（空白以外を 1 文字以上含む） */
+  name: NonBlankStringSchema,
+  /** 新しい表示設定（画像は data URL のまま含む） */
+  display: DashboardDisplaySettingsSchema
+});
+
+/** スタイルの更新の本文（UpdatePresetBodySchema を通った値） */
+export type UpdatePresetBody = z.infer<typeof UpdatePresetBodySchema>;
+
+/** スタイル 1 つを ID で指す本文（適用・削除で共通） */
+export const PresetIdBodySchema = z.object({
+  /** 対象のスタイルの ID */
+  id: PresetIdSchema
+});
+
+/** スタイルを ID で指す本文（PresetIdBodySchema を通った値） */
+export type PresetIdBody = z.infer<typeof PresetIdBodySchema>;
+
+/** 既定の表示設定の目標文を書き換える本文 */
+export const UpdateGoalTextBodySchema = z.object({
+  /** 新しい目標文（空白以外を 1 文字以上含む） */
+  goalText: NonBlankStringSchema
+});
+
+/** 目標文の書き換えの本文（UpdateGoalTextBodySchema を通った値） */
+export type UpdateGoalTextBody = z.infer<typeof UpdateGoalTextBodySchema>;
 
 /** 設定ファイルの中身（data）の形。画面の取り込み前の検査と background の取り込みが同じものを使う */
 export const ExportedDataSchema = z.object({
@@ -257,9 +319,9 @@ export const ExportedDataSchema = z.object({
   /** ブロックが効く時間帯 */
   schedules: z.array(ScheduleSchema),
   /** ダッシュボードのスタイル */
-  presets: z.array(PresetSchema),
+  presets: z.array(DashboardPresetSchema),
   /** スタイルを適用していないときの表示設定 */
-  defaultDisplaySettings: DisplaySettingsSchema,
+  defaultDisplaySettings: DashboardDisplaySettingsSchema,
   /** 適用中のスタイルの ID（null = defaultDisplaySettings を使う） */
   activePresetId: z.string().nullable(),
   /** 残り時間の通知の設定 */

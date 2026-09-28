@@ -28,9 +28,9 @@ function toTrackedSite(site: ImportedSite): TrackedSite {
 
 // 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
 /**
- * import-settings: 設定ファイルの設定とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
- * @param message data.data に設定ファイルの中身（設定への重ね合わせは保存済みの最新の値に対して行う）
- * @returns 成功時の skipped は既存のサイトと入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）。失敗は invalid-request / save-failed
+ * import-settings: 設定ファイルの設定・表示設定とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
+ * @param message data.data に設定ファイルの中身（重ね合わせは保存済みの最新の値に対して行う）
+ * @returns 成功時の skipped は既存のサイトと入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）、skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request / save-failed
  */
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   data
@@ -46,7 +46,8 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
 
     const blockedBefore = await getActiveBlockedDomains();
 
-    await importSettings(imported);
+    const { skippedPresets, clearedActivePreset, clearedSchedulePresets } =
+      await importSettings(imported);
     const { skipped } = await importSites(
       Object.values(imported.sites).map(toTrackedSite),
       new Date()
@@ -70,7 +71,10 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
       skipped: skipped.map(({ input, nested }) => ({
         domain: input,
         conflict: nested.site
-      }))
+      })),
+      skippedPresets,
+      clearedActivePreset,
+      clearedSchedulePresets
     };
   } catch {
     return { success: false, error: { code: 'save-failed' } };

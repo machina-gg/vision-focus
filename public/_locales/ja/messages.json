@@ -2235,6 +2235,20 @@
       }
     }
   },
+  "importWarningPresetLimit": {
+    "message": "スタイルの上限（$LIMIT$件）を超えるため、次のスタイルを取り込みませんでした: $NAMES$",
+    "description": "インポート警告: スタイルの上限を超えるため読み飛ばした",
+    "placeholders": {
+      "limit": {
+        "content": "$1",
+        "example": "10"
+      },
+      "names": {
+        "content": "$2",
+        "example": "朝, 夜"
+      }
+    }
+  },
   "importWarningNestedSite": {
     "message": "$DOMAIN$ は $SITE$ と重なるため取り込みませんでした",
     "description": "インポート警告: 追跡中のサイトと親子関係になるサイトを読み飛ばした",

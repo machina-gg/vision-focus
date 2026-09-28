@@ -1,15 +1,12 @@
 import * as z from 'zod';
 
 import { getTodayKey } from '~/lib/time';
-import { ExportedDataSchema } from '~/types/messageSchemas';
+import { ExportedDataSchema, type ExportedData } from '~/types/messageSchemas';
 import type { TrackedSites } from '~/types/site';
 import type {
   AppSettings,
   VisionSettings,
-  Schedule,
-  DashboardPreset,
-  NotificationSettings,
-  UnblockConfirmSettings
+  DashboardPreset
 } from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
@@ -24,30 +21,17 @@ const MAX_IMPORT_SIZE = 5 * 1024 * 1024;
 
 const LARGE_EXPORT_WARNING_SIZE = 1 * 1024 * 1024;
 
-/** 設定ファイル（JSON）の形 */
-export interface ExportedSettings {
+const exportFileSchema = z.object({
   /** 書き出したときの形式の版（EXPORT_VERSION） */
-  version: number;
+  version: z.number().int().min(EXPORT_VERSION),
   /** 書き出した時刻（ISO8601） */
-  exportedAt: string;
+  exportedAt: z.string(),
   /** 設定の中身 */
-  data: {
-    /** 追跡中のサイト */
-    sites: TrackedSites;
-    /** ブロックが効く時間帯 */
-    schedules: Schedule[];
-    /** ダッシュボードのスタイル */
-    presets: DashboardPreset[];
-    /** スタイルを適用していないときの表示設定 */
-    defaultDisplaySettings: VisionSettings['defaultSettings'];
-    /** 適用中のスタイルの ID（null = defaultDisplaySettings を使う） */
-    activePresetId: string | null;
-    /** 時間制限の残り時間が少なくなったときの通知の設定 */
-    notifications: NotificationSettings;
-    /** ブロック解除の長押し確認の設定 */
-    unblockConfirm: UnblockConfirmSettings;
-  };
-}
+  data: ExportedDataSchema
+});
+
+/** 設定ファイル（JSON）の形（exportFileSchema を通った値） */
+export type ExportedSettings = z.infer<typeof exportFileSchema>;
 
 /** validateImportedData の結果。error と warnings は i18n のキー */
 export interface ImportResult {
@@ -58,14 +42,8 @@ export interface ImportResult {
   /** 取り込めるが知らせることの i18n のキー（無ければ無い） */
   warnings?: string[];
   /** 検証し、参照先の無いプリセット ID を外した中身（success が true のときだけ） */
-  data?: ExportedSettings['data'];
+  data?: ExportedData;
 }
-
-const exportFileSchema = z.object({
-  version: z.number().int().min(EXPORT_VERSION),
-  exportedAt: z.string(),
-  data: ExportedDataSchema
-});
 
 /**
  * 設定ファイルにしたときのバイト数
@@ -196,7 +174,7 @@ export function validateImportedData(jsonString: string): ImportResult {
   return {
     success: true,
     warnings: warnings.length > 0 ? warnings : undefined,
-    data: result.data.data as unknown as ExportedSettings['data']
+    data: result.data.data
   };
 }
 
@@ -221,10 +199,7 @@ export function readFileAsString(file: File): Promise<string> {
  * @returns 重ねた後のアプリの設定（引数は書き換えない）
  */
 export function applyImportedSettings(
-  data: Pick<
-    ExportedSettings['data'],
-    'schedules' | 'notifications' | 'unblockConfirm'
-  >,
+  data: Pick<ExportedData, 'schedules' | 'notifications' | 'unblockConfirm'>,
   currentSettings: AppSettings
 ): AppSettings {
   const existingScheduleIds = new Set(
@@ -242,27 +217,47 @@ export function applyImportedSettings(
   };
 }
 
+/** applyImportedVision の結果 */
+export interface ImportedVision {
+  /** 重ねた後の表示設定 */
+  vision: VisionSettings;
+  /** 上限を超えるため足さなかったスタイル（ファイルの並び順） */
+  skippedPresets: DashboardPreset[];
+}
+
 /**
- * 取り込んだ表示設定を今の表示設定に重ねる（スタイルは無いものだけ足し、既定の表示設定と適用中のスタイルは上書き）
+ * 取り込んだ表示設定を今の表示設定に重ねる（既存のスタイルは残し、ID が重ならないスタイルをファイルの並び順に上限まで足す。既定の表示設定と適用中のスタイルは上書きし、適用中のスタイルが足さなかったものなら null にする）
  * @param data 取り込む設定ファイルの中身（使うのはスタイル・既定の表示設定・適用中のスタイル）
  * @param currentVision 今のダッシュボードの表示設定
- * @returns 重ねた後の表示設定（引数は書き換えない）
+ * @param maxPresets スタイルの件数の上限（既存と合わせた数）
+ * @returns 重ねた後の表示設定と、足さなかったスタイル（引数は書き換えない）
  */
 export function applyImportedVision(
   data: Pick<
-    ExportedSettings['data'],
+    ExportedData,
     'presets' | 'defaultDisplaySettings' | 'activePresetId'
   >,
-  currentVision: VisionSettings
-): VisionSettings {
+  currentVision: VisionSettings,
+  maxPresets: number
+): ImportedVision {
   const existingPresetIds = new Set(currentVision.presets.map((p) => p.id));
   const newPresets = data.presets.filter((p) => !existingPresetIds.has(p.id));
+  const room = Math.max(0, maxPresets - currentVision.presets.length);
+  const addedPresets = newPresets.slice(0, room);
+  const skippedPresets = newPresets.slice(room);
+
+  const activePresetSkipped = skippedPresets.some(
+    (p) => p.id === data.activePresetId
+  );
 
   return {
-    ...currentVision,
-    presets: [...currentVision.presets, ...newPresets],
-    defaultSettings: data.defaultDisplaySettings,
-    activePresetId: data.activePresetId
+    vision: {
+      ...currentVision,
+      presets: [...currentVision.presets, ...addedPresets],
+      defaultSettings: data.defaultDisplaySettings,
+      activePresetId: activePresetSkipped ? null : data.activePresetId
+    },
+    skippedPresets
   };
 }
 

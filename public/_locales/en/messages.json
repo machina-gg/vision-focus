@@ -2235,6 +2235,20 @@
       }
     }
   },
+  "importWarningPresetLimit": {
+    "message": "Styles over the limit ($LIMIT$) were not imported: $NAMES$",
+    "description": "Import warning: skipped styles that would exceed the style limit",
+    "placeholders": {
+      "limit": {
+        "content": "$1",
+        "example": "10"
+      },
+      "names": {
+        "content": "$2",
+        "example": "Morning, Night"
+      }
+    }
+  },
   "importWarningNestedSite": {
     "message": "$DOMAIN$ was not imported because it overlaps with $SITE$",
     "description": "Import warning: skipped a site nested with a tracked site",

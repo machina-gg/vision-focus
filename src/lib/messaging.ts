@@ -11,6 +11,10 @@ import type {
   AddBlockResponse,
   AddScheduleRequest,
   AddTrackedSiteRequest,
+  ApplyPresetRequest,
+  CreatePresetRequest,
+  CreatePresetResponse,
+  DeletePresetRequest,
   AddTrackedSiteResponse,
   GetRemainingTimeRequest,
   GetRemainingTimeResponse,
@@ -31,7 +35,9 @@ import type {
   TrackerHeartbeatRequest,
   TrackerHeartbeatResponse,
   UpdateAnalyticsOptInRequest,
+  UpdateGoalTextRequest,
   UpdateNotificationsRequest,
+  UpdatePresetRequest,
   UpdateScheduleRequest,
   UpdateTimeLimitRequest,
   UpdateTimeLimitResponse,
@@ -48,9 +54,15 @@ export interface ProtocolMap {
   'add-schedule'(data: AddScheduleRequest): SettingsChangeResponse;
   /** サイトの追跡だけを始める */
   'add-tracked-site'(data: AddTrackedSiteRequest): AddTrackedSiteResponse;
+  /** スタイルを適用中にする */
+  'apply-preset'(data: ApplyPresetRequest): SettingsChangeResponse;
+  /** 既定の表示設定でスタイルを作る（上限まで） */
+  'create-preset'(data: CreatePresetRequest): CreatePresetResponse;
+  /** スタイルを消し、適用中の指定とスケジュールからの参照も外す */
+  'delete-preset'(data: DeletePresetRequest): SettingsChangeResponse;
   /** 開いているページのサイトの時間制限と今日の残り秒数を返す */
   'get-remaining-time'(data: GetRemainingTimeRequest): GetRemainingTimeResponse;
-  /** 設定ファイルの設定と追跡中のサイトを取り込む */
+  /** 設定ファイルの設定・表示設定と追跡中のサイトを取り込む */
   'import-settings'(data: ImportSettingsRequest): ImportSettingsResponse;
   /** サイトのブロック設定を外す（追跡は続く） */
   'remove-block'(data: RemoveBlockRequest): RemoveBlockResponse;
@@ -72,10 +84,14 @@ export interface ProtocolMap {
   'update-analytics-opt-in'(
     data: UpdateAnalyticsOptInRequest
   ): SettingsChangeResponse;
+  /** 既定の表示設定の目標文を書き換える */
+  'update-goal-text'(data: UpdateGoalTextRequest): SettingsChangeResponse;
   /** 残り時間の通知の設定を保存する */
   'update-notifications'(
     data: UpdateNotificationsRequest
   ): SettingsChangeResponse;
+  /** スタイルの名前と表示設定を置き換える */
+  'update-preset'(data: UpdatePresetRequest): SettingsChangeResponse;
   /** スケジュールの入力値を置き換える */
   'update-schedule'(data: UpdateScheduleRequest): SettingsChangeResponse;
   /** サイトの時間制限を変える */

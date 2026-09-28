@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { MAX_PRESETS } from '~/constants/limits';
+import { getMessage } from '~/lib/i18n';
 import { messageErrorText } from '~/lib/messageError';
 import { stubI18nWithLocale } from '~/test/i18n';
 import type { MessageError } from '~/types/messages';
@@ -20,6 +22,7 @@ const ALL_ERRORS: MessageError[] = [
   { code: 'schedule-overlap' },
   { code: 'schedule-not-found' },
   { code: 'preset-not-found' },
+  { code: 'preset-limit' },
   { code: 'save-failed' }
 ];
 
@@ -39,6 +42,15 @@ describe('messageErrorText（ja）', () => {
     [{ code: 'save-failed' }, '保存できませんでした。もう一度お試しください']
   ] satisfies [MessageError, string][])('%o は「%s」', (error, text) => {
     expect(messageErrorText(error)).toBe(text);
+  });
+
+  it('スタイルの上限は、上限の件数を添えた上限到達の文言にする', () => {
+    expect(messageErrorText({ code: 'preset-limit' })).toBe(
+      getMessage('maxPresetsReached', String(MAX_PRESETS))
+    );
+    expect(messageErrorText({ code: 'preset-limit' })).toContain(
+      String(MAX_PRESETS)
+    );
   });
 
   it('入れ子は、追跡中のサイトの内側なら「含まれる」、外側なら「含まれている」で相手を示す', () => {

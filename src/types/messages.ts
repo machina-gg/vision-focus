@@ -1,12 +1,17 @@
 import type {
   AddScheduleBody,
+  CreatePresetBody,
   GetRemainingTimeBody,
+  ImportSettingsBody,
+  PresetIdBody,
   RemoveScheduleBody,
   ToggleScheduleBody,
   TogglePauseBody,
   TrackerHeartbeatBody,
   UpdateAnalyticsOptInBody,
+  UpdateGoalTextBody,
   UpdateNotificationsBody,
+  UpdatePresetBody,
   UpdateScheduleBody,
   UpdateTimeLimitBody,
   UpdateUnblockConfirmBody
@@ -61,15 +66,19 @@ export type MessageError =
       code: 'schedule-not-found';
     }
   | {
-      /** スケジュールが指すスタイルが無い */
+      /** 指定されたスタイルが無い */
       code: 'preset-not-found';
+    }
+  | {
+      /** スタイルが上限（MAX_PRESETS）に達している */
+      code: 'preset-limit';
     }
   | {
       /** 保存に失敗した */
       code: 'save-failed';
     };
 
-/** 設定を書き換える依頼の結果（スケジュール・通知・長押し確認・利用状況の送信への同意で共通） */
+/** 設定を書き換える依頼の結果（スケジュール・通知・長押し確認・利用状況の送信への同意・表示設定で共通） */
 export interface SettingsChangeResponse {
   /** 書き換えられたか */
   success: boolean;
@@ -97,6 +106,31 @@ export type UpdateUnblockConfirmRequest = UpdateUnblockConfirmBody;
 
 /** 利用状況の送信への同意・拒否を保存する依頼 */
 export type UpdateAnalyticsOptInRequest = UpdateAnalyticsOptInBody;
+
+/** 既定の表示設定でスタイルを作る依頼 */
+export type CreatePresetRequest = CreatePresetBody;
+
+/** スタイルの作成の結果 */
+export interface CreatePresetResponse {
+  /** 作れたか */
+  success: boolean;
+  /** 作ったスタイルの ID。失敗時は無い */
+  id?: string;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
+}
+
+/** スタイルの名前と表示設定を置き換える依頼 */
+export type UpdatePresetRequest = UpdatePresetBody;
+
+/** スタイルを適用中にする依頼 */
+export type ApplyPresetRequest = PresetIdBody;
+
+/** スタイルを消す依頼（適用中の指定とスケジュールからの参照も外す） */
+export type DeletePresetRequest = PresetIdBody;
+
+/** 既定の表示設定の目標文を書き換える依頼 */
+export type UpdateGoalTextRequest = UpdateGoalTextBody;
 
 /** サイトをブロックリストに加える依頼 */
 export interface AddBlockRequest {
@@ -163,11 +197,8 @@ export interface GetRemainingTimeResponse {
   error?: MessageError;
 }
 
-/** 書き出したファイルの設定と追跡中のサイトを取り込む依頼 */
-export interface ImportSettingsRequest {
-  /** 取り込む設定ファイルの中身（画面の取り込み前の検査を通ったもの） */
-  data: import('~/lib/settingsExport').ExportedSettings['data'];
-}
+/** 書き出したファイルの設定・表示設定と追跡中のサイトを取り込む依頼（data は画面の取り込み前の検査を通ったもの） */
+export type ImportSettingsRequest = ImportSettingsBody;
 
 /** 既存のサイトと入れ子になるため取り込まなかったサイト */
 interface SkippedNestedSite {
@@ -185,6 +216,12 @@ export interface ImportSettingsResponse {
   error?: MessageError;
   /** 入れ子になるため取り込まなかったサイト */
   skipped?: SkippedNestedSite[];
+  /** 上限（MAX_PRESETS）を超えるため取り込まなかったスタイルの名前（ファイルの並び順） */
+  skippedPresets?: string[];
+  /** 取り込まなかったスタイルを指していたため、適用中のスタイルを外したか */
+  clearedActivePreset?: boolean;
+  /** 取り込まなかったスタイルを指していたため、取り込んだスケジュールからスタイルを外したか */
+  clearedSchedulePresets?: boolean;
 }
 
 /** 活動の記録をすべて消した結果 */

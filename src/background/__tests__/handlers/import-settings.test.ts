@@ -24,10 +24,7 @@ import { importSites } from '~/lib/siteService';
 import { getActiveBlockedDomains } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
-import {
-  createDefaultExportData,
-  type ExportedSettings
-} from '~/lib/settingsExport';
+import { createDefaultExportData } from '~/lib/settingsExport';
 import {
   blockedSite,
   sitesOf,
@@ -35,16 +32,25 @@ import {
   youtubeFeatures
 } from '~/test/sites';
 import type { MessageError } from '~/types/messages';
+import type { ExportedData } from '~/types/messageSchemas';
+import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 
 interface Response {
   success: boolean;
   error?: MessageError;
   skipped?: { domain: string; conflict: string }[];
+  skippedPresets?: string[];
+  clearedActivePreset?: boolean;
+  clearedSchedulePresets?: boolean;
 }
 
-const exportedData = (
-  overrides: Partial<ExportedSettings['data']> = {}
-): ExportedSettings['data'] => ({
+const NOTHING_SKIPPED = {
+  skippedPresets: [],
+  clearedActivePreset: false,
+  clearedSchedulePresets: false
+};
+
+const exportedData = (overrides: Partial<ExportedData> = {}): ExportedData => ({
   ...createDefaultExportData().data,
   ...overrides
 });
@@ -59,7 +65,7 @@ function givenBlockedDomains(before: string[], after: string[]) {
 describe('import-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(importSettings).mockResolvedValue(undefined);
+    vi.mocked(importSettings).mockResolvedValue(NOTHING_SKIPPED);
     vi.mocked(importSites).mockResolvedValue({ changed: [], skipped: [] });
     givenBlockedDomains([], []);
   });
@@ -88,6 +94,23 @@ describe('import-settings ハンドラ', () => {
           data: {
             ...data,
             notifications: { timeLimitEnabled: true, timeLimitMinutes: 2 }
+          }
+        }
+      ],
+      [
+        'スタイルのフォントが知らないもの',
+        {
+          data: {
+            ...data,
+            presets: [
+              {
+                ...data.defaultDisplaySettings,
+                id: 'p1',
+                name: 'p1',
+                createdAt: 'x',
+                fontSettings: { family: 'x', size: 'md', weight: 'bold' }
+              }
+            ]
           }
         }
       ],
@@ -130,7 +153,7 @@ describe('import-settings ハンドラ', () => {
 
     const result = await invoke<Response>(handler, { data });
 
-    expect(result).toEqual({ success: true, skipped: [] });
+    expect(result).toEqual({ success: true, skipped: [], ...NOTHING_SKIPPED });
     expect(importSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         schedules,
@@ -159,7 +182,42 @@ describe('import-settings ハンドラ', () => {
 
     expect(result).toEqual({
       success: true,
-      skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }]
+      skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }],
+      ...NOTHING_SKIPPED
+    });
+  });
+
+  it('表示設定も重ねる側へ渡し、上限で取り込まなかったスタイルと外した参照を返す', async () => {
+    const presets = [
+      {
+        ...DEFAULT_DISPLAY_SETTINGS,
+        id: 'p1',
+        name: 'Morning',
+        createdAt: '2026-01-01T00:00:00.000Z'
+      }
+    ];
+    vi.mocked(importSettings).mockResolvedValue({
+      skippedPresets: ['Morning'],
+      clearedActivePreset: true,
+      clearedSchedulePresets: false
+    });
+    const data = exportedData({ presets, activePresetId: 'p1' });
+
+    const result = await invoke<Response>(handler, { data });
+
+    expect(importSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        presets,
+        activePresetId: 'p1',
+        defaultDisplaySettings: data.defaultDisplaySettings
+      })
+    );
+    expect(result).toEqual({
+      success: true,
+      skipped: [],
+      skippedPresets: ['Morning'],
+      clearedActivePreset: true,
+      clearedSchedulePresets: false
     });
   });
 

@@ -52,7 +52,7 @@ export function roundToNearestPreset(minutes: number): number {
 }
 
 /**
- * スタイルのプリセットを作れる数の上限
- * 選択ボタンを横並びで表示する UI の都合による上限
+ * スタイルを保存できる数の上限（background の書き込み口が作成と取り込みで守る）
+ * 理由は docs/PRD.md の「機能上限について」
  */
 export const MAX_PRESETS = 10;

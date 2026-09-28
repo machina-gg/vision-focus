@@ -18,10 +18,10 @@ import {
   exportSettings,
   downloadSettings,
   readFileAsString,
-  validateImportedData,
-  applyImportedVision
+  validateImportedData
 } from '~/lib/settingsExport';
-import { getSettings, getSites, getVision, setVision } from '~/lib/storage';
+import { getSettings, getSites, getVision } from '~/lib/storage';
+import { MAX_PRESETS } from '~/constants/limits';
 
 /** SettingsBackup に渡す読み込み後の通知先 */
 interface SettingsBackupProps {
@@ -106,9 +106,9 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         return;
       }
 
-      const warnings = (result.warnings ?? []).map((w) => getMessage(w));
-      if (warnings.length > 0) {
-        setImportWarnings(warnings);
+      const warningKeys = result.warnings ?? [];
+      if (warningKeys.length > 0) {
+        setImportWarnings(warningKeys.map((key) => getMessage(key)));
       }
 
       if (!result.data) {
@@ -125,14 +125,31 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
         return;
       }
 
-      await setVision(applyImportedVision(result.data, await getVision()));
-
-      const skipped = (response.skipped ?? []).map(({ domain, conflict }) =>
-        getMessage('importWarningNestedSite', [domain, conflict])
+      const clearedKeys = [
+        ...(response.clearedSchedulePresets
+          ? ['importWarningOrphanedPresets']
+          : []),
+        ...(response.clearedActivePreset
+          ? ['importWarningActivePresetNotFound']
+          : [])
+      ].filter((key) => !warningKeys.includes(key));
+      const skippedPresets = response.skippedPresets ?? [];
+      const skippedSites = (response.skipped ?? []).map(
+        ({ domain, conflict }) =>
+          getMessage('importWarningNestedSite', [domain, conflict])
       );
-      if (skipped.length > 0) {
-        setImportWarnings([...warnings, ...skipped]);
-      }
+      setImportWarnings([
+        ...[...warningKeys, ...clearedKeys].map((key) => getMessage(key)),
+        ...(skippedPresets.length > 0
+          ? [
+              getMessage('importWarningPresetLimit', [
+                String(MAX_PRESETS),
+                skippedPresets.join(', ')
+              ])
+            ]
+          : []),
+        ...skippedSites
+      ]);
 
       setImportStatus('success');
       setImportMessage(getMessage('importSuccessWithMerge'));

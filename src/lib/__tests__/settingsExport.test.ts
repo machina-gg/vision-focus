@@ -18,7 +18,11 @@ import {
   trackedSite,
   youtubeFeatures
 } from '~/test/sites';
-import type { AppSettings, VisionSettings } from '~/types/storage';
+import type {
+  AppSettings,
+  DashboardPreset,
+  VisionSettings
+} from '~/types/storage';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VISION,
@@ -179,6 +183,24 @@ describe('validateImportedData', () => {
     });
   });
 
+  it('表示設定のフォントが知らないものなら形式エラーで拒む', () => {
+    const data = createValidExportData();
+    const broken = {
+      ...data,
+      data: {
+        ...data.data,
+        defaultDisplaySettings: {
+          ...DEFAULT_DISPLAY_SETTINGS,
+          fontSettings: { family: 'comic-sans', size: 'md', weight: 'bold' }
+        }
+      }
+    };
+    expect(validateImportedData(JSON.stringify(broken))).toEqual({
+      success: false,
+      error: 'importErrorInvalidFormat'
+    });
+  });
+
   it('sites を持っていても版が古ければ形式エラーで拒む', () => {
     const data = { ...createValidExportData(), version: EXPORT_VERSION - 1 };
     expect(validateImportedData(JSON.stringify(data)).success).toBe(false);
@@ -319,6 +341,13 @@ describe('applyImportedSettings', () => {
 });
 
 describe('applyImportedVision', () => {
+  const preset = (id: string): DashboardPreset => ({
+    ...DEFAULT_DISPLAY_SETTINGS,
+    id,
+    name: `name-${id}`,
+    createdAt: '2024-01-01T00:00:00Z'
+  });
+
   it('プリセットをマージし、重複IDを除外する', () => {
     const importData = createValidExportData({
       presets: [
@@ -338,32 +367,34 @@ describe('applyImportedVision', () => {
       ]
     }).data;
 
-    const vision = applyImportedVision(importData, DEFAULT_VISION);
+    const { vision, skippedPresets } = applyImportedVision(
+      importData,
+      DEFAULT_VISION,
+      10
+    );
     expect(vision.presets).toHaveLength(1);
     expect(itemAt(vision.presets, 0).name).toBe('New Preset');
+    expect(skippedPresets).toEqual([]);
   });
 
   it('既存と同じIDのプリセットは今のものを残す', () => {
-    const existing = {
-      id: 'p1',
-      name: 'Existing',
-      createdAt: '2024-01-01T00:00:00Z',
-      ...DEFAULT_DISPLAY_SETTINGS
-    };
+    const existing = preset('p1');
     const importData = createValidExportData({
       presets: [{ ...existing, name: 'Imported' }]
     }).data;
 
-    const vision = applyImportedVision(importData, {
-      ...DEFAULT_VISION,
-      presets: [existing]
-    });
+    const { vision } = applyImportedVision(
+      importData,
+      { ...DEFAULT_VISION, presets: [existing] },
+      10
+    );
 
     expect(vision.presets).toEqual([existing]);
   });
 
   it('defaultDisplaySettingsとactivePresetIdが反映される', () => {
     const importData = createValidExportData({
+      presets: [preset('p1')],
       activePresetId: 'p1',
       defaultDisplaySettings: {
         ...DEFAULT_DISPLAY_SETTINGS,
@@ -371,9 +402,87 @@ describe('applyImportedVision', () => {
       }
     }).data;
 
-    const vision = applyImportedVision(importData, DEFAULT_VISION);
+    const { vision } = applyImportedVision(importData, DEFAULT_VISION, 10);
     expect(vision.activePresetId).toBe('p1');
     expect(vision.defaultSettings.goalText).toBe('Imported Goal');
+  });
+
+  it('既存 8 件にファイルの新しい 5 件なら、ファイルの並び順で先頭の 2 件だけを足し、残り 3 件を返す', () => {
+    const existing = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'].map(
+      preset
+    );
+    const importData = createValidExportData({
+      presets: ['n1', 'n2', 'n3', 'n4', 'n5'].map(preset)
+    }).data;
+
+    const { vision, skippedPresets } = applyImportedVision(
+      importData,
+      { ...DEFAULT_VISION, presets: existing },
+      10
+    );
+
+    expect(vision.presets.map((p) => p.id)).toEqual([
+      ...existing.map((p) => p.id),
+      'n1',
+      'n2'
+    ]);
+    expect(skippedPresets.map((p) => p.id)).toEqual(['n3', 'n4', 'n5']);
+  });
+
+  it('既存と ID が重なるスタイルは数えずに、重ならないものだけで上限まで足す', () => {
+    const existing = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9'].map(
+      preset
+    );
+    const importData = createValidExportData({
+      presets: ['e1', 'n1', 'n2'].map(preset)
+    }).data;
+
+    const { vision, skippedPresets } = applyImportedVision(
+      importData,
+      { ...DEFAULT_VISION, presets: existing },
+      10
+    );
+
+    expect(vision.presets.map((p) => p.id).slice(-1)).toEqual(['n1']);
+    expect(vision.presets).toHaveLength(10);
+    expect(skippedPresets.map((p) => p.id)).toEqual(['n2']);
+  });
+
+  it('既存が上限を超えていても、既存は消さずに何も足さない', () => {
+    const existing = ['e1', 'e2', 'e3'].map(preset);
+    const importData = createValidExportData({
+      presets: [preset('n1')]
+    }).data;
+
+    const { vision, skippedPresets } = applyImportedVision(
+      importData,
+      { ...DEFAULT_VISION, presets: existing },
+      2
+    );
+
+    expect(vision.presets).toEqual(existing);
+    expect(skippedPresets.map((p) => p.id)).toEqual(['n1']);
+  });
+
+  it('適用中のスタイルが足さなかったものなら null にし、足したものか既存なら残す', () => {
+    const importData = createValidExportData({
+      presets: ['n1', 'n2'].map(preset)
+    }).data;
+
+    expect(
+      applyImportedVision(
+        { ...importData, activePresetId: 'n2' },
+        DEFAULT_VISION,
+        1
+      ).vision.activePresetId
+    ).toBeNull();
+    expect(
+      applyImportedVision(
+        { ...importData, activePresetId: 'n1' },
+        DEFAULT_VISION,
+        1
+      ).vision.activePresetId
+    ).toBe('n1');
   });
 });
 
@@ -402,10 +511,8 @@ describe('長押しの秒数のエクスポート・インポート', () => {
     const imported = validateImportedData(JSON.stringify(data));
     expect(imported.success).toBe(true);
 
-    const settings = applyImportedSettings(
-      imported.data as ExportedSettings['data'],
-      DEFAULT_SETTINGS
-    );
+    if (!imported.data) throw new Error('取り込めなかった');
+    const settings = applyImportedSettings(imported.data, DEFAULT_SETTINGS);
     expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
   });
 
