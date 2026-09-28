@@ -842,12 +842,12 @@
     "description": "スタイル名入力プレースホルダー"
   },
   "maxPresetsReached": {
-    "message": "スタイルの上限に達しました（$COUNT$件）。プレミアムにアップグレードするとより多く保存できます。",
+    "message": "スタイルは最大 $COUNT$ 件まで保存できます。",
     "description": "最大スタイル数到達メッセージ",
     "placeholders": {
       "count": {
         "content": "$1",
-        "example": "1"
+        "example": "10"
       }
     }
   },

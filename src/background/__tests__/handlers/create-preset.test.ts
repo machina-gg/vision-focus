@@ -44,6 +44,12 @@ describe('create-preset ハンドラ', () => {
     expect(createPreset).toHaveBeenCalledWith('Morning', expect.any(Date));
   });
 
+  it('名前の前後の空白を除いてから作る', async () => {
+    await invoke<Response>(handler, { name: '  Morning \n' });
+
+    expect(createPreset).toHaveBeenCalledWith('Morning', expect.any(Date));
+  });
+
   it('上限で拒まれたら preset-limit を返す', async () => {
     vi.mocked(createPreset).mockResolvedValue({ rejection: 'limit' });
 

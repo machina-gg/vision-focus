@@ -39,6 +39,7 @@ describe('messageErrorText（ja）', () => {
       'ブロック設定か YouTube の機能が残っているため、追跡を止められません'
     ],
     [{ code: 'schedule-overlap' }, '既存のスケジュールと重複しています。'],
+    [{ code: 'preset-limit' }, 'スタイルは最大 10 件まで保存できます。'],
     [{ code: 'save-failed' }, '保存できませんでした。もう一度お試しください']
   ] satisfies [MessageError, string][])('%o は「%s」', (error, text) => {
     expect(messageErrorText(error)).toBe(text);

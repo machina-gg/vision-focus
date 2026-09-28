@@ -842,12 +842,12 @@
     "description": "Style name input placeholder"
   },
   "maxPresetsReached": {
-    "message": "Maximum styles reached ($COUNT$). Upgrade to Premium for more slots.",
+    "message": "You can save up to $COUNT$ styles.",
     "description": "Max styles reached message",
     "placeholders": {
       "count": {
         "content": "$1",
-        "example": "1"
+        "example": "10"
       }
     }
   },

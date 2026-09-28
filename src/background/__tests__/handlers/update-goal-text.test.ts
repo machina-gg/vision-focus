@@ -43,6 +43,12 @@ describe('update-goal-text ハンドラ', () => {
     expect(setGoalText).toHaveBeenCalledWith('Ship it');
   });
 
+  it('前後の空白を除いてから書き換える', async () => {
+    await invoke<Response>(handler, { goalText: '  Ship it \n' });
+
+    expect(setGoalText).toHaveBeenCalledWith('Ship it');
+  });
+
   it('保存に失敗したら save-failed を返す', async () => {
     vi.mocked(setGoalText).mockRejectedValue(new Error('storage full'));
 

@@ -270,12 +270,12 @@ export const DashboardPresetSchema = DashboardDisplaySettingsSchema.extend({
 
 const PresetIdSchema = z.string().min(1);
 
-const NonBlankStringSchema = z.string().regex(/\S/);
+const TrimmedNonBlankStringSchema = z.string().trim().min(1);
 
 /** 既定の表示設定でスタイルを作る本文（ID は background が振る） */
 export const CreatePresetBodySchema = z.object({
-  /** 作るスタイルの名前（空白以外を 1 文字以上含む） */
-  name: NonBlankStringSchema
+  /** 作るスタイルの名前（前後の空白を除いて 1 文字以上。除いた値を保存する） */
+  name: TrimmedNonBlankStringSchema
 });
 
 /** スタイルの作成の本文（CreatePresetBodySchema を通った値） */
@@ -285,10 +285,13 @@ export type CreatePresetBody = z.infer<typeof CreatePresetBodySchema>;
 export const UpdatePresetBodySchema = z.object({
   /** 置き換えるスタイルの ID */
   id: PresetIdSchema,
-  /** 新しい名前（空白以外を 1 文字以上含む） */
-  name: NonBlankStringSchema,
-  /** 新しい表示設定（画像は data URL のまま含む） */
-  display: DashboardDisplaySettingsSchema
+  /** 新しい名前（前後の空白を除いて 1 文字以上。除いた値を保存する） */
+  name: TrimmedNonBlankStringSchema,
+  /** 新しい表示設定（画像は data URL のまま含む。目標文と補足の文は前後の空白を除いて保存する） */
+  display: DashboardDisplaySettingsSchema.extend({
+    goalText: z.string().trim(),
+    goalSubText: z.string().trim()
+  })
 });
 
 /** スタイルの更新の本文（UpdatePresetBodySchema を通った値） */
@@ -305,8 +308,8 @@ export type PresetIdBody = z.infer<typeof PresetIdBodySchema>;
 
 /** 既定の表示設定の目標文を書き換える本文 */
 export const UpdateGoalTextBodySchema = z.object({
-  /** 新しい目標文（空白以外を 1 文字以上含む） */
-  goalText: NonBlankStringSchema
+  /** 新しい目標文（前後の空白を除いて 1 文字以上。除いた値を保存する） */
+  goalText: TrimmedNonBlankStringSchema
 });
 
 /** 目標文の書き換えの本文（UpdateGoalTextBodySchema を通った値） */

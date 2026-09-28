@@ -65,6 +65,20 @@ describe('update-preset ハンドラ', () => {
     expect(updatePreset).toHaveBeenCalledWith(body);
   });
 
+  it('名前・目標文・補足の文の前後の空白を除いてから置き換える', async () => {
+    await invoke<Response>(handler, {
+      ...body,
+      name: ' Morning ',
+      display: { ...display, goalText: ' Focus\n', goalSubText: '  sub ' }
+    });
+
+    expect(updatePreset).toHaveBeenCalledWith({
+      ...body,
+      name: 'Morning',
+      display: { ...display, goalText: 'Focus', goalSubText: 'sub' }
+    });
+  });
+
   it('対象が無ければ preset-not-found を返す', async () => {
     vi.mocked(updatePreset).mockResolvedValue('not-found');
 
