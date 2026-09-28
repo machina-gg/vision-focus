@@ -60,10 +60,15 @@ export const YouTubeSettingsInputSchema = z.object({
   timeLimit: TimeLimitSchema.nullable()
 });
 
+/** ブロックを弱める操作に添える、パスワード保護中の照合に使う平文のパスワード */
+const UnblockPasswordSchema = z.string().optional();
+
 /** YouTube 設定の保存を依頼する本文 */
 export const UpdateYouTubeSettingsBodySchema = z.object({
   /** 保存する YouTube 設定画面の入力値 */
-  youtube: YouTubeSettingsInputSchema
+  youtube: YouTubeSettingsInputSchema,
+  /** パスワード保護中にアクセスのブロックを外すときに照合するパスワード */
+  password: UnblockPasswordSchema
 });
 
 /** YouTube 設定画面の入力値（YouTubeSettingsInputSchema を通った値） */
@@ -348,7 +353,9 @@ export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
 /** すべてのブロックの一時停止を切り替える本文 */
 export const TogglePauseBodySchema = z.object({
   /** true = 一時停止する / false = 再開する */
-  paused: z.boolean()
+  paused: z.boolean(),
+  /** パスワード保護中に一時停止するときに照合するパスワード */
+  password: UnblockPasswordSchema
 });
 
 /** 一時停止の切り替えの本文（TogglePauseBodySchema を通った値） */
@@ -363,5 +370,42 @@ export const SiteBodySchema = z.object({
 /** ブロックリストの項目の有効・無効を切り替える本文 */
 export const ToggleBlockBodySchema = SiteBodySchema.extend({
   /** true = ブロックを有効にする / false = 一時的に無効にする */
-  enabled: z.boolean()
+  enabled: z.boolean(),
+  /** パスワード保護中に無効にするときに照合するパスワード */
+  password: UnblockPasswordSchema
 });
+
+/** ブロックリストから項目を外す本文 */
+export const RemoveBlockBodySchema = SiteBodySchema.extend({
+  /** パスワード保護中に照合するパスワード */
+  password: UnblockPasswordSchema
+});
+
+/** パスワードを設定する本文 */
+export const SetPasswordBodySchema = z.object({
+  /** 新しいパスワード（平文。強度の検査とハッシュ化は background が行う） */
+  password: z.string()
+});
+
+/** パスワードの設定の本文（SetPasswordBodySchema を通った値） */
+export type SetPasswordBody = z.infer<typeof SetPasswordBodySchema>;
+
+/** パスワードを変更する本文 */
+export const ChangePasswordBodySchema = z.object({
+  /** 照合する今のパスワード */
+  currentPassword: z.string(),
+  /** 新しいパスワード（平文。強度の検査とハッシュ化は background が行う） */
+  newPassword: z.string()
+});
+
+/** パスワードの変更の本文（ChangePasswordBodySchema を通った値） */
+export type ChangePasswordBody = z.infer<typeof ChangePasswordBodySchema>;
+
+/** パスワード保護をやめる本文 */
+export const RemovePasswordBodySchema = z.object({
+  /** 照合する今のパスワード */
+  currentPassword: z.string()
+});
+
+/** パスワード保護の解除の本文（RemovePasswordBodySchema を通った値） */
+export type RemovePasswordBody = z.infer<typeof RemovePasswordBodySchema>;

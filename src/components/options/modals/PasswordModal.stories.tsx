@@ -18,8 +18,7 @@ export const Default: Story = {
   args: {
     isOpen: true,
     onClose: () => {},
-    onSuccess: () => {},
-    passwordHash: 'dummy-hash'
+    onSubmit: async () => null
   }
 };
 
@@ -27,8 +26,7 @@ export const CustomTitleAndDescription: Story = {
   args: {
     isOpen: true,
     onClose: () => {},
-    onSuccess: () => {},
-    passwordHash: 'dummy-hash',
+    onSubmit: async () => null,
     title: 'ブロックを解除',
     description: 'このサイトのブロックを解除するにはパスワードが必要です。'
   }
@@ -38,7 +36,6 @@ export const Closed: Story = {
   args: {
     isOpen: false,
     onClose: () => {},
-    onSuccess: () => {},
-    passwordHash: 'dummy-hash'
+    onSubmit: async () => null
   }
 };

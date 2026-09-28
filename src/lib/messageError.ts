@@ -32,6 +32,17 @@ export function messageErrorText(error: MessageError | undefined): string {
       return getMessage('maxPresetsReached', String(MAX_PRESETS));
     case 'save-failed':
       return getMessage('errorSaveFailed');
+    case 'password-required':
+      return getMessage('passwordRequired');
+    case 'password-mismatch':
+      return getMessage('passwordIncorrect');
+    case 'password-not-set':
+      return getMessage('passwordNotSet');
+    case 'password-invalid':
+      return getMessage(
+        error.reason === 'too-short' ? 'passwordTooShort' : 'passwordTooLong'
+      );
+    case 'password-already-set':
     case 'invalid-request':
     case 'invalid-url':
     case 'schedule-not-found':

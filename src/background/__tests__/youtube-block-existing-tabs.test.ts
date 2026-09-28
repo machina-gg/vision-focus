@@ -9,6 +9,10 @@ vi.mock('~/lib/storage', () => ({
   setLastBlocked: vi.fn()
 }));
 
+vi.mock('~/lib/settingsService', () => ({
+  checkUnblockPassword: vi.fn(async () => null)
+}));
+
 vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));

@@ -14,8 +14,8 @@ export interface UnblockRequest {
   timeLimit: TimeLimit | null | undefined;
   /** 確認モーダルの文言の種別 */
   action: UnblockAction;
-  /** 確認が通ったときにだけ呼ばれる */
-  onConfirm: () => void;
+  /** 確認が通ったときにだけ呼ばれる。パスワード入力を通ったときは入力されたパスワードを受け取り、操作を依頼して失敗の文言（成功なら null）を返す */
+  onConfirm: (password?: string) => Promise<string | null>;
 }
 
 /** 確認待ちの依頼（依頼に、確認モーダルに出すラベルを足したもの） */
@@ -32,10 +32,10 @@ function getBlockStyleLabel(timeLimit: TimeLimit | null | undefined): string {
 }
 
 /**
- * ブロックを弱める操作を、パスワード保護中はパスワード入力、それ以外は長押し確認を通してから実行させる
+ * ブロックを弱める操作を、パスワード保護中はパスワード入力、それ以外は長押し確認を通してから実行させる（パスワードの照合は操作を受けた background が行う）
  * @param isPasswordProtected true ならパスワード入力、false なら長押し確認を求める
  * @returns pending（確認待ちの依頼。無ければ null）・isPasswordModalOpen / isConfirmModalOpen（どちらのモーダルを開くか）・
- *   requestUnblock（依頼を確認待ちにする）・confirm（確認待ちの onConfirm を呼ぶ）・close（確認待ちを片付ける）
+ *   requestUnblock（依頼を確認待ちにする）・confirm（確認待ちの onConfirm にパスワードを渡して呼び、その結果を返す）・close（確認待ちを片付ける）
  */
 export function useUnblockGuard(isPasswordProtected: boolean) {
   const [pending, setPending] = useState<PendingUnblock | null>(null);
@@ -53,9 +53,11 @@ export function useUnblockGuard(isPasswordProtected: boolean) {
   );
 
   // モーダルは確定時に onConfirm → onClose の順で呼ぶため、後片付けは close に任せる
-  const confirm = useCallback(() => {
-    pending?.onConfirm();
-  }, [pending]);
+  const confirm = useCallback(
+    async (password?: string): Promise<string | null> =>
+      pending ? pending.onConfirm(password) : null,
+    [pending]
+  );
 
   const close = useCallback(() => {
     setPending(null);

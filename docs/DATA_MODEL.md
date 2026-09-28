@@ -108,6 +108,8 @@ erDiagram
 | enabled      | boolean        | 解除操作にパスワードを求めるか                 |
 | passwordHash | string \| null | パスワードの SHA-256 ハッシュ。未設定なら null |
 
+書き手は background だけ（`set-password` / `change-password` / `remove-password` のハンドラと `src/lib/settingsService.ts`）。画面は平文のパスワードを送り、長さの検査（4〜100 文字。`src/lib/password.ts` の `validatePasswordStrength`）・照合・ハッシュ化は background が行う。画面は保護中かどうかを `enabled` だけで判断し、ハッシュは読まない。照合を求める操作は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)
+
 ### UnblockConfirmSettings（ブロック解除の長押し確認）
 
 | フィールド  | 型                  | 説明                                                   |

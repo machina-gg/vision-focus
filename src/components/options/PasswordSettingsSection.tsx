@@ -4,11 +4,10 @@ import { Lock, Shield } from 'lucide-react';
 import { Card, Toggle } from '~/components/ui';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
-import {
-  hashPassword,
-  verifyPassword,
-  validatePasswordStrength
-} from '~/lib/password';
+import { messageErrorText } from '~/lib/messageError';
+import { sendMessage } from '~/lib/messaging';
+import { validatePasswordStrength } from '~/lib/password';
+import type { MessageError, SettingsChangeResponse } from '~/types/messages';
 import type {
   PasswordSettings,
   UnblockConfirmSettings,
@@ -20,10 +19,8 @@ import { UnblockHoldSecondsField } from './UnblockHoldSecondsField';
 
 /** PasswordSettingsSection に渡す解除保護の現在の設定と保存先 */
 interface PasswordSettingsSectionProps {
-  /** 現在のパスワード設定（有効かつハッシュがあるときだけ保護中として扱う） */
+  /** 現在のパスワード設定（enabled が true なら保護中として扱う） */
   passwordSettings: PasswordSettings;
-  /** 設定・変更・解除したパスワード設定を保存する（失敗は例外で知らせる） */
-  onUpdate: (settings: PasswordSettings) => Promise<void>;
   /** 解除の確認で長押しさせる秒数 */
   holdSeconds: UnblockHoldSeconds;
   /** 長押しの秒数を変えたときに、変更後の確認設定を保存する */
@@ -32,17 +29,28 @@ interface PasswordSettingsSectionProps {
 
 type SettingMode = 'view' | 'set' | 'change' | 'remove';
 
-// 呼び出し側が error の状態で判断すると useCallback が閉じ込めた更新前の値を見るため、返り値で伝える
-type SaveResult = 'saved' | 'failed-reported' | 'failed-unreported';
+function failureText(
+  error: MessageError | undefined,
+  fallbackKey: string
+): string {
+  switch (error?.code) {
+    case 'password-mismatch':
+      return getMessage('currentPasswordIncorrect');
+    case 'password-invalid':
+    case 'password-not-set':
+      return messageErrorText(error);
+    default:
+      return getMessage(fallbackKey);
+  }
+}
 
 /**
- * 解除保護の設定（長押しの秒数と、パスワードの設定・変更・解除のフォーム）をカードで表示する（パスワードの保護中は長押しの秒数を変えられない）
+ * 解除保護の設定（長押しの秒数と、パスワードの設定・変更・解除のフォーム）をカードで表示する（パスワードの保護中は長押しの秒数を変えられない。パスワードは平文で background へ送り、照合とハッシュ化は background が行う）
  * @param props 現在の設定と保存先（各フィールドは PasswordSettingsSectionProps）
  * @returns 解除保護のカード
  */
 export function PasswordSettingsSection({
   passwordSettings,
-  onUpdate,
   holdSeconds,
   onUnblockConfirmUpdate
 }: PasswordSettingsSectionProps) {
@@ -57,9 +65,7 @@ export function PasswordSettingsSection({
   const [success, setSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isEnabled = Boolean(
-    passwordSettings.enabled && passwordSettings.passwordHash
-  );
+  const isEnabled = passwordSettings.enabled;
 
   const resetForm = useCallback(() => {
     setCurrentPassword('');
@@ -73,82 +79,71 @@ export function PasswordSettingsSection({
     setMode('view');
   }, []);
 
-  const saveNewPassword = useCallback(
-    async (successMessageKey: string): Promise<SaveResult> => {
-      const validation = validatePasswordStrength(newPassword);
-      if (!validation.isValid && validation.errorKey) {
-        setError(getMessage(validation.errorKey));
-        return 'failed-reported';
-      }
-      if (newPassword !== confirmPassword) {
-        setError(getMessage('passwordMismatch'));
-        return 'failed-reported';
-      }
+  const checkNewPassword = useCallback((): boolean => {
+    const reason = validatePasswordStrength(newPassword);
+    if (reason) {
+      setError(messageErrorText({ code: 'password-invalid', reason }));
+      return false;
+    }
+    if (newPassword !== confirmPassword) {
+      setError(getMessage('passwordMismatch'));
+      return false;
+    }
+    return true;
+  }, [newPassword, confirmPassword]);
+
+  const submit = useCallback(
+    async (
+      send: () => Promise<SettingsChangeResponse>,
+      successKey: string,
+      failureKey: string
+    ) => {
       setIsProcessing(true);
       try {
-        const hash = await hashPassword(newPassword);
-        await onUpdate({ enabled: true, passwordHash: hash });
-        setSuccess(getMessage(successMessageKey));
-        setTimeout(resetForm, STATUS_RESET_DELAY_MS);
-        return 'saved';
+        const response = await send();
+        if (response.success) {
+          setSuccess(getMessage(successKey));
+          setTimeout(resetForm, STATUS_RESET_DELAY_MS);
+        } else {
+          setError(failureText(response.error, failureKey));
+        }
       } catch {
-        return 'failed-unreported';
+        setError(getMessage(failureKey));
       } finally {
         setIsProcessing(false);
       }
     },
-    [newPassword, confirmPassword, onUpdate, resetForm]
+    [resetForm]
   );
-
-  const verifyCurrentPassword = useCallback(async (): Promise<boolean> => {
-    if (!passwordSettings.passwordHash) {
-      setError(getMessage('passwordNotSet'));
-      return false;
-    }
-    const isValid = await verifyPassword(
-      currentPassword,
-      passwordSettings.passwordHash
-    );
-    if (!isValid) {
-      setError(getMessage('currentPasswordIncorrect'));
-      return false;
-    }
-    return true;
-  }, [currentPassword, passwordSettings.passwordHash]);
 
   const handleSetPassword = useCallback(async () => {
     setError(null);
-    const result = await saveNewPassword('passwordSetSuccess');
-    if (result === 'failed-unreported') {
-      setError(getMessage('passwordSetFailed'));
-    }
-  }, [saveNewPassword]);
+    if (!checkNewPassword()) return;
+    await submit(
+      () => sendMessage('set-password', { password: newPassword }),
+      'passwordSetSuccess',
+      'passwordSetFailed'
+    );
+  }, [checkNewPassword, submit, newPassword]);
 
   const handleChangePassword = useCallback(async () => {
     setError(null);
-    const verified = await verifyCurrentPassword();
-    if (!verified) return;
-    const result = await saveNewPassword('passwordChangedSuccess');
-    if (result === 'failed-unreported') {
-      setError(getMessage('passwordChangeFailed'));
-    }
-  }, [verifyCurrentPassword, saveNewPassword]);
+    if (!checkNewPassword()) return;
+    await submit(
+      () => sendMessage('change-password', { currentPassword, newPassword }),
+      'passwordChangedSuccess',
+      'passwordChangeFailed'
+    );
+  }, [checkNewPassword, submit, currentPassword, newPassword]);
 
   const handleRemovePassword = useCallback(async () => {
     setError(null);
-    const verified = await verifyCurrentPassword();
-    if (!verified) return;
-    setIsProcessing(true);
-    try {
-      await onUpdate({ enabled: false, passwordHash: null });
-      setSuccess(getMessage('passwordRemovedSuccess'));
-      setTimeout(resetForm, STATUS_RESET_DELAY_MS);
-    } catch {
-      setError(getMessage('passwordRemoveFailed'));
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [verifyCurrentPassword, onUpdate, resetForm]);
+    await submit(
+      () => sendMessage('remove-password', { currentPassword }),
+      'passwordRemovedSuccess',
+      'passwordRemoveFailed'
+    );
+  }, [submit, currentPassword]);
 
   const handleToggle = useCallback(
     (enabled: boolean) => {

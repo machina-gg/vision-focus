@@ -24,9 +24,12 @@ interface UsePopupActionsReturn {
   handleGoalClick: () => void;
   /** domain をブロックリストに加える。失敗したら文言を alert で出す */
   handleBlock: (domain: string) => Promise<void>;
-  /** すべてのブロックの一時停止を切り替える */
-  handlePausedChange: (paused: boolean) => Promise<void>;
-  /** パスワード保護が有効で、パスワードも設定済みか */
+  /** すべてのブロックの一時停止を切り替える（パスワード保護中に一時停止するときは password を添える）。失敗の文言、切り替えたら null を返す */
+  handlePausedChange: (
+    paused: boolean,
+    password?: string
+  ) => Promise<string | null>;
+  /** パスワード保護が有効か */
   isPasswordProtected: boolean;
 }
 
@@ -41,9 +44,7 @@ export function usePopupActions({
   settings,
   clearDomain
 }: UsePopupActionsOptions): UsePopupActionsReturn {
-  const isPasswordProtected = Boolean(
-    settings?.password?.enabled && settings?.password?.passwordHash
-  );
+  const isPasswordProtected = settings?.password.enabled === true;
 
   const handleSettingsClick = useCallback(() => {
     openOptionsPage();
@@ -77,13 +78,20 @@ export function usePopupActions({
     [clearDomain]
   );
 
-  const handlePausedChange = useCallback(async (paused: boolean) => {
-    try {
-      await sendMessage('toggle-pause', { paused });
-    } catch {
-      // Silently handle error
-    }
-  }, []);
+  const handlePausedChange = useCallback(
+    async (paused: boolean, password?: string) => {
+      try {
+        const response = await sendMessage('toggle-pause', {
+          paused,
+          password
+        });
+        return response.success ? null : messageErrorText(response.error);
+      } catch {
+        return messageErrorText(undefined);
+      }
+    },
+    []
+  );
 
   return {
     handleSettingsClick,

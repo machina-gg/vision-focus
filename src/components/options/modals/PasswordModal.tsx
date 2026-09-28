@@ -4,18 +4,15 @@ import { Lock } from 'lucide-react';
 import { Modal, Button } from '~/components/ui';
 import { PasswordField } from '~/components/options/password';
 import { getMessage } from '~/lib/i18n';
-import { verifyPassword } from '~/lib/password';
 
-/** PasswordModal に渡す開閉状態・照合先と文言 */
+/** PasswordModal に渡す開閉状態・送り先と文言 */
 interface PasswordModalProps {
   /** false の間は表示しない。開くたびに入力とエラーを空に戻す */
   isOpen: boolean;
-  /** 閉じるときに呼ぶ（照合が通ったあとにも呼ぶ） */
+  /** 閉じるときに呼ぶ（onSubmit が成功したあとにも呼ぶ） */
   onClose: () => void;
-  /** 入力したパスワードが照合を通ったときに呼ぶ */
-  onSuccess: () => void;
-  /** 照合に使う保存済みのパスワードのハッシュ */
-  passwordHash: string;
+  /** 入力したパスワードを受け取り、操作を依頼する。失敗なら表示する文言、成功なら null を返す */
+  onSubmit: (password: string) => Promise<string | null>;
   /** 見出し（省略時は「パスワードが必要です」の既定の文言） */
   title?: string;
   /** 見出しの下の説明（省略時は既定の文言） */
@@ -23,15 +20,14 @@ interface PasswordModalProps {
 }
 
 /**
- * パスワードを入力させて保存済みのハッシュと照合するモーダルを表示する（Enter でも照合する）
- * @param props 開閉状態・照合先と文言（各フィールドは PasswordModalProps）
+ * パスワードを入力させて呼び出し元へ渡すモーダルを表示する（照合はしない。Enter でも送る。成功なら閉じ、失敗なら返された文言を出す）
+ * @param props 開閉状態・送り先と文言（各フィールドは PasswordModalProps）
  * @returns パスワード入力のモーダル
  */
 export function PasswordModal({
   isOpen,
   onClose,
-  onSuccess,
-  passwordHash,
+  onSubmit,
   title,
   description
 }: PasswordModalProps) {
@@ -60,20 +56,19 @@ export function PasswordModal({
     setError(null);
 
     try {
-      const isValid = await verifyPassword(password, passwordHash);
+      const failure = await onSubmit(password);
 
-      if (isValid) {
-        onSuccess();
+      if (failure === null) {
         onClose();
       } else {
-        setError(getMessage('passwordIncorrect'));
+        setError(failure);
       }
     } catch {
       setError(getMessage('passwordVerificationFailed'));
     } finally {
       setIsVerifying(false);
     }
-  }, [password, passwordHash, onSuccess, onClose]);
+  }, [password, onSubmit, onClose]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

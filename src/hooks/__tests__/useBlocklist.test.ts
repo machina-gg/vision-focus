@@ -198,16 +198,79 @@ describe('useBlocklist', () => {
       }
     );
 
-    it('依頼が例外を投げてもエラーをスローしない', async () => {
+    it('依頼が例外を投げてもスローせず、汎用の失敗の文言を返す', async () => {
       vi.mocked(sendMessage).mockRejectedValue(new Error('Network error'));
       const { result } = render();
 
-      await expect(
-        act(async () => {
-          await result.current.handleRemoveDomain('youtube.com');
-          await result.current.handleToggleDomain('youtube.com', true);
-        })
-      ).resolves.not.toThrow();
+      let failures: (string | null)[] = [];
+      await act(async () => {
+        failures = [
+          await result.current.handleRemoveDomain('youtube.com'),
+          await result.current.handleToggleDomain('youtube.com', true)
+        ];
+      });
+
+      expect(failures).toEqual([
+        '操作できませんでした。もう一度お試しください',
+        '操作できませんでした。もう一度お試しください'
+      ]);
+    });
+
+    it('成功したら null を返す', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
+      const { result } = render();
+
+      let failures: (string | null)[] = [];
+      await act(async () => {
+        failures = [
+          await result.current.handleRemoveDomain('youtube.com'),
+          await result.current.handleToggleDomain('youtube.com', false)
+        ];
+      });
+
+      expect(failures).toEqual([null, null]);
+    });
+
+    it('パスワードを添えて依頼する', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({ success: true });
+      const { result } = render();
+
+      await act(async () => {
+        await result.current.handleRemoveDomain('a.com', 'secret');
+        await result.current.handleToggleDomain('b.com', false, 'secret');
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('remove-block', {
+        domain: 'a.com',
+        password: 'secret'
+      });
+      expect(sendMessage).toHaveBeenCalledWith('toggle-block', {
+        domain: 'b.com',
+        enabled: false,
+        password: 'secret'
+      });
+    });
+
+    it('照合に失敗したら失敗の文言を返し、削除を記録しない', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'password-mismatch' }
+      });
+      const { result } = render();
+
+      let failures: (string | null)[] = [];
+      await act(async () => {
+        failures = [
+          await result.current.handleRemoveDomain('a.com', 'wrong'),
+          await result.current.handleToggleDomain('a.com', false, 'wrong')
+        ];
+      });
+
+      expect(failures).toEqual([
+        'パスワードが正しくありません。再度お試しください。',
+        'パスワードが正しくありません。再度お試しください。'
+      ]);
+      expect(trackFeatureUse).not.toHaveBeenCalledWith('block_remove');
     });
   });
 
