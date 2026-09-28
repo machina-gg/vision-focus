@@ -57,7 +57,7 @@ function OptionsAppContent() {
 
   const analytics = useAnalytics();
   const blocklist = useBlocklist({ settings, setSettings });
-  const schedules = useSchedules({ settings, setSettings });
+  const schedules = useSchedules({ settings });
   const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
   const { activity } = useActivitySources();

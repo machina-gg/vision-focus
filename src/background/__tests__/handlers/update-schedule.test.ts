@@ -67,6 +67,18 @@ describe('update-schedule ハンドラ', () => {
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
+  it('終了時刻 00:00 はその日の終わり（24:00）にして置き換える', async () => {
+    await invoke<Response>(handler, {
+      id: 's1',
+      schedule: { ...input, endTime: '00:00' }
+    });
+
+    expect(updateSchedule).toHaveBeenCalledWith('s1', {
+      ...input,
+      endTime: '24:00'
+    });
+  });
+
   it.each([
     ['not-found', 'schedule-not-found'],
     ['overlap', 'schedule-overlap'],
