@@ -1,8 +1,14 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useSchedules, type ScheduleFormData } from '~/hooks/useSchedules';
-import { ScheduleSchema } from '~/types/messageSchemas';
+import {
+  isScheduleFormValid,
+  toScheduleInput,
+  useSchedules,
+  type ScheduleFormData
+} from '~/hooks/useSchedules';
+import { getMessage } from '~/lib/i18n';
+import { AddScheduleBodySchema } from '~/types/messageSchemas';
 import type { AppSettings, Schedule } from '~/types/storage';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
@@ -11,7 +17,6 @@ vi.mock('~/lib/analytics', () => ({
 }));
 
 vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn(),
   settingsItem: {
     setValue: vi.fn()
   }
@@ -23,66 +28,64 @@ vi.mock('~/lib/messaging', () => ({
 
 import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
-import { getSettings, settingsItem } from '~/lib/storage';
+import { settingsItem } from '~/lib/storage';
 import { itemAt } from '~/test/items';
 
+const mockSchedule: Schedule = {
+  id: 'schedule-1',
+  name: 'Work Hours',
+  startTime: '09:00',
+  endTime: '17:00',
+  days: [1, 2, 3, 4, 5],
+  enabled: true,
+  presetId: 'preset-1'
+};
+
+const mockSettings: AppSettings = {
+  ...DEFAULT_SETTINGS,
+  schedules: [mockSchedule]
+};
+
+const DEFAULT_FORM: ScheduleFormData = {
+  name: '',
+  startTime: '09:00',
+  endTime: '17:00',
+  days: [1, 2, 3, 4, 5],
+  presetId: ''
+};
+
+const VALID_FORM: ScheduleFormData = {
+  name: 'Morning',
+  startTime: '06:00',
+  endTime: '08:00',
+  days: [1],
+  presetId: ''
+};
+
+function render(settings: AppSettings | undefined = mockSettings) {
+  return renderHook(() => useSchedules({ settings }));
+}
+
 describe('useSchedules', () => {
-  const mockSetSettings = vi.fn();
-
-  const mockSchedule: Schedule = {
-    id: 'schedule-1',
-    name: 'Work Hours',
-    startTime: '09:00',
-    endTime: '17:00',
-    days: [1, 2, 3, 4, 5],
-    enabled: true,
-    presetId: 'preset-1'
-  };
-
-  const mockSettings: AppSettings = {
-    ...DEFAULT_SETTINGS,
-    schedules: [mockSchedule]
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(sendMessage).mockResolvedValue({ success: true });
   });
 
   describe('初期状態', () => {
-    it('初期状態でモーダルが非表示', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('モーダルは閉じていて、編集中のスケジュールは無く、フォームは既定値', () => {
+      const { result } = render();
+
       expect(result.current.showScheduleModal).toBe(false);
-    });
-
-    it('初期状態で編集中のスケジュールがnull', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
       expect(result.current.editingSchedule).toBeNull();
-    });
-
-    it('初期状態でフォームがデフォルト値', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      expect(result.current.scheduleForm).toEqual({
-        name: '',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        presetId: ''
-      });
+      expect(result.current.scheduleForm).toEqual(DEFAULT_FORM);
+      expect(result.current.scheduleError).toBeNull();
     });
   });
 
   describe('setShowScheduleModal', () => {
     it('モーダルの表示状態を更新できる', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+      const { result } = render();
 
       act(() => {
         result.current.setShowScheduleModal(true);
@@ -92,55 +95,24 @@ describe('useSchedules', () => {
     });
   });
 
-  describe('setScheduleForm', () => {
-    it('フォームを更新できる', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      const newForm: ScheduleFormData = {
-        name: 'Evening',
-        startTime: '18:00',
-        endTime: '22:00',
-        days: [0, 6],
-        presetId: 'preset-2'
-      };
-
-      act(() => {
-        result.current.setScheduleForm(newForm);
-      });
-
-      expect(result.current.scheduleForm).toEqual(newForm);
-    });
-  });
-
   describe('openAddSchedule', () => {
-    it('新規作成モードでモーダルを開く', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('既定の入力値で新規作成のモーダルを開く', () => {
+      const { result } = render();
 
       act(() => {
+        result.current.setScheduleForm(VALID_FORM);
         result.current.openAddSchedule();
       });
 
       expect(result.current.showScheduleModal).toBe(true);
       expect(result.current.editingSchedule).toBeNull();
-      expect(result.current.scheduleForm).toEqual({
-        name: '',
-        startTime: '09:00',
-        endTime: '17:00',
-        days: [1, 2, 3, 4, 5],
-        presetId: ''
-      });
+      expect(result.current.scheduleForm).toEqual(DEFAULT_FORM);
     });
   });
 
   describe('openEditSchedule', () => {
-    it('編集モードでモーダルを開く', () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('スケジュールの値を入力値にして編集のモーダルを開く', () => {
+      const { result } = render();
 
       act(() => {
         result.current.openEditSchedule(mockSchedule);
@@ -157,18 +129,14 @@ describe('useSchedules', () => {
       });
     });
 
-    it('presetIdがundefinedの場合、空文字に変換', () => {
-      const scheduleWithoutPreset: Schedule = {
-        ...mockSchedule,
-        presetId: undefined
-      };
-
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('スタイルを指定していなければ presetId は空文字になる', () => {
+      const { result } = render();
 
       act(() => {
-        result.current.openEditSchedule(scheduleWithoutPreset);
+        result.current.openEditSchedule({
+          ...mockSchedule,
+          presetId: undefined
+        });
       });
 
       expect(result.current.scheduleForm.presetId).toBe('');
@@ -176,557 +144,289 @@ describe('useSchedules', () => {
   });
 
   describe('handleSaveSchedule', () => {
-    beforeEach(() => {
-      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-      vi.stubGlobal('crypto', {
-        ...global.crypto,
-        randomUUID: vi.fn(() => 'new-schedule-id')
-      });
-    });
-
-    it('settingsがundefinedの場合、何もしない', async () => {
+    it('設定の読み込み前は何も送らない', async () => {
       const { result } = renderHook(() =>
-        useSchedules({ settings: undefined, setSettings: mockSetSettings })
-      );
-
-      await act(async () => {
-        await result.current.handleSaveSchedule();
-      });
-
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
-    });
-
-    it('名前が空の場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        useSchedules({ settings: undefined })
       );
 
       act(() => {
-        result.current.setScheduleForm({
-          name: '   ',
-          startTime: '09:00',
-          endTime: '17:00',
-          days: [1, 2, 3, 4, 5],
-          presetId: ''
-        });
+        result.current.setScheduleForm(VALID_FORM);
       });
-
       await act(async () => {
         await result.current.handleSaveSchedule();
       });
 
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it('新規作成時、スケジュールを追加', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it.each([
+      ['名前が空白だけ', { ...VALID_FORM, name: '  ' }],
+      ['曜日が無い', { ...VALID_FORM, days: [] }],
+      ['開始時刻が空', { ...VALID_FORM, startTime: '' }]
+    ])('%s なら何も送らない', async (_label, form) => {
+      const { result } = render();
 
       act(() => {
         result.current.openAddSchedule();
-        result.current.setScheduleForm({
-          name: 'Evening',
-          startTime: '18:00',
-          endTime: '22:00',
-          days: [0, 6],
-          presetId: 'preset-2'
-        });
+        result.current.setScheduleForm(form);
       });
-
       await act(async () => {
         await result.current.handleSaveSchedule();
       });
 
-      const expectedSettings = {
-        ...mockSettings,
-        schedules: [
-          mockSchedule,
-          {
-            id: 'new-schedule-id',
-            name: 'Evening',
-            startTime: '18:00',
-            endTime: '22:00',
-            days: [0, 6],
-            enabled: true,
-            presetId: 'preset-2'
-          }
-        ]
-      };
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(result.current.showScheduleModal).toBe(true);
+    });
 
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+    it('新規作成なら add-schedule を送り、保存領域には書かずにモーダルを閉じる', async () => {
+      const { result } = render();
+
+      act(() => {
+        result.current.openAddSchedule();
+        result.current.setScheduleForm({ ...VALID_FORM, presetId: 'preset-2' });
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('add-schedule', {
+        schedule: {
+          name: 'Morning',
+          startTime: '06:00',
+          endTime: '08:00',
+          days: [1],
+          presetId: 'preset-2'
+        }
+      });
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_create');
       expect(result.current.showScheduleModal).toBe(false);
       expect(result.current.editingSchedule).toBeNull();
+      expect(result.current.scheduleForm).toEqual(DEFAULT_FORM);
     });
 
-    it('新規作成時、presetIdが空の場合はundefinedに変換', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('スタイルを指定しなければ presetId を送らない（空文字を送らない）', async () => {
+      const { result } = render();
 
       act(() => {
         result.current.openAddSchedule();
-        result.current.setScheduleForm({
-          name: 'Evening',
-          startTime: '18:00',
-          endTime: '22:00',
-          days: [0, 6],
-          presetId: ''
-        });
+        result.current.setScheduleForm(VALID_FORM);
       });
-
       await act(async () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = itemAt(
-        vi.mocked(settingsItem.setValue).mock.calls,
-        0
-      )[0];
-      expect(itemAt(savedSchedule.schedules, 1).presetId).toBeUndefined();
+      const [, body] = itemAt(vi.mocked(sendMessage).mock.calls, 0);
+      expect(body).toEqual({
+        schedule: {
+          name: 'Morning',
+          startTime: '06:00',
+          endTime: '08:00',
+          days: [1]
+        }
+      });
     });
 
-    it('編集時、既存のスケジュールを更新', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('終了時刻 00:00 はそのまま送る（24:00 への読み替えは background が行う）', async () => {
+      const { result } = render();
 
       act(() => {
-        result.current.openEditSchedule(mockSchedule);
+        result.current.openAddSchedule();
+        result.current.setScheduleForm({ ...VALID_FORM, endTime: '00:00' });
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('add-schedule', {
+        schedule: expect.objectContaining({ endTime: '00:00' })
+      });
+    });
+
+    it('編集なら update-schedule を ID つきで送り、有効・無効は送らない', async () => {
+      const { result } = render();
+
+      act(() => {
+        result.current.openEditSchedule({ ...mockSchedule, enabled: false });
+      });
+      act(() => {
         result.current.setScheduleForm({
-          name: 'Updated Work Hours',
-          startTime: '08:00',
-          endTime: '18:00',
+          ...result.current.scheduleForm,
+          name: 'Updated'
+        });
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('update-schedule', {
+        id: 'schedule-1',
+        schedule: {
+          name: 'Updated',
+          startTime: '09:00',
+          endTime: '17:00',
           days: [1, 2, 3, 4, 5],
           presetId: 'preset-1'
-        });
+        }
       });
-
-      await act(async () => {
-        await result.current.handleSaveSchedule();
-      });
-
-      const expectedSettings = {
-        ...mockSettings,
-        schedules: [
-          {
-            id: 'schedule-1',
-            name: 'Updated Work Hours',
-            startTime: '08:00',
-            endTime: '18:00', // normalizeEndTime は '18:00' をそのまま返す
-            days: [1, 2, 3, 4, 5],
-            enabled: true,
-            presetId: 'preset-1'
-          }
-        ]
-      };
-
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(trackFeatureUse).not.toHaveBeenCalled();
       expect(result.current.showScheduleModal).toBe(false);
-      expect(result.current.editingSchedule).toBeNull();
     });
 
-    it('endTimeが00:00の場合、24:00に正規化される', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('schedule-overlap で拒まれたら重なりの文言を出し、モーダルを閉じない', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'schedule-overlap' }
+      });
+      const { result } = render();
 
       act(() => {
         result.current.openAddSchedule();
-        result.current.setScheduleForm({
-          name: 'All Day',
-          startTime: '00:00',
-          endTime: '00:00',
-          // 既存（月〜金）と曜日を重ねない。ここで見るのは終了時刻の正規化
-          days: [0, 6],
-          presetId: ''
-        });
+        result.current.setScheduleForm(VALID_FORM);
       });
-
       await act(async () => {
         await result.current.handleSaveSchedule();
       });
 
-      const savedSchedule = itemAt(
-        vi.mocked(settingsItem.setValue).mock.calls,
-        0
-      )[0];
-      expect(itemAt(savedSchedule.schedules, 1).endTime).toBe('24:00');
+      expect(result.current.scheduleError).toBe(
+        getMessage('scheduleOverlapError')
+      );
+      expect(result.current.showScheduleModal).toBe(true);
+      expect(result.current.scheduleForm).toEqual(VALID_FORM);
+      expect(trackFeatureUse).not.toHaveBeenCalled();
     });
 
-    describe('既存のスケジュールと時間帯が重なるとき', () => {
-      it('保存せずエラーを返し、モーダルを開いたままにする', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-        );
+    it('理由の無い失敗は既定の文言を出す', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({ success: false });
+      const { result } = render();
 
-        act(() => {
-          result.current.openAddSchedule();
-          result.current.setScheduleForm({
-            name: 'Overlapping',
-            startTime: '10:00',
-            endTime: '13:00',
-            days: [1],
-            presetId: ''
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(settingsItem.setValue).not.toHaveBeenCalled();
-        expect(mockSetSettings).not.toHaveBeenCalled();
-        expect(trackFeatureUse).not.toHaveBeenCalled();
-        expect(result.current.scheduleError).toBe('scheduleOverlapError');
-        expect(result.current.showScheduleModal).toBe(true);
+      act(() => {
+        result.current.openAddSchedule();
+        result.current.setScheduleForm(VALID_FORM);
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
       });
 
-      it('無効な既存スケジュールとも重なりとみなす', async () => {
-        const disabledSettings: AppSettings = {
-          ...mockSettings,
-          schedules: [{ ...mockSchedule, enabled: false }]
-        };
+      expect(result.current.scheduleError).toBe(
+        getMessage('errorOperationFailed')
+      );
+      expect(result.current.showScheduleModal).toBe(true);
+    });
 
-        const { result } = renderHook(() =>
-          useSchedules({
-            settings: disabledSettings,
-            setSettings: mockSetSettings
-          })
-        );
+    it('送信できなかったときも既定の文言を出し、例外を外に投げない', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      const { result } = render();
 
-        act(() => {
-          result.current.openAddSchedule();
-          result.current.setScheduleForm({
-            name: 'Overlapping',
-            startTime: '10:00',
-            endTime: '13:00',
-            days: [1],
-            presetId: ''
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(settingsItem.setValue).not.toHaveBeenCalled();
-        expect(result.current.scheduleError).toBe('scheduleOverlapError');
+      act(() => {
+        result.current.openAddSchedule();
+        result.current.setScheduleForm(VALID_FORM);
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
       });
 
-      it('フォームを変更するとエラーが消える', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-        );
+      expect(result.current.scheduleError).toBe(
+        getMessage('errorOperationFailed')
+      );
+      expect(result.current.showScheduleModal).toBe(true);
+    });
 
-        act(() => {
-          result.current.openAddSchedule();
-          result.current.setScheduleForm({
-            name: 'Overlapping',
-            startTime: '10:00',
-            endTime: '13:00',
-            days: [1],
-            presetId: ''
-          });
-        });
+    it('入力を変えると失敗の文言が消える', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'schedule-overlap' }
+      });
+      const { result } = render();
 
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(result.current.scheduleError).toBe('scheduleOverlapError');
-
-        act(() => {
-          result.current.setScheduleForm({
-            ...result.current.scheduleForm,
-            days: [0]
-          });
-        });
-
-        expect(result.current.scheduleError).toBeNull();
+      act(() => {
+        result.current.openAddSchedule();
+        result.current.setScheduleForm(VALID_FORM);
+      });
+      await act(async () => {
+        await result.current.handleSaveSchedule();
+      });
+      act(() => {
+        result.current.setScheduleForm({ ...VALID_FORM, days: [2] });
       });
 
-      it('重なりを解消すれば保存できる', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-        );
-
-        act(() => {
-          result.current.openAddSchedule();
-          result.current.setScheduleForm({
-            name: 'Overlapping',
-            startTime: '10:00',
-            endTime: '13:00',
-            days: [1],
-            presetId: ''
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        // 既存（月〜金 09:00-17:00）と接するだけの時間帯に直す
-        act(() => {
-          result.current.setScheduleForm({
-            ...result.current.scheduleForm,
-            startTime: '17:00',
-            endTime: '19:00'
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(settingsItem.setValue).toHaveBeenCalledTimes(1);
-        expect(result.current.scheduleError).toBeNull();
-        expect(result.current.showScheduleModal).toBe(false);
-      });
-
-      it('編集時は自分自身を重なりとみなさない', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-        );
-
-        act(() => {
-          result.current.openEditSchedule(mockSchedule);
-          result.current.setScheduleForm({
-            name: 'Work Hours',
-            startTime: '09:00',
-            endTime: '17:00',
-            days: [1, 2, 3, 4, 5],
-            presetId: 'preset-1'
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(settingsItem.setValue).toHaveBeenCalledTimes(1);
-        expect(result.current.scheduleError).toBeNull();
-      });
-
-      it('編集時、自分以外と重なれば保存しない', async () => {
-        const otherSchedule: Schedule = {
-          id: 'schedule-2',
-          name: 'Evening',
-          startTime: '18:00',
-          endTime: '22:00',
-          days: [1],
-          enabled: true
-        };
-        const twoSchedules: AppSettings = {
-          ...mockSettings,
-          schedules: [mockSchedule, otherSchedule]
-        };
-
-        const { result } = renderHook(() =>
-          useSchedules({ settings: twoSchedules, setSettings: mockSetSettings })
-        );
-
-        act(() => {
-          result.current.openEditSchedule(mockSchedule);
-          result.current.setScheduleForm({
-            name: 'Work Hours',
-            startTime: '09:00',
-            endTime: '19:00',
-            days: [1],
-            presetId: 'preset-1'
-          });
-        });
-
-        await act(async () => {
-          await result.current.handleSaveSchedule();
-        });
-
-        expect(settingsItem.setValue).not.toHaveBeenCalled();
-        expect(result.current.scheduleError).toBe('scheduleOverlapError');
-      });
+      expect(result.current.scheduleError).toBeNull();
     });
   });
 
   describe('handleDeleteSchedule', () => {
-    beforeEach(() => {
-      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-    });
-
-    it('settingsがundefinedの場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: undefined, setSettings: mockSetSettings })
-      );
+    it('remove-schedule を送り、保存領域には書かない', async () => {
+      const { result } = render();
 
       await act(async () => {
         await result.current.handleDeleteSchedule('schedule-1');
       });
 
+      expect(sendMessage).toHaveBeenCalledWith('remove-schedule', {
+        id: 'schedule-1'
+      });
       expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
-    it('指定したIDのスケジュールを削除', async () => {
+    it('設定の読み込み前は何も送らない', async () => {
       const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        useSchedules({ settings: undefined })
       );
 
       await act(async () => {
         await result.current.handleDeleteSchedule('schedule-1');
       });
 
-      const expectedSettings = {
-        ...mockSettings,
-        schedules: []
-      };
-
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it('存在しないIDの場合、何も削除しない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('送信できなくても例外を外に投げない', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      const { result } = render();
 
-      await act(async () => {
-        await result.current.handleDeleteSchedule('non-existent-id');
-      });
-
-      const expectedSettings = {
-        ...mockSettings,
-        schedules: [mockSchedule]
-      };
-
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      await expect(
+        act(async () => {
+          await result.current.handleDeleteSchedule('schedule-1');
+        })
+      ).resolves.toBeUndefined();
     });
   });
 
   describe('handleToggleSchedule', () => {
-    beforeEach(() => {
-      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-    });
-
-    it('settingsがundefinedの場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: undefined, setSettings: mockSetSettings })
-      );
+    it('toggle-schedule を送り、保存領域には書かない', async () => {
+      const { result } = render();
 
       await act(async () => {
         await result.current.handleToggleSchedule('schedule-1', false);
       });
 
+      expect(sendMessage).toHaveBeenCalledWith('toggle-schedule', {
+        id: 'schedule-1',
+        enabled: false
+      });
+      expect(sendMessage).toHaveBeenCalledOnce();
       expect(settingsItem.setValue).not.toHaveBeenCalled();
-    });
-
-    it('スケジュールのenabledを切り替え', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      await act(async () => {
-        await result.current.handleToggleSchedule('schedule-1', false);
-      });
-
-      const expectedSettings = {
-        ...mockSettings,
-        paused: false, // enabled=false の場合は paused に影響しない
-        schedules: [{ ...mockSchedule, enabled: false }]
-      };
-
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
     });
 
-    describe('一時停止中にスケジュールを有効化したとき', () => {
-      const pausedSettings: AppSettings = {
-        ...mockSettings,
-        paused: true,
-        schedules: [{ ...mockSchedule, enabled: false }]
-      };
+    it('一時停止中に有効にしても、一時停止の解除は画面から送らない（background が行う）', async () => {
+      const { result } = render({ ...mockSettings, paused: true });
 
-      const resumedSettings: AppSettings = {
-        ...pausedSettings,
-        paused: false,
-        schedules: [{ ...mockSchedule, enabled: true }]
-      };
-
-      beforeEach(() => {
-        vi.mocked(sendMessage).mockResolvedValue({
-          success: true,
-          paused: false
-        });
-        vi.mocked(getSettings).mockResolvedValue(resumedSettings);
+      await act(async () => {
+        await result.current.handleToggleSchedule('schedule-1', true);
       });
 
-      it('一時停止の解除は toggle-pause ハンドラ経由で行う（paused を直接書かない）', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({
-            settings: pausedSettings,
-            setSettings: mockSetSettings
-          })
-        );
-
-        await act(async () => {
-          await result.current.handleToggleSchedule('schedule-1', true);
-        });
-
-        // 画面から書くのはスケジュールだけで、paused は変更しない
-        expect(settingsItem.setValue).toHaveBeenCalledWith({
-          ...pausedSettings,
-          schedules: [{ ...mockSchedule, enabled: true }]
-        });
-        expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
-          paused: false
-        });
-      });
-
-      it('解除後の設定を読み直して表示へ反映する', async () => {
-        const { result } = renderHook(() =>
-          useSchedules({
-            settings: pausedSettings,
-            setSettings: mockSetSettings
-          })
-        );
-
-        await act(async () => {
-          await result.current.handleToggleSchedule('schedule-1', true);
-        });
-
-        expect(mockSetSettings).toHaveBeenCalledWith(resumedSettings);
-      });
-
-      it('送信に失敗してもスケジュールの変更は残る（例外を外に投げない）', async () => {
-        vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
-
-        const { result } = renderHook(() =>
-          useSchedules({
-            settings: pausedSettings,
-            setSettings: mockSetSettings
-          })
-        );
-
-        await act(async () => {
-          await expect(
-            result.current.handleToggleSchedule('schedule-1', true)
-          ).resolves.toBeUndefined();
-        });
-
-        expect(settingsItem.setValue).toHaveBeenCalledWith({
-          ...pausedSettings,
-          schedules: [{ ...mockSchedule, enabled: true }]
-        });
-        expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
+      expect(sendMessage).toHaveBeenCalledOnce();
+      expect(sendMessage).toHaveBeenCalledWith('toggle-schedule', {
+        id: 'schedule-1',
+        enabled: true
       });
     });
 
-    it('一時停止していなければ toggle-pause を送らない', async () => {
+    it('設定の読み込み前は何も送らない', async () => {
       const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
+        useSchedules({ settings: undefined })
       );
 
       await act(async () => {
@@ -736,30 +436,74 @@ describe('useSchedules', () => {
       expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it('存在しないIDの場合、何も変更しない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: mockSettings, setSettings: mockSetSettings })
-      );
+    it('拒まれたら利用の記録を送らない', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'schedule-not-found' }
+      });
+      const { result } = render();
 
       await act(async () => {
-        await result.current.handleToggleSchedule('non-existent-id', false);
+        await result.current.handleToggleSchedule('missing', true);
       });
 
-      const expectedSettings = {
-        ...mockSettings,
-        paused: false,
-        schedules: [mockSchedule]
-      };
+      expect(trackFeatureUse).not.toHaveBeenCalled();
+    });
 
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+    it('送信できなくても例外を外に投げない', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      const { result } = render();
+
+      await expect(
+        act(async () => {
+          await result.current.handleToggleSchedule('schedule-1', true);
+        })
+      ).resolves.toBeUndefined();
+      expect(trackFeatureUse).not.toHaveBeenCalled();
     });
   });
 });
 
-describe('画面の入力欄で選べる時刻で保存したスケジュール', () => {
+describe('toScheduleInput', () => {
+  it('スタイルを指定しない入力値は presetId を持たない', () => {
+    expect(toScheduleInput(VALID_FORM).presetId).toBeUndefined();
+  });
+
+  it('スタイルを指定した入力値はその ID を持つ', () => {
+    expect(toScheduleInput({ ...VALID_FORM, presetId: 'p1' }).presetId).toBe(
+      'p1'
+    );
+  });
+});
+
+describe('isScheduleFormValid', () => {
+  it.each([
+    [
+      '既定のフォームに名前を入れたもの',
+      { ...DEFAULT_FORM, name: 'Work' },
+      true
+    ],
+    ['終了時刻 00:00', { ...VALID_FORM, endTime: '00:00' }, true],
+    [
+      '終了時刻 24:00（保存値を開いたとき）',
+      { ...VALID_FORM, endTime: '24:00' },
+      true
+    ],
+    ['名前が空', { ...VALID_FORM, name: '' }, false],
+    ['名前が空白だけ', { ...VALID_FORM, name: '   ' }, false],
+    ['曜日が無い', { ...VALID_FORM, days: [] }, false],
+    ['開始時刻が空', { ...VALID_FORM, startTime: '' }, false],
+    ['終了時刻が空', { ...VALID_FORM, endTime: '' }, false],
+    ['開始時刻 24:00', { ...VALID_FORM, startTime: '24:00' }, false]
+  ])('%s → %s', (_label, form, expected) => {
+    expect(isScheduleFormValid(form)).toBe(expected);
+  });
+});
+
+describe('画面の入力欄で選べる時刻で送るスケジュール', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(sendMessage).mockResolvedValue({ success: true });
   });
 
   it.each([
@@ -767,11 +511,10 @@ describe('画面の入力欄で選べる時刻で保存したスケジュール'
     ['23:59', '00:00'],
     ['00:00', '00:00']
   ])(
-    '開始 %s・終了 %s で保存した値は取り込みの検証を通る',
+    '開始 %s・終了 %s で送る本文は background の検証を通る',
     async (startTime, endTime) => {
-      const settings: AppSettings = { ...DEFAULT_SETTINGS, schedules: [] };
       const { result } = renderHook(() =>
-        useSchedules({ settings, setSettings: vi.fn() })
+        useSchedules({ settings: { ...DEFAULT_SETTINGS, schedules: [] } })
       );
 
       act(() => {
@@ -788,11 +531,8 @@ describe('画面の入力欄で選べる時刻で保存したスケジュール'
         await result.current.handleSaveSchedule();
       });
 
-      const saved = itemAt(
-        itemAt(vi.mocked(settingsItem.setValue).mock.calls, 0)[0].schedules,
-        0
-      );
-      expect(ScheduleSchema.safeParse(saved).success).toBe(true);
+      const [, body] = itemAt(vi.mocked(sendMessage).mock.calls, 0);
+      expect(AddScheduleBodySchema.safeParse(body).success).toBe(true);
     }
   );
 });

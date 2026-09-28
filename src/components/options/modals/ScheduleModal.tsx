@@ -3,7 +3,10 @@ import React from 'react';
 import { Button, Input, Modal } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import type { Schedule, VisionSettings } from '~/types/storage';
-import type { ScheduleFormData } from '~/hooks/useSchedules';
+import {
+  isScheduleFormValid,
+  type ScheduleFormData
+} from '~/hooks/useSchedules';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
@@ -19,7 +22,7 @@ interface ScheduleModalProps {
   scheduleForm: ScheduleFormData;
   /** どれかの欄が変わったときに変更後のフォーム全体を受け取る（曜日は昇順に並べ直す） */
   onFormChange: (form: ScheduleFormData) => void;
-  /** 保存ボタンが押されたときに呼ぶ */
+  /** 保存ボタンが押されたときに呼ぶ（入力が background の検証を通らない間は押せない） */
   onSave: () => void;
   /** プリセットの選択肢を引く表示設定（読み込み前は undefined で、選択肢は「なし」だけ） */
   vision: VisionSettings | undefined;
@@ -169,7 +172,7 @@ export function ScheduleModal({
           </Button>
           <Button
             onClick={onSave}
-            disabled={!scheduleForm.name.trim()}
+            disabled={!isScheduleFormValid(scheduleForm)}
             data-testid="schedule-save-button"
           >
             {editingSchedule

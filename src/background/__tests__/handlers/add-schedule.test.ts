@@ -63,6 +63,14 @@ describe('add-schedule ハンドラ', () => {
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
+  it('終了時刻 00:00 はその日の終わり（24:00）にして足す', async () => {
+    await invoke<Response>(handler, {
+      schedule: { ...input, endTime: '00:00' }
+    });
+
+    expect(addSchedule).toHaveBeenCalledWith({ ...input, endTime: '24:00' });
+  });
+
   it.each([
     ['overlap', 'schedule-overlap'],
     ['preset-not-found', 'preset-not-found']
