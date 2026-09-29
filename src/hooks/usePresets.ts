@@ -273,7 +273,6 @@ export function usePresets({
 }: UsePresetsOptions): UsePresetsReturn {
   const [state, dispatch] = useReducer(presetReducer, INITIAL_STATE);
 
-  // 読み込み前の vision は保存値ではなく fallback（スタイル 0 件）なので、選べるスタイルが現れるまで選択を決めない
   useEffect(() => {
     const presetId = initialSelection(vision);
     if (state.initialized || presetId === null) return;
