@@ -22,6 +22,10 @@ export function addSiteError(
       return { code: duplicate };
     case 'allowed':
       return { code: 'already-allowed' };
+    case 'blocked':
+      return { code: 'already-blocked' };
+    case 'tracked':
+      return { code: 'already-tracked' };
     case 'invalid':
       return { code: 'invalid-domain' };
   }

@@ -403,6 +403,26 @@ export const SiteBodySchema = z.object({
   domain: z.string().min(1).max(253)
 });
 
+/** 許可サイトを追加する本文 */
+export const AddAllowedSiteBodySchema = z.object({
+  /** 利用者が入力したドメインか URL（background がサイトキーに直す） */
+  domain: z.string().min(1).max(2048)
+});
+
+/** 許可サイトの追加の本文（AddAllowedSiteBodySchema を通った値） */
+export type AddAllowedSiteBody = z.infer<typeof AddAllowedSiteBodySchema>;
+
+/** 許可サイトの「記録する」を切り替える本文 */
+export const SetAllowedSiteRecordingBodySchema = SiteBodySchema.extend({
+  /** true = 滞在時間を記録する / false = 記録しない */
+  recordTime: z.boolean()
+});
+
+/** 「記録する」の切り替えの本文（SetAllowedSiteRecordingBodySchema を通った値） */
+export type SetAllowedSiteRecordingBody = z.infer<
+  typeof SetAllowedSiteRecordingBodySchema
+>;
+
 /** ブロックリストの項目の有効・無効を切り替える本文 */
 export const ToggleBlockBodySchema = SiteBodySchema.extend({
   /** true = ブロックを有効にする / false = 一時的に無効にする */

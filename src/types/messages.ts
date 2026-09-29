@@ -1,4 +1,5 @@
 import type {
+  AddAllowedSiteBody,
   AddScheduleBody,
   CreatePresetBody,
   GetRemainingTimeBody,
@@ -17,7 +18,8 @@ import type {
   UpdateUnblockConfirmBody,
   SetPasswordBody,
   ChangePasswordBody,
-  RemovePasswordBody
+  RemovePasswordBody,
+  SetAllowedSiteRecordingBody
 } from './messageSchemas';
 import type { PasswordStrengthProblem } from '~/lib/password';
 import type { NestedSite } from '~/lib/siteKey';
@@ -60,6 +62,10 @@ export type MessageError =
   | {
       /** ブロックリストに対象の項目が無い */
       code: 'block-not-found';
+    }
+  | {
+      /** 対象の許可サイトが無い */
+      code: 'allow-not-found';
     }
   | {
       /** ブロックの規則か YouTube の機能が残っているため追跡をやめられない */
@@ -189,6 +195,28 @@ export interface AddTrackedSiteRequest {
 /** 追跡対象への追加の結果 */
 export interface AddTrackedSiteResponse {
   /** 追加できたか */
+  success: boolean;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
+}
+
+/** 許可サイトを追加する依頼（既に許可サイトなら何もせず成功） */
+export type AddAllowedSiteRequest = AddAllowedSiteBody;
+
+/** 許可サイトの追加の結果 */
+export interface AddAllowedSiteResponse {
+  /** 追加できたか（既に許可サイトだったときも true） */
+  success: boolean;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
+}
+
+/** 許可サイトの「記録する」を切り替える依頼 */
+export type SetAllowedSiteRecordingRequest = SetAllowedSiteRecordingBody;
+
+/** 「記録する」の切り替えの結果 */
+export interface SetAllowedSiteRecordingResponse {
+  /** 切り替えられたか */
   success: boolean;
   /** 失敗の種類。成功時は無い */
   error?: MessageError;

@@ -9,6 +9,7 @@ vi.mock('~/lib/messaging', () => ({
 }));
 
 import { registerMessageHandlers } from '../../handlers';
+import { addAllowedSiteHandler } from '../../handlers/add-allowed-site';
 import { addBlockHandler } from '../../handlers/add-block';
 import { addScheduleHandler } from '../../handlers/add-schedule';
 import { addTrackedSiteHandler } from '../../handlers/add-tracked-site';
@@ -20,6 +21,7 @@ import { importSettingsHandler } from '../../handlers/import-settings';
 import { removeBlockHandler } from '../../handlers/remove-block';
 import { removeScheduleHandler } from '../../handlers/remove-schedule';
 import { resetActivityHandler } from '../../handlers/reset-activity';
+import { setAllowedSiteRecordingHandler } from '../../handlers/set-allowed-site-recording';
 import { stopTrackingHandler } from '../../handlers/stop-tracking';
 import { toggleBlockHandler } from '../../handlers/toggle-block';
 import { togglePauseHandler } from '../../handlers/toggle-pause';
@@ -38,6 +40,7 @@ import { changePasswordHandler } from '../../handlers/change-password';
 import { removePasswordHandler } from '../../handlers/remove-password';
 
 const expected = [
+  ['add-allowed-site', addAllowedSiteHandler],
   ['add-block', addBlockHandler],
   ['add-schedule', addScheduleHandler],
   ['add-tracked-site', addTrackedSiteHandler],
@@ -49,6 +52,7 @@ const expected = [
   ['remove-block', removeBlockHandler],
   ['remove-schedule', removeScheduleHandler],
   ['reset-activity', resetActivityHandler],
+  ['set-allowed-site-recording', setAllowedSiteRecordingHandler],
   ['stop-tracking', stopTrackingHandler],
   ['toggle-block', toggleBlockHandler],
   ['toggle-pause', togglePauseHandler],

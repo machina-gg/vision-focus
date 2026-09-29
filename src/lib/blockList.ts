@@ -1,8 +1,13 @@
-import { coveringSiteKeys, YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import {
+  coveringSiteKeys,
+  normalizeSiteKey,
+  YOUTUBE_DOMAIN
+} from '~/lib/siteKey';
 import type {
   AllowRule,
   BlockRule,
   SiteEntry,
+  SiteKey,
   TrackedSites
 } from '~/types/site';
 
@@ -63,4 +68,73 @@ export function blockListSites(sites: TrackedSites): BlockedSite[] {
         a.rule.addedAt.localeCompare(b.rule.addedAt) ||
         a.domain.localeCompare(b.domain)
     );
+}
+
+/** 「許可サイト」節の 1 行 */
+export interface AllowedSiteRow {
+  /** 許可サイトのサイトキー */
+  domain: SiteKey;
+  /** 滞在時間を記録するか */
+  recordTime: boolean;
+  /** 覆うブロックの登録のサイトキー（無ければ null） */
+  exceptionOf: SiteKey | null;
+}
+
+function coveringBlockKey(
+  hostname: string,
+  sites: TrackedSites
+): SiteKey | null {
+  return (
+    coveringSiteKeys(hostname, Object.keys(sites)).find((key) => {
+      const site = sites[key];
+      return site !== undefined && hasBlock(site);
+    }) ?? null
+  );
+}
+
+/**
+ * 「許可サイト」節に並べる行をドメイン順で返す
+ * @param sites 登録
+ * @returns 許可サイトの行（覆うブロックがあればそのサイトキーを添える）
+ */
+export function allowedSiteRows(sites: TrackedSites): AllowedSiteRow[] {
+  return Object.values(sites)
+    .filter(isAllowedSite)
+    .map((site) => ({
+      domain: site.domain,
+      recordTime: site.rule.recordTime,
+      exceptionOf: coveringBlockKey(site.domain, sites)
+    }))
+    .sort((a, b) => a.domain.localeCompare(b.domain));
+}
+
+/**
+ * ブロックの登録の下にある許可サイトの件数
+ * @param sites 登録
+ * @param blockKey ブロックの登録のサイトキー
+ * @returns blockKey の真のサブドメインにある許可サイトの件数
+ */
+export function allowedCountUnder(
+  sites: TrackedSites,
+  blockKey: SiteKey
+): number {
+  return Object.values(sites).filter(
+    (site) => isAllowedSite(site) && site.domain.endsWith(`.${blockKey}`)
+  ).length;
+}
+
+/**
+ * ブロックされたホストを許可サイトにするときの候補（ブロックした登録そのものは許可サイトにできないので候補にしない）
+ * @param hostname ブロックされたホスト名
+ * @param sites 登録
+ * @returns ホストを正規化したサイトキーが、覆うブロックの登録の真のサブドメインならそのキー。そうでなければ null
+ */
+export function allowCandidate(
+  hostname: string,
+  sites: TrackedSites
+): SiteKey | null {
+  const key = normalizeSiteKey(hostname);
+  const blockKey = coveringBlockKey(key, sites);
+  if (!blockKey || !key.endsWith(`.${blockKey}`)) return null;
+  return key;
 }

@@ -44,7 +44,8 @@ const fakeChrome = vi.hoisted(() => {
 });
 
 vi.mock('~/lib/siteService', () => ({
-  getTrackedSiteKeys: vi.fn()
+  getTrackedSiteKeys: vi.fn(),
+  getRecordableSiteKeys: vi.fn()
 }));
 
 import {
@@ -55,7 +56,7 @@ import {
   recordActivity,
   recordHostActivity
 } from '~/lib/activityService';
-import { getTrackedSiteKeys } from '~/lib/siteService';
+import { getRecordableSiteKeys, getTrackedSiteKeys } from '~/lib/siteService';
 import { activityItem } from '~/lib/storage';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
@@ -78,6 +79,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   fakeChrome.reset();
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['youtube.com', 'x.com']);
+  vi.mocked(getRecordableSiteKeys).mockResolvedValue(['youtube.com', 'x.com']);
 });
 
 describe('appendActivity', () => {
@@ -149,6 +151,24 @@ describe('appendActivity', () => {
     expect(await stored()).toEqual({ '2026-09-26': { 'x.com': row(0, 1, 0) } });
   });
 
+  it('「記録する」が OFF の許可サイトの出来事は捨てる（過去の行は消さない）', async () => {
+    fakeChrome.localData.activity = {
+      '2026-09-25': { 'music.youtube.com': row(30) }
+    };
+    vi.mocked(getRecordableSiteKeys).mockResolvedValue(['youtube.com']);
+    const at = localDate(2026, 9, 26);
+
+    await appendActivity(
+      { kind: 'stay', site: 'music.youtube.com', seconds: 5, at },
+      { kind: 'stay', site: 'youtube.com', seconds: 5, at }
+    );
+
+    expect(await stored()).toEqual({
+      '2026-09-25': { 'music.youtube.com': row(30) },
+      '2026-09-26': { 'youtube.com': row(5) }
+    });
+  });
+
   it('記録できる出来事が 1 件も無ければ書き込まない', async () => {
     await appendActivity({
       kind: 'unblock',
@@ -178,7 +198,7 @@ describe('appendActivity', () => {
   it('出来事を渡さなければ何もしない', async () => {
     await appendActivity();
 
-    expect(getTrackedSiteKeys).not.toHaveBeenCalled();
+    expect(getRecordableSiteKeys).not.toHaveBeenCalled();
     expect(fakeChrome.localData.activity).toBeUndefined();
   });
 
@@ -206,7 +226,7 @@ describe('appendActivity', () => {
   });
 
   it('前の処理が失敗しても後続の処理は実行される', async () => {
-    vi.mocked(getTrackedSiteKeys)
+    vi.mocked(getRecordableSiteKeys)
       .mockRejectedValueOnce(new Error('読み出し失敗'))
       .mockResolvedValue(['x.com']);
     const at = localDate(2026, 9, 26);
@@ -320,7 +340,7 @@ describe('recordActivity', () => {
     const consoleError = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
-    vi.mocked(getTrackedSiteKeys).mockRejectedValueOnce(new Error('失敗'));
+    vi.mocked(getRecordableSiteKeys).mockRejectedValueOnce(new Error('失敗'));
 
     await expect(
       recordActivity({
@@ -366,6 +386,39 @@ describe('recordHostActivity', () => {
     ]);
     expect(await stored()).toEqual({
       '2026-09-26': { 'youtube.com': row(5, 0, 0), 'x.com': row(5, 0, 0) }
+    });
+  });
+
+  describe('youtube.com をブロックし music.youtube.com を許可サイトにしたとき', () => {
+    beforeEach(() => {
+      vi.mocked(getTrackedSiteKeys).mockResolvedValue([
+        'youtube.com',
+        'music.youtube.com'
+      ]);
+    });
+
+    it('「記録する」が OFF なら、許可サイトのホストは許可サイトの行にも上のブロックの行にも入らない', async () => {
+      vi.mocked(getRecordableSiteKeys).mockResolvedValue(['youtube.com']);
+
+      await recordHostActivity(['music.youtube.com'], stay);
+
+      expect(fakeChrome.localData.activity).toBeUndefined();
+    });
+
+    it('「記録する」が ON なら、許可サイトのホストは許可サイトの行に入り、上のブロックの行には入らない', async () => {
+      vi.mocked(getRecordableSiteKeys).mockResolvedValue([
+        'youtube.com',
+        'music.youtube.com'
+      ]);
+
+      await recordHostActivity(['music.youtube.com', 'www.youtube.com'], stay);
+
+      expect(await stored()).toEqual({
+        '2026-09-26': {
+          'music.youtube.com': row(5, 0, 0),
+          'youtube.com': row(5, 0, 0)
+        }
+      });
     });
   });
 

@@ -52,6 +52,25 @@ export async function getTrackedSiteKeys(): Promise<SiteKey[]> {
   return trackedSiteKeys(await getSites());
 }
 
+/**
+ * 滞在時間などの出来事を記録してよいサイトのサイトキー一覧（「記録する」が OFF の許可サイトを除く）
+ * @param sites 追跡中のサイト
+ * @returns サイトキー
+ */
+export function recordableSiteKeys(sites: TrackedSites): SiteKey[] {
+  return Object.values(sites)
+    .filter((site) => !isAllowedSite(site) || site.rule.recordTime)
+    .map((site) => site.domain);
+}
+
+/**
+ * 保存領域から記録してよいサイトのサイトキー一覧を読む
+ * @returns サイトキー（「記録する」が OFF の許可サイトを除く）
+ */
+export async function getRecordableSiteKeys(): Promise<SiteKey[]> {
+  return recordableSiteKeys(await getSites());
+}
+
 /** サイトを追加しなかった理由 */
 export type AddSiteRejection =
   | {
@@ -65,6 +84,14 @@ export type AddSiteRejection =
   | {
       /** 許可サイトとして登録済み（許可とブロック・規則なしの間の付け替えはしない） */
       reason: 'allowed';
+    }
+  | {
+      /** ブロックの規則を持つ登録として登録済み（許可サイトには変えない） */
+      reason: 'blocked';
+    }
+  | {
+      /** 規則なしの登録として追跡中（許可サイトには変えない） */
+      reason: 'tracked';
     }
   | {
       /** 既存のサイトと許されない入れ子になる */
@@ -174,6 +201,59 @@ export async function addTrackedSite(
     return {
       next: { ...sites, [site]: newSite(site, now) },
       result: checked
+    };
+  });
+}
+
+/**
+ * 入力をサイトキーにして許可サイトとして登録する（「記録する」は OFF で始める。既に許可サイトなら何もせず成功。ブロック・規則なしの登録と、許可サイトでない子孫があるなら拒否）
+ * @param input 利用者が入力したドメインか URL
+ * @param now 追跡を始めた時刻
+ * @returns 追加の結果（既に許可サイトだったときも site にそのサイトキーが入る）
+ */
+export async function addAllowedSite(
+  input: string,
+  now: Date
+): Promise<AddSiteResult> {
+  return mutateSites<AddSiteResult>((sites) => {
+    const checked = checkAddition(input, 'allow', sites, (existing) => {
+      if (existing.rule?.kind === 'block') return { reason: 'blocked' };
+      if (existing.rule === null) return { reason: 'tracked' };
+      return null;
+    });
+    if (checked.rejection !== null) return { next: null, result: checked };
+
+    const { site } = checked;
+    if (sites[site]) return { next: null, result: checked };
+    const allowed: SiteEntry = {
+      ...newSite(site, now),
+      rule: { kind: 'allow', recordTime: false }
+    };
+    return { next: { ...sites, [site]: allowed }, result: checked };
+  });
+}
+
+/**
+ * 許可サイトの「記録する」を切り替える（許可サイトでなければ何もせず false）。切り替えても過去の記録は消さない
+ * @param site サイトキー
+ * @param recordTime 滞在時間を記録するなら true
+ * @returns 許可サイトがあって書き込んだら true
+ */
+export async function setAllowedSiteRecording(
+  site: SiteKey,
+  recordTime: boolean
+): Promise<boolean> {
+  return mutateSites((sites) => {
+    const current = sites[site];
+    if (!current || !isAllowedSite(current)) {
+      return { next: null, result: false };
+    }
+    return {
+      next: {
+        ...sites,
+        [site]: { ...current, rule: { ...current.rule, recordTime } }
+      },
+      result: true
     };
   });
 }

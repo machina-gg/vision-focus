@@ -44,11 +44,15 @@ const fakeChrome = vi.hoisted(() => {
 });
 
 import {
+  addAllowedSite,
   addBlock,
   addTrackedSite,
+  getRecordableSiteKeys,
   getTrackedSiteKeys,
   importSites,
+  recordableSiteKeys,
   removeBlock,
+  setAllowedSiteRecording,
   setBlockEnabled,
   setTimeLimit,
   stopTracking,
@@ -93,6 +97,165 @@ describe('trackedSiteKeys / getTrackedSiteKeys', () => {
       'youtube.com'
     ]);
     expect(trackedSiteKeys(sitesOf(trackedSite('a.com')))).toEqual(['a.com']);
+  });
+});
+
+describe('recordableSiteKeys / getRecordableSiteKeys', () => {
+  it('「記録する」が OFF の許可サイトだけを除く', async () => {
+    const sites = sitesOf(
+      blockedSite('youtube.com'),
+      trackedSite('x.com'),
+      allowedSite('music.youtube.com', false),
+      allowedSite('docs.google.com', true)
+    );
+
+    expect(recordableSiteKeys(sites).sort()).toEqual([
+      'docs.google.com',
+      'x.com',
+      'youtube.com'
+    ]);
+
+    expect(await getRecordableSiteKeys()).toEqual([]);
+    givenSites(sites);
+    expect((await getRecordableSiteKeys()).sort()).toEqual([
+      'docs.google.com',
+      'x.com',
+      'youtube.com'
+    ]);
+  });
+});
+
+describe('addAllowedSite', () => {
+  it('入力をサイトキーにし、「記録する」を OFF にした許可サイトを作る', async () => {
+    givenSites(sitesOf(blockedSite('youtube.com')));
+
+    expect(
+      await addAllowedSite('https://Music.YouTube.com/watch?v=1', NOW)
+    ).toEqual({ site: 'music.youtube.com', rejection: null });
+    expect((await stored())['music.youtube.com']).toEqual({
+      domain: 'music.youtube.com',
+      trackedAt: NOW.toISOString(),
+      rule: { kind: 'allow', recordTime: false },
+      youtube: null
+    });
+  });
+
+  it('上にブロックが無くても登録できる', async () => {
+    expect((await addAllowedSite('docs.google.com', NOW)).rejection).toBeNull();
+    expect(Object.keys(await stored())).toEqual(['docs.google.com']);
+  });
+
+  it('許可サイトの下にも許可サイトを置ける', async () => {
+    givenSites(sitesOf(allowedSite('google.com')));
+
+    expect((await addAllowedSite('mail.google.com', NOW)).rejection).toBeNull();
+    expect(Object.keys(await stored()).sort()).toEqual([
+      'google.com',
+      'mail.google.com'
+    ]);
+  });
+
+  it('既に許可サイトなら何も書かずに成功する（「記録する」も変えない）', async () => {
+    const before = sitesOf(allowedSite('music.youtube.com', true));
+    givenSites(before);
+
+    expect(await addAllowedSite('www.music.youtube.com', NOW)).toEqual({
+      site: 'music.youtube.com',
+      rejection: null
+    });
+    expect(await stored()).toEqual(before);
+  });
+
+  it.each([
+    ['ドメインの形でない', 'not a domain', sitesOf(), { reason: 'invalid' }],
+    [
+      'ブロックの登録',
+      'youtube.com',
+      sitesOf(blockedSite('youtube.com')),
+      { reason: 'blocked' }
+    ],
+    [
+      '規則なしの登録',
+      'x.com',
+      sitesOf(trackedSite('x.com')),
+      { reason: 'tracked' }
+    ],
+    [
+      '許可サイトでない子孫がある',
+      'youtube.com',
+      sitesOf(trackedSite('m.youtube.com')),
+      {
+        reason: 'nested',
+        nested: { site: 'm.youtube.com', relation: 'descendant' }
+      }
+    ]
+  ] as const)(
+    '%s なら拒み、何も書かない',
+    async (_label, input, sites, rejection) => {
+      givenSites(sites);
+
+      expect(await addAllowedSite(input, NOW)).toEqual({
+        site: null,
+        rejection
+      });
+      expect(await getSites()).toEqual(sites);
+    }
+  );
+
+  it('既存の登録の検査は子孫の検査より先に行う', async () => {
+    givenSites(
+      sitesOf(trackedSite('youtube.com'), trackedSite('m.youtube.com'))
+    );
+
+    expect((await addAllowedSite('youtube.com', NOW)).rejection).toEqual({
+      reason: 'tracked'
+    });
+  });
+
+  it('子孫が許可サイトなら祖先にも許可サイトを置ける', async () => {
+    givenSites(sitesOf(allowedSite('mail.google.com')));
+
+    expect((await addAllowedSite('google.com', NOW)).rejection).toBeNull();
+  });
+});
+
+describe('setAllowedSiteRecording', () => {
+  it('許可サイトの「記録する」を切り替え、他の項目は保つ', async () => {
+    givenSites(
+      sitesOf(
+        allowedSite('music.youtube.com', false, {
+          trackedAt: '2026-01-01T00:00:00.000Z'
+        })
+      )
+    );
+
+    expect(await setAllowedSiteRecording('music.youtube.com', true)).toBe(true);
+    expect((await stored())['music.youtube.com']).toEqual(
+      allowedSite('music.youtube.com', true, {
+        trackedAt: '2026-01-01T00:00:00.000Z'
+      })
+    );
+
+    expect(await setAllowedSiteRecording('music.youtube.com', false)).toBe(
+      true
+    );
+    expect((await stored())['music.youtube.com']?.rule).toEqual({
+      kind: 'allow',
+      recordTime: false
+    });
+  });
+
+  it.each([
+    ['登録が無い', sitesOf()],
+    ['ブロックの登録', sitesOf(blockedSite('music.youtube.com'))],
+    ['規則なしの登録', sitesOf(trackedSite('music.youtube.com'))]
+  ])('%s なら何も書かずに false', async (_label, sites) => {
+    givenSites(sites);
+
+    expect(await setAllowedSiteRecording('music.youtube.com', true)).toBe(
+      false
+    );
+    expect(await getSites()).toEqual(sites);
   });
 });
 

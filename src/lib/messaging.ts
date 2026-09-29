@@ -7,6 +7,8 @@ import {
 } from '@webext-core/messaging';
 
 import type {
+  AddAllowedSiteRequest,
+  AddAllowedSiteResponse,
   AddBlockRequest,
   AddBlockResponse,
   AddScheduleRequest,
@@ -46,11 +48,15 @@ import type {
   UpdateYouTubeSettingsResponse,
   SetPasswordRequest,
   ChangePasswordRequest,
-  RemovePasswordRequest
+  RemovePasswordRequest,
+  SetAllowedSiteRecordingRequest,
+  SetAllowedSiteRecordingResponse
 } from '~/types/messages';
 
 /** メッセージ名ごとの引数と戻り値。送信側と受信側の型をここで縛る */
 export interface ProtocolMap {
+  /** ホストを許可サイトにする（「記録する」は OFF で始まる） */
+  'add-allowed-site'(data: AddAllowedSiteRequest): AddAllowedSiteResponse;
   /** サイトをブロックリストに追加する */
   'add-block'(data: AddBlockRequest): AddBlockResponse;
   /** スケジュールを足す */
@@ -73,7 +79,11 @@ export interface ProtocolMap {
   'remove-schedule'(data: RemoveScheduleRequest): SettingsChangeResponse;
   /** 活動の記録をすべて消す */
   'reset-activity'(): ResetActivityResponse;
-  /** サイトの追跡を止める */
+  /** 許可サイトの「記録する」を切り替える */
+  'set-allowed-site-recording'(
+    data: SetAllowedSiteRecordingRequest
+  ): SetAllowedSiteRecordingResponse;
+  /** サイトの追跡を止める（許可サイトは登録ごと消える） */
   'stop-tracking'(data: StopTrackingRequest): StopTrackingResponse;
   /** サイトのブロック設定の有効・無効を切り替える */
   'toggle-block'(data: ToggleBlockRequest): ToggleBlockResponse;
