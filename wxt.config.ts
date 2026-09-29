@@ -18,7 +18,8 @@ export default defineConfig({
       'alarms',
       'webNavigation',
       'notifications',
-      'clipboardWrite'
+      'clipboardWrite',
+      'unlimitedStorage'
     ],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"

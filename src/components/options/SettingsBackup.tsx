@@ -20,7 +20,12 @@ import {
   readFileAsString,
   validateImportedData
 } from '~/lib/settingsExport';
-import { getSettings, getSites, getVision } from '~/lib/storage';
+import {
+  getBackgroundImages,
+  getSettings,
+  getSites,
+  getVision
+} from '~/lib/storage';
 import { MAX_PRESETS } from '~/constants/limits';
 
 /**
@@ -49,7 +54,12 @@ export function SettingsBackup() {
         getVision(),
         getSites()
       ]);
-      const { data, isLarge } = exportSettings(settings, vision, sites);
+      const images = await getBackgroundImages(
+        vision.presets.flatMap((preset) =>
+          preset.customBackgroundId === null ? [] : [preset.customBackgroundId]
+        )
+      );
+      const { data, isLarge } = exportSettings(settings, vision, sites, images);
 
       if (isLarge) {
         setExportWarning(getMessage('exportLargeWarning'));
@@ -72,9 +82,9 @@ export function SettingsBackup() {
     fileInputRef.current?.click();
   };
 
-  const showImportError = (messageKey: string) => {
+  const showImportError = (messageKey: string, substitutions?: string[]) => {
     setImportStatus('error');
-    setImportMessage(getMessage(messageKey));
+    setImportMessage(getMessage(messageKey, substitutions));
     setTimeout(() => {
       setImportStatus('idle');
       setImportMessage(null);
@@ -95,7 +105,10 @@ export function SettingsBackup() {
       const result = validateImportedData(content);
 
       if (!result.success) {
-        showImportError(result.error || 'importErrorInvalidFormat');
+        showImportError(
+          result.error || 'importErrorInvalidFormat',
+          result.errorSubstitutions
+        );
         return;
       }
 

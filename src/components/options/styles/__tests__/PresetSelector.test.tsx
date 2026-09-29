@@ -16,12 +16,14 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   ...DEFAULT_DISPLAY_SETTINGS,
   id,
   name,
-  createdAt: '2026-01-01T00:00:00.000Z'
+  createdAt: '2026-01-01T00:00:00.000Z',
+  customBackgroundId: null
 });
 
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: '目標' },
+    draftBackgroundData: null,
     draftPresets: [],
     selectedPresetId: null,
     editingPresetName: 'スタイル A',

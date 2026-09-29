@@ -20,12 +20,14 @@ const FONT_SIZE_PX: Record<string, number> = {
 interface UseBackgroundPreloadOptions {
   /** 今表示する表示設定 */
   displaySettings: DashboardDisplaySettings;
+  /** 今表示するスタイルの画像の data URL（useBackgroundImage の戻り値）。null = 画像なし / undefined = 読み込み中 */
+  customBackgroundData: string | null | undefined;
 }
 
 interface UseBackgroundPreloadReturn {
   /** 保存済みの表示設定を読めたか（保存値が無くても一定時間で true になる） */
   isStorageLoaded: boolean;
-  /** 背景を出せる状態か（画像は読み込みが終わるか失敗したら true。単色なら最初から true） */
+  /** 背景を出せる状態か（画像は読み込みが終わるか失敗したら true。単色なら最初から true。利用者の画像を読み込み中なら false） */
   isBackgroundReady: boolean;
   /** 単色の背景を使うか */
   isColorBackground: boolean;
@@ -43,13 +45,15 @@ interface UseBackgroundPreloadReturn {
  * ダッシュボードの背景画像とフォントを先読みし、表示してよいかの状態と適用するスタイルを返す
  * @param options フックの入力（下記の項目）
  * @param options.displaySettings 今表示する表示設定
+ * @param options.customBackgroundData 今表示するスタイルの画像の data URL。null = 画像なし / undefined = 読み込み中
  * @returns 読み込みの状態と、背景・目標文に当てるスタイル
  */
 export function useBackgroundPreload({
-  displaySettings
+  displaySettings,
+  customBackgroundData
 }: UseBackgroundPreloadOptions): UseBackgroundPreloadReturn {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
-  const [isBackgroundReady, setIsBackgroundReady] = useState(false);
+  const [isPreloaded, setIsPreloaded] = useState(false);
 
   useEffect(() => {
     const checkStorageLoaded = async () => {
@@ -68,8 +72,10 @@ export function useBackgroundPreload({
   }, []);
 
   const isColorBackground = displaySettings.backgroundType === 'color';
-  const backgroundUrl = displaySettings.customBackgroundData
-    ? displaySettings.customBackgroundData
+  const isCustomBackgroundPending =
+    !isColorBackground && customBackgroundData === undefined;
+  const backgroundUrl = customBackgroundData
+    ? customBackgroundData
     : displaySettings.backgroundImage
       ? getBackgroundUrl(displaySettings.backgroundImage)
       : getBackgroundUrl('default-1');
@@ -77,19 +83,23 @@ export function useBackgroundPreload({
 
   useEffect(() => {
     if (isColorBackground) {
-      setIsBackgroundReady(true);
+      setIsPreloaded(true);
       return;
     }
+    if (isCustomBackgroundPending) return;
 
     const img = new Image();
     img.onload = () => {
-      setIsBackgroundReady(true);
+      setIsPreloaded(true);
     };
     img.onerror = () => {
-      setIsBackgroundReady(true);
+      setIsPreloaded(true);
     };
     img.src = backgroundUrl;
-  }, [backgroundUrl, isColorBackground]);
+  }, [backgroundUrl, isColorBackground, isCustomBackgroundPending]);
+
+  // 読み込み中に同梱の画像を出すと、利用者の画像に切り替わる前に一瞬見えてしまう
+  const isBackgroundReady = isPreloaded && !isCustomBackgroundPending;
 
   const fontSettings = displaySettings.fontSettings;
   const fontDef = getFontDefinition(fontSettings.family);

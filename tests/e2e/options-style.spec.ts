@@ -7,6 +7,11 @@ import {
   makeDisplaySettings,
   makePreset,
   getStorageData,
+  getBackgroundImageIds,
+  setBackgroundImage,
+  openNewTab,
+  TINY_JPEG_BASE64,
+  TINY_JPEG_DATA_URL,
   SELECTORS,
   UI_TEXT
 } from './helpers';
@@ -446,6 +451,84 @@ test.describe('Options - Style Tab', () => {
         ['default', 'Draft Goal'],
         ['added', 'Focus on what matters']
       ]);
+
+    await page.close();
+  });
+
+  test('OPT-ST18: 画像を付けて保存したスタイルが新しいタブに出る', async ({
+    context,
+    extensionId
+  }) => {
+    const page = await openOptions(context, extensionId, 'styles');
+
+    await page
+      .locator(SELECTORS.styles.presetButton)
+      .filter({ hasText: 'Default' })
+      .click();
+    await page.locator(SELECTORS.styles.backgroundTypeImage).click();
+    await page.locator(SELECTORS.styles.customBackgroundUpload).setInputFiles({
+      name: 'background.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from(TINY_JPEG_BASE64, 'base64')
+    });
+    await expect(page.locator(SELECTORS.styles.preview)).toHaveAttribute(
+      'style',
+      /data:image\/jpeg;base64,/
+    );
+
+    await page.locator(SELECTORS.styles.saveButton).click();
+
+    // スタイルが指す画像が 1 枚だけ保存され、持ち主のいない画像が無い
+    await expect
+      .poll(async () => {
+        const vision = await getStorageData(page, 'vision');
+        const imageId = vision?.presets.find(
+          (p) => p.id === 'default'
+        )?.customBackgroundId;
+        const stored = await getBackgroundImageIds(page);
+        return imageId != null && stored.length === 1 && stored[0] === imageId;
+      })
+      .toBe(true);
+    await page.close();
+
+    const newtab = await openNewTab(context, extensionId);
+    await expect(newtab.locator(SELECTORS.newtab.container)).toHaveAttribute(
+      'style',
+      /background-image: url\("data:image\/jpeg;base64,/
+    );
+    await newtab.close();
+  });
+
+  test('OPT-ST19: スタイルを消すと画像の保存キーも消える', async ({
+    context,
+    extensionId
+  }) => {
+    const setupPage = await openOptions(context, extensionId);
+    await setStorageData(setupPage, 'vision', {
+      defaultSettings: makeDisplaySettings(),
+      presets: [
+        makePreset('default', 'Default'),
+        makePreset('with-image', 'With Image', {
+          backgroundType: 'image',
+          customBackgroundId: 'img-delete'
+        })
+      ],
+      activePresetId: 'default'
+    });
+    await setBackgroundImage(setupPage, 'img-delete', TINY_JPEG_DATA_URL);
+    await setupPage.close();
+
+    const page = await openOptions(context, extensionId, 'styles');
+    expect(await getBackgroundImageIds(page)).toEqual(['img-delete']);
+
+    const target = page
+      .locator(SELECTORS.styles.presetButton)
+      .filter({ hasText: 'With Image' });
+    await target.click();
+    await page.locator(SELECTORS.styles.deleteButton).click();
+
+    await expect(target).not.toBeVisible();
+    await expect.poll(() => getBackgroundImageIds(page)).toEqual([]);
 
     await page.close();
   });

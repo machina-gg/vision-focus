@@ -68,6 +68,7 @@ describe('useBackgroundPreload', () => {
     it('backgroundImage の ID から URL を組み立てる', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({ backgroundImage: 'monday' })
         })
       );
@@ -81,6 +82,7 @@ describe('useBackgroundPreload', () => {
     it('backgroundImage が無い場合は default-1 にフォールバックする', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({ backgroundImage: '' })
         })
       );
@@ -93,14 +95,47 @@ describe('useBackgroundPreload', () => {
     it('カスタム背景データがある場合はそれを優先する', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
-          displaySettings: settings({
-            customBackgroundData: 'data:image/png;base64,AAA',
-            backgroundImage: 'monday'
-          })
+          customBackgroundData: 'data:image/png;base64,AAA',
+          displaySettings: settings({ backgroundImage: 'monday' })
         })
       );
 
       expect(result.current.backgroundUrl).toBe('data:image/png;base64,AAA');
+    });
+
+    it('利用者の画像を読み込み中は先読みせず、準備完了にしない', () => {
+      const { result, rerender } = renderHook(
+        ({ data }: { data: string | null | undefined }) =>
+          useBackgroundPreload({
+            customBackgroundData: data,
+            displaySettings: settings({ backgroundImage: 'monday' })
+          }),
+        { initialProps: { data: undefined as string | null | undefined } }
+      );
+
+      expect(MockImage.instances).toHaveLength(0);
+      expect(result.current.isBackgroundReady).toBe(false);
+
+      rerender({ data: 'data:image/png;base64,AAA' });
+      expect(itemAt(MockImage.instances, 0).src).toBe(
+        'data:image/png;base64,AAA'
+      );
+      act(() => {
+        itemAt(MockImage.instances, 0).onload?.();
+      });
+
+      expect(result.current.isBackgroundReady).toBe(true);
+    });
+
+    it('単色の背景なら、利用者の画像を読み込み中でも準備完了にする', () => {
+      const { result } = renderHook(() =>
+        useBackgroundPreload({
+          customBackgroundData: undefined,
+          displaySettings: settings({ backgroundType: 'color' })
+        })
+      );
+
+      expect(result.current.isBackgroundReady).toBe(true);
     });
   });
 
@@ -108,6 +143,7 @@ describe('useBackgroundPreload', () => {
     it('プリロードを待たずに即座に準備完了とする', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({
             backgroundType: 'color',
             backgroundColor: '#123456'
@@ -123,6 +159,7 @@ describe('useBackgroundPreload', () => {
     it('containerStyle に背景色を設定する', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({
             backgroundType: 'color',
             backgroundColor: '#123456'
@@ -139,7 +176,10 @@ describe('useBackgroundPreload', () => {
   describe('画像背景のプリロード', () => {
     it('読み込み完了までは暗色のプレースホルダを使う', () => {
       const { result } = renderHook(() =>
-        useBackgroundPreload({ displaySettings: settings() })
+        useBackgroundPreload({
+          customBackgroundData: null,
+          displaySettings: settings()
+        })
       );
 
       expect(result.current.isBackgroundReady).toBe(false);
@@ -151,6 +191,7 @@ describe('useBackgroundPreload', () => {
     it('読み込み完了後に背景画像を適用する', async () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({ backgroundImage: 'monday' })
         })
       );
@@ -171,7 +212,10 @@ describe('useBackgroundPreload', () => {
 
     it('読み込み失敗時も準備完了として扱う（表示を止めない）', async () => {
       const { result } = renderHook(() =>
-        useBackgroundPreload({ displaySettings: settings() })
+        useBackgroundPreload({
+          customBackgroundData: null,
+          displaySettings: settings()
+        })
       );
 
       await act(async () => {
@@ -189,7 +233,10 @@ describe('useBackgroundPreload', () => {
       vi.mocked(hasStoredVision).mockResolvedValue(true);
 
       const { result } = renderHook(() =>
-        useBackgroundPreload({ displaySettings: settings() })
+        useBackgroundPreload({
+          customBackgroundData: null,
+          displaySettings: settings()
+        })
       );
 
       await waitFor(() => {
@@ -202,7 +249,10 @@ describe('useBackgroundPreload', () => {
       vi.useFakeTimers();
 
       const { result } = renderHook(() =>
-        useBackgroundPreload({ displaySettings: settings() })
+        useBackgroundPreload({
+          customBackgroundData: null,
+          displaySettings: settings()
+        })
       );
 
       expect(result.current.isStorageLoaded).toBe(false);
@@ -219,6 +269,7 @@ describe('useBackgroundPreload', () => {
     it('フォント設定からスタイルを組み立てる', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({
             fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
           })
@@ -235,6 +286,7 @@ describe('useBackgroundPreload', () => {
     it('サイズ指定に応じて px が変わる', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({
             fontSettings: { family: 'system', size: 'sm', weight: 'normal' }
           })
@@ -247,6 +299,7 @@ describe('useBackgroundPreload', () => {
     it('システムフォントでは Google Fonts を読み込まない', () => {
       renderHook(() =>
         useBackgroundPreload({
+          customBackgroundData: null,
           displaySettings: settings({
             fontSettings: { family: 'system', size: 'md', weight: 'bold' }
           })

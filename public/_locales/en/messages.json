@@ -1252,8 +1252,14 @@
     "description": "Import success message with merge"
   },
   "importErrorFileTooLarge": {
-    "message": "File is too large (max 5MB)",
-    "description": "Import error: file too large"
+    "message": "File is too large (max $SIZE$MB)",
+    "description": "Import error: file too large",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
   },
   "importErrorInvalidJson": {
     "message": "Invalid file format. Please select a valid JSON file.",

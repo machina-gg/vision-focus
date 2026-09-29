@@ -23,8 +23,11 @@ vi.mock('~/constants/backgrounds', async (importOriginal) => {
 });
 
 vi.mock('~/components/features', () => ({
-  ImageUploader: (props: { value: string | null }) => (
-    <div data-testid="image-uploader">{String(props.value)}</div>
+  ImageUploader: (props: { value: string | null; loading?: boolean }) => (
+    <div data-testid="image-uploader">
+      {String(props.value)}
+      {props.loading ? ':loading' : ''}
+    </div>
   ),
   FontPicker: (props: { value: { family: string }; previewText: string }) => (
     <div data-testid="font-picker">
@@ -38,12 +41,14 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   ...DEFAULT_DISPLAY_SETTINGS,
   id,
   name,
-  createdAt: '2026-01-01T00:00:00.000Z'
+  createdAt: '2026-01-01T00:00:00.000Z',
+  customBackgroundId: null
 });
 
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    draftBackgroundData: null,
     draftPresets: [],
     selectedPresetId: 'preset-1',
     editingPresetName: 'スタイル A',
@@ -368,20 +373,22 @@ describe('DisplaySettingsForm', () => {
   });
 
   describe('取り込んだ背景画像', () => {
-    it('未設定のときは null を渡す', () => {
-      renderForm({
-        draftDisplaySettings: displayWith({ customBackgroundData: null })
-      });
+    it('未設定のときは null を渡し、読み込み中にはしない', () => {
+      renderForm({ draftBackgroundData: null });
 
-      expect(screen.getByTestId('image-uploader')).toHaveTextContent('null');
+      expect(screen.getByTestId('image-uploader')).toHaveTextContent(/^null$/);
+    });
+
+    it('読み込み中は、空のアップロード欄ではなく読み込み中の表示にする', () => {
+      renderForm({ draftBackgroundData: undefined });
+
+      expect(screen.getByTestId('image-uploader')).toHaveTextContent(
+        'null:loading'
+      );
     });
 
     it('設定済みのときはその内容を渡す', () => {
-      renderForm({
-        draftDisplaySettings: displayWith({
-          customBackgroundData: 'data:image/webp;base64,AAAA'
-        })
-      });
+      renderForm({ draftBackgroundData: 'data:image/webp;base64,AAAA' });
 
       expect(screen.getByTestId('image-uploader')).toHaveTextContent(
         'data:image/webp;base64,AAAA'

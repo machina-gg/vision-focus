@@ -17,6 +17,7 @@ import {
   blockedHostTotals,
   todayStats,
   useActivitySources,
+  useBackgroundImage,
   useBackgroundPreload,
   useResolvedPreset,
   useStorageItem
@@ -55,10 +56,14 @@ export function NewtabApp() {
   const blockedDomain = blockRecord?.domain ?? null;
   const isTimeLimit = blockRecord?.reason === 'time_limit_exceeded';
 
-  const { displaySettings } = useResolvedPreset({ vision, settings });
+  const { displaySettings, customBackgroundId } = useResolvedPreset({
+    vision,
+    settings
+  });
+  const customBackgroundData = useBackgroundImage(customBackgroundId);
 
   const { isStorageLoaded, isBackgroundReady, containerStyle, fontStyle } =
-    useBackgroundPreload({ displaySettings });
+    useBackgroundPreload({ displaySettings, customBackgroundData });
 
   useEffect(() => {
     const loadBlockedInfo = async () => {

@@ -8,7 +8,23 @@ import { getFontDefinition } from '~/types/font';
 import { usePresets, useStorageItem } from '~/hooks';
 import { settingsItem, visionItem } from '~/lib/storage';
 import { DeletePresetModal, NewPresetModal } from '~/components/options/modals';
+import type { DashboardDisplaySettings } from '~/types/storage';
 import { PresetSelector, DisplaySettingsForm } from './styles';
+
+const COVER = { backgroundSize: 'cover', backgroundPosition: 'center' };
+
+function previewBackgroundStyle(
+  display: DashboardDisplaySettings,
+  customBackgroundData: string | null
+): React.CSSProperties {
+  if (display.backgroundType === 'color') {
+    return { backgroundColor: display.backgroundColor };
+  }
+  const url =
+    customBackgroundData ??
+    getBackgroundUrl(display.backgroundImage || 'default-1');
+  return { backgroundImage: `url(${url})`, ...COVER };
+}
 
 /**
  * 設定画面のスタイルタブ（プリセットの選択・表示設定のフォーム・編集中のプレビュー・プリセットの作成と削除のモーダル）を表示する（保存値は購読で読み、書き込みは usePresets が background に依頼する）
@@ -20,8 +36,12 @@ export function StylesTab() {
 
   const presets = usePresets({ vision, settings });
 
-  const { draftDisplaySettings, selectedPresetId } = presets;
+  const { draftDisplaySettings, draftBackgroundData, selectedPresetId } =
+    presets;
   const isEditing = !!selectedPresetId;
+  const isBackgroundLoading =
+    draftDisplaySettings.backgroundType !== 'color' &&
+    draftBackgroundData === undefined;
 
   return (
     <div
@@ -41,29 +61,29 @@ export function StylesTab() {
                 {getMessage('dashboardPreview')}
               </h2>
               <div
-                className="relative aspect-video rounded-lg overflow-hidden"
+                className={`relative aspect-video rounded-lg overflow-hidden ${
+                  isBackgroundLoading ? 'bg-gray-200 animate-pulse' : ''
+                }`}
                 data-testid="style-preview"
+                aria-busy={isBackgroundLoading}
                 style={
-                  draftDisplaySettings.backgroundType === 'color'
-                    ? {
-                        backgroundColor: draftDisplaySettings.backgroundColor
-                      }
-                    : draftDisplaySettings.customBackgroundData
-                      ? {
-                          backgroundImage: `url(${draftDisplaySettings.customBackgroundData})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }
-                      : {
-                          backgroundImage: `url(${getBackgroundUrl(
-                            draftDisplaySettings.backgroundImage || 'default-1'
-                          )})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }
+                  isBackgroundLoading
+                    ? undefined
+                    : previewBackgroundStyle(
+                        draftDisplaySettings,
+                        draftBackgroundData ?? null
+                      )
                 }
               >
                 <div className="absolute inset-0 bg-black/30" />
+                {isBackgroundLoading && (
+                  <p
+                    data-testid="style-preview-loading"
+                    className="absolute top-2 left-2 z-20 text-xs bg-black/50 text-white px-2 py-0.5 rounded"
+                  >
+                    {getMessage('loading')}
+                  </p>
+                )}
                 <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">
                   <p
                     className="text-center drop-shadow-lg"

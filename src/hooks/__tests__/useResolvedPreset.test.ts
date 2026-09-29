@@ -17,7 +17,6 @@ vi.mock('~/lib/presetUtils', () => ({
     backgroundType: preset.backgroundType,
     backgroundImage: preset.backgroundImage,
     backgroundColor: preset.backgroundColor,
-    customBackgroundData: preset.customBackgroundData,
     fontSettings: preset.fontSettings
   }))
 }));
@@ -48,7 +47,7 @@ const presetVision: VisionSettings = {
       backgroundType: 'color',
       backgroundImage: '',
       backgroundColor: '#000000',
-      customBackgroundData: null,
+      customBackgroundId: 'img-1',
       fontSettings: { family: 'inter', size: 'lg', weight: 'bold' }
     }
   ],
@@ -110,7 +109,7 @@ describe('useResolvedPreset', () => {
             backgroundType: 'color',
             backgroundImage: '',
             backgroundColor: '#111',
-            customBackgroundData: null,
+            customBackgroundId: null,
             fontSettings: { family: 'inter', size: 'md', weight: 'normal' }
           }
         ],
@@ -137,34 +136,32 @@ describe('useResolvedPreset', () => {
     });
   });
 
-  describe('カスタム背景', () => {
-    it('プリセットが選択されていればその目標を使う', () => {
+  describe('画像の ID', () => {
+    it('表示するスタイルの画像の ID を返す', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
           vision: presetVision,
           settings: DEFAULT_SETTINGS
         })
       );
-      expect(result.current.displaySettings.goalText).toBe('Focus on work');
+      expect(result.current.customBackgroundId).toBe('img-1');
     });
 
-    it('カスタム背景をそのまま適用する', () => {
-      const vision: VisionSettings = {
-        ...DEFAULT_VISION,
-        defaultSettings: {
-          ...DEFAULT_DISPLAY_SETTINGS,
-          customBackgroundData: 'data:image/png;base64,custom'
-        }
-      };
+    it('既定の表示設定を使うときは null を返す', () => {
       const { result } = renderHook(() =>
         useResolvedPreset({
-          vision,
+          vision: { ...presetVision, activePresetId: null },
           settings: DEFAULT_SETTINGS
         })
       );
-      expect(result.current.displaySettings.customBackgroundData).toBe(
-        'data:image/png;base64,custom'
+      expect(result.current.customBackgroundId).toBeNull();
+    });
+
+    it('読み込み前は null を返す', () => {
+      const { result } = renderHook(() =>
+        useResolvedPreset({ vision: undefined, settings: undefined })
       );
+      expect(result.current.customBackgroundId).toBeNull();
     });
   });
 

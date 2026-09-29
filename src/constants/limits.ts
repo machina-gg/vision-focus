@@ -56,3 +56,6 @@ export function roundToNearestPreset(minutes: number): number {
  * 理由は docs/PRD.md の「機能上限について」
  */
 export const MAX_PRESETS = 10;
+
+/** 取り込む設定ファイルの大きさの上限（文字数。画像はファイルに data URL で入るので、1 文字 1 バイトとして数える） */
+export const MAX_IMPORT_SIZE = 15 * 1024 * 1024;

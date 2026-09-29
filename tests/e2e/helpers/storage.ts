@@ -101,7 +101,6 @@ export function makeDisplaySettings(
     backgroundType: 'color',
     backgroundImage: 'default-1',
     backgroundColor: '#1a1a2e',
-    customBackgroundData: null,
     fontSettings: { family: 'system', size: 'lg', weight: 'bold' },
     ...overrides
   };
@@ -110,14 +109,51 @@ export function makeDisplaySettings(
 export function makePreset(
   id: string,
   name: string,
-  overrides: Partial<DashboardDisplaySettings> = {}
+  overrides: Partial<DashboardDisplaySettings> & {
+    customBackgroundId?: string | null;
+  } = {}
 ): DashboardPreset {
+  const { customBackgroundId = null, ...display } = overrides;
   return {
-    ...makeDisplaySettings(overrides),
+    ...makeDisplaySettings(display),
     id,
     name,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    customBackgroundId
   };
+}
+
+// 画像は項目定義を通さない動的なキー（backgroundImage:<ID>）に置かれる
+const BACKGROUND_IMAGE_KEY_PREFIX = 'backgroundImage:';
+
+/** 2x2 の JPEG の base64（アップロードと前提データに使う。アプリの画像の検査を通る形） */
+export const TINY_JPEG_BASE64 =
+  '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAACAAIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDg6KKK+xPnD//Z';
+
+export const TINY_JPEG_DATA_URL = `data:image/jpeg;base64,${TINY_JPEG_BASE64}`;
+
+export async function setBackgroundImage(
+  page: Page,
+  imageId: string,
+  dataUrl: string
+): Promise<void> {
+  await page.evaluate(
+    async ({ key, dataUrl }) => {
+      await chrome.storage.local.set({ [key]: dataUrl });
+    },
+    { key: `${BACKGROUND_IMAGE_KEY_PREFIX}${imageId}`, dataUrl }
+  );
+}
+
+/** 保存されている画像の ID の一覧 */
+export async function getBackgroundImageIds(page: Page): Promise<string[]> {
+  const keys = await page.evaluate(async () =>
+    Object.keys(await chrome.storage.local.get(null))
+  );
+  return keys
+    .filter((key) => key.startsWith(BACKGROUND_IMAGE_KEY_PREFIX))
+    .map((key) => key.slice(BACKGROUND_IMAGE_KEY_PREFIX.length))
+    .sort();
 }
 
 export function makeVision(

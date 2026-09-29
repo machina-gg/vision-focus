@@ -48,6 +48,7 @@ const noopHandlers: Pick<
 };
 
 const editingPresets: UsePresetsReturn = {
+  draftBackgroundData: null,
   draftDisplaySettings: {
     ...DEFAULT_DISPLAY_SETTINGS,
     goalText: '1日1時間だけ SNS を見る',
@@ -58,7 +59,8 @@ const editingPresets: UsePresetsReturn = {
       ...DEFAULT_DISPLAY_SETTINGS,
       id: 'preset-1',
       name: '仕事モード',
-      createdAt: '2026-02-01T00:00:00Z'
+      createdAt: '2026-02-01T00:00:00Z',
+      customBackgroundId: null
     }
   ],
   selectedPresetId: 'preset-1',

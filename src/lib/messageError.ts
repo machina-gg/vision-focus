@@ -30,6 +30,8 @@ export function messageErrorText(error: MessageError | undefined): string {
       return getMessage('scheduleOverlapError');
     case 'preset-limit':
       return getMessage('maxPresetsReached', String(MAX_PRESETS));
+    case 'image-invalid':
+      return getMessage('imageErrorProcessFailed');
     case 'save-failed':
       return getMessage('errorSaveFailed');
     case 'password-required':

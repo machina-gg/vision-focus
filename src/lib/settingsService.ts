@@ -11,6 +11,7 @@ import {
   applyImportedVision
 } from '~/lib/settingsExport';
 import {
+  backgroundImageKey,
   getSettings,
   getVision,
   settingsItem,
@@ -18,6 +19,7 @@ import {
 } from '~/lib/storage';
 import type {
   ExportedData,
+  PresetImageInput,
   ScheduleInput,
   UpdatePresetBody
 } from '~/types/messageSchemas';
@@ -37,19 +39,30 @@ const enqueue = createSerialQueue();
 interface StorageChange<T> {
   settings?: AppSettings;
   vision?: VisionSettings;
+  /** 足す画像（キーは画像の ID） */
+  images?: Record<string, string>;
+  /** 消す画像の ID */
+  removedImageIds?: string[];
   result: T;
 }
 
-/** `change` は読み出した値を書き換えず、変更後の値（変更の無い項目は省く）と呼び出し元へ返す結果を返す。両方の変更は 1 回の書き込みにまとめる */
+/** `change` は読み出した値を書き換えず、変更後の値（変更の無い項目は省く）と呼び出し元へ返す結果を返す。画像を消してから、設定・表示設定・足す画像を 1 回の書き込みで書く */
 async function mutate<T>(
   change: (current: AppSettings, vision: VisionSettings) => StorageChange<T>
 ): Promise<T> {
   return enqueue(async () => {
     const [current, vision] = await Promise.all([getSettings(), getVision()]);
     const next = change(current, vision);
+    // 逆順（書いてから消す）にすると、間で止まったときに持ち主のいない画像が残る
+    const removedKeys = (next.removedImageIds ?? []).map(backgroundImageKey);
+    if (removedKeys.length > 0) await extensionStorage.removeItems(removedKeys);
     const writes = [
       ...(next.settings ? [{ item: settingsItem, value: next.settings }] : []),
-      ...(next.vision ? [{ item: visionItem, value: next.vision }] : [])
+      ...(next.vision ? [{ item: visionItem, value: next.vision }] : []),
+      ...Object.entries(next.images ?? {}).map(([imageId, dataUrl]) => ({
+        key: backgroundImageKey(imageId),
+        value: dataUrl
+      }))
     ];
     if (writes.length > 0) await extensionStorage.setItems(writes);
     return next.result;
@@ -275,7 +288,7 @@ export interface ImportSettingsResult {
 }
 
 /**
- * 設定ファイルの設定と表示設定を、保存済みの値に重ねて 1 回の書き込みで保存する（重ね方は applyImportedSettings / applyImportedVision。スタイルは既存と合わせて MAX_PRESETS 件まで）
+ * 設定ファイルの設定・表示設定・画像を、保存済みの値に重ねて 1 回の書き込みで保存する（重ね方は applyImportedSettings / applyImportedVision。スタイルは既存と合わせて MAX_PRESETS 件まで。画像は毎回新しい ID で作り、既存の画像は消さない）
  * @param data 取り込む設定ファイルの中身（検証済み）
  * @returns 取り込まなかったスタイルと、それを指していた参照を外したか
  */
@@ -283,10 +296,12 @@ export async function importSettings(
   data: Omit<ExportedData, 'sites'>
 ): Promise<ImportSettingsResult> {
   return mutate<ImportSettingsResult>((current, vision) => {
-    const { vision: nextVision, skippedPresets } = applyImportedVision(
-      data,
-      vision,
-      MAX_PRESETS
+    const {
+      vision: nextVision,
+      images,
+      skippedPresets
+    } = applyImportedVision(data, vision, MAX_PRESETS, () =>
+      crypto.randomUUID()
     );
     const skippedIds = new Set(skippedPresets.map((preset) => preset.id));
     const existingScheduleIds = new Set(
@@ -305,6 +320,7 @@ export async function importSettings(
     return {
       settings: applyImportedSettings({ ...data, schedules }, current),
       vision: nextVision,
+      images,
       result: {
         skippedPresets: skippedPresets.map((preset) => preset.name),
         clearedActivePreset:
@@ -353,7 +369,8 @@ export async function createPreset(
       ...DEFAULT_DISPLAY_SETTINGS,
       id: crypto.randomUUID(),
       name,
-      createdAt: createdAt.toISOString()
+      createdAt: createdAt.toISOString(),
+      customBackgroundId: null
     };
     return {
       vision: { ...vision, presets: [...vision.presets, preset] },
@@ -362,9 +379,37 @@ export async function createPreset(
   });
 }
 
+interface ImageChange {
+  customBackgroundId: string | null;
+  images?: Record<string, string>;
+  removedImageIds?: string[];
+}
+
+function changeImage(
+  currentId: string | null,
+  image: PresetImageInput
+): ImageChange {
+  const removedImageIds = currentId === null ? [] : [currentId];
+  switch (image.kind) {
+    case 'keep':
+      return { customBackgroundId: currentId };
+    case 'clear':
+      return { customBackgroundId: null, removedImageIds };
+    case 'set': {
+      // 同じ ID の中身を書き換えないので、画面は ID ごとに 1 回読めば済む
+      const imageId = crypto.randomUUID();
+      return {
+        customBackgroundId: imageId,
+        images: { [imageId]: image.dataUrl },
+        removedImageIds
+      };
+    }
+  }
+}
+
 /**
- * スタイルの名前と表示設定を置き換える（ID と作成時刻は保つ）
- * @param input 置き換える内容（検証済み）
+ * スタイルの名前・表示設定・画像を置き換える（ID と作成時刻は保つ）。画像を変えるときは新しい ID で作り、古い画像を先に消してからスタイルを書く
+ * @param input 置き換える内容（検証済み。set の画像も検証済み）
  * @returns 拒んだ理由（not-found）。置き換えたら null
  */
 export async function updatePreset(
@@ -374,13 +419,20 @@ export async function updatePreset(
     const existing = vision.presets.find((preset) => preset.id === input.id);
     if (!existing) return { result: 'not-found' };
 
+    const { customBackgroundId, images, removedImageIds } = changeImage(
+      existing.customBackgroundId,
+      input.image
+    );
     const updated: DashboardPreset = {
       ...input.display,
       id: existing.id,
       name: input.name,
-      createdAt: existing.createdAt
+      createdAt: existing.createdAt,
+      customBackgroundId
     };
     return {
+      images,
+      removedImageIds,
       vision: {
         ...vision,
         presets: vision.presets.map((preset) =>
@@ -407,7 +459,7 @@ export async function applyPreset(id: string): Promise<PresetRejection | null> {
 }
 
 /**
- * スタイルを消し、適用中ならその指定を外し、参照しているスケジュールからも外す（設定と表示設定を 1 回の書き込みで保存する）
+ * スタイルとその画像を消し、適用中ならその指定を外し、参照しているスケジュールからも外す（画像を先に消してから、設定と表示設定を 1 回の書き込みで保存する）
  * @param id 消すスタイルの ID
  * @returns 拒んだ理由（not-found）。消したら null
  */
@@ -415,13 +467,16 @@ export async function deletePreset(
   id: string
 ): Promise<PresetRejection | null> {
   return mutate((current, vision) => {
-    if (!vision.presets.some((preset) => preset.id === id)) {
+    const target = vision.presets.find((preset) => preset.id === id);
+    if (!target) {
       return { result: 'not-found' };
     }
     const referenced = current.schedules.some(
       (schedule) => schedule.presetId === id
     );
     return {
+      removedImageIds:
+        target.customBackgroundId === null ? [] : [target.customBackgroundId],
       ...(referenced && {
         settings: {
           ...current,

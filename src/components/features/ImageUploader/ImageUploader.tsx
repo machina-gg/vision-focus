@@ -22,6 +22,8 @@ export interface ImageUploaderProps {
   maxSizeMB?: number;
   /** true なら選択・ドロップ・削除をできなくする */
   disabled?: boolean;
+  /** true なら保存済みの画像を読み込み中として、アップロード欄の代わりに読み込み中の表示を出す */
+  loading?: boolean;
 }
 
 const BYTES_PER_MB = 1024 * 1024;
@@ -51,7 +53,8 @@ export function ImageUploader({
   value,
   onChange,
   maxSizeMB = 1,
-  disabled = false
+  disabled = false,
+  loading = false
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -143,6 +146,18 @@ export function ImageUploader({
       fileInputRef.current.click();
     }
   }, [disabled]);
+
+  if (loading && !value) {
+    return (
+      <div
+        data-testid="image-uploader-loading"
+        aria-busy="true"
+        className="w-full aspect-video rounded-lg border border-gray-200 bg-gray-100 animate-pulse flex items-center justify-center"
+      >
+        <p className="text-sm text-gray-600">{getMessage('loading')}</p>
+      </div>
+    );
+  }
 
   if (value) {
     return (

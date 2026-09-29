@@ -47,6 +47,7 @@ vi.mock('~/components/options/modals', () => ({
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    draftBackgroundData: null,
     draftPresets: [],
     selectedPresetId: 'preset-1',
     editingPresetName: 'スタイル A',
@@ -158,9 +159,9 @@ describe('StylesTab', () => {
       renderTab({
         draftDisplaySettings: displayWith({
           backgroundType: 'color',
-          backgroundColor: '#112233',
-          customBackgroundData: 'data:image/webp;base64,AAAA'
-        })
+          backgroundColor: '#112233'
+        }),
+        draftBackgroundData: 'data:image/webp;base64,AAAA'
       });
 
       expect(screen.getByTestId('style-preview')).toHaveStyle({
@@ -171,9 +172,9 @@ describe('StylesTab', () => {
     it('種類が画像で取り込んだ画像があるときはそれを敷く', () => {
       renderTab({
         draftDisplaySettings: displayWith({
-          backgroundType: 'image',
-          customBackgroundData: 'data:image/webp;base64,AAAA'
-        })
+          backgroundType: 'image'
+        }),
+        draftBackgroundData: 'data:image/webp;base64,AAAA'
       });
 
       expect(screen.getByTestId('style-preview')).toHaveStyle({
@@ -185,9 +186,9 @@ describe('StylesTab', () => {
       renderTab({
         draftDisplaySettings: displayWith({
           backgroundType: 'image',
-          backgroundImage: 'default-3',
-          customBackgroundData: null
-        })
+          backgroundImage: 'default-3'
+        }),
+        draftBackgroundData: null
       });
 
       expect(screen.getByTestId('style-preview')).toHaveStyle({
@@ -200,14 +201,44 @@ describe('StylesTab', () => {
       renderTab({
         draftDisplaySettings: displayWith({
           backgroundType: 'image',
-          backgroundImage: '',
-          customBackgroundData: null
-        })
+          backgroundImage: ''
+        }),
+        draftBackgroundData: null
       });
 
       expect(screen.getByTestId('style-preview')).toHaveStyle({
         backgroundImage: 'url(stub://backgrounds/default-1.webp)'
       });
+    });
+
+    it('保存済みの画像を読み込み中は、既定の画像も仮の色も敷かずに読み込み中と出す', () => {
+      renderTab({
+        draftDisplaySettings: displayWith({ backgroundType: 'image' }),
+        draftBackgroundData: undefined
+      });
+
+      const preview = screen.getByTestId('style-preview');
+      expect(preview).toHaveAttribute('aria-busy', 'true');
+      expect(preview.style.backgroundImage).toBe('');
+      expect(preview.style.backgroundColor).toBe('');
+      expect(screen.getByTestId('style-preview-loading')).toHaveTextContent(
+        'loading'
+      );
+    });
+
+    it('単色の背景なら、画像を読み込み中でも読み込み中とは出さない', () => {
+      renderTab({
+        draftDisplaySettings: displayWith({
+          backgroundType: 'color',
+          backgroundColor: '#112233'
+        }),
+        draftBackgroundData: undefined
+      });
+
+      expect(screen.getByTestId('style-preview')).toHaveStyle({
+        backgroundColor: '#112233'
+      });
+      expect(screen.queryByTestId('style-preview-loading')).toBeNull();
     });
   });
 

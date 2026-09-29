@@ -154,7 +154,7 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 ### 補足
 
-- chrome.storage.local: 5MB以上の大容量データに対応
+- chrome.storage.local: 既定の上限（10 MB）を `unlimitedStorage` 権限で外している（スタイルごとの画像と記録を合わせると上限を超えうるため）
 - 使用統計: GA4（オプトイン、匿名データのみ）
 
 ## 5. データ通信方針
@@ -203,13 +203,19 @@ Manifest V3 の CSP に準拠し、以下を遵守：
 
 ### 権限の最小化
 
-| 権限                         | 用途           |
-| ---------------------------- | -------------- |
-| storage                      | データ保存     |
-| tabs                         | タブ情報取得   |
-| declarativeNetRequest        | サイトブロック |
-| alarms                       | 定期処理       |
-| host_permissions: <all_urls> | 滞在時間計測   |
+manifest の定義は `wxt.config.ts`（`permissions` / `host_permissions`）。
+
+| 権限                         | 用途                                                   |
+| ---------------------------- | ------------------------------------------------------ |
+| storage                      | データ保存                                             |
+| unlimitedStorage             | 保存領域の既定の上限を外す（スタイルの画像を保存する） |
+| tabs                         | タブ情報取得                                           |
+| declarativeNetRequest        | サイトブロック                                         |
+| alarms                       | 定期処理                                               |
+| webNavigation                | ブロック対象への遷移を記録する                         |
+| notifications                | 時間制限の残り時間の通知                               |
+| clipboardWrite               | 共有画像のクリップボードへのコピー                     |
+| host_permissions: <all_urls> | 滞在時間計測                                           |
 
 ### データ保護
 

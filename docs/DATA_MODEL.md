@@ -22,10 +22,11 @@ chrome.storage に保存するデータ構造の設計。
 
 項目定義を通さないもの:
 
-| 領域    | キー                                                  | 持ち主                                                               |
-| ------- | ----------------------------------------------------- | -------------------------------------------------------------------- |
-| local   | `ga_client_id` / `ga_session_id` / `ga_session_start` | `src/lib/analytics.ts`（GA4。詳細は [ANALYTICS.md](./ANALYTICS.md)） |
-| session | `lastBlocked`                                         | `src/lib/storage.ts`。ブロック画面の帯に出すホスト名とブロックの理由 |
+| 領域    | キー                                                  | 持ち主                                                                                                                                                          |
+| ------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| local   | `backgroundImage:<imageId>`                           | 書き手は background（`src/lib/settingsService.ts`）、キーを作るのは `src/lib/storage.ts` の `backgroundImageKey`。スタイルの背景画像 1 枚（「スタイルの画像」） |
+| local   | `ga_client_id` / `ga_session_id` / `ga_session_start` | `src/lib/analytics.ts`（GA4。詳細は [ANALYTICS.md](./ANALYTICS.md)）                                                                                            |
+| session | `lastBlocked`                                         | `src/lib/storage.ts`。ブロック画面の帯に出すホスト名とブロックの理由                                                                                            |
 
 ## エンティティ関連図
 
@@ -47,6 +48,7 @@ erDiagram
     VisionSettings ||--|| DashboardDisplaySettings : has
     VisionSettings ||--o{ DashboardPreset : contains
     DashboardPreset ||--|| DashboardDisplaySettings : extends
+    DashboardPreset ||--o| BackgroundImage : "customBackgroundId"
     DashboardDisplaySettings ||--|| FontSettings : has
     Schedule }o--o| DashboardPreset : references
 ```
@@ -204,26 +206,42 @@ erDiagram
 
 ### DashboardDisplaySettings（表示設定）
 
-| フィールド           | 型                 | 説明                     |
-| -------------------- | ------------------ | ------------------------ |
-| goalText             | string             | 目標テキスト             |
-| goalSubText          | string             | サブテキスト             |
-| textColor            | string             | テキスト色               |
-| backgroundType       | "image" \| "color" | 背景の種類               |
-| backgroundImage      | string             | 既定の背景画像の ID      |
-| backgroundColor      | string             | 背景色                   |
-| customBackgroundData | string \| null     | 取り込んだ背景（Base64） |
-| fontSettings         | FontSettings       | フォント設定             |
+| フィールド      | 型                 | 説明                |
+| --------------- | ------------------ | ------------------- |
+| goalText        | string             | 目標テキスト        |
+| goalSubText     | string             | サブテキスト        |
+| textColor       | string             | テキスト色          |
+| backgroundType  | "image" \| "color" | 背景の種類          |
+| backgroundImage | string             | 既定の背景画像の ID |
+| backgroundColor | string             | 背景色              |
+| fontSettings    | FontSettings       | フォント設定        |
+
+利用者の画像は持たない（持てるのはスタイルだけ）。
 
 ### DashboardPreset（スタイル）
 
 DashboardDisplaySettings に次を足したもの。
 
-| フィールド | 型     | 説明                |
-| ---------- | ------ | ------------------- |
-| id         | string | 一意識別子          |
-| name       | string | スタイル名          |
-| createdAt  | string | 作成日時（ISO8601） |
+| フィールド         | 型             | 説明                                                                                      |
+| ------------------ | -------------- | ----------------------------------------------------------------------------------------- |
+| id                 | string         | 一意識別子                                                                                |
+| name               | string         | スタイル名                                                                                |
+| createdAt          | string         | 作成日時（ISO8601）                                                                       |
+| customBackgroundId | string \| null | 利用者の画像の ID（「スタイルの画像」）。あれば backgroundImage より優先。null = 使わない |
+
+### スタイルの画像
+
+画像 1 枚を 1 つの保存キー `backgroundImage:<imageId>` に置く（値は JPEG の data URL で、文字数は `IMAGE_LIMITS.TARGET_SIZE` 以下）。論理的には画像はスタイルの一部で、書き手の `src/lib/settingsService.ts` が次を守る。
+
+| 規則                         | 守り方                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| スタイルと一緒に作る         | 作るのは `update-preset` の画像の `set` と設定の取り込みだけ。ID は background が振る                                                 |
+| 差し替えるたびに新しい ID    | 同じ ID の中身は書き換えない。読み手は ID ごとに 1 回読めば済み、変更を監視しない                                                     |
+| スタイルと一緒に消す         | `update-preset` の `set` / `clear` と `delete-preset` が古い画像を消す                                                                |
+| 共有しない                   | 既存の画像 ID を画面から受け取るメッセージは無い。取り込みも毎回新しい ID で作る                                                      |
+| 持ち主のいない画像を残さない | 古い画像を消してから、スタイル（と足す画像）を 1 回の書き込みで書く。間で止まっても残るのは「画像の無い ID を指すスタイル」だけになる |
+
+読み手（`src/hooks/useBackgroundImage.ts`）は画像の無い ID を画像なしとして扱う。新しいタブは表示するスタイルの画像 1 枚だけを読む。
 
 ### FontSettings（フォント設定）
 
@@ -239,6 +257,14 @@ DashboardDisplaySettings に次を足したもの。
 | ----------- | -------------- | ----------------------------------------------- |
 | dismissedAt | number \| null | 最後に閉じた時刻（epoch ms）。未操作なら null   |
 | opened      | boolean        | 支援ページを開いたことがあるか。true なら非表示 |
+
+## 設定ファイル（書き出し形式）
+
+書き出し・取り込みは `src/lib/settingsExport.ts`。形式の版は `EXPORT_VERSION`（古い版の扱いは [SCREEN.md](./SCREEN.md) の設定タブ「設定のバックアップ」）。
+
+- スタイルの画像は ID ではなく data URL（`customBackgroundData`）でスタイルごとに含め、ファイル 1 つで完結させる。既定の表示設定は画像の欄を持たない
+- 取り込みは設定・表示設定・画像を 1 回の書き込みで保存する（画像の ID の振り方は「スタイルの画像」、スタイルの重ね方は「VisionSettings」）
+- 取り込むファイルの大きさの上限は `MAX_IMPORT_SIZE`（「機能上限」）。超えたら形式エラーではなく大きすぎる旨で拒む
 
 ## 導出する値
 
@@ -259,11 +285,12 @@ DashboardDisplaySettings に次を足したもの。
 
 課金による機能制限は行わない（詳細は [PRD.md](./PRD.md) のマネタイズセクションを参照）。
 
-| 項目           | 上限   | 理由                                                             |
-| -------------- | ------ | ---------------------------------------------------------------- |
-| 追跡中のサイト | 無制限 | -                                                                |
-| 事実の保持     | 365日  | ストレージ肥大の防止。`daily-cleanup` アラームが古い日の行を消す |
-| スタイル       | 10件   | [PRD.md](./PRD.md)「機能上限について」                           |
-| カスタム背景   | 無制限 | -                                                                |
+| 項目                   | 上限                | 理由                                                                     |
+| ---------------------- | ------------------- | ------------------------------------------------------------------------ |
+| 追跡中のサイト         | 無制限              | -                                                                        |
+| 事実の保持             | 365日               | ストレージ肥大の防止。`daily-cleanup` アラームが古い日の行を消す         |
+| スタイル               | 10件                | [PRD.md](./PRD.md)「機能上限について」                                   |
+| 利用者の画像           | スタイルごとに 1 枚 | 画像はスタイルの一部（「スタイルの画像」）                               |
+| 設定ファイルの取り込み | 15 MB               | 画像を含む書き出し（スタイルの上限 × 画像 1 枚の上限）を取り込めるように |
 
-定義箇所: `src/constants/limits.ts`（`MAX_PRESETS`）、`src/constants/intervals.ts`（`MAX_HISTORY_DAYS_FALLBACK`）
+定義箇所: `src/constants/limits.ts`（`MAX_PRESETS` / `IMAGE_LIMITS` / `MAX_IMPORT_SIZE`）、`src/constants/intervals.ts`（`MAX_HISTORY_DAYS_FALLBACK`）

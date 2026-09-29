@@ -29,7 +29,8 @@ const visionWithPreset = (id: string, name: string): VisionSettings => ({
       ...DEFAULT_DISPLAY_SETTINGS,
       id,
       name,
-      createdAt: '2026-01-01T00:00:00.000Z'
+      createdAt: '2026-01-01T00:00:00.000Z',
+      customBackgroundId: null
     }
   ]
 });

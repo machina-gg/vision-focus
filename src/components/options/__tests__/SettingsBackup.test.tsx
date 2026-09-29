@@ -9,11 +9,24 @@ import {
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
 import { MAX_PRESETS } from '~/constants/limits';
-import { DEFAULT_SETTINGS, DEFAULT_VISION } from '~/types/storage';
+import {
+  DEFAULT_DISPLAY_SETTINGS,
+  DEFAULT_SETTINGS,
+  DEFAULT_VISION,
+  type DashboardPreset
+} from '~/types/storage';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite, sitesOf } from '~/test/sites';
 
 const IMPORTED_SITES = sitesOf(blockedSite('example.com'));
+
+const presetOf = (id: string): DashboardPreset => ({
+  ...DEFAULT_DISPLAY_SETTINGS,
+  id,
+  name: id,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  customBackgroundId: null
+});
 
 const settingsExport = vi.hoisted(() => ({
   exportSettings: vi.fn(),
@@ -23,6 +36,7 @@ const settingsExport = vi.hoisted(() => ({
 }));
 
 const storage = vi.hoisted(() => ({
+  getBackgroundImages: vi.fn(),
   getSettings: vi.fn(),
   getSites: vi.fn(),
   getVision: vi.fn(),
@@ -62,6 +76,7 @@ beforeEach(() => {
   storage.getSettings.mockReset().mockResolvedValue(DEFAULT_SETTINGS);
   storage.getSites.mockReset().mockResolvedValue(IMPORTED_SITES);
   storage.getVision.mockReset().mockResolvedValue(DEFAULT_VISION);
+  storage.getBackgroundImages.mockReset().mockResolvedValue({});
   storage.settingsItem.setValue.mockReset();
   storage.visionItem.setValue.mockReset();
   messaging.sendMessage.mockReset().mockResolvedValue({ success: true });
@@ -90,8 +105,18 @@ describe('SettingsBackup', () => {
   });
 
   describe('エクスポート', () => {
-    it('現在の設定・スタイル・追跡中のサイトを渡して書き出す', async () => {
+    it('現在の設定・スタイル・追跡中のサイトと、スタイルの画像を渡して書き出す', async () => {
       const data = { version: 1 };
+      const vision = {
+        ...DEFAULT_VISION,
+        presets: [
+          { ...presetOf('p1'), customBackgroundId: 'img-1' },
+          presetOf('p2')
+        ]
+      };
+      const images = { 'img-1': 'data:image/jpeg;base64,AAAA' };
+      storage.getVision.mockResolvedValue(vision);
+      storage.getBackgroundImages.mockResolvedValue(images);
       settingsExport.exportSettings.mockReturnValue({ data, isLarge: false });
       render(<SettingsBackup />);
 
@@ -99,10 +124,12 @@ describe('SettingsBackup', () => {
         fireEvent.click(exportButton());
       });
 
+      expect(storage.getBackgroundImages).toHaveBeenCalledWith(['img-1']);
       expect(settingsExport.exportSettings).toHaveBeenCalledWith(
         DEFAULT_SETTINGS,
-        DEFAULT_VISION,
-        IMPORTED_SITES
+        vision,
+        IMPORTED_SITES,
+        images
       );
       expect(settingsExport.downloadSettings).toHaveBeenCalledWith(data);
       expect(exportButton()).toHaveTextContent('saved');
@@ -286,6 +313,8 @@ describe('SettingsBackup', () => {
   });
 
   describe('インポートの失敗', () => {
+    stubI18nWithSubstitutions();
+
     it('検証で弾かれたら理由を出し、保存へ進まない', async () => {
       settingsExport.validateImportedData.mockReturnValue({
         success: false,
@@ -297,6 +326,22 @@ describe('SettingsBackup', () => {
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorVersionMismatch'
+      );
+      expect(messaging.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('理由に差し込む値があれば文言に差し込む', async () => {
+      settingsExport.validateImportedData.mockReturnValue({
+        success: false,
+        error: 'importErrorFileTooLarge',
+        errorSubstitutions: ['15']
+      });
+      render(<SettingsBackup />);
+
+      await importFile();
+
+      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
+        'importErrorFileTooLarge(15)'
       );
       expect(messaging.sendMessage).not.toHaveBeenCalled();
     });

@@ -10,7 +10,11 @@ import {
   holdUnblockConfirm,
   makeAppSettings,
   makeDisplaySettings,
+  makePreset,
   makeVision,
+  setBackgroundImage,
+  getBackgroundImageIds,
+  TINY_JPEG_DATA_URL,
   toggleAfter,
   SELECTORS,
   TEST_DATA,
@@ -299,6 +303,16 @@ test.describe('Options - Settings Tab', () => {
       'sites',
       makeSites([{ domain: 'reddit.com', block: {} }])
     );
+    await setStorageData(
+      setupPage,
+      'vision',
+      makeVision({
+        presets: [
+          makePreset('default', 'Default', { customBackgroundId: 'img-1' })
+        ]
+      })
+    );
+    await setBackgroundImage(setupPage, 'img-1', TINY_JPEG_DATA_URL);
     await setupPage.close();
 
     const page = await openOptions(context, extensionId, 'settings');
@@ -322,9 +336,22 @@ test.describe('Options - Settings Tab', () => {
           return chunks;
         })()
       ).toString('utf8')
-    ) as { version: number; data: { sites: Record<string, unknown> } };
+    ) as {
+      version: number;
+      data: {
+        sites: Record<string, unknown>;
+        presets: { id: string; customBackgroundData: string | null }[];
+      };
+    };
     expect(exported.version).toBe(EXPORT_VERSION);
     expect(Object.keys(exported.data.sites)).toEqual(['reddit.com']);
+    expect(exported.data.presets).toEqual([
+      expect.objectContaining({
+        id: 'default',
+        customBackgroundData: TINY_JPEG_DATA_URL
+      })
+    ]);
+    expect(exported.data.presets[0]).not.toHaveProperty('customBackgroundId');
 
     await page.close();
   });
@@ -340,15 +367,21 @@ test.describe('Options - Settings Tab', () => {
     const vision = makeVision({
       defaultSettings: makeDisplaySettings({ goalText: 'Imported Goal' })
     });
+    const { customBackgroundId: _id, ...importedStyle } = makePreset(
+      'imported-style',
+      'Imported Style'
+    );
     const testData = {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       data: {
         sites: makeSites([{ domain: 'imported.example', block: {} }]),
         schedules: settings.schedules,
-        presets: vision.presets,
+        presets: [
+          { ...importedStyle, customBackgroundData: TINY_JPEG_DATA_URL }
+        ],
         defaultDisplaySettings: vision.defaultSettings,
-        activePresetId: vision.activePresetId,
+        activePresetId: null,
         notifications: settings.notifications,
         unblockConfirm: settings.unblockConfirm
       }
@@ -382,6 +415,15 @@ test.describe('Options - Settings Tab', () => {
     await expect(
       page.locator(SELECTORS.settings.unblockHoldSecondsSelect)
     ).toHaveValue(String(IMPORTED_HOLD_SECONDS));
+
+    // 取り込んだスタイルは新しい ID で作った画像を指す
+    const imported = (await getStorageData(page, 'vision'))?.presets.find(
+      (p) => p.id === 'imported-style'
+    );
+    expect(imported?.customBackgroundId).toEqual(expect.any(String));
+    expect(await getBackgroundImageIds(page)).toEqual([
+      imported?.customBackgroundId
+    ]);
 
     await page.close();
   });

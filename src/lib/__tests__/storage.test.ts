@@ -46,6 +46,9 @@ const fakeChrome = vi.hoisted(() => {
 });
 
 import {
+  backgroundImageKey,
+  getBackgroundImage,
+  getBackgroundImages,
   getSettings,
   getVision,
   setVision,
@@ -94,6 +97,32 @@ describe('保存形式', () => {
     expect(await getSites()).toEqual(DEFAULT_SITES);
     // 未保存判定でも旧形式は「保存されていない」として扱う
     expect(await hasStoredVision()).toBe(false);
+  });
+});
+
+describe('背景画像', () => {
+  const JPEG = 'data:image/jpeg;base64,/9j/AAAA';
+
+  it('画像 1 枚ごとに backgroundImage:<ID> の実キーで読む', async () => {
+    fakeChrome.localData['backgroundImage:img-1'] = JPEG;
+
+    expect(backgroundImageKey('img-1')).toBe('local:backgroundImage:img-1');
+    expect(await getBackgroundImage('img-1')).toBe(JPEG);
+  });
+
+  it('画像の無い ID・文字列でない値は null（画像なし）にする', async () => {
+    fakeChrome.localData['backgroundImage:broken'] = { data: JPEG };
+
+    expect(await getBackgroundImage('missing')).toBeNull();
+    expect(await getBackgroundImage('broken')).toBeNull();
+  });
+
+  it('まとめて読むと、画像のある ID だけを返す', async () => {
+    fakeChrome.localData['backgroundImage:img-1'] = JPEG;
+
+    expect(await getBackgroundImages(['img-1', 'missing'])).toEqual({
+      'img-1': JPEG
+    });
   });
 });
 

@@ -5,6 +5,7 @@ import { isWithinSchedule } from '~/lib/time';
 import type {
   VisionSettings,
   DashboardDisplaySettings,
+  DashboardPreset,
   AppSettings
 } from '~/types/storage';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
@@ -19,6 +20,8 @@ interface UseResolvedPresetOptions {
 interface UseResolvedPresetReturn {
   /** 今表示する表示設定 */
   displaySettings: DashboardDisplaySettings;
+  /** 今表示するスタイルの画像の ID。既定の表示設定・画像の無いスタイルなら null */
+  customBackgroundId: string | null;
   /** タブが再表示されるたびに 1 増える数（判定し直すきっかけ） */
   timeTick: number;
 }
@@ -28,7 +31,7 @@ interface UseResolvedPresetReturn {
  * @param options フックの入力（下記の項目）
  * @param options.vision 保存済みのダッシュボードの設定。読み込み前は undefined（既定の表示設定を返す）
  * @param options.settings 今のアプリ設定。読み込み前は undefined（スケジュールを見ない）
- * @returns 今表示する表示設定と、再表示の回数
+ * @returns 今表示する表示設定とその画像の ID、再表示の回数
  */
 export function useResolvedPreset({
   vision,
@@ -47,8 +50,8 @@ export function useResolvedPreset({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  const displaySettings: DashboardDisplaySettings = useMemo(() => {
-    if (!vision) return DEFAULT_DISPLAY_SETTINGS;
+  const resolvedPreset: DashboardPreset | null = useMemo(() => {
+    if (!vision) return null;
 
     const activeScheduleWithPreset = settings?.schedules?.find(
       (schedule) =>
@@ -61,23 +64,28 @@ export function useResolvedPreset({
       const schedulePreset = vision.presets?.find(
         (p) => p.id === activeScheduleWithPreset.presetId
       );
-      if (schedulePreset) {
-        return presetToDisplaySettings(schedulePreset);
-      }
+      if (schedulePreset) return schedulePreset;
     }
 
     if (vision.activePresetId) {
       const activePreset = vision.presets?.find(
         (p) => p.id === vision.activePresetId
       );
-      if (activePreset) {
-        return presetToDisplaySettings(activePreset);
-      }
+      if (activePreset) return activePreset;
     }
 
-    return vision.defaultSettings || DEFAULT_DISPLAY_SETTINGS;
+    return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timeTick forces re-computation on tab visibility change
   }, [vision, settings, timeTick]);
 
-  return { displaySettings, timeTick };
+  const displaySettings: DashboardDisplaySettings = useMemo(() => {
+    if (resolvedPreset) return presetToDisplaySettings(resolvedPreset);
+    return vision?.defaultSettings || DEFAULT_DISPLAY_SETTINGS;
+  }, [resolvedPreset, vision]);
+
+  return {
+    displaySettings,
+    customBackgroundId: resolvedPreset?.customBackgroundId ?? null,
+    timeTick
+  };
 }

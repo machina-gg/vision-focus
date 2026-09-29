@@ -187,13 +187,14 @@ describe('import-settings ハンドラ', () => {
     });
   });
 
-  it('表示設定も重ねる側へ渡し、上限で取り込まなかったスタイルと外した参照を返す', async () => {
+  it('表示設定（スタイルの画像を含む）も重ねる側へ渡し、上限で取り込まなかったスタイルと外した参照を返す', async () => {
     const presets = [
       {
         ...DEFAULT_DISPLAY_SETTINGS,
         id: 'p1',
         name: 'Morning',
-        createdAt: '2026-01-01T00:00:00.000Z'
+        createdAt: '2026-01-01T00:00:00.000Z',
+        customBackgroundData: 'data:image/jpeg;base64,/9j/AAAA'
       }
     ];
     vi.mocked(importSettings).mockResolvedValue({
