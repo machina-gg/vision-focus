@@ -88,9 +88,10 @@ test.describe('Allow - 許可サイトの集計', () => {
       )
     ).toContainText(formatTime(ALLOWED_SECONDS));
 
+    // 見出しの親は見出しの行だけなので、ランキングの行を含む Card まで 2 つ上る
     const ranking = page
       .locator(SELECTORS.analytics.siteRankingList)
-      .locator('xpath=..');
+      .locator('xpath=../..');
     await expect(ranking).toContainText(BLOCKED);
     await expect(ranking).not.toContainText(ALLOWED);
 
