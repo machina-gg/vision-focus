@@ -29,7 +29,7 @@ export function BlockedSitesList({
   const [showsAll, setShowsAll] = useState(false);
 
   const enabledBlockList = blockListSites(trackedSites).filter(
-    (site) => site.block.enabled
+    (site) => site.rule.enabled
   );
 
   if (enabledBlockList.length === 0) {

@@ -1,4 +1,4 @@
-import type { SiteKey } from '~/types/site';
+import type { SiteKey, SiteRule, TrackedSites } from '~/types/site';
 
 /** YouTube のサイトキー。YouTube 固有の非表示機能はこのキーのサイトだけが持てる */
 export const YOUTUBE_DOMAIN: SiteKey = 'youtube.com';
@@ -23,7 +23,25 @@ export function normalizeSiteKey(input: string): SiteKey {
 }
 
 /**
- * ホスト名が属するサイトキー（キーと一致するか .キー で終わるもののうち最長。無ければ null）
+ * ホスト名を覆うサイトキー（キーと一致するか .キー で終わるもの）をキーの長い順に返す
+ * @param hostname 引き当てるホスト名
+ * @param sites 候補のサイトキー
+ * @returns 覆うサイトキー（最も具体的なものが先頭。無ければ空）
+ */
+export function coveringSiteKeys(
+  hostname: string,
+  sites: readonly SiteKey[]
+): SiteKey[] {
+  const host = hostname.trim().toLowerCase();
+  if (!host) return [];
+
+  return sites
+    .filter((key) => key && (host === key || host.endsWith(`.${key}`)))
+    .sort((a, b) => b.length - a.length);
+}
+
+/**
+ * ホスト名が属するサイトキー（覆うもののうち最長。無ければ null）
  * @param hostname 引き当てるホスト名
  * @param sites 候補のサイトキー
  * @returns 最も具体的に一致するサイトキー
@@ -32,18 +50,7 @@ export function resolveSiteKey(
   hostname: string,
   sites: readonly SiteKey[]
 ): SiteKey | null {
-  const host = hostname.trim().toLowerCase();
-  if (!host) return null;
-
-  let best: SiteKey | null = null;
-  for (const key of sites) {
-    if (!key) continue;
-    const matches = host === key || host.endsWith(`.${key}`);
-    if (matches && (best === null || key.length > best.length)) {
-      best = key;
-    }
-  }
-  return best;
+  return coveringSiteKeys(hostname, sites)[0] ?? null;
 }
 
 /** 入れ子になる既存のサイト。relation は既存のサイトから見た関係 */
@@ -55,19 +62,25 @@ export interface NestedSite {
 }
 
 /**
- * key を追加すると入れ子になる既存のサイトを返す（同じキーは数えない。無ければ null）
- * @param key 追加しようとしているサイトキー
- * @param sites 既存のサイトキー
- * @returns 最初に見つかった入れ子になるサイトとその関係
+ * key を kind の規則で登録すると許されない入れ子になる既存のサイトを返す（祖先・子孫の組を許すのは子孫が許可サイトのときだけ。同じキーは数えない）
+ * @param key 登録しようとしているサイトキー
+ * @param kind 登録する規則の種類（null = 規則なし）
+ * @param sites 既存の登録
+ * @returns 最初に見つかった許されない入れ子の相手とその関係（無ければ null）
  */
-export function findNestedSite(
+export function findNestingConflict(
   key: SiteKey,
-  sites: readonly SiteKey[]
+  kind: SiteRule['kind'] | null,
+  sites: TrackedSites
 ): NestedSite | null {
-  for (const site of sites) {
+  for (const [site, entry] of Object.entries(sites)) {
     if (!site || site === key) continue;
-    if (key.endsWith(`.${site}`)) return { site, relation: 'ancestor' };
-    if (site.endsWith(`.${key}`)) return { site, relation: 'descendant' };
+    if (key.endsWith(`.${site}`) && kind !== 'allow') {
+      return { site, relation: 'ancestor' };
+    }
+    if (site.endsWith(`.${key}`) && entry.rule?.kind !== 'allow') {
+      return { site, relation: 'descendant' };
+    }
   }
   return null;
 }

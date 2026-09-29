@@ -81,10 +81,21 @@ export type UpdateYouTubeSettingsBody = z.infer<
 >;
 
 const BlockRuleSchema = z.object({
+  kind: z.literal('block'),
   enabled: z.boolean(),
   addedAt: z.string(),
   timeLimit: TimeLimitSchema.nullable()
 });
+
+const AllowRuleSchema = z.object({
+  kind: z.literal('allow'),
+  recordTime: z.boolean()
+});
+
+const SiteRuleSchema = z.discriminatedUnion('kind', [
+  BlockRuleSchema,
+  AllowRuleSchema
+]);
 
 /** YouTube の非表示機能の保存値の形（YouTubeFeatures と対応する） */
 export const YouTubeFeaturesSchema = z.object({
@@ -98,14 +109,14 @@ export const YouTubeFeaturesSchema = z.object({
   hideHomeFeed: z.boolean()
 });
 
-/** 追跡中のサイトの保存値の形（TrackedSite と対応する。設定の書き出し・取り込みの検証に使う） */
-export const TrackedSiteSchema = z.object({
+/** 保存する 1 項目の形（SiteEntry と対応する。設定の書き出し・取り込みの検証に使う） */
+export const SiteEntrySchema = z.object({
   /** サイトキー */
   domain: z.string(),
   /** 追跡を始めた時刻（ISO8601） */
   trackedAt: z.string(),
-  /** null = ブロック対象ではない（追跡だけ） */
-  block: BlockRuleSchema.nullable(),
+  /** ブロックか許可の規則（null = 規則なし・追跡だけ） */
+  rule: SiteRuleSchema.nullable(),
   /** YouTube の非表示機能。null = 使わない */
   youtube: YouTubeFeaturesSchema.nullable()
 });
@@ -348,7 +359,7 @@ export type UpdateGoalTextBody = z.infer<typeof UpdateGoalTextBodySchema>;
 /** 設定ファイルの中身（data）の形。画面の取り込み前の検査と background の取り込みが同じものを使う */
 export const ExportedDataSchema = z.object({
   /** 追跡中のサイト（キーはサイトキー） */
-  sites: z.record(z.string(), TrackedSiteSchema),
+  sites: z.record(z.string(), SiteEntrySchema),
   /** ブロックが効く時間帯 */
   schedules: z.array(ScheduleSchema),
   /** ダッシュボードのスタイル（画像は data URL で含む） */

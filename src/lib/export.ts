@@ -58,7 +58,7 @@ function formatDateKey(date: DateKey | null): string {
 export function blockListRows(sites: TrackedSites): string[][] {
   return blockListSites(sites).map((site) => [
     site.domain,
-    new Date(site.block.addedAt).toLocaleDateString()
+    new Date(site.rule.addedAt).toLocaleDateString()
   ]);
 }
 

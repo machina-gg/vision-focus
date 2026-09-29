@@ -12,6 +12,7 @@ const ALL_ERRORS: MessageError[] = [
   { code: 'invalid-domain' },
   { code: 'already-blocked' },
   { code: 'already-tracked' },
+  { code: 'already-allowed' },
   {
     code: 'nested-site',
     domain: 'm.youtube.com',
@@ -39,6 +40,7 @@ describe('messageErrorText（ja）', () => {
     [{ code: 'invalid-domain' }, 'ドメインの形式が正しくありません'],
     [{ code: 'already-blocked' }, 'このサイトは既にブロックリストにあります'],
     [{ code: 'already-tracked' }, 'このサイトは既に追跡中です'],
+    [{ code: 'already-allowed' }, 'このサイトは許可サイトに登録されています'],
     [{ code: 'block-not-found' }, 'このサイトのブロック設定が見つかりません'],
     [
       { code: 'site-in-use' },
@@ -71,14 +73,16 @@ describe('messageErrorText（ja）', () => {
     );
   });
 
-  it('入れ子は、追跡中のサイトの内側なら「含まれる」、外側なら「含まれている」で相手を示す', () => {
+  it('入れ子は、追跡中のサイトの内側なら「含まれる」と許可サイトへの案内、外側なら「含まれている」で相手を示す', () => {
     expect(
       messageErrorText({
         code: 'nested-site',
         domain: 'm.youtube.com',
         nested: { site: 'youtube.com', relation: 'ancestor' }
       })
-    ).toBe('m.youtube.com は追跡中の youtube.com に含まれるため追加できません');
+    ).toBe(
+      'm.youtube.com は追跡中の youtube.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
+    );
     expect(
       messageErrorText({
         code: 'nested-site',

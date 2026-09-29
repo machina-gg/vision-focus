@@ -39,6 +39,7 @@ interface Response {
 }
 
 const before = (enabled: boolean): BlockRule => ({
+  kind: 'block',
   enabled,
   addedAt: '2026-01-01T00:00:00.000Z',
   timeLimit: null

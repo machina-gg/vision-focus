@@ -62,7 +62,7 @@ export const AddSiteRejected: Story = {
   args: {
     ...Default.args,
     addSiteError:
-      'm.twitter.com は追跡中の twitter.com に含まれるため追加できません'
+      'm.twitter.com は追跡中の twitter.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
   }
 };
 

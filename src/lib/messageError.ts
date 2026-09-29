@@ -15,6 +15,8 @@ export function messageErrorText(error: MessageError | undefined): string {
       return getMessage('siteErrorAlreadyBlocked');
     case 'already-tracked':
       return getMessage('siteErrorAlreadyTracked');
+    case 'already-allowed':
+      return getMessage('siteErrorAlreadyAllowed');
     case 'nested-site':
       return getMessage(
         error.nested.relation === 'ancestor'

@@ -1,27 +1,29 @@
-// 条件は evaluateBlock にだけ置き、ここは材料を揃えて結論を束ねるだけにする（足すと判定とルールが食い違う）
-// 判定はホスト名を覆う登録すべてで行う（最も具体的な登録だけを見ると、親の `||キー` ルールが止めているのに許可と判定する）
+// 条件は evaluateBlock にだけ置き、ここは材料を揃えるだけにする（足すと判定と転送ルールが食い違う）
+// 許可サイトに当たるかを先に見る（転送ルールでは許可サイトの allow が覆うブロックの redirect より優先される）
 
 import { getSettings, getSites, activityItem } from '~/lib/storage';
 import { extractDomain } from '~/lib/domain';
 import { isWithinSchedule, toDateKey } from '~/lib/time';
 import { secondsOnDay } from '~/lib/activityStats';
 import { evaluateBlock, type BlockState } from '~/lib/blockRule';
+import { hasBlock, isAllowedHost, isAllowedSite } from '~/lib/blockList';
+import { coveringSiteKeys } from '~/lib/siteKey';
 import { objectOrFallback } from '~/lib/storedValue';
 import { DEFAULT_ACTIVITY } from '~/types/storage';
 import type { AppSettings, Schedule } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
-import type { BlockRule, SiteKey, TrackedSites } from '~/types/site';
+import type { BlockRule, SiteEntry, SiteKey, TrackedSites } from '~/types/site';
 
 export type { BlockReason, BlockState } from '~/lib/blockRule';
 
-/** evaluateBlock が見るブロック設定 */
+/** evaluateBlock が見るブロックの規則 */
 type BlockRuleInput = Pick<BlockRule, 'enabled' | 'timeLimit'>;
 
-/** 1 件の登録（ブロック設定を持つ追跡中のサイト）の判定結果 */
+/** 1 件のブロックの登録の判定結果 */
 export interface SiteBlockStatus {
   /** 登録のサイトキー */
   site: SiteKey;
-  /** 判定に使ったブロック設定 */
+  /** 判定に使ったブロックの規則 */
   rule: BlockRuleInput;
   /** 判定結果 */
   state: BlockState;
@@ -83,16 +85,25 @@ async function loadInputs(): Promise<BlockInputs> {
   };
 }
 
-function collectRegistrations(sites: TrackedSites): Registration[] {
-  const registrations: Registration[] = [];
-  for (const site of Object.values(sites)) {
-    if (!site.block) continue;
-    registrations.push({
-      site: site.domain,
-      rule: { enabled: site.block.enabled, timeLimit: site.block.timeLimit }
-    });
+function registrationOf(site: SiteEntry): Registration | null {
+  if (!hasBlock(site)) return null;
+  return {
+    site: site.domain,
+    rule: { enabled: site.rule.enabled, timeLimit: site.rule.timeLimit }
+  };
+}
+
+function coveringRegistration(
+  hostname: string,
+  sites: TrackedSites
+): Registration | null {
+  if (isAllowedHost(hostname, sites)) return null;
+  for (const key of coveringSiteKeys(hostname, Object.keys(sites))) {
+    const site = sites[key];
+    const registration = site ? registrationOf(site) : null;
+    if (registration) return registration;
   }
-  return registrations;
+  return null;
 }
 
 function evaluate(
@@ -108,56 +119,23 @@ function evaluate(
   return { site, rule, state };
 }
 
-function covers(site: SiteKey, hostname: string): boolean {
-  const host = hostname.trim().toLowerCase();
-  return host === site || host.endsWith(`.${site}`);
-}
-
-function statusesForHostname(
-  hostname: string,
-  registrations: readonly Registration[],
-  inputs: BlockInputs
-): SiteBlockStatus[] {
-  return registrations
-    .filter((registration) => covers(registration.site, hostname))
-    .sort((a, b) => b.site.length - a.site.length)
-    .map((registration) => evaluate(registration, inputs));
-}
-
-function representative(
-  statuses: readonly SiteBlockStatus[]
-): SiteBlockStatus | null {
-  const blocked = statuses.find((status) => status.state.blocked);
-  if (blocked) return blocked;
-
-  let tightest: SiteBlockStatus | null = null;
-  for (const status of statuses) {
-    const remaining = status.state.remainingSeconds;
-    if (remaining === undefined) continue;
-    const current = tightest?.state.remainingSeconds;
-    if (current === undefined || remaining < current) tightest = status;
-  }
-  return tightest ?? statuses[0] ?? null;
-}
-
 /**
- * ホスト名を覆う登録の判定結果を代表 1 件で返す（覆う登録が無ければ null）
+ * ホスト名を覆うブロックの登録の判定結果を返す
  * @param hostname 判定するホスト名
- * @returns ブロック中の登録があればそれ、無ければ残り秒数が最も少ない登録、それも無ければ最も具体的な登録（覆う登録が無ければ null）
+ * @returns 覆うブロックの登録の判定結果（許可サイトに当たるか、覆うブロックが無ければ null）
  */
 export async function getSiteBlockStatus(
   hostname: string
 ): Promise<SiteBlockStatus | null> {
   const inputs = await loadInputs();
-  return representative(
-    statusesForHostname(hostname, collectRegistrations(inputs.sites), inputs)
-  );
+  const registration = coveringRegistration(hostname, inputs.sites);
+  return registration ? evaluate(registration, inputs) : null;
 }
 
 /**
- * 複数のホスト名を覆う登録すべての判定結果を、登録ごとに 1 件で返す
+ * 複数のホスト名を覆うブロックの登録の判定結果を、登録ごとに 1 件で返す
  * @param hostnames 判定するホスト名（空なら空の配列を返す）
- * @returns いずれかのホスト名を覆う登録ごとの判定結果
+ * @returns いずれかのホスト名を覆うブロックの登録ごとの判定結果（許可サイトに当たるホスト名は数えない）
  */
 export async function getSiteBlockStatuses(
   hostnames: readonly string[]
@@ -165,14 +143,14 @@ export async function getSiteBlockStatuses(
   if (hostnames.length === 0) return [];
 
   const inputs = await loadInputs();
-  const registrations = collectRegistrations(inputs.sites);
-  const covering = new Set<Registration>();
+  const covering = new Map<SiteKey, Registration>();
   for (const hostname of hostnames) {
-    for (const registration of registrations) {
-      if (covers(registration.site, hostname)) covering.add(registration);
-    }
+    const registration = coveringRegistration(hostname, inputs.sites);
+    if (registration) covering.set(registration.site, registration);
   }
-  return [...covering].map((registration) => evaluate(registration, inputs));
+  return [...covering.values()].map((registration) =>
+    evaluate(registration, inputs)
+  );
 }
 
 /**
@@ -188,7 +166,7 @@ export async function getBlockState(url: string): Promise<BlockState> {
 }
 
 /**
- * ホスト名のブロック判定（覆う登録のどれかがブロックならブロック）
+ * ホスト名のブロック判定（許可サイトに当たれば通し、そうでなければ覆うブロックの登録で決める）
  * @param domain 判定するホスト名
  * @returns ブロックの判定結果（覆う登録が無ければブロックしない）
  */
@@ -209,17 +187,31 @@ export async function shouldBlockUrl(url: string): Promise<boolean> {
   return state.blocked;
 }
 
+/** declarativeNetRequest のルールの元になるサイトキー */
+export interface RuleTargets {
+  /** 今ブロックしているブロックの登録（ブロック画面へ転送する） */
+  redirect: SiteKey[];
+  /** 許可サイトすべて（覆うブロックの転送より優先して通す） */
+  allow: SiteKey[];
+}
+
 /**
- * 今ブロックしている登録のサイトキー一覧（declarativeNetRequest のルールの元になる）
- * @returns ブロック中の登録のサイトキー
+ * declarativeNetRequest のルールの元になるサイトキーを返す
+ * @returns 転送するサイトキーと通すサイトキー
  */
-export async function getActiveBlockedDomains(): Promise<SiteKey[]> {
+export async function getRuleTargets(): Promise<RuleTargets> {
   const inputs = await loadInputs();
-  const blocked = new Set<SiteKey>();
-  for (const registration of collectRegistrations(inputs.sites)) {
-    if (evaluate(registration, inputs).state.blocked) {
-      blocked.add(registration.site);
+  const redirect: SiteKey[] = [];
+  const allow: SiteKey[] = [];
+  for (const site of Object.values(inputs.sites)) {
+    if (isAllowedSite(site)) {
+      allow.push(site.domain);
+      continue;
+    }
+    const registration = registrationOf(site);
+    if (registration && evaluate(registration, inputs).state.blocked) {
+      redirect.push(site.domain);
     }
   }
-  return [...blocked];
+  return { redirect, allow };
 }

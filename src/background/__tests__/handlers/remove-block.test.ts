@@ -27,6 +27,7 @@ import { itemAt } from '~/test/items';
 import type { BlockRule } from '~/types/site';
 
 const rule = (enabled: boolean): BlockRule => ({
+  kind: 'block',
   enabled,
   addedAt: '2026-01-01T00:00:00.000Z',
   timeLimit: null

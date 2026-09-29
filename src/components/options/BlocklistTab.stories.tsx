@@ -44,10 +44,10 @@ const BlocklistTabWrapper = () => {
 
   const handleToggleDomain = async (domain: string, enabled: boolean) => {
     const site = trackedSites[domain];
-    if (!site?.block) return null;
+    if (site?.rule?.kind !== 'block') return null;
     setTrackedSites({
       ...trackedSites,
-      [domain]: { ...site, block: { ...site.block, enabled } }
+      [domain]: { ...site, rule: { ...site.rule, enabled } }
     });
     return null;
   };

@@ -8,10 +8,11 @@ import {
   secondsSinceUnblock,
   totalSecondsSinceUnblock
 } from '~/lib/activityStats';
+import { hasBlock } from '~/lib/blockList';
 import { formatTime, toDateKey } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import type { ActivityLog, DateKey } from '~/types/activity';
-import type { TrackedSite, TrackedSites } from '~/types/site';
+import type { SiteEntry, TrackedSites } from '~/types/site';
 
 const DAYS_PER_WEEK = 7;
 const DAYS_PER_MONTH = 30;
@@ -48,13 +49,17 @@ const STATUS_LABEL_KEY: Record<TrackedSiteStatus, string> = {
   tracking: 'statusUnblocked'
 };
 
-function statusOf(site: TrackedSite): TrackedSiteStatus {
-  if (site.block === null) return 'tracking';
-  return site.block.enabled ? 'blocked' : 'disabled';
+function statusOf(site: SiteEntry): TrackedSiteStatus {
+  if (!hasBlock(site)) return 'tracking';
+  return site.rule.enabled ? 'blocked' : 'disabled';
+}
+
+function blockAddedAt(site: SiteEntry): string {
+  return hasBlock(site) ? site.rule.addedAt : '';
 }
 
 interface TrackedSiteRow {
-  site: TrackedSite;
+  site: SiteEntry;
   status: TrackedSiteStatus;
   unblockedOn: DateKey | null;
   secondsSinceUnblock: number;
@@ -67,9 +72,9 @@ interface AnalyticsSummaryProps {
   /** 登録済みのサイト（計測・ブロックの状態を含む） */
   trackedSites: TrackedSites;
   /** 行のサイトをブロックに戻すときに、そのサイトを受け取る */
-  onReblock: (site: TrackedSite) => void;
+  onReblock: (site: SiteEntry) => void;
   /** 行のサイトの計測をやめるときに、そのサイトを受け取る */
-  onStopTracking: (site: TrackedSite) => void;
+  onStopTracking: (site: SiteEntry) => void;
 }
 
 /**
@@ -96,8 +101,8 @@ export function AnalyticsSummary({
     return rows.sort((a, b) => {
       const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
       if (byStatus !== 0) return byStatus;
-      const byAddedAt = (b.site.block?.addedAt ?? '').localeCompare(
-        a.site.block?.addedAt ?? ''
+      const byAddedAt = blockAddedAt(b.site).localeCompare(
+        blockAddedAt(a.site)
       );
       return byAddedAt || a.site.domain.localeCompare(b.site.domain);
     });
@@ -184,9 +189,9 @@ interface TrackedSiteItemProps {
   /** 今日の日付キー（「何日前」の表記の基準） */
   today: DateKey;
   /** ブロックに戻すボタンが押されたときに、そのサイトを受け取る */
-  onReblock: (site: TrackedSite) => void;
+  onReblock: (site: SiteEntry) => void;
   /** 計測をやめるボタンが押されたときに、そのサイトを受け取る */
-  onStopTracking: (site: TrackedSite) => void;
+  onStopTracking: (site: SiteEntry) => void;
 }
 
 /**
@@ -202,7 +207,7 @@ function TrackedSiteItem({
 }: TrackedSiteItemProps) {
   const { site, status } = row;
   const isBlocked = status === 'blocked';
-  const canStopTracking = site.block === null && site.youtube === null;
+  const canStopTracking = !hasBlock(site) && site.youtube === null;
   const bgColor = isBlocked ? 'bg-success-50' : 'bg-block-50';
   const borderColor = isBlocked ? 'border-success-100' : 'border-block-100';
   const dotColor = isBlocked ? 'bg-success-500' : 'bg-block-500';
@@ -228,11 +233,11 @@ function TrackedSiteItem({
               {getMessage(STATUS_LABEL_KEY[status])}
             </span>
           </div>
-          {site.block && (
+          {hasBlock(site) && (
             <p className="text-sm text-gray-500 mt-1">
               {getMessage('blockedSince')}:{' '}
               {formatRelativeDate(
-                toDateKey(new Date(site.block.addedAt)),
+                toDateKey(new Date(site.rule.addedAt)),
                 today
               )}
             </p>

@@ -3,17 +3,19 @@
 import { isValidDomain, parseDomainInput } from '~/lib/domain';
 import { createSerialQueue } from '~/lib/serialQueue';
 import { getSites, sitesItem } from '~/lib/storage';
+import { hasBlock, isAllowedSite } from '~/lib/blockList';
 import {
-  findNestedSite,
+  findNestingConflict,
   normalizeSiteKey,
   YOUTUBE_DOMAIN,
   type NestedSite
 } from '~/lib/siteKey';
 import type {
   BlockRule,
+  SiteEntry,
   SiteKey,
+  SiteRule,
   TimeLimit,
-  TrackedSite,
   TrackedSites,
   YouTubeFeatures
 } from '~/types/site';
@@ -61,7 +63,11 @@ export type AddSiteRejection =
       reason: 'duplicate';
     }
   | {
-      /** 既存のサイトと入れ子になる */
+      /** 許可サイトとして登録済み（許可とブロック・規則なしの間の付け替えはしない） */
+      reason: 'allowed';
+    }
+  | {
+      /** 既存のサイトと許されない入れ子になる */
       reason: 'nested';
       /** 入れ子になる既存のサイトとその関係 */
       nested: NestedSite;
@@ -84,8 +90,9 @@ export type AddSiteResult =
 
 function checkAddition(
   input: string,
+  kind: SiteRule['kind'] | null,
   sites: TrackedSites,
-  isDuplicate: (existing: TrackedSite) => boolean
+  rejectExisting: (existing: SiteEntry) => AddSiteRejection | null
 ): AddSiteResult {
   const site = normalizeSiteKey(parseDomainInput(input).domain);
   if (!isValidDomain(site))
@@ -93,31 +100,35 @@ function checkAddition(
 
   const existing = sites[site];
   if (existing) {
-    return isDuplicate(existing)
-      ? { site: null, rejection: { reason: 'duplicate' } }
-      : { site, rejection: null };
+    const rejection = rejectExisting(existing);
+    return rejection ? { site: null, rejection } : { site, rejection: null };
   }
 
-  const nested = findNestedSite(site, Object.keys(sites));
+  const nested = findNestingConflict(site, kind, sites);
   if (nested) return { site: null, rejection: { reason: 'nested', nested } };
   return { site, rejection: null };
 }
 
-function newSite(site: SiteKey, now: Date): TrackedSite {
+function newSite(site: SiteKey, now: Date): SiteEntry {
   return {
     domain: site,
     trackedAt: now.toISOString(),
-    block: null,
+    rule: null,
     youtube: null
   };
 }
 
 function newBlockRule(now: Date): BlockRule {
-  return { enabled: true, addedAt: now.toISOString(), timeLimit: null };
+  return {
+    kind: 'block',
+    enabled: true,
+    addedAt: now.toISOString(),
+    timeLimit: null
+  };
 }
 
 /**
- * 入力をサイトキーにしてブロックリストに追加する（サイトが無ければ作る。既にブロック設定がある・入れ子になるなら拒否）
+ * 入力をサイトキーにしてブロックリストに追加する（サイトが無ければ作る。既にブロックの規則がある・許可サイト・許されない入れ子になるなら拒否）
  * @param input 利用者が入力したドメインか URL
  * @param now 追加の時刻（ブロック日数と追跡開始の起点）
  * @returns 追加の結果
@@ -127,24 +138,24 @@ export async function addBlock(
   now: Date
 ): Promise<AddSiteResult> {
   return mutateSites<AddSiteResult>((sites) => {
-    const checked = checkAddition(
-      input,
-      sites,
-      (existing) => existing.block !== null
-    );
+    const checked = checkAddition(input, 'block', sites, (existing) => {
+      if (existing.rule?.kind === 'block') return { reason: 'duplicate' };
+      if (existing.rule?.kind === 'allow') return { reason: 'allowed' };
+      return null;
+    });
     if (checked.rejection !== null) return { next: null, result: checked };
 
     const { site } = checked;
     const current = sites[site] ?? newSite(site, now);
     return {
-      next: { ...sites, [site]: { ...current, block: newBlockRule(now) } },
+      next: { ...sites, [site]: { ...current, rule: newBlockRule(now) } },
       result: checked
     };
   });
 }
 
 /**
- * 入力をサイトキーにして追跡だけを始める（既に追跡中・入れ子になるなら拒否）
+ * 入力をサイトキーにして追跡だけを始める（既に追跡中・許されない入れ子になるなら拒否）
  * @param input 利用者が入力したドメインか URL
  * @param now 追跡を始めた時刻
  * @returns 追加の結果
@@ -154,7 +165,9 @@ export async function addTrackedSite(
   now: Date
 ): Promise<AddSiteResult> {
   return mutateSites<AddSiteResult>((sites) => {
-    const checked = checkAddition(input, sites, () => true);
+    const checked = checkAddition(input, null, sites, () => ({
+      reason: 'duplicate'
+    }));
     if (checked.rejection !== null) return { next: null, result: checked };
 
     const { site } = checked;
@@ -167,8 +180,8 @@ export async function addTrackedSite(
 
 async function updateSite(
   site: SiteKey,
-  change: (current: TrackedSite) => TrackedSite
-): Promise<{ before: TrackedSite; after: TrackedSite } | null> {
+  change: (current: SiteEntry) => SiteEntry
+): Promise<{ before: SiteEntry; after: SiteEntry } | null> {
   return mutateSites((sites) => {
     const before = sites[site];
     if (!before) return { next: null, result: null };
@@ -178,23 +191,22 @@ async function updateSite(
 }
 
 /**
- * ブロック設定を外し（追跡は続く）、外す前のブロック設定を返す（無ければ null）
+ * ブロックの規則を外し（追跡は続く）、外す前のブロックの規則を返す（無ければ何もせず null）
  * @param site サイトキー
- * @returns 外す前のブロック設定（サイトかブロック設定が無ければ null）
+ * @returns 外す前のブロックの規則（サイトかブロックの規則が無ければ null）
  */
 export async function removeBlock(site: SiteKey): Promise<BlockRule | null> {
-  const changed = await updateSite(site, (current) => ({
-    ...current,
-    block: null
-  }));
-  return changed?.before.block ?? null;
+  const changed = await updateSite(site, (current) =>
+    hasBlock(current) ? { ...current, rule: null } : current
+  );
+  return changed && hasBlock(changed.before) ? changed.before.rule : null;
 }
 
 /**
- * ブロック設定の有効・無効を切り替え、切り替える前の設定を返す（ブロック設定が無ければ何もせず null）
+ * ブロックの規則の有効・無効を切り替え、切り替える前の規則を返す（ブロックの規則が無ければ何もせず null）
  * @param site サイトキー
  * @param enabled 有効にするなら true
- * @returns 切り替える前のブロック設定
+ * @returns 切り替える前のブロックの規則
  */
 export async function setBlockEnabled(
   site: SiteKey,
@@ -202,19 +214,19 @@ export async function setBlockEnabled(
 ): Promise<BlockRule | null> {
   return mutateSites((sites) => {
     const current = sites[site];
-    if (!current?.block) return { next: null, result: null };
+    if (!current || !hasBlock(current)) return { next: null, result: null };
     return {
       next: {
         ...sites,
-        [site]: { ...current, block: { ...current.block, enabled } }
+        [site]: { ...current, rule: { ...current.rule, enabled } }
       },
-      result: current.block
+      result: current.rule
     };
   });
 }
 
 /**
- * 時間制限を変える（null で外す）。ブロック設定を持たないサイトなら何もせず false
+ * 時間制限を変える（null で外す）。ブロックの規則を持たないサイトなら何もせず false
  * @param site サイトキー
  * @param timeLimit 新しい時間制限（null = 常時ブロック）
  * @returns 変えたら true
@@ -225,11 +237,11 @@ export async function setTimeLimit(
 ): Promise<boolean> {
   return mutateSites((sites) => {
     const current = sites[site];
-    if (!current?.block) return { next: null, result: false };
+    if (!current || !hasBlock(current)) return { next: null, result: false };
     return {
       next: {
         ...sites,
-        [site]: { ...current, block: { ...current.block, timeLimit } }
+        [site]: { ...current, rule: { ...current.rule, timeLimit } }
       },
       result: true
     };
@@ -240,31 +252,68 @@ export async function setTimeLimit(
 export interface YouTubeSiteUpdate {
   /** 非表示機能の設定（null = 使わない） */
   youtube: YouTubeFeatures | null;
-  /** アクセスブロックの設定（null = 外す。無効の指定はブロック設定が無ければ作らない） */
+  /** アクセスブロックの設定（null = 外す。無効の指定はブロックの規則が無ければ作らない） */
   block: Pick<BlockRule, 'enabled' | 'timeLimit'> | null;
 }
 
-/** updateYouTubeSite の結果。rejection が null なら書き込んで、before に変更前の youtube.com のサイト（無ければ null）が入る */
+/** youtube.com の登録の形から updateYouTubeSite が拒んだ理由（allowed = 許可サイトとして登録済み / nested = 新しく作ると許されない入れ子になる） */
+export type YouTubeSiteRejection = Extract<
+  AddSiteRejection,
+  { reason: 'allowed' | 'nested' }
+>;
+
+/** updateYouTubeSite が書き込まなかった理由 */
+export type UpdateYouTubeSiteRejection<R> =
+  | {
+      /** youtube.com の登録の形から拒んだ */
+      by: 'site';
+      /** 拒んだ理由 */
+      rejection: YouTubeSiteRejection;
+    }
+  | {
+      /** authorize が拒んだ */
+      by: 'authorize';
+      /** authorize が返した理由 */
+      rejection: R;
+    };
+
+/** updateYouTubeSite の結果。rejection が null なら書き込んで、before に変更前の youtube.com の登録（無ければ null）が入る */
 export type UpdateYouTubeSiteResult<R> =
   | {
       /** 書き込んだので null */
       rejection: null;
-      /** 変更前の youtube.com のサイト（無ければ null） */
-      before: TrackedSite | null;
+      /** 変更前の youtube.com の登録（無ければ null） */
+      before: SiteEntry | null;
     }
   | {
-      /** authorize が拒んだ理由 */
-      rejection: R;
+      /** 書き込まなかった理由 */
+      rejection: UpdateYouTubeSiteRejection<R>;
       /** 書き込まなかったので null */
       before: null;
     };
 
+function youTubeBlockRule(
+  update: YouTubeSiteUpdate,
+  current: SiteEntry,
+  now: Date
+): BlockRule | null {
+  if (!update.block) return null;
+  const existing = hasBlock(current) ? current.rule : null;
+  if (!update.block.enabled && !existing) return null;
+  return {
+    kind: 'block',
+    addedAt: existing?.addedAt ?? now.toISOString(),
+    enabled: update.block.enabled,
+    timeLimit: update.block.timeLimit
+  };
+}
+
 /**
- * 書き込み直前の youtube.com を見てアクセスブロックを弱めるかを判定し、authorize が通したときだけ非表示機能とアクセスブロックを書く（サイトが無ければ作る）
+ * 書き込み直前の youtube.com を見てアクセスブロックを弱めるかを判定し、authorize が通したときだけ非表示機能とアクセスブロックを書く（登録が無ければ作る）。youtube.com が許可サイトのときと、新しく作ると許されない入れ子になるときは authorize を呼ばずに拒む
  * @param update 書く値
- * @param now サイトかブロック設定を新しく作るときの時刻
+ * @param now 登録かブロックの規則を新しく作るときの時刻
  * @param authorize 弱めるか（有効なアクセスブロックが外れる・無効になるか）を受け、拒むならその理由、通すなら null を返す。待ち行列の中で呼ぶので、判定から書き込みまでに別の書き込みは入らない
- * @returns 書き込んだなら変更前のサイト、拒んだならその理由
+ * @returns 書き込んだなら変更前の登録、拒んだならその理由
  */
 export async function updateYouTubeSite<R>(
   update: YouTubeSiteUpdate,
@@ -272,40 +321,54 @@ export async function updateYouTubeSite<R>(
   authorize: (weakens: boolean) => Promise<R | null>
 ): Promise<UpdateYouTubeSiteResult<R>> {
   return mutateSites<UpdateYouTubeSiteResult<R>>(async (sites) => {
+    const reject = (
+      rejection: UpdateYouTubeSiteRejection<R>
+    ): SitesChange<UpdateYouTubeSiteResult<R>> => ({
+      next: null,
+      result: { rejection, before: null }
+    });
+
     const before = sites[YOUTUBE_DOMAIN] ?? null;
-    const weakens =
-      before?.block?.enabled === true && update.block?.enabled !== true;
-    const rejection = await authorize(weakens);
-    if (rejection !== null) {
-      return { next: null, result: { rejection, before: null } };
+    if (before && isAllowedSite(before)) {
+      return reject({ by: 'site', rejection: { reason: 'allowed' } });
     }
 
     const current = before ?? newSite(YOUTUBE_DOMAIN, now);
-    const keepsNoBlock =
-      update.block !== null && !update.block.enabled && !current.block;
-    const block: BlockRule | null =
-      update.block && !keepsNoBlock
-        ? {
-            addedAt: current.block?.addedAt ?? now.toISOString(),
-            enabled: update.block.enabled,
-            timeLimit: update.block.timeLimit
-          }
-        : null;
+    const rule = youTubeBlockRule(update, current, now);
+    if (!before) {
+      const nested = findNestingConflict(
+        YOUTUBE_DOMAIN,
+        rule?.kind ?? null,
+        sites
+      );
+      if (nested) {
+        return reject({ by: 'site', rejection: { reason: 'nested', nested } });
+      }
+    }
+
+    const weakens =
+      before !== null &&
+      hasBlock(before) &&
+      before.rule.enabled &&
+      update.block?.enabled !== true;
+    const rejection = await authorize(weakens);
+    if (rejection !== null) return reject({ by: 'authorize', rejection });
+
     return {
       next: {
         ...sites,
-        [YOUTUBE_DOMAIN]: { ...current, youtube: update.youtube, block }
+        [YOUTUBE_DOMAIN]: { ...current, youtube: update.youtube, rule }
       },
       result: { rejection: null, before }
     };
   });
 }
 
-/** stopTracking の結果。in-use はブロック設定か YouTube 機能が残っていて止めなかったとき */
+/** stopTracking の結果。in-use はブロックの規則か YouTube 機能が残っていて止めなかったとき */
 export type StopTrackingResult = 'stopped' | 'not-found' | 'in-use';
 
 /**
- * 追跡を止める（ブロック設定か YouTube 機能を持つサイトは止めない）。事実の行（activity）は消さないので呼び出し側で消す
+ * 追跡を止める（ブロックの規則か YouTube 機能を持つサイトは止めない。許可サイトは登録ごと消す）。事実の行（activity）は消さないので呼び出し側で消す
  * @param site サイトキー
  * @returns stopped = 止めた / not-found = 追跡していない / in-use = 設定が残っていて止めなかった
  */
@@ -313,7 +376,7 @@ export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   return mutateSites((sites) => {
     const current = sites[site];
     if (!current) return { next: null, result: 'not-found' as const };
-    if (current.block !== null || current.youtube !== null) {
+    if (hasBlock(current) || current.youtube !== null) {
       return { next: null, result: 'in-use' as const };
     }
     const rest = { ...sites };
@@ -322,11 +385,11 @@ export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   });
 }
 
-/** importSites の結果。skipped は入れ子になるため取り込まなかったもの */
+/** importSites の結果。skipped は許されない入れ子になるため取り込まなかったもの */
 export interface ImportSitesResult {
   /** 追加したか設定を足したサイトキー */
   changed: SiteKey[];
-  /** 入れ子になるため取り込まなかったもの */
+  /** 許されない入れ子になるため取り込まなかったもの */
   skipped: {
     /** 設定ファイルに書かれていた表記 */
     input: string;
@@ -335,14 +398,22 @@ export interface ImportSitesResult {
   }[];
 }
 
+function mergedRule(
+  current: SiteRule | null,
+  imported: SiteRule | null
+): SiteRule | null {
+  if (current) return current;
+  return imported?.kind === 'allow' ? null : imported;
+}
+
 /**
- * 設定ファイルの追跡中のサイトを取り込む（既存の設定は上書きせず、無い設定だけを足す）
- * @param imported 設定ファイルの追跡中のサイト（youtube.com 以外の YouTube 機能は捨てる）
+ * 設定ファイルの登録を取り込む（既存の設定は上書きせず、無い設定だけを足す。規則なしの既存の登録を許可サイトには変えない）
+ * @param imported 設定ファイルの登録（youtube.com 以外と許可サイトの YouTube 機能は捨てる）
  * @param now 新しく追跡を始めるサイトの追跡開始時刻
  * @returns 取り込んだサイトと取り込まなかったサイト
  */
 export async function importSites(
-  imported: readonly TrackedSite[],
+  imported: readonly SiteEntry[],
   now: Date
 ): Promise<ImportSitesResult> {
   return mutateSites((sites) => {
@@ -350,7 +421,12 @@ export async function importSites(
     const changed: SiteKey[] = [];
     const skipped: ImportSitesResult['skipped'] = [];
     for (const entry of imported) {
-      const checked = checkAddition(entry.domain, next, () => false);
+      const checked = checkAddition(
+        entry.domain,
+        entry.rule?.kind ?? null,
+        next,
+        () => null
+      );
       if (checked.rejection !== null) {
         if (checked.rejection.reason === 'nested') {
           skipped.push({
@@ -362,26 +438,17 @@ export async function importSites(
       }
       const { site } = checked;
       const current = next[site];
-      const youtube = site === YOUTUBE_DOMAIN ? entry.youtube : null;
-      const merged: TrackedSite = current
-        ? {
-            ...current,
-            block: current.block ?? entry.block,
-            youtube: current.youtube ?? youtube
-          }
-        : {
-            domain: site,
-            trackedAt: now.toISOString(),
-            block: entry.block,
-            youtube
-          };
-      if (
-        current &&
-        merged.block === current.block &&
-        merged.youtube === current.youtube
-      ) {
+      const rule = current ? mergedRule(current.rule, entry.rule) : entry.rule;
+      const youtube =
+        site === YOUTUBE_DOMAIN && rule?.kind !== 'allow'
+          ? (current?.youtube ?? entry.youtube)
+          : null;
+      if (current && rule === current.rule && youtube === current.youtube) {
         continue;
       }
+      const merged: SiteEntry = current
+        ? { ...current, rule, youtube }
+        : { domain: site, trackedAt: now.toISOString(), rule, youtube };
       next = { ...next, [site]: merged };
       changed.push(site);
     }

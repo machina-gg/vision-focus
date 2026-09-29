@@ -4,15 +4,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlockedSitesList } from './BlockedSitesList';
 import { blockedSite, sitesOf } from '~/test/sites';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 
 const blockedAt = (
   domain: string,
   addedAt: string,
   enabled = true
-): TrackedSite => blockedSite(domain, { addedAt, enabled });
+): SiteEntry => blockedSite(domain, { addedAt, enabled });
 
-const mockSites: TrackedSite[] = [
+const mockSites: SiteEntry[] = [
   blockedAt('twitter.com', '2026-02-10T10:00:00Z'),
   blockedAt('youtube.com', '2026-02-10T11:00:00Z'),
   blockedAt('reddit.com', '2026-02-10T12:00:00Z'),

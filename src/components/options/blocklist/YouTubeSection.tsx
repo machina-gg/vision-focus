@@ -24,12 +24,12 @@ import { TIME_LIMIT_CONFIG, roundToNearestPreset } from '~/constants/limits';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 
 /** YouTubeSection に渡す YouTube の登録状態と操作 */
 interface YouTubeSectionProps {
   /** YouTube の登録内容（登録が無ければ null で、すべてオフとして表示する） */
-  site: TrackedSite | null;
+  site: SiteEntry | null;
   /** 変更後の YouTube の設定全体を受け取る（解除の確認でパスワードが入力されたときはそれも受け取る）。失敗の文言、保存したら null を返す */
   onYouTubeChange: (
     youtube: YouTubeSettingsInput,
@@ -44,9 +44,10 @@ const UNBLOCK_GUARDED_KEYS: ReadonlySet<keyof YouTubeSettingsInput> = new Set([
   'blockAccess'
 ]);
 
-function settingsOf(site: TrackedSite | null): YouTubeSettingsInput {
+function settingsOf(site: SiteEntry | null): YouTubeSettingsInput {
   const features = site?.youtube ?? null;
-  const blockAccess = site?.block?.enabled === true;
+  const block = site?.rule?.kind === 'block' ? site.rule : null;
+  const blockAccess = block?.enabled === true;
   return {
     enabled: features !== null || blockAccess,
     blockAccess,
@@ -54,7 +55,7 @@ function settingsOf(site: TrackedSite | null): YouTubeSettingsInput {
     hideRecommendations: features?.hideRecommendations ?? false,
     hideComments: features?.hideComments ?? false,
     hideHomeFeed: features?.hideHomeFeed ?? false,
-    timeLimit: site?.block?.timeLimit ?? null
+    timeLimit: block?.timeLimit ?? null
   };
 }
 
@@ -63,7 +64,7 @@ const SAVED_FEEDBACK_DURATION_MS = 2000;
 type LimitTypeOption = 'always' | 'daily';
 
 /**
- * YouTube の設定（全体の有効化・アクセスのブロック・時間制限・ショートやおすすめなどの非表示）をカードで表示する
+ * YouTube の設定（全体の有効化・アクセスのブロック・時間制限・ショートやおすすめなどの非表示）をカードで表示する（保存を拒まれたら理由を出す）
  * @param props YouTube の登録状態と操作（各フィールドは YouTubeSectionProps）
  * @returns YouTube の設定のカード
  */
@@ -77,6 +78,7 @@ export function YouTubeSection({
   const blockAccessEnabled = youtube.blockAccess;
 
   const [showSaved, setShowSaved] = useState(false);
+  const [error, setError] = useState('');
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -128,6 +130,13 @@ export function YouTubeSection({
     selectedType !== currentType ||
     (selectedType !== 'always' && minutes !== currentMinutes);
 
+  const submit = useCallback(
+    async (next: YouTubeSettingsInput) => {
+      setError((await onYouTubeChange(next)) ?? '');
+    },
+    [onYouTubeChange]
+  );
+
   const handleToggle = useCallback(
     (key: keyof YouTubeSettingsInput) => (checked: boolean) => {
       if (!checked && UNBLOCK_GUARDED_KEYS.has(key)) {
@@ -140,9 +149,9 @@ export function YouTubeSection({
         });
         return;
       }
-      void onYouTubeChange({ ...youtube, [key]: checked });
+      void submit({ ...youtube, [key]: checked });
     },
-    [youtube, onYouTubeChange, onRequestUnblock]
+    [youtube, submit, onYouTubeChange, onRequestUnblock]
   );
 
   const handleTypeChange = useCallback((newType: LimitTypeOption) => {
@@ -162,9 +171,9 @@ export function YouTubeSection({
 
   const handleSave = useCallback(() => {
     if (selectedType === 'always') {
-      void onYouTubeChange({ ...youtube, timeLimit: null });
+      void submit({ ...youtube, timeLimit: null });
     } else {
-      void onYouTubeChange({
+      void submit({
         ...youtube,
         timeLimit: {
           type: selectedType,
@@ -173,7 +182,7 @@ export function YouTubeSection({
       });
     }
     showSavedFeedback();
-  }, [selectedType, minutes, youtube, onYouTubeChange, showSavedFeedback]);
+  }, [selectedType, minutes, youtube, submit, showSavedFeedback]);
 
   const typeOptions = [
     { value: 'always', label: getMessage('alwaysBlocked') },
@@ -248,6 +257,14 @@ export function YouTubeSection({
             size="lg"
           />
         </div>
+        {error && (
+          <p
+            className="mt-2 text-sm text-danger-600"
+            data-testid="youtube-error"
+          >
+            {error}
+          </p>
+        )}
       </div>
 
       {isEnabled && (

@@ -8,7 +8,7 @@ import {
 } from './helpers/storage';
 import { SELECTORS, TEST_DOMAINS } from './helpers/constants';
 import {
-  getBlockRuleFilters,
+  getRuleDomains,
   setupStorageViaSW,
   triggerBlockRuleRecompute,
   waitForBlockRules,
@@ -153,8 +153,8 @@ test.describe('TimeLimit - Time Limit 機能', () => {
 
     await triggerBlockRuleRecompute(context);
     await waitForBlockRules(context, [TEST_DOMAINS.reddit]);
-    const filters = await getBlockRuleFilters(context);
-    expect(filters.some((f) => f.includes(TEST_DOMAINS.example))).toBe(false);
+    const { redirect } = await getRuleDomains(context);
+    expect(redirect).not.toContain(TEST_DOMAINS.example);
 
     const page = await openExternalSite(
       context,

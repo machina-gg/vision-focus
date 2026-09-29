@@ -61,7 +61,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await expect
       .poll(async () => {
         const sites = await getStorageData(page, 'sites');
-        return sites?.['reddit.com']?.block?.enabled ?? null;
+        const rule = sites?.['reddit.com']?.rule;
+        return rule?.kind === 'block' ? rule.enabled : null;
       })
       .toBe(true);
 
@@ -176,7 +177,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await expect
       .poll(async () => {
         const sites = await getStorageData(page, 'sites');
-        return sites?.['example.com']?.block?.timeLimit;
+        const rule = sites?.['example.com']?.rule;
+        return rule?.kind === 'block' ? rule.timeLimit : undefined;
       })
       .toEqual({ type: 'daily', limitSeconds: 5 * 60 });
 
@@ -410,7 +412,8 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
     await expect
       .poll(async () => {
         const sites = await getStorageData(page, 'sites');
-        return sites?.['youtube.com']?.block?.timeLimit;
+        const rule = sites?.['youtube.com']?.rule;
+        return rule?.kind === 'block' ? rule.timeLimit : undefined;
       })
       .toEqual({ type: 'daily', limitSeconds: 15 * 60 });
 

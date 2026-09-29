@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AnalyticsSummary } from '../AnalyticsSummary';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import {
   blockedSite,
@@ -32,7 +32,7 @@ const siteOf = ({
   domain?: string;
   status?: 'blocked' | 'disabled' | 'tracking';
   blockedAt?: string;
-} = {}): TrackedSite =>
+} = {}): SiteEntry =>
   status === 'tracking'
     ? trackedSite(domain)
     : blockedSite(domain, {
@@ -51,7 +51,7 @@ interface RenderOptions {
 }
 
 function renderSummary(
-  sites: TrackedSite[],
+  sites: SiteEntry[],
   { activity = {} }: RenderOptions = {}
 ) {
   const onReblock = vi.fn();

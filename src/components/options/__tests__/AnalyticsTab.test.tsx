@@ -202,11 +202,11 @@ describe('AnalyticsTab', () => {
     it('拒否の理由を表示する', () => {
       renderTab({
         addSiteError:
-          'm.example.com は追跡中の example.com に含まれるため追加できません'
+          'm.example.com は追跡中の example.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
       });
 
       expect(screen.getByTestId('analytics-add-site-error')).toHaveTextContent(
-        'm.example.com は追跡中の example.com に含まれるため追加できません'
+        'm.example.com は追跡中の example.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
       );
     });
 

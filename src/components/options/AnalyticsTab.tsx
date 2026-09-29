@@ -5,7 +5,7 @@ import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { trackedSiteKeys } from '~/lib/siteService';
 import type { ActivityLog } from '~/types/activity';
-import type { TrackedSite, TrackedSites } from '~/types/site';
+import type { SiteEntry, TrackedSites } from '~/types/site';
 
 import {
   AnalyticsExportBar,
@@ -21,11 +21,11 @@ interface AnalyticsTabProps {
   /** 登録済みのサイト（計測・ブロックの状態を含む） */
   trackedSites: TrackedSites;
   /** 一覧のサイトをブロックに戻すときに、そのサイトを受け取る */
-  onReblock: (site: TrackedSite) => void;
+  onReblock: (site: SiteEntry) => void;
   /** 計測データの削除を求められたときに呼ぶ */
   onReset: () => void;
   /** 一覧のサイトの計測をやめるときに、そのサイトを受け取る */
-  onStopTracking: (site: TrackedSite) => void;
+  onStopTracking: (site: SiteEntry) => void;
   /** 計測データの読み直しを求められたときに呼ぶ */
   onRefresh: () => Promise<void>;
   /** 小文字にしたドメインを受け取って計測対象に加え、加えられたら true を返す（true なら入力欄を空に戻す） */

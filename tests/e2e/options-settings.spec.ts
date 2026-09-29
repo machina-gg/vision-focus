@@ -408,7 +408,8 @@ test.describe('Options - Settings Tab', () => {
     await expect
       .poll(async () => {
         const sites = await getStorageData(page, 'sites');
-        return sites?.['imported.example']?.block?.enabled ?? null;
+        const rule = sites?.['imported.example']?.rule;
+        return rule?.kind === 'block' ? rule.enabled : null;
       })
       .toBe(true);
 

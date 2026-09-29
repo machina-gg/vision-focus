@@ -1,6 +1,7 @@
 import { defineContentScript } from '#imports';
 
 import { sitesItem } from '~/lib/storage';
+import { isAllowedHost } from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 
 import type { TrackedSites, YouTubeFeatures } from '~/types/site';
@@ -90,8 +91,9 @@ function setupObserver(): void {
 function featuresOf(
   sites: TrackedSites | null | undefined
 ): YouTubeFeatures | null {
+  if (!sites || isAllowedHost(location.hostname, sites)) return null;
   const parsed = YouTubeFeaturesSchema.safeParse(
-    sites?.[YOUTUBE_DOMAIN]?.youtube
+    sites[YOUTUBE_DOMAIN]?.youtube
   );
   return parsed.success ? parsed.data : null;
 }

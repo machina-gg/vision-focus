@@ -6,7 +6,7 @@ vi.mock('~/lib/storage', () => ({
 
 vi.mock('~/lib/blockService', () => ({
   getBlockState: vi.fn(),
-  getActiveBlockedDomains: vi.fn()
+  getRuleTargets: vi.fn()
 }));
 
 vi.mock('~/lib/chromeApi', () => ({
@@ -18,7 +18,7 @@ vi.mock('~/lib/blockRecordService', () => ({
 }));
 
 import { getSettings } from '~/lib/storage';
-import { getBlockState, getActiveBlockedDomains } from '~/lib/blockService';
+import { getBlockState, getRuleTargets } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
@@ -36,7 +36,7 @@ function setupChrome(overrides: Record<string, unknown> = {}) {
     declarativeNetRequest: {
       getDynamicRules: vi.fn().mockResolvedValue([]),
       updateDynamicRules: vi.fn().mockResolvedValue(undefined),
-      RuleActionType: { REDIRECT: 'redirect' },
+      RuleActionType: { REDIRECT: 'redirect', ALLOW: 'allow' },
       ResourceType: { MAIN_FRAME: 'main_frame' }
     },
     tabs: {
@@ -56,6 +56,10 @@ function setupChrome(overrides: Record<string, unknown> = {}) {
   return chromeMock;
 }
 
+function givenTargets(redirect: string[], allow: string[] = []): void {
+  vi.mocked(getRuleTargets).mockResolvedValue({ redirect, allow });
+}
+
 function lastUpdateRulesArg(
   chromeMock: ReturnType<typeof setupChrome>
 ): UpdateRulesArg {
@@ -70,13 +74,13 @@ describe('blocker', () => {
     vi.clearAllMocks();
     chromeMock = setupChrome();
     vi.mocked(getSettings).mockResolvedValue({ ...DEFAULT_SETTINGS });
-    vi.mocked(getActiveBlockedDomains).mockResolvedValue([]);
+    vi.mocked(getRuleTargets).mockResolvedValue({ redirect: [], allow: [] });
     vi.mocked(isExtensionContextValid).mockReturnValue(true);
   });
 
   describe('updateBlockRules', () => {
     it('ブロック対象ドメインからリダイレクトルールを生成する', async () => {
-      vi.mocked(getActiveBlockedDomains).mockResolvedValue(['example.com']);
+      givenTargets(['example.com']);
 
       await updateBlockRules();
 
@@ -90,18 +94,60 @@ describe('blocker', () => {
           redirect: { extensionPath: '/newtab.html' }
         },
         condition: {
-          urlFilter: '||example.com',
+          requestDomains: ['example.com'],
           resourceTypes: ['main_frame']
         }
       });
     });
 
-    it('ルール ID は RULE_ID_OFFSET から連番で割り当てる', async () => {
-      vi.mocked(getActiveBlockedDomains).mockResolvedValue([
-        'a.com',
-        'b.com',
-        'c.com'
+    it('許可サイトごとに優先度 2 の allow ルールを作り、redirect（優先度 1）より優先させる', async () => {
+      givenTargets(['youtube.com'], ['music.youtube.com', 'mail.google.com']);
+
+      await updateBlockRules();
+
+      const arg = lastUpdateRulesArg(chromeMock);
+      expect(arg.addRules).toHaveLength(3);
+      expect(itemAt(arg.addRules, 0)).toMatchObject({
+        priority: 1,
+        action: { type: 'redirect' },
+        condition: { requestDomains: ['youtube.com'] }
+      });
+      const allowRules = arg.addRules.filter(
+        (rule) => rule.action.type === 'allow'
+      );
+      expect(allowRules).toEqual([
+        {
+          id: BLOCKER_CONFIG.RULE_ID_OFFSET + 1,
+          priority: 2,
+          action: { type: 'allow' },
+          condition: {
+            requestDomains: ['music.youtube.com'],
+            resourceTypes: ['main_frame']
+          }
+        },
+        {
+          id: BLOCKER_CONFIG.RULE_ID_OFFSET + 2,
+          priority: 2,
+          action: { type: 'allow' },
+          condition: {
+            requestDomains: ['mail.google.com'],
+            resourceTypes: ['main_frame']
+          }
+        }
       ]);
+    });
+
+    it('allow ルールは許可サイトの分だけ作る（転送するサイトが無くても作る）', async () => {
+      givenTargets([], ['music.youtube.com']);
+
+      await updateBlockRules();
+
+      const arg = lastUpdateRulesArg(chromeMock);
+      expect(arg.addRules.map((rule) => rule.action.type)).toEqual(['allow']);
+    });
+
+    it('ルール ID は RULE_ID_OFFSET から連番で割り当てる', async () => {
+      givenTargets(['a.com', 'b.com'], ['c.com']);
 
       await updateBlockRules();
 
@@ -113,15 +159,14 @@ describe('blocker', () => {
       ]);
     });
 
-    it('サイトキーをそのまま ||キー の urlFilter にする（サブドメインも止める）', async () => {
-      vi.mocked(getActiveBlockedDomains).mockResolvedValue(['example.com']);
+    it('サイトキーをそのまま requestDomains にし、urlFilter は使わない', async () => {
+      givenTargets(['example.com']);
 
       await updateBlockRules();
 
-      const arg = lastUpdateRulesArg(chromeMock);
-      expect(itemAt(arg.addRules, 0).condition?.urlFilter).toBe(
-        '||example.com'
-      );
+      const { condition } = itemAt(lastUpdateRulesArg(chromeMock).addRules, 0);
+      expect(condition.requestDomains).toEqual(['example.com']);
+      expect(condition.urlFilter).toBeUndefined();
     });
 
     it('既存の動的ルールをすべて削除対象に含める', async () => {
@@ -129,7 +174,7 @@ describe('blocker', () => {
         { id: 1000 },
         { id: 1001 }
       ]);
-      vi.mocked(getActiveBlockedDomains).mockResolvedValue(['example.com']);
+      givenTargets(['example.com']);
 
       await updateBlockRules();
 
@@ -173,7 +218,7 @@ describe('blocker', () => {
       it('ブロック対象の取得自体を行わない', async () => {
         await updateBlockRules();
 
-        expect(getActiveBlockedDomains).not.toHaveBeenCalled();
+        expect(getRuleTargets).not.toHaveBeenCalled();
       });
     });
   });

@@ -123,7 +123,7 @@ describe('useAnalytics', () => {
       });
       expect(added).toBe(false);
       expect(result.current.addSiteError).toBe(
-        'm.x.com は追跡中の x.com に含まれるため追加できません'
+        'm.x.com は追跡中の x.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
       );
 
       vi.mocked(sendMessage).mockResolvedValue({ success: true });

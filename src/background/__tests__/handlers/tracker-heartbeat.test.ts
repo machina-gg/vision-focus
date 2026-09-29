@@ -37,7 +37,7 @@ import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 import type { AppSettings } from '~/types/storage';
-import type { BlockRule, TrackedSite } from '~/types/site';
+import type { BlockRule, SiteEntry } from '~/types/site';
 import { blockedSite, sitesOf } from '~/test/sites';
 import { TRACKER_CONFIG } from '~/constants/limits';
 import type { MessageError } from '~/types/messages';
@@ -58,7 +58,7 @@ const RECORDED_SECONDS = Math.floor(
   TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000
 );
 
-function given(sites: TrackedSite[], settings: Partial<AppSettings> = {}) {
+function given(sites: SiteEntry[], settings: Partial<AppSettings> = {}) {
   vi.mocked(getSettings).mockResolvedValue({
     ...DEFAULT_SETTINGS,
     ...settings

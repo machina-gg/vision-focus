@@ -1,15 +1,20 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { YouTubeSection } from '../YouTubeSection';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
-import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
+import {
+  allowedSite,
+  blockedSite,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 import { itemAt } from '~/test/items';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
-import type { BlockRule, TrackedSite, YouTubeFeatures } from '~/types/site';
+import type { BlockRule, SiteEntry, YouTubeFeatures } from '~/types/site';
 
 const YOUTUBE_OFF: YouTubeSettingsInput = {
   enabled: false,
@@ -31,7 +36,7 @@ function switchNear(text: string): HTMLElement {
   throw new Error(`${text} に対応するトグルが見つからない`);
 }
 
-function siteOf(youtube: Partial<YouTubeSettingsInput>): TrackedSite | null {
+function siteOf(youtube: Partial<YouTubeSettingsInput>): SiteEntry | null {
   const settings = { ...YOUTUBE_OFF, ...youtube };
   if (!settings.enabled) return null;
   const features: YouTubeFeatures = youtubeFeatures({
@@ -49,7 +54,7 @@ function siteOf(youtube: Partial<YouTubeSettingsInput>): TrackedSite | null {
     : trackedSite(YOUTUBE_DOMAIN, { youtube: features });
 }
 
-function renderSite(site: TrackedSite | null, onYouTubeChange = vi.fn()) {
+function renderSite(site: SiteEntry | null, onYouTubeChange = vi.fn()) {
   const onRequestUnblock = vi.fn<(request: UnblockRequest) => void>();
   render(
     <YouTubeSection
@@ -80,6 +85,15 @@ describe('YouTubeSection', () => {
   describe('youtube.com のサイトの見せ方', () => {
     it('youtube.com が無ければすべて OFF', () => {
       renderSite(null);
+
+      expect(switchNear('youtubeEnabled')).toHaveAttribute(
+        'aria-checked',
+        'false'
+      );
+    });
+
+    it('許可サイトの youtube.com はアクセスブロック OFF として見せる', () => {
+      renderSite(allowedSite(YOUTUBE_DOMAIN));
 
       expect(switchNear('youtubeEnabled')).toHaveAttribute(
         'aria-checked',
@@ -416,6 +430,26 @@ describe('YouTubeSection', () => {
         ...settings,
         timeLimit: null
       });
+    });
+  });
+
+  describe('保存を拒まれたとき', () => {
+    it('理由の文言を出し、次に保存できたら消す', async () => {
+      const onYouTubeChange = vi
+        .fn()
+        .mockResolvedValueOnce('nested reason')
+        .mockResolvedValueOnce(null);
+      renderSite(null, onYouTubeChange);
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+      expect(await screen.findByTestId('youtube-error')).toHaveTextContent(
+        'nested reason'
+      );
+
+      fireEvent.click(switchNear('youtubeEnabled'));
+      await waitFor(() =>
+        expect(screen.queryByTestId('youtube-error')).not.toBeInTheDocument()
+      );
     });
   });
 });

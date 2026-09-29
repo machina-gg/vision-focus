@@ -20,6 +20,8 @@ export function addSiteError(
       return { code: 'nested-site', domain: input, nested: rejection.nested };
     case 'duplicate':
       return { code: duplicate };
+    case 'allowed':
+      return { code: 'already-allowed' };
     case 'invalid':
       return { code: 'invalid-domain' };
   }

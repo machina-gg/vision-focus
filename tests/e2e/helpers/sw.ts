@@ -38,14 +38,31 @@ export async function setupStorageViaSW(
   );
 }
 
-export async function getBlockRuleFilters(
+/** 動的ルールの requestDomains を action ごとに集めたもの */
+export interface RuleDomains {
+  /** ブロック画面へ転送するサイトキー */
+  redirect: string[];
+  /** 許可サイトとして通すサイトキー */
+  allow: string[];
+}
+
+/**
+ * 動的ルールの requestDomains を action ごとに読む
+ * @param context 拡張機能を読み込んだコンテキスト
+ * @returns 転送と許可のサイトキー
+ */
+export async function getRuleDomains(
   context: BrowserContext
-): Promise<string[]> {
+): Promise<RuleDomains> {
   const sw = await getServiceWorker(context);
 
   return await sw.evaluate(async () => {
     const rules = await chrome.declarativeNetRequest.getDynamicRules();
-    return rules.map((rule) => rule.condition.urlFilter ?? '');
+    const domainsOf = (type: string) =>
+      rules
+        .filter((rule) => rule.action.type === type)
+        .flatMap((rule) => rule.condition.requestDomains ?? []);
+    return { redirect: domainsOf('redirect'), allow: domainsOf('allow') };
   });
 }
 
@@ -59,21 +76,32 @@ export async function triggerBlockRuleRecompute(
   );
 }
 
+async function waitForRuleDomains(
+  context: BrowserContext,
+  done: (rules: RuleDomains) => boolean,
+  failure: string,
+  timeout: number
+): Promise<void> {
+  const deadline = Date.now() + timeout;
+
+  while (Date.now() < deadline) {
+    if (done(await getRuleDomains(context))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  throw new Error(failure);
+}
+
 export async function waitForBlockRules(
   context: BrowserContext,
   domains: string[],
   timeout = 10_000
 ): Promise<void> {
-  const deadline = Date.now() + timeout;
-
-  while (Date.now() < deadline) {
-    const filters = await getBlockRuleFilters(context);
-    if (domains.every((d) => filters.some((f) => f.includes(d)))) return;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  throw new Error(
-    `ブロックルールが反映されない: ${domains.join(', ')} を待っていた`
+  await waitForRuleDomains(
+    context,
+    ({ redirect }) => domains.every((d) => redirect.includes(d)),
+    `ブロックルールが反映されない: ${domains.join(', ')} を待っていた`,
+    timeout
   );
 }
 
@@ -82,16 +110,30 @@ export async function waitForNoBlockRules(
   domains: string[],
   timeout = 10_000
 ): Promise<void> {
-  const deadline = Date.now() + timeout;
+  await waitForRuleDomains(
+    context,
+    ({ redirect }) => domains.every((d) => !redirect.includes(d)),
+    `ブロックルールが外れない: ${domains.join(', ')} を待っていた`,
+    timeout
+  );
+}
 
-  while (Date.now() < deadline) {
-    const filters = await getBlockRuleFilters(context);
-    if (domains.every((d) => !filters.some((f) => f.includes(d)))) return;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  throw new Error(
-    `ブロックルールが外れない: ${domains.join(', ')} を待っていた`
+/**
+ * 許可サイトのルールが揃うまで待つ
+ * @param context 拡張機能を読み込んだコンテキスト
+ * @param domains 待つサイトキー
+ * @param timeout 待つ上限（ミリ秒）
+ */
+export async function waitForAllowRules(
+  context: BrowserContext,
+  domains: string[],
+  timeout = 10_000
+): Promise<void> {
+  await waitForRuleDomains(
+    context,
+    ({ allow }) => domains.every((d) => allow.includes(d)),
+    `許可ルールが反映されない: ${domains.join(', ')} を待っていた`,
+    timeout
   );
 }
 

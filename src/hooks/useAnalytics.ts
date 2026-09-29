@@ -2,17 +2,17 @@ import { useCallback, useState } from 'react';
 
 import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 
 interface UseAnalyticsReturn {
   /** 追跡サイトの追加に失敗したときの文言。失敗していなければ空文字 */
   addSiteError: string;
-  /** サイトをブロックに戻す（ブロック設定が無ければ追加し、無効なら有効にする） */
-  handleReblock: (site: TrackedSite) => Promise<void>;
+  /** サイトをブロックに戻す（規則が無ければブロックを追加し、無効なブロックなら有効にする。許可サイトには何もしない） */
+  handleReblock: (site: SiteEntry) => Promise<void>;
   /** 活動の記録をすべて消す */
   handleResetAnalytics: () => Promise<void>;
   /** サイトの追跡をやめ、その記録を消す */
-  handleStopTracking: (site: TrackedSite) => Promise<void>;
+  handleStopTracking: (site: SiteEntry) => Promise<void>;
   /** 何もしない（表示は保存値の変更に追従するため） */
   handleRefreshAnalytics: () => Promise<void>;
   /** 入力されたドメインを追跡対象に加える。加えられたら true */
@@ -26,12 +26,12 @@ interface UseAnalyticsReturn {
 export function useAnalytics(): UseAnalyticsReturn {
   const [addSiteError, setAddSiteError] = useState('');
 
-  // add-block は既存のブロック設定を重複として拒否するので、無効にしたサイトはトグルで戻す
-  const handleReblock = useCallback(async (site: TrackedSite) => {
+  // add-block は既存のブロックの規則を重複として拒否するので、無効にしたサイトはトグルで戻す
+  const handleReblock = useCallback(async (site: SiteEntry) => {
     try {
-      if (site.block === null) {
+      if (site.rule === null) {
         await sendMessage('add-block', { domain: site.domain });
-      } else if (!site.block.enabled) {
+      } else if (site.rule.kind === 'block' && !site.rule.enabled) {
         await sendMessage('toggle-block', {
           domain: site.domain,
           enabled: true
@@ -50,7 +50,7 @@ export function useAnalytics(): UseAnalyticsReturn {
     }
   }, []);
 
-  const handleStopTracking = useCallback(async (site: TrackedSite) => {
+  const handleStopTracking = useCallback(async (site: SiteEntry) => {
     try {
       await sendMessage('stop-tracking', { domain: site.domain });
     } catch {

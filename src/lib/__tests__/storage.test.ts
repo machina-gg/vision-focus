@@ -161,7 +161,7 @@ describe('getSites', () => {
       'x.com': {
         domain: 'x.com',
         trackedAt: '2024-01-01T00:00:00.000Z',
-        block: null,
+        rule: null,
         youtube: null
       }
     };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { calculateBlockingDays } from '~/lib/blockingDays';
-import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import { allowedSite, blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
 const NOW = new Date('2024-06-15T00:00:00Z');
 
@@ -10,9 +10,14 @@ describe('calculateBlockingDays', () => {
     expect(calculateBlockingDays('example.com', {}, NOW)).toBeNull();
   });
 
-  it('ブロック設定の無いサイトなら null を返す', () => {
-    const sites = sitesOf(trackedSite('example.com'));
+  it('ブロックの規則の無いサイト（規則なし・許可サイト）なら null を返す', () => {
+    const sites = sitesOf(
+      trackedSite('example.com'),
+      blockedSite('youtube.com'),
+      allowedSite('music.youtube.com')
+    );
     expect(calculateBlockingDays('example.com', sites, NOW)).toBeNull();
+    expect(calculateBlockingDays('music.youtube.com', sites, NOW)).toBeNull();
   });
 
   it('サイトのブロックリストに入れた日からの経過日数を返す', () => {

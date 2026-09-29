@@ -2,7 +2,7 @@ import { getSettings } from '~/lib/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import {
   getBlockState,
-  getActiveBlockedDomains,
+  getRuleTargets,
   type BlockReason
 } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
@@ -12,7 +12,22 @@ import { recordBlockedDomain } from '~/lib/blockRecordService';
 /** ブロックした理由（常時ブロック / 時間制限の超過。ブロックしていなければ null） */
 export type { BlockReason };
 
-/** 現在の設定から declarativeNetRequest の動的ルールを作り直す（一時停止中はすべて外す） */
+type RuleWithoutId = Omit<chrome.declarativeNetRequest.Rule, 'id'>;
+
+const REDIRECT_PRIORITY = 1;
+// 許可サイトは覆うブロックの転送より必ず優先させる
+const ALLOW_PRIORITY = 2;
+
+function conditionFor(
+  domain: string
+): chrome.declarativeNetRequest.RuleCondition {
+  return {
+    requestDomains: [domain],
+    resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME]
+  };
+}
+
+/** 現在の設定から declarativeNetRequest の動的ルールを作り直す（ブロック中の登録は転送、許可サイトは通す。一時停止中はすべて外す） */
 export async function updateBlockRules(): Promise<void> {
   const settings = await getSettings();
 
@@ -26,28 +41,34 @@ export async function updateBlockRules(): Promise<void> {
     return;
   }
 
-  const domainsToBlock = await getActiveBlockedDomains();
+  const { redirect, allow } = await getRuleTargets();
 
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
   const removeRuleIds = existingRules.map((rule) => rule.id);
 
-  // `||キー` は本体とすべてのサブドメインに一致する（判定の `resolveSiteKey` と同じ範囲）
-  const addRules: chrome.declarativeNetRequest.Rule[] = domainsToBlock.map(
-    (domain, index) => ({
-      id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
-      priority: 1,
-      action: {
-        type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-        redirect: {
-          extensionPath: '/newtab.html'
-        }
-      },
-      condition: {
-        urlFilter: `||${domain}`,
-        resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME]
+  // requestDomains はキーとそのサブドメインだけに一致する（判定の coveringSiteKeys と同じ範囲）
+  const redirectRules = redirect.map((domain): RuleWithoutId => ({
+    priority: REDIRECT_PRIORITY,
+    action: {
+      type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+      redirect: {
+        extensionPath: '/newtab.html'
       }
-    })
-  );
+    },
+    condition: conditionFor(domain)
+  }));
+  const allowRules = allow.map((domain): RuleWithoutId => ({
+    priority: ALLOW_PRIORITY,
+    action: { type: chrome.declarativeNetRequest.RuleActionType.ALLOW },
+    condition: conditionFor(domain)
+  }));
+  const addRules: chrome.declarativeNetRequest.Rule[] = [
+    ...redirectRules,
+    ...allowRules
+  ].map((rule, index) => ({
+    id: BLOCKER_CONFIG.RULE_ID_OFFSET + index,
+    ...rule
+  }));
 
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds,

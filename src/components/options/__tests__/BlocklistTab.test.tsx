@@ -12,7 +12,7 @@ import type { AppSettings } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { TimeLimit } from '~/types/storage';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
@@ -52,7 +52,7 @@ function switchNear(text: string): HTMLElement {
 
 const itemOf = (
   overrides: { domain?: string; enabled?: boolean; timeLimit?: TimeLimit } = {}
-): TrackedSite => {
+): SiteEntry => {
   const { domain = 'example.com', ...block } = overrides;
   return blockedSite(domain, block);
 };
@@ -68,7 +68,7 @@ const YOUTUBE_OFF: YouTubeSettingsInput = {
 };
 
 function setSettings(
-  overrides: (Partial<AppSettings> & { sites?: TrackedSite[] }) | undefined
+  overrides: (Partial<AppSettings> & { sites?: SiteEntry[] }) | undefined
 ) {
   if (overrides === undefined) {
     contextState.settings = undefined;
@@ -85,8 +85,8 @@ type TabProps = Parameters<typeof BlocklistTab>[0];
 function renderTab({
   youtube,
   ...props
-}: Partial<TabProps> & { youtube?: TrackedSite } = {}) {
-  const sites = contextState.sites as TrackedSite[];
+}: Partial<TabProps> & { youtube?: SiteEntry } = {}) {
+  const sites = contextState.sites as SiteEntry[];
   const handlers = {
     setNewDomain: vi.fn(),
     onAddDomain: vi.fn(),
