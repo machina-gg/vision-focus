@@ -45,7 +45,11 @@ export function NewtabApp() {
   const vision = useStorageItem(visionItem);
   const settings = useStorageItem(settingsItem);
   const trackedSites = useStorageItem(sitesItem);
-  const { activity, sites } = useActivitySources();
+  const {
+    activity,
+    wasteSites,
+    trackedSites: trackedSiteKeys
+  } = useActivitySources();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [goalError, setGoalError] = useState<string | null>(null);
@@ -78,7 +82,7 @@ export function NewtabApp() {
 
   // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも今日の値にするため）
   const now = new Date();
-  const today = todayStats(activity, sites, now);
+  const today = todayStats(activity, wasteSites, now);
   const blockCounts = blockCountsByDomain(
     activity,
     Object.values(trackedSites),
@@ -87,7 +91,7 @@ export function NewtabApp() {
   const blockedInfo = blockedDomain
     ? {
         domain: blockedDomain,
-        ...blockedHostTotals(activity, sites, blockedDomain, now)
+        ...blockedHostTotals(activity, trackedSiteKeys, blockedDomain, now)
       }
     : null;
 

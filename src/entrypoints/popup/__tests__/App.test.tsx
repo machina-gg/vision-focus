@@ -13,7 +13,8 @@ stubI18nWithSubstitutions();
 
 const sourcesState = vi.hoisted(() => ({
   activity: {} as ActivityLog,
-  sites: [] as SiteKey[]
+  wasteSites: [] as SiteKey[],
+  trackedSites: [] as SiteKey[]
 }));
 
 const popupActions = vi.hoisted(() => ({
@@ -52,7 +53,8 @@ vi.mock('~/hooks', async (importOriginal) => {
     ...actual,
     useActivitySources: () => ({
       activity: sourcesState.activity,
-      sites: sourcesState.sites
+      wasteSites: sourcesState.wasteSites,
+      trackedSites: sourcesState.trackedSites
     }),
     useCurrentDomain: () => ({
       currentDomain: null,
@@ -83,9 +85,14 @@ function row(overrides: Partial<DailySiteActivity> = {}): DailySiteActivity {
   return { seconds: 0, blocks: 0, unblocks: 0, ...overrides };
 }
 
-function renderPopup(activity: ActivityLog, sites: SiteKey[]) {
+function renderPopup(
+  activity: ActivityLog,
+  wasteSites: SiteKey[],
+  trackedSites: SiteKey[] = wasteSites
+) {
   sourcesState.activity = activity;
-  sourcesState.sites = sites;
+  sourcesState.wasteSites = wasteSites;
+  sourcesState.trackedSites = trackedSites;
   return render(<PopupApp />);
 }
 
@@ -139,6 +146,23 @@ describe('今日のサマリー', () => {
 
     expect(screen.getByTestId('summary-wasted-time')).toHaveTextContent(
       formatTimeLocalized(3600)
+    );
+  });
+
+  it('許可サイトの時間は今日の浪費時間に入らない（浪費時間の母集団だけを数える）', () => {
+    renderPopup(
+      {
+        [TODAY]: {
+          'youtube.com': row({ seconds: 600 }),
+          'music.youtube.com': row({ seconds: 3000 })
+        }
+      },
+      ['youtube.com'],
+      ['youtube.com', 'music.youtube.com']
+    );
+
+    expect(screen.getByTestId('summary-wasted-time')).toHaveTextContent(
+      formatTimeLocalized(600)
     );
   });
 

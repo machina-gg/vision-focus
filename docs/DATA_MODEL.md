@@ -298,18 +298,23 @@ DashboardDisplaySettings に次を足したもの。
 
 ## 導出する値
 
-「浪費時間」は、追跡中のサイトが表示されていた時間の合計（分類は持たない）。
+「浪費時間」は、追跡中のサイトのうち許可サイトを除いたもの（ブロックの規則を持つサイトと規則なしのサイト）が表示されていた時間の合計（分類は持たない）。許可サイトの時間は浪費時間に入れず、別に集計する。どちらに入るかはサイト自身の規則だけで決まるので、規則を付け外ししても過去の分類は動かない。
 
-| 画面・処理                                           | 導出（`src/lib/activityStats.ts`）                                     | 期間                         |
-| ---------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- |
-| ポップアップの今日のサマリー・新しいタブの MiniStats | `todaySummary`                                                         | 今日                         |
-| ブロック画面の回数と時間                             | `siteTotals`                                                           | 保持期間全体                 |
-| 時間制限の判定・残り時間・通知・バッジ               | `secondsOnDay`                                                         | 今日                         |
-| 利用時間の推移（日別・サイト別・累積）               | `dailySeries` / `rankSites` / `cumulativeSeries`                       | グラフの期間（全系列で同じ） |
-| 週次・月次レポート                                   | `sumRange` / `dailySeries` / `rankSites`                               | その週・その月               |
-| 追跡中のサイト一覧（解除日・解除後の時間・合計）     | `lastUnblockedOn` / `secondsSinceUnblock` / `totalSecondsSinceUnblock` | 最後に解除した日から今日     |
-| CSV（ブロック回数・日別統計）                        | `rankSites` / `lastBlockedOn` / `dailySeries`                          | 保持期間全体                 |
-| CSV（解除したサイト）                                | `lastUnblockedOn` / `secondsSinceUnblock` / `lastActiveOn`             | 最後に解除した日から今日     |
+母集団は `src/lib/sitePopulation.ts` が `sites` から導く（浪費 = `wasteSiteKeys`、許可サイト = `allowedSiteKeys`。記録していない許可サイトも含み、行が無いので 0 になる）。ホスト名を一番具体的なサイトに引き当てるときは、母集団で絞らず追跡中のサイトすべて（`trackedSiteKeys`）を使う（絞ると引き当て先がずれる）。
+
+| 画面・処理                                           | 導出（`src/lib/activityStats.ts`）                                     | 母集団                                                         | 期間                         |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------- |
+| ポップアップの今日のサマリー・新しいタブの MiniStats | `todaySummary`                                                         | 浪費                                                           | 今日                         |
+| ブロック画面の回数と時間                             | `siteTotals`                                                           | ホスト名を追跡中のサイトすべてから引き当てた 1 サイト          | 保持期間全体                 |
+| 時間制限の判定・残り時間・通知・バッジ               | `secondsOnDay`                                                         | そのブロックのサイトの行だけ                                   | 今日                         |
+| 利用時間の推移（日別・サイト別・累積）               | `dailySeries` / `rankSites` / `cumulativeSeries`                       | 浪費                                                           | グラフの期間（全系列で同じ） |
+| 許可サイトの時間（分析タブの別のグラフ）             | `dailySeries` / `rankSites` / `cumulativeSeries`                       | 許可サイト                                                     | グラフの期間（全系列で同じ） |
+| サイト別ランキング・X シェア                         | `rankSites` / `sumRange`                                               | 浪費                                                           | 保持期間全体                 |
+| 週次・月次レポート                                   | `sumRange` / `dailySeries` / `rankSites`                               | 浪費                                                           | その週・その月               |
+| 追跡中のサイト一覧（解除日・解除後の時間・合計）     | `lastUnblockedOn` / `secondsSinceUnblock` / `totalSecondsSinceUnblock` | 追跡中のサイトすべて（合計は解除済みと無効の行だけ）           | 最後に解除した日から今日     |
+| 追跡中のサイト一覧の許可サイトの行の時間             | `siteTotals`                                                           | そのサイト（記録していなければ時間の代わりに記録していない旨） | 保持期間全体                 |
+| CSV（ブロック回数・日別統計）                        | `rankSites` / `lastBlockedOn` / `dailySeries`                          | 浪費                                                           | 保持期間全体                 |
+| CSV（解除したサイト）                                | `lastUnblockedOn` / `secondsSinceUnblock` / `lastActiveOn`             | 浪費                                                           | 最後に解除した日から今日     |
 
 ## 機能上限
 

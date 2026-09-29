@@ -25,12 +25,43 @@ const BY_SITE_LIMIT = 8;
 const DOMAIN_LABEL_MAX = 15;
 const SECONDS_PER_MINUTE = 60;
 
+/** グラフが数える時間の種類（浪費時間 / 許可サイトの時間）。合計の見出しの文言と色を決める */
+export type AnalyticsChartVariant = 'waste' | 'allowed';
+
+const TOTAL_STYLE: Record<
+  AnalyticsChartVariant,
+  {
+    messageKey: string;
+    box: string;
+    label: string;
+    value: string;
+    note: string;
+  }
+> = {
+  waste: {
+    messageKey: 'totalTimeOnTrackedSites',
+    box: 'bg-block-50 border-block-100',
+    label: 'text-block-600',
+    value: 'text-block-700',
+    note: 'text-block-500'
+  },
+  allowed: {
+    messageKey: 'totalTimeOnAllowedSites',
+    box: 'bg-info-50 border-info-100',
+    label: 'text-info-600',
+    value: 'text-info-700',
+    note: 'text-info-500'
+  }
+};
+
 /** AnalyticsChart に渡す集計元と対象サイト */
 export interface AnalyticsChartProps {
   /** 日別・サイト別の閲覧時間の記録 */
   activity: ActivityLog;
-  /** 集計に含めるサイト */
+  /** 集計に含めるサイト（variant の母集団） */
   sites: readonly SiteKey[];
+  /** 数える時間の種類。waste = 浪費時間、allowed = 許可サイトの時間 */
+  variant: AnalyticsChartVariant;
   /** true なら薄く表示して操作できなくする */
   disabled?: boolean;
 }
@@ -40,16 +71,18 @@ function toMinutes(seconds: number): number {
 }
 
 /**
- * 直近 CHART_DAYS 日の合計閲覧時間と、種類を切り替えられるグラフを表示する
+ * 直近 CHART_DAYS 日の合計時間（variant で浪費時間か許可サイトの時間）と、種類を切り替えられるグラフを表示する
  * @param props 集計元の記録と対象サイト（各フィールドは AnalyticsChartProps）
  * @returns 合計時間・グラフ切り替えボタン・グラフをまとめた要素
  */
 export function AnalyticsChart({
   activity,
   sites,
+  variant,
   disabled = false
 }: AnalyticsChartProps) {
   const [chartType, setChartType] = useState<ChartType>('daily');
+  const totalStyle = TOTAL_STYLE[variant];
 
   const { totalSeconds, dailyData, bySiteData, cumulativeData } =
     useMemo(() => {
@@ -107,14 +140,18 @@ export function AnalyticsChart({
     <div
       className={`space-y-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      <div className="p-4 bg-block-50 rounded-lg border border-block-100">
-        <p className="text-sm text-block-600 font-medium">
-          {getMessage('totalTimeOnTrackedSites', String(CHART_DAYS))}
+      <div
+        className={`p-4 rounded-lg border ${totalStyle.box}`}
+        data-testid="analytics-chart-total"
+        data-variant={variant}
+      >
+        <p className={`text-sm font-medium ${totalStyle.label}`}>
+          {getMessage(totalStyle.messageKey, String(CHART_DAYS))}
         </p>
-        <p className="text-2xl font-bold text-block-700">
+        <p className={`text-2xl font-bold ${totalStyle.value}`}>
           {formatTime(totalSeconds)}
         </p>
-        <p className="text-xs text-block-500 mt-1">
+        <p className={`text-xs mt-1 ${totalStyle.note}`}>
           {getMessage('chartSiteCount', String(sites.length))}
         </p>
       </div>

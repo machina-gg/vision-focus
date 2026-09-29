@@ -63,7 +63,8 @@ vi.mock('~/lib/messaging', () => ({
 const hooksState = vi.hoisted(() => ({
   values: {} as Record<string, unknown>,
   activity: {} as ActivityLog,
-  sites: [] as SiteKey[]
+  sites: [] as SiteKey[],
+  wasteSites: [] as SiteKey[]
 }));
 
 // useResolvedPreset / useBackgroundPreload と導出は実体を通す（既定値への落ち方と導出が検査対象）
@@ -74,7 +75,8 @@ vi.mock('~/hooks', async (importOriginal) => {
     useStorageItem: (item: { key: string }) => hooksState.values[item.key],
     useActivitySources: () => ({
       activity: hooksState.activity,
-      sites: hooksState.sites
+      wasteSites: hooksState.wasteSites,
+      trackedSites: hooksState.sites
     })
   };
 });
@@ -117,6 +119,7 @@ function renderApp(
     trackedSites?: TrackedSites;
     activity?: ActivityLog;
     sites?: SiteKey[];
+    wasteSites?: SiteKey[];
   } = {}
 ) {
   hooksState.values = {
@@ -126,6 +129,7 @@ function renderApp(
   };
   hooksState.activity = options.activity ?? {};
   hooksState.sites = options.sites ?? [];
+  hooksState.wasteSites = options.wasteSites ?? hooksState.sites;
   return render(<NewtabApp />);
 }
 
@@ -378,6 +382,24 @@ describe('数値は activity から導出する', () => {
 
     expect(await screen.findByTestId('newtab-block-count')).toHaveTextContent(
       /^3$/
+    );
+  });
+
+  it('ミニ統計は浪費時間の母集団だけを数え、許可サイトの行を入れない', async () => {
+    renderApp({
+      vision,
+      activity: {
+        [TODAY]: {
+          'example.com': row({ blocks: 2 }),
+          'music.example.com': row({ blocks: 4 })
+        }
+      },
+      sites: ['example.com', 'music.example.com'],
+      wasteSites: ['example.com']
+    });
+
+    expect(await screen.findByTestId('newtab-block-count')).toHaveTextContent(
+      /^2$/
     );
   });
 

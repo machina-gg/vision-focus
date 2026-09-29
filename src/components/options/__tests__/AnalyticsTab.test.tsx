@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AnalyticsTab } from '../AnalyticsTab';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
-import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import { allowedSite, blockedSite, sitesOf, trackedSite } from '~/test/sites';
 
 interface SourcesProps {
   activity: ActivityLog;
@@ -238,6 +238,30 @@ describe('AnalyticsTab', () => {
       expect(screen.getByTestId('site-ranking')).toHaveTextContent(expected);
       expect(screen.getByTestId('summary')).toHaveTextContent(expected);
       expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
+    });
+
+    it('ランキングと期間の絞り込みには許可サイトを除いた母集団を渡し、一覧と書き出しには登録をすべて渡す', () => {
+      renderTab({
+        activity: {
+          '2026-03-10': {
+            'a.example': { seconds: 60, blocks: 1, unblocks: 0 }
+          }
+        },
+        trackedSites: sitesOf(
+          trackedSite('a.example'),
+          allowedSite('music.a.example', true)
+        )
+      });
+
+      const all = '2026-03-10|a.example,music.a.example';
+      const waste = '2026-03-10|a.example';
+      expect(screen.getByTestId('export-bar')).toHaveTextContent(all);
+      expect(screen.getByTestId('summary')).toHaveTextContent(all);
+      expect(screen.getByTestId('site-ranking').textContent).toBe(waste);
+      expect(screen.getByTestId('date-filter')).toHaveTextContent(waste);
+      expect(screen.getByTestId('date-filter')).not.toHaveTextContent(
+        'music.a.example'
+      );
     });
 
     it('支援の案内を出すかどうかを期間の絞り込みへ渡す', () => {

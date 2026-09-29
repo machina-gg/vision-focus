@@ -32,6 +32,7 @@ export const DailyView: Story = {
   args: {
     activity: storyActivity(),
     sites: STORY_SITES,
+    variant: 'waste',
     disabled: false
   }
 };
@@ -40,6 +41,7 @@ export const Empty: Story = {
   args: {
     activity: {},
     sites: [],
+    variant: 'waste',
     disabled: false
   }
 };
@@ -48,6 +50,7 @@ export const Disabled: Story = {
   args: {
     activity: storyActivity(),
     sites: STORY_SITES,
+    variant: 'waste',
     disabled: true
   }
 };
@@ -56,6 +59,19 @@ export const SingleSite: Story = {
   args: {
     activity: mockActivity([['twitter.com', { seconds: 7200, blocks: 15 }, 0]]),
     sites: ['twitter.com'],
+    variant: 'waste',
+    disabled: false
+  }
+};
+
+export const AllowedSites: Story = {
+  args: {
+    activity: mockActivity([
+      ['music.youtube.com', { seconds: 5400, blocks: 0 }, 0],
+      ['music.youtube.com', { seconds: 1800, blocks: 0 }, 1]
+    ]),
+    sites: ['music.youtube.com'],
+    variant: 'allowed',
     disabled: false
   }
 };

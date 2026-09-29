@@ -28,9 +28,9 @@ import '~/styles/globals.css';
 
 function PopupAppContent() {
   const { settings, vision } = useSettings();
-  const { activity, sites } = useActivitySources();
+  const { activity, wasteSites } = useActivitySources();
   // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも今日の値にするため）
-  const stats = todayStats(activity, sites, new Date());
+  const stats = todayStats(activity, wasteSites, new Date());
   const { displaySettings } = useResolvedPreset({ vision, settings });
   const { currentDomain, timeLimitInfo, clearDomain } = useCurrentDomain();
 

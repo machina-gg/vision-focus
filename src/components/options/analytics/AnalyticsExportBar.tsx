@@ -33,7 +33,7 @@ import {
   copyImageToClipboard,
   downloadImage
 } from '~/lib/share';
-import { trackedSiteKeys } from '~/lib/siteService';
+import { allowedSiteKeys, wasteSiteKeys } from '~/lib/sitePopulation';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
@@ -42,7 +42,7 @@ import type { TrackedSites } from '~/types/site';
 interface AnalyticsExportBarProps {
   /** 日別・サイト別の閲覧時間とブロック回数の記録 */
   activity: ActivityLog;
-  /** 登録済みのサイト（書き出しとグラフの対象） */
+  /** 登録済みのサイト（書き出しと浪費のグラフは許可サイトを除いて数え、許可サイトは別のグラフに出す） */
   trackedSites: TrackedSites;
   /** 再読み込みボタンが押されたときに呼ぶ */
   onRefresh: () => Promise<void>;
@@ -51,7 +51,7 @@ interface AnalyticsExportBarProps {
 }
 
 /**
- * 計測データの CSV 書き出し・再読み込み・グラフ・X への共有・画像の保存・データの削除をまとめたカードを表示する
+ * 計測データの CSV 書き出し・再読み込み・浪費時間のグラフ・X への共有・画像の保存・データの削除をまとめたカードと、許可サイトがあればその時間のグラフを表示する
  * @param props 集計元と操作（各フィールドは AnalyticsExportBarProps）
  * @returns 計測データのカードと、削除の確認用のモーダル
  */
@@ -76,7 +76,11 @@ export function AnalyticsExportBar({
     setTimeout(() => setIsRefreshing(false), REFRESH_SPINNER_DELAY_MS);
   };
 
-  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
+  const sites = useMemo(() => wasteSiteKeys(trackedSites), [trackedSites]);
+  const allowedSites = useMemo(
+    () => allowedSiteKeys(trackedSites),
+    [trackedSites]
+  );
 
   const { range, totals, topBlockedSite } = useMemo(() => {
     const retention = retentionRange(new Date());
@@ -322,9 +326,22 @@ export function AnalyticsExportBar({
           </div>
         )}
         <div ref={chartRef}>
-          <AnalyticsChart activity={activity} sites={sites} />
+          <AnalyticsChart activity={activity} sites={sites} variant="waste" />
         </div>
       </Card>
+
+      {allowedSites.length > 0 && (
+        <Card data-testid="analytics-allowed-chart">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {getMessage('allowedSitesChart')}
+          </h3>
+          <AnalyticsChart
+            activity={activity}
+            sites={allowedSites}
+            variant="allowed"
+          />
+        </Card>
+      )}
 
       <Modal
         isOpen={showResetModal}

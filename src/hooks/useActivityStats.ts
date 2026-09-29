@@ -10,6 +10,7 @@ import {
 } from '~/lib/activityStats';
 import { resolveSiteKey } from '~/lib/siteKey';
 import { trackedSiteKeys } from '~/lib/siteService';
+import { wasteSiteKeys } from '~/lib/sitePopulation';
 import { activityItem, sitesItem } from '~/lib/storage';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DateRange } from '~/types/activity';
@@ -17,12 +18,14 @@ import type { SiteKey } from '~/types/site';
 
 import { useStorageItem } from './useStorageItem';
 
-/** 活動統計の導出に使う入力（事実の表と、その母集団である追跡中のサイト） */
+/** 活動統計の導出に使う入力（事実の表と、浪費時間の母集団・ホスト名の引き当てに使う全キー） */
 export interface ActivitySources {
   /** 活動の事実の表 */
   activity: ActivityLog;
-  /** 追跡中のサイトのキー */
-  sites: SiteKey[];
+  /** 浪費時間の母集団（許可サイトを除いた追跡中のサイト）のキー */
+  wasteSites: SiteKey[];
+  /** 追跡中のサイトすべてのキー（ホスト名を一番具体的なサイトに引き当てるときに使う） */
+  trackedSites: SiteKey[];
 }
 
 /** 今日の合計と、今日いちばんブロックされたサイトとその回数 */
@@ -43,7 +46,7 @@ export function retentionRange(now: Date): DateRange {
 /**
  * 今日（ローカル日付）の合計と、今日いちばんブロックされたサイト・その回数を返す
  * @param activity 活動の事実の表
- * @param sites 集計の対象にする追跡中のサイトのキー
+ * @param sites 集計の対象にするサイトのキー（画面では浪費時間の母集団）
  * @param now 今日を決める現在時刻
  * @returns 今日の合計。ブロックが無ければ topBlockedCount は 0
  */
@@ -65,7 +68,7 @@ export function todayStats(
 /**
  * ホスト名が属する追跡中のサイトの、保持期間全体の合計を返す。どのサイトにも属さなければすべて 0
  * @param activity 活動の事実の表
- * @param sites 追跡中のサイトのキー
+ * @param sites 追跡中のサイトすべてのキー（母集団で絞ると引き当て先がずれるので絞らない）
  * @param hostname ブロックされたページのホスト名
  * @param now 保持期間を決める現在時刻
  * @returns 属するサイトの保持期間全体の合計（秒数・ブロック回数・解除回数）
@@ -104,11 +107,12 @@ export function blockCountsByDomain(
 
 /**
  * 事実の表と追跡中のサイトを保存値から読み、変更に追従する
- * @returns 事実の表と追跡中のサイトのキー（読み込み前は空の既定値）
+ * @returns 事実の表・浪費時間の母集団のキー・追跡中のサイトすべてのキー（読み込み前は空の既定値）
  */
 export function useActivitySources(): ActivitySources {
   const activity = useStorageItem(activityItem);
-  const trackedSites = useStorageItem(sitesItem);
-  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
-  return { activity, sites };
+  const sites = useStorageItem(sitesItem);
+  const wasteSites = useMemo(() => wasteSiteKeys(sites), [sites]);
+  const trackedSites = useMemo(() => trackedSiteKeys(sites), [sites]);
+  return { activity, wasteSites, trackedSites };
 }

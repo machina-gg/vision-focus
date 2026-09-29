@@ -109,7 +109,8 @@ test.describe('Options - Analytics Tab', () => {
       makeSites([
         { domain: 'youtube.com' },
         { domain: 'blocked.com', block: {} },
-        { domain: 'paused.com', block: { enabled: false } }
+        { domain: 'paused.com', block: { enabled: false } },
+        { domain: 'music.blocked.com', allow: { recordTime: true } }
       ])
     );
     await setupPage.close();
@@ -124,13 +125,15 @@ test.describe('Options - Analytics Tab', () => {
     await expect(trackedSection).toContainText('youtube.com');
 
     const rows = page.locator(SELECTORS.analytics.trackedSite);
-    await expect(rows).toHaveCount(3);
+    await expect(rows).toHaveCount(4);
     await expect(rows.nth(0)).toHaveAttribute('data-status', 'blocked');
     await expect(rows.nth(0)).toContainText('blocked.com');
     await expect(rows.nth(1)).toHaveAttribute('data-status', 'disabled');
     await expect(rows.nth(1)).toContainText('paused.com');
     await expect(rows.nth(2)).toHaveAttribute('data-status', 'tracking');
     await expect(rows.nth(2)).toContainText('youtube.com');
+    await expect(rows.nth(3)).toHaveAttribute('data-status', 'allowed');
+    await expect(rows.nth(3)).toContainText('music.blocked.com');
 
     await expect(
       rows.nth(1).locator(SELECTORS.analytics.reblockButton)
@@ -140,6 +143,12 @@ test.describe('Options - Analytics Tab', () => {
     ).toHaveCount(0);
     await expect(
       rows.nth(0).locator(SELECTORS.analytics.reblockButton)
+    ).toHaveCount(0);
+    await expect(
+      rows.nth(3).locator(SELECTORS.analytics.reblockButton)
+    ).toHaveCount(0);
+    await expect(
+      rows.nth(3).locator(SELECTORS.analytics.stopTrackingButton)
     ).toHaveCount(0);
 
     await page.close();
