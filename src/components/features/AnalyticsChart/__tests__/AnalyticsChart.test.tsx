@@ -3,7 +3,11 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { AnalyticsChart, CHART_DAYS } from '../AnalyticsChart';
+import {
+  AnalyticsChart,
+  CHART_DAYS,
+  type AnalyticsChartVariant
+} from '../AnalyticsChart';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
@@ -36,10 +40,16 @@ const seconds = (value: number) => ({ seconds: value, blocks: 0, unblocks: 0 });
 function renderChart(
   activity: ActivityLog,
   sites: readonly SiteKey[],
-  disabled = false
+  disabled = false,
+  variant: AnalyticsChartVariant = 'waste'
 ) {
   return render(
-    <AnalyticsChart activity={activity} sites={sites} disabled={disabled} />
+    <AnalyticsChart
+      activity={activity}
+      sites={sites}
+      variant={variant}
+      disabled={disabled}
+    />
   );
 }
 
@@ -84,11 +94,35 @@ describe('AnalyticsChart', () => {
       renderChart(activity, sites);
 
       expect(
-        screen.getByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
+        screen.getByText(`totalWasteTime(${CHART_DAYS})`)
       ).toBeInTheDocument();
       // 600 + 1200 + 3000 + 600 = 5400 秒
       expect(screen.getByText('1h 30m')).toBeInTheDocument();
       expect(screen.getByText('chartSiteCount(2)')).toBeInTheDocument();
+    });
+
+    it('variant が allowed なら見出しを許可サイトの合計にし、色を浪費と変える', () => {
+      renderChart(activity, sites, false, 'allowed');
+
+      expect(
+        screen.getByText(`totalTimeOnAllowedSites(${CHART_DAYS})`)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(`totalWasteTime(${CHART_DAYS})`)
+      ).not.toBeInTheDocument();
+      expect(screen.getByText('1h 30m')).toBeInTheDocument();
+      const total = screen.getByTestId('analytics-chart-total');
+      expect(total).toHaveAttribute('data-variant', 'allowed');
+      expect(total.className).toContain('bg-info-50');
+      expect(total.className).not.toContain('bg-block-50');
+    });
+
+    it('variant が waste なら浪費の色で出す', () => {
+      renderChart(activity, sites);
+
+      const total = screen.getByTestId('analytics-chart-total');
+      expect(total).toHaveAttribute('data-variant', 'waste');
+      expect(total.className).toContain('bg-block-50');
     });
 
     it('追跡中のサイトが無くても例外にならず 0 件と出す', () => {

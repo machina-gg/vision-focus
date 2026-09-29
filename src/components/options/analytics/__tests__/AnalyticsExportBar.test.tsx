@@ -10,7 +10,7 @@ import {
 } from '~/constants/intervals';
 import { toDateKey } from '~/lib/time';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
-import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import { allowedSite, blockedSite, sitesOf, trackedSite } from '~/test/sites';
 import { itemAt } from '~/test/items';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
@@ -40,7 +40,19 @@ vi.mock('~/lib/analytics', () => ({
   trackFeatureUse: analytics.trackFeatureUse
 }));
 vi.mock('~/components/features', () => ({
-  AnalyticsChart: () => <div data-testid="analytics-chart" />
+  AnalyticsChart: ({
+    sites,
+    variant
+  }: {
+    sites: readonly string[];
+    variant: string;
+  }) => (
+    <div
+      data-testid="analytics-chart"
+      data-variant={variant}
+      data-sites={[...sites].sort().join(',')}
+    />
+  )
 }));
 
 const blockListOf = (domains: string[]): TrackedSites =>
@@ -101,6 +113,41 @@ describe('AnalyticsExportBar', () => {
       expect(screen.getByText('trackedSitesTitle')).toBeInTheDocument();
       expect(screen.getByText('usageChart')).toBeInTheDocument();
       expect(screen.getByTestId('analytics-chart')).toBeInTheDocument();
+    });
+
+    it('許可サイトが無ければ、許可サイトのグラフは出さない', () => {
+      renderBar({ trackedSites: trackedOf(['example.com']) });
+
+      expect(
+        screen.queryByTestId('analytics-allowed-chart')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('analytics-chart')).toHaveAttribute(
+        'data-variant',
+        'waste'
+      );
+    });
+
+    it('許可サイトがあれば、浪費のグラフから除き、別のカードに許可サイトのグラフを出す', () => {
+      renderBar({
+        trackedSites: sitesOf(
+          blockedSite('youtube.com'),
+          trackedSite('reddit.com'),
+          allowedSite('music.youtube.com', true),
+          allowedSite('studio.youtube.com', false)
+        )
+      });
+
+      const [waste, allowed] = screen.getAllByTestId('analytics-chart');
+      expect(waste).toHaveAttribute('data-variant', 'waste');
+      expect(waste).toHaveAttribute('data-sites', 'reddit.com,youtube.com');
+      expect(allowed).toHaveAttribute('data-variant', 'allowed');
+      expect(allowed).toHaveAttribute(
+        'data-sites',
+        'music.youtube.com,studio.youtube.com'
+      );
+      const card = screen.getByTestId('analytics-allowed-chart');
+      expect(card).toHaveTextContent('allowedSitesChart');
+      expect(card).toContainElement(allowed ?? null);
     });
 
     it('データが 1 件も無ければ書き出しボタンを押せない', () => {
@@ -220,6 +267,31 @@ describe('AnalyticsExportBar', () => {
       expect(analytics.trackFeatureUse).toHaveBeenCalledTimes(3);
     });
 
+    it('許可サイトは CSV の母集団に入れない', () => {
+      const activity: ActivityLog = {
+        [daysAgo(0)]: {
+          'example.com': row({ seconds: 60, blocks: 3, unblocks: 1 }),
+          'music.example.com': row({ seconds: 600 })
+        }
+      };
+      renderBar({
+        activity,
+        trackedSites: sitesOf(
+          trackedSite('example.com'),
+          allowedSite('music.example.com', true)
+        )
+      });
+
+      openExportMenu();
+      fireEvent.click(screen.getByTestId('analytics-export-daily-stats'));
+
+      expect(exportLib.exportDailyActivity).toHaveBeenCalledWith(
+        activity,
+        ['example.com'],
+        expect.anything()
+      );
+    });
+
     it('もう一度押すとメニューは閉じる', () => {
       renderBar({ trackedSites: blockListOf(['example.com']) });
 
@@ -287,6 +359,31 @@ describe('AnalyticsExportBar', () => {
       });
       expect(share.shareToX).toHaveBeenCalledWith('共有テキスト');
       expect(screen.getByText('shareSuccess')).toBeInTheDocument();
+    });
+
+    it('許可サイトの時間はシェア文の浪費時間に入れない', async () => {
+      renderBar({
+        activity: {
+          [daysAgo(0)]: {
+            'example.com': row({ seconds: 60, blocks: 1 }),
+            'music.example.com': row({ seconds: 600 })
+          }
+        },
+        trackedSites: sitesOf(
+          blockedSite('example.com'),
+          allowedSite('music.example.com', true)
+        )
+      });
+
+      await act(async () => {
+        fireEvent.click(itemAt(screen.getAllByTitle('shareToX'), 0));
+      });
+
+      expect(share.generateShareText).toHaveBeenCalledWith({
+        totalBlockCount: 1,
+        totalWasteTime: 60,
+        topBlockedSite: 'example.com'
+      });
     });
 
     it('集計対象が 0 件でもシェア文は作れる', async () => {

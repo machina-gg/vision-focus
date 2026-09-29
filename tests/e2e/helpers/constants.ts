@@ -173,6 +173,12 @@ export const SELECTORS = {
     siteRankingList: '[data-testid="analytics-top-sites-heading"]',
     trackedSitesList: '[data-testid="analytics-tracked-sites-heading"]',
     trackedSite: '[data-testid="analytics-tracked-site"]',
+    trackedSiteTime: '[data-testid="analytics-tracked-site-time"]',
+    trackedSiteNotRecording:
+      '[data-testid="analytics-tracked-site-not-recording"]',
+    trackedSitesTotal: '[data-testid="analytics-tracked-sites-total"]',
+    chartTotal: '[data-testid="analytics-chart-total"]',
+    allowedChart: '[data-testid="analytics-allowed-chart"]',
     wastedTimeSection: '[data-testid="analytics-tracked-sites-heading"]',
     exportButton: '[data-testid="analytics-export-button"]',
     exportBlocklist: '[data-testid="analytics-export-blocklist"]',
