@@ -1,4 +1,5 @@
 import { onMessage } from '~/lib/messaging';
+import { addAllowedSiteHandler } from './add-allowed-site';
 import { addBlockHandler } from './add-block';
 import { addScheduleHandler } from './add-schedule';
 import { addTrackedSiteHandler } from './add-tracked-site';
@@ -10,6 +11,7 @@ import { importSettingsHandler } from './import-settings';
 import { removeBlockHandler } from './remove-block';
 import { removeScheduleHandler } from './remove-schedule';
 import { resetActivityHandler } from './reset-activity';
+import { setAllowedSiteRecordingHandler } from './set-allowed-site-recording';
 import { stopTrackingHandler } from './stop-tracking';
 import { toggleBlockHandler } from './toggle-block';
 import { togglePauseHandler } from './toggle-pause';
@@ -29,6 +31,7 @@ import { removePasswordHandler } from './remove-password';
 
 /** background が受けるメッセージごとにハンドラを登録する */
 export function registerMessageHandlers(): void {
+  onMessage('add-allowed-site', addAllowedSiteHandler);
   onMessage('add-block', addBlockHandler);
   onMessage('add-schedule', addScheduleHandler);
   onMessage('add-tracked-site', addTrackedSiteHandler);
@@ -40,6 +43,7 @@ export function registerMessageHandlers(): void {
   onMessage('remove-block', removeBlockHandler);
   onMessage('remove-schedule', removeScheduleHandler);
   onMessage('reset-activity', resetActivityHandler);
+  onMessage('set-allowed-site-recording', setAllowedSiteRecordingHandler);
   onMessage('stop-tracking', stopTrackingHandler);
   onMessage('toggle-block', toggleBlockHandler);
   onMessage('toggle-pause', togglePauseHandler);

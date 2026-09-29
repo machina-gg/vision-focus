@@ -61,11 +61,11 @@ flowchart TD
 - `*.example.com` / `www.example.com` / `example.com` はどれも `example.com` になる（追加時に正規化する）
 - 時間制限の使用量はサイトキーの行で数える。`www.example.com` と `m.example.com` の滞在は同じ枠に入る
 - 祖先・子孫の組を許すのは、子孫が許可サイトのときだけ（`findNestingConflict()`）。
-  追加（`add-block` / `add-tracked-site` / `import-settings`）と、YouTube 設定で youtube.com を新しく作るときに検査する。
+  追加（`add-block` / `add-tracked-site` / `add-allowed-site` / `import-settings`）と、YouTube 設定で youtube.com を新しく作るときに検査する。
   ブロック・規則なしは、祖先がある・許可サイトでない子孫があると拒む。許可サイトは、許可サイトでない子孫があると拒む。
   ブロック・規則なしの入れ子を許すと、子のサブドメインでの滞在が親の使用量に入らず、子を登録するだけで親の時間制限を回避できる。
   許可サイトはその回避を意図して登録するもので、ブロックリストの側から見える
-- 許可サイトでの滞在は許可サイトの行に入り（ホストが属するのはキーが最も長い登録）、親の使用量には入らない
+- 許可サイトでの滞在は、「記録する」が ON なら許可サイトの行に入り（ホストが属するのはキーが最も長い登録）、OFF なら記録しない。どちらでも親の使用量には入らない
 
 ## 状態遷移図
 
@@ -75,7 +75,7 @@ stateDiagram-v2
 
     Unknown --> NotInBlocklist: 追跡していない / 追跡だけ（rule が null）
     Unknown --> InBlocklist: add-block で追加 / import-settings で取り込み
-    Unknown --> Allowed: import-settings で許可サイトを取り込み
+    Unknown --> Allowed: add-allowed-site で追加 / import-settings で取り込み
     Unknown --> AllowedHost: 覆う登録に許可サイトがある
 
     Allowed: 許可サイト（rule.kind = allow）

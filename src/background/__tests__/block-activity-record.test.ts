@@ -30,9 +30,14 @@ vi.mock('~/lib/chromeApi', () => ({
   isExtensionContextValid: vi.fn(() => true)
 }));
 
-vi.mock('~/lib/siteService', () => ({
-  getTrackedSiteKeys: vi.fn()
-}));
+// 記録を OFF にした許可サイトはこのテストに無いので、記録してよいサイトは追跡中のサイトと同じ
+vi.mock('~/lib/siteService', () => {
+  const getTrackedSiteKeys = vi.fn();
+  return {
+    getTrackedSiteKeys,
+    getRecordableSiteKeys: vi.fn(() => getTrackedSiteKeys())
+  };
+});
 
 import { getBlockState, getBlockStateForDomain } from '~/lib/blockService';
 import { setLastBlocked } from '~/lib/storage';

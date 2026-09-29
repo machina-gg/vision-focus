@@ -202,6 +202,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 | ALLOW-001 | `youtube.com` をブロックし `music.youtube.com` を許可サイトにした種で、許可サイトは開け、`www.youtube.com` はブロック画面へ移る | P0     |
 | ALLOW-002 | 親に時間制限を付けて上限まで使った種でも、許可サイトは開ける                                                                    | P1     |
 | ALLOW-003 | 規則なしの `m.youtube.com` を追跡した状態で YouTube 設定を有効にすると、理由が出て保存されない                                  | P1     |
+| ALLOW-004 | 「記録する」が OFF の許可サイトは、見ていても今日の行が増えない。ON の種では許可サイトの行に入り、親の行には入らない            | P1     |
 
 ### Time Limit 機能
 

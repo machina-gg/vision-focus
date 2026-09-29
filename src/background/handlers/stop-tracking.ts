@@ -2,9 +2,10 @@ import type { MessageHandler } from '~/lib/messaging';
 import { purgeSite } from '~/lib/activityService';
 import { stopTracking } from '~/lib/siteService';
 import { SiteBodySchema } from '~/types/messageSchemas';
+import { blockExistingTabs, updateBlockRules } from '../blocker';
 
 /**
- * stop-tracking: ドメインの追跡をやめ、そのサイトの記録を消す（ブロック設定か YouTube 機能が残るサイトはやめない）
+ * stop-tracking: ドメインの追跡をやめ、そのサイトの記録を消す（ブロック設定か YouTube 機能が残るサイトはやめない。許可サイトは登録ごと消え、そのホストが上のブロックに入るので、ルールを作り直して開いているタブも置き換える）
  * @param message data.domain に追跡をやめるドメイン
  * @returns 成功か、失敗の種類（invalid-request / site-in-use）
  */
@@ -20,6 +21,10 @@ export const stopTrackingHandler: MessageHandler<'stop-tracking'> = async ({
   const result = await stopTracking(domain);
   if (result === 'in-use') {
     return { success: false, error: { code: 'site-in-use' } };
+  }
+  if (result === 'stopped') {
+    await updateBlockRules();
+    await blockExistingTabs();
   }
   // 追跡中に無くても事実の列が残っていることがあるので、消す処理は常に通す
   await purgeSite(domain);
