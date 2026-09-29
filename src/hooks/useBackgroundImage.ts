@@ -20,14 +20,16 @@ export function useBackgroundImage(
   useEffect(() => {
     if (imageId === null) return;
     let active = true;
-    getBackgroundImage(imageId).then(
-      (dataUrl) => {
-        if (active) setLoaded({ imageId, dataUrl });
-      },
-      () => {
-        if (active) setLoaded({ imageId, dataUrl: null });
+    const load = async () => {
+      let dataUrl: string | null;
+      try {
+        dataUrl = await getBackgroundImage(imageId);
+      } catch {
+        dataUrl = null;
       }
-    );
+      if (active) setLoaded({ imageId, dataUrl });
+    };
+    void load();
     return () => {
       active = false;
     };
