@@ -30,8 +30,11 @@ import type { TrackedSite } from '~/types/site';
 interface YouTubeSectionProps {
   /** YouTube の登録内容（登録が無ければ null で、すべてオフとして表示する） */
   site: TrackedSite | null;
-  /** 変更後の YouTube の設定全体を受け取る */
-  onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
+  /** 変更後の YouTube の設定全体を受け取る（解除の確認でパスワードが入力されたときはそれも受け取る）。失敗の文言、保存したら null を返す */
+  onYouTubeChange: (
+    youtube: YouTubeSettingsInput,
+    password?: string
+  ) => Promise<string | null>;
   /** 全体の有効化かアクセスのブロックをオフにするときに、解除の確認を求める */
   onRequestUnblock: (request: UnblockRequest) => void;
 }
@@ -132,11 +135,12 @@ export function YouTubeSection({
           domain: YOUTUBE_DOMAIN,
           timeLimit: youtube.timeLimit,
           action: 'toggle',
-          onConfirm: () => onYouTubeChange({ ...youtube, [key]: false })
+          onConfirm: (password) =>
+            onYouTubeChange({ ...youtube, [key]: false }, password)
         });
         return;
       }
-      onYouTubeChange({ ...youtube, [key]: checked });
+      void onYouTubeChange({ ...youtube, [key]: checked });
     },
     [youtube, onYouTubeChange, onRequestUnblock]
   );
@@ -158,9 +162,9 @@ export function YouTubeSection({
 
   const handleSave = useCallback(() => {
     if (selectedType === 'always') {
-      onYouTubeChange({ ...youtube, timeLimit: null });
+      void onYouTubeChange({ ...youtube, timeLimit: null });
     } else {
-      onYouTubeChange({
+      void onYouTubeChange({
         ...youtube,
         timeLimit: {
           type: selectedType,

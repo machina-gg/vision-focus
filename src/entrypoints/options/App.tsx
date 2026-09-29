@@ -36,11 +36,7 @@ import { getMessage } from '~/lib/i18n';
 import { getSettings, getVision, settingsItem, sitesItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
-import type {
-  AnalyticsOptIn,
-  PasswordSettings,
-  UnblockConfirmSettings
-} from '~/types/storage';
+import type { AnalyticsOptIn, UnblockConfirmSettings } from '~/types/storage';
 
 import '~/styles/globals.css';
 
@@ -62,13 +58,6 @@ function OptionsAppContent() {
   const supportPrompt = useSupportPrompt();
   const { activity } = useActivitySources();
   const [trackedSites] = useStorageItem(sitesItem);
-
-  const handlePasswordUpdate = async (password: PasswordSettings) => {
-    if (!settings) return;
-    const updated = { ...settings, password };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
-  };
 
   const handleUnblockConfirmUpdate = async (
     unblockConfirm: UnblockConfirmSettings
@@ -198,7 +187,6 @@ function OptionsAppContent() {
 
         {activeTab === TABS.SETTINGS && (
           <SettingsTab
-            onPasswordUpdate={handlePasswordUpdate}
             onUnblockConfirmUpdate={handleUnblockConfirmUpdate}
             onUpdateNotifications={blocklist.handleUpdateNotifications}
             onAnalyticsOptInChange={handleAnalyticsOptIn}

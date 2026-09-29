@@ -14,8 +14,12 @@ import type {
   UpdatePresetBody,
   UpdateScheduleBody,
   UpdateTimeLimitBody,
-  UpdateUnblockConfirmBody
+  UpdateUnblockConfirmBody,
+  SetPasswordBody,
+  ChangePasswordBody,
+  RemovePasswordBody
 } from './messageSchemas';
+import type { PasswordStrengthProblem } from '~/lib/password';
 import type { NestedSite } from '~/lib/siteKey';
 import type { TimeLimitType } from './site';
 
@@ -76,6 +80,28 @@ export type MessageError =
   | {
       /** 保存に失敗した */
       code: 'save-failed';
+    }
+  | {
+      /** パスワード保護中にブロックを弱める操作へパスワードが添えられていない */
+      code: 'password-required';
+    }
+  | {
+      /** パスワードが保存済みのものと一致しない */
+      code: 'password-mismatch';
+    }
+  | {
+      /** パスワードが設定されていない */
+      code: 'password-not-set';
+    }
+  | {
+      /** パスワードが既に設定されている */
+      code: 'password-already-set';
+    }
+  | {
+      /** 新しいパスワードの長さが範囲外 */
+      code: 'password-invalid';
+      /** 範囲外である理由 */
+      reason: PasswordStrengthProblem;
     };
 
 /** 設定を書き換える依頼の結果（スケジュール・通知・長押し確認・利用状況の送信への同意・表示設定で共通） */
@@ -164,12 +190,16 @@ export interface AddTrackedSiteResponse {
 export interface RemoveBlockRequest {
   /** 外す項目のドメイン */
   domain: string;
+  /** パスワード保護中に照合するパスワード */
+  password?: string;
 }
 
 /** ブロックリストから外した結果 */
 export interface RemoveBlockResponse {
   /** 外せたか */
   success: boolean;
+  /** 失敗の種類。成功時は無い */
+  error?: MessageError;
 }
 
 /** 開いているページのサイトの時間制限（ポップアップの残り時間表示が読む） */
@@ -250,6 +280,8 @@ export interface ToggleBlockRequest {
   domain: string;
   /** true = ブロックを有効にする / false = 一時的に無効にする */
   enabled: boolean;
+  /** パスワード保護中に無効にするときに照合するパスワード */
+  password?: string;
 }
 
 /** 有効・無効の切り替えの結果 */
@@ -306,3 +338,12 @@ export interface UpdateYouTubeSettingsResponse {
   /** 失敗の種類。成功時は無い */
   error?: MessageError;
 }
+
+/** パスワードを設定する依頼 */
+export type SetPasswordRequest = SetPasswordBody;
+
+/** パスワードを変更する依頼 */
+export type ChangePasswordRequest = ChangePasswordBody;
+
+/** パスワード保護をやめる依頼 */
+export type RemovePasswordRequest = RemovePasswordBody;

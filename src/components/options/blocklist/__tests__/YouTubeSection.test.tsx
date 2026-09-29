@@ -281,12 +281,12 @@ describe('YouTubeSection', () => {
       });
 
       fireEvent.click(switchNear('youtubeEnabled'));
-      onlyRequest(onRequestUnblock).onConfirm();
+      void onlyRequest(onRequestUnblock).onConfirm('secret');
 
-      expect(onYouTubeChange).toHaveBeenCalledWith({
-        ...settings,
-        enabled: false
-      });
+      expect(onYouTubeChange).toHaveBeenCalledWith(
+        { ...settings, enabled: false },
+        'secret'
+      );
     });
 
     it('アクセスブロックを OFF にすると確認に回り、まだ設定を変えない', () => {
@@ -315,12 +315,12 @@ describe('YouTubeSection', () => {
       });
 
       fireEvent.click(switchNear('youtubeBlockAccess'));
-      onlyRequest(onRequestUnblock).onConfirm();
+      void onlyRequest(onRequestUnblock).onConfirm('secret');
 
-      expect(onYouTubeChange).toHaveBeenCalledWith({
-        ...settings,
-        blockAccess: false
-      });
+      expect(onYouTubeChange).toHaveBeenCalledWith(
+        { ...settings, blockAccess: false },
+        'secret'
+      );
     });
 
     it('時間制限があれば依頼にその時間制限が載る', () => {

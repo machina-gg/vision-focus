@@ -26,6 +26,10 @@ vi.mock('~/lib/storage', () => ({
   }
 }));
 
+vi.mock('~/lib/settingsService', () => ({
+  checkUnblockPassword: vi.fn(async () => null)
+}));
+
 vi.mock('../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()

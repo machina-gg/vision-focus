@@ -8,7 +8,6 @@ import { useSettings } from '~/contexts/SettingsContext';
 import type {
   AnalyticsOptIn,
   NotificationSettings,
-  PasswordSettings,
   UnblockConfirmSettings
 } from '~/types/storage';
 import {
@@ -18,8 +17,6 @@ import {
 
 /** SettingsTab に渡す各設定の保存先 */
 interface SettingsTabProps {
-  /** パスワード設定を保存する */
-  onPasswordUpdate: (settings: PasswordSettings) => Promise<void>;
   /** 解除の確認（長押しの秒数）の設定を保存する */
   onUnblockConfirmUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
   /** 通知の設定を保存する */
@@ -36,7 +33,6 @@ interface SettingsTabProps {
  * @returns 設定タブの中身
  */
 export function SettingsTab({
-  onPasswordUpdate,
   onUnblockConfirmUpdate,
   onUpdateNotifications,
   onAnalyticsOptInChange,
@@ -47,7 +43,6 @@ export function SettingsTab({
     <div className="space-y-6">
       <PasswordSettingsSection
         passwordSettings={settings?.password ?? DEFAULT_PASSWORD_SETTINGS}
-        onUpdate={onPasswordUpdate}
         holdSeconds={
           (settings?.unblockConfirm ?? DEFAULT_UNBLOCK_CONFIRM_SETTINGS)
             .holdSeconds

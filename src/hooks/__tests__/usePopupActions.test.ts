@@ -128,6 +128,55 @@ describe('usePopupActions', () => {
         paused: true
       });
     });
+
+    it('パスワードを添えて送り、成功なら null を返す', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({ success: true, paused: true });
+      const { result } = renderHook(() => usePopupActions(defaultProps));
+
+      let failure: string | null = 'unset';
+      await act(async () => {
+        failure = await result.current.handlePausedChange(true, 'secret');
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
+        paused: true,
+        password: 'secret'
+      });
+      expect(failure).toBeNull();
+    });
+
+    describe('失敗の文言', () => {
+      stubI18nWithLocale('ja');
+
+      it('照合に失敗したら応答の失敗の文言を返す', async () => {
+        vi.mocked(sendMessage).mockResolvedValue({
+          success: false,
+          error: { code: 'password-mismatch' }
+        });
+        const { result } = renderHook(() => usePopupActions(defaultProps));
+
+        let failure: string | null = null;
+        await act(async () => {
+          failure = await result.current.handlePausedChange(true, 'wrong');
+        });
+
+        expect(failure).toBe(
+          'パスワードが正しくありません。再度お試しください。'
+        );
+      });
+
+      it('送信が例外で終わったら汎用の文言を返す', async () => {
+        vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+        const { result } = renderHook(() => usePopupActions(defaultProps));
+
+        let failure: string | null = null;
+        await act(async () => {
+          failure = await result.current.handlePausedChange(true);
+        });
+
+        expect(failure).toBe('操作できませんでした。もう一度お試しください');
+      });
+    });
   });
 
   describe('isPasswordProtected', () => {
@@ -149,7 +198,7 @@ describe('usePopupActions', () => {
       expect(result.current.isPasswordProtected).toBe(false);
     });
 
-    it('パスワードハッシュがnullの場合はfalse', () => {
+    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
       const { result } = renderHook(() =>
         usePopupActions({
           ...defaultProps,
@@ -159,7 +208,7 @@ describe('usePopupActions', () => {
           }
         })
       );
-      expect(result.current.isPasswordProtected).toBe(false);
+      expect(result.current.isPasswordProtected).toBe(true);
     });
   });
 });

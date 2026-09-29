@@ -30,18 +30,25 @@ interface BlocklistTabProps {
   blockError: string;
   /** 追加ボタンが押されたときに呼ぶ */
   onAddDomain: () => void;
-  /** 解除の確認（パスワード・長押し）を通ったあとに、削除するドメインを受け取る */
-  onRemoveDomain: (domain: string) => void;
-  /** 有効・無効の切り替えを受け取る（無効にするときは解除の確認を通ったあとに呼ぶ） */
-  onToggleDomain: (domain: string, enabled: boolean) => void;
+  /** 解除の確認（パスワード・長押し）を通ったあとに、削除するドメインと入力されたパスワードを受け取る。失敗の文言、外せたら null を返す */
+  onRemoveDomain: (domain: string, password?: string) => Promise<string | null>;
+  /** 有効・無効の切り替えを受け取る（無効にするときは解除の確認を通ったあとに、入力されたパスワードとともに呼ぶ）。失敗の文言、切り替えたら null を返す */
+  onToggleDomain: (
+    domain: string,
+    enabled: boolean,
+    password?: string
+  ) => Promise<string | null>;
   /** ドメインの時間制限の変更を受け取る（null なら制限を外す） */
   onUpdateTimeLimit: (domain: string, timeLimit: TimeLimit | null) => void;
   /** 今日の使用時間とブロック回数を出すための記録 */
   activity: ActivityLog;
   /** 登録済みのサイト（ブロック設定のあるものを一覧に出す） */
   trackedSites: TrackedSites;
-  /** YouTube の個別設定の変更を受け取る */
-  onYouTubeChange: (youtube: YouTubeSettingsInput) => void;
+  /** YouTube の個別設定の変更を受け取る（解除の確認を通ったときは入力されたパスワードも受け取る）。失敗の文言、保存したら null を返す */
+  onYouTubeChange: (
+    youtube: YouTubeSettingsInput,
+    password?: string
+  ) => Promise<string | null>;
 }
 
 /**
@@ -63,9 +70,7 @@ export function BlocklistTab({
 }: BlocklistTabProps) {
   const { settings } = useSettings();
 
-  const isPasswordProtected = Boolean(
-    settings?.password?.enabled && settings?.password?.passwordHash
-  );
+  const isPasswordProtected = settings?.password.enabled === true;
   const unblockGuard = useUnblockGuard(isPasswordProtected);
   const { requestUnblock } = unblockGuard;
   const now = new Date();
@@ -81,7 +86,7 @@ export function BlocklistTab({
         domain,
         timeLimit: block.timeLimit,
         action: 'delete',
-        onConfirm: () => onRemoveDomain(domain)
+        onConfirm: (password) => onRemoveDomain(domain, password)
       });
     },
     [requestUnblock, onRemoveDomain, trackedSites]
@@ -90,7 +95,7 @@ export function BlocklistTab({
   const handleToggleClick = useCallback(
     (domain: string, enabled: boolean) => {
       if (enabled) {
-        onToggleDomain(domain, enabled);
+        void onToggleDomain(domain, enabled);
         return;
       }
       const block = trackedSites[domain]?.block;
@@ -99,7 +104,7 @@ export function BlocklistTab({
         domain,
         timeLimit: block.timeLimit,
         action: 'toggle',
-        onConfirm: () => onToggleDomain(domain, false)
+        onConfirm: (password) => onToggleDomain(domain, false, password)
       });
     },
     [requestUnblock, onToggleDomain, trackedSites]
@@ -181,12 +186,11 @@ export function BlocklistTab({
         </div>
       )}
 
-      {isPasswordProtected && settings?.password?.passwordHash && (
+      {isPasswordProtected && (
         <PasswordModal
           isOpen={unblockGuard.isPasswordModalOpen}
           onClose={unblockGuard.close}
-          onSuccess={unblockGuard.confirm}
-          passwordHash={settings.password.passwordHash}
+          onSubmit={unblockGuard.confirm}
           title={getMessage('passwordRequiredForUnblock')}
           description={getMessage('passwordRequiredForUnblockDescription')}
         />
@@ -196,7 +200,7 @@ export function BlocklistTab({
         <UnblockConfirmModal
           isOpen={unblockGuard.isConfirmModalOpen}
           onClose={unblockGuard.close}
-          onConfirm={unblockGuard.confirm}
+          onConfirm={() => void unblockGuard.confirm()}
           domain={unblockGuard.pending.domain}
           blockStyle={unblockGuard.pending.blockStyle}
           action={unblockGuard.pending.action}

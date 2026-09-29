@@ -43,7 +43,10 @@ import type {
   UpdateTimeLimitResponse,
   UpdateUnblockConfirmRequest,
   UpdateYouTubeSettingsRequest,
-  UpdateYouTubeSettingsResponse
+  UpdateYouTubeSettingsResponse,
+  SetPasswordRequest,
+  ChangePasswordRequest,
+  RemovePasswordRequest
 } from '~/types/messages';
 
 /** メッセージ名ごとの引数と戻り値。送信側と受信側の型をここで縛る */
@@ -104,6 +107,12 @@ export interface ProtocolMap {
   'update-youtube-settings'(
     data: UpdateYouTubeSettingsRequest
   ): UpdateYouTubeSettingsResponse;
+  /** パスワードを設定する（強度の検査とハッシュ化は background が行う） */
+  'set-password'(data: SetPasswordRequest): SettingsChangeResponse;
+  /** 今のパスワードを照合してから新しいパスワードに変える */
+  'change-password'(data: ChangePasswordRequest): SettingsChangeResponse;
+  /** 今のパスワードを照合してからパスワード保護をやめる */
+  'remove-password'(data: RemovePasswordRequest): SettingsChangeResponse;
 }
 
 /** background 側で onMessage に渡すハンドラの型。data は外部から届く値で型どおりとは限らないため、実行時の検証（zod）はハンドラ側で行う */

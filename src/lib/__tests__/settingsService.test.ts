@@ -59,6 +59,13 @@ import {
   updatePreset,
   updateSchedule
 } from '~/lib/settingsService';
+import {
+  changePassword,
+  checkUnblockPassword,
+  removePassword,
+  setPassword
+} from '~/lib/settingsService';
+import { hashPassword } from '~/lib/password';
 import { createDefaultExportData } from '~/lib/settingsExport';
 import { MAX_PRESETS } from '~/constants/limits';
 import { getSettings, getVision } from '~/lib/storage';
@@ -713,5 +720,134 @@ describe('書き込みの直列化', () => {
     expect(settings.paused).toBe(false);
     expect(settings.schedules).toEqual([schedule('s1')]);
     set.mockRestore();
+  });
+});
+
+describe('パスワード', () => {
+  const givenPassword = async (password: string | null) => {
+    givenSettings({
+      ...DEFAULT_SETTINGS,
+      schedules: [schedule('s1')],
+      password:
+        password === null
+          ? { enabled: false, passwordHash: null }
+          : { enabled: true, passwordHash: await hashPassword(password) }
+    });
+  };
+
+  describe('setPassword', () => {
+    it('SHA-256 の 16 進で保存して保護を始め、他の設定は残す', async () => {
+      await givenPassword(null);
+
+      expect(await setPassword('secret')).toBeNull();
+
+      const settings = await getSettings();
+      expect(settings.password).toEqual({
+        enabled: true,
+        passwordHash: await hashPassword('secret')
+      });
+      expect(settings.password.passwordHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(settings.schedules).toEqual([schedule('s1')]);
+    });
+
+    it('既に設定済みなら already-set を返し、書き換えない', async () => {
+      await givenPassword('old1');
+
+      expect(await setPassword('new1')).toBe('already-set');
+      expect((await getSettings()).password.passwordHash).toBe(
+        await hashPassword('old1')
+      );
+    });
+  });
+
+  describe('changePassword', () => {
+    it('今のパスワードが一致すれば新しいハッシュに置き換える', async () => {
+      await givenPassword('old1');
+
+      expect(await changePassword('old1', 'new1')).toBeNull();
+      expect((await getSettings()).password).toEqual({
+        enabled: true,
+        passwordHash: await hashPassword('new1')
+      });
+    });
+
+    it('今のパスワードが違えば mismatch を返し、書き換えない', async () => {
+      await givenPassword('old1');
+
+      expect(await changePassword('wrong', 'new1')).toBe('mismatch');
+      expect((await getSettings()).password.passwordHash).toBe(
+        await hashPassword('old1')
+      );
+    });
+
+    it('未設定なら not-set を返す', async () => {
+      await givenPassword(null);
+
+      expect(await changePassword('old1', 'new1')).toBe('not-set');
+      expect((await getSettings()).password.enabled).toBe(false);
+    });
+  });
+
+  describe('removePassword', () => {
+    it('今のパスワードが一致すれば保護をやめ、ハッシュを消す', async () => {
+      await givenPassword('old1');
+
+      expect(await removePassword('old1')).toBeNull();
+      expect((await getSettings()).password).toEqual({
+        enabled: false,
+        passwordHash: null
+      });
+    });
+
+    it('今のパスワードが違えば mismatch を返し、保護を続ける', async () => {
+      await givenPassword('old1');
+
+      expect(await removePassword('wrong')).toBe('mismatch');
+      expect((await getSettings()).password.enabled).toBe(true);
+    });
+
+    it('未設定なら not-set を返す', async () => {
+      await givenPassword(null);
+
+      expect(await removePassword('old1')).toBe('not-set');
+    });
+  });
+
+  describe('checkUnblockPassword', () => {
+    it.each([
+      ['弱める操作で一致', 'old1', true, null],
+      ['弱める操作で不一致', 'wrong', true, 'mismatch'],
+      ['弱める操作で無い', undefined, true, 'required'],
+      ['弱めない操作で無い', undefined, false, null],
+      ['弱めない操作でも添えられていれば照合する', 'wrong', false, 'mismatch']
+    ] as const)(
+      '保護中: %s なら %s',
+      async (_label, password, weakens, expected) => {
+        await givenPassword('old1');
+
+        expect(await checkUnblockPassword(password, weakens)).toBe(expected);
+      }
+    );
+
+    it.each([
+      ['無い', undefined],
+      ['違う', 'wrong']
+    ] as const)(
+      '保護していなければ、パスワードが%sときも通す',
+      async (_label, password) => {
+        await givenPassword(null);
+
+        expect(await checkUnblockPassword(password, true)).toBeNull();
+      }
+    );
+
+    it('設定を書き換えない', async () => {
+      await givenPassword('old1');
+      const before = structuredClone(fakeChrome.localData);
+
+      await checkUnblockPassword('old1', true);
+
+      expect(fakeChrome.localData).toEqual(before);
+    });
   });
 });

@@ -9,7 +9,7 @@ function requestOf(overrides: Partial<UnblockRequest> = {}): UnblockRequest {
     domain: 'example.com',
     timeLimit: null,
     action: 'toggle',
-    onConfirm: vi.fn(),
+    onConfirm: vi.fn(async () => null),
     ...overrides
   };
 }
@@ -80,14 +80,33 @@ describe('useUnblockGuard', () => {
     expect(result.current.pending?.blockStyle).toBe('dailyLimit');
   });
 
-  it('confirm で依頼の onConfirm が 1 回だけ呼ばれる', () => {
+  it('confirm で依頼の onConfirm が 1 回だけ呼ばれる', async () => {
     const { result } = renderHook(() => useUnblockGuard(false));
     const request = requestOf();
 
     act(() => result.current.requestUnblock(request));
-    act(() => result.current.confirm());
+    await act(async () => {
+      await result.current.confirm();
+    });
 
     expect(request.onConfirm).toHaveBeenCalledTimes(1);
+    expect(request.onConfirm).toHaveBeenCalledWith(undefined);
+  });
+
+  it('confirm に渡したパスワードを onConfirm へ渡し、その失敗の文言を返す', async () => {
+    const { result } = renderHook(() => useUnblockGuard(true));
+    const request = requestOf({
+      onConfirm: vi.fn(async () => 'passwordIncorrect')
+    });
+
+    act(() => result.current.requestUnblock(request));
+    let failure: string | null = null;
+    await act(async () => {
+      failure = await result.current.confirm('secret');
+    });
+
+    expect(request.onConfirm).toHaveBeenCalledWith('secret');
+    expect(failure).toBe('passwordIncorrect');
   });
 
   it('close すると依頼を捨て、実行もしない', () => {
@@ -102,14 +121,18 @@ describe('useUnblockGuard', () => {
     expect(request.onConfirm).not.toHaveBeenCalled();
   });
 
-  it('close の後に confirm が来ても実行しない', () => {
+  it('close の後に confirm が来ても実行せず、成功として扱う', async () => {
     const { result } = renderHook(() => useUnblockGuard(false));
     const request = requestOf();
 
     act(() => result.current.requestUnblock(request));
     act(() => result.current.close());
-    act(() => result.current.confirm());
+    let failure: string | null = 'unset';
+    await act(async () => {
+      failure = await result.current.confirm();
+    });
 
     expect(request.onConfirm).not.toHaveBeenCalled();
+    expect(failure).toBeNull();
   });
 });

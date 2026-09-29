@@ -26,10 +26,14 @@ interface UseBlocklistReturn {
   blockError: string;
   /** 追加欄のドメインをブロックリストに加える。空欄なら何もしない */
   handleAddDomain: () => Promise<void>;
-  /** id（項目のドメイン）をブロックリストから外す */
-  handleRemoveDomain: (id: string) => Promise<void>;
-  /** id（項目のドメイン）のブロックの有効・無効を切り替える */
-  handleToggleDomain: (id: string, enabled: boolean) => Promise<void>;
+  /** id（項目のドメイン）をブロックリストから外す（パスワード保護中は password を添える）。失敗の文言、外せたら null を返す */
+  handleRemoveDomain: (id: string, password?: string) => Promise<string | null>;
+  /** id（項目のドメイン）のブロックの有効・無効を切り替える（保護中に無効にするときは password を添える）。失敗の文言、切り替えたら null を返す */
+  handleToggleDomain: (
+    id: string,
+    enabled: boolean,
+    password?: string
+  ) => Promise<string | null>;
   /** id（項目のドメイン）の時間制限を変える。null = 常時ブロック */
   handleUpdateTimeLimit: (
     id: string,
@@ -75,21 +79,34 @@ export function useBlocklist({
     }
   }, [newDomain]);
 
-  const handleRemoveDomain = useCallback(async (id: string) => {
-    try {
-      await sendMessage('remove-block', { domain: id });
-      trackFeatureUse('block_remove');
-    } catch {
-      // Silently handle error - list will refresh on next settings change
-    }
-  }, []);
+  const handleRemoveDomain = useCallback(
+    async (id: string, password?: string) => {
+      try {
+        const response = await sendMessage('remove-block', {
+          domain: id,
+          password
+        });
+        if (!response.success) return messageErrorText(response.error);
+        trackFeatureUse('block_remove');
+        return null;
+      } catch {
+        return messageErrorText(undefined);
+      }
+    },
+    []
+  );
 
   const handleToggleDomain = useCallback(
-    async (id: string, enabled: boolean) => {
+    async (id: string, enabled: boolean, password?: string) => {
       try {
-        await sendMessage('toggle-block', { domain: id, enabled });
+        const response = await sendMessage('toggle-block', {
+          domain: id,
+          enabled,
+          password
+        });
+        return response.success ? null : messageErrorText(response.error);
       } catch {
-        // Silently handle error - list will refresh on next settings change
+        return messageErrorText(undefined);
       }
     },
     []

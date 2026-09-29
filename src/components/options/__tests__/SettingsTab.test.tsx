@@ -68,7 +68,6 @@ vi.mock('~/components/options/SettingsBackup', () => ({
 }));
 
 const handlers = () => ({
-  onPasswordUpdate: vi.fn(),
   onUnblockConfirmUpdate: vi.fn(),
   onUpdateNotifications: vi.fn(),
   onAnalyticsOptInChange: vi.fn(),
@@ -120,7 +119,6 @@ describe('SettingsTab', () => {
       const props = handlers();
       render(<SettingsTab {...props} />);
 
-      expect(received.password?.onUpdate).toBe(props.onPasswordUpdate);
       expect(received.password?.onUnblockConfirmUpdate).toBe(
         props.onUnblockConfirmUpdate
       );

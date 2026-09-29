@@ -42,12 +42,12 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             setNewDomain={() => {}}
             blockError=""
             onAddDomain={() => {}}
-            onRemoveDomain={() => {}}
-            onToggleDomain={() => {}}
+            onRemoveDomain={async () => null}
+            onToggleDomain={async () => null}
             onUpdateTimeLimit={() => {}}
             activity={{}}
             trackedSites={trackedSites}
-            onYouTubeChange={() => {}}
+            onYouTubeChange={async () => null}
           />
         );
       case 'schedules':
@@ -62,7 +62,6 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
       case 'settings':
         return (
           <SettingsTab
-            onPasswordUpdate={async () => {}}
             onUnblockConfirmUpdate={async () => {}}
             onUpdateNotifications={() => {}}
             onAnalyticsOptInChange={async () => {}}

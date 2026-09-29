@@ -2,6 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
+vi.mock('~/lib/settingsService', () => ({
+  checkUnblockPassword: vi.fn()
+}));
+
 vi.mock('~/lib/siteService', () => ({
   removeBlock: vi.fn()
 }));
@@ -14,6 +18,7 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
+import { checkUnblockPassword } from '~/lib/settingsService';
 import { removeBlock } from '~/lib/siteService';
 import { updateBlockRules } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
@@ -31,6 +36,7 @@ describe('remove-block ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(removeBlock).mockResolvedValue(rule(true));
+    vi.mocked(checkUnblockPassword).mockResolvedValue(null);
   });
 
   it.each([
@@ -41,7 +47,10 @@ describe('remove-block ハンドラ', () => {
   ])('%s の場合は失敗し、何も変えない', async (_label, data) => {
     const result = await invoke<{ success: boolean }>(handler, data);
 
-    expect(result).toEqual({ success: false });
+    expect(result).toEqual({
+      success: false,
+      error: { code: 'invalid-request' }
+    });
     expect(removeBlock).not.toHaveBeenCalled();
     expect(updateBlockRules).not.toHaveBeenCalled();
   });
@@ -86,5 +95,30 @@ describe('remove-block ハンドラ', () => {
     expect(result).toEqual({ success: true });
     expect(updateBlockRules).not.toHaveBeenCalled();
     expect(recordActivity).not.toHaveBeenCalled();
+  });
+
+  describe('パスワード保護', () => {
+    it('削除は弱める操作として、添えられたパスワードを照合する', async () => {
+      await invoke(handler, { domain: 'example.com', password: 'secret' });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', true);
+    });
+
+    it.each([
+      ['required', 'password-required'],
+      ['mismatch', 'password-mismatch']
+    ] as const)(
+      '%s で拒まれたら %s を返し、何も書かない',
+      async (rejection, code) => {
+        vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
+
+        const result = await invoke(handler, { domain: 'example.com' });
+
+        expect(result).toEqual({ success: false, error: { code } });
+        expect(removeBlock).not.toHaveBeenCalled();
+        expect(updateBlockRules).not.toHaveBeenCalled();
+        expect(recordActivity).not.toHaveBeenCalled();
+      }
+    );
   });
 });

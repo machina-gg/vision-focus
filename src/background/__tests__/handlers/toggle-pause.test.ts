@@ -3,7 +3,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { invoke } from './helpers';
 
 vi.mock('~/lib/settingsService', () => ({
-  setPaused: vi.fn()
+  setPaused: vi.fn(),
+  checkUnblockPassword: vi.fn()
 }));
 
 vi.mock('~/background/blocker', () => ({
@@ -11,7 +12,7 @@ vi.mock('~/background/blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { setPaused } from '~/lib/settingsService';
+import { checkUnblockPassword, setPaused } from '~/lib/settingsService';
 import { updateBlockRules, blockExistingTabs } from '~/background/blocker';
 import { togglePauseHandler as handler } from '../../handlers/toggle-pause';
 import type { MessageError } from '~/types/messages';
@@ -26,6 +27,7 @@ describe('toggle-pause ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(setPaused).mockResolvedValue(undefined);
+    vi.mocked(checkUnblockPassword).mockResolvedValue(null);
   });
 
   describe('入力検証', () => {
@@ -89,5 +91,44 @@ describe('toggle-pause ハンドラ', () => {
     });
     expect(updateBlockRules).not.toHaveBeenCalled();
     expect(blockExistingTabs).not.toHaveBeenCalled();
+  });
+
+  describe('パスワード保護', () => {
+    it.each([
+      ['一時停止は弱める操作として照合する', true, true],
+      ['再開は弱めない操作として照合する', false, false]
+    ])('%s', async (_label, paused, weakens) => {
+      await invoke(handler, { paused, password: 'secret' });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', weakens);
+    });
+
+    it.each([
+      ['required', 'password-required'],
+      ['mismatch', 'password-mismatch']
+    ] as const)(
+      '%s で拒まれたら %s を返し、何も書かない',
+      async (rejection, code) => {
+        vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
+
+        const result = await invoke<Response>(handler, { paused: true });
+
+        expect(result).toEqual({ success: false, error: { code } });
+        expect(setPaused).not.toHaveBeenCalled();
+        expect(updateBlockRules).not.toHaveBeenCalled();
+      }
+    );
+
+    it('照合で保存領域を読めなければ save-failed を返す', async () => {
+      vi.mocked(checkUnblockPassword).mockRejectedValue(new Error('read'));
+
+      const result = await invoke<Response>(handler, { paused: true });
+
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'save-failed' }
+      });
+      expect(setPaused).not.toHaveBeenCalled();
+    });
   });
 });
