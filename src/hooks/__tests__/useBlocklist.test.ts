@@ -109,7 +109,7 @@ describe('useBlocklist', () => {
       });
 
       expect(result.current.blockError).toBe(
-        'm.youtube.com は追跡中の youtube.com に含まれるため追加できません'
+        'm.youtube.com は追跡中の youtube.com に含まれるため追加できません。開けるようにするなら許可サイトに追加してください'
       );
       expect(result.current.newDomain).toBe('m.youtube.com');
     });

@@ -195,6 +195,14 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 | BLOCK-009 | ブロック時にリダイレクト先でブロック元ドメインが表示される  | P2     |
 | BLOCK-010 | ブロック回数がカウントされる                                | P1     |
 
+### 許可サイト（ALLOW）
+
+| ID        | シナリオ                                                                                                                        | 優先度 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| ALLOW-001 | `youtube.com` をブロックし `music.youtube.com` を許可サイトにした種で、許可サイトは開け、`www.youtube.com` はブロック画面へ移る | P0     |
+| ALLOW-002 | 親に時間制限を付けて上限まで使った種でも、許可サイトは開ける                                                                    | P1     |
+| ALLOW-003 | 規則なしの `m.youtube.com` を追跡した状態で YouTube 設定を有効にすると、理由が出て保存されない                                  | P1     |
+
 ### Time Limit 機能
 
 | ID     | シナリオ                                                            | 優先度 |
@@ -258,13 +266,13 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 ブロック機能のテストは実際のサイトへ遷移して確認する必要があるが、外部への実アクセスは行わない。Chromium の `--host-resolver-rules` で全ホストをローカルの HTTPS サーバ（`tests/e2e/fixtures/testServer.ts`）へ向け、`example.com` や `youtube.com` をローカルで再現する。
 
-- 拡張機能側は `declarativeNetRequest` の `||domain` でスキーム非依存に判定するため、実サイトと同じ経路を通る
+- 拡張機能側は `declarativeNetRequest` の `requestDomains`（ブロックは `redirect`、許可サイトは優先度の高い `allow`）でスキーム非依存に判定するため、実サイトと同じ経路を通る。ルールは `getRuleDomains`（`tests/e2e/helpers/sw.ts`）で action ごとに読む
 - HTTPS で待ち受けるのは、`youtube.com` が HSTS プリロード済みで http:// が内部昇格されるため。証明書は実行時に自己署名で生成する（リポジトリには含めない）
 - storage の書き込みは Service Worker 経由（`tests/e2e/helpers/sw.ts`）で行う。options を開いて書くとアプリの hydration が state を書き戻して上書きしたり、UI が時間制限値をプリセットに丸めたりするため、意図した状態にならない
 - 時間制限の超過判定は `activity` の今日の行（サイトキーごとの `seconds`）を見るが、activity の変更はブロックルール再計算のトリガーにならない。実装と同じ経路（`check-schedule` アラーム）を即時発火させて待つ。使用量の種も `makeActivity()` で置く（日付はローカル日付。日付が変わった状態は前日の行として置く）
 - ポップアップの今日のサマリー（POP-004）・新しいタブのミニ統計（NEW-004）・ブロック情報とブロック中のサイト一覧の回数（NEW-009 / NEW-010）は `activity` から導出される。前 2 つは今日の行だけ、後 2 つは保持期間全体を数える。種は `makeActivity()` で置き、**母集団は追跡中のサイト**なので、対象のサイトを同じテストで `makeSites()` にも入れる（入れないと行が読み飛ばされて 0 になる）
 - 分析タブ（OPT-A02 / A04 / A08 / A10 / A11 / A12、PR-006）の数値も `activity` から導出される（ランキング・CSV・X シェアは保持期間全体、利用時間の推移は直近 14 日、週次・月次はその週・その月、解除後の時間は最後に解除した日から今日まで）。種は `makeActivity()` で置き、対象のサイトを `makeSites()` にも入れて追跡中にする
-- fixture の settings は必ず `makeAppSettings()`、追跡中のサイト（ブロック設定・時間制限・YouTube 機能）は `makeSites()` 経由で作る。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる。サイトのキーはサイトキー（`*.` / `www.` なし）で書く
+- fixture の settings は必ず `makeAppSettings()`、追跡中のサイト（ブロック・許可の規則・時間制限・YouTube 機能）は `makeSites()` 経由で作る（種の `block: {}` はブロックの規則、`allow: {}` は許可サイト（`recordTime` の既定は false）になる）。フィールドが欠けると実装側のスキーマ検証に落ちて既定値へフォールバックし、「設定したのに効かない」という分かりにくい失敗になる。サイトのキーはサイトキー（`*.` / `www.` なし）で書く
 - storage の読み書きヘルパー（`tests/e2e/helpers/storage.ts`）はキーごとに実装の型で引数を受ける。保存形と違うキー名は `pnpm type-check` で止まるので、`as any` を挟んで回避しない
 - 滞在時間を書くのは heartbeat（`tracker-heartbeat`。表示されているページ）の 1 本だけで、書く先は `activity` の今日の行の `seconds`。記録されるのは追跡中のサイトだけなので、`makeSites()` で前提データを用意する。前面のウィンドウかどうかには依存しない。ブロック回数・解除回数も同じ行（`blocks` / `unblocks`）に入り、今日の行の 1 サイト分は `getTodayActivityViaSW`（`tests/e2e/helpers/sw.ts`）で読む
 - 分析データのリセット（AN-007 / OPT-A09）は background が `activity` を今日の分も含めて消す（キーごと無くなる）。リセット前に種が入っていることを確かめてから、消えるのを poll で待つ
@@ -273,7 +281,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 - 失敗を合格に変換しない。`isVisible()` を catch で包んで真偽値にすると、strict mode 違反（一致が複数）もタイムアウトも「表示されていない」として飲み込む。一致が 1 件になる範囲まで絞ってから判定する
 - 広すぎる一致で判定しない。`text=/5/i` のようなページ全体の数字一致や `toContainText('0')`（10 / 100 でも通る）は、壊れても落ちない。文言は `UI_TEXT`（`tests/e2e/helpers/constants.ts`）から、要素は data-testid から指す
 - 範囲を絞るのに `xpath=../..` のような「何階層上」を使わない。構造が変わると範囲が広がり、ページのどこかに文字列があるだけで通る。指す先が無くなれば落ちる書き方（見出しからドキュメント順にたどる等）にする
-- 固定 `setTimeout` で待たない。ブロックルールは `waitForBlockRules` / `waitForNoBlockRules`、それ以外の反映は `expect.poll`。⚠ poll の対象は**狙った経路だけが書く値**にする（別の経路も書く値だと、検証したい処理が走る前に条件が満たされる）
+- 固定 `setTimeout` で待たない。ブロックルールは `waitForBlockRules` / `waitForNoBlockRules`、許可サイトのルールは `waitForAllowRules`、それ以外の反映は `expect.poll`。⚠ poll の対象は**狙った経路だけが書く値**にする（別の経路も書く値だと、検証したい処理が走る前に条件が満たされる）
 - `locator.count()` は自動リトライしない。件数は `toHaveCount`、下限だけを見るなら `expect.poll(() => locator.count())` で待つ
 
 ### 開発支援（投げ銭）
@@ -742,7 +750,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 **期待結果**
 
-- 「example.com」は追跡中のサイトに残り、ブロック設定だけが外れる（`sites['example.com'].block` が null）
+- 「example.com」は追跡中のサイトに残り、ブロックの規則だけが外れる（`sites['example.com'].rule` が null）
 - 事実の表（`activity`）の今日の行に「example.com」の解除が 1 回記録される
 
 ⚠ `analyticsOptIn` が止めるのは **GA4 への送信だけ**で、手元の集計（ブロック回数・使用時間・解除の記録）は

@@ -197,9 +197,9 @@ describe('YouTube のアクセスブロック ON で開いているタブが置�
     const arg = lastItem(calls)[0] as {
       addRules: chrome.declarativeNetRequest.Rule[];
     };
-    // ||youtube.com は www. を含むすべてのサブドメインを止める
-    expect(arg.addRules.map((rule) => rule.condition?.urlFilter)).toEqual([
-      '||youtube.com'
+    // requestDomains は www. を含むすべてのサブドメインを止める
+    expect(arg.addRules.map((rule) => rule.condition.requestDomains)).toEqual([
+      ['youtube.com']
     ]);
   });
 });

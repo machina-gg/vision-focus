@@ -10,10 +10,11 @@ VisionFocusのブロック機能は、複数の条件を組み合わせてドメ
 
 ```mermaid
 flowchart TD
-    Start["URL アクセス"] --> Host["ホスト名を覆う登録を集める<br/>（キーと一致するか .キー で終わる登録すべて）"]
+    Start["URL アクセス"] --> Host["ホスト名を覆う登録を集める<br/>coveringSiteKeys()（キーの長い順）"]
 
-    Host -->|覆う登録が無い| Unblocked["✅ 許可"]
-    Host -->|登録ごとに判定。どれかがブロックならブロック| A{"グローバル一時停止？<br/>settings.paused"}
+    Host -->|覆う登録に許可サイトがある| Unblocked["✅ 許可"]
+    Host -->|覆うブロックの登録が無い| Unblocked
+    Host -->|覆うブロックの登録（高々 1 件）で判定| A{"グローバル一時停止？<br/>settings.paused"}
 
     A -->|Yes| Unblocked
     A -->|No| D{"ブロックが効く時間帯？<br/>isBlockingWindowOpen()"}
@@ -32,18 +33,21 @@ flowchart TD
 ```
 
 一時停止から時間制限までの条件を並べるのは `src/lib/blockRule.ts` の `evaluateBlock()` だけである。
-`src/lib/blockService.ts` は保存値（`settings` と `sites` と `activity`）を読み、登録（ブロック設定を持つ追跡中のサイト）ごとに
-今日の表示秒数を添えて `evaluateBlock()` に渡し、ホスト名を覆う登録の結論を束ねるだけにする。
+`src/lib/blockService.ts` は保存値（`settings` と `sites` と `activity`）を読み、ホスト名を覆う登録から
+判定に使うブロックの登録を選び、今日の表示秒数を添えて `evaluateBlock()` に渡すだけにする。
 
 - 判定（`getBlockStateForDomain()` / URL 起点の `getBlockState()`。記録の要否と理由もこの結論を使う）、
-  ルール生成（`getActiveBlockedDomains()`）はどれも同じ `evaluateBlock()` を通る。
+  ルール生成（`getRuleTargets()`）はどれも同じ `evaluateBlock()` を通る。
   条件をどこか 1 箇所に並べ直すと、開いているタブと新しい遷移で結果がずれたり、
   ブロックされていないのにブロック回数が増えたりする
-- ルール生成はすべての登録を `evaluateBlock()` に通し、ブロックする登録のサイトキーを返す。
-  ルールは `||サイトキー` で、本体とすべてのサブドメインを止める
-- 判定も同じ範囲で結論を出す。ホスト名を覆う登録（自分と祖先のキー）のどれかがブロックなら
-  ブロックする（親の登録のブロックは子のサブドメインも覆う。子の登録を無効にしても親の結論は外れない）。
-  どれもブロックでなければ、残り秒数がいちばん少ない時間制限の値を返す
+- 判定: ホスト名を覆う登録（自分と祖先のキー）に許可サイトがあれば通す。無ければ覆うブロックの登録の規則で決める。
+  入れ子の決まり（下の「サイトキー」）により、覆うブロックの登録は高々 1 件なので、代表を選ぶ処理は無い
+- ルール生成（`getRuleTargets()`）は、今ブロックしているブロックの登録を `redirect`、許可サイトすべてを `allow` として返す。
+  ルールの条件は `requestDomains: [サイトキー]` で、本体とすべてのサブドメインに一致する。
+  `redirect` は優先度 1、`allow` は優先度 2 の固定値で、許可サイトのルールは覆うブロックの転送より必ず優先される
+  （上にブロックが無い許可サイトの `allow` は、どのリクエストの結果も変えない）
+- 判定とルールは一致する: ホストに許可サイトが掛かっていればその `allow` が一致して通す（判定も通す）。
+  掛かっていなければ、一致しうるのはホストを覆うブロックの `redirect` だけで、それは判定がブロックのときにだけ出ている
 - 有効なスケジュールが 1 件以上あれば、すべての項目はスケジュール内だけブロックする
   （時間制限の無い項目もスケジュール外は閲覧できる）。すべて無効にしたスケジュールは
   「スケジュール無し」と同じで、常に判定に進む。スケジュール外でも滞在時間は記録するが、
@@ -56,11 +60,12 @@ flowchart TD
 
 - `*.example.com` / `www.example.com` / `example.com` はどれも `example.com` になる（追加時に正規化する）
 - 時間制限の使用量はサイトキーの行で数える。`www.example.com` と `m.example.com` の滞在は同じ枠に入る
-- 追跡中のサイト同士は入れ子にしない。追加（`add-block` / `add-tracked-site` / `import-settings`）のときに、
-  既存のキーの祖先・子孫になるキーは拒否する。入れ子を許すと子のサブドメインでの滞在が親の使用量に入らず、
-  子を登録するだけで親の時間制限を回避できる
-- 判定は保存値が入れ子になっていても上のとおり「覆う登録のどれかがブロックならブロック」で結論を出す
-  （ルールの `||キー` と範囲を揃えるため）
+- 祖先・子孫の組を許すのは、子孫が許可サイトのときだけ（`findNestingConflict()`）。
+  追加（`add-block` / `add-tracked-site` / `import-settings`）と、YouTube 設定で youtube.com を新しく作るときに検査する。
+  ブロック・規則なしは、祖先がある・許可サイトでない子孫があると拒む。許可サイトは、許可サイトでない子孫があると拒む。
+  ブロック・規則なしの入れ子を許すと、子のサブドメインでの滞在が親の使用量に入らず、子を登録するだけで親の時間制限を回避できる。
+  許可サイトはその回避を意図して登録するもので、ブロックリストの側から見える
+- 許可サイトでの滞在は許可サイトの行に入り（ホストが属するのはキーが最も長い登録）、親の使用量には入らない
 
 ## 状態遷移図
 
@@ -68,8 +73,13 @@ flowchart TD
 stateDiagram-v2
     [*] --> Unknown: ドメイン初期状態
 
-    Unknown --> NotInBlocklist: 追跡していない / 追跡だけ（block が null）
+    Unknown --> NotInBlocklist: 追跡していない / 追跡だけ（rule が null）
     Unknown --> InBlocklist: add-block で追加 / import-settings で取り込み
+    Unknown --> Allowed: import-settings で許可サイトを取り込み
+    Unknown --> AllowedHost: 覆う登録に許可サイトがある
+
+    Allowed: 許可サイト（rule.kind = allow）
+    AllowedHost: 許可サイトの下のホスト
 
     state InBlocklist {
         [*] --> Enabled
@@ -101,8 +111,12 @@ stateDiagram-v2
         }
     }
 
-    InBlocklist --> NotInBlocklist: remove-block で削除（block を null にし、追跡は続く）
+    InBlocklist --> NotInBlocklist: remove-block で削除（rule を null にし、追跡は続く）
     NotInBlocklist --> InBlocklist: add-block で追加 / import-settings で取り込み
+
+    Allowed --> Unknown: stop-tracking で登録ごと消す
+    Allowed --> [*]: 許可（覆うブロックに関わらず。ブロックの追加は already-allowed）
+    AllowedHost --> [*]: 許可（覆うブロックに関わらず）
 
     NotInBlocklist --> [*]: 許可（常に）
 ```
@@ -117,29 +131,37 @@ stateDiagram-v2
 
 ## 状態を決定する要素
 
-| 要素               | 保存場所                             | 型                  | 説明                           |
-| ------------------ | ------------------------------------ | ------------------- | ------------------------------ |
-| グローバル一時停止 | `settings.paused`                    | `boolean`           | 拡張機能全体の一時停止         |
-| ブロック設定       | `sites[サイトキー].block`            | `BlockRule \| null` | null ならブロック対象ではない  |
-| サイト別有効/無効  | `sites[サイトキー].block.enabled`    | `boolean`           | 個別サイトのブロック ON/OFF    |
-| サイト別時間制限   | `sites[サイトキー].block.timeLimit`  | `TimeLimit \| null` | 「1日30分まで」などの設定      |
-| スケジュール       | `settings.schedules`                 | `Schedule[]`        | ブロック有効時間帯             |
-| 時間制限使用量     | `activity[今日][サイトキー].seconds` | `number`            | 今日（ローカル日付）の表示秒数 |
+| 要素               | 保存場所                             | 型                  | 説明                                                   |
+| ------------------ | ------------------------------------ | ------------------- | ------------------------------------------------------ |
+| グローバル一時停止 | `settings.paused`                    | `boolean`           | 拡張機能全体の一時停止                                 |
+| サイトの規則       | `sites[サイトキー].rule`             | `SiteRule \| null`  | `kind` がブロックか許可。null なら規則なし（追跡だけ） |
+| 覆う許可サイト     | `sites[祖先か自分のキー].rule.kind`  | `'allow'`           | あればブロックの規則に関わらず通す                     |
+| サイト別有効/無効  | `sites[サイトキー].rule.enabled`     | `boolean`           | ブロックの規則の ON/OFF                                |
+| サイト別時間制限   | `sites[サイトキー].rule.timeLimit`   | `TimeLimit \| null` | ブロックの規則の「1日30分まで」などの設定              |
+| スケジュール       | `settings.schedules`                 | `Schedule[]`        | ブロック有効時間帯                                     |
+| 時間制限使用量     | `activity[今日][サイトキー].seconds` | `number`            | 今日（ローカル日付）の表示秒数                         |
 
 ### YouTube の扱い
 
-`youtube.com` も普通の追跡中のサイトで、アクセスブロックと時間制限は `sites['youtube.com'].block` が持つ。
+`youtube.com` も普通の追跡中のサイトで、アクセスブロックと時間制限は `sites['youtube.com'].rule`（ブロックの規則）が持つ。
 判定は他のサイトと同じ `evaluateBlock()` を通り、YouTube だけの条件は無い。
 
-- 設定画面の YouTube の節で機能全体を無効にすると、非表示機能（`youtube`）とブロック設定（`block`）の両方が
-  null になる。アクセスブロックを OFF にすると `block.enabled` が false になる（ブロックリストのトグル OFF と同じ。
+- 設定画面の YouTube の節で機能全体を無効にすると、非表示機能（`youtube`）と規則（`rule`）の両方が
+  null になる。アクセスブロックを OFF にするとブロックの規則の `enabled` が false になる（ブロックリストのトグル OFF と同じ。
   時間制限は残り、ON に戻せば復元される）
-- 節の「有効」表示は `youtube` があるか、ブロック設定が有効なとき。無効のブロック設定だけの youtube.com は有効に数えない
-- 使用量は `youtube.com` の今日の行を読む（`www.youtube.com` / `m.youtube.com` の滞在も同じ行に入る）。
-  滞在は追跡中なら常に記録されるが、ブロックと通知に使うのはブロック設定が有効なときだけ
+- 節の「有効」表示は `youtube` があるか、ブロックの規則が有効なとき。無効のブロックの規則だけの youtube.com は有効に数えない
+- youtube.com が無い状態から YouTube 設定を保存すると、youtube.com を新しく作る前に入れ子を検査する。
+  許可サイトでない子孫（例: 規則なしで追跡中の `m.youtube.com`）があれば書かずに `nested-site` を返し、節に理由を出す。
+  youtube.com が許可サイトとして登録されていれば、保存は `already-allowed` で拒む（許可をブロックに変えない）
+- 使用量は `youtube.com` の今日の行を読む（`www.youtube.com` / `m.youtube.com` の滞在も同じ行に入る。
+  `music.youtube.com` のような許可サイトの滞在はその許可サイトの行に入る）。
+  滞在は追跡中なら常に記録されるが、ブロックと通知に使うのはブロックの規則が有効なときだけ
+- youtube.com をブロックし `music.youtube.com` を許可サイトにすると、ルールは youtube.com の `redirect`（優先度 1）と
+  `music.youtube.com` の `allow`（優先度 2）になる。`music.youtube.com` は通り、`www.youtube.com` / `m.youtube.com` は止まる
 - 非表示の設定（Shorts / おすすめ / コメント / ホームフィード）はこの状態遷移とは独立で、
-  `sites['youtube.com'].youtube` があればブロック設定の値に関わらず適用される。制限を併用していると上限までは
-  YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`）
+  `sites['youtube.com'].youtube` があればブロックの規則の値に関わらず適用される。制限を併用していると上限までは
+  YouTube を開けるため（`src/lib/youtubeHideStyles.ts` の `generateYouTubeHideCSS()`）。
+  ただし許可サイトに当たるホスト（例: `music.youtube.com`）には当てない（`src/entrypoints/youtube.content.ts`）
 
 ## ブロックの記録とブロック画面
 
@@ -225,15 +247,16 @@ flowchart LR
 
 ## 関連ファイル
 
-| ファイル                                         | 責務                                                        |
-| ------------------------------------------------ | ----------------------------------------------------------- |
-| `src/background/blocker.ts`                      | ルール更新と開いているタブのブロック                        |
-| `src/background/handlers/tracker-heartbeat.ts`   | 滞在の記録と時間制限の適用                                  |
-| `src/background/notifications.ts`                | 通知判定と送信                                              |
-| `src/background/listeners/alarmHandlers.ts`      | 毎分のルール再計算（`check-schedule`）                      |
-| `src/lib/blockRule.ts`                           | ブロックの条件（`evaluateBlock()`）                         |
-| `src/lib/blockService.ts`                        | 保存値を読み `evaluateBlock()` に渡す判定とルール生成の入口 |
-| `src/lib/activityStats.ts`                       | 今日の表示秒数（`secondsOnDay()`）                          |
-| `src/lib/blockRecordService.ts`                  | ブロック成立時の記録の一元管理                              |
-| `src/background/listeners/navigationTracking.ts` | 遷移イベントからの記録                                      |
-| `wxt.config.ts`                                  | manifest（リダイレクト先の公開宣言）                        |
+| ファイル                                         | 責務                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| `src/background/blocker.ts`                      | ルール更新と開いているタブのブロック                           |
+| `src/background/handlers/tracker-heartbeat.ts`   | 滞在の記録と時間制限の適用                                     |
+| `src/background/notifications.ts`                | 通知判定と送信                                                 |
+| `src/background/listeners/alarmHandlers.ts`      | 毎分のルール再計算（`check-schedule`）                         |
+| `src/lib/blockRule.ts`                           | ブロックの条件（`evaluateBlock()`）                            |
+| `src/lib/blockService.ts`                        | 保存値を読み `evaluateBlock()` に渡す判定とルール生成の入口    |
+| `src/lib/siteKey.ts`                             | サイトキーの正規化・照合（`coveringSiteKeys()`）と入れ子の検査 |
+| `src/lib/activityStats.ts`                       | 今日の表示秒数（`secondsOnDay()`）                             |
+| `src/lib/blockRecordService.ts`                  | ブロック成立時の記録の一元管理                                 |
+| `src/background/listeners/navigationTracking.ts` | 遷移イベントからの記録                                         |
+| `wxt.config.ts`                                  | manifest（リダイレクト先の公開宣言）                           |

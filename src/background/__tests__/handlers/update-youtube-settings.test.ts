@@ -28,7 +28,7 @@ import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
 import { itemAt } from '~/test/items';
-import type { TrackedSite } from '~/types/site';
+import type { SiteEntry } from '~/types/site';
 import type { MessageError } from '~/types/messages';
 
 interface Response {
@@ -52,13 +52,13 @@ const youtube = (
 });
 
 // 弱めるかの判定は siteService が書き込み直前の値で行う（siteService のテストで確かめる）。ここでは判定結果を受け取った後を見る
-function givenStored(site: TrackedSite | null, weakens = false) {
+function givenStored(site: SiteEntry | null, weakens = false) {
   vi.mocked(updateYouTubeSite).mockImplementation(
     async (_update, _now, authorize) => {
       const rejection = await authorize(weakens);
       return rejection === null
         ? { rejection: null, before: site }
-        : { rejection, before: null };
+        : { rejection: { by: 'authorize', rejection }, before: null };
     }
   );
 }
@@ -303,6 +303,45 @@ describe('update-youtube-settings ハンドラ', () => {
 
         expect(result).toEqual({ success: false, error: { code } });
         expect(updateBlockRules).not.toHaveBeenCalled();
+        expect(recordActivity).not.toHaveBeenCalled();
+      }
+    );
+  });
+
+  describe('youtube.com の登録の形による拒否', () => {
+    it.each([
+      [
+        '許可サイトとして登録済み',
+        { reason: 'allowed' } as const,
+        { code: 'already-allowed' }
+      ],
+      [
+        '新しく作ると許可サイトでない子孫と入れ子になる',
+        {
+          reason: 'nested',
+          nested: { site: 'm.youtube.com', relation: 'descendant' }
+        } as const,
+        {
+          code: 'nested-site',
+          domain: YOUTUBE_DOMAIN,
+          nested: { site: 'm.youtube.com', relation: 'descendant' }
+        }
+      ]
+    ])(
+      '%s なら理由を返し、ルールの更新も記録もしない',
+      async (_label, rejection, error) => {
+        vi.mocked(updateYouTubeSite).mockResolvedValue({
+          rejection: { by: 'site', rejection },
+          before: null
+        });
+
+        const result = await invoke<Response>(handler, {
+          youtube: youtube({ enabled: true, blockAccess: true })
+        });
+
+        expect(result).toEqual({ success: false, error });
+        expect(updateBlockRules).not.toHaveBeenCalled();
+        expect(blockExistingTabs).not.toHaveBeenCalled();
         expect(recordActivity).not.toHaveBeenCalled();
       }
     );

@@ -11,7 +11,7 @@ vi.mock('~/lib/siteService', () => ({
 }));
 
 vi.mock('~/lib/blockService', () => ({
-  getActiveBlockedDomains: vi.fn()
+  getRuleTargets: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
@@ -21,11 +21,12 @@ vi.mock('../../blocker', () => ({
 
 import { importSettings } from '~/lib/settingsService';
 import { importSites } from '~/lib/siteService';
-import { getActiveBlockedDomains } from '~/lib/blockService';
+import { getRuleTargets } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
 import { createDefaultExportData } from '~/lib/settingsExport';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -56,10 +57,10 @@ const exportedData = (overrides: Partial<ExportedData> = {}): ExportedData => ({
 });
 
 function givenBlockedDomains(before: string[], after: string[]) {
-  vi.mocked(getActiveBlockedDomains)
+  vi.mocked(getRuleTargets)
     .mockReset()
-    .mockResolvedValueOnce(before)
-    .mockResolvedValueOnce(after);
+    .mockResolvedValueOnce({ redirect: before, allow: [] })
+    .mockResolvedValueOnce({ redirect: after, allow: ['music.youtube.com'] });
 }
 
 describe('import-settings ハンドラ', () => {
@@ -147,7 +148,8 @@ describe('import-settings ハンドラ', () => {
       blockedSite('sns.example', {
         timeLimit: { type: 'daily', limitSeconds: 600 }
       }),
-      trackedSite('youtube.com', { youtube: youtubeFeatures() })
+      trackedSite('youtube.com', { youtube: youtubeFeatures() }),
+      allowedSite('music.youtube.com', true)
     ];
     const data = exportedData({ schedules, sites: sitesOf(...sites) });
 
@@ -241,7 +243,7 @@ describe('import-settings ハンドラ', () => {
   });
 
   describe('既存タブをブロックしない条件', () => {
-    it('ブロック対象が変わらないとき', async () => {
+    it('ブロック対象が変わらないとき（許可サイトが増えても）', async () => {
       givenBlockedDomains(['example.com'], ['example.com']);
 
       await invoke(handler, { data: exportedData() });

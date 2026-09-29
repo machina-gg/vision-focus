@@ -41,7 +41,7 @@ export function DomainListItem({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Toggle
-            checked={site.block.enabled}
+            checked={site.rule.enabled}
             onChange={(checked) => onToggle(site.domain, checked)}
             size="sm"
             data-testid="blocklist-item-toggle"
@@ -49,12 +49,12 @@ export function DomainListItem({
           <div>
             <p
               data-testid="blocklist-item-domain"
-              className={`font-medium ${site.block.enabled ? 'text-gray-900' : 'text-gray-400'}`}
+              className={`font-medium ${site.rule.enabled ? 'text-gray-900' : 'text-gray-400'}`}
             >
               {site.domain}
             </p>
             <p className="text-xs text-gray-500">
-              Added {new Date(site.block.addedAt).toLocaleDateString()}
+              Added {new Date(site.rule.addedAt).toLocaleDateString()}
             </p>
           </div>
           {blockCount > 0 && (

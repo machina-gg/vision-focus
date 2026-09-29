@@ -58,6 +58,7 @@ import {
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { getSites } from '~/lib/storage';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -105,7 +106,12 @@ describe('addBlock', () => {
       'reddit.com': {
         domain: 'reddit.com',
         trackedAt: NOW.toISOString(),
-        block: { enabled: true, addedAt: NOW.toISOString(), timeLimit: null },
+        rule: {
+          kind: 'block',
+          enabled: true,
+          addedAt: NOW.toISOString(),
+          timeLimit: null
+        },
         youtube: null
       }
     });
@@ -116,7 +122,7 @@ describe('addBlock', () => {
     expect(Object.keys(await stored())).toEqual(['example.com']);
   });
 
-  it('追跡だけのサイトにはブロック設定を足し、追跡を始めた時刻は保つ', async () => {
+  it('追跡だけのサイトにはブロックの規則を足し、追跡を始めた時刻は保つ', async () => {
     givenSites(
       sitesOf(trackedSite('x.com', { trackedAt: '2026-01-01T00:00:00.000Z' }))
     );
@@ -125,15 +131,46 @@ describe('addBlock', () => {
     expect((await stored())['x.com']).toEqual({
       domain: 'x.com',
       trackedAt: '2026-01-01T00:00:00.000Z',
-      block: { enabled: true, addedAt: NOW.toISOString(), timeLimit: null },
+      rule: {
+        kind: 'block',
+        enabled: true,
+        addedAt: NOW.toISOString(),
+        timeLimit: null
+      },
       youtube: null
     });
   });
 
-  it('既にブロック設定を持つサイト（www. 付きの入力を含む）は重複として拒否する', async () => {
+  it('既にブロックの規則を持つサイト（www. 付きの入力を含む）は重複として拒否する', async () => {
     givenSites(sitesOf(blockedSite('x.com')));
     expect((await addBlock('www.x.com', NOW)).rejection).toEqual({
       reason: 'duplicate'
+    });
+  });
+
+  it('許可サイトはブロックに変えず allowed で拒否する', async () => {
+    const existing = allowedSite('music.youtube.com');
+    givenSites(sitesOf(existing));
+    expect((await addBlock('music.youtube.com', NOW)).rejection).toEqual({
+      reason: 'allowed'
+    });
+    expect(entryOf(await stored(), 'music.youtube.com')).toEqual(existing);
+  });
+
+  it('許可サイトの子孫しか無ければ親をブロックできる', async () => {
+    givenSites(sitesOf(allowedSite('music.youtube.com')));
+    expect((await addBlock('youtube.com', NOW)).rejection).toBeNull();
+    expect(Object.keys(await stored()).sort()).toEqual([
+      'music.youtube.com',
+      'youtube.com'
+    ]);
+  });
+
+  it('祖先が許可サイトでも、その下にはブロックを足せない', async () => {
+    givenSites(sitesOf(allowedSite('google.com')));
+    expect((await addBlock('mail.google.com', NOW)).rejection).toEqual({
+      reason: 'nested',
+      nested: { site: 'google.com', relation: 'ancestor' }
     });
   });
 
@@ -154,7 +191,7 @@ describe('addBlock', () => {
     ],
     ['祖先（既存が子孫）', 'mail.google.com', 'google.com', 'descendant']
   ] as const)(
-    '入れ子になるキーは拒否する: %s',
+    '許可サイトでない登録と入れ子になるキーは拒否する: %s',
     async (_label, existing, input, relation) => {
       givenSites(sitesOf(trackedSite(existing)));
       expect((await addBlock(input, NOW)).rejection).toEqual({
@@ -185,23 +222,37 @@ describe('addBlock', () => {
 });
 
 describe('addTrackedSite', () => {
-  it('ブロック設定なしで追跡を始める', async () => {
+  it('規則なしで追跡を始める', async () => {
     expect(
       (await addTrackedSite('news.example.org', NOW)).rejection
     ).toBeNull();
     expect((await stored())['news.example.org']).toEqual({
       domain: 'news.example.org',
       trackedAt: NOW.toISOString(),
-      block: null,
+      rule: null,
       youtube: null
     });
   });
 
-  it('既に追跡中のサイトは重複として拒否する', async () => {
-    givenSites(sitesOf(blockedSite('x.com')));
+  it.each([
+    ['ブロック', blockedSite('x.com')],
+    ['許可サイト', allowedSite('x.com')]
+  ])('既に登録済みのサイト（%s）は重複として拒否する', async (_label, site) => {
+    givenSites(sitesOf(site));
     expect((await addTrackedSite('x.com', NOW)).rejection).toEqual({
       reason: 'duplicate'
     });
+  });
+
+  it('許可サイトでない子孫があれば拒否し、許可サイトの子孫だけなら追加できる', async () => {
+    givenSites(sitesOf(trackedSite('m.youtube.com')));
+    expect((await addTrackedSite('youtube.com', NOW)).rejection).toEqual({
+      reason: 'nested',
+      nested: { site: 'm.youtube.com', relation: 'descendant' }
+    });
+
+    givenSites(sitesOf(allowedSite('m.youtube.com')));
+    expect((await addTrackedSite('youtube.com', NOW)).rejection).toBeNull();
   });
 
   it('入れ子になるキーは拒否する', async () => {
@@ -214,46 +265,59 @@ describe('addTrackedSite', () => {
 });
 
 describe('removeBlock / setBlockEnabled / setTimeLimit', () => {
-  it('removeBlock は block を null にして追跡を続け、外す前の設定を返す', async () => {
+  it('removeBlock は rule を null にして追跡を続け、外す前の規則を返す', async () => {
     givenSites(sitesOf(blockedSite('x.com')));
     const before = await removeBlock('x.com');
     expect(before?.enabled).toBe(true);
-    expect(entryOf(await stored(), 'x.com').block).toBeNull();
+    expect(entryOf(await stored(), 'x.com').rule).toBeNull();
   });
 
-  it('removeBlock はサイトもブロック設定も無ければ null', async () => {
-    givenSites(sitesOf(trackedSite('x.com')));
+  it('removeBlock はサイトもブロックの規則も無ければ null で、許可サイトは変えない', async () => {
+    givenSites(sitesOf(trackedSite('x.com'), allowedSite('y.com')));
     expect(await removeBlock('x.com')).toBeNull();
     expect(await removeBlock('none.com')).toBeNull();
+    expect(await removeBlock('y.com')).toBeNull();
+    expect(entryOf(await stored(), 'y.com').rule).toEqual({
+      kind: 'allow',
+      recordTime: false
+    });
   });
 
-  it('setBlockEnabled は block.enabled だけを変え、切り替える前の設定を返す', async () => {
+  it('setBlockEnabled は rule.enabled だけを変え、切り替える前の規則を返す', async () => {
     givenSites(sitesOf(blockedSite('x.com', { timeLimit: LIMIT })));
     const before = await setBlockEnabled('x.com', false);
     expect(before?.enabled).toBe(true);
-    expect(entryOf(await stored(), 'x.com').block).toEqual({
+    expect(entryOf(await stored(), 'x.com').rule).toEqual({
+      kind: 'block',
       enabled: false,
       addedAt: '2024-01-01T00:00:00.000Z',
       timeLimit: LIMIT
     });
   });
 
-  it('setBlockEnabled はブロック設定の無いサイトでは何もしない', async () => {
-    givenSites(sitesOf(trackedSite('x.com')));
+  it('setBlockEnabled はブロックの規則の無いサイトでは何もしない', async () => {
+    givenSites(sitesOf(trackedSite('x.com'), allowedSite('y.com')));
     expect(await setBlockEnabled('x.com', true)).toBeNull();
-    expect(entryOf(await stored(), 'x.com').block).toBeNull();
+    expect(await setBlockEnabled('y.com', true)).toBeNull();
+    expect(entryOf(await stored(), 'x.com').rule).toBeNull();
+    expect(entryOf(await stored(), 'y.com').rule?.kind).toBe('allow');
   });
 
-  it('setTimeLimit はブロック設定の時間制限を変える（無ければ false）', async () => {
-    givenSites(sitesOf(blockedSite('x.com'), trackedSite('y.com')));
+  it('setTimeLimit はブロックの規則の時間制限を変える（無ければ false）', async () => {
+    givenSites(
+      sitesOf(blockedSite('x.com'), trackedSite('y.com'), allowedSite('z.com'))
+    );
     expect(await setTimeLimit('x.com', LIMIT)).toBe(true);
-    expect(entryOf(await stored(), 'x.com').block?.timeLimit).toEqual(LIMIT);
+    expect(entryOf(await stored(), 'x.com').rule).toMatchObject({
+      timeLimit: LIMIT
+    });
     expect(await setTimeLimit('y.com', LIMIT)).toBe(false);
+    expect(await setTimeLimit('z.com', LIMIT)).toBe(false);
   });
 });
 
 describe('updateYouTubeSite', () => {
-  it('youtube.com が無ければ作り、YouTube 機能とブロック設定を書く', async () => {
+  it('youtube.com が無ければ作り、YouTube 機能とブロックの規則を書く', async () => {
     const { before } = await updateYouTubeSite(
       {
         youtube: youtubeFeatures({ hideShorts: true }),
@@ -266,12 +330,17 @@ describe('updateYouTubeSite', () => {
     expect((await stored())[YOUTUBE_DOMAIN]).toEqual({
       domain: YOUTUBE_DOMAIN,
       trackedAt: NOW.toISOString(),
-      block: { enabled: true, addedAt: NOW.toISOString(), timeLimit: LIMIT },
+      rule: {
+        kind: 'block',
+        enabled: true,
+        addedAt: NOW.toISOString(),
+        timeLimit: LIMIT
+      },
       youtube: youtubeFeatures({ hideShorts: true })
     });
   });
 
-  it('ブロックリストに入れた時刻は既存のブロック設定から引き継ぎ、変更前のサイトを返す', async () => {
+  it('ブロックリストに入れた時刻は既存のブロックの規則から引き継ぎ、変更前の登録を返す', async () => {
     const existing = blockedSite(YOUTUBE_DOMAIN);
     givenSites(sitesOf(existing));
     const { before } = await updateYouTubeSite(
@@ -280,12 +349,12 @@ describe('updateYouTubeSite', () => {
       allow
     );
     expect(before).toEqual(existing);
-    expect(entryOf(await stored(), YOUTUBE_DOMAIN).block?.addedAt).toBe(
-      existing.block?.addedAt
-    );
+    expect(entryOf(await stored(), YOUTUBE_DOMAIN).rule).toMatchObject({
+      addedAt: existing.rule.addedAt
+    });
   });
 
-  it('アクセスブロックの無効化はブロック設定を残し、時間制限と addedAt を保つ', async () => {
+  it('アクセスブロックの無効化はブロックの規則を残し、時間制限と addedAt を保つ', async () => {
     const existing = blockedSite(
       YOUTUBE_DOMAIN,
       { timeLimit: LIMIT },
@@ -302,14 +371,15 @@ describe('updateYouTubeSite', () => {
       allow
     );
 
-    expect(entryOf(await stored(), YOUTUBE_DOMAIN).block).toEqual({
+    expect(entryOf(await stored(), YOUTUBE_DOMAIN).rule).toEqual({
+      kind: 'block',
       enabled: false,
-      addedAt: existing.block?.addedAt,
+      addedAt: existing.rule.addedAt,
       timeLimit: LIMIT
     });
   });
 
-  it('ブロック設定が無ければ、無効のブロック設定は作らない', async () => {
+  it('ブロックの規則が無ければ、無効のブロックの規則は作らない', async () => {
     givenSites(
       sitesOf(trackedSite(YOUTUBE_DOMAIN, { youtube: youtubeFeatures() }))
     );
@@ -323,7 +393,7 @@ describe('updateYouTubeSite', () => {
       allow
     );
 
-    expect(entryOf(await stored(), YOUTUBE_DOMAIN).block).toBeNull();
+    expect(entryOf(await stored(), YOUTUBE_DOMAIN).rule).toBeNull();
   });
 
   it('機能もブロックも外しても youtube.com は追跡中に残る', async () => {
@@ -332,8 +402,76 @@ describe('updateYouTubeSite', () => {
     );
     await updateYouTubeSite({ youtube: null, block: null }, NOW, allow);
     expect((await stored())[YOUTUBE_DOMAIN]).toMatchObject({
-      block: null,
+      rule: null,
       youtube: null
+    });
+  });
+
+  describe('youtube.com の登録の形による拒否', () => {
+    it('許可サイトとして登録された youtube.com には書かず、authorize も呼ばない', async () => {
+      const existing = allowedSite(YOUTUBE_DOMAIN);
+      givenSites(sitesOf(existing));
+      const authorize = vi.fn(allow);
+
+      const result = await updateYouTubeSite(
+        {
+          youtube: youtubeFeatures(),
+          block: { enabled: true, timeLimit: null }
+        },
+        NOW,
+        authorize
+      );
+
+      expect(result).toEqual({
+        rejection: { by: 'site', rejection: { reason: 'allowed' } },
+        before: null
+      });
+      expect(authorize).not.toHaveBeenCalled();
+      expect(entryOf(await stored(), YOUTUBE_DOMAIN)).toEqual(existing);
+    });
+
+    it('新しく作るときに許可サイトでない子孫があれば nested で拒み、何も書かない', async () => {
+      givenSites(sitesOf(trackedSite('m.youtube.com')));
+
+      const result = await updateYouTubeSite(
+        {
+          youtube: youtubeFeatures(),
+          block: { enabled: false, timeLimit: null }
+        },
+        NOW,
+        allow
+      );
+
+      expect(result).toEqual({
+        rejection: {
+          by: 'site',
+          rejection: {
+            reason: 'nested',
+            nested: { site: 'm.youtube.com', relation: 'descendant' }
+          }
+        },
+        before: null
+      });
+      expect(Object.keys(await stored())).toEqual(['m.youtube.com']);
+    });
+
+    it('新しく作るときも、子孫が許可サイトだけなら作る', async () => {
+      givenSites(sitesOf(allowedSite('music.youtube.com')));
+
+      const result = await updateYouTubeSite(
+        {
+          youtube: youtubeFeatures(),
+          block: { enabled: true, timeLimit: null }
+        },
+        NOW,
+        allow
+      );
+
+      expect(result.rejection).toBeNull();
+      expect(Object.keys(await stored()).sort()).toEqual([
+        'music.youtube.com',
+        YOUTUBE_DOMAIN
+      ]);
     });
   });
 
@@ -405,7 +543,10 @@ describe('updateYouTubeSite', () => {
         async () => 'required' as const
       );
 
-      expect(result).toEqual({ rejection: 'required', before: null });
+      expect(result).toEqual({
+        rejection: { by: 'authorize', rejection: 'required' },
+        before: null
+      });
       expect(entryOf(await stored(), YOUTUBE_DOMAIN)).toEqual(blocking);
     });
 
@@ -428,8 +569,13 @@ describe('updateYouTubeSite', () => {
       ]);
 
       expect(authorize).toHaveBeenCalledWith(true);
-      expect(unblocking.rejection).toBe('required');
-      expect(entryOf(await stored(), YOUTUBE_DOMAIN).block?.enabled).toBe(true);
+      expect(unblocking.rejection).toEqual({
+        by: 'authorize',
+        rejection: 'required'
+      });
+      expect(entryOf(await stored(), YOUTUBE_DOMAIN).rule).toMatchObject({
+        enabled: true
+      });
     });
   });
 });
@@ -441,7 +587,13 @@ describe('stopTracking', () => {
     expect(Object.keys(await stored())).toEqual(['y.com']);
   });
 
-  it('ブロック設定か YouTube 機能を持つサイトは消さない', async () => {
+  it('許可サイトは登録ごと消す', async () => {
+    givenSites(sitesOf(allowedSite('music.youtube.com', true)));
+    expect(await stopTracking('music.youtube.com')).toBe('stopped');
+    expect(await stored()).toEqual({});
+  });
+
+  it('ブロックの規則か YouTube 機能を持つサイトは消さない', async () => {
     givenSites(
       sitesOf(
         blockedSite('x.com', { enabled: false }),
@@ -477,21 +629,66 @@ describe('importSites', () => {
     expect((await stored())['new.com']).toEqual({
       domain: 'new.com',
       trackedAt: NOW.toISOString(),
-      block: {
+      rule: {
+        kind: 'block',
         enabled: true,
         addedAt: '2025-05-05T00:00:00.000Z',
         timeLimit: null
       },
       youtube: null
     });
-    expect(entryOf(await stored(), 'x.com').block?.enabled).toBe(false);
+    expect(entryOf(await stored(), 'x.com').rule).toMatchObject({
+      enabled: false
+    });
   });
 
-  it('追跡だけの既存サイトにはブロック設定を足す', async () => {
+  it('追跡だけの既存サイトにはブロックの規則を足す', async () => {
     givenSites(sitesOf(trackedSite('x.com')));
     const result = await importSites([blockedSite('x.com')], NOW);
     expect(result.changed).toEqual(['x.com']);
-    expect(entryOf(await stored(), 'x.com').block?.enabled).toBe(true);
+    expect(entryOf(await stored(), 'x.com').rule).toMatchObject({
+      kind: 'block',
+      enabled: true
+    });
+  });
+
+  it('既存の登録の規則は許可とブロック・規則なしの間で付け替えない', async () => {
+    givenSites(sitesOf(trackedSite('x.com'), allowedSite('y.com')));
+    const result = await importSites(
+      [allowedSite('x.com'), blockedSite('y.com')],
+      NOW
+    );
+    expect(result).toEqual({ changed: [], skipped: [] });
+    expect(entryOf(await stored(), 'x.com').rule).toBeNull();
+    expect(entryOf(await stored(), 'y.com').rule?.kind).toBe('allow');
+  });
+
+  it('許可サイトはブロックの下にも取り込み、許可サイトでない子孫を持つものは取り込まない', async () => {
+    givenSites(
+      sitesOf(blockedSite('youtube.com'), trackedSite('m.google.com'))
+    );
+    const result = await importSites(
+      [
+        allowedSite('music.youtube.com', true),
+        allowedSite('google.com'),
+        blockedSite('reddit.com'),
+        allowedSite('old.reddit.com')
+      ],
+      NOW
+    );
+    expect(result).toEqual({
+      changed: ['music.youtube.com', 'reddit.com', 'old.reddit.com'],
+      skipped: [
+        {
+          input: 'google.com',
+          nested: { site: 'm.google.com', relation: 'descendant' }
+        }
+      ]
+    });
+    expect(entryOf(await stored(), 'music.youtube.com').rule).toEqual({
+      kind: 'allow',
+      recordTime: true
+    });
   });
 
   it('既存・ファイル内の先行サイトと入れ子になるものは取り込まず理由を返す', async () => {
@@ -521,6 +718,17 @@ describe('importSites', () => {
       'google.com',
       'reddit.com'
     ]);
+  });
+
+  it('許可サイトの youtube.com には YouTube 機能を取り込まない', async () => {
+    await importSites(
+      [allowedSite(YOUTUBE_DOMAIN, false, { youtube: youtubeFeatures() })],
+      NOW
+    );
+    expect(entryOf(await stored(), YOUTUBE_DOMAIN)).toMatchObject({
+      rule: { kind: 'allow' },
+      youtube: null
+    });
   });
 
   it('YouTube 機能は youtube.com 以外では取り込まない', async () => {

@@ -62,6 +62,11 @@ describe('add-block ハンドラ', () => {
       { code: 'already-blocked' }
     ],
     [
+      '許可サイトとして登録済み',
+      { reason: 'allowed' as const },
+      { code: 'already-allowed' }
+    ],
+    [
       '追跡中のサイトのサブドメイン',
       {
         reason: 'nested' as const,

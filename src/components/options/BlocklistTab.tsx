@@ -12,7 +12,7 @@ import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import { blockCountsByDomain } from '~/hooks/useActivityStats';
 import { secondsOnDay } from '~/lib/activityStats';
-import { blockListSites } from '~/lib/blockList';
+import { blockListSites, hasBlock } from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { isProtectedByPassword } from '~/lib/password';
 import { toDateKey } from '~/lib/time';
@@ -82,11 +82,11 @@ export function BlocklistTab({
 
   const handleRemoveClick = useCallback(
     (domain: string) => {
-      const block = trackedSites[domain]?.block;
-      if (!block) return;
+      const site = trackedSites[domain];
+      if (!site || !hasBlock(site)) return;
       requestUnblock({
         domain,
-        timeLimit: block.timeLimit,
+        timeLimit: site.rule.timeLimit,
         action: 'delete',
         onConfirm: (password) => onRemoveDomain(domain, password)
       });
@@ -100,11 +100,11 @@ export function BlocklistTab({
         void onToggleDomain(domain, enabled);
         return;
       }
-      const block = trackedSites[domain]?.block;
-      if (!block) return;
+      const site = trackedSites[domain];
+      if (!site || !hasBlock(site)) return;
       requestUnblock({
         domain,
-        timeLimit: block.timeLimit,
+        timeLimit: site.rule.timeLimit,
         action: 'toggle',
         onConfirm: (password) => onToggleDomain(domain, false, password)
       });

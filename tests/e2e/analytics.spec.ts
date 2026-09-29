@@ -93,9 +93,9 @@ test.describe('Analytics - アナリティクス機能', () => {
       .poll(async () => {
         const sites = await getStorageData(optionsPage, 'sites');
         const site = sites?.[TEST_DOMAINS.example];
-        return site ? { tracked: true, block: site.block } : null;
+        return site ? { tracked: true, rule: site.rule } : null;
       })
-      .toEqual({ tracked: true, block: null });
+      .toEqual({ tracked: true, rule: null });
 
     await optionsPage.close();
   });
@@ -298,7 +298,7 @@ test.describe('Analytics - アナリティクス機能', () => {
     );
 
     await expect
-      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'block'))
+      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'rule'))
       .toBeNull();
 
     await expect

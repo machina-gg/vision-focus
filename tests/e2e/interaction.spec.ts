@@ -306,7 +306,7 @@ test.describe('Interaction - 機能間相互作用', () => {
     );
 
     await expect
-      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'block'))
+      .poll(() => readSiteSetting(optionsPage, TEST_DOMAINS.example, 'rule'))
       .toBeNull();
 
     await optionsPage.close();

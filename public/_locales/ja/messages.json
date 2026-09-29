@@ -1874,7 +1874,7 @@
     "description": "支援誘導を閉じるボタン"
   },
   "siteErrorInsideTrackedSite": {
-    "message": "$DOMAIN$ は追跡中の $SITE$ に含まれるため追加できません",
+    "message": "$DOMAIN$ は追跡中の $SITE$ に含まれるため追加できません。開けるようにするなら許可サイトに追加してください",
     "description": "追加しようとしたドメインが追跡中のサイトのサブドメインのときのエラー",
     "placeholders": {
       "domain": {
@@ -1940,6 +1940,10 @@
   "siteErrorAlreadyTracked": {
     "message": "このサイトは既に追跡中です",
     "description": "サイト追加エラー: 既に追跡中"
+  },
+  "siteErrorAlreadyAllowed": {
+    "message": "このサイトは許可サイトに登録されています",
+    "description": "サイト追加エラー: 許可サイトとして登録済み（ブロック・YouTube 設定には変えない）"
   },
   "siteErrorBlockNotFound": {
     "message": "このサイトのブロック設定が見つかりません",

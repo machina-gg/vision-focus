@@ -20,7 +20,7 @@ import {
 } from '~/types/storage';
 
 /** 設定ファイルの形式の版。保存形を変えたら上げる。これより古い版のファイルは形式エラーで拒む */
-export const EXPORT_VERSION = 3;
+export const EXPORT_VERSION = 4;
 
 const BYTES_PER_MB = 1024 * 1024;
 

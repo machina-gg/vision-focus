@@ -16,7 +16,7 @@ chrome.storage に保存するデータ構造の設計。
 | 項目定義のキー        | 実キー          | 型                 | 書き手                                     | 説明                             |
 | --------------------- | --------------- | ------------------ | ------------------------------------------ | -------------------------------- |
 | `local:settings`      | `settings`      | AppSettings        | background（`src/lib/settingsService.ts`） | 全サイトに共通の設定             |
-| `local:sites`         | `sites`         | TrackedSites       | background（`src/lib/siteService.ts`）     | 追跡中のサイトとサイトごとの設定 |
+| `local:sites`         | `sites`         | TrackedSites       | background（`src/lib/siteService.ts`）     | 追跡中のサイトとサイトごとの規則 |
 | `local:activity`      | `activity`      | ActivityLog        | background（`src/lib/activityService.ts`） | 日 × サイトの事実                |
 | `local:vision`        | `vision`        | VisionSettings     | background（`src/lib/settingsService.ts`） | ダッシュボードの表示設定         |
 | `local:supportPrompt` | `supportPrompt` | SupportPromptState | 画面                                       | 支援誘導の表示状態               |
@@ -38,13 +38,14 @@ erDiagram
     AppSettings ||--|| PasswordSettings : has
     AppSettings ||--|| UnblockConfirmSettings : has
 
-    TrackedSites ||--o{ TrackedSite : "キー = サイトキー"
-    TrackedSite ||--o| BlockRule : has
-    TrackedSite ||--o| YouTubeFeatures : "youtube.com のみ"
+    TrackedSites ||--o{ SiteEntry : "キー = サイトキー"
+    SiteEntry ||--|| TrackedSite : "追跡の情報"
+    SiteEntry ||--o| SiteRule : "rule（BlockRule / AllowRule）"
+    SiteEntry ||--o| YouTubeFeatures : "youtube.com のみ"
     BlockRule ||--o| TimeLimit : has
 
     ActivityLog ||--o{ DailySiteActivity : "日付キー × サイトキー"
-    TrackedSite ||--o{ DailySiteActivity : "サイトキーで結ぶ"
+    SiteEntry ||--o{ DailySiteActivity : "サイトキーで結ぶ"
 
     VisionSettings ||--|| DashboardDisplaySettings : has
     VisionSettings ||--o{ DashboardPreset : contains
@@ -59,8 +60,9 @@ erDiagram
 追跡中のサイトは正規化したドメイン（サイトキー）で識別する。
 
 - 正規化: 小文字にし、先頭の `*.` と `www.` を除く（`*.example.com` と `example.com` は照合結果が同じなので区別しない）
-- 照合: ホスト名がキーと一致するか `.キー` で終わるとき、そのサイトに属する（declarativeNetRequest の `||キー` と同じ範囲）
-- 追跡中のサイト同士は祖先・子孫の関係にならない（追加時に拒否する）。1 つのホスト名は高々 1 つのサイトに属する
+- 照合: ホスト名がキーと一致するか `.キー` で終わるとき、そのサイトがホストを覆う（declarativeNetRequest の `requestDomains: [キー]` と同じ範囲）。覆うサイトはキーの長い順に並べ（`coveringSiteKeys`）、先頭をホストが属するサイトとする（`resolveSiteKey`。記録の行を決める）
+- 祖先・子孫の組を許すのは、子孫が許可サイトのときだけ（ブロック ⊃ 許可、規則なし ⊃ 許可、許可 ⊃ 許可は可。それ以外の組は追加時に拒否する。`findNestingConflict`）。したがって 1 つのホスト名を覆うサイトは、許可サイトでないものが高々 1 つ（最も祖先側）と、その下の許可サイト 0 個以上になる
+- 判定: ホストを覆うサイトに許可サイトがあれば通す。無ければ覆うブロックの規則で決める（流れは [BLOCK_STATE_MACHINE.md](./BLOCK_STATE_MACHINE.md)）
 
 実装: `src/lib/siteKey.ts`
 
@@ -126,38 +128,65 @@ erDiagram
 | enabled    | boolean | 匿名の使用統計を送るか |
 | decidedAt  | string  | 決めた時刻（ISO8601）  |
 
-### TrackedSite（追跡中のサイト）
+### SiteEntry（保存する 1 項目）
 
-分析の母集団であり、サイトごとの設定の置き場。`sites` はサイトキーをキーにした `Record<SiteKey, TrackedSite>`。
+`sites` はサイトキーをキーにした `Record<SiteKey, SiteEntry>`。追跡の情報（TrackedSite）に、サイトごとの規則と YouTube の設定を足したもの。
 
-| フィールド | 型                      | 説明                                                                   |
-| ---------- | ----------------------- | ---------------------------------------------------------------------- |
-| domain     | SiteKey                 | サイトキー                                                             |
-| trackedAt  | string                  | 追跡を始めた時刻（ISO8601）                                            |
-| block      | BlockRule \| null       | ブロックの設定。null ならブロック対象ではない（追跡だけ）              |
-| youtube    | YouTubeFeatures \| null | YouTube 固有の非表示機能。domain が `youtube.com` のときだけ値を持てる |
+| フィールド | 型                      | 説明                                                                                     |
+| ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| domain     | SiteKey                 | サイトキー（TrackedSite）                                                                |
+| trackedAt  | string                  | 追跡を始めた時刻（ISO8601。TrackedSite）                                                 |
+| rule       | SiteRule \| null        | ブロックか許可の規則。null なら規則なし（追跡だけ）                                      |
+| youtube    | YouTubeFeatures \| null | YouTube 固有の非表示機能。domain が `youtube.com` で、許可サイトでないときだけ値を持てる |
 
-生成契機は 2 つ: ブロックリストへの追加（`block` を持つ）と、分析タブからの追跡サイトの追加（`block` が null）。youtube.com は YouTube 機能を有効にしたときにも作られる。
+生成契機: ブロックリストへの追加（`rule` がブロック）、分析タブからの追跡サイトの追加（`rule` が null）、設定ファイルの取り込み（ファイルの `rule` のまま）。youtube.com は YouTube 機能を有効にしたときにも作られる（作るときも入れ子を検査する）。
 
-| 操作                   | 変わるもの                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| ブロックリストに追加   | `block` を作る（サイトが無ければサイトごと作る）                                    |
-| ブロックのトグル       | `block.enabled`                                                                     |
-| ブロックリストから削除 | `block` を null にする（追跡は続く）                                                |
-| 追跡の停止             | サイトと、その `activity` の行を消す（`block` か `youtube` を持つサイトは止めない） |
+| 操作                   | 変わるもの                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ブロックリストに追加   | `rule` をブロックにする（サイトが無ければサイトごと作る。許可サイトには足さない）                             |
+| ブロックのトグル       | ブロックの規則の `enabled`                                                                                    |
+| ブロックリストから削除 | ブロックの規則を外して `rule` を null にする（追跡は続く）                                                    |
+| 追跡の停止             | サイトと、その `activity` の行を消す（ブロックの規則か `youtube` を持つサイトは止めない。許可サイトは消せる） |
+
+規則の種類は、規則なし ⇔ ブロックの間でだけ変わる。許可サイトと、ブロック・規則なしの間の付け替えはしない（ブロックの追加は `already-allowed`、YouTube 設定の保存も `already-allowed` で拒む。取り込みでも既存の規則は変えない）。変えたいときは追跡を止めてから足し直す。
 
 画面での見え方（どちらも `sites` からの導出で、保存はしない）:
 
-- 「ブロック中のサイト」一覧（ブロックリストタブ・新しいタブ・ブロックリスト CSV）は、`block` を持つサイトから youtube.com を除いたもの（`src/lib/blockList.ts` の `blockListSites`。新しいタブはそのうち `block.enabled` のものだけ）。youtube.com の設定は YouTube の節だけが扱う
-- 追跡中サイト一覧（分析タブ）の状態は、`block === null` なら解除済み（追跡だけ）、`block.enabled` でブロック中 / ブロック中（無効）
+- 「ブロック中のサイト」一覧（ブロックリストタブ・新しいタブ・ブロックリスト CSV）は、ブロックの規則を持つサイトから youtube.com を除いたもの（`src/lib/blockList.ts` の `blockListSites`。新しいタブはそのうち `enabled` のものだけ）。youtube.com の設定は YouTube の節だけが扱う
+- 追跡中サイト一覧（分析タブ）の状態は、ブロックの規則が無ければ解除済み（追跡だけ）、ブロックの規則の `enabled` でブロック中 / ブロック中（無効）
 
-### BlockRule（ブロックの設定）
+### TrackedSite（追跡の情報）
+
+分析の母集団を決める。ブロック・許可の要素は持たない。
+
+| フィールド | 型      | 説明                        |
+| ---------- | ------- | --------------------------- |
+| domain     | SiteKey | サイトキー                  |
+| trackedAt  | string  | 追跡を始めた時刻（ISO8601） |
+
+### SiteRule（BlockRule / AllowRule）
+
+`kind` で分ける。
+
+#### BlockRule（ブロックの規則）
 
 | フィールド | 型                | 説明                                                      |
 | ---------- | ----------------- | --------------------------------------------------------- |
+| kind       | 'block'           | ブロック                                                  |
 | enabled    | boolean           | false なら一時的に無効                                    |
 | addedAt    | string            | ブロックリストに入れた時刻（ISO8601）。ブロック日数の起点 |
 | timeLimit  | TimeLimit \| null | null なら常時ブロック                                     |
+
+#### AllowRule（許可サイト）
+
+覆うブロックがあっても、このサイトとその下のホストは開ける。上にブロックが無ければ何も変えない（上にブロックを足せば効き始める）。
+
+| フィールド | 型      | 説明                                                                     |
+| ---------- | ------- | ------------------------------------------------------------------------ |
+| kind       | 'allow' | 許可                                                                     |
+| recordTime | boolean | 滞在時間を記録するか（作るときは false）。判定と転送ルールには関わらない |
+
+`recordTime` はまだ記録に反映していない（false でも滞在時間を記録する）。
 
 判定の流れは [BLOCK_STATE_MACHINE.md](./BLOCK_STATE_MACHINE.md)。
 
@@ -179,7 +208,7 @@ erDiagram
 | hideComments        | boolean | コメントを隠す         |
 | hideHomeFeed        | boolean | ホームのフィードを隠す |
 
-アクセスのブロックと時間制限は youtube.com の `block` が持つ（他のサイトと同じ）。
+アクセスのブロックと時間制限は youtube.com のブロックの規則が持つ（他のサイトと同じ）。
 
 ### ActivityLog（事実）
 
@@ -261,7 +290,7 @@ DashboardDisplaySettings に次を足したもの。
 
 ## 設定ファイル（書き出し形式）
 
-書き出し・取り込みは `src/lib/settingsExport.ts`。形式の版は `EXPORT_VERSION`（古い版の扱いは [SCREEN.md](./SCREEN.md) の設定タブ「設定のバックアップ」）。
+書き出し・取り込みは `src/lib/settingsExport.ts`。形式の版は `EXPORT_VERSION`（古い版の扱いは [SCREEN.md](./SCREEN.md) の設定タブ「設定のバックアップ」）。`sites` は保存値と同じ SiteEntry の形で書き、旧形式（`block` を持つ形）は読み替えずに形式エラーで拒む。
 
 - スタイルの画像は ID ではなく data URL（`customBackgroundData`）でスタイルごとに含め、ファイル 1 つで完結させる。既定の表示設定は画像の欄を持たない
 - 取り込みは設定・表示設定・画像を 1 回の書き込みで保存する（画像の ID の振り方は「スタイルの画像」、スタイルの重ね方は「VisionSettings」）

@@ -274,7 +274,8 @@ test.describe('Popup 画面', () => {
       .poll(
         async () => {
           const sites = await getStorageData(page, 'sites');
-          return sites?.['reddit.com']?.block?.enabled ?? null;
+          const rule = sites?.['reddit.com']?.rule;
+          return rule?.kind === 'block' ? rule.enabled : null;
         },
         { timeout: 10000 }
       )

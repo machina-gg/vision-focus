@@ -53,9 +53,9 @@ import {
 } from '~/test/sites';
 import { entryOf } from '~/test/items';
 import type { ActivityLog } from '~/types/activity';
-import type { TrackedSite, TrackedSites } from '~/types/site';
+import type { SiteEntry, TrackedSites } from '~/types/site';
 
-function givenSites(...sites: TrackedSite[]) {
+function givenSites(...sites: SiteEntry[]) {
   store.sites = sitesOf(...sites);
 }
 
@@ -104,7 +104,7 @@ describe('解除の事実が保存される', () => {
     await invoke(removeBlockHandler, { domain: 'example.com' });
 
     expect(todayUnblocks('example.com')).toBe(1);
-    expect(entryOf(storedSites(), 'example.com').block).toBeNull();
+    expect(entryOf(storedSites(), 'example.com').rule).toBeNull();
   });
 
   it('YouTube のアクセスブロックだけを OFF にしたとき', async () => {
@@ -116,7 +116,9 @@ describe('解除の事実が保存される', () => {
 
     expect(todayUnblocks('youtube.com')).toBe(1);
     // ブロック設定は無効になるだけで残る（ON に戻せば時間制限ごと復元される）
-    expect(entryOf(storedSites(), 'youtube.com').block?.enabled).toBe(false);
+    expect(entryOf(storedSites(), 'youtube.com').rule).toMatchObject({
+      enabled: false
+    });
   });
 
   it('無効化済みのアクセスブロックで機能ごと無効にしても解除は数えない', async () => {
@@ -133,7 +135,7 @@ describe('解除の事実が保存される', () => {
     });
 
     expect(todayUnblocks('youtube.com')).toBeUndefined();
-    expect(entryOf(storedSites(), 'youtube.com').block).toBeNull();
+    expect(entryOf(storedSites(), 'youtube.com').rule).toBeNull();
   });
 
   it('YouTube 機能ごと無効にしたとき（保存の後でも youtube.com は追跡中に残る）', async () => {
@@ -145,7 +147,7 @@ describe('解除の事実が保存される', () => {
 
     expect(todayUnblocks('youtube.com')).toBe(1);
     expect(storedSites()['youtube.com']).toMatchObject({
-      block: null,
+      rule: null,
       youtube: null
     });
   });
@@ -179,7 +181,7 @@ describe('効いていないブロックを外す操作は解除として数え�
     expect(todayUnblocks('youtube.com')).toBeUndefined();
     // ブロック設定の無い youtube.com でも、機能を外した行は追跡中に残る
     expect(storedSites()['youtube.com']).toMatchObject({
-      block: null,
+      rule: null,
       youtube: null
     });
   });
@@ -208,7 +210,9 @@ describe('事実の記録に失敗しても、本体の操作は成功する', (
     });
 
     expect(result).toEqual({ success: true });
-    expect(entryOf(storedSites(), 'example.com').block?.enabled).toBe(false);
+    expect(entryOf(storedSites(), 'example.com').rule).toMatchObject({
+      enabled: false
+    });
     expect(consoleError).toHaveBeenCalledOnce();
   });
 
@@ -218,7 +222,7 @@ describe('事実の記録に失敗しても、本体の操作は成功する', (
     const result = await invoke(removeBlockHandler, { domain: 'example.com' });
 
     expect(result).toEqual({ success: true });
-    expect(entryOf(storedSites(), 'example.com').block).toBeNull();
+    expect(entryOf(storedSites(), 'example.com').rule).toBeNull();
     expect(consoleError).toHaveBeenCalledOnce();
   });
 

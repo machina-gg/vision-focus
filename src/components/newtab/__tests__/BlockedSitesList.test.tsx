@@ -7,11 +7,11 @@ import { BlockedSitesList } from '../BlockedSitesList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import { blockedSite, sitesOf, trackedSite } from '~/test/sites';
-import type { TrackedSite, TrackedSites } from '~/types/site';
+import type { SiteEntry, TrackedSites } from '~/types/site';
 
 stubI18nWithSubstitutions();
 
-const itemOf = (domain: string, enabled = true): TrackedSite =>
+const itemOf = (domain: string, enabled = true): SiteEntry =>
   blockedSite(domain, { enabled });
 
 function expand() {

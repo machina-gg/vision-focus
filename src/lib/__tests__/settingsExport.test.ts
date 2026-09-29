@@ -273,6 +273,28 @@ describe('validateImportedData', () => {
     expect(validateImportedData(JSON.stringify(data)).success).toBe(false);
   });
 
+  it('版 3（サイトがブロックの設定を block で持つ形）のファイルは形式エラーで拒む', () => {
+    const v3 = {
+      version: 3,
+      exportedAt: '2024-06-12T00:00:00Z',
+      data: {
+        ...createValidExportData().data,
+        sites: {
+          'x.com': {
+            domain: 'x.com',
+            trackedAt: '2024-06-12T00:00:00Z',
+            block: { enabled: true, addedAt: 'x', timeLimit: null },
+            youtube: null
+          }
+        }
+      }
+    };
+    expect(validateImportedData(JSON.stringify(v3))).toEqual({
+      success: false,
+      error: 'importErrorInvalidFormat'
+    });
+  });
+
   it('版 2（画像を表示設定に埋め込んだ形）のファイルは形式エラーで拒む', () => {
     const v2 = {
       version: 2,
@@ -292,13 +314,20 @@ describe('validateImportedData', () => {
     });
   });
 
-  it('追跡中のサイトの形が崩れていれば形式エラーで拒む', () => {
+  it('追跡中のサイトの形が崩れていれば（旧形式の block を含む）形式エラーで拒む', () => {
     const data = createValidExportData();
     const broken = {
       ...data,
       data: {
         ...data.data,
-        sites: { 'x.com': { domain: 'x.com', trackedAt: 'x', block: null } }
+        sites: {
+          'x.com': {
+            domain: 'x.com',
+            trackedAt: 'x',
+            block: null,
+            youtube: null
+          }
+        }
       }
     };
     expect(validateImportedData(JSON.stringify(broken)).success).toBe(false);

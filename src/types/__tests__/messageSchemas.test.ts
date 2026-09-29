@@ -4,12 +4,17 @@ import {
   ImportSettingsBodySchema,
   ScheduleInputSchema,
   ScheduleSchema,
-  TrackedSiteSchema,
+  SiteEntrySchema,
   YouTubeFeaturesSchema,
   YouTubeSettingsInputSchema
 } from '../messageSchemas';
 import { createDefaultExportData } from '~/lib/settingsExport';
-import { blockedSite, trackedSite, youtubeFeatures } from '~/test/sites';
+import {
+  allowedSite,
+  blockedSite,
+  trackedSite,
+  youtubeFeatures
+} from '~/test/sites';
 import type { Schedule } from '~/types/storage';
 
 describe('YouTubeFeaturesSchema', () => {
@@ -27,24 +32,44 @@ describe('YouTubeFeaturesSchema', () => {
   });
 });
 
-describe('TrackedSiteSchema', () => {
+describe('SiteEntrySchema', () => {
   it.each([
-    ['追跡だけのサイト', trackedSite('x.com')],
+    ['規則なしのサイト', trackedSite('x.com')],
     [
-      'ブロック設定と YouTube 機能を持つサイト',
+      'ブロックの規則と YouTube 機能を持つサイト',
       blockedSite(
         'youtube.com',
         { timeLimit: { type: 'daily', limitSeconds: 600 } },
         { youtube: youtubeFeatures() }
       )
-    ]
+    ],
+    ['許可サイト', allowedSite('music.youtube.com', true)]
   ])('%s を受け付ける', (_label, site) => {
-    expect(TrackedSiteSchema.parse(site)).toEqual(site);
+    expect(SiteEntrySchema.parse(site)).toEqual(site);
   });
 
-  it('block / youtube が欠けた形は拒む（null で明示する）', () => {
-    const { block: _block, ...withoutBlock } = trackedSite('x.com');
-    expect(TrackedSiteSchema.safeParse(withoutBlock).success).toBe(false);
+  it('rule / youtube が欠けた形は拒む（null で明示する）', () => {
+    const { rule: _rule, ...withoutRule } = trackedSite('x.com');
+    expect(SiteEntrySchema.safeParse(withoutRule).success).toBe(false);
+  });
+
+  it('旧形式の block を持つ形は拒む', () => {
+    const { rule: _rule, ...rest } = blockedSite('x.com');
+    const legacy = {
+      ...rest,
+      block: { enabled: true, addedAt: rest.trackedAt, timeLimit: null }
+    };
+    expect(SiteEntrySchema.safeParse(legacy).success).toBe(false);
+  });
+
+  it.each([
+    ['kind の無いブロック', { enabled: true, addedAt: 'x', timeLimit: null }],
+    ['recordTime の無い許可', { kind: 'allow' }],
+    ['知らない kind', { kind: 'track' }]
+  ])('規則が %s なら拒む', (_label, rule) => {
+    expect(
+      SiteEntrySchema.safeParse({ ...trackedSite('x.com'), rule }).success
+    ).toBe(false);
   });
 });
 

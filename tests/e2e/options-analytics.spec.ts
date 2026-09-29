@@ -208,7 +208,8 @@ test.describe('Options - Analytics Tab', () => {
     await expect
       .poll(async () => {
         const sites = await getStorageData(page, 'sites');
-        return sites?.['twitter.com']?.block?.enabled ?? null;
+        const rule = sites?.['twitter.com']?.rule;
+        return rule?.kind === 'block' ? rule.enabled : null;
       })
       .toBe(true);
 
@@ -251,9 +252,9 @@ test.describe('Options - Analytics Tab', () => {
       .not.toContain('reddit.com');
 
     await expect(stopButtonOf('paused.com')).toHaveCount(0);
-    expect(
-      (await getStorageData(page, 'sites'))?.['paused.com']?.block
-    ).toEqual(expect.objectContaining({ enabled: false }));
+    expect((await getStorageData(page, 'sites'))?.['paused.com']?.rule).toEqual(
+      expect.objectContaining({ kind: 'block', enabled: false })
+    );
 
     await page.reload();
     await page.waitForLoadState('domcontentloaded');

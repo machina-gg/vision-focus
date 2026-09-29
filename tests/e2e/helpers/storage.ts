@@ -5,9 +5,11 @@ import type { LastBlocked } from '~/lib/storage';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type {
+  AllowRule,
   BlockRule,
+  SiteEntry,
   SiteKey,
-  TrackedSite,
+  SiteRule,
   TrackedSites,
   YouTubeFeatures
 } from '~/types/site';
@@ -203,22 +205,38 @@ export function makeAppSettings(
 
 export interface SiteSeed {
   domain: SiteKey;
-  block?: Partial<BlockRule> | null;
+  block?: Partial<Omit<BlockRule, 'kind'>> | null;
+  allow?: Partial<Omit<AllowRule, 'kind'>> | null;
   youtube?: Partial<YouTubeFeatures> | null;
   trackedAt?: string;
+}
+
+function seedRule(
+  { block, allow }: Pick<SiteSeed, 'block' | 'allow'>,
+  now: string
+): SiteRule | null {
+  if (allow) return { kind: 'allow', recordTime: false, ...allow };
+  if (block) {
+    return {
+      kind: 'block',
+      enabled: true,
+      addedAt: now,
+      timeLimit: null,
+      ...block
+    };
+  }
+  return null;
 }
 
 export function makeSites(seeds: SiteSeed[]): TrackedSites {
   const now = new Date().toISOString();
   return Object.fromEntries(
-    seeds.map(({ domain, block, youtube, trackedAt = now }) => [
+    seeds.map(({ domain, block, allow, youtube, trackedAt = now }) => [
       domain,
       {
         domain,
         trackedAt,
-        block: block
-          ? { enabled: true, addedAt: now, timeLimit: null, ...block }
-          : null,
+        rule: seedRule({ block, allow }, now),
         youtube: youtube
           ? {
               hideShorts: false,
@@ -255,10 +273,8 @@ export const SITE_ROW_MISSING = 'missing';
 export async function readSiteSetting(
   page: Page,
   domain: SiteKey,
-  field: 'block' | 'youtube'
-): Promise<
-  TrackedSite['block'] | TrackedSite['youtube'] | typeof SITE_ROW_MISSING
-> {
+  field: 'rule' | 'youtube'
+): Promise<SiteEntry['rule'] | SiteEntry['youtube'] | typeof SITE_ROW_MISSING> {
   const sites = await getStorageData(page, 'sites');
   const row = sites?.[domain];
   return row === undefined ? SITE_ROW_MISSING : row[field];

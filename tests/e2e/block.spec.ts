@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures/extension';
 import { openNewTab, openOptions, openExternalSite } from './helpers/pages';
 import {
-  getBlockRuleFilters,
+  getRuleDomains,
   getTodayActivityViaSW,
   waitForBlockRules,
   waitForNoBlockRules
@@ -177,8 +177,8 @@ test.describe('Block - ブロック機能', () => {
 
     await waitForBlockRules(context, [TEST_DOMAINS.reddit]);
 
-    const filters = await getBlockRuleFilters(context);
-    expect(filters.some((f) => f.includes(TEST_DOMAINS.example))).toBe(false);
+    const { redirect } = await getRuleDomains(context);
+    expect(redirect).not.toContain(TEST_DOMAINS.example);
 
     const unblockedPage = await openExternalSite(
       context,

@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { blockListSites, hasBlock } from '~/lib/blockList';
+import {
+  blockListSites,
+  hasBlock,
+  isAllowedHost,
+  isAllowedSite
+} from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -11,23 +17,50 @@ import {
 
 const LIMIT = { type: 'daily' as const, limitSeconds: 600 };
 
-describe('hasBlock', () => {
-  it('ブロック設定の有無で分ける（無効のブロック設定もブロック設定あり）', () => {
+describe('hasBlock / isAllowedSite', () => {
+  it('規則の種類で分ける（無効のブロックもブロックの規則あり）', () => {
     expect(hasBlock(trackedSite('a.com'))).toBe(false);
     expect(hasBlock(blockedSite('a.com'))).toBe(true);
     expect(hasBlock(blockedSite('a.com', { enabled: false }))).toBe(true);
+    expect(hasBlock(allowedSite('a.com'))).toBe(false);
+    expect(isAllowedSite(allowedSite('a.com'))).toBe(true);
+    expect(isAllowedSite(blockedSite('a.com'))).toBe(false);
+    expect(isAllowedSite(trackedSite('a.com'))).toBe(false);
+  });
+});
+
+describe('isAllowedHost', () => {
+  const sites = sitesOf(
+    blockedSite(YOUTUBE_DOMAIN),
+    allowedSite('music.youtube.com'),
+    trackedSite('x.com')
+  );
+
+  it.each([
+    ['許可サイトそのもの', 'music.youtube.com', true],
+    ['許可サイトの下のホスト', 'a.music.youtube.com', true],
+    ['許可サイトの外の親のホスト', 'www.youtube.com', false],
+    ['規則なしのサイト', 'x.com', false],
+    ['どれにも属さないホスト', 'example.com', false]
+  ])('%s（%s）なら %s', (_label, host, expected) => {
+    expect(isAllowedHost(host, sites)).toBe(expected);
   });
 });
 
 describe('blockListSites', () => {
-  it('ブロック設定を持つサイトを追加した順に並べる（追跡だけのサイトは出さない）', () => {
+  it('ブロックの規則を持つサイトを追加した順に並べる（追跡だけ・許可サイトは出さない）', () => {
     const off = blockedSite('a.com', {
       addedAt: '2026-01-01T00:00:00.000Z',
       enabled: false,
       timeLimit: LIMIT
     });
     const on = blockedSite('b.com', { addedAt: '2026-02-01T00:00:00.000Z' });
-    const sites = sitesOf(on, trackedSite('tracked.com'), off);
+    const sites = sitesOf(
+      on,
+      trackedSite('tracked.com'),
+      allowedSite('allowed.b.com'),
+      off
+    );
 
     expect(blockListSites(sites)).toEqual([off, on]);
   });

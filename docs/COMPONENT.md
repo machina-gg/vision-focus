@@ -720,9 +720,9 @@ Esc で編集を取り消す。
 | ---------------------- | -------------------------------------- | ------ | ------------------------------------------------------- |
 | activity               | `ActivityLog`                          | 必須   | 日別・サイト別の閲覧時間とブロック回数の記録            |
 | trackedSites           | `TrackedSites`                         | 必須   | 登録済みのサイト（計測・ブロックの状態を含む）          |
-| onReblock              | `(site: TrackedSite) => void`          | 必須   | ブロックに戻すサイトを受け取る                          |
+| onReblock              | `(site: SiteEntry) => void`            | 必須   | ブロックに戻すサイトを受け取る                          |
 | onReset                | `() => void`                           | 必須   | 計測データの削除を求められたときに呼ぶ                  |
-| onStopTracking         | `(site: TrackedSite) => void`          | 必須   | 計測をやめるサイトを受け取る                            |
+| onStopTracking         | `(site: SiteEntry) => void`            | 必須   | 計測をやめるサイトを受け取る                            |
 | onRefresh              | `() => Promise<void>`                  | 必須   | 計測データの読み直しを求められたときに呼ぶ              |
 | onAddSite              | `(domain: string) => Promise<boolean>` | 必須   | 小文字にしたドメインを計測対象に加え、加えられたら true |
 | addSiteError           | `string`                               | 必須   | 計測対象の追加に失敗した理由（空なら出さない）          |
@@ -839,12 +839,12 @@ Esc で編集を取り消す。
 
 `src/components/options/analytics/AnalyticsSummary.tsx`。状態（ブロック中・無効・計測のみ）の順に並べる。
 
-| Prop           | 型                            | 省略時 | 説明                                           |
-| -------------- | ----------------------------- | ------ | ---------------------------------------------- |
-| activity       | `ActivityLog`                 | 必須   | 日別・サイト別の閲覧時間と解除の記録           |
-| trackedSites   | `TrackedSites`                | 必須   | 登録済みのサイト（計測・ブロックの状態を含む） |
-| onReblock      | `(site: TrackedSite) => void` | 必須   | ブロックに戻すサイトを受け取る                 |
-| onStopTracking | `(site: TrackedSite) => void` | 必須   | 計測をやめるサイトを受け取る                   |
+| Prop           | 型                          | 省略時 | 説明                                           |
+| -------------- | --------------------------- | ------ | ---------------------------------------------- |
+| activity       | `ActivityLog`               | 必須   | 日別・サイト別の閲覧時間と解除の記録           |
+| trackedSites   | `TrackedSites`              | 必須   | 登録済みのサイト（計測・ブロックの状態を含む） |
+| onReblock      | `(site: SiteEntry) => void` | 必須   | ブロックに戻すサイトを受け取る                 |
+| onStopTracking | `(site: SiteEntry) => void` | 必須   | 計測をやめるサイトを受け取る                   |
 
 ---
 
@@ -906,11 +906,11 @@ Esc で編集を取り消す。
 
 `src/components/options/blocklist/YouTubeSection.tsx`。送る値と保存の流れは [useYouTubeSettings](#useyoutubesettings) を参照。
 
-| Prop             | 型                                                                              | 省略時 | 説明                                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| site             | `TrackedSite \| null`                                                           | 必須   | YouTube の登録内容（null ならすべてオフとして表示する）                                                      |
-| onYouTubeChange  | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>` | 必須   | 変更後の YouTube の設定全体と、解除の確認で入力されたパスワードを受け取る。失敗の文言（成功なら null）を返す |
-| onRequestUnblock | `(request: UnblockRequest) => void`                                             | 必須   | 全体の有効化かアクセスのブロックをオフにするときに解除の確認を求める                                         |
+| Prop             | 型                                                                              | 省略時 | 説明                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| site             | `SiteEntry \| null`                                                             | 必須   | YouTube の登録内容（null ならすべてオフとして表示する）                                                                                                |
+| onYouTubeChange  | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>` | 必須   | 変更後の YouTube の設定全体と、解除の確認で入力されたパスワードを受け取る。失敗の文言（成功なら null）を返し、節は失敗の文言を有効化のトグルの下に出す |
+| onRequestUnblock | `(request: UnblockRequest) => void`                                             | 必須   | 全体の有効化かアクセスのブロックをオフにするときに解除の確認を求める                                                                                   |
 
 ---
 
@@ -1145,7 +1145,7 @@ function useBlocklist(): {
 };
 ```
 
-- 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
+- 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・許可サイト・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
 - 通知設定は `update-notifications` で依頼する。失敗しても文言は出さず、表示は保存値のまま
 - 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）。削除・無効化は確認で入力されたパスワードを添えて送り、失敗の文言（成功なら null）を返す
 
@@ -1243,9 +1243,9 @@ function usePresets(options: {
 ```typescript
 function useAnalytics(): {
   addSiteError: string;
-  handleReblock: (site: TrackedSite) => Promise<void>;
+  handleReblock: (site: SiteEntry) => Promise<void>;
   handleResetAnalytics: () => Promise<void>;
-  handleStopTracking: (site: TrackedSite) => Promise<void>;
+  handleStopTracking: (site: SiteEntry) => Promise<void>;
   handleRefreshAnalytics: () => Promise<void>;
   handleAddSiteToTrack: (domain: string) => Promise<boolean>;
 };
@@ -1455,8 +1455,10 @@ function useSupportPrompt(): {
 | UnblockHoldSeconds       | `src/types/storage.ts`   | [UnblockConfirmSettings の holdSeconds](./DATA_MODEL.md#unblockconfirmsettingsブロック解除の長押し確認) |
 | AnalyticsOptIn           | `src/types/analytics.ts` | [AnalyticsOptIn](./DATA_MODEL.md#analyticsoptinga4-の同意)                                              |
 | SiteKey                  | `src/types/site.ts`      | [サイトキー](./DATA_MODEL.md#サイトキー)                                                                |
-| TrackedSite              | `src/types/site.ts`      | [TrackedSite](./DATA_MODEL.md#trackedsite追跡中のサイト)                                                |
-| TrackedSites             | `src/types/site.ts`      | [TrackedSite](./DATA_MODEL.md#trackedsite追跡中のサイト)（`Record<SiteKey, TrackedSite>`）              |
+| TrackedSite              | `src/types/site.ts`      | [TrackedSite](./DATA_MODEL.md#trackedsite追跡の情報)                                                    |
+| SiteEntry                | `src/types/site.ts`      | [SiteEntry](./DATA_MODEL.md#siteentry保存する-1-項目)                                                   |
+| SiteRule                 | `src/types/site.ts`      | [SiteRule](./DATA_MODEL.md#siteruleblockrule--allowrule)（`BlockRule \| AllowRule`）                    |
+| TrackedSites             | `src/types/site.ts`      | [SiteEntry](./DATA_MODEL.md#siteentry保存する-1-項目)（`Record<SiteKey, SiteEntry>`）                   |
 | TimeLimit                | `src/types/site.ts`      | [TimeLimit](./DATA_MODEL.md#timelimit時間制限)                                                          |
 | ActivityLog              | `src/types/activity.ts`  | [ActivityLog](./DATA_MODEL.md#activitylog事実)                                                          |
 | VisionSettings           | `src/types/vision.ts`    | [VisionSettings](./DATA_MODEL.md#visionsettingsダッシュボード設定)                                      |

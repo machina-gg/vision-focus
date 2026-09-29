@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  coveringSiteKeys,
+  findNestingConflict,
   normalizeSiteKey,
-  resolveSiteKey,
-  findNestedSite
+  resolveSiteKey
 } from '~/lib/siteKey';
+import { allowedSite, blockedSite, sitesOf, trackedSite } from '~/test/sites';
+import type { SiteEntry, SiteRule } from '~/types/site';
 
 describe('normalizeSiteKey', () => {
   it('小文字にする', () => {
@@ -89,25 +92,90 @@ describe('resolveSiteKey', () => {
   });
 });
 
-describe('findNestedSite', () => {
-  const SITES = ['youtube.com', 'mail.google.com'];
+describe('coveringSiteKeys', () => {
+  it('覆うキーをキーの長い順に返す（登録順に左右されない）', () => {
+    expect(
+      coveringSiteKeys('a.music.youtube.com', [
+        'youtube.com',
+        'a.music.youtube.com',
+        'music.youtube.com',
+        'x.com'
+      ])
+    ).toEqual(['a.music.youtube.com', 'music.youtube.com', 'youtube.com']);
+  });
 
-  it.each([
-    [
-      '既存のサブドメイン（既存が祖先）',
-      'm.youtube.com',
-      'youtube.com',
-      'ancestor'
-    ],
-    ['深いサブドメイン', 'a.b.youtube.com', 'youtube.com', 'ancestor'],
-    [
-      '既存の親ドメイン（既存が子孫）',
-      'google.com',
-      'mail.google.com',
-      'descendant'
-    ]
-  ] as const)('%s', (_label, key, site, relation) => {
-    expect(findNestedSite(key, SITES)).toEqual({ site, relation });
+  it('接尾辞が同じだけの別ドメインと空のキーは含めない', () => {
+    expect(
+      coveringSiteKeys('badyoutube.com', ['youtube.com', '', 'x.com'])
+    ).toEqual([]);
+  });
+
+  it('空のホスト名は空', () => {
+    expect(coveringSiteKeys('  ', ['youtube.com'])).toEqual([]);
+  });
+});
+
+describe('findNestingConflict', () => {
+  type Kind = SiteRule['kind'] | null;
+
+  function existing(kind: Kind, domain: string): SiteEntry {
+    if (kind === 'block') return blockedSite(domain);
+    if (kind === 'allow') return allowedSite(domain);
+    return trackedSite(domain);
+  }
+
+  describe('既存が祖先（youtube.com）で、子（music.youtube.com）を足す', () => {
+    it.each([
+      ['block', 'block', true],
+      ['block', null, true],
+      ['block', 'allow', false],
+      [null, 'block', true],
+      [null, null, true],
+      [null, 'allow', false],
+      ['allow', 'block', true],
+      ['allow', null, true],
+      ['allow', 'allow', false]
+    ] satisfies [Kind, Kind, boolean][])(
+      '祖先 %s ⊃ 追加 %s: 拒むか %s',
+      (ancestorKind, kind, rejected) => {
+        const sites = sitesOf(existing(ancestorKind, 'youtube.com'));
+        expect(findNestingConflict('music.youtube.com', kind, sites)).toEqual(
+          rejected ? { site: 'youtube.com', relation: 'ancestor' } : null
+        );
+      }
+    );
+  });
+
+  describe('既存が子孫（music.youtube.com）で、親（youtube.com）を足す', () => {
+    it.each([
+      ['block', 'block', true],
+      ['block', null, true],
+      ['block', 'allow', true],
+      [null, 'block', true],
+      [null, null, true],
+      [null, 'allow', true],
+      ['allow', 'block', false],
+      ['allow', null, false],
+      ['allow', 'allow', false]
+    ] satisfies [Kind, Kind, boolean][])(
+      '子孫 %s ⊂ 追加 %s: 拒むか %s',
+      (descendantKind, kind, rejected) => {
+        const sites = sitesOf(existing(descendantKind, 'music.youtube.com'));
+        expect(findNestingConflict('youtube.com', kind, sites)).toEqual(
+          rejected
+            ? { site: 'music.youtube.com', relation: 'descendant' }
+            : null
+        );
+      }
+    );
+  });
+
+  it('深い子孫も数える', () => {
+    const sites = sitesOf(trackedSite('a.b.youtube.com'));
+    expect(findNestingConflict('youtube.com', 'block', sites)).toEqual({
+      site: 'a.b.youtube.com',
+      relation: 'descendant'
+    });
   });
 
   it.each([
@@ -116,10 +184,16 @@ describe('findNestedSite', () => {
     ['兄弟のサブドメイン', 'drive.google.com'],
     ['関係の無いドメイン', 'x.com']
   ])('%s', (_label, key) => {
-    expect(findNestedSite(key, SITES)).toBeNull();
+    const sites = sitesOf(
+      blockedSite('youtube.com'),
+      trackedSite('mail.google.com')
+    );
+    expect(findNestingConflict(key, 'block', sites)).toBeNull();
   });
 
   it('空のキーは読み飛ばす', () => {
-    expect(findNestedSite('x.com', [''])).toBeNull();
+    expect(
+      findNestingConflict('x.com', 'block', { '': trackedSite('') })
+    ).toBeNull();
   });
 });

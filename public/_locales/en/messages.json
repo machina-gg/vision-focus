@@ -1874,7 +1874,7 @@
     "description": "Dismiss button of the support prompt"
   },
   "siteErrorInsideTrackedSite": {
-    "message": "$DOMAIN$ can't be added because it is part of $SITE$, which is already tracked",
+    "message": "$DOMAIN$ can't be added because it is part of $SITE$, which is already tracked. To keep it open, add it to your allowed sites",
     "description": "Error when the domain is a subdomain of a tracked site",
     "placeholders": {
       "domain": {
@@ -1940,6 +1940,10 @@
   "siteErrorAlreadyTracked": {
     "message": "This site is already tracked",
     "description": "Add site error: already tracked"
+  },
+  "siteErrorAlreadyAllowed": {
+    "message": "This site is already in your allowed sites",
+    "description": "Add site error: already registered as an allowed site (not turned into a block or YouTube setting)"
   },
   "siteErrorBlockNotFound": {
     "message": "No block setting was found for this site",

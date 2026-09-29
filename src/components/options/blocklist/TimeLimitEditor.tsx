@@ -32,7 +32,7 @@ export function TimeLimitEditor({
   onUpdate,
   usedSeconds
 }: TimeLimitEditorProps) {
-  const { enabled, timeLimit } = site.block;
+  const { enabled, timeLimit } = site.rule;
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

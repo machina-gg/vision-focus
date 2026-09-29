@@ -21,10 +21,11 @@ import {
   getSiteBlockStatus,
   getSiteBlockStatuses,
   shouldBlockUrl,
-  getActiveBlockedDomains
+  getRuleTargets
 } from '~/lib/blockService';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -32,7 +33,7 @@ import {
 } from '~/test/sites';
 import type { AppSettings, Schedule } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
-import type { BlockRule, TrackedSite } from '~/types/site';
+import type { BlockRule, SiteEntry } from '~/types/site';
 import { DEFAULT_SETTINGS } from '~/types/storage';
 
 const mockGetSettings = vi.mocked(getSettings);
@@ -52,7 +53,7 @@ beforeEach(() => {
 
 interface Given {
   settings?: Partial<AppSettings>;
-  sites?: TrackedSite[];
+  sites?: SiteEntry[];
 }
 
 function given({ settings = {}, sites = [] }: Given): void {
@@ -60,17 +61,16 @@ function given({ settings = {}, sites = [] }: Given): void {
   mockGetSites.mockResolvedValue(sitesOf(...sites));
 }
 
-function site(
-  domain = 'example.com',
-  block: Partial<BlockRule> = {}
-): TrackedSite {
+type BlockRuleInput = Partial<Omit<BlockRule, 'kind'>>;
+
+function site(domain = 'example.com', block: BlockRuleInput = {}): SiteEntry {
   return blockedSite(domain, block);
 }
 
 function limitedSite(
   domain = 'example.com',
-  block: Partial<BlockRule> = {}
-): TrackedSite {
+  block: BlockRuleInput = {}
+): SiteEntry {
   return blockedSite(domain, {
     timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS },
     ...block
@@ -167,7 +167,7 @@ describe('isBlockingWindowOpen（ブロックが効く時間帯か）', () => {
       blocked: true,
       reason: 'always_blocked'
     });
-    expect(await getActiveBlockedDomains()).toEqual(['example.com']);
+    expect((await getRuleTargets()).redirect).toEqual(['example.com']);
   });
 });
 
@@ -266,40 +266,69 @@ describe('getBlockState', () => {
       expect(result.reason).toBe('time_limit_exceeded');
     }
   );
+});
 
-  it('保存値が入れ子でも、親がブロックしていれば子が無効でもサブドメインをブロックする', async () => {
-    given({
-      sites: [site('google.com'), site('mail.google.com', { enabled: false })]
-    });
-    expect(await getBlockState('https://mail.google.com')).toEqual({
-      blocked: true,
-      reason: 'always_blocked'
-    });
+describe('許可サイト', () => {
+  const PARENT = 'youtube.com';
+  const ALLOWED = 'music.youtube.com';
+
+  it('覆うブロックがあっても、許可サイトとその下のホストは通す', async () => {
+    given({ sites: [site(PARENT), allowedSite(ALLOWED)] });
+    for (const host of [ALLOWED, `a.${ALLOWED}`]) {
+      expect(await getBlockStateForDomain(host)).toEqual({
+        blocked: false,
+        reason: null
+      });
+    }
   });
 
-  it('保存値が入れ子で子だけがブロックなら、親のホスト名はブロックしない', async () => {
-    given({
-      sites: [site('google.com', { enabled: false }), site('mail.google.com')]
-    });
-    expect((await getBlockState('https://google.com')).blocked).toBe(false);
-    expect((await getBlockState('https://mail.google.com')).blocked).toBe(true);
+  it('許可サイトの外の親のホストはブロックのまま', async () => {
+    given({ sites: [site(PARENT), allowedSite(ALLOWED)] });
+    for (const host of [PARENT, `www.${PARENT}`, `m.${PARENT}`]) {
+      expect((await getBlockStateForDomain(host)).blocked).toBe(true);
+    }
   });
 
-  it('覆う登録がどれもブロックでなければ、残り秒数がいちばん少ない制限の値を返す', async () => {
+  it('親の時間制限を使い切っても許可サイトは通す', async () => {
+    given({ sites: [limitedSite(PARENT), allowedSite(ALLOWED)] });
+    givenSeconds({ [PARENT]: LIMIT_SECONDS });
+    expect((await getBlockStateForDomain(`www.${PARENT}`)).blocked).toBe(true);
+    expect((await getBlockStateForDomain(ALLOWED)).blocked).toBe(false);
+  });
+
+  it('許可サイトの記録する / しないは判定に関わらない', async () => {
+    given({ sites: [site(PARENT), allowedSite(ALLOWED, true)] });
+    expect((await getBlockStateForDomain(ALLOWED)).blocked).toBe(false);
+  });
+
+  it('許可サイトに当たるホストの判定結果は null、覆うブロックは 1 件だけ返す', async () => {
+    given({ sites: [limitedSite(PARENT), allowedSite(ALLOWED)] });
+    expect(await getSiteBlockStatus(ALLOWED)).toBeNull();
+    expect((await getSiteBlockStatus(`m.${PARENT}`))?.site).toBe(PARENT);
+    const statuses = await getSiteBlockStatuses([ALLOWED, `m.${PARENT}`]);
+    expect(statuses.map((status) => status.site)).toEqual([PARENT]);
+  });
+
+  it('上にブロックが無い許可サイトは何も変えない', async () => {
+    given({ sites: [allowedSite('mail.google.com')] });
+    expect(await getSiteBlockStatus('mail.google.com')).toBeNull();
+    expect((await getBlockStateForDomain('google.com')).blocked).toBe(false);
+  });
+
+  it('許可サイトの下の許可サイトも通す', async () => {
     given({
       sites: [
-        limitedSite('google.com'),
-        limitedSite('mail.google.com', {
-          timeLimit: { type: 'daily', limitSeconds: 600 }
-        })
+        site('google.com'),
+        allowedSite('mail.google.com'),
+        allowedSite('a.mail.google.com')
       ]
     });
-    givenSeconds({ 'google.com': 100, 'mail.google.com': 500 });
-    expect(await getBlockState('https://mail.google.com')).toEqual({
-      blocked: false,
-      reason: null,
-      remainingSeconds: 100
-    });
+    expect((await getBlockStateForDomain('a.mail.google.com')).blocked).toBe(
+      false
+    );
+    expect((await getBlockStateForDomain('drive.google.com')).blocked).toBe(
+      true
+    );
   });
 });
 
@@ -387,25 +416,25 @@ describe('YouTube（youtube.com も普通の追跡中のサイト）', () => {
   });
 });
 
-describe('getActiveBlockedDomains', () => {
-  it('一時停止中は空配列を返す', async () => {
+describe('getRuleTargets', () => {
+  it('一時停止中は転送するサイトが無い', async () => {
     given({
       settings: { paused: true },
       sites: [site(), site(YOUTUBE_DOMAIN)]
     });
-    expect(await getActiveBlockedDomains()).toEqual([]);
+    expect((await getRuleTargets()).redirect).toEqual([]);
   });
 
-  it('スケジュール外では常時ブロックのサイトもブロックしない', async () => {
+  it('スケジュール外では常時ブロックのサイトも転送しない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
     given({
       settings: { schedules: OUT_OF_SCHEDULE },
       sites: [site(), site(YOUTUBE_DOMAIN)]
     });
-    expect(await getActiveBlockedDomains()).toEqual([]);
+    expect((await getRuleTargets()).redirect).toEqual([]);
   });
 
-  it('常時ブロックと上限に達したサイトだけを含め、上限未満・無効・追跡だけのサイトは含めない', async () => {
+  it('常時ブロックと上限に達したサイトだけを転送し、上限未満・無効・追跡だけのサイトは含めない', async () => {
     given({
       sites: [
         site('always.com'),
@@ -417,15 +446,29 @@ describe('getActiveBlockedDomains', () => {
     });
     givenSeconds({ 'exceeded.com': LIMIT_SECONDS, 'under.com': 10 });
 
-    expect(await getActiveBlockedDomains()).toEqual([
-      'always.com',
-      'exceeded.com'
-    ]);
+    expect(await getRuleTargets()).toEqual({
+      redirect: ['always.com', 'exceeded.com'],
+      allow: []
+    });
   });
 
-  it('youtube.com のブロック設定も他のサイトと同じく含める', async () => {
+  it('youtube.com のブロックも他のサイトと同じく転送する', async () => {
     given({ sites: [site(YOUTUBE_DOMAIN)] });
-    expect(await getActiveBlockedDomains()).toEqual([YOUTUBE_DOMAIN]);
+    expect((await getRuleTargets()).redirect).toEqual([YOUTUBE_DOMAIN]);
+  });
+
+  it('許可サイトは上にブロックが無くても、記録の設定に関わらずすべて通す', async () => {
+    given({
+      sites: [
+        site(YOUTUBE_DOMAIN),
+        allowedSite('music.youtube.com'),
+        allowedSite('mail.google.com', true)
+      ]
+    });
+    expect(await getRuleTargets()).toEqual({
+      redirect: [YOUTUBE_DOMAIN],
+      allow: ['music.youtube.com', 'mail.google.com']
+    });
   });
 });
 
@@ -434,8 +477,17 @@ describe('判定とルール生成の一致', () => {
   const CHILD = 'mail.example.com';
   const HOSTS = [PARENT, `www.${PARENT}`, CHILD, `a.${CHILD}`, 'other.test'];
 
-  function ruleCovers(ruleDomains: readonly string[], host: string): boolean {
-    return ruleDomains.some((key) => host === key || host.endsWith(`.${key}`));
+  function matches(domains: readonly string[], host: string): boolean {
+    return domains.some((key) => host === key || host.endsWith(`.${key}`));
+  }
+
+  // 優先度 2 の allow が一致すれば通し、そうでなければ優先度 1 の redirect が一致したら止まる
+  function ruleBlocks(
+    targets: { redirect: string[]; allow: string[] },
+    host: string
+  ): boolean {
+    if (matches(targets.allow, host)) return false;
+    return matches(targets.redirect, host);
   }
 
   const cases: [string, Given, Record<string, number>, boolean][] = [
@@ -461,27 +513,27 @@ describe('判定とルール生成の一致', () => {
     ],
     ['一時停止中', { settings: { paused: true }, sites: [site()] }, {}, false],
     [
-      '入れ子の保存値: 親ブロック + 子無効',
-      { sites: [site(), site(CHILD, { enabled: false })] },
+      '許可サイト: 親ブロック + 子許可',
+      { sites: [site(), allowedSite(CHILD)] },
       {},
       false
     ],
     [
-      '入れ子の保存値: 親無効 + 子ブロック',
-      { sites: [site(PARENT, { enabled: false }), site(CHILD)] },
+      '許可サイト: 親に時間制限（上限到達）+ 子許可',
+      { sites: [limitedSite(), allowedSite(CHILD, true)] },
+      { [PARENT]: LIMIT_SECONDS },
+      false
+    ],
+    [
+      '許可サイト: 親無効 + 子許可',
+      { sites: [site(PARENT, { enabled: false }), allowedSite(CHILD)] },
       {},
       false
     ],
     [
-      '入れ子の保存値: 親に時間制限（上限未満）+ 子常時',
-      { sites: [limitedSite(), site(CHILD)] },
-      { [PARENT]: 1 },
-      false
-    ],
-    [
-      '入れ子の保存値: 親に時間制限（上限到達）+ 子に時間制限（上限未満）',
-      { sites: [limitedSite(), limitedSite(CHILD)] },
-      { [PARENT]: LIMIT_SECONDS, [CHILD]: 1 },
+      '許可サイト: 上にブロックの無い子許可',
+      { sites: [trackedSite(PARENT), allowedSite(CHILD)] },
+      {},
       false
     ]
   ];
@@ -491,12 +543,12 @@ describe('判定とルール生成の一致', () => {
     given(input);
     givenSeconds(seconds);
 
-    const ruleDomains = await getActiveBlockedDomains();
+    const targets = await getRuleTargets();
     for (const host of HOSTS) {
       const state = await getBlockStateForDomain(host);
       expect({ host, blocked: state.blocked }).toEqual({
         host,
-        blocked: ruleCovers(ruleDomains, host)
+        blocked: ruleBlocks(targets, host)
       });
     }
   });

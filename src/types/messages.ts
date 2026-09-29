@@ -46,7 +46,11 @@ export type MessageError =
       code: 'already-tracked';
     }
   | {
-      /** 既存のサイトと入れ子になる */
+      /** 許可サイトとして登録済み（ブロック・YouTube 設定には変えない） */
+      code: 'already-allowed';
+    }
+  | {
+      /** 既存のサイトと許されない入れ子になる（祖先・子孫の組を許すのは子孫が許可サイトのときだけ） */
       code: 'nested-site';
       /** 依頼された表記 */
       domain: string;
@@ -58,7 +62,7 @@ export type MessageError =
       code: 'block-not-found';
     }
   | {
-      /** ブロック設定か YouTube の機能が残っているため追跡をやめられない */
+      /** ブロックの規則か YouTube の機能が残っているため追跡をやめられない */
       code: 'site-in-use';
     }
   | {
@@ -234,7 +238,7 @@ export interface GetRemainingTimeResponse {
 /** 書き出したファイルの設定・表示設定と追跡中のサイトを取り込む依頼（data は画面の取り込み前の検査を通ったもの） */
 export type ImportSettingsRequest = ImportSettingsBody;
 
-/** 既存のサイトと入れ子になるため取り込まなかったサイト */
+/** 既存のサイトと許されない入れ子になるため取り込まなかったサイト */
 interface SkippedNestedSite {
   /** ファイルに書かれていた表記 */
   domain: string;
@@ -248,7 +252,7 @@ export interface ImportSettingsResponse {
   success: boolean;
   /** 失敗の種類。成功時は無い */
   error?: MessageError;
-  /** 入れ子になるため取り込まなかったサイト */
+  /** 許されない入れ子になるため取り込まなかったサイト */
   skipped?: SkippedNestedSite[];
   /** 上限（MAX_PRESETS）を超えるため取り込まなかったスタイルの名前（ファイルの並び順） */
   skippedPresets?: string[];
