@@ -109,7 +109,7 @@ interface PresetState {
 }
 
 type PresetAction =
-  | { type: 'INITIALIZE'; presetId: string | null }
+  | { type: 'INITIALIZE'; presetId: string }
   | { type: 'SELECT_PRESET'; presetId: string }
   | {
       type: 'EDIT';
@@ -273,9 +273,11 @@ export function usePresets({
 }: UsePresetsOptions): UsePresetsReturn {
   const [state, dispatch] = useReducer(presetReducer, INITIAL_STATE);
 
+  // 読み込み前の vision は保存値ではなく fallback（スタイル 0 件）なので、選べるスタイルが現れるまで選択を決めない
   useEffect(() => {
-    if (!vision || state.initialized) return;
-    dispatch({ type: 'INITIALIZE', presetId: initialSelection(vision) });
+    const presetId = initialSelection(vision);
+    if (state.initialized || presetId === null) return;
+    dispatch({ type: 'INITIALIZE', presetId });
   }, [vision, state.initialized]);
 
   const presets = vision?.presets ?? NO_PRESETS;

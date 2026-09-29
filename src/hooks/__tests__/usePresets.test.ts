@@ -165,6 +165,17 @@ describe('usePresets', () => {
       expect(result.current.selectedPresetId).toBe('preset-1');
     });
 
+    it('読み込み前の fallback（スタイル 0 件）の後に保存値が届いたら、適用中のスタイルを選ぶ', () => {
+      const { result, rerender } = renderUsePresets(DEFAULT_VISION);
+
+      expect(result.current.selectedPresetId).toBeNull();
+
+      rerender({ vision: mockVision, settings: settingsWith() });
+
+      expect(result.current.selectedPresetId).toBe('preset-1');
+      expect(result.current.draftDisplaySettings.goalText).toBe('Stay Focused');
+    });
+
     it('初期化の後に適用中のスタイルが変わっても、選択は変わらない', async () => {
       const { result, rerender } = renderUsePresets({
         ...twoPresetsVision,
