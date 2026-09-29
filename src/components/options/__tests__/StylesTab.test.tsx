@@ -211,18 +211,34 @@ describe('StylesTab', () => {
       });
     });
 
-    it('保存済みの画像を読み込み中は、既定の画像を出さずに仮の色を敷く', () => {
+    it('保存済みの画像を読み込み中は、既定の画像も仮の色も敷かずに読み込み中と出す', () => {
       renderTab({
         draftDisplaySettings: displayWith({ backgroundType: 'image' }),
         draftBackgroundData: undefined
       });
 
-      expect(screen.getByTestId('style-preview')).toHaveStyle({
-        backgroundColor: '#1a1a2e'
-      });
-      expect(screen.getByTestId('style-preview').style.backgroundImage).toBe(
-        ''
+      const preview = screen.getByTestId('style-preview');
+      expect(preview).toHaveAttribute('aria-busy', 'true');
+      expect(preview.style.backgroundImage).toBe('');
+      expect(preview.style.backgroundColor).toBe('');
+      expect(screen.getByTestId('style-preview-loading')).toHaveTextContent(
+        'loading'
       );
+    });
+
+    it('単色の背景なら、画像を読み込み中でも読み込み中とは出さない', () => {
+      renderTab({
+        draftDisplaySettings: displayWith({
+          backgroundType: 'color',
+          backgroundColor: '#112233'
+        }),
+        draftBackgroundData: undefined
+      });
+
+      expect(screen.getByTestId('style-preview')).toHaveStyle({
+        backgroundColor: '#112233'
+      });
+      expect(screen.queryByTestId('style-preview-loading')).toBeNull();
     });
   });
 

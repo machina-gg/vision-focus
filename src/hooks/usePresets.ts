@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'react';
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { sendMessage } from '~/lib/messaging';
@@ -30,7 +37,7 @@ interface UsePresetsOptions {
 export interface UsePresetsReturn {
   /** 選択中のスタイルの、保存前の表示設定 */
   draftDisplaySettings: DashboardDisplaySettings;
-  /** 選択中のスタイルの、保存前の画像の data URL。null = 画像なし / undefined = 保存済みの画像を読み込み中 */
+  /** 選択中のスタイルの、保存前の画像の data URL。null = 画像なし / undefined = 保存済みの画像を読み込み中（同じスタイルで直前に出していた画像があれば、読み終えるまでそれを返す） */
   draftBackgroundData: string | null | undefined;
   /** 画面に並べるスタイルの一覧（保存値の変更に追従する） */
   draftPresets: DashboardPreset[];
@@ -102,6 +109,11 @@ interface PresetDraft {
 }
 
 const KEEP_IMAGE: PresetImageInput = { kind: 'keep' };
+
+interface ShownBackground {
+  presetId: string;
+  dataUrl: string | null;
+}
 
 interface PresetState {
   initialized: boolean;
@@ -306,12 +318,34 @@ export function usePresets({
   const storedBackgroundData = useBackgroundImage(
     selectedPreset?.customBackgroundId ?? null
   );
-  const draftBackgroundData =
+  const resolvedBackgroundData =
     draftImage.kind === 'set'
       ? draftImage.dataUrl
       : draftImage.kind === 'clear'
         ? null
         : storedBackgroundData;
+
+  // 保存すると画像は新しい ID になり読み直しになる。その間に空の表示へ戻さないよう、同じスタイルで最後に出した画像を保つ
+  const [shownBackground, setShownBackground] =
+    useState<ShownBackground | null>(null);
+  const selectedPresetKey = selectedPreset?.id ?? null;
+  if (
+    selectedPresetKey !== null &&
+    resolvedBackgroundData !== undefined &&
+    (shownBackground?.presetId !== selectedPresetKey ||
+      shownBackground.dataUrl !== resolvedBackgroundData)
+  ) {
+    setShownBackground({
+      presetId: selectedPresetKey,
+      dataUrl: resolvedBackgroundData
+    });
+  }
+  const draftBackgroundData =
+    resolvedBackgroundData !== undefined
+      ? resolvedBackgroundData
+      : shownBackground?.presetId === selectedPresetKey
+        ? shownBackground.dataUrl
+        : undefined;
 
   const { fontSettings: currentFontSettings } = draftDisplaySettings;
   useEffect(() => {

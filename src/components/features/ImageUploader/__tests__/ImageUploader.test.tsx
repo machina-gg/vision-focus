@@ -92,6 +92,33 @@ describe('ImageUploader', () => {
     });
   });
 
+  describe('保存済みの画像を読み込み中のとき', () => {
+    it('ドロップゾーンを出さず、読み込み中の表示を出す', () => {
+      render(<ImageUploader value={null} onChange={vi.fn()} loading />);
+
+      expect(screen.getByTestId('image-uploader-loading')).toHaveTextContent(
+        'loading'
+      );
+      expect(screen.queryByTestId('style-bg-upload-dropzone')).toBeNull();
+    });
+
+    it('画像を受け取っていれば、読み込み中でもその画像を出す', () => {
+      render(
+        <ImageUploader
+          value="data:image/jpeg;base64,AAAA"
+          onChange={vi.fn()}
+          loading
+        />
+      );
+
+      expect(screen.getByRole('img')).toHaveAttribute(
+        'src',
+        'data:image/jpeg;base64,AAAA'
+      );
+      expect(screen.queryByTestId('image-uploader-loading')).toBeNull();
+    });
+  });
+
   describe('画像が未設定のとき', () => {
     it('ドロップゾーンと対応形式の案内を出す', () => {
       render(<ImageUploader value={null} onChange={vi.fn()} />);

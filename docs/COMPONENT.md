@@ -405,12 +405,13 @@ Esc で編集を取り消す。
 
 `src/components/features/ImageUploader/ImageUploader.tsx`
 
-| Prop      | 型                                  | 省略時  | 説明                                                                    |
-| --------- | ----------------------------------- | ------- | ----------------------------------------------------------------------- |
-| value     | `string \| null`                    | 必須    | 設定済みの画像のデータ URL（null なら未設定としてアップロード欄を出す） |
-| onChange  | `(dataUrl: string \| null) => void` | 必須    | 圧縮した画像のデータ URL を受け取る。削除されたときは null              |
-| maxSizeMB | `number`                            | `1`     | 圧縮後の上限サイズ（MB）                                                |
-| disabled  | `boolean`                           | `false` | 選択・ドロップ・削除をできなくする                                      |
+| Prop      | 型                                  | 省略時  | 説明                                                                                       |
+| --------- | ----------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| value     | `string \| null`                    | 必須    | 設定済みの画像のデータ URL（null なら未設定としてアップロード欄を出す）                    |
+| onChange  | `(dataUrl: string \| null) => void` | 必須    | 圧縮した画像のデータ URL を受け取る。削除されたときは null                                 |
+| maxSizeMB | `number`                            | `1`     | 圧縮後の上限サイズ（MB）                                                                   |
+| disabled  | `boolean`                           | `false` | 選択・ドロップ・削除をできなくする                                                         |
+| loading   | `boolean`                           | `false` | 保存済みの画像を読み込み中。value が無ければアップロード欄の代わりに読み込み中の表示を出す |
 
 ---
 
@@ -1229,7 +1230,7 @@ function usePresets(options: {
 ```
 
 - 保存領域には書かず、作成・保存・適用・削除を `create-preset` / `update-preset` / `apply-preset` / `delete-preset` で background に依頼する。スタイルの一覧（`draftPresets`）は `vision` の購読に追従し、選択中のスタイルの保存していない変更は保つ
-- 画像は下書きに「変え方」（`keep` / `set` / `clear`）で持ち、`update-preset` の `image` で送る。保存済みの画像は [useBackgroundImage](#usebackgroundimage) で選択中のスタイルの 1 枚だけを読む（`draftBackgroundData` が `undefined` の間は読み込み中）
+- 画像は下書きに「変え方」（`keep` / `set` / `clear`）で持ち、`update-preset` の `image` で送る。保存済みの画像は [useBackgroundImage](#usebackgroundimage) で選択中のスタイルの 1 枚だけを読む（`draftBackgroundData` が `undefined` の間は読み込み中。同じスタイルで直前に出していた画像があれば、保存直後の読み直しの間もそれを返す）
 - 拒まれた依頼は `messageErrorText` の文言にし、作成は `createPresetError`（[NewPresetModal](#newpresetmodal)）、ほかは `presetError`（[PresetSelector](#presetselector)）に入れる
 - 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せずに削除する。参照の件数を数えるために `settings` を受け取る（参照を外すのは `delete-preset`）
 

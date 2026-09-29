@@ -221,6 +221,7 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
           </div>
           <ImageUploader
             value={draftBackgroundData ?? null}
+            loading={draftBackgroundData === undefined}
             onChange={handleCustomBackgroundChange}
           />
         </div>

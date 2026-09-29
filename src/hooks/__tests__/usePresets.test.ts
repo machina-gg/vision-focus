@@ -358,6 +358,61 @@ describe('usePresets', () => {
       expect(getBackgroundImage).toHaveBeenCalledWith('img-1');
     });
 
+    it('保存して画像が新しい ID になっても、読み終えるまで保存した画像を出し続ける', async () => {
+      const { result, rerender } = renderUsePresets(mockVision);
+      act(() => {
+        result.current.handleCustomBackgroundChange(IMAGE);
+      });
+      await act(async () => {
+        await result.current.handleSaveSelectedPreset();
+      });
+      let finishRead: (value: string | null) => void = () => {};
+      vi.mocked(getBackgroundImage).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishRead = resolve;
+          })
+      );
+
+      rerender({
+        vision: {
+          ...mockVision,
+          presets: [{ ...mockPreset, customBackgroundId: 'img-new' }]
+        },
+        settings: settingsWith()
+      });
+
+      expect(getBackgroundImage).toHaveBeenCalledWith('img-new');
+      expect(result.current.draftBackgroundData).toBe(IMAGE);
+
+      await act(async () => {
+        finishRead(IMAGE);
+      });
+      expect(result.current.draftBackgroundData).toBe(IMAGE);
+    });
+
+    it('画像付きのスタイルへ切り替えたら、前のスタイルの画像は出さずに読み込み中にする', async () => {
+      vi.mocked(getBackgroundImage).mockImplementation(async (imageId) =>
+        imageId === 'img-1' ? STORED : new Promise(() => {})
+      );
+      const { result } = renderUsePresets({
+        ...twoPresetsVision,
+        presets: [
+          { ...mockPreset, customBackgroundId: 'img-1' },
+          { ...anotherPreset, customBackgroundId: 'img-2' }
+        ]
+      });
+      await waitFor(() =>
+        expect(result.current.draftBackgroundData).toBe(STORED)
+      );
+
+      act(() => {
+        result.current.handleSelectPreset('preset-2');
+      });
+
+      expect(result.current.draftBackgroundData).toBeUndefined();
+    });
+
     it('画像の無いスタイルでは読まず、画像なしにする', () => {
       const { result } = renderUsePresets(mockVision);
 

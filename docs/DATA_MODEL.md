@@ -260,10 +260,10 @@ DashboardDisplaySettings に次を足したもの。
 
 ## 設定ファイル（書き出し形式）
 
-書き出し・取り込みは `src/lib/settingsExport.ts`。形式の版は `EXPORT_VERSION` で、それより古い版のファイルは形式エラーで拒む（旧い形の読み替えは持たない）。
+書き出し・取り込みは `src/lib/settingsExport.ts`。形式の版は `EXPORT_VERSION`（古い版の扱いは [SCREEN.md](./SCREEN.md) の設定タブ「設定のバックアップ」）。
 
 - スタイルの画像は ID ではなく data URL（`customBackgroundData`）でスタイルごとに含め、ファイル 1 つで完結させる。既定の表示設定は画像の欄を持たない
-- 取り込みは画像を新しい ID で作り、設定・表示設定・画像を 1 回の書き込みで保存する（スタイルの重ね方は「VisionSettings」）
+- 取り込みは設定・表示設定・画像を 1 回の書き込みで保存する（画像の ID の振り方は「スタイルの画像」、スタイルの重ね方は「VisionSettings」）
 - 取り込むファイルの大きさの上限は `MAX_IMPORT_SIZE`（「機能上限」）。超えたら形式エラーではなく大きすぎる旨で拒む
 
 ## 導出する値

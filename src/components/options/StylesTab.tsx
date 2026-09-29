@@ -15,13 +15,10 @@ const COVER = { backgroundSize: 'cover', backgroundPosition: 'center' };
 
 function previewBackgroundStyle(
   display: DashboardDisplaySettings,
-  customBackgroundData: string | null | undefined
+  customBackgroundData: string | null
 ): React.CSSProperties {
   if (display.backgroundType === 'color') {
     return { backgroundColor: display.backgroundColor };
-  }
-  if (customBackgroundData === undefined) {
-    return { backgroundColor: '#1a1a2e' };
   }
   const url =
     customBackgroundData ??
@@ -42,6 +39,9 @@ export function StylesTab() {
   const { draftDisplaySettings, draftBackgroundData, selectedPresetId } =
     presets;
   const isEditing = !!selectedPresetId;
+  const isBackgroundLoading =
+    draftDisplaySettings.backgroundType !== 'color' &&
+    draftBackgroundData === undefined;
 
   return (
     <div
@@ -61,14 +61,29 @@ export function StylesTab() {
                 {getMessage('dashboardPreview')}
               </h2>
               <div
-                className="relative aspect-video rounded-lg overflow-hidden"
+                className={`relative aspect-video rounded-lg overflow-hidden ${
+                  isBackgroundLoading ? 'bg-gray-200 animate-pulse' : ''
+                }`}
                 data-testid="style-preview"
-                style={previewBackgroundStyle(
-                  draftDisplaySettings,
-                  draftBackgroundData
-                )}
+                aria-busy={isBackgroundLoading}
+                style={
+                  isBackgroundLoading
+                    ? undefined
+                    : previewBackgroundStyle(
+                        draftDisplaySettings,
+                        draftBackgroundData ?? null
+                      )
+                }
               >
                 <div className="absolute inset-0 bg-black/30" />
+                {isBackgroundLoading && (
+                  <p
+                    data-testid="style-preview-loading"
+                    className="absolute top-2 left-2 z-20 text-xs bg-black/50 text-white px-2 py-0.5 rounded"
+                  >
+                    {getMessage('loading')}
+                  </p>
+                )}
                 <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">
                   <p
                     className="text-center drop-shadow-lg"

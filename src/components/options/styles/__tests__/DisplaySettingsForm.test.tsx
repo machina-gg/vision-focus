@@ -23,8 +23,11 @@ vi.mock('~/constants/backgrounds', async (importOriginal) => {
 });
 
 vi.mock('~/components/features', () => ({
-  ImageUploader: (props: { value: string | null }) => (
-    <div data-testid="image-uploader">{String(props.value)}</div>
+  ImageUploader: (props: { value: string | null; loading?: boolean }) => (
+    <div data-testid="image-uploader">
+      {String(props.value)}
+      {props.loading ? ':loading' : ''}
+    </div>
   ),
   FontPicker: (props: { value: { family: string }; previewText: string }) => (
     <div data-testid="font-picker">
@@ -370,16 +373,18 @@ describe('DisplaySettingsForm', () => {
   });
 
   describe('取り込んだ背景画像', () => {
-    it('未設定のときは null を渡す', () => {
+    it('未設定のときは null を渡し、読み込み中にはしない', () => {
       renderForm({ draftBackgroundData: null });
 
-      expect(screen.getByTestId('image-uploader')).toHaveTextContent('null');
+      expect(screen.getByTestId('image-uploader')).toHaveTextContent(/^null$/);
     });
 
-    it('読み込み中は null を渡す', () => {
+    it('読み込み中は、空のアップロード欄ではなく読み込み中の表示にする', () => {
       renderForm({ draftBackgroundData: undefined });
 
-      expect(screen.getByTestId('image-uploader')).toHaveTextContent('null');
+      expect(screen.getByTestId('image-uploader')).toHaveTextContent(
+        'null:loading'
+      );
     });
 
     it('設定済みのときはその内容を渡す', () => {
