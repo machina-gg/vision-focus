@@ -325,10 +325,10 @@ graph TD
 
 `src/components/ui/Badge/Badge.tsx`
 
-| Prop     | 型                                                                       | 省略時      | 説明                 |
-| -------- | ------------------------------------------------------------------------ | ----------- | -------------------- |
-| variant  | `'default' \| 'success' \| 'warning' \| 'danger' \| 'info' \| 'premium'` | `'default'` | 色の種類             |
-| children | `ReactNode`                                                              | 必須        | バッジの中に出す内容 |
+| Prop     | 型                                                          | 省略時      | 説明                 |
+| -------- | ----------------------------------------------------------- | ----------- | -------------------- |
+| variant  | `'default' \| 'success' \| 'warning' \| 'danger' \| 'info'` | `'default'` | 色の種類             |
+| children | `ReactNode`                                                 | 必須        | バッジの中に出す内容 |
 
 ---
 

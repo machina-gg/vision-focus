@@ -10,14 +10,14 @@ import {
 } from '~/types/storage';
 
 vi.mock('~/lib/presetUtils', () => ({
-  presetToDisplaySettings: vi.fn((preset, isPremium) => ({
+  presetToDisplaySettings: vi.fn((preset) => ({
     goalText: preset.goalText,
     goalSubText: preset.goalSubText,
     textColor: preset.textColor,
     backgroundType: preset.backgroundType,
     backgroundImage: preset.backgroundImage,
     backgroundColor: preset.backgroundColor,
-    customBackgroundData: isPremium ? preset.customBackgroundData : null,
+    customBackgroundData: preset.customBackgroundData,
     fontSettings: preset.fontSettings
   }))
 }));
@@ -149,25 +149,6 @@ describe('useResolvedPreset', () => {
     });
 
     it('カスタム背景をそのまま適用する', () => {
-      const vision: VisionSettings = {
-        ...DEFAULT_VISION,
-        defaultSettings: {
-          ...DEFAULT_DISPLAY_SETTINGS,
-          customBackgroundData: 'data:image/png;base64,custom'
-        }
-      };
-      const { result } = renderHook(() =>
-        useResolvedPreset({
-          vision,
-          settings: DEFAULT_SETTINGS
-        })
-      );
-      expect(result.current.displaySettings.customBackgroundData).toBe(
-        'data:image/png;base64,custom'
-      );
-    });
-
-    it('プレミアムではカスタム背景を保持する', () => {
       const vision: VisionSettings = {
         ...DEFAULT_VISION,
         defaultSettings: {

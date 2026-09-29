@@ -137,20 +137,6 @@
     "message": "example.com or *.example.com",
     "description": "Domain input placeholder"
   },
-  "freeTierLimit": {
-    "message": "Free tier: $COUNT$ / $MAX$ sites",
-    "description": "Free tier limit display",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "3"
-      },
-      "max": {
-        "content": "$2",
-        "example": "5"
-      }
-    }
-  },
   "blockedSites": {
     "message": "Blocked Sites",
     "description": "Blocked sites list heading"
@@ -355,145 +341,9 @@
     "message": "You have unsaved changes",
     "description": "Text indicating unsaved changes"
   },
-  "license": {
-    "message": "License",
-    "description": "License tab"
-  },
-  "premium": {
-    "message": "Premium",
-    "description": "Premium label"
-  },
-  "free": {
-    "message": "Free",
-    "description": "Free tier label"
-  },
-  "currentPlan": {
-    "message": "Current Plan",
-    "description": "Current plan heading"
-  },
-  "freePlan": {
-    "message": "Free Plan",
-    "description": "Free plan name"
-  },
-  "premiumPlan": {
-    "message": "Premium Plan",
-    "description": "Premium plan name"
-  },
-  "subscriptionActive": {
-    "message": "Your subscription is active",
-    "description": "Active subscription status"
-  },
-  "manageSubscription": {
-    "message": "Manage Subscription",
-    "description": "Manage subscription button"
-  },
-  "licenseKey": {
-    "message": "License Key",
-    "description": "License key input label"
-  },
-  "enterLicenseKey": {
-    "message": "Enter your license key",
-    "description": "License key input placeholder"
-  },
-  "activateLicense": {
-    "message": "Activate License",
-    "description": "Activate license button"
-  },
-  "activating": {
-    "message": "Activating...",
-    "description": "License activation in progress"
-  },
-  "licenseActivated": {
-    "message": "License activated successfully!",
-    "description": "License activation success message"
-  },
-  "invalidLicenseKey": {
-    "message": "Invalid license key. Please check and try again.",
-    "description": "Invalid license key error"
-  },
-  "deactivateLicense": {
-    "message": "Deactivate License",
-    "description": "Deactivate license button"
-  },
-  "licenseDeactivated": {
-    "message": "License deactivated",
-    "description": "License deactivation message"
-  },
-  "licenseExpires": {
-    "message": "Expires: $DATE$",
-    "description": "License expiration date",
-    "placeholders": {
-      "date": {
-        "content": "$1",
-        "example": "2026-12-31"
-      }
-    }
-  },
-  "licenseLifetime": {
-    "message": "Lifetime License",
-    "description": "Lifetime license label"
-  },
-  "upgradeToPremium": {
-    "message": "Upgrade to Premium",
-    "description": "Upgrade button text"
-  },
-  "premiumFeatures": {
-    "message": "Premium Features",
-    "description": "Premium features heading"
-  },
-  "premiumFeatureUnlimitedBlocklist": {
-    "message": "Unlimited block list",
-    "description": "Premium feature: unlimited blocklist"
-  },
-  "premiumFeatureUnlimitedHistory": {
-    "message": "Unlimited analytics history",
-    "description": "Premium feature: unlimited history"
-  },
-  "premiumFeatureCustomBackground": {
-    "message": "Custom backgrounds",
-    "description": "Premium feature: custom backgrounds"
-  },
-  "premiumFeatureReports": {
-    "message": "Weekly & monthly reports",
-    "description": "Premium feature: reports"
-  },
-  "freeTierLimitReached": {
-    "message": "Free tier limit reached",
-    "description": "Free tier limit reached heading"
-  },
-  "upgradeToAddMore": {
-    "message": "Upgrade to Premium to add more sites to your block list.",
-    "description": "Upgrade prompt for blocklist"
-  },
-  "upgradeForCustomBackground": {
-    "message": "Upgrade to Premium to upload custom background images.",
-    "description": "Upgrade prompt for custom background"
-  },
-  "gracePeriodWarning": {
-    "message": "License verification failed. Premium features will remain active until $DATE$.",
-    "description": "Grace period warning",
-    "placeholders": {
-      "date": {
-        "content": "$1",
-        "example": "2026-01-26"
-      }
-    }
-  },
-  "getPremium": {
-    "message": "Get Premium",
-    "description": "Get premium button"
-  },
   "learnMore": {
     "message": "Learn More",
     "description": "Learn more link"
-  },
-  "premiumRequired": {
-    "message": "Premium Required",
-    "description": "Premium required heading"
-  },
-  "premiumRequiredDescription": {
-    "message": "This feature requires a Premium subscription.",
-    "description": "Premium required description"
   },
   "remove": {
     "message": "Remove",
@@ -566,16 +416,6 @@
   "noGoals": {
     "message": "No goals yet. Add a goal to get started.",
     "description": "Empty goals message"
-  },
-  "maxGoalsReached": {
-    "message": "Maximum goals reached ($COUNT$). Upgrade to Premium for unlimited goals.",
-    "description": "Max goals reached message",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "1"
-      }
-    }
   },
   "multipleGoals": {
     "message": "Multiple Goals",
@@ -721,10 +561,6 @@
     "message": "Reports",
     "description": "Reports section title"
   },
-  "reportsPremiumDescription": {
-    "message": "View detailed weekly and monthly reports to track your productivity trends",
-    "description": "Reports premium feature description"
-  },
   "close": {
     "message": "Close",
     "description": "Close button"
@@ -756,18 +592,6 @@
   "uploadCustomBackground": {
     "message": "Upload Custom Background",
     "description": "Upload custom background button"
-  },
-  "premiumFeatureMultipleGoals": {
-    "message": "Multiple goal cards",
-    "description": "Premium feature: multiple goals"
-  },
-  "premiumFeatureFontCustomization": {
-    "message": "Font customization",
-    "description": "Premium feature: font customization"
-  },
-  "premiumFeatureDownloadWallpaper": {
-    "message": "Download wallpaper",
-    "description": "Premium feature: download wallpaper"
   },
   "detailedAnalytics": {
     "message": "Detailed Analytics",
@@ -850,10 +674,6 @@
         "example": "10"
       }
     }
-  },
-  "premiumFeaturePresets": {
-    "message": "Save up to 5 styles",
-    "description": "Premium feature: dashboard styles"
   },
   "noPresets": {
     "message": "No styles saved yet. Configure your dashboard and save it as a style.",
@@ -958,138 +778,6 @@
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
-  },
-  "upgradeToUsePreset": {
-    "message": "Upgrade to Premium to use this style",
-    "description": "Tooltip for locked style"
-  },
-  "lockedPresetWarning": {
-    "message": "The currently selected style is not available on the Free plan. Default settings will be applied.",
-    "description": "Warning when active style is locked"
-  },
-  "scheduleLockedPresetWarning": {
-    "message": "The selected style will not be applied on the Free plan.",
-    "description": "Warning when schedule style is locked"
-  },
-  "featureBlocklist": {
-    "message": "Block List",
-    "description": "Feature name: blocklist"
-  },
-  "featureBlocklistFree": {
-    "message": "Up to $COUNT$ sites",
-    "description": "Free tier blocklist limit",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "5"
-      }
-    }
-  },
-  "featureUnlimited": {
-    "message": "Unlimited",
-    "description": "Unlimited feature text"
-  },
-  "featureHistoryRetention": {
-    "message": "History Retention",
-    "description": "Feature name: history retention"
-  },
-  "featureHistoryDays": {
-    "message": "$COUNT$ days",
-    "description": "History days limit",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "7"
-      }
-    }
-  },
-  "featureAllTime": {
-    "message": "All time",
-    "description": "All time history"
-  },
-  "featurePresets": {
-    "message": "Styles",
-    "description": "Feature name: styles"
-  },
-  "featurePresetCount": {
-    "message": "$COUNT$ styles",
-    "description": "Style count",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "5"
-      }
-    }
-  },
-  "featureCustomBackground": {
-    "message": "Custom Background",
-    "description": "Feature name: custom background"
-  },
-  "featureWallpaperDownload": {
-    "message": "Wallpaper Download",
-    "description": "Feature name: wallpaper download"
-  },
-  "featureWeeklyMonthlyReports": {
-    "message": "Weekly & Monthly Reports",
-    "description": "Feature name: reports"
-  },
-  "premiumActiveTitle": {
-    "message": "You're on Premium",
-    "description": "Premium active title"
-  },
-  "premiumActiveDescription": {
-    "message": "Enjoy all features without limits",
-    "description": "Premium active description"
-  },
-  "premiumFeaturesIncluded": {
-    "message": "What's Included",
-    "description": "Premium features included heading"
-  },
-  "currentUsage": {
-    "message": "Current Usage",
-    "description": "Current usage heading"
-  },
-  "limitReachedUpgrade": {
-    "message": "Limit reached. Upgrade to Premium for unlimited.",
-    "description": "Limit reached message"
-  },
-  "limitWarning": {
-    "message": "$COUNT$ more until limit",
-    "description": "Limit warning message",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "2"
-      }
-    }
-  },
-  "historySaving": {
-    "message": "History",
-    "description": "History saving label"
-  },
-  "premiumMarketingHeadline": {
-    "message": "Unlock Your Full Potential",
-    "description": "Premium marketing headline"
-  },
-  "premiumMarketingPrice": {
-    "message": "For less than $0.10/day, get unlimited focus power",
-    "description": "Premium marketing price copy"
-  },
-  "premiumMarketingPriceNote": {
-    "message": "* Based on monthly subscription",
-    "description": "Premium price note"
-  },
-  "cancelAnytime": {
-    "message": "Cancel anytime",
-    "description": "Cancel anytime text"
-  },
-  "planComparison": {
-    "message": "Plan Comparison",
-    "description": "Plan comparison heading"
-  },
-  "featureColumn": {
-    "message": "Feature",
-    "description": "Feature column header"
   },
   "trackedSitesTitle": {
     "message": "Site Tracking",
@@ -1199,18 +887,6 @@
       }
     }
   },
-  "upgradeFeatureViewTime": {
-    "message": "View time spent since unblocking",
-    "description": "Upgrade feature: view time"
-  },
-  "upgradeFeatureReblock": {
-    "message": "One-click re-block",
-    "description": "Upgrade feature: re-block"
-  },
-  "upgradeFeatureChart": {
-    "message": "Usage trend chart",
-    "description": "Upgrade feature: chart"
-  },
   "usageChart": {
     "message": "Usage Trend",
     "description": "Usage chart title"
@@ -1319,7 +995,7 @@
   },
   "exportUnblockedSites": {
     "message": "Export Unblocked Sites",
-    "description": "Export unblocked sites button (premium)"
+    "description": "Export unblocked sites button"
   },
   "exportAll": {
     "message": "Export All",
@@ -1433,14 +1109,6 @@
     "message": "Use the Settings Backup section in the Settings tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
     "description": "Help FAQ backup answer"
   },
-  "helpFaqPremium": {
-    "message": "What's included in Premium?",
-    "description": "Help FAQ premium question"
-  },
-  "helpFaqPremiumAnswer": {
-    "message": "Premium unlocks unlimited block list entries (Free: 5), up to 5 dashboard styles (Free: 1), custom backgrounds, wallpaper downloads, full analytics history (Free: 7 days), and weekly/monthly reports. Check the Premium tab for details.",
-    "description": "Help FAQ premium answer"
-  },
   "helpFaqDataStorage": {
     "message": "Where is my data stored?",
     "description": "Help FAQ data storage question"
@@ -1448,14 +1116,6 @@
   "helpFaqDataStorageAnswer": {
     "message": "All your data (block list, schedules, statistics, settings) is stored locally in Chrome's storage on your device. Nothing is sent to external servers. If you opt in to anonymous usage statistics, only aggregated feature usage data is shared via Google Analytics — no personal information.",
     "description": "Help FAQ data storage answer"
-  },
-  "helpFaqBlockLimit": {
-    "message": "Why can't I add more sites to the block list?",
-    "description": "Help FAQ block limit question"
-  },
-  "helpFaqBlockLimitAnswer": {
-    "message": "The free plan allows up to 5 blocked sites. Upgrade to Premium for unlimited block list entries. You can still use wildcards (*.example.com) to block entire domains and their subdomains with a single entry.",
-    "description": "Help FAQ block limit answer"
   },
   "helpTroubleshooting": {
     "message": "Troubleshooting",
@@ -1628,7 +1288,7 @@
     "description": "What's included in settings export"
   },
   "settingsNotIncluded": {
-    "message": "Not included: Premium status, Analytics data",
+    "message": "Not included: Password protection, Pause state, Anonymous usage statistics consent, Analytics data",
     "description": "What's not included in settings export"
   },
   "alwaysBlocked": {

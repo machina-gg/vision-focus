@@ -137,20 +137,6 @@
     "message": "example.com または *.example.com",
     "description": "ドメイン入力プレースホルダー"
   },
-  "freeTierLimit": {
-    "message": "無料枠: $COUNT$ / $MAX$ サイト",
-    "description": "無料枠制限表示",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "3"
-      },
-      "max": {
-        "content": "$2",
-        "example": "5"
-      }
-    }
-  },
   "blockedSites": {
     "message": "ブロック中のサイト",
     "description": "ブロックリスト見出し"
@@ -355,145 +341,9 @@
     "message": "未保存の変更があります",
     "description": "未保存の変更があることを知らせるテキスト"
   },
-  "license": {
-    "message": "ライセンス",
-    "description": "ライセンスタブ"
-  },
-  "premium": {
-    "message": "プレミアム",
-    "description": "プレミアムラベル"
-  },
-  "free": {
-    "message": "無料",
-    "description": "無料ティアラベル"
-  },
-  "currentPlan": {
-    "message": "現在のプラン",
-    "description": "現在のプラン見出し"
-  },
-  "freePlan": {
-    "message": "無料プラン",
-    "description": "無料プラン名"
-  },
-  "premiumPlan": {
-    "message": "プレミアムプラン",
-    "description": "プレミアムプラン名"
-  },
-  "subscriptionActive": {
-    "message": "サブスクリプションが有効です",
-    "description": "サブスクリプション有効状態"
-  },
-  "manageSubscription": {
-    "message": "サブスクリプションを管理",
-    "description": "サブスクリプション管理ボタン"
-  },
-  "licenseKey": {
-    "message": "ライセンスキー",
-    "description": "ライセンスキー入力ラベル"
-  },
-  "enterLicenseKey": {
-    "message": "ライセンスキーを入力してください",
-    "description": "ライセンスキー入力プレースホルダー"
-  },
-  "activateLicense": {
-    "message": "ライセンスを有効化",
-    "description": "ライセンス有効化ボタン"
-  },
-  "activating": {
-    "message": "有効化中...",
-    "description": "ライセンス有効化中"
-  },
-  "licenseActivated": {
-    "message": "ライセンスが正常に有効化されました！",
-    "description": "ライセンス有効化成功メッセージ"
-  },
-  "invalidLicenseKey": {
-    "message": "無効なライセンスキーです。確認して再度お試しください。",
-    "description": "無効なライセンスキーエラー"
-  },
-  "deactivateLicense": {
-    "message": "ライセンスを無効化",
-    "description": "ライセンス無効化ボタン"
-  },
-  "licenseDeactivated": {
-    "message": "ライセンスが無効化されました",
-    "description": "ライセンス無効化メッセージ"
-  },
-  "licenseExpires": {
-    "message": "有効期限: $DATE$",
-    "description": "ライセンス有効期限",
-    "placeholders": {
-      "date": {
-        "content": "$1",
-        "example": "2026-12-31"
-      }
-    }
-  },
-  "licenseLifetime": {
-    "message": "永続ライセンス",
-    "description": "永続ライセンスラベル"
-  },
-  "upgradeToPremium": {
-    "message": "プレミアムにアップグレード",
-    "description": "アップグレードボタンテキスト"
-  },
-  "premiumFeatures": {
-    "message": "プレミアム機能",
-    "description": "プレミアム機能見出し"
-  },
-  "premiumFeatureUnlimitedBlocklist": {
-    "message": "無制限のブロックリスト",
-    "description": "プレミアム機能: 無制限のブロックリスト"
-  },
-  "premiumFeatureUnlimitedHistory": {
-    "message": "無制限の分析履歴",
-    "description": "プレミアム機能: 無制限の履歴"
-  },
-  "premiumFeatureCustomBackground": {
-    "message": "カスタム背景",
-    "description": "プレミアム機能: カスタム背景"
-  },
-  "premiumFeatureReports": {
-    "message": "週次・月次レポート",
-    "description": "プレミアム機能: レポート"
-  },
-  "freeTierLimitReached": {
-    "message": "無料枠の上限に達しました",
-    "description": "無料枠上限到達見出し"
-  },
-  "upgradeToAddMore": {
-    "message": "プレミアムにアップグレードして、ブロックリストにさらにサイトを追加しましょう。",
-    "description": "ブロックリストのアップグレードプロンプト"
-  },
-  "upgradeForCustomBackground": {
-    "message": "プレミアムにアップグレードして、カスタム背景画像をアップロードしましょう。",
-    "description": "カスタム背景のアップグレードプロンプト"
-  },
-  "gracePeriodWarning": {
-    "message": "ライセンス検証に失敗しました。プレミアム機能は $DATE$ まで有効です。",
-    "description": "猶予期間警告",
-    "placeholders": {
-      "date": {
-        "content": "$1",
-        "example": "2026-01-26"
-      }
-    }
-  },
-  "getPremium": {
-    "message": "プレミアムを取得",
-    "description": "プレミアム取得ボタン"
-  },
   "learnMore": {
     "message": "詳細を見る",
     "description": "詳細リンク"
-  },
-  "premiumRequired": {
-    "message": "プレミアムが必要です",
-    "description": "プレミアム必須見出し"
-  },
-  "premiumRequiredDescription": {
-    "message": "この機能にはプレミアムサブスクリプションが必要です。",
-    "description": "プレミアム必須説明"
   },
   "remove": {
     "message": "削除",
@@ -566,16 +416,6 @@
   "noGoals": {
     "message": "目標がありません。目標を追加して始めましょう。",
     "description": "空の目標メッセージ"
-  },
-  "maxGoalsReached": {
-    "message": "目標の上限に達しました（$COUNT$件）。プレミアムにアップグレードすると無制限に追加できます。",
-    "description": "最大目標数到達メッセージ",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "1"
-      }
-    }
   },
   "multipleGoals": {
     "message": "複数の目標",
@@ -721,10 +561,6 @@
     "message": "レポート",
     "description": "レポートセクションタイトル"
   },
-  "reportsPremiumDescription": {
-    "message": "週次・月次レポートで生産性の推移を確認",
-    "description": "レポートプレミアム機能の説明"
-  },
   "close": {
     "message": "閉じる",
     "description": "閉じるボタン"
@@ -756,18 +592,6 @@
   "uploadCustomBackground": {
     "message": "カスタム背景をアップロード",
     "description": "カスタム背景アップロードボタン"
-  },
-  "premiumFeatureMultipleGoals": {
-    "message": "複数の目標カード",
-    "description": "プレミアム機能: 複数の目標"
-  },
-  "premiumFeatureFontCustomization": {
-    "message": "フォントカスタマイズ",
-    "description": "プレミアム機能: フォントカスタマイズ"
-  },
-  "premiumFeatureDownloadWallpaper": {
-    "message": "壁紙ダウンロード",
-    "description": "プレミアム機能: 壁紙ダウンロード"
   },
   "detailedAnalytics": {
     "message": "詳細分析",
@@ -850,10 +674,6 @@
         "example": "10"
       }
     }
-  },
-  "premiumFeaturePresets": {
-    "message": "最大5つのスタイルを保存",
-    "description": "プレミアム機能: ダッシュボードスタイル"
   },
   "noPresets": {
     "message": "まだスタイルがありません。ダッシュボードを設定してスタイルとして保存してください。",
@@ -958,138 +778,6 @@
   "useDefault": {
     "message": "デフォルトに戻す",
     "description": "デフォルトに戻すボタン"
-  },
-  "upgradeToUsePreset": {
-    "message": "プレミアムにアップグレードしてこのスタイルを使用",
-    "description": "ロックされたスタイルのツールチップ"
-  },
-  "lockedPresetWarning": {
-    "message": "現在設定中のスタイルはFreeプランでは使用できません。デフォルト設定が適用されます。",
-    "description": "アクティブなスタイルがロックされている場合の警告"
-  },
-  "scheduleLockedPresetWarning": {
-    "message": "選択中のスタイルはFreeプランでは適用されません。",
-    "description": "スケジュールのスタイルがロックされている場合の警告"
-  },
-  "featureBlocklist": {
-    "message": "ブロックリスト",
-    "description": "機能名: ブロックリスト"
-  },
-  "featureBlocklistFree": {
-    "message": "$COUNT$件まで",
-    "description": "無料枠のブロックリスト制限",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "5"
-      }
-    }
-  },
-  "featureUnlimited": {
-    "message": "無制限",
-    "description": "無制限テキスト"
-  },
-  "featureHistoryRetention": {
-    "message": "履歴保存期間",
-    "description": "機能名: 履歴保存期間"
-  },
-  "featureHistoryDays": {
-    "message": "$COUNT$日間",
-    "description": "履歴日数制限",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "7"
-      }
-    }
-  },
-  "featureAllTime": {
-    "message": "無制限",
-    "description": "全期間履歴"
-  },
-  "featurePresets": {
-    "message": "スタイル",
-    "description": "機能名: スタイル"
-  },
-  "featurePresetCount": {
-    "message": "$COUNT$件",
-    "description": "スタイル数",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "5"
-      }
-    }
-  },
-  "featureCustomBackground": {
-    "message": "カスタム背景画像",
-    "description": "機能名: カスタム背景"
-  },
-  "featureWallpaperDownload": {
-    "message": "壁紙ダウンロード",
-    "description": "機能名: 壁紙ダウンロード"
-  },
-  "featureWeeklyMonthlyReports": {
-    "message": "週次・月次レポート",
-    "description": "機能名: レポート"
-  },
-  "premiumActiveTitle": {
-    "message": "Premiumプランをご利用中",
-    "description": "プレミアムアクティブタイトル"
-  },
-  "premiumActiveDescription": {
-    "message": "すべての機能をお楽しみいただけます",
-    "description": "プレミアムアクティブ説明"
-  },
-  "premiumFeaturesIncluded": {
-    "message": "ご利用中の機能",
-    "description": "プレミアム機能一覧見出し"
-  },
-  "currentUsage": {
-    "message": "現在の使用状況",
-    "description": "現在の使用状況見出し"
-  },
-  "limitReachedUpgrade": {
-    "message": "上限に達しました。Premiumで無制限に。",
-    "description": "上限到達メッセージ"
-  },
-  "limitWarning": {
-    "message": "あと$COUNT$件で上限です",
-    "description": "上限警告メッセージ",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "2"
-      }
-    }
-  },
-  "historySaving": {
-    "message": "履歴保存",
-    "description": "履歴保存ラベル"
-  },
-  "premiumMarketingHeadline": {
-    "message": "もっと集中したいあなたへ",
-    "description": "プレミアムマーケティング見出し"
-  },
-  "premiumMarketingPrice": {
-    "message": "1日たった約15円で、無制限の集中環境を",
-    "description": "プレミアムマーケティング価格コピー"
-  },
-  "premiumMarketingPriceNote": {
-    "message": "※ 1ドル=155円換算",
-    "description": "価格備考"
-  },
-  "cancelAnytime": {
-    "message": "いつでもキャンセル可能",
-    "description": "いつでもキャンセル可能テキスト"
-  },
-  "planComparison": {
-    "message": "プラン比較",
-    "description": "プラン比較見出し"
-  },
-  "featureColumn": {
-    "message": "機能",
-    "description": "機能列ヘッダー"
   },
   "trackedSitesTitle": {
     "message": "サイト追跡",
@@ -1199,18 +887,6 @@
       }
     }
   },
-  "upgradeFeatureViewTime": {
-    "message": "解除後の利用時間を確認",
-    "description": "アップグレード機能: 時間確認"
-  },
-  "upgradeFeatureReblock": {
-    "message": "ワンクリックで再ブロック",
-    "description": "アップグレード機能: 再ブロック"
-  },
-  "upgradeFeatureChart": {
-    "message": "利用時間の推移グラフ",
-    "description": "アップグレード機能: グラフ"
-  },
   "usageChart": {
     "message": "利用時間の推移",
     "description": "利用グラフタイトル"
@@ -1319,7 +995,7 @@
   },
   "exportUnblockedSites": {
     "message": "解除サイトをエクスポート",
-    "description": "解除サイトエクスポートボタン（プレミアム）"
+    "description": "解除サイトエクスポートボタン"
   },
   "exportAll": {
     "message": "すべてエクスポート",
@@ -1433,14 +1109,6 @@
     "message": "設定タブの「設定のバックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
     "description": "ヘルプFAQバックアップ回答"
   },
-  "helpFaqPremium": {
-    "message": "Premium版には何が含まれますか？",
-    "description": "ヘルプFAQプレミアム質問"
-  },
-  "helpFaqPremiumAnswer": {
-    "message": "Premiumでは、ブロックリスト無制限（無料版：5件）、スタイル最大5個（無料版：1個）、カスタム背景、壁紙ダウンロード、全期間の統計履歴（無料版：7日間）、週次・月次レポートが利用できます。詳しくはPremiumタブをご確認ください。",
-    "description": "ヘルプFAQプレミアム回答"
-  },
   "helpFaqDataStorage": {
     "message": "データはどこに保存されますか？",
     "description": "ヘルプFAQデータ保存場所質問"
@@ -1448,14 +1116,6 @@
   "helpFaqDataStorageAnswer": {
     "message": "すべてのデータ（ブロックリスト、スケジュール、統計、設定）はChromeのストレージにローカル保存されます。外部サーバーには送信されません。匿名使用統計をオプトインした場合のみ、集計された機能使用データがGoogle Analytics経由で共有されます（個人情報は含まれません）。",
     "description": "ヘルプFAQデータ保存場所回答"
-  },
-  "helpFaqBlockLimit": {
-    "message": "ブロックリストにサイトを追加できないのはなぜ？",
-    "description": "ヘルプFAQブロック上限質問"
-  },
-  "helpFaqBlockLimitAnswer": {
-    "message": "無料プランではブロックリストに最大5件まで登録できます。Premiumにアップグレードすると無制限になります。ワイルドカード（*.example.com）を使えば、1つのエントリでドメインとすべてのサブドメインをブロックできます。",
-    "description": "ヘルプFAQブロック上限回答"
   },
   "helpTroubleshooting": {
     "message": "トラブルシューティング",
@@ -1628,7 +1288,7 @@
     "description": "設定エクスポートに含まれるもの"
   },
   "settingsNotIncluded": {
-    "message": "含まれない: プレミアムステータス、分析データ",
+    "message": "含まれない: パスワード保護、一時停止の状態、匿名使用統計の同意、分析データ",
     "description": "設定エクスポートに含まれないもの"
   },
   "alwaysBlocked": {

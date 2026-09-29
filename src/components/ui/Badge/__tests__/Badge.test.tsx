@@ -45,17 +45,13 @@ describe('Badge', () => {
       expect(badge()).toHaveAttribute('data-variant', 'default');
     });
 
-    it.each([
-      'default',
-      'success',
-      'warning',
-      'danger',
-      'info',
-      'premium'
-    ] as const)('%s を指定するとその種類が属性に出る', (variant) => {
-      renderBadge({ variant });
+    it.each(['default', 'success', 'warning', 'danger', 'info'] as const)(
+      '%s を指定するとその種類が属性に出る',
+      (variant) => {
+        renderBadge({ variant });
 
-      expect(badge()).toHaveAttribute('data-variant', variant);
-    });
+        expect(badge()).toHaveAttribute('data-variant', variant);
+      }
+    );
   });
 });

@@ -33,11 +33,6 @@ describe('presetToDisplaySettings', () => {
     expect(result.fontSettings).toEqual(mockPreset.fontSettings);
   });
 
-  it('プレミアムユーザーはカスタム背景を保持する', () => {
-    const result = presetToDisplaySettings(mockPreset);
-    expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
-  });
-
   it('カスタム背景をそのまま引き継ぐ', () => {
     const result = presetToDisplaySettings(mockPreset);
     expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
