@@ -25,7 +25,9 @@ const settingsExport = vi.hoisted(() => ({
 const storage = vi.hoisted(() => ({
   getSettings: vi.fn(),
   getSites: vi.fn(),
-  getVision: vi.fn()
+  getVision: vi.fn(),
+  settingsItem: { setValue: vi.fn() },
+  visionItem: { setValue: vi.fn() }
 }));
 
 const messaging = vi.hoisted(() => ({
@@ -60,6 +62,8 @@ beforeEach(() => {
   storage.getSettings.mockReset().mockResolvedValue(DEFAULT_SETTINGS);
   storage.getSites.mockReset().mockResolvedValue(IMPORTED_SITES);
   storage.getVision.mockReset().mockResolvedValue(DEFAULT_VISION);
+  storage.settingsItem.setValue.mockReset();
+  storage.visionItem.setValue.mockReset();
   messaging.sendMessage.mockReset().mockResolvedValue({ success: true });
 });
 
@@ -154,9 +158,8 @@ describe('SettingsBackup', () => {
   });
 
   describe('インポートの成功', () => {
-    it('設定ファイルの中身を background へ送り、成功を伝える（画面は保存領域に書かない）', async () => {
-      const onSettingsChange = vi.fn();
-      render(<SettingsBackup onSettingsChange={onSettingsChange} />);
+    it('設定ファイルの中身を background へ送り、成功を伝える（画面は設定を読み直さず、保存領域に書かない）', async () => {
+      render(<SettingsBackup />);
 
       await importFile();
 
@@ -166,7 +169,10 @@ describe('SettingsBackup', () => {
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importSuccessWithMerge'
       );
-      expect(onSettingsChange).toHaveBeenCalledTimes(1);
+      expect(storage.getSettings).not.toHaveBeenCalled();
+      expect(storage.getVision).not.toHaveBeenCalled();
+      expect(storage.settingsItem.setValue).not.toHaveBeenCalled();
+      expect(storage.visionItem.setValue).not.toHaveBeenCalled();
     });
 
     it('入れ子で取り込まれなかったサイトを警告として並べる', async () => {
@@ -224,16 +230,6 @@ describe('SettingsBackup', () => {
       expect(
         screen.queryByText(/^importWarningPresetLimit/)
       ).not.toBeInTheDocument();
-    });
-
-    it('onSettingsChange が未指定でも例外にならない', async () => {
-      render(<SettingsBackup />);
-
-      await importFile();
-
-      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
-        'importSuccessWithMerge'
-      );
     });
 
     it('検証が警告を返したら警告として並べる', async () => {
@@ -327,17 +323,17 @@ describe('SettingsBackup', () => {
       );
     });
 
-    it('background への保存が失敗したら失敗を伝え、読み込み後の通知をしない', async () => {
+    it('background への保存が失敗したら失敗を伝え、保存領域に書かない', async () => {
       messaging.sendMessage.mockResolvedValue({ success: false });
-      const onSettingsChange = vi.fn();
-      render(<SettingsBackup onSettingsChange={onSettingsChange} />);
+      render(<SettingsBackup />);
 
       await importFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorSaveFailed'
       );
-      expect(onSettingsChange).not.toHaveBeenCalled();
+      expect(storage.settingsItem.setValue).not.toHaveBeenCalled();
+      expect(storage.visionItem.setValue).not.toHaveBeenCalled();
     });
 
     it('background からの応答が無くても失敗として扱う', async () => {

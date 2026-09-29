@@ -23,18 +23,11 @@ import {
 import { getSettings, getSites, getVision } from '~/lib/storage';
 import { MAX_PRESETS } from '~/constants/limits';
 
-/** SettingsBackup に渡す読み込み後の通知先 */
-interface SettingsBackupProps {
-  /** バックアップの読み込みが保存まで済んだあとに呼ぶ */
-  onSettingsChange?: () => void;
-}
-
 /**
- * 設定を JSON ファイルに書き出す操作と、書き出したファイルから読み込む操作をカードで表示する（読み込みの保存は background に任せる）
- * @param props 読み込み後の通知先（各フィールドは SettingsBackupProps）
+ * 設定を JSON ファイルに書き出す操作と、書き出したファイルから読み込む操作をカードで表示する（読み込みの保存は background に任せ、画面は結果だけを出す。読み込んだ設定の表示は保存値の購読が追従する）
  * @returns バックアップのカード（結果・警告の表示を含む）
  */
-export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
+export function SettingsBackup() {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
@@ -153,8 +146,6 @@ export function SettingsBackup({ onSettingsChange }: SettingsBackupProps) {
 
       setImportStatus('success');
       setImportMessage(getMessage('importSuccessWithMerge'));
-
-      onSettingsChange?.();
 
       setTimeout(() => {
         setImportStatus('idle');

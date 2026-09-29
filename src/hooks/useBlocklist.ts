@@ -3,19 +3,7 @@ import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
 
 import { trackFeatureUse } from '~/lib/analytics';
-import { settingsItem } from '~/lib/storage';
-import type {
-  AppSettings,
-  TimeLimit,
-  NotificationSettings
-} from '~/types/storage';
-
-interface UseBlocklistOptions {
-  /** 今のアプリ設定。読み込み前は undefined */
-  settings: AppSettings | undefined;
-  /** 画面側のアプリ設定を差し替える */
-  setSettings: (settings: AppSettings) => void;
-}
+import type { TimeLimit, NotificationSettings } from '~/types/storage';
 
 interface UseBlocklistReturn {
   /** 追加欄に入力中のドメイン */
@@ -39,23 +27,17 @@ interface UseBlocklistReturn {
     id: string,
     timeLimit: TimeLimit | null
   ) => Promise<void>;
-  /** 残り時間の通知の設定を保存する。設定の読み込み前は何もしない */
+  /** 残り時間の通知の設定の保存を background に依頼する。失敗したら表示は保存値のまま */
   handleUpdateNotifications: (
     notifications: NotificationSettings
   ) => Promise<void>;
 }
 
 /**
- * ブロックリスト画面の操作（追加・削除・有効切り替え・時間制限・通知設定）と追加欄の入力状態を提供する
- * @param options フックの入力（下記の項目）
- * @param options.settings 今のアプリ設定。読み込み前は undefined
- * @param options.setSettings 通知設定を保存したあと画面側のアプリ設定を差し替える関数
+ * ブロックリスト画面の操作（追加・削除・有効切り替え・時間制限・通知設定）と追加欄の入力状態を提供する（保存はすべて background に依頼する）
  * @returns 追加欄の入力状態・失敗の文言と、各操作
  */
-export function useBlocklist({
-  settings,
-  setSettings
-}: UseBlocklistOptions): UseBlocklistReturn {
+export function useBlocklist(): UseBlocklistReturn {
   const [newDomain, setNewDomain] = useState('');
   const [blockError, setBlockError] = useState('');
 
@@ -125,20 +107,11 @@ export function useBlocklist({
 
   const handleUpdateNotifications = useCallback(
     async (notifications: NotificationSettings) => {
-      if (!settings) return;
-
-      try {
-        const updatedSettings: AppSettings = {
-          ...settings,
-          notifications
-        };
-        await settingsItem.setValue(updatedSettings);
-        setSettings(updatedSettings);
-      } catch {
-        // Silently handle error
-      }
+      await sendMessage('update-notifications', { notifications }).catch(
+        () => undefined
+      );
     },
-    [settings, setSettings]
+    []
   );
 
   return {

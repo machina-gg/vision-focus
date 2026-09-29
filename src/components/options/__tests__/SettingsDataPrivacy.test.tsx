@@ -1,13 +1,11 @@
 import React from 'react';
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { SettingsDataPrivacy } from '../SettingsDataPrivacy';
 import type { AnalyticsOptIn } from '~/types/analytics';
 import type { AppSettings } from '~/types/storage';
-
-const NOW = new Date('2026-03-10T12:00:00.000Z');
 
 const settingsOf = (
   analyticsOptIn: AnalyticsOptIn | null | undefined
@@ -25,15 +23,6 @@ function renderSection(settings: AppSettings | undefined) {
 }
 
 const toggle = () => screen.getByTestId('analytics-optin-toggle');
-
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(NOW);
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 describe('SettingsDataPrivacy', () => {
   describe('表示', () => {
@@ -79,28 +68,22 @@ describe('SettingsDataPrivacy', () => {
   });
 
   describe('切り替えたとき', () => {
-    it('共有しない状態から入れると、許可と決定時刻を渡す', () => {
+    it('共有しない状態から入れると、許可を渡す', () => {
       const { onAnalyticsOptInChange } = renderSection(undefined);
 
       fireEvent.click(toggle());
 
-      expect(onAnalyticsOptInChange).toHaveBeenCalledWith({
-        enabled: true,
-        decidedAt: NOW.toISOString()
-      });
+      expect(onAnalyticsOptInChange).toHaveBeenCalledWith(true);
     });
 
-    it('共有する状態から外すと、拒否と決定時刻を渡す', () => {
+    it('共有する状態から外すと、拒否を渡す', () => {
       const { onAnalyticsOptInChange } = renderSection(
         settingsOf({ enabled: true, decidedAt: '2026-01-01T00:00:00.000Z' })
       );
 
       fireEvent.click(toggle());
 
-      expect(onAnalyticsOptInChange).toHaveBeenCalledWith({
-        enabled: false,
-        decidedAt: NOW.toISOString()
-      });
+      expect(onAnalyticsOptInChange).toHaveBeenCalledWith(false);
     });
   });
 });

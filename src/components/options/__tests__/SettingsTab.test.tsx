@@ -23,8 +23,7 @@ const received = vi.hoisted(() => ({
     | undefined,
   privacy: undefined as
     | { settings: AppSettings | undefined; onAnalyticsOptInChange: unknown }
-    | undefined,
-  backup: undefined as { onSettingsChange: unknown } | undefined
+    | undefined
 }));
 
 const context = vi.hoisted(() => ({
@@ -34,9 +33,7 @@ const context = vi.hoisted(() => ({
 vi.mock('~/contexts/SettingsContext', () => ({
   useSettings: () => ({
     settings: context.settings,
-    setSettings: vi.fn(),
-    vision: undefined,
-    setVision: vi.fn()
+    vision: undefined
   })
 }));
 
@@ -61,23 +58,18 @@ vi.mock('~/components/options/SettingsDataPrivacy', () => ({
   }
 }));
 vi.mock('~/components/options/SettingsBackup', () => ({
-  SettingsBackup: (props: { onSettingsChange: unknown }) => {
-    received.backup = props;
-    return <div data-testid="settings-backup" />;
-  }
+  SettingsBackup: () => <div data-testid="settings-backup" />
 }));
 
 const handlers = () => ({
   onUnblockConfirmUpdate: vi.fn(),
   onUpdateNotifications: vi.fn(),
-  onAnalyticsOptInChange: vi.fn(),
-  onSettingsChange: vi.fn()
+  onAnalyticsOptInChange: vi.fn()
 });
 
 beforeEach(() => {
   received.password = undefined;
   received.privacy = undefined;
-  received.backup = undefined;
   context.settings = undefined;
 });
 
@@ -162,15 +154,6 @@ describe('SettingsTab', () => {
       expect(received.privacy?.onAnalyticsOptInChange).toBe(
         props.onAnalyticsOptInChange
       );
-    });
-  });
-
-  describe('バックアップ', () => {
-    it('設定変更の通知先をそのまま渡す', () => {
-      const props = handlers();
-      render(<SettingsTab {...props} />);
-
-      expect(received.backup?.onSettingsChange).toBe(props.onSettingsChange);
     });
   });
 });

@@ -20,15 +20,14 @@ import {
   useResolvedPreset
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { settingsItem } from '~/lib/storage';
+import { sendMessage } from '~/lib/messaging';
 import { formatTimeLocalized } from '~/lib/time';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
-import type { AnalyticsOptIn } from '~/types/storage';
 
 import '~/styles/globals.css';
 
 function PopupAppContent() {
-  const { settings, setSettings, vision } = useSettings();
+  const { settings, vision } = useSettings();
   const { activity, sites } = useActivitySources();
   // 日付は描画のたびに取り直す（開いたまま 0 時をまたいでも今日の値にするため）
   const stats = todayStats(activity, sites, new Date());
@@ -47,11 +46,10 @@ function PopupAppContent() {
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
-    if (!settings) return;
-    const updated = { ...settings, analyticsOptIn: optIn };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
+  const handleAnalyticsOptIn = async (enabled: boolean) => {
+    await sendMessage('update-analytics-opt-in', { enabled }).catch(
+      () => undefined
+    );
   };
 
   const handlePausedChangeWithPassword = useCallback(
@@ -203,18 +201,8 @@ function PopupAppContent() {
       </div>
 
       <AnalyticsOptInModal
-        onAllow={() =>
-          handleAnalyticsOptIn({
-            enabled: true,
-            decidedAt: new Date().toISOString()
-          })
-        }
-        onDeny={() =>
-          handleAnalyticsOptIn({
-            enabled: false,
-            decidedAt: new Date().toISOString()
-          })
-        }
+        onAllow={() => handleAnalyticsOptIn(true)}
+        onDeny={() => handleAnalyticsOptIn(false)}
       />
 
       {isPasswordProtected && (

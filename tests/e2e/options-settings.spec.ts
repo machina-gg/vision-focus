@@ -329,11 +329,14 @@ test.describe('Options - Settings Tab', () => {
     await page.close();
   });
 
-  test('OPT-SET10: 設定データをインポートできる', async ({
+  test('OPT-SET10: 設定データをインポートでき、開いている設定タブに反映される', async ({
     context,
     extensionId
   }) => {
-    const settings = makeAppSettings();
+    const IMPORTED_HOLD_SECONDS = 10;
+    const settings = makeAppSettings({
+      unblockConfirm: { holdSeconds: IMPORTED_HOLD_SECONDS }
+    });
     const vision = makeVision({
       defaultSettings: makeDisplaySettings({ goalText: 'Imported Goal' })
     });
@@ -375,6 +378,10 @@ test.describe('Options - Settings Tab', () => {
         return sites?.['imported.example']?.block?.enabled ?? null;
       })
       .toBe(true);
+
+    await expect(
+      page.locator(SELECTORS.settings.unblockHoldSecondsSelect)
+    ).toHaveValue(String(IMPORTED_HOLD_SECONDS));
 
     await page.close();
   });

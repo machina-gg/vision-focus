@@ -65,7 +65,6 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             onUnblockConfirmUpdate={async () => {}}
             onUpdateNotifications={() => {}}
             onAnalyticsOptInChange={async () => {}}
-            onSettingsChange={() => {}}
           />
         );
       case 'help':

@@ -16,9 +16,7 @@ const settingsState = vi.hoisted(() => ({
 vi.mock('~/contexts/SettingsContext', () => ({
   useSettings: () => ({
     settings: settingsState.settings,
-    setSettings: vi.fn(),
-    vision: settingsState.vision,
-    setVision: vi.fn()
+    vision: settingsState.vision
   })
 }));
 
