@@ -41,7 +41,11 @@ vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
   return {
     ...actual,
-    useActivitySources: () => ({ activity: {}, sites: [] }),
+    useActivitySources: () => ({
+      activity: {},
+      wasteSites: [],
+      trackedSites: []
+    }),
     useAnalytics: () => ({}),
     useSchedules: () => ({
       showScheduleModal: false,

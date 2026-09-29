@@ -12,6 +12,7 @@ import { toDateKey } from '~/lib/time';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import { DEFAULT_ACTIVITY, DEFAULT_SITES } from '~/types/storage';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -111,6 +112,31 @@ describe('blockedHostTotals', () => {
     ).toEqual({ seconds: 90, blocks: 3, unblocks: 0 });
   });
 
+  it('許可サイトを含む全キーで引き当て、許可サイトのホストは許可サイトの行を読む', () => {
+    const withAllowed: ActivityLog = {
+      [TODAY]: {
+        'example.com': row({ blocks: 1, seconds: 60 }),
+        'music.example.com': row({ seconds: 500 })
+      }
+    };
+    expect(
+      blockedHostTotals(
+        withAllowed,
+        ['example.com', 'music.example.com'],
+        'www.example.com',
+        NOW
+      )
+    ).toEqual({ seconds: 60, blocks: 1, unblocks: 0 });
+    expect(
+      blockedHostTotals(
+        withAllowed,
+        ['example.com', 'music.example.com'],
+        'music.example.com',
+        NOW
+      )
+    ).toEqual({ seconds: 500, blocks: 0, unblocks: 0 });
+  });
+
   it('どのサイトにも属さないホスト名はすべて 0', () => {
     expect(blockedHostTotals(log, ['example.com'], 'other.com', NOW)).toEqual({
       seconds: 0,
@@ -139,7 +165,7 @@ describe('blockCountsByDomain', () => {
 });
 
 describe('useActivitySources', () => {
-  it('保存値の activity と、追跡中のサイトのキーを返す（ブロック設定の有無を問わない）', () => {
+  it('保存値の activity と、浪費時間の母集団（許可サイトを除く）・追跡中のサイトすべてのキーを返す', () => {
     const activity: ActivityLog = {
       [TODAY]: { 'x.com': row({ blocks: 1 }) }
     };
@@ -148,21 +174,28 @@ describe('useActivitySources', () => {
       'local:sites': sitesOf(
         blockedSite('x.com'),
         trackedSite('reddit.com'),
-        trackedSite('youtube.com', { youtube: youtubeFeatures() })
+        trackedSite('youtube.com', { youtube: youtubeFeatures() }),
+        allowedSite('music.youtube.com', true)
       )
     };
 
     const { result } = renderHook(() => useActivitySources());
 
     expect(result.current.activity).toBe(activity);
-    expect([...result.current.sites].sort()).toEqual([
+    expect([...result.current.wasteSites].sort()).toEqual([
+      'reddit.com',
+      'x.com',
+      'youtube.com'
+    ]);
+    expect([...result.current.trackedSites].sort()).toEqual([
+      'music.youtube.com',
       'reddit.com',
       'x.com',
       'youtube.com'
     ]);
   });
 
-  it('何も保存されていなければ activity は空で、追跡中のサイトも無い', () => {
+  it('何も保存されていなければ activity は空で、どちらのキーも無い', () => {
     storedValues.values = {
       'local:activity': DEFAULT_ACTIVITY,
       'local:sites': DEFAULT_SITES
@@ -170,6 +203,10 @@ describe('useActivitySources', () => {
 
     const { result } = renderHook(() => useActivitySources());
 
-    expect(result.current).toEqual({ activity: {}, sites: [] });
+    expect(result.current).toEqual({
+      activity: {},
+      wasteSites: [],
+      trackedSites: []
+    });
   });
 });

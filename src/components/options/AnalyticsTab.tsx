@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import { trackedSiteKeys } from '~/lib/siteService';
+import { wasteSiteKeys } from '~/lib/sitePopulation';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteEntry, TrackedSites } from '~/types/site';
 
@@ -59,7 +59,7 @@ export function AnalyticsTab({
   onDismissSupport
 }: AnalyticsTabProps) {
   const [newSiteDomain, setNewSiteDomain] = useState('');
-  const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
+  const sites = useMemo(() => wasteSiteKeys(trackedSites), [trackedSites]);
 
   const handleAddSite = async () => {
     const domain = newSiteDomain.trim().toLowerCase();

@@ -9,6 +9,7 @@ import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { SiteEntry } from '~/types/site';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -284,6 +285,101 @@ describe('AnalyticsSummary', () => {
       });
 
       expect(screen.getByText('unblockedOn: yesterday')).toBeInTheDocument();
+    });
+  });
+
+  describe('許可サイト', () => {
+    it('「許可」の印を出し、再ブロック・追跡停止・ブロック開始日・解除日は出さない', () => {
+      renderSummary([allowedSite('music.youtube.com', true)], {
+        activity: {
+          [keyDaysAgo(1)]: { 'music.youtube.com': row(0, 1) }
+        }
+      });
+
+      const item = screen.getByTestId('analytics-tracked-site');
+      expect(item).toHaveAttribute('data-status', 'allowed');
+      expect(screen.getByText('statusAllowed')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('analytics-reblock-button')
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('analytics-stop-tracking-button')
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/^blockedSince:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^unblockedOn:/)).not.toBeInTheDocument();
+    });
+
+    it('記録していれば、保持期間全体の表示時間を出す', () => {
+      renderSummary([allowedSite('music.youtube.com', true)], {
+        activity: {
+          [keyDaysAgo(10)]: { 'music.youtube.com': row(1800) },
+          [keyDaysAgo(0)]: { 'music.youtube.com': row(1800) }
+        }
+      });
+
+      expect(
+        screen.getByTestId('analytics-tracked-site-time')
+      ).toHaveTextContent('1h');
+      expect(
+        screen.queryByTestId('analytics-tracked-site-not-recording')
+      ).not.toBeInTheDocument();
+    });
+
+    it('記録していなければ、時間の代わりに「記録していません」を出す', () => {
+      renderSummary([allowedSite('music.youtube.com', false)]);
+
+      expect(
+        screen.getByTestId('analytics-tracked-site-not-recording')
+      ).toHaveTextContent('notRecording');
+      expect(
+        screen.queryByTestId('analytics-tracked-site-time')
+      ).not.toBeInTheDocument();
+    });
+
+    it('並びの最後に置く', () => {
+      renderSummary([
+        allowedSite('a.example', true),
+        siteOf({ domain: 'tracking.example', status: 'tracking' }),
+        siteOf({ domain: 'blocked.example', status: 'blocked' })
+      ]);
+
+      expect(
+        screen
+          .getAllByTestId('analytics-tracked-site')
+          .map((el) => el.getAttribute('data-status'))
+      ).toEqual(['blocked', 'tracking', 'allowed']);
+    });
+
+    it('一覧の合計に数えず、合計を出すかどうかの件数にも入れない', () => {
+      renderSummary(
+        [
+          siteOf({ domain: 'a.example', status: 'tracking' }),
+          siteOf({ domain: 'b.example', status: 'tracking' }),
+          allowedSite('music.youtube.com', true)
+        ],
+        {
+          activity: {
+            [keyDaysAgo(0)]: {
+              'a.example': row(600, 1),
+              'b.example': row(1200, 1),
+              'music.youtube.com': row(3600, 1)
+            }
+          }
+        }
+      );
+
+      expect(screen.getByText('totalWastedTime')).toBeInTheDocument();
+      expect(screen.getByText('30m')).toBeInTheDocument();
+      expect(screen.queryByText('1h 30m')).not.toBeInTheDocument();
+    });
+
+    it('解除済み 1 件と許可サイトだけなら合計は出さない', () => {
+      renderSummary([
+        siteOf({ domain: 'a.example', status: 'tracking' }),
+        allowedSite('music.youtube.com', true)
+      ]);
+
+      expect(screen.queryByText('totalWastedTime')).not.toBeInTheDocument();
     });
   });
 

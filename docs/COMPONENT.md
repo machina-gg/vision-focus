@@ -448,11 +448,12 @@ Esc で編集を取り消す。
 
 `src/components/features/AnalyticsChart/AnalyticsChart.tsx`。集計する日数は同ファイルの `CHART_DAYS`。
 
-| Prop     | 型                   | 省略時  | 説明                           |
-| -------- | -------------------- | ------- | ------------------------------ |
-| activity | `ActivityLog`        | 必須    | 日別・サイト別の閲覧時間の記録 |
-| sites    | `readonly SiteKey[]` | 必須    | 集計に含めるサイト             |
-| disabled | `boolean`            | `false` | 薄く表示して操作できなくする   |
+| Prop     | 型                     | 省略時  | 説明                                                                                     |
+| -------- | ---------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| activity | `ActivityLog`          | 必須    | 日別・サイト別の閲覧時間の記録                                                           |
+| sites    | `readonly SiteKey[]`   | 必須    | 集計に含めるサイト（variant の母集団）                                                   |
+| variant  | `'waste' \| 'allowed'` | 必須    | 数える時間の種類。浪費時間か許可サイトの時間かで、合計の見出しの文言と色だけを切り替える |
+| disabled | `boolean`              | `false` | 薄く表示して操作できなくする                                                             |
 
 ---
 
@@ -714,7 +715,7 @@ Esc で編集を取り消す。
 
 ### AnalyticsTab
 
-`src/components/options/AnalyticsTab.tsx`。`trackedSites` から集計の母集団（サイトキー）を作って子へ渡す。
+`src/components/options/AnalyticsTab.tsx`。`trackedSites` から浪費時間の母集団（`wasteSiteKeys`）を作ってランキングとレポートへ渡す。書き出しのカードと追跡中のサイト一覧には `trackedSites` をそのまま渡す。
 
 | Prop                   | 型                                     | 省略時 | 説明                                                    |
 | ---------------------- | -------------------------------------- | ------ | ------------------------------------------------------- |
@@ -813,12 +814,12 @@ Esc で編集を取り消す。
 
 `src/components/options/analytics/AnalyticsExportBar.tsx`
 
-| Prop         | 型                    | 省略時 | 説明                                         |
-| ------------ | --------------------- | ------ | -------------------------------------------- |
-| activity     | `ActivityLog`         | 必須   | 日別・サイト別の閲覧時間とブロック回数の記録 |
-| trackedSites | `TrackedSites`        | 必須   | 登録済みのサイト（書き出しとグラフの対象）   |
-| onRefresh    | `() => Promise<void>` | 必須   | 再読み込みボタンが押されたときに呼ぶ         |
-| onReset      | `() => void`          | 必須   | 確認のモーダルで削除が選ばれたときに呼ぶ     |
+| Prop         | 型                    | 省略時 | 説明                                                                                                                                      |
+| ------------ | --------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| activity     | `ActivityLog`         | 必須   | 日別・サイト別の閲覧時間とブロック回数の記録                                                                                              |
+| trackedSites | `TrackedSites`        | 必須   | 登録済みのサイト。書き出しと利用時間の推移は浪費時間の母集団で数え、許可サイトが 1 件以上あれば許可サイトの時間のグラフを別のカードに出す |
+| onRefresh    | `() => Promise<void>` | 必須   | 再読み込みボタンが押されたときに呼ぶ                                                                                                      |
+| onReset      | `() => void`          | 必須   | 確認のモーダルで削除が選ばれたときに呼ぶ                                                                                                  |
 
 ---
 
@@ -837,7 +838,7 @@ Esc で編集を取り消す。
 
 ### AnalyticsSummary
 
-`src/components/options/analytics/AnalyticsSummary.tsx`。状態（ブロック中・無効・計測のみ）の順に並べる。
+`src/components/options/analytics/AnalyticsSummary.tsx`。状態（ブロック中・無効・計測のみ・許可）の順に並べる。許可サイトの行は「許可」の印と保持期間全体の時間だけを出して操作を出さず、「時間を記録する」が OFF なら時間の代わりに「記録していません」を出す。一覧の合計は無効と計測のみの行だけを足す。
 
 | Prop           | 型                          | 省略時 | 説明                                           |
 | -------------- | --------------------------- | ------ | ---------------------------------------------- |
@@ -1260,12 +1261,13 @@ function useAnalytics(): {
 
 ### useActivitySources
 
-`src/hooks/useActivityStats.ts`。画面が導出に使う入力（事実の表 `activity` と、その母集団である追跡中のサイト）を保存値から読む。どちらも保存値の変更に追従する。
+`src/hooks/useActivityStats.ts`。画面が導出に使う入力（事実の表 `activity` と、浪費時間の母集団・追跡中のサイトすべてのキー）を保存値から読む。どれも保存値の変更に追従する。
 
 ```typescript
 interface ActivitySources {
   activity: ActivityLog;
-  sites: SiteKey[];
+  wasteSites: SiteKey[]; // 浪費時間の母集団（wasteSiteKeys）。今日の集計に使う
+  trackedSites: SiteKey[]; // 追跡中のサイトすべて。ホスト名の引き当て（blockedHostTotals）に使う
 }
 
 function useActivitySources(): ActivitySources;

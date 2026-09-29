@@ -2,13 +2,16 @@ import React, { useMemo } from 'react';
 import { Clock, RefreshCw, EyeOff, List } from 'lucide-react';
 
 import { Card, Button } from '~/components/ui';
+import { retentionRange } from '~/hooks/useActivityStats';
 import {
   daysBetween,
   lastUnblockedOn,
+  parseDateKey,
   secondsSinceUnblock,
+  siteTotals,
   totalSecondsSinceUnblock
 } from '~/lib/activityStats';
-import { hasBlock } from '~/lib/blockList';
+import { hasBlock, isAllowedSite } from '~/lib/blockList';
 import { formatTime, toDateKey } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import type { ActivityLog, DateKey } from '~/types/activity';
@@ -35,23 +38,52 @@ function formatRelativeDate(date: DateKey, today: DateKey): string {
   }
 }
 
-type TrackedSiteStatus = 'blocked' | 'disabled' | 'tracking';
+type TrackedSiteStatus = 'blocked' | 'disabled' | 'tracking' | 'allowed';
 
 const STATUS_ORDER: Record<TrackedSiteStatus, number> = {
   blocked: 0,
   disabled: 1,
-  tracking: 2
+  tracking: 2,
+  allowed: 3
 };
 
 const STATUS_LABEL_KEY: Record<TrackedSiteStatus, string> = {
   blocked: 'statusBlocked',
   disabled: 'statusBlockDisabled',
-  tracking: 'statusUnblocked'
+  tracking: 'statusUnblocked',
+  allowed: 'statusAllowed'
+};
+
+const ROW_STYLE: Record<
+  'blocked' | 'unblocked' | 'allowed',
+  { row: string; dot: string; badge: string }
+> = {
+  blocked: {
+    row: 'bg-success-50 border-success-100',
+    dot: 'bg-success-500',
+    badge: 'bg-success-100 text-success-700'
+  },
+  unblocked: {
+    row: 'bg-block-50 border-block-100',
+    dot: 'bg-block-500',
+    badge: 'bg-gray-100 text-gray-700'
+  },
+  allowed: {
+    row: 'bg-info-50 border-info-100',
+    dot: 'bg-info-500',
+    badge: 'bg-info-100 text-info-700'
+  }
 };
 
 function statusOf(site: SiteEntry): TrackedSiteStatus {
+  if (isAllowedSite(site)) return 'allowed';
   if (!hasBlock(site)) return 'tracking';
   return site.rule.enabled ? 'blocked' : 'disabled';
+}
+
+function rowStyleOf(status: TrackedSiteStatus): keyof typeof ROW_STYLE {
+  if (status === 'blocked' || status === 'allowed') return status;
+  return 'unblocked';
 }
 
 function blockAddedAt(site: SiteEntry): string {
@@ -62,7 +94,8 @@ interface TrackedSiteRow {
   site: SiteEntry;
   status: TrackedSiteStatus;
   unblockedOn: DateKey | null;
-  secondsSinceUnblock: number;
+  // 許可サイトは解除が無いので保持期間全体の時間、それ以外は解除後の時間
+  seconds: number;
 }
 
 /** AnalyticsSummary に渡す集計元とサイトごとの操作 */
@@ -78,7 +111,7 @@ interface AnalyticsSummaryProps {
 }
 
 /**
- * 計測中のサイトを状態（ブロック中・無効・計測のみ）の順に並べ、解除してからの時間とその合計を表示する
+ * 計測中のサイトを状態（ブロック中・無効・計測のみ・許可）の順に並べ、解除してからの時間とその合計（許可サイトは除く）を表示する
  * @param props 集計元とサイトごとの操作（各フィールドは AnalyticsSummaryProps）
  * @returns 計測中のサイトの一覧。サイトが無ければその案内
  */
@@ -91,12 +124,19 @@ export function AnalyticsSummary({
   const today = toDateKey(new Date());
 
   const allTrackedSites = useMemo(() => {
-    const rows: TrackedSiteRow[] = Object.values(trackedSites).map((site) => ({
-      site,
-      status: statusOf(site),
-      unblockedOn: lastUnblockedOn(activity, site.domain),
-      secondsSinceUnblock: secondsSinceUnblock(activity, site.domain, today)
-    }));
+    const retention = retentionRange(parseDateKey(today));
+    const rows: TrackedSiteRow[] = Object.values(trackedSites).map((site) => {
+      const status = statusOf(site);
+      return {
+        site,
+        status,
+        unblockedOn: lastUnblockedOn(activity, site.domain),
+        seconds:
+          status === 'allowed'
+            ? siteTotals(activity, site.domain, retention).seconds
+            : secondsSinceUnblock(activity, site.domain, today)
+      };
+    });
 
     return rows.sort((a, b) => {
       const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
@@ -109,7 +149,9 @@ export function AnalyticsSummary({
   }, [activity, trackedSites, today]);
 
   const unblockedSites = useMemo(() => {
-    return allTrackedSites.filter((row) => row.status !== 'blocked');
+    return allTrackedSites.filter(
+      (row) => row.status === 'disabled' || row.status === 'tracking'
+    );
   }, [allTrackedSites]);
 
   const hasTrackedSites = allTrackedSites.length > 0;
@@ -170,7 +212,10 @@ export function AnalyticsSummary({
                 <span className="text-sm font-medium text-gray-700">
                   {getMessage('totalWastedTime')}
                 </span>
-                <span className="text-lg font-bold text-block-600">
+                <span
+                  className="text-lg font-bold text-block-600"
+                  data-testid="analytics-tracked-sites-total"
+                >
                   {formatTime(totalWastedTime)}
                 </span>
               </div>
@@ -195,7 +240,7 @@ interface TrackedSiteItemProps {
 }
 
 /**
- * 計測中のサイト 1 件を、状態・ブロックした日・解除した日と解除してからの時間とともに表示する（ブロック中でなければ再ブロックのボタンを出し、ブロックも YouTube の設定も無いサイトには計測をやめるボタンも出す）
+ * 計測中のサイト 1 件を、状態・ブロックした日・解除した日と時間とともに表示する（ブロック中でも許可サイトでもなければ再ブロックのボタンを出し、ブロックも YouTube の設定も無いサイトには計測をやめるボタンも出す。許可サイトは印と時間だけで、記録していなければ時間の代わりにその旨を出す）
  * @param props 1 行分のサイトと操作（各フィールドは TrackedSiteItemProps）
  * @returns 計測中のサイトの 1 行
  */
@@ -207,28 +252,27 @@ function TrackedSiteItem({
 }: TrackedSiteItemProps) {
   const { site, status } = row;
   const isBlocked = status === 'blocked';
+  const isAllowed = isAllowedSite(site);
+  const hasActions = !isBlocked && !isAllowed;
+  const isNotRecording = isAllowedSite(site) && !site.rule.recordTime;
   const canStopTracking = !hasBlock(site) && site.youtube === null;
-  const bgColor = isBlocked ? 'bg-success-50' : 'bg-block-50';
-  const borderColor = isBlocked ? 'border-success-100' : 'border-block-100';
-  const dotColor = isBlocked ? 'bg-success-500' : 'bg-block-500';
-  const statusBgColor = isBlocked ? 'bg-success-100' : 'bg-gray-100';
-  const statusTextColor = isBlocked ? 'text-success-700' : 'text-gray-700';
+  const style = ROW_STYLE[rowStyleOf(status)];
 
   return (
     <div
-      className={`p-3 ${bgColor} rounded-lg border ${borderColor}`}
+      className={`p-3 ${style.row} rounded-lg border`}
       data-testid="analytics-tracked-site"
       data-status={status}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 ${dotColor} rounded-full`} />
+            <div className={`w-2 h-2 ${style.dot} rounded-full`} />
             <span className="font-medium text-gray-900 truncate">
               {site.domain}
             </span>
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusBgColor} ${statusTextColor}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${style.badge}`}
             >
               {getMessage(STATUS_LABEL_KEY[status])}
             </span>
@@ -242,24 +286,37 @@ function TrackedSiteItem({
               )}
             </p>
           )}
-          {!isBlocked && row.unblockedOn && (
+          {hasActions && row.unblockedOn && (
             <p className="text-sm text-gray-500">
               {getMessage('unblockedOn')}:{' '}
               {formatRelativeDate(row.unblockedOn, today)}
             </p>
           )}
 
-          {!isBlocked && (
+          {isNotRecording && (
+            <p
+              className="mt-2 text-sm text-gray-500"
+              data-testid="analytics-tracked-site-not-recording"
+            >
+              {getMessage('notRecording')}
+            </p>
+          )}
+          {!isBlocked && !isNotRecording && (
             <div className="mt-2 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-block-500" />
-              <span className="text-sm font-bold text-block-600">
-                {formatTime(row.secondsSinceUnblock)}
+              <Clock
+                className={`w-4 h-4 ${isAllowed ? 'text-info-500' : 'text-block-500'}`}
+              />
+              <span
+                className={`text-sm font-bold ${isAllowed ? 'text-info-600' : 'text-block-600'}`}
+                data-testid="analytics-tracked-site-time"
+              >
+                {formatTime(row.seconds)}
               </span>
             </div>
           )}
         </div>
 
-        {!isBlocked && (
+        {hasActions && (
           <div className="flex items-center gap-2">
             <Button
               data-testid="analytics-reblock-button"
