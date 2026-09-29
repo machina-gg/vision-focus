@@ -851,9 +851,9 @@
     "message": "Total time on unblocked sites",
     "description": "Total time on unblocked sites label"
   },
-  "totalTimeOnTrackedSites": {
-    "message": "Total time on tracked sites (last $DAYS$ days)",
-    "description": "Heading of the usage chart. The number of days is the chart period",
+  "totalWasteTime": {
+    "message": "Total wasted time (last $DAYS$ days)",
+    "description": "Heading of the wasted time chart. The number of days is the chart period",
     "placeholders": {
       "days": {
         "content": "$1",

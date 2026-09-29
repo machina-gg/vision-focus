@@ -94,7 +94,7 @@ describe('AnalyticsChart', () => {
       renderChart(activity, sites);
 
       expect(
-        screen.getByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
+        screen.getByText(`totalWasteTime(${CHART_DAYS})`)
       ).toBeInTheDocument();
       // 600 + 1200 + 3000 + 600 = 5400 秒
       expect(screen.getByText('1h 30m')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('AnalyticsChart', () => {
         screen.getByText(`totalTimeOnAllowedSites(${CHART_DAYS})`)
       ).toBeInTheDocument();
       expect(
-        screen.queryByText(`totalTimeOnTrackedSites(${CHART_DAYS})`)
+        screen.queryByText(`totalWasteTime(${CHART_DAYS})`)
       ).not.toBeInTheDocument();
       expect(screen.getByText('1h 30m')).toBeInTheDocument();
       const total = screen.getByTestId('analytics-chart-total');

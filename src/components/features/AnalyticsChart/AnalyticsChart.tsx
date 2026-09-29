@@ -39,7 +39,7 @@ const TOTAL_STYLE: Record<
   }
 > = {
   waste: {
-    messageKey: 'totalTimeOnTrackedSites',
+    messageKey: 'totalWasteTime',
     box: 'bg-block-50 border-block-100',
     label: 'text-block-600',
     value: 'text-block-700',
