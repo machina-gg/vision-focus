@@ -222,7 +222,6 @@ Tailwind の 4px 単位スケールを使用。以下のサイズを**推奨値*
 | Warning    | warning-100 | warning-700 |
 | Danger     | danger-100  | danger-700  |
 | Info       | info-100    | info-700    |
-| Premium    | premium-100 | premium-700 |
 
 ### 入力フォーム
 

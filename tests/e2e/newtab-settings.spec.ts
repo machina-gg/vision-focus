@@ -7,7 +7,7 @@ import {
   UI_TEXT
 } from './helpers';
 
-test.describe('NewTab 画面 - 設定とプレミアム機能', () => {
+test.describe('NewTab 画面 - 設定', () => {
   test.beforeEach(async ({ context, extensionId }) => {
     const page = await openNewTab(context, extensionId);
     await clearStorage(page);

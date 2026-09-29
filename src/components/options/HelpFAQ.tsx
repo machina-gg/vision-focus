@@ -55,16 +55,8 @@ export function HelpFAQ() {
             a: getMessage('helpFaqBackupAnswer')
           },
           {
-            q: getMessage('helpFaqPremium'),
-            a: getMessage('helpFaqPremiumAnswer')
-          },
-          {
             q: getMessage('helpFaqDataStorage'),
             a: getMessage('helpFaqDataStorageAnswer')
-          },
-          {
-            q: getMessage('helpFaqBlockLimit'),
-            a: getMessage('helpFaqBlockLimitAnswer')
           }
         ].map((item) => (
           <details key={item.q} className="group" data-testid="help-faq-item">
