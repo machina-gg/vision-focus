@@ -35,19 +35,21 @@ const BlocklistTabWrapper = () => {
     setBlockError('');
   };
 
-  const handleRemoveDomain = (domain: string) => {
+  const handleRemoveDomain = async (domain: string) => {
     const rest = { ...trackedSites };
     delete rest[domain];
     setTrackedSites(rest);
+    return null;
   };
 
-  const handleToggleDomain = (domain: string, enabled: boolean) => {
+  const handleToggleDomain = async (domain: string, enabled: boolean) => {
     const site = trackedSites[domain];
-    if (!site?.block) return;
+    if (!site?.block) return null;
     setTrackedSites({
       ...trackedSites,
       [domain]: { ...site, block: { ...site.block, enabled } }
     });
+    return null;
   };
 
   return (
@@ -62,7 +64,7 @@ const BlocklistTabWrapper = () => {
         onUpdateTimeLimit={() => {}}
         activity={{}}
         trackedSites={trackedSites}
-        onYouTubeChange={() => {}}
+        onYouTubeChange={async () => null}
       />
     </SettingsProvider>
   );
@@ -87,12 +89,12 @@ const meta = {
     setNewDomain: () => {},
     blockError: '',
     onAddDomain: () => {},
-    onRemoveDomain: () => {},
-    onToggleDomain: () => {},
+    onRemoveDomain: async () => null,
+    onToggleDomain: async () => null,
     onUpdateTimeLimit: () => {},
     activity: {},
     trackedSites: mockSites,
-    onYouTubeChange: () => {}
+    onYouTubeChange: async () => null
   }
 } satisfies Meta<typeof BlocklistTab>;
 
@@ -111,12 +113,12 @@ export const LongUrlInput: Story = {
         setNewDomain={() => {}}
         blockError=""
         onAddDomain={() => {}}
-        onRemoveDomain={() => {}}
-        onToggleDomain={() => {}}
+        onRemoveDomain={async () => null}
+        onToggleDomain={async () => null}
         onUpdateTimeLimit={() => {}}
         activity={{}}
         trackedSites={mockSites}
-        onYouTubeChange={() => {}}
+        onYouTubeChange={async () => null}
       />
     </SettingsProvider>
   )

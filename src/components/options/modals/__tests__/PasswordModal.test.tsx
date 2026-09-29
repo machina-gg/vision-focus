@@ -5,29 +5,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { PasswordModal } from '../PasswordModal';
 
-const password = vi.hoisted(() => ({
-  verifyPassword: vi.fn()
-}));
-
-vi.mock('~/lib/password', () => ({
-  verifyPassword: password.verifyPassword
-}));
-
 function renderModal(
   overrides: Partial<React.ComponentProps<typeof PasswordModal>> = {}
 ) {
   const onClose = vi.fn();
-  const onSuccess = vi.fn();
   const result = render(
     <PasswordModal
       isOpen
       onClose={onClose}
-      onSuccess={onSuccess}
-      passwordHash="stored-hash"
+      onSubmit={onSubmit}
       {...overrides}
     />
   );
-  return { onClose, onSuccess, ...result };
+  return { onClose, onSubmit, ...result };
 }
 
 const field = () => screen.getByLabelText('enterPassword');
@@ -38,8 +28,10 @@ function type(value: string) {
   fireEvent.change(field(), { target: { value } });
 }
 
+const onSubmit = vi.fn<(password: string) => Promise<string | null>>();
+
 beforeEach(() => {
-  password.verifyPassword.mockReset().mockResolvedValue(true);
+  onSubmit.mockReset().mockResolvedValue(null);
 });
 
 describe('PasswordModal', () => {
@@ -140,36 +132,32 @@ describe('PasswordModal', () => {
     });
   });
 
-  describe('照合', () => {
-    it('保存済みハッシュと入力値を渡して照合する', async () => {
-      renderModal({ passwordHash: 'stored-hash' });
+  describe('送信', () => {
+    it('照合はせず、入力値を呼び出し元へ渡す', async () => {
+      renderModal();
 
       type('secret');
       await act(async () => {
         fireEvent.click(screen.getByTestId('password-modal-confirm'));
       });
 
-      expect(password.verifyPassword).toHaveBeenCalledWith(
-        'secret',
-        'stored-hash'
-      );
+      expect(onSubmit).toHaveBeenCalledWith('secret');
     });
 
-    it('一致すれば onSuccess と onClose が呼ばれる', async () => {
-      const { onSuccess, onClose } = renderModal();
+    it('呼び出し元が成功（null）を返せば閉じる', async () => {
+      const { onClose } = renderModal();
 
       type('secret');
       await act(async () => {
         fireEvent.click(screen.getByTestId('password-modal-confirm'));
       });
 
-      expect(onSuccess).toHaveBeenCalledTimes(1);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('一致しなければ誤りを表示し、onSuccess は呼ばれない', async () => {
-      password.verifyPassword.mockResolvedValue(false);
-      const { onSuccess, onClose } = renderModal();
+    it('呼び出し元が失敗の文言を返せばそれを出し、閉じない', async () => {
+      onSubmit.mockResolvedValue('passwordIncorrect');
+      const { onClose } = renderModal();
 
       type('wrong');
       await act(async () => {
@@ -177,13 +165,12 @@ describe('PasswordModal', () => {
       });
 
       expect(screen.getByText('passwordIncorrect')).toBeInTheDocument();
-      expect(onSuccess).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('照合が例外で終わっても onSuccess は呼ばれない', async () => {
-      password.verifyPassword.mockRejectedValue(new Error('crypto error'));
-      const { onSuccess } = renderModal();
+    it('呼び出し元が例外で終われば照合失敗の文言を出し、閉じない', async () => {
+      onSubmit.mockRejectedValue(new Error('disconnected'));
+      const { onClose } = renderModal();
 
       type('secret');
       await act(async () => {
@@ -193,21 +180,21 @@ describe('PasswordModal', () => {
       expect(
         screen.getByText('passwordVerificationFailed')
       ).toBeInTheDocument();
-      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('Enter キーでも照合できる', async () => {
-      const { onSuccess } = renderModal();
+    it('Enter キーでも送れる', async () => {
+      renderModal();
 
       type('secret');
       await act(async () => {
         fireEvent.keyDown(field(), { key: 'Enter' });
       });
 
-      expect(onSuccess).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith('secret');
     });
 
-    it('Enter 以外のキーでは照合しない', async () => {
+    it('Enter 以外のキーでは送らない', async () => {
       renderModal();
 
       type('secret');
@@ -215,27 +202,25 @@ describe('PasswordModal', () => {
         fireEvent.keyDown(field(), { key: 'a' });
       });
 
-      expect(password.verifyPassword).not.toHaveBeenCalled();
+      expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it('未入力のまま Enter を押しても照合しない', async () => {
-      // 見出しの既定文言と区別するため title を渡して描画する
+    it('未入力のまま Enter を押しても送らない', async () => {
       renderModal({ title: '解除の確認' });
 
       await act(async () => {
         fireEvent.keyDown(field(), { key: 'Enter' });
       });
 
-      expect(password.verifyPassword).not.toHaveBeenCalled();
+      expect(onSubmit).not.toHaveBeenCalled();
       expect(screen.queryByText('passwordRequired')).not.toBeInTheDocument();
     });
 
-    it('未入力かつ照合中に Enter を押しても照合しない', async () => {
-      // 照合中は入力欄を空にできないため、照合を解決させないままその最中の Enter を見る
-      let resolveVerify: (value: boolean) => void = () => undefined;
-      password.verifyPassword.mockReturnValue(
-        new Promise<boolean>((resolve) => {
-          resolveVerify = resolve;
+    it('送信中に Enter を押しても二重に送らない', async () => {
+      let resolveSubmit: (value: string | null) => void = () => undefined;
+      onSubmit.mockReturnValue(
+        new Promise<string | null>((resolve) => {
+          resolveSubmit = resolve;
         })
       );
       renderModal();
@@ -244,21 +229,18 @@ describe('PasswordModal', () => {
       await act(async () => {
         fireEvent.click(screen.getByTestId('password-modal-confirm'));
       });
-      expect(password.verifyPassword).toHaveBeenCalledTimes(1);
-
       await act(async () => {
         fireEvent.keyDown(field(), { key: 'Enter' });
       });
 
-      expect(password.verifyPassword).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledTimes(1);
 
       await act(async () => {
-        resolveVerify(true);
+        resolveSubmit(null);
       });
     });
 
-    it('空白だけでも確認ボタンを押せ、Enter で照合する', async () => {
-      // 空白はパスワードとして成立する文字なので、未入力とは区別して通す
+    it('空白だけでも確認ボタンを押せ、そのまま渡す', async () => {
       renderModal();
 
       type(' ');
@@ -268,14 +250,14 @@ describe('PasswordModal', () => {
         fireEvent.keyDown(field(), { key: 'Enter' });
       });
 
-      expect(password.verifyPassword).toHaveBeenCalledWith(' ', 'stored-hash');
+      expect(onSubmit).toHaveBeenCalledWith(' ');
     });
 
-    it('照合中は確認ボタンが待機表示になり、押せない', async () => {
-      let resolveVerify: (value: boolean) => void = () => undefined;
-      password.verifyPassword.mockReturnValue(
-        new Promise<boolean>((resolve) => {
-          resolveVerify = resolve;
+    it('送信中は確認ボタンが待機表示になり、押せない', async () => {
+      let resolveSubmit: (value: string | null) => void = () => undefined;
+      onSubmit.mockReturnValue(
+        new Promise<string | null>((resolve) => {
+          resolveSubmit = resolve;
         })
       );
       renderModal();
@@ -290,14 +272,14 @@ describe('PasswordModal', () => {
       expect(confirm).toBeDisabled();
 
       await act(async () => {
-        resolveVerify(true);
+        resolveSubmit(null);
       });
     });
   });
 
   describe('開き直したときの状態', () => {
     it('前回の入力とエラーが残らない', async () => {
-      password.verifyPassword.mockResolvedValue(false);
+      onSubmit.mockResolvedValue('passwordIncorrect');
       const { rerender } = renderModal();
 
       type('wrong');
@@ -307,21 +289,9 @@ describe('PasswordModal', () => {
       expect(screen.getByText('passwordIncorrect')).toBeInTheDocument();
 
       rerender(
-        <PasswordModal
-          isOpen={false}
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-          passwordHash="stored-hash"
-        />
+        <PasswordModal isOpen={false} onClose={vi.fn()} onSubmit={onSubmit} />
       );
-      rerender(
-        <PasswordModal
-          isOpen
-          onClose={vi.fn()}
-          onSuccess={vi.fn()}
-          passwordHash="stored-hash"
-        />
-      );
+      rerender(<PasswordModal isOpen onClose={vi.fn()} onSubmit={onSubmit} />);
 
       expect(field()).toHaveValue('');
       expect(screen.queryByText('passwordIncorrect')).not.toBeInTheDocument();
@@ -330,12 +300,12 @@ describe('PasswordModal', () => {
 
   describe('キャンセル', () => {
     it('キャンセルを押すと onClose だけが呼ばれる', () => {
-      const { onClose, onSuccess } = renderModal();
+      const { onClose } = renderModal();
 
       fireEvent.click(screen.getByTestId('password-modal-cancel'));
 
       expect(onClose).toHaveBeenCalledTimes(1);
-      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onSubmit).not.toHaveBeenCalled();
     });
   });
 });

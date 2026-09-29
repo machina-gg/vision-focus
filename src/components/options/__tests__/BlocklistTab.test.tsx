@@ -92,10 +92,10 @@ function renderTab({
   const handlers = {
     setNewDomain: vi.fn(),
     onAddDomain: vi.fn(),
-    onRemoveDomain: vi.fn(),
-    onToggleDomain: vi.fn(),
+    onRemoveDomain: vi.fn(async () => null as string | null),
+    onToggleDomain: vi.fn(async () => null as string | null),
     onUpdateTimeLimit: vi.fn(),
-    onYouTubeChange: vi.fn()
+    onYouTubeChange: vi.fn(async () => null as string | null)
   };
 
   render(
@@ -400,6 +400,72 @@ describe('BlocklistTab', () => {
 
       expect(handlers.onRemoveDomain).not.toHaveBeenCalled();
     });
+
+    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
+      setSettings({
+        sites: [itemOf()],
+        password: { enabled: true, passwordHash: null }
+      });
+      renderTab();
+
+      fireEvent.click(screen.getByTestId('blocklist-item-remove'));
+
+      expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
+    });
+
+    it('入力したパスワードを添えて削除を依頼し、成功したら閉じる', async () => {
+      const handlers = renderTab();
+
+      fireEvent.click(screen.getByTestId('blocklist-item-remove'));
+      fireEvent.change(screen.getByLabelText('enterPassword'), {
+        target: { value: 'secret' }
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('password-modal-confirm'));
+      });
+
+      expect(handlers.onRemoveDomain).toHaveBeenCalledWith(
+        'example.com',
+        'secret'
+      );
+      expect(
+        screen.queryByTestId('password-modal-confirm')
+      ).not.toBeInTheDocument();
+    });
+
+    it('入力したパスワードを添えて無効化を依頼する', async () => {
+      const handlers = renderTab();
+
+      fireEvent.click(screen.getByTestId('blocklist-item-toggle'));
+      fireEvent.change(screen.getByLabelText('enterPassword'), {
+        target: { value: 'secret' }
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('password-modal-confirm'));
+      });
+
+      expect(handlers.onToggleDomain).toHaveBeenCalledWith(
+        'example.com',
+        false,
+        'secret'
+      );
+    });
+
+    it('依頼が失敗したら応答の文言をモーダルに出し、閉じない', async () => {
+      const onRemoveDomain = vi.fn(async () => 'passwordIncorrect');
+      renderTab({ onRemoveDomain });
+
+      fireEvent.click(screen.getByTestId('blocklist-item-remove'));
+      fireEvent.change(screen.getByLabelText('enterPassword'), {
+        target: { value: 'wrong' }
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('password-modal-confirm'));
+      });
+
+      expect(screen.getByText('passwordIncorrect')).toBeInTheDocument();
+      expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
+    });
   });
 
   describe('YouTube 設定の受け渡し', () => {
@@ -506,10 +572,10 @@ describe('BlocklistTab', () => {
       });
 
       expect(handlers.onYouTubeChange).toHaveBeenCalledTimes(1);
-      expect(handlers.onYouTubeChange).toHaveBeenCalledWith({
-        ...youtubeOnValue,
-        enabled: false
-      });
+      expect(handlers.onYouTubeChange).toHaveBeenCalledWith(
+        { ...youtubeOnValue, enabled: false },
+        undefined
+      );
     });
 
     it('ON にする操作は確認なしで反映する', () => {

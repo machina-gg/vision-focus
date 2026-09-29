@@ -1,11 +1,15 @@
 import { useCallback } from 'react';
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 
 interface UseYouTubeSettingsReturn {
-  /** YouTube 設定画面の入力値の保存を background へ依頼する */
-  handleYouTubeChange: (youtube: YouTubeSettingsInput) => Promise<void>;
+  /** YouTube 設定画面の入力値の保存を background へ依頼する（パスワード保護中にアクセスのブロックを外すときは password を添える）。失敗の文言、保存したら null を返す */
+  handleYouTubeChange: (
+    youtube: YouTubeSettingsInput,
+    password?: string
+  ) => Promise<string | null>;
 }
 
 /**
@@ -14,11 +18,15 @@ interface UseYouTubeSettingsReturn {
  */
 export function useYouTubeSettings(): UseYouTubeSettingsReturn {
   const handleYouTubeChange = useCallback(
-    async (youtube: YouTubeSettingsInput) => {
+    async (youtube: YouTubeSettingsInput, password?: string) => {
       try {
-        await sendMessage('update-youtube-settings', { youtube });
+        const response = await sendMessage('update-youtube-settings', {
+          youtube,
+          password
+        });
+        return response.success ? null : messageErrorText(response.error);
       } catch {
-        // 失敗しても表示は次の sites の変更で同期される
+        return messageErrorText(undefined);
       }
     },
     []

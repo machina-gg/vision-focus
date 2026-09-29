@@ -2,6 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
 
+vi.mock('~/lib/settingsService', () => ({
+  checkUnblockPassword: vi.fn()
+}));
+
 vi.mock('~/lib/siteService', () => ({
   setBlockEnabled: vi.fn()
 }));
@@ -19,6 +23,7 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
+import { checkUnblockPassword } from '~/lib/settingsService';
 import { setBlockEnabled } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { trackEvent } from '~/lib/analytics';
@@ -43,6 +48,7 @@ describe('toggle-block ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(setBlockEnabled).mockResolvedValue(before(true));
+    vi.mocked(checkUnblockPassword).mockResolvedValue(null);
   });
 
   describe('入力検証', () => {
@@ -145,5 +151,40 @@ describe('toggle-block ハンドラ', () => {
       expect(recordActivity).not.toHaveBeenCalled();
       expect(trackEvent).not.toHaveBeenCalled();
     });
+  });
+
+  describe('パスワード保護', () => {
+    it.each([
+      ['無効化は弱める操作として照合する', false, true],
+      ['有効化は弱めない操作として照合する', true, false]
+    ])('%s', async (_label, enabled, weakens) => {
+      await invoke(handler, {
+        domain: 'example.com',
+        enabled,
+        password: 'secret'
+      });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', weakens);
+    });
+
+    it.each([
+      ['required', 'password-required'],
+      ['mismatch', 'password-mismatch']
+    ] as const)(
+      '%s で拒まれたら %s を返し、何も書かない',
+      async (rejection, code) => {
+        vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
+
+        const result = await invoke<Response>(handler, {
+          domain: 'example.com',
+          enabled: false
+        });
+
+        expect(result).toEqual({ success: false, error: { code } });
+        expect(setBlockEnabled).not.toHaveBeenCalled();
+        expect(updateBlockRules).not.toHaveBeenCalled();
+        expect(recordActivity).not.toHaveBeenCalled();
+      }
+    );
   });
 });

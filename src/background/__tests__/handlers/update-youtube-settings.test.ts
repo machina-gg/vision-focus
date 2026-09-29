@@ -6,6 +6,14 @@ vi.mock('~/lib/siteService', () => ({
   updateYouTubeSite: vi.fn()
 }));
 
+vi.mock('~/lib/settingsService', () => ({
+  checkUnblockPassword: vi.fn()
+}));
+
+vi.mock('~/lib/storage', () => ({
+  getSites: vi.fn()
+}));
+
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
@@ -15,7 +23,9 @@ vi.mock('~/lib/activityService', () => ({
   recordActivity: vi.fn()
 }));
 
+import { checkUnblockPassword } from '~/lib/settingsService';
 import { updateYouTubeSite } from '~/lib/siteService';
+import { getSites } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
@@ -47,6 +57,7 @@ const youtube = (
 });
 
 function givenStored(site: TrackedSite | null) {
+  vi.mocked(getSites).mockResolvedValue(site ? { [YOUTUBE_DOMAIN]: site } : {});
   vi.mocked(updateYouTubeSite).mockResolvedValue(site);
 }
 
@@ -61,6 +72,7 @@ describe('update-youtube-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     givenStored(null);
+    vi.mocked(checkUnblockPassword).mockResolvedValue(null);
   });
 
   describe('入力検証', () => {
@@ -256,5 +268,66 @@ describe('update-youtube-settings ハンドラ', () => {
 
       expect(recordActivity).not.toHaveBeenCalled();
     });
+  });
+
+  describe('パスワード保護', () => {
+    it.each([
+      [
+        '有効なアクセスブロックを外すのは弱める操作',
+        blocking,
+        youtube({ enabled: true, blockAccess: false }),
+        true
+      ],
+      [
+        'YouTube ごと無効にして有効なアクセスブロックが外れるのは弱める操作',
+        blocking,
+        youtube({ enabled: false }),
+        true
+      ],
+      [
+        'アクセスブロックが無効なまま機能を外すのは弱めない操作',
+        notBlocking,
+        youtube({ enabled: false }),
+        false
+      ],
+      [
+        'アクセスブロックを掛けるのは弱めない操作',
+        notBlocking,
+        youtube({ enabled: true, blockAccess: true }),
+        false
+      ],
+      [
+        'アクセスブロックが有効のまま他を変えるのは弱めない操作',
+        blocking,
+        youtube({ enabled: true, blockAccess: true, hideShorts: true }),
+        false
+      ]
+    ])('%s', async (_label, stored, next, weakens) => {
+      givenStored(stored);
+
+      await invoke(handler, { youtube: next, password: 'secret' });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', weakens);
+    });
+
+    it.each([
+      ['required', 'password-required'],
+      ['mismatch', 'password-mismatch']
+    ] as const)(
+      '%s で拒まれたら %s を返し、何も書かない',
+      async (rejection, code) => {
+        givenStored(blocking);
+        vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
+
+        const result = await invoke<Response>(handler, {
+          youtube: youtube({ enabled: true, blockAccess: false })
+        });
+
+        expect(result).toEqual({ success: false, error: { code } });
+        expect(updateYouTubeSite).not.toHaveBeenCalled();
+        expect(updateBlockRules).not.toHaveBeenCalled();
+        expect(recordActivity).not.toHaveBeenCalled();
+      }
+    );
   });
 });

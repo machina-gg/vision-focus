@@ -15,6 +15,7 @@ vi.mock('~/lib/storage', () => ({
 
 import { sendMessage } from '~/lib/messaging';
 import { settingsItem, sitesItem } from '~/lib/storage';
+import { stubI18nWithLocale } from '~/test/i18n';
 
 const value: YouTubeSettingsInput = {
   enabled: true,
@@ -27,6 +28,8 @@ const value: YouTubeSettingsInput = {
 };
 
 describe('useYouTubeSettings', () => {
+  stubI18nWithLocale('ja');
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(sendMessage).mockResolvedValue({ success: true });
@@ -46,14 +49,45 @@ describe('useYouTubeSettings', () => {
     expect(sitesItem.setValue).not.toHaveBeenCalled();
   });
 
-  it('送信が例外を投げても外に伝播しない', async () => {
+  it('送信が例外を投げても外に伝播させず、汎用の失敗の文言を返す', async () => {
     vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
     const { result } = renderHook(() => useYouTubeSettings());
 
-    await expect(
-      act(async () => {
-        await result.current.handleYouTubeChange(value);
-      })
-    ).resolves.not.toThrow();
+    let failure: string | null = null;
+    await act(async () => {
+      failure = await result.current.handleYouTubeChange(value);
+    });
+
+    expect(failure).toBe('操作できませんでした。もう一度お試しください');
+  });
+
+  it('パスワードを添えて依頼し、成功なら null を返す', async () => {
+    const { result } = renderHook(() => useYouTubeSettings());
+
+    let failure: string | null = 'unset';
+    await act(async () => {
+      failure = await result.current.handleYouTubeChange(value, 'secret');
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith('update-youtube-settings', {
+      youtube: value,
+      password: 'secret'
+    });
+    expect(failure).toBeNull();
+  });
+
+  it('照合に失敗したら失敗の文言を返す', async () => {
+    vi.mocked(sendMessage).mockResolvedValue({
+      success: false,
+      error: { code: 'password-required' }
+    });
+    const { result } = renderHook(() => useYouTubeSettings());
+
+    let failure: string | null = null;
+    await act(async () => {
+      failure = await result.current.handleYouTubeChange(value);
+    });
+
+    expect(failure).toBe('パスワードが必要です');
   });
 });

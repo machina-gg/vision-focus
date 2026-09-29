@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { Ban, Shield, TrendingUp, Clock, Timer, Unlock } from 'lucide-react';
 
@@ -16,7 +16,6 @@ import {
   todayStats,
   useActivitySources,
   useCurrentDomain,
-  usePasswordVerification,
   usePopupActions,
   useResolvedPreset
 } from '~/hooks';
@@ -46,12 +45,7 @@ function PopupAppContent() {
     isPasswordProtected
   } = usePopupActions({ settings, clearDomain });
 
-  const passwordVerification = usePasswordVerification({
-    passwordHash: settings?.password?.passwordHash ?? null,
-    onSuccess: async () => {
-      await handlePausedChange(true);
-    }
-  });
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
     if (!settings) return;
@@ -63,12 +57,12 @@ function PopupAppContent() {
   const handlePausedChangeWithPassword = useCallback(
     async (paused: boolean) => {
       if (paused && isPasswordProtected) {
-        passwordVerification.openModal();
+        setIsPasswordModalOpen(true);
         return;
       }
       await handlePausedChange(paused);
     },
-    [isPasswordProtected, passwordVerification, handlePausedChange]
+    [isPasswordProtected, handlePausedChange]
   );
 
   return (
@@ -223,14 +217,11 @@ function PopupAppContent() {
         }
       />
 
-      {settings?.password?.passwordHash && (
+      {isPasswordProtected && (
         <PasswordModal
-          isOpen={passwordVerification.showModal}
-          onClose={passwordVerification.closeModal}
-          onSuccess={async () => {
-            await handlePausedChange(true);
-          }}
-          passwordHash={settings.password.passwordHash}
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          onSubmit={(password) => handlePausedChange(true, password)}
           title={getMessage('passwordRequired')}
           description={getMessage('passwordRequiredForPause')}
         />

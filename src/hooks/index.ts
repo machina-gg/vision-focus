@@ -3,7 +3,6 @@ export * from './useAnalytics';
 export * from './useBackgroundPreload';
 export * from './useBlocklist';
 export * from './useCurrentDomain';
-export * from './usePasswordVerification';
 export * from './usePopupActions';
 export * from './usePresets';
 export * from './useResolvedPreset';

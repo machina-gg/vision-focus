@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  hashPassword,
-  verifyPassword,
-  validatePasswordStrength
-} from '~/lib/password';
+import { hashPassword, validatePasswordStrength } from '~/lib/password';
 
 describe('hashPassword', () => {
   it('文字列のSHA-256ハッシュ（16進数）を返す', async () => {
@@ -32,46 +28,14 @@ describe('hashPassword', () => {
   });
 });
 
-describe('verifyPassword', () => {
-  it('正しいパスワードでtrueを返す', async () => {
-    const hash = await hashPassword('correct');
-    const result = await verifyPassword('correct', hash);
-    expect(result).toBe(true);
-  });
-
-  it('間違ったパスワードでfalseを返す', async () => {
-    const hash = await hashPassword('correct');
-    const result = await verifyPassword('wrong', hash);
-    expect(result).toBe(false);
-  });
-});
-
 describe('validatePasswordStrength', () => {
-  it('4文字未満は無効（passwordTooShort）', () => {
-    const result = validatePasswordStrength('abc');
-    expect(result.isValid).toBe(false);
-    expect(result.errorKey).toBe('passwordTooShort');
-  });
-
-  it('100文字超は無効（passwordTooLong）', () => {
-    const result = validatePasswordStrength('a'.repeat(101));
-    expect(result.isValid).toBe(false);
-    expect(result.errorKey).toBe('passwordTooLong');
-  });
-
-  it('4文字以上100文字以下は有効', () => {
-    const result = validatePasswordStrength('abcd');
-    expect(result.isValid).toBe(true);
-    expect(result.errorKey).toBeNull();
-  });
-
-  it('ちょうど100文字は有効', () => {
-    const result = validatePasswordStrength('a'.repeat(100));
-    expect(result.isValid).toBe(true);
-  });
-
-  it('ちょうど4文字は有効', () => {
-    const result = validatePasswordStrength('abcd');
-    expect(result.isValid).toBe(true);
+  it.each([
+    ['4文字未満', 'abc', 'too-short'],
+    ['空', '', 'too-short'],
+    ['100文字超', 'a'.repeat(101), 'too-long'],
+    ['ちょうど4文字', 'abcd', null],
+    ['ちょうど100文字', 'a'.repeat(100), null]
+  ])('%s は %s', (_label, password, expected) => {
+    expect(validatePasswordStrength(password)).toBe(expected);
   });
 });

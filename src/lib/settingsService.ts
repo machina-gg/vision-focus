@@ -3,6 +3,7 @@
 import { storage as extensionStorage } from '@wxt-dev/storage';
 
 import { MAX_PRESETS } from '~/constants/limits';
+import { hashPassword } from '~/lib/password';
 import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
 import { createSerialQueue } from '~/lib/serialQueue';
 import {
@@ -25,6 +26,7 @@ import {
   type AppSettings,
   type DashboardPreset,
   type NotificationSettings,
+  type PasswordSettings,
   type Schedule,
   type UnblockConfirmSettings,
   type VisionSettings
@@ -453,4 +455,112 @@ export async function setGoalText(goalText: string): Promise<void> {
     },
     result: undefined
   }));
+}
+
+/** パスワードの書き込み・照合を拒んだ理由 */
+export type PasswordRejection =
+  /** パスワードが既に設定されている */
+  | 'already-set'
+  /** パスワードが設定されていない */
+  | 'not-set'
+  /** 添えられたパスワードが保存済みのものと一致しない */
+  | 'mismatch'
+  /** パスワード保護中にブロックを弱める操作へパスワードが添えられていない */
+  | 'required';
+
+function isProtected(password: PasswordSettings): boolean {
+  return password.enabled && password.passwordHash !== null;
+}
+
+function matchCurrent(
+  password: PasswordSettings,
+  inputHash: string
+): 'not-set' | 'mismatch' | null {
+  if (!isProtected(password)) return 'not-set';
+  return password.passwordHash === inputHash ? null : 'mismatch';
+}
+
+/**
+ * パスワードを設定してパスワード保護を始める（強度は検査済みのものを受ける。保存するのは SHA-256 の 16 進）
+ * @param password 新しいパスワード（平文）
+ * @returns 拒んだ理由（already-set）。設定したら null
+ */
+export async function setPassword(
+  password: string
+): Promise<'already-set' | null> {
+  const passwordHash = await hashPassword(password);
+  return mutate((current) => {
+    if (isProtected(current.password)) return { result: 'already-set' };
+    return {
+      settings: { ...current, password: { enabled: true, passwordHash } },
+      result: null
+    };
+  });
+}
+
+/**
+ * 今のパスワードを保存済みの値で照合してから、新しいパスワードに置き換える（新しいパスワードの強度は検査済みのものを受ける）
+ * @param currentPassword 照合する今のパスワード（平文）
+ * @param newPassword 新しいパスワード（平文）
+ * @returns 拒んだ理由（not-set / mismatch）。置き換えたら null
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<'not-set' | 'mismatch' | null> {
+  const [currentHash, passwordHash] = await Promise.all([
+    hashPassword(currentPassword),
+    hashPassword(newPassword)
+  ]);
+  return mutate((current) => {
+    const rejection = matchCurrent(current.password, currentHash);
+    if (rejection) return { result: rejection };
+    return {
+      settings: { ...current, password: { enabled: true, passwordHash } },
+      result: null
+    };
+  });
+}
+
+/**
+ * 今のパスワードを保存済みの値で照合してから、パスワード保護をやめる
+ * @param currentPassword 照合する今のパスワード（平文）
+ * @returns 拒んだ理由（not-set / mismatch）。やめたら null
+ */
+export async function removePassword(
+  currentPassword: string
+): Promise<'not-set' | 'mismatch' | null> {
+  const currentHash = await hashPassword(currentPassword);
+  return mutate((current) => {
+    const rejection = matchCurrent(current.password, currentHash);
+    if (rejection) return { result: rejection };
+    return {
+      settings: {
+        ...current,
+        password: { enabled: false, passwordHash: null }
+      },
+      result: null
+    };
+  });
+}
+
+/**
+ * パスワード保護中に、操作に添えられたパスワードを保存済みの値で照合する（保護していなければ常に通す。添えられていれば弱めない操作でも照合する）
+ * @param password 操作に添えられたパスワード（平文）。無ければ undefined
+ * @param weakens その操作がブロックを弱めるか（true なら保護中はパスワードを必須にする）
+ * @returns 拒んだ理由（required / mismatch）。通すなら null
+ */
+export async function checkUnblockPassword(
+  password: string | undefined,
+  weakens: boolean
+): Promise<'required' | 'mismatch' | null> {
+  const inputHash =
+    password === undefined ? null : await hashPassword(password);
+  return mutate((current) => {
+    if (!isProtected(current.password)) return { result: null };
+    if (inputHash === null) return { result: weakens ? 'required' : null };
+    return {
+      result: current.password.passwordHash === inputHash ? null : 'mismatch'
+    };
+  });
 }

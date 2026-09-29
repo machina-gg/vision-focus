@@ -88,7 +88,7 @@
 | ScheduleModal               | `modals/`    | スケジュールの追加・編集のモーダル                                     |
 | NewPresetModal              | `modals/`    | 新しいプリセットの名前を入力するモーダル                               |
 | DeletePresetModal           | `modals/`    | プリセット削除の確認モーダル                                           |
-| PasswordModal               | `modals/`    | パスワードを入力させて照合するモーダル                                 |
+| PasswordModal               | `modals/`    | パスワードを入力させて呼び出し元へ渡すモーダル                         |
 | UnblockConfirmModal         | `modals/`    | ブロックの削除・無効化を長押しで確定させる確認モーダル                 |
 | AnalyticsOptInModal         | `modals/`    | 匿名の利用統計を共有するかを尋ねるダイアログ                           |
 
@@ -661,18 +661,18 @@ Esc で編集を取り消す。
 
 `src/components/options/BlocklistTab.tsx`。一覧は `blockListSites` で導く。無効化・削除の確認は [useUnblockGuard](#useunblockguard)、YouTube の設定の保存は [useYouTubeSettings](#useyoutubesettings) を参照。
 
-| Prop              | 型                                                       | 省略時 | 説明                                                       |
-| ----------------- | -------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| newDomain         | `string`                                                 | 必須   | 追加欄に入力中のドメイン                                   |
-| setNewDomain      | `(value: string) => void`                                | 必須   | 追加欄の入力の変更を受け取る                               |
-| blockError        | `string`                                                 | 必須   | 追加に失敗した理由（空なら出さない）                       |
-| onAddDomain       | `() => void`                                             | 必須   | 追加ボタンが押されたときに呼ぶ                             |
-| onRemoveDomain    | `(domain: string) => void`                               | 必須   | 解除の確認を通ったあとに、削除するドメインを受け取る       |
-| onToggleDomain    | `(domain: string, enabled: boolean) => void`             | 必須   | 有効・無効の切り替えを受け取る（無効化は確認を通ったあと） |
-| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void` | 必須   | 時間制限の変更を受け取る（null なら制限を外す）            |
-| activity          | `ActivityLog`                                            | 必須   | 今日の使用時間とブロック回数を出すための記録               |
-| trackedSites      | `TrackedSites`                                           | 必須   | 登録済みのサイト（ブロック設定のあるものを一覧に出す）     |
-| onYouTubeChange   | `(youtube: YouTubeSettingsInput) => void`                | 必須   | YouTube の設定の変更を受け取る                             |
+| Prop              | 型                                                                                 | 省略時 | 説明                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| newDomain         | `string`                                                                           | 必須   | 追加欄に入力中のドメイン                                                                                      |
+| setNewDomain      | `(value: string) => void`                                                          | 必須   | 追加欄の入力の変更を受け取る                                                                                  |
+| blockError        | `string`                                                                           | 必須   | 追加に失敗した理由（空なら出さない）                                                                          |
+| onAddDomain       | `() => void`                                                                       | 必須   | 追加ボタンが押されたときに呼ぶ                                                                                |
+| onRemoveDomain    | `(domain: string, password?: string) => Promise<string \| null>`                   | 必須   | 解除の確認を通ったあとに、削除するドメインと入力されたパスワードを受け取る。失敗の文言（成功なら null）を返す |
+| onToggleDomain    | `(domain: string, enabled: boolean, password?: string) => Promise<string \| null>` | 必須   | 有効・無効の切り替えを受け取る（無効化は確認を通ったあと）。失敗の文言（成功なら null）を返す                 |
+| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void`                           | 必須   | 時間制限の変更を受け取る（null なら制限を外す）                                                               |
+| activity          | `ActivityLog`                                                                      | 必須   | 今日の使用時間とブロック回数を出すための記録                                                                  |
+| trackedSites      | `TrackedSites`                                                                     | 必須   | 登録済みのサイト（ブロック設定のあるものを一覧に出す）                                                        |
+| onYouTubeChange   | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>`    | 必須   | YouTube の設定の変更を受け取る。失敗の文言（成功なら null）を返す                                             |
 
 ---
 
@@ -735,7 +735,6 @@ Esc で編集を取り消す。
 
 | Prop                   | 型                                                    | 省略時 | 説明                                       |
 | ---------------------- | ----------------------------------------------------- | ------ | ------------------------------------------ |
-| onPasswordUpdate       | `(settings: PasswordSettings) => Promise<void>`       | 必須   | パスワード設定を保存する                   |
 | onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 解除の確認（長押しの秒数）の設定を保存する |
 | onUpdateNotifications  | `(notifications: NotificationSettings) => void`       | 必須   | 通知の設定を保存する                       |
 | onAnalyticsOptInChange | `(optIn: AnalyticsOptIn) => Promise<void>`            | 必須   | 利用統計の共有の選択を保存する             |
@@ -745,14 +744,13 @@ Esc で編集を取り消す。
 
 ### PasswordSettingsSection
 
-`src/components/options/PasswordSettingsSection.tsx`。パスワードの保護中は長押しの秒数を変えられない。
+`src/components/options/PasswordSettingsSection.tsx`。パスワードの保護中は長押しの秒数を変えられない。パスワードの設定・変更・解除は平文を `set-password` / `change-password` / `remove-password` で background へ送り、強度の検査・照合・ハッシュ化は background が行う（新しいパスワードと確認欄の一致と長さは送る前にも画面で確かめる）。
 
-| Prop                   | 型                                                    | 省略時 | 説明                                                         |
-| ---------------------- | ----------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| passwordSettings       | `PasswordSettings`                                    | 必須   | 現在のパスワード設定（有効かつハッシュがあるときだけ保護中） |
-| onUpdate               | `(settings: PasswordSettings) => Promise<void>`       | 必須   | 設定・変更・解除したパスワード設定を保存する（失敗は例外）   |
-| holdSeconds            | `UnblockHoldSeconds`                                  | 必須   | 解除の確認で長押しさせる秒数                                 |
-| onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 長押しの秒数を変えたときに確認設定を保存する                 |
+| Prop                   | 型                                                    | 省略時 | 説明                                                 |
+| ---------------------- | ----------------------------------------------------- | ------ | ---------------------------------------------------- |
+| passwordSettings       | `PasswordSettings`                                    | 必須   | 現在のパスワード設定（`enabled` が true なら保護中） |
+| holdSeconds            | `UnblockHoldSeconds`                                  | 必須   | 解除の確認で長押しさせる秒数                         |
+| onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 長押しの秒数を変えたときに確認設定を保存する         |
 
 ---
 
@@ -910,11 +908,11 @@ Esc で編集を取り消す。
 
 `src/components/options/blocklist/YouTubeSection.tsx`。送る値と保存の流れは [useYouTubeSettings](#useyoutubesettings) を参照。
 
-| Prop             | 型                                        | 省略時 | 説明                                                                 |
-| ---------------- | ----------------------------------------- | ------ | -------------------------------------------------------------------- |
-| site             | `TrackedSite \| null`                     | 必須   | YouTube の登録内容（null ならすべてオフとして表示する）              |
-| onYouTubeChange  | `(youtube: YouTubeSettingsInput) => void` | 必須   | 変更後の YouTube の設定全体を受け取る                                |
-| onRequestUnblock | `(request: UnblockRequest) => void`       | 必須   | 全体の有効化かアクセスのブロックをオフにするときに解除の確認を求める |
+| Prop             | 型                                                                              | 省略時 | 説明                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| site             | `TrackedSite \| null`                                                           | 必須   | YouTube の登録内容（null ならすべてオフとして表示する）                                                      |
+| onYouTubeChange  | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>` | 必須   | 変更後の YouTube の設定全体と、解除の確認で入力されたパスワードを受け取る。失敗の文言（成功なら null）を返す |
+| onRequestUnblock | `(request: UnblockRequest) => void`                                             | 必須   | 全体の有効化かアクセスのブロックをオフにするときに解除の確認を求める                                         |
 
 ---
 
@@ -1045,16 +1043,15 @@ Esc で編集を取り消す。
 
 ### PasswordModal
 
-`src/components/options/modals/PasswordModal.tsx`。Enter でも照合する。
+`src/components/options/modals/PasswordModal.tsx`。照合はせず、入力を呼び出し元へ渡す（Enter でも送る）。呼び出し元が操作を依頼し、成功なら閉じ、失敗なら返された文言を出す。
 
-| Prop         | 型           | 省略時     | 説明                                                     |
-| ------------ | ------------ | ---------- | -------------------------------------------------------- |
-| isOpen       | `boolean`    | 必須       | false の間は表示しない。開くたびに入力とエラーを空に戻す |
-| onClose      | `() => void` | 必須       | 閉じるときに呼ぶ（照合が通ったあとにも呼ぶ）             |
-| onSuccess    | `() => void` | 必須       | 照合が通ったときに呼ぶ                                   |
-| passwordHash | `string`     | 必須       | 照合に使う保存済みのハッシュ                             |
-| title        | `string`     | 既定の文言 | 見出し                                                   |
-| description  | `string`     | 既定の文言 | 見出しの下の説明                                         |
+| Prop        | 型                                              | 省略時     | 説明                                                            |
+| ----------- | ----------------------------------------------- | ---------- | --------------------------------------------------------------- |
+| isOpen      | `boolean`                                       | 必須       | false の間は表示しない。開くたびに入力とエラーを空に戻す        |
+| onClose     | `() => void`                                    | 必須       | 閉じるときに呼ぶ（onSubmit が成功したあとにも呼ぶ）             |
+| onSubmit    | `(password: string) => Promise<string \| null>` | 必須       | 入力を受け取って操作を依頼し、失敗の文言（成功なら null）を返す |
+| title       | `string`                                        | 既定の文言 | 見出し                                                          |
+| description | `string`                                        | 既定の文言 | 見出しの下の説明                                                |
 
 ---
 
@@ -1140,8 +1137,12 @@ function useBlocklist(options: {
   setNewDomain: (value: string) => void;
   blockError: string;
   handleAddDomain: () => Promise<void>;
-  handleRemoveDomain: (id: string) => Promise<void>;
-  handleToggleDomain: (id: string, enabled: boolean) => Promise<void>;
+  handleRemoveDomain: (id: string, password?: string) => Promise<string | null>;
+  handleToggleDomain: (
+    id: string,
+    enabled: boolean,
+    password?: string
+  ) => Promise<string | null>;
   handleUpdateTimeLimit: (
     id: string,
     timeLimit: TimeLimit | null
@@ -1154,7 +1155,7 @@ function useBlocklist(options: {
 
 - 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
 - 通知設定だけは `settings` へ直接保存する
-- 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）
+- 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）。削除・無効化は確認で入力されたパスワードを添えて送り、失敗の文言（成功なら null）を返す
 
 ---
 
@@ -1286,7 +1287,10 @@ function useActivitySources(): ActivitySources;
 
 ```typescript
 function useYouTubeSettings(): {
-  handleYouTubeChange: (youtube: YouTubeSettingsInput) => Promise<void>;
+  handleYouTubeChange: (
+    youtube: YouTubeSettingsInput,
+    password?: string
+  ) => Promise<string | null>;
 };
 ```
 
@@ -1307,7 +1311,7 @@ interface UnblockRequest {
   domain: string;
   timeLimit: TimeLimit | null | undefined;
   action: UnblockAction;
-  onConfirm: () => void;
+  onConfirm: (password?: string) => Promise<string | null>;
 }
 
 interface PendingUnblock extends UnblockRequest {
@@ -1319,13 +1323,14 @@ function useUnblockGuard(isPasswordProtected: boolean): {
   isPasswordModalOpen: boolean;
   isConfirmModalOpen: boolean;
   requestUnblock: (request: UnblockRequest) => void;
-  confirm: () => void;
+  confirm: (password?: string) => Promise<string | null>;
   close: () => void;
 };
 ```
 
 - パスワード保護中は [PasswordModal](#passwordmodal)、それ以外は [UnblockConfirmModal](#unblockconfirmmodal)（長押し確認）を開かせる
-- 確認が通ったときだけ `onConfirm` を呼ぶ。キャンセルすると何も実行しない
+- 確認が通ったときだけ `onConfirm` を呼ぶ（パスワード入力を通ったときは入力されたパスワードを渡し、その失敗の文言を [PasswordModal](#passwordmodal) へ返す）。キャンセルすると何も実行しない
+- 保護中かどうかは `settings.password.enabled` で決める。照合は操作を受けた background が行う（[SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)）
 - 対象の操作と画面は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)。このフックを持つのは [BlocklistTab](#blocklisttab) で、[YouTubeSection](#youtubesection) には `requestUnblock` を `onRequestUnblock` として渡す
 
 ---
@@ -1398,36 +1403,15 @@ function usePopupActions(options: {
   handleAnalyticsClick: () => void;
   handleGoalClick: () => void;
   handleBlock: (domain: string) => Promise<void>;
-  handlePausedChange: (paused: boolean) => Promise<void>;
+  handlePausedChange: (
+    paused: boolean,
+    password?: string
+  ) => Promise<string | null>;
   isPasswordProtected: boolean;
 };
 ```
 
-- `handlePausedChange` 自体はパスワードを確かめない。パスワード保護中に一時停止にするとき、`PopupApp` は [usePasswordVerification](#usepasswordverification) の `openModal` でモーダルを開くだけで、照合と `handlePausedChange(true)` の呼び出しは [PasswordModal](#passwordmodal) が行う（`PopupApp` はこのフックの `handleSubmit` を使わない）
-
----
-
-### usePasswordVerification
-
-`src/hooks/usePasswordVerification.ts`。パスワード確認モーダルの状態と、照合に成功したら `onSuccess` を呼ぶ送信処理。
-
-```typescript
-function usePasswordVerification(options: {
-  passwordHash: string | null;
-  onSuccess: () => void | Promise<void>;
-}): {
-  showModal: boolean;
-  passwordInput: string;
-  passwordError: string | null;
-  showPassword: boolean;
-  isVerifying: boolean;
-  openModal: () => void;
-  closeModal: () => void;
-  setPasswordInput: (value: string) => void;
-  toggleShowPassword: () => void;
-  handleSubmit: () => Promise<void>;
-};
-```
+- `isPasswordProtected` は `settings.password.enabled`。パスワード保護中に一時停止にするとき、`PopupApp` は [PasswordModal](#passwordmodal) を開き、入力されたパスワードを添えて `handlePausedChange(true, password)` を呼ぶ。照合は background の `toggle-pause` が行う
 
 ---
 

@@ -28,7 +28,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    onPasswordUpdate: async () => alert('Password updated'),
     onUnblockConfirmUpdate: async () => alert('Hold duration updated'),
     onUpdateNotifications: () => alert('Notifications updated'),
     onAnalyticsOptInChange: async () => alert('Analytics opt-in changed'),

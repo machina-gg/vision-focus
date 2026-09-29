@@ -8,13 +8,12 @@ import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import { itemAt } from '~/test/items';
 import type { PasswordSettings } from '~/types/storage';
 
-const password = vi.hoisted(() => ({
-  hashPassword: vi.fn(),
-  verifyPassword: vi.fn(),
-  validatePasswordStrength: vi.fn()
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
 }));
 
-vi.mock('~/lib/password', () => password);
+import { sendMessage } from '~/lib/messaging';
+import type { MessageError } from '~/types/messages';
 
 const DISABLED: PasswordSettings = { enabled: false, passwordHash: null };
 const ENABLED: PasswordSettings = {
@@ -23,16 +22,17 @@ const ENABLED: PasswordSettings = {
 };
 
 function renderSection(passwordSettings: PasswordSettings = DISABLED) {
-  const onUpdate = vi.fn().mockResolvedValue(undefined);
-  const result = render(
+  return render(
     <PasswordSettingsSection
       passwordSettings={passwordSettings}
-      onUpdate={onUpdate}
       holdSeconds={5}
       onUnblockConfirmUpdate={vi.fn()}
     />
   );
-  return { onUpdate, ...result };
+}
+
+function givenFailure(error?: MessageError) {
+  vi.mocked(sendMessage).mockResolvedValue({ success: false, error });
 }
 
 const fields = () => screen.getAllByTestId(/^password-field-/);
@@ -61,11 +61,7 @@ async function clickSubmit() {
 }
 
 beforeEach(() => {
-  password.hashPassword.mockReset().mockResolvedValue('new-hash');
-  password.verifyPassword.mockReset().mockResolvedValue(true);
-  password.validatePasswordStrength
-    .mockReset()
-    .mockReturnValue({ isValid: true, errorKey: null });
+  vi.mocked(sendMessage).mockReset().mockResolvedValue({ success: true });
 });
 
 describe('PasswordSettingsSection', () => {
@@ -96,24 +92,10 @@ describe('PasswordSettingsSection', () => {
       expect(screen.getByTestId('password-change-button')).toBeInTheDocument();
     });
 
-    it('enabled でもハッシュが無ければ無効として扱う', () => {
+    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
       renderSection({ enabled: true, passwordHash: null });
 
-      expect(
-        screen.getByText('passwordProtectionDisabled')
-      ).toBeInTheDocument();
-      expect(screen.getByTestId('password-enable-toggle')).toHaveAttribute(
-        'aria-checked',
-        'false'
-      );
-    });
-
-    it('ハッシュがあっても enabled でなければ無効として扱う', () => {
-      renderSection({ enabled: false, passwordHash: 'stored-hash' });
-
-      expect(
-        screen.getByText('passwordProtectionDisabled')
-      ).toBeInTheDocument();
+      expect(screen.getByText('passwordProtectionEnabled')).toBeInTheDocument();
     });
   });
 
@@ -143,64 +125,66 @@ describe('PasswordSettingsSection', () => {
       expect(submit()).toBeEnabled();
     });
 
-    it('保存すると有効化とハッシュが渡り、成功を伝える', async () => {
-      const { onUpdate } = renderSection(DISABLED);
+    it('平文のパスワードを set-password で送り、成功を伝える', async () => {
+      renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'secret');
       fill(1, 'secret');
       await clickSubmit();
 
-      expect(password.hashPassword).toHaveBeenCalledWith('secret');
-      expect(onUpdate).toHaveBeenCalledWith({
-        enabled: true,
-        passwordHash: 'new-hash'
+      expect(sendMessage).toHaveBeenCalledWith('set-password', {
+        password: 'secret'
       });
       expect(screen.getByText('passwordSetSuccess')).toBeInTheDocument();
     });
 
-    it('条件を満たさなければ、その理由を出して保存しない', async () => {
-      password.validatePasswordStrength.mockReturnValue({
-        isValid: false,
-        errorKey: 'passwordTooShort'
-      });
-      const { onUpdate } = renderSection(DISABLED);
+    it('短すぎれば、その理由を出して送らない', async () => {
+      renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'ab');
       fill(1, 'ab');
       await clickSubmit();
 
-      expect(onUpdate).not.toHaveBeenCalled();
-      expect(password.hashPassword).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
       expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
       expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
     });
 
-    it('確認が一致しなければ、一致しないことを出して保存しない', async () => {
-      const { onUpdate } = renderSection(DISABLED);
+    it('確認が一致しなければ、一致しないことを出して送らない', async () => {
+      renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'secret');
       fill(1, 'other');
       await clickSubmit();
 
-      expect(onUpdate).not.toHaveBeenCalled();
-      expect(password.hashPassword).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
       expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
       expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
     });
 
-    it('理由の分からない失敗のときだけ汎用の文言を出す', async () => {
-      const onUpdate = vi.fn().mockRejectedValue(new Error('storage error'));
-      render(
-        <PasswordSettingsSection
-          passwordSettings={DISABLED}
-          onUpdate={onUpdate}
-          holdSeconds={5}
-          onUnblockConfirmUpdate={vi.fn()}
-        />
-      );
+    it('background が長さで拒んだらその理由を出す', async () => {
+      givenFailure({ code: 'password-invalid', reason: 'too-long' });
+      renderSection(DISABLED);
+
+      enterSetMode();
+      fill(0, 'secret');
+      fill(1, 'secret');
+      await clickSubmit();
+
+      expect(screen.getByText('passwordTooLong')).toBeInTheDocument();
+      expect(screen.queryByText('passwordSetSuccess')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['理由の無い失敗', undefined],
+      ['保存の失敗', { code: 'save-failed' } as const],
+      ['設定済み', { code: 'password-already-set' } as const]
+    ])('%s なら設定の失敗の文言を出す', async (_label, error) => {
+      givenFailure(error);
+      renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'secret');
@@ -211,8 +195,20 @@ describe('PasswordSettingsSection', () => {
       expect(screen.getByText('passwordSetFailed')).toBeInTheDocument();
     });
 
+    it('送信が例外で終わっても設定の失敗の文言を出す', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      renderSection(DISABLED);
+
+      enterSetMode();
+      fill(0, 'secret');
+      fill(1, 'secret');
+      await clickSubmit();
+
+      expect(screen.getByText('passwordSetFailed')).toBeInTheDocument();
+    });
+
     it('続けて失敗しても毎回その理由を出す', async () => {
-      const { onUpdate } = renderSection(DISABLED);
+      renderSection(DISABLED);
 
       enterSetMode();
       fill(0, 'secret');
@@ -220,17 +216,13 @@ describe('PasswordSettingsSection', () => {
       await clickSubmit();
       expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
 
-      password.validatePasswordStrength.mockReturnValue({
-        isValid: false,
-        errorKey: 'passwordTooShort'
-      });
       fill(0, 'ab');
       fill(1, 'ab');
       await clickSubmit();
 
       expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
       expect(screen.queryByText('passwordSetFailed')).not.toBeInTheDocument();
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('キャンセルすると表示モードへ戻る', () => {
@@ -278,7 +270,7 @@ describe('PasswordSettingsSection', () => {
       expect(submit()).toBeEnabled();
     });
 
-    it('現在のパスワードを保存済みハッシュと照合する', async () => {
+    it('今のパスワードと新しいパスワードを change-password で送り、成功を伝える', async () => {
       renderSection(ENABLED);
 
       enterChangeMode();
@@ -287,15 +279,16 @@ describe('PasswordSettingsSection', () => {
       fill(2, 'secret');
       await clickSubmit();
 
-      expect(password.verifyPassword).toHaveBeenCalledWith(
-        'current',
-        'stored-hash'
-      );
+      expect(sendMessage).toHaveBeenCalledWith('change-password', {
+        currentPassword: 'current',
+        newPassword: 'secret'
+      });
+      expect(screen.getByText('passwordChangedSuccess')).toBeInTheDocument();
     });
 
-    it('照合に失敗したら保存しない', async () => {
-      password.verifyPassword.mockResolvedValue(false);
-      const { onUpdate } = renderSection(ENABLED);
+    it('今のパスワードが違えば、今のパスワードの誤りを出す', async () => {
+      givenFailure({ code: 'password-mismatch' });
+      renderSection(ENABLED);
 
       enterChangeMode();
       fill(0, 'wrong');
@@ -304,15 +297,26 @@ describe('PasswordSettingsSection', () => {
       await clickSubmit();
 
       expect(screen.getByText('currentPasswordIncorrect')).toBeInTheDocument();
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(
+        screen.queryByText('passwordChangedSuccess')
+      ).not.toBeInTheDocument();
     });
 
-    it('条件を満たさなければ、その理由を出して保存しない', async () => {
-      password.validatePasswordStrength.mockReturnValue({
-        isValid: false,
-        errorKey: 'passwordTooShort'
-      });
-      const { onUpdate } = renderSection(ENABLED);
+    it('未設定なら、未設定であることを出す', async () => {
+      givenFailure({ code: 'password-not-set' });
+      renderSection(ENABLED);
+
+      enterChangeMode();
+      fill(0, 'current');
+      fill(1, 'secret');
+      fill(2, 'secret');
+      await clickSubmit();
+
+      expect(screen.getByText('passwordNotSet')).toBeInTheDocument();
+    });
+
+    it('短すぎれば、その理由を出して送らない', async () => {
+      renderSection(ENABLED);
 
       enterChangeMode();
       fill(0, 'current');
@@ -320,15 +324,15 @@ describe('PasswordSettingsSection', () => {
       fill(2, 'ab');
       await clickSubmit();
 
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
       expect(screen.getByText('passwordTooShort')).toBeInTheDocument();
       expect(
         screen.queryByText('passwordChangeFailed')
       ).not.toBeInTheDocument();
     });
 
-    it('確認が一致しなければ、一致しないことを出して保存しない', async () => {
-      const { onUpdate } = renderSection(ENABLED);
+    it('確認が一致しなければ、一致しないことを出して送らない', async () => {
+      renderSection(ENABLED);
 
       enterChangeMode();
       fill(0, 'current');
@@ -336,23 +340,13 @@ describe('PasswordSettingsSection', () => {
       fill(2, 'other');
       await clickSubmit();
 
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
       expect(screen.getByText('passwordMismatch')).toBeInTheDocument();
-      expect(
-        screen.queryByText('passwordChangeFailed')
-      ).not.toBeInTheDocument();
     });
 
-    it('理由の分からない失敗のときだけ汎用の文言を出す', async () => {
-      const onUpdate = vi.fn().mockRejectedValue(new Error('storage error'));
-      render(
-        <PasswordSettingsSection
-          passwordSettings={ENABLED}
-          onUpdate={onUpdate}
-          holdSeconds={5}
-          onUnblockConfirmUpdate={vi.fn()}
-        />
-      );
+    it('理由の分からない失敗なら変更の失敗の文言を出す', async () => {
+      givenFailure({ code: 'save-failed' });
+      renderSection(ENABLED);
 
       enterChangeMode();
       fill(0, 'current');
@@ -360,26 +354,7 @@ describe('PasswordSettingsSection', () => {
       fill(2, 'secret');
       await clickSubmit();
 
-      expect(
-        screen.queryByText('passwordChangedSuccess')
-      ).not.toBeInTheDocument();
       expect(screen.getByText('passwordChangeFailed')).toBeInTheDocument();
-    });
-
-    it('照合を通れば新しいハッシュで保存し、成功を伝える', async () => {
-      const { onUpdate } = renderSection(ENABLED);
-
-      enterChangeMode();
-      fill(0, 'current');
-      fill(1, 'secret');
-      fill(2, 'secret');
-      await clickSubmit();
-
-      expect(onUpdate).toHaveBeenCalledWith({
-        enabled: true,
-        passwordHash: 'new-hash'
-      });
-      expect(screen.getByText('passwordChangedSuccess')).toBeInTheDocument();
     });
   });
 
@@ -403,42 +378,36 @@ describe('PasswordSettingsSection', () => {
       expect(submit()).toBeEnabled();
     });
 
-    it('照合に失敗したら解除しない', async () => {
-      password.verifyPassword.mockResolvedValue(false);
-      const { onUpdate } = renderSection(ENABLED);
+    it('今のパスワードが違えば、今のパスワードの誤りを出す', async () => {
+      givenFailure({ code: 'password-mismatch' });
+      renderSection(ENABLED);
 
       enterRemoveMode();
       fill(0, 'wrong');
       await clickSubmit();
 
       expect(screen.getByText('currentPasswordIncorrect')).toBeInTheDocument();
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(
+        screen.queryByText('passwordRemovedSuccess')
+      ).not.toBeInTheDocument();
     });
 
-    it('照合を通れば無効化とハッシュの破棄が渡る', async () => {
-      const { onUpdate } = renderSection(ENABLED);
+    it('今のパスワードを remove-password で送り、成功を伝える', async () => {
+      renderSection(ENABLED);
 
       enterRemoveMode();
       fill(0, 'current');
       await clickSubmit();
 
-      expect(onUpdate).toHaveBeenCalledWith({
-        enabled: false,
-        passwordHash: null
+      expect(sendMessage).toHaveBeenCalledWith('remove-password', {
+        currentPassword: 'current'
       });
       expect(screen.getByText('passwordRemovedSuccess')).toBeInTheDocument();
     });
 
-    it('解除の保存が失敗したら成功表示を出さない', async () => {
-      const onUpdate = vi.fn().mockRejectedValue(new Error('storage error'));
-      render(
-        <PasswordSettingsSection
-          passwordSettings={ENABLED}
-          onUpdate={onUpdate}
-          holdSeconds={5}
-          onUnblockConfirmUpdate={vi.fn()}
-        />
-      );
+    it('理由の分からない失敗なら解除の失敗の文言を出す', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      renderSection(ENABLED);
 
       enterRemoveMode();
       fill(0, 'current');
@@ -500,13 +469,11 @@ describe('PasswordSettingsSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('選んだ秒数を秒数の保存へ渡し、パスワードの保存には渡さない', () => {
-      const onUpdate = vi.fn().mockResolvedValue(undefined);
+    it('選んだ秒数を秒数の保存へ渡し、パスワードのメッセージは送らない', () => {
       const onUnblockConfirmUpdate = vi.fn().mockResolvedValue(undefined);
       render(
         <PasswordSettingsSection
           passwordSettings={DISABLED}
-          onUpdate={onUpdate}
           holdSeconds={5}
           onUnblockConfirmUpdate={onUnblockConfirmUpdate}
         />
@@ -518,7 +485,7 @@ describe('PasswordSettingsSection', () => {
       );
 
       expect(onUnblockConfirmUpdate).toHaveBeenCalledWith({ holdSeconds: 10 });
-      expect(onUpdate).not.toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
     });
   });
 });

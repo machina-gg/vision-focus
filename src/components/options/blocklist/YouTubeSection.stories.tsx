@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 export const Disabled: Story = {
   args: {
     site: null,
-    onYouTubeChange: () => {},
+    onYouTubeChange: async () => null,
     onRequestUnblock: () => {}
   }
 };
@@ -28,7 +28,7 @@ export const EnabledWithFeatures: Story = {
     site: trackedSite('youtube.com', {
       youtube: youtubeFeatures({ hideShorts: true, hideRecommendations: true })
     }),
-    onYouTubeChange: () => {},
+    onYouTubeChange: async () => null,
     onRequestUnblock: () => {}
   }
 };
@@ -40,7 +40,7 @@ export const EnabledWithBlockAccess: Story = {
       { timeLimit: { type: 'daily', limitSeconds: 1800 } },
       { youtube: youtubeFeatures({ hideShorts: true, hideComments: true }) }
     ),
-    onYouTubeChange: () => {},
+    onYouTubeChange: async () => null,
     onRequestUnblock: () => {}
   }
 };

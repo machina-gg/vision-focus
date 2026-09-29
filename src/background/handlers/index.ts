@@ -23,6 +23,9 @@ import { updateScheduleHandler } from './update-schedule';
 import { updateTimeLimitHandler } from './update-time-limit';
 import { updateUnblockConfirmHandler } from './update-unblock-confirm';
 import { updateYouTubeSettingsHandler } from './update-youtube-settings';
+import { setPasswordHandler } from './set-password';
+import { changePasswordHandler } from './change-password';
+import { removePasswordHandler } from './remove-password';
 
 /** background が受けるメッセージごとにハンドラを登録する */
 export function registerMessageHandlers(): void {
@@ -50,4 +53,7 @@ export function registerMessageHandlers(): void {
   onMessage('update-time-limit', updateTimeLimitHandler);
   onMessage('update-unblock-confirm', updateUnblockConfirmHandler);
   onMessage('update-youtube-settings', updateYouTubeSettingsHandler);
+  onMessage('set-password', setPasswordHandler);
+  onMessage('change-password', changePasswordHandler);
+  onMessage('remove-password', removePasswordHandler);
 }

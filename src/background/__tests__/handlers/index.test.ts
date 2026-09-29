@@ -33,6 +33,9 @@ import { updateScheduleHandler } from '../../handlers/update-schedule';
 import { updateTimeLimitHandler } from '../../handlers/update-time-limit';
 import { updateUnblockConfirmHandler } from '../../handlers/update-unblock-confirm';
 import { updateYouTubeSettingsHandler } from '../../handlers/update-youtube-settings';
+import { setPasswordHandler } from '../../handlers/set-password';
+import { changePasswordHandler } from '../../handlers/change-password';
+import { removePasswordHandler } from '../../handlers/remove-password';
 
 const expected = [
   ['add-block', addBlockHandler],
@@ -58,7 +61,10 @@ const expected = [
   ['update-schedule', updateScheduleHandler],
   ['update-time-limit', updateTimeLimitHandler],
   ['update-unblock-confirm', updateUnblockConfirmHandler],
-  ['update-youtube-settings', updateYouTubeSettingsHandler]
+  ['update-youtube-settings', updateYouTubeSettingsHandler],
+  ['set-password', setPasswordHandler],
+  ['change-password', changePasswordHandler],
+  ['remove-password', removePasswordHandler]
 ] as const;
 
 beforeEach(() => {

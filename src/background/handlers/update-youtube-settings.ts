@@ -5,8 +5,11 @@ import {
   type UpdateYouTubeSettingsBody
 } from '~/types/messageSchemas';
 import { recordActivity } from '~/lib/activityService';
+import { checkUnblockPassword } from '~/lib/settingsService';
 import { updateYouTubeSite, type YouTubeSiteUpdate } from '~/lib/siteService';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { getSites } from '~/lib/storage';
+import { passwordError } from './passwordRejection';
 
 function toSiteUpdate(
   value: UpdateYouTubeSettingsBody['youtube']
@@ -24,9 +27,9 @@ function toSiteUpdate(
 }
 
 /**
- * update-youtube-settings: YouTube の非表示機能とアクセスのブロックを保存してルールを更新する（ブロックを外したら解除として記録し、掛けたら開いているタブもブロックする）
- * @param message data.youtube に YouTube の設定（enabled が false なら非表示機能もブロックも外す）
- * @returns 成功か、失敗の種類（invalid-request / save-failed）
+ * update-youtube-settings: YouTube の非表示機能とアクセスのブロックを保存してルールを更新する（ブロックを外したら解除として記録し、掛けたら開いているタブもブロックする。パスワード保護中に有効なアクセスのブロックを外すときはパスワードを照合してから書く）
+ * @param message data.youtube に YouTube の設定（enabled が false なら非表示機能もブロックも外す）、data.password にパスワード保護中に照合するパスワード
+ * @returns 成功か、失敗の種類（invalid-request / password-required / password-mismatch / save-failed）
  */
 export const updateYouTubeSettingsHandler: MessageHandler<
   'update-youtube-settings'
@@ -38,12 +41,19 @@ export const updateYouTubeSettingsHandler: MessageHandler<
   }
 
   const update = toSiteUpdate(parsed.data.youtube);
+  const blocksAccess = update.block?.enabled === true;
 
   try {
+    const stored = (await getSites())[YOUTUBE_DOMAIN];
+    const rejection = await checkUnblockPassword(
+      parsed.data.password,
+      stored?.block?.enabled === true && !blocksAccess
+    );
+    if (rejection) return { success: false, error: passwordError(rejection) };
+
     const before = await updateYouTubeSite(update, new Date());
 
     const wasBlockingAccess = before?.block?.enabled === true;
-    const blocksAccess = update.block?.enabled === true;
 
     await updateBlockRules();
 

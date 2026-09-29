@@ -23,7 +23,13 @@ const ALL_ERRORS: MessageError[] = [
   { code: 'schedule-not-found' },
   { code: 'preset-not-found' },
   { code: 'preset-limit' },
-  { code: 'save-failed' }
+  { code: 'save-failed' },
+  { code: 'password-required' },
+  { code: 'password-mismatch' },
+  { code: 'password-not-set' },
+  { code: 'password-already-set' },
+  { code: 'password-invalid', reason: 'too-short' },
+  { code: 'password-invalid', reason: 'too-long' }
 ];
 
 describe('messageErrorText（ja）', () => {
@@ -40,7 +46,18 @@ describe('messageErrorText（ja）', () => {
     ],
     [{ code: 'schedule-overlap' }, '既存のスケジュールと重複しています。'],
     [{ code: 'preset-limit' }, 'スタイルは最大 10 件まで保存できます。'],
-    [{ code: 'save-failed' }, '保存できませんでした。もう一度お試しください']
+    [{ code: 'save-failed' }, '保存できませんでした。もう一度お試しください'],
+    [{ code: 'password-required' }, 'パスワードが必要です'],
+    [
+      { code: 'password-mismatch' },
+      'パスワードが正しくありません。再度お試しください。'
+    ],
+    [{ code: 'password-not-set' }, 'パスワードが設定されていません'],
+    [
+      { code: 'password-invalid', reason: 'too-short' },
+      'パスワードは4文字以上で入力してください'
+    ],
+    [{ code: 'password-invalid', reason: 'too-long' }, 'パスワードが長すぎます']
   ] satisfies [MessageError, string][])('%o は「%s」', (error, text) => {
     expect(messageErrorText(error)).toBe(text);
   });
@@ -78,6 +95,7 @@ describe('messageErrorText（ja）', () => {
     [{ code: 'invalid-url' }],
     [{ code: 'schedule-not-found' }],
     [{ code: 'preset-not-found' }],
+    [{ code: 'password-already-set' }],
     [undefined]
   ] satisfies [MessageError | undefined][])(
     '利用者に理由を見せない失敗（%o）は汎用の文言にする',
