@@ -6,7 +6,8 @@ chrome.storage に保存するデータ構造の設計。
 
 - **設定と事実を分ける。** 何を追跡し、どうブロックするかは `sites`（サイトごと）と `settings`（全体）に置く。いつ・どのサイトで・何が起きたかは `activity` にだけ置く
 - **画面に出す数値はすべて導出する。** 浪費時間・ランキング・グラフ・レポート・時間制限の今日の使用量は `src/lib/activityStats.ts` が `activity` と `sites` から求める。画面やハンドラで集計しない
-- **`sites` と `activity` を書くのは background だけ。** 画面はメッセージで依頼する（書き込みの直列化を 1 箇所で保つため）
+- **保存項目を書くのは background だけ。** `settings` / `sites` / `activity` / `vision` / スタイルの画像は、background のサービス（`src/lib/settingsService.ts` / `siteService.ts` / `activityService.ts`）が各自の待ち行列で書く。画面はメッセージで依頼し、保存値は購読（`useStorageItem`）で読む。例外は画面が書く `supportPrompt` と、`src/lib/analytics.ts` が持つ GA4 のキーだけ（書き込みの直列化を 1 箇所で保つため）
+- **この規則は lint が守る。** `eslint.config.mjs` の `no-restricted-syntax` / `no-restricted-imports` が、サービス以外からの保存項目・`@wxt-dev/storage`・`chrome.storage.local` への書き込みを禁じる（例外のファイルと対象は同ファイルの定数）
 
 ## ストレージキー一覧
 
@@ -110,7 +111,7 @@ erDiagram
 | enabled      | boolean        | 解除操作にパスワードを求めるか                 |
 | passwordHash | string \| null | パスワードの SHA-256 ハッシュ。未設定なら null |
 
-書き手は background だけ（`set-password` / `change-password` / `remove-password` のハンドラと `src/lib/settingsService.ts`）。画面は平文のパスワードを送り、長さの検査（4〜100 文字。`src/lib/password.ts` の `validatePasswordStrength`）・照合・ハッシュ化は background が行う。画面は保護中かどうかを `enabled` だけで判断し、ハッシュは読まない。照合を求める操作は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)
+書き手は background だけ（`set-password` / `change-password` / `remove-password` のハンドラと `src/lib/settingsService.ts`）。画面は平文のパスワードを送り、長さの検査（4〜100 文字。`src/lib/password.ts` の `validatePasswordStrength`）・照合・ハッシュ化は background が行う。保護中かどうかは `src/lib/password.ts` の `isProtectedByPassword`（`enabled` が true で、ハッシュがある）で決め、background の照合と画面の表示（パスワード入力を求めるか）の両方がこれに従う。画面はハッシュの値を照合に使わない。照合を求める操作は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)
 
 ### UnblockConfirmSettings（ブロック解除の長押し確認）
 

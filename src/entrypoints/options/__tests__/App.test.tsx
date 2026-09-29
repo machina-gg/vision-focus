@@ -47,7 +47,7 @@ vi.mock('~/hooks', async (importOriginal) => {
       showScheduleModal: false,
       scheduleForm: { name: '', startTime: '', endTime: '', days: [] }
     }),
-    useStorageItem: () => [{}],
+    useStorageItem: () => ({}),
     useSupportPrompt: () => ({ isVisible: false }),
     useYouTubeSettings: () => ({ handleYouTubeChange: vi.fn() })
   };

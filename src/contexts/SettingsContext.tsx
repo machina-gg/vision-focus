@@ -29,8 +29,8 @@ interface SettingsProviderProps {
  * @returns 子要素を包んだ Context の Provider
  */
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  const [settings] = useStorageItem(settingsItem);
-  const [vision] = useStorageItem(visionItem);
+  const settings = useStorageItem(settingsItem);
+  const vision = useStorageItem(visionItem);
 
   return (
     <SettingsContext.Provider value={{ settings, vision }}>

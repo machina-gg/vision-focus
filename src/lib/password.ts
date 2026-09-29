@@ -1,3 +1,5 @@
+import type { PasswordSettings } from '~/types/storage';
+
 /**
  * パスワードの SHA-256 ハッシュ（16 進文字列）
  * @param password ハッシュにするパスワード
@@ -28,4 +30,13 @@ export function validatePasswordStrength(
   if (password.length < 4) return 'too-short';
   if (password.length > 100) return 'too-long';
   return null;
+}
+
+/**
+ * パスワード保護中か（有効で、照合に使うハッシュがあるときだけ保護中とする）。background の照合と画面の表示の両方がこの判定に従う
+ * @param password 保存済みのパスワード設定
+ * @returns 保護中なら true
+ */
+export function isProtectedByPassword(password: PasswordSettings): boolean {
+  return password.enabled && password.passwordHash !== null;
 }

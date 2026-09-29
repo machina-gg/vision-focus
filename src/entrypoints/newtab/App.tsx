@@ -42,9 +42,9 @@ import '~/styles/globals.css';
  * @returns 新しいタブの画面
  */
 export function NewtabApp() {
-  const [vision] = useStorageItem(visionItem);
-  const [settings] = useStorageItem(settingsItem);
-  const [trackedSites] = useStorageItem(sitesItem);
+  const vision = useStorageItem(visionItem);
+  const settings = useStorageItem(settingsItem);
+  const trackedSites = useStorageItem(sitesItem);
   const { activity, sites } = useActivitySources();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');

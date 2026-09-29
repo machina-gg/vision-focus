@@ -28,10 +28,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 vi.mock('../useStorageItem', () => ({
-  useStorageItem: (item: { key: string }) => [
-    storedValues.values[item.key],
-    vi.fn()
-  ]
+  useStorageItem: (item: { key: string }) => storedValues.values[item.key]
 }));
 
 // 月末・年末をまたがない日を基準にし、日付の加減算の検査を 1 つに絞る

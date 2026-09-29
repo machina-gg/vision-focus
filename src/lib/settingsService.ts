@@ -3,7 +3,7 @@
 import { storage as extensionStorage } from '@wxt-dev/storage';
 
 import { MAX_PRESETS } from '~/constants/limits';
-import { hashPassword } from '~/lib/password';
+import { hashPassword, isProtectedByPassword } from '~/lib/password';
 import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
 import { createSerialQueue } from '~/lib/serialQueue';
 import {
@@ -523,15 +523,11 @@ export type PasswordRejection =
   /** パスワード保護中にブロックを弱める操作へパスワードが添えられていない */
   | 'required';
 
-function isProtected(password: PasswordSettings): boolean {
-  return password.enabled && password.passwordHash !== null;
-}
-
 function matchCurrent(
   password: PasswordSettings,
   inputHash: string
 ): 'not-set' | 'mismatch' | null {
-  if (!isProtected(password)) return 'not-set';
+  if (!isProtectedByPassword(password)) return 'not-set';
   return password.passwordHash === inputHash ? null : 'mismatch';
 }
 
@@ -545,7 +541,8 @@ export async function setPassword(
 ): Promise<'already-set' | null> {
   const passwordHash = await hashPassword(password);
   return mutate((current) => {
-    if (isProtected(current.password)) return { result: 'already-set' };
+    if (isProtectedByPassword(current.password))
+      return { result: 'already-set' };
     return {
       settings: { ...current, password: { enabled: true, passwordHash } },
       result: null
@@ -612,7 +609,7 @@ export async function checkUnblockPassword(
   const inputHash =
     password === undefined ? null : await hashPassword(password);
   return mutate((current) => {
-    if (!isProtected(current.password)) return { result: null };
+    if (!isProtectedByPassword(current.password)) return { result: null };
     if (inputHash === null) return { result: weakens ? 'required' : null };
     return {
       result: current.password.passwordHash === inputHash ? null : 'mismatch'

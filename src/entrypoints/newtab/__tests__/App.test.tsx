@@ -62,7 +62,6 @@ vi.mock('~/lib/messaging', () => ({
 
 const hooksState = vi.hoisted(() => ({
   values: {} as Record<string, unknown>,
-  setItem: vi.fn(),
   activity: {} as ActivityLog,
   sites: [] as SiteKey[]
 }));
@@ -72,10 +71,7 @@ vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
   return {
     ...actual,
-    useStorageItem: (item: { key: string }) => [
-      hooksState.values[item.key],
-      hooksState.setItem
-    ],
+    useStorageItem: (item: { key: string }) => hooksState.values[item.key],
     useActivitySources: () => ({
       activity: hooksState.activity,
       sites: hooksState.sites
@@ -490,7 +486,7 @@ describe('目標の編集', () => {
     vi.mocked(sendMessage).mockResolvedValue({ success: true });
   });
 
-  it('保存すると update-goal-text に入力を trim せずに送り、保存領域には書かずに編集を閉じる', async () => {
+  it('保存すると update-goal-text に入力を trim せずに送り、編集を閉じる', async () => {
     await startEditing(' 新しい目標 ');
 
     fireEvent.click(screen.getByTestId('newtab-goal-save'));
@@ -501,7 +497,6 @@ describe('目標の編集', () => {
     expect(sendMessage).toHaveBeenCalledWith('update-goal-text', {
       goalText: ' 新しい目標 '
     });
-    expect(hooksState.setItem).not.toHaveBeenCalled();
   });
 
   it('空白だけなら送らずに編集を閉じる', async () => {

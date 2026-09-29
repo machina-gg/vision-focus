@@ -105,14 +105,6 @@ export async function getVision(): Promise<VisionSettings> {
 }
 
 /**
- * ダッシュボードの表示設定を丸ごと保存する
- * @param vision 保存する表示設定
- */
-export async function setVision(vision: VisionSettings): Promise<void> {
-  await visionItem.setValue(vision);
-}
-
-/**
  * ダッシュボードの表示設定が保存済みか。`getValue()` は未保存でも fallback を返すので、未保存と既定値の保存済みを区別するときはこちらを使う
  * @returns 使える形の値が保存されていれば true
  */

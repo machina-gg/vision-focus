@@ -31,8 +31,8 @@ function previewBackgroundStyle(
  * @returns スタイルタブの中身
  */
 export function StylesTab() {
-  const [vision] = useStorageItem(visionItem);
-  const [settings] = useStorageItem(settingsItem);
+  const vision = useStorageItem(visionItem);
+  const settings = useStorageItem(settingsItem);
 
   const presets = usePresets({ vision, settings });
 

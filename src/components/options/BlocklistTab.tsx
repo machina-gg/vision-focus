@@ -14,6 +14,7 @@ import { blockCountsByDomain } from '~/hooks/useActivityStats';
 import { secondsOnDay } from '~/lib/activityStats';
 import { blockListSites } from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
+import { isProtectedByPassword } from '~/lib/password';
 import { toDateKey } from '~/lib/time';
 import type { TimeLimit } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
@@ -70,7 +71,8 @@ export function BlocklistTab({
 }: BlocklistTabProps) {
   const { settings } = useSettings();
 
-  const isPasswordProtected = settings?.password.enabled === true;
+  const isPasswordProtected =
+    settings !== undefined && isProtectedByPassword(settings.password);
   const unblockGuard = useUnblockGuard(isPasswordProtected);
   const { requestUnblock } = unblockGuard;
   const now = new Date();

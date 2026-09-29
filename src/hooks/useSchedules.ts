@@ -7,7 +7,7 @@ import {
   ScheduleInputSchema,
   type ScheduleInput
 } from '~/types/messageSchemas';
-import type { AppSettings, Schedule } from '~/types/storage';
+import type { Schedule } from '~/types/storage';
 
 /** スケジュール編集モーダルの入力値 */
 export interface ScheduleFormData {
@@ -55,11 +55,6 @@ export function isScheduleFormValid(form: ScheduleFormData): boolean {
   return ScheduleInputSchema.safeParse(toScheduleInput(form)).success;
 }
 
-interface UseSchedulesOptions {
-  /** 今のアプリ設定。読み込み前は undefined（操作は何もしない） */
-  settings: AppSettings | undefined;
-}
-
 interface UseSchedulesReturn {
   /** 編集モーダルを表示中か */
   showScheduleModal: boolean;
@@ -87,14 +82,9 @@ interface UseSchedulesReturn {
 
 /**
  * スケジュール画面の編集モーダルの状態と、保存・削除・有効切り替えを background へ依頼する操作を提供する（表示は保存値の購読で追従する）
- * @param options フックの入力（下記の項目）
- * @param options.settings 今のアプリ設定。読み込み前は undefined
  * @returns 編集モーダルの状態と各操作
  */
-export function useSchedules({
-  settings
-}: UseSchedulesOptions): UseSchedulesReturn {
-  const loaded = settings !== undefined;
+export function useSchedules(): UseSchedulesReturn {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [scheduleForm, setScheduleFormState] = useState<ScheduleFormData>(
@@ -108,8 +98,6 @@ export function useSchedules({
   }, []);
 
   const handleSaveSchedule = useCallback(async () => {
-    if (!loaded) return;
-
     const parsed = ScheduleInputSchema.safeParse(toScheduleInput(scheduleForm));
     if (!parsed.success) return;
 
@@ -137,19 +125,14 @@ export function useSchedules({
     setShowScheduleModal(false);
     setEditingSchedule(null);
     setScheduleForm(DEFAULT_SCHEDULE_FORM);
-  }, [loaded, scheduleForm, setScheduleForm, editingSchedule]);
+  }, [scheduleForm, setScheduleForm, editingSchedule]);
 
-  const handleDeleteSchedule = useCallback(
-    async (id: string) => {
-      if (!loaded) return;
-      await sendMessage('remove-schedule', { id }).catch(() => undefined);
-    },
-    [loaded]
-  );
+  const handleDeleteSchedule = useCallback(async (id: string) => {
+    await sendMessage('remove-schedule', { id }).catch(() => undefined);
+  }, []);
 
   const handleToggleSchedule = useCallback(
     async (id: string, enabled: boolean) => {
-      if (!loaded) return;
       const response = await sendMessage('toggle-schedule', {
         id,
         enabled
@@ -158,7 +141,7 @@ export function useSchedules({
         trackFeatureUse('schedule_toggle');
       }
     },
-    [loaded]
+    []
   );
 
   const openEditSchedule = useCallback(

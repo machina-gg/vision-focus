@@ -92,10 +92,16 @@ describe('PasswordSettingsSection', () => {
       expect(screen.getByTestId('password-change-button')).toBeInTheDocument();
     });
 
-    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
+    it('有効でもハッシュが無ければ保護なしとして表示する（background の照合と同じ判定）', () => {
       renderSection({ enabled: true, passwordHash: null });
 
-      expect(screen.getByText('passwordProtectionEnabled')).toBeInTheDocument();
+      expect(
+        screen.queryByText('passwordProtectionEnabled')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('password-enable-toggle')).toHaveAttribute(
+        'aria-checked',
+        'false'
+      );
     });
   });
 
