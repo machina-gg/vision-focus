@@ -4,7 +4,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { WeeklyReportCard, MonthlyReportCard } from '../ReportCard';
+import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';
+
+stubI18nWithSubstitutions();
 
 // 期間の表記はロケールと時差で変わるため、渡した値と表示の対応だけを見る
 vi.mock('~/lib/report', () => ({
@@ -40,6 +43,7 @@ const weeklyReportOf = (
   topUnblockedSites: [],
   wasteTimeChangePercent: -12.5,
   trend: 'improving',
+  allowedSeconds: 0,
   ...overrides
 });
 
@@ -56,6 +60,7 @@ const monthlyReportOf = (
   topUnblockedSites: [],
   wasteTimeChangePercent: null,
   trend: 'stable',
+  allowedSeconds: 0,
   ...overrides
 });
 
@@ -159,6 +164,25 @@ describe('WeeklyReportCard', () => {
       renderCard(weeklyReportOf({ topWasteSites: [], topBlockedSites: [] }));
 
       expect(screen.getAllByText('noData')).toHaveLength(2);
+    });
+
+    it('許可サイトの時間があれば補助の 1 行に出す', () => {
+      renderCard(weeklyReportOf({ allowedSeconds: 3900 }));
+
+      expect(screen.getByTestId('report-allowed-time')).toHaveTextContent(
+        'reportAllowedTime(1h 5m)'
+      );
+      expect(screen.getByTestId('report-waste-time')).toHaveTextContent(
+        '1h 1m'
+      );
+    });
+
+    it('許可サイトの時間が 0 秒なら補助の 1 行を出さない', () => {
+      renderCard(weeklyReportOf({ allowedSeconds: 0 }));
+
+      expect(
+        screen.queryByTestId('report-allowed-time')
+      ).not.toBeInTheDocument();
     });
 
     it('前の期間との比較が無ければその旨を出す', () => {
@@ -301,6 +325,22 @@ describe('MonthlyReportCard', () => {
       renderCard(monthlyReportOf());
 
       expect(screen.getByText('noComparisonData')).toBeInTheDocument();
+    });
+
+    it('許可サイトの時間があれば補助の 1 行に出す', () => {
+      renderCard(monthlyReportOf({ allowedSeconds: 45 }));
+
+      expect(screen.getByTestId('report-allowed-time')).toHaveTextContent(
+        'reportAllowedTime(45s)'
+      );
+    });
+
+    it('許可サイトの時間が 0 秒なら補助の 1 行を出さない', () => {
+      renderCard(monthlyReportOf({ allowedSeconds: 0 }));
+
+      expect(
+        screen.queryByTestId('report-allowed-time')
+      ).not.toBeInTheDocument();
     });
 
     it('比較があれば符号つきの変化率を出す', () => {

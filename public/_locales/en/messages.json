@@ -561,6 +561,16 @@
     "message": "Reports",
     "description": "Reports section title"
   },
+  "reportAllowedTime": {
+    "message": "Time on allowed sites: $TIME$",
+    "description": "Supplementary line under the weekly/monthly report stats. The time is how long allowed sites were shown in that period",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "1h 5m"
+      }
+    }
+  },
   "close": {
     "message": "Close",
     "description": "Close button"

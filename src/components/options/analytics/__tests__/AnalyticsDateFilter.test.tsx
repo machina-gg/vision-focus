@@ -5,10 +5,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsDateFilter } from '../AnalyticsDateFilter';
 import { generateWeeklyReport, generateMonthlyReport } from '~/lib/report';
+import type { SitePopulations } from '~/lib/sitePopulation';
 import type { ActivityLog } from '~/types/activity';
 
 const EMPTY_ACTIVITY: ActivityLog = {};
-const SITES = ['a.example'];
+const POPULATIONS: SitePopulations = {
+  waste: ['a.example'],
+  allowed: ['music.a.example']
+};
 
 vi.mock('~/lib/report', () => ({
   generateWeeklyReport: vi.fn(() => null),
@@ -92,7 +96,7 @@ function renderFilter(props: Partial<FilterProps> = {}) {
   return render(
     <AnalyticsDateFilter
       activity={EMPTY_ACTIVITY}
-      sites={SITES}
+      populations={POPULATIONS}
       isSupportPromptVisible={true}
       onSupport={onSupport}
       onDismissSupport={onDismissSupport}
@@ -112,12 +116,12 @@ describe('AnalyticsDateFilter', () => {
 
       expect(generateWeeklyReport).toHaveBeenCalledWith(
         EMPTY_ACTIVITY,
-        SITES,
+        POPULATIONS,
         0
       );
       expect(generateMonthlyReport).toHaveBeenCalledWith(
         EMPTY_ACTIVITY,
-        SITES,
+        POPULATIONS,
         0
       );
     });
@@ -323,18 +327,21 @@ describe('AnalyticsDateFilter', () => {
   });
 
   describe('渡された事実と母集団', () => {
-    it('週次・月次とも同じ activity と sites をレポート生成へ渡す', () => {
+    it('週次・月次とも同じ activity と母集団の組をレポート生成へ渡す', () => {
       const activity: ActivityLog = {
         '2026-03-09': { 'a.example': { seconds: 600, blocks: 1, unblocks: 0 } }
       };
-      const sites = ['a.example', 'b.example'];
+      const populations: SitePopulations = {
+        waste: ['a.example', 'b.example'],
+        allowed: ['music.a.example']
+      };
 
-      renderFilter({ activity, sites });
+      renderFilter({ activity, populations });
 
       for (const generate of [generateWeeklyReport, generateMonthlyReport]) {
         const call = vi.mocked(generate).mock.lastCall;
         expect(call?.[0]).toBe(activity);
-        expect(call?.[1]).toBe(sites);
+        expect(call?.[1]).toBe(populations);
       }
     });
   });

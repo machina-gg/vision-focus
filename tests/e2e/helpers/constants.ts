@@ -184,7 +184,9 @@ export const SELECTORS = {
     addSiteButton: '[data-testid="analytics-add-site-button"]',
     addSiteError: '[data-testid="analytics-add-site-error"]',
     weeklyReportTab: '[data-testid="tab-report-weekly"]',
-    monthlyReportTab: '[data-testid="tab-report-monthly"]'
+    monthlyReportTab: '[data-testid="tab-report-monthly"]',
+    reportWasteTime: '[data-testid="report-waste-time"]',
+    reportAllowedTime: '[data-testid="report-allowed-time"]'
   },
 
   help: {
@@ -265,7 +267,8 @@ export const UI_TEXT = {
   reports: {
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
-    previousMonth: 'Previous month'
+    previousMonth: 'Previous month',
+    allowedTime: 'Time on allowed sites'
   },
   font: {
     sizeSmall: 'Small',

@@ -81,7 +81,10 @@ export function StatsGrid({
         <div className="flex items-center justify-center gap-1 text-danger-600 mb-1">
           <Clock className="w-4 h-4" />
         </div>
-        <p className="text-lg font-bold text-danger-700">
+        <p
+          className="text-lg font-bold text-danger-700"
+          data-testid="report-waste-time"
+        >
           {formatTime(wasteTime)}
         </p>
         <p className="text-xs text-danger-600">{getMessage('wasteTime')}</p>

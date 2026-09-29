@@ -4,7 +4,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { userEvent, within } from 'storybook/test';
 
 import { AnalyticsDateFilter } from './AnalyticsDateFilter';
-import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
+import {
+  STORY_ALLOWED_SITES,
+  STORY_SITES,
+  storyActivity
+} from '~/stories/mockActivity';
+
+const populations = { waste: STORY_SITES, allowed: STORY_ALLOWED_SITES };
 
 const meta = {
   title: 'Options/Analytics/AnalyticsDateFilter',
@@ -28,7 +34,7 @@ type Story = StoryObj<typeof meta>;
 export const WithData: Story = {
   args: {
     activity: storyActivity(),
-    sites: STORY_SITES,
+    populations,
     isSupportPromptVisible: true,
     onSupport: async () => alert('Open Buy Me a Coffee'),
     onDismissSupport: async () => alert('Dismiss')
@@ -38,7 +44,7 @@ export const WithData: Story = {
 export const MonthlyTab: Story = {
   args: {
     activity: storyActivity(),
-    sites: STORY_SITES,
+    populations,
     isSupportPromptVisible: true,
     onSupport: async () => alert('Open Buy Me a Coffee'),
     onDismissSupport: async () => alert('Dismiss')
@@ -52,7 +58,7 @@ export const MonthlyTab: Story = {
 export const Empty: Story = {
   args: {
     activity: {},
-    sites: STORY_SITES,
+    populations,
     isSupportPromptVisible: true,
     onSupport: async () => alert('Open Buy Me a Coffee'),
     onDismissSupport: async () => alert('Dismiss')
@@ -62,7 +68,7 @@ export const Empty: Story = {
 export const WithoutSupportPrompt: Story = {
   args: {
     activity: storyActivity(),
-    sites: STORY_SITES,
+    populations,
     isSupportPromptVisible: false,
     onSupport: async () => alert('Open Buy Me a Coffee'),
     onDismissSupport: async () => alert('Dismiss')

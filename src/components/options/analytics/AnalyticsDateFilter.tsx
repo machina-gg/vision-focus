@@ -8,8 +8,8 @@ import {
 } from '~/components/features';
 import { generateWeeklyReport, generateMonthlyReport } from '~/lib/report';
 import { getMessage } from '~/lib/i18n';
+import type { SitePopulations } from '~/lib/sitePopulation';
 import type { ActivityLog } from '~/types/activity';
-import type { SiteKey } from '~/types/site';
 
 /** Tabs の data-testid は `tab-${id}` になるため、設定画面上部のタブの id と重ならない名前にする */
 const REPORT_TABS = {
@@ -26,8 +26,8 @@ const isReportTab = (tabId: string): tabId is ReportTab =>
 interface AnalyticsDateFilterProps {
   /** 日別・サイト別の閲覧時間とブロック回数の記録 */
   activity: ActivityLog;
-  /** レポートの集計に含めるサイト */
-  sites: readonly SiteKey[];
+  /** レポートの集計の母集団（浪費は合計・前期比・傾向・トップに、許可サイトは補助の 1 行にだけ使う） */
+  populations: SitePopulations;
   /** true ならレポートの下に支援の呼びかけを出す */
   isSupportPromptVisible: boolean;
   /** 支援の呼びかけで支援ボタンが押されたときに呼ぶ */
@@ -43,7 +43,7 @@ interface AnalyticsDateFilterProps {
  */
 export function AnalyticsDateFilter({
   activity,
-  sites,
+  populations,
   isSupportPromptVisible,
   onSupport,
   onDismissSupport
@@ -53,12 +53,12 @@ export function AnalyticsDateFilter({
   const [monthlyOffset, setMonthlyOffset] = useState(0);
 
   const weeklyReport = useMemo(() => {
-    return generateWeeklyReport(activity, sites, weeklyOffset);
-  }, [activity, sites, weeklyOffset]);
+    return generateWeeklyReport(activity, populations, weeklyOffset);
+  }, [activity, populations, weeklyOffset]);
 
   const monthlyReport = useMemo(() => {
-    return generateMonthlyReport(activity, sites, monthlyOffset);
-  }, [activity, sites, monthlyOffset]);
+    return generateMonthlyReport(activity, populations, monthlyOffset);
+  }, [activity, populations, monthlyOffset]);
 
   const handlePreviousWeek = useCallback(() => {
     setWeeklyOffset((prev) => prev - 1);

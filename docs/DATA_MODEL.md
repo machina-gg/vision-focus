@@ -312,6 +312,7 @@ DashboardDisplaySettings に次を足したもの。
 | 許可サイトの時間（分析タブの別のグラフ）             | `dailySeries` / `rankSites` / `cumulativeSeries`                       | 許可サイト                                                     | グラフの期間（全系列で同じ） |
 | サイト別ランキング・X シェア                         | `rankSites` / `sumRange`                                               | 浪費                                                           | 保持期間全体                 |
 | 週次・月次レポート                                   | `sumRange` / `dailySeries` / `rankSites`                               | 浪費                                                           | その週・その月               |
+| 週次・月次レポートの許可サイトの時間（補助の 1 行）  | `sumRange`                                                             | 許可サイト                                                     | その週・その月               |
 | 追跡中のサイト一覧（解除日・解除後の時間・合計）     | `lastUnblockedOn` / `secondsSinceUnblock` / `totalSecondsSinceUnblock` | 追跡中のサイトすべて（合計は解除済みと無効の行だけ）           | 最後に解除した日から今日     |
 | 追跡中のサイト一覧の許可サイトの行の時間             | `siteTotals`                                                           | そのサイト（記録していなければ時間の代わりに記録していない旨） | 保持期間全体                 |
 | CSV（ブロック回数・日別統計）                        | `rankSites` / `lastBlockedOn` / `dailySeries`                          | 浪費                                                           | 保持期間全体                 |

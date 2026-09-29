@@ -489,7 +489,7 @@ Esc で編集を取り消す。
 
 ### WeeklyReportCard
 
-`src/components/features/ReportCard/ReportCard.tsx`。このカードと `MonthlyReportCard` はレポートを描くだけで、レポートは `AnalyticsDateFilter` が `src/lib/report.ts` で組む。
+`src/components/features/ReportCard/ReportCard.tsx`。このカードと `MonthlyReportCard` はレポートを描くだけで、レポートは `AnalyticsDateFilter` が `src/lib/report.ts` で組む。集計値（`StatsGrid`）の下に、レポートの `allowedSeconds` を補助の 1 行「許可サイトの時間: <時間>」で出す（0 秒なら出さない。浪費時間には入らない）。
 
 | Prop          | 型                     | 省略時  | 説明                                        |
 | ------------- | ---------------------- | ------- | ------------------------------------------- |
@@ -503,7 +503,7 @@ Esc で編集を取り消す。
 
 ### MonthlyReportCard
 
-`src/components/features/ReportCard/ReportCard.tsx`
+`src/components/features/ReportCard/ReportCard.tsx`。許可サイトの時間の補助の 1 行は `WeeklyReportCard` と同じ。
 
 | Prop           | 型                      | 省略時  | 説明                                        |
 | -------------- | ----------------------- | ------- | ------------------------------------------- |
@@ -715,7 +715,7 @@ Esc で編集を取り消す。
 
 ### AnalyticsTab
 
-`src/components/options/AnalyticsTab.tsx`。`trackedSites` から浪費時間の母集団（`wasteSiteKeys`）を作ってランキングとレポートへ渡す。書き出しのカードと追跡中のサイト一覧には `trackedSites` をそのまま渡す。
+`src/components/options/AnalyticsTab.tsx`。`trackedSites` から浪費時間の母集団（`wasteSiteKeys`）を作ってランキングへ渡し、浪費と許可サイト（`allowedSiteKeys`）の母集団の組（`SitePopulations`）をレポートへ渡す。書き出しのカードと追跡中のサイト一覧には `trackedSites` をそのまま渡す。
 
 | Prop                   | 型                                     | 省略時 | 説明                                                    |
 | ---------------------- | -------------------------------------- | ------ | ------------------------------------------------------- |
@@ -853,13 +853,13 @@ Esc で編集を取り消す。
 
 `src/components/options/analytics/AnalyticsDateFilter.tsx`。今の期間より先へは進めない。
 
-| Prop                   | 型                    | 省略時 | 説明                                           |
-| ---------------------- | --------------------- | ------ | ---------------------------------------------- |
-| activity               | `ActivityLog`         | 必須   | 日別・サイト別の閲覧時間とブロック回数の記録   |
-| sites                  | `readonly SiteKey[]`  | 必須   | レポートの集計に含めるサイト                   |
-| isSupportPromptVisible | `boolean`             | 必須   | true ならレポートの下に支援の呼びかけを出す    |
-| onSupport              | `() => Promise<void>` | 必須   | 支援の呼びかけで支援ボタンが押されたときに呼ぶ |
-| onDismissSupport       | `() => Promise<void>` | 必須   | 支援の呼びかけが閉じられたときに呼ぶ           |
+| Prop                   | 型                    | 省略時 | 説明                                                                                                          |
+| ---------------------- | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| activity               | `ActivityLog`         | 必須   | 日別・サイト別の閲覧時間とブロック回数の記録                                                                  |
+| populations            | `SitePopulations`     | 必須   | レポートの母集団（`{ waste; allowed }`。浪費は合計・前期比・傾向・トップ、許可サイトは補助の 1 行だけに使う） |
+| isSupportPromptVisible | `boolean`             | 必須   | true ならレポートの下に支援の呼びかけを出す                                                                   |
+| onSupport              | `() => Promise<void>` | 必須   | 支援の呼びかけで支援ボタンが押されたときに呼ぶ                                                                |
+| onDismissSupport       | `() => Promise<void>` | 必須   | 支援の呼びかけが閉じられたときに呼ぶ                                                                          |
 
 ---
 

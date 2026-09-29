@@ -10,6 +10,8 @@ export const STORY_SITES: SiteKey[] = [
   'reddit.com'
 ];
 
+export const STORY_ALLOWED_SITES: SiteKey[] = ['music.youtube.com'];
+
 const STORY_DAYS = 45;
 
 export function daysAgoKey(days: number, now: Date = new Date()): string {
@@ -55,7 +57,8 @@ export function storyActivity(now: Date = new Date()): ActivityLog {
         },
         d
       ],
-      ['reddit.com', { seconds: (d % 3) * 400, blocks: d % 4 }, d]
+      ['reddit.com', { seconds: (d % 3) * 400, blocks: d % 4 }, d],
+      ['music.youtube.com', { seconds: 900 + ((d * 97) % 1200) }, d]
     );
   }
   return mockActivity(entries, now);
