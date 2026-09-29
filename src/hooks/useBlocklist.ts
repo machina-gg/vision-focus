@@ -27,6 +27,15 @@ interface UseBlocklistReturn {
     id: string,
     timeLimit: TimeLimit | null
   ) => Promise<void>;
+  /** 入力したホストを許可サイトにする（「時間を記録する」は OFF で始まる）。失敗の文言、追加したら null を返す */
+  handleAddAllowedSite: (input: string) => Promise<string | null>;
+  /** 許可サイトを登録ごと消す（そのホストの記録も消える）。失敗の文言、消せたら null を返す */
+  handleRemoveAllowedSite: (domain: string) => Promise<string | null>;
+  /** 許可サイトの「時間を記録する」を切り替える。失敗の文言、切り替えたら null を返す */
+  handleSetAllowedSiteRecording: (
+    domain: string,
+    recordTime: boolean
+  ) => Promise<string | null>;
   /** 残り時間の通知の設定の保存を background に依頼する。失敗したら表示は保存値のまま */
   handleUpdateNotifications: (
     notifications: NotificationSettings
@@ -34,7 +43,7 @@ interface UseBlocklistReturn {
 }
 
 /**
- * ブロックリスト画面の操作（追加・削除・有効切り替え・時間制限・通知設定）と追加欄の入力状態を提供する（保存はすべて background に依頼する）
+ * ブロックリスト画面の操作（追加・削除・有効切り替え・時間制限・許可サイト・通知設定）と追加欄の入力状態を提供する（保存はすべて background に依頼する）
  * @returns 追加欄の入力状態・失敗の文言と、各操作
  */
 export function useBlocklist(): UseBlocklistReturn {
@@ -105,6 +114,41 @@ export function useBlocklist(): UseBlocklistReturn {
     []
   );
 
+  const handleAddAllowedSite = useCallback(async (input: string) => {
+    try {
+      const response = await sendMessage('add-allowed-site', {
+        domain: input.trim()
+      });
+      return response.success ? null : messageErrorText(response.error);
+    } catch {
+      return messageErrorText(undefined);
+    }
+  }, []);
+
+  const handleRemoveAllowedSite = useCallback(async (domain: string) => {
+    try {
+      const response = await sendMessage('stop-tracking', { domain });
+      return response.success ? null : messageErrorText(response.error);
+    } catch {
+      return messageErrorText(undefined);
+    }
+  }, []);
+
+  const handleSetAllowedSiteRecording = useCallback(
+    async (domain: string, recordTime: boolean) => {
+      try {
+        const response = await sendMessage('set-allowed-site-recording', {
+          domain,
+          recordTime
+        });
+        return response.success ? null : messageErrorText(response.error);
+      } catch {
+        return messageErrorText(undefined);
+      }
+    },
+    []
+  );
+
   const handleUpdateNotifications = useCallback(
     async (notifications: NotificationSettings) => {
       await sendMessage('update-notifications', { notifications }).catch(
@@ -122,6 +166,9 @@ export function useBlocklist(): UseBlocklistReturn {
     handleRemoveDomain,
     handleToggleDomain,
     handleUpdateTimeLimit,
+    handleAddAllowedSite,
+    handleRemoveAllowedSite,
+    handleSetAllowedSiteRecording,
     handleUpdateNotifications
   };
 }

@@ -12,6 +12,7 @@ import {
   youtubeFeatures
 } from '~/test/sites';
 import { itemAt } from '~/test/items';
+import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
 import type { BlockRule, SiteEntry, YouTubeFeatures } from '~/types/site';
@@ -54,11 +55,16 @@ function siteOf(youtube: Partial<YouTubeSettingsInput>): SiteEntry | null {
     : trackedSite(YOUTUBE_DOMAIN, { youtube: features });
 }
 
-function renderSite(site: SiteEntry | null, onYouTubeChange = vi.fn()) {
+function renderSite(
+  site: SiteEntry | null,
+  onYouTubeChange = vi.fn(),
+  allowedCount = 0
+) {
   const onRequestUnblock = vi.fn<(request: UnblockRequest) => void>();
   render(
     <YouTubeSection
       site={site}
+      allowedCount={allowedCount}
       onYouTubeChange={onYouTubeChange}
       onRequestUnblock={onRequestUnblock}
     />
@@ -82,6 +88,26 @@ function onlyRequest(
 }
 
 describe('YouTubeSection', () => {
+  describe('許可サイトの件数', () => {
+    stubI18nWithSubstitutions();
+
+    it('0 件なら出さない', () => {
+      renderSite(blockedSite(YOUTUBE_DOMAIN));
+
+      expect(
+        screen.queryByTestId('youtube-allowed-count')
+      ).not.toBeInTheDocument();
+    });
+
+    it('1 件以上なら件数つきで出す', () => {
+      renderSite(blockedSite(YOUTUBE_DOMAIN), vi.fn(), 1);
+
+      expect(screen.getByTestId('youtube-allowed-count')).toHaveTextContent(
+        'allowedSitesCount(1)'
+      );
+    });
+  });
+
   describe('youtube.com のサイトの見せ方', () => {
     it('youtube.com が無ければすべて OFF', () => {
       renderSite(null);

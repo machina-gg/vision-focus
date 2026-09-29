@@ -2034,5 +2034,53 @@
   "imageErrorProcessFailed": {
     "message": "Failed to process image",
     "description": "Image error: failed to load or convert"
+  },
+  "allowedSitesSection": {
+    "message": "Allowed sites",
+    "description": "Heading of the allowed sites section on the blocklist tab"
+  },
+  "allowedSitesDescription": {
+    "message": "Hosts listed here stay open even inside a blocked domain",
+    "description": "Description of the allowed sites section"
+  },
+  "allowedSitePlaceholder": {
+    "message": "e.g. music.youtube.com",
+    "description": "Placeholder of the input in the allowed sites section"
+  },
+  "allowedSiteExceptionOf": {
+    "message": "Exception to $SITE$",
+    "description": "Note on an allowed site row. The blocked site that covers it",
+    "placeholders": {
+      "site": {
+        "content": "$1",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "allowedSiteNoBlock": {
+    "message": "Not inside any blocked site",
+    "description": "Note on an allowed site row when no blocked site covers it"
+  },
+  "allowedSiteRecordTime": {
+    "message": "Record time",
+    "description": "Switch on an allowed site row that turns time recording on or off"
+  },
+  "removeAllowedSite": {
+    "message": "Remove from allowed sites",
+    "description": "aria-label of the remove button on an allowed site row"
+  },
+  "noAllowedSites": {
+    "message": "No allowed sites",
+    "description": "Shown when there are no allowed sites"
+  },
+  "allowedSitesCount": {
+    "message": "$COUNT$ allowed site(s)",
+    "description": "Number of allowed sites under a blocked site, shown on its row and in the YouTube section",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
   }
 }
