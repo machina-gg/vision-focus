@@ -1988,5 +1988,53 @@
   "imageErrorProcessFailed": {
     "message": "画像を読み込めませんでした",
     "description": "画像エラー: 読み込み・変換の失敗"
+  },
+  "allowedSitesSection": {
+    "message": "許可サイト",
+    "description": "ブロックリストタブの「許可サイト」節の見出し"
+  },
+  "allowedSitesDescription": {
+    "message": "ブロックしたドメインの中でも、ここに登録したホストは開けます",
+    "description": "「許可サイト」節の説明"
+  },
+  "allowedSitePlaceholder": {
+    "message": "例: music.youtube.com",
+    "description": "「許可サイト」節の入力欄のプレースホルダー"
+  },
+  "allowedSiteExceptionOf": {
+    "message": "$SITE$ の例外",
+    "description": "許可サイトの行の補足。覆うブロックのサイト",
+    "placeholders": {
+      "site": {
+        "content": "$1",
+        "example": "youtube.com"
+      }
+    }
+  },
+  "allowedSiteNoBlock": {
+    "message": "かかっているブロックはありません",
+    "description": "許可サイトの行の補足。覆うブロックが無いとき"
+  },
+  "allowedSiteRecordTime": {
+    "message": "時間を記録する",
+    "description": "許可サイトの行の、滞在時間を記録するかのスイッチ"
+  },
+  "removeAllowedSite": {
+    "message": "許可サイトから削除",
+    "description": "許可サイトの行の削除ボタンの aria-label"
+  },
+  "noAllowedSites": {
+    "message": "許可サイトはありません",
+    "description": "許可サイトが 1 件も無いときの表示"
+  },
+  "allowedSitesCount": {
+    "message": "許可サイト $COUNT$ 件",
+    "description": "ブロックの行と YouTube の節に出す、その下の許可サイトの件数",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
   }
 }

@@ -17,6 +17,7 @@ import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -93,7 +94,14 @@ function renderTab({
     onRemoveDomain: vi.fn(async () => null as string | null),
     onToggleDomain: vi.fn(async () => null as string | null),
     onUpdateTimeLimit: vi.fn(),
-    onYouTubeChange: vi.fn(async () => null as string | null)
+    onYouTubeChange: vi.fn(async () => null as string | null),
+    onAddAllowedSite: vi.fn(async (_input: string) => null as string | null),
+    onRemoveAllowedSite: vi.fn(
+      async (_domain: string) => null as string | null
+    ),
+    onSetAllowedSiteRecording: vi.fn(
+      async (_domain: string, _recordTime: boolean) => null as string | null
+    )
   };
 
   render(
@@ -273,6 +281,163 @@ describe('BlocklistTab', () => {
       renderTab({ blockError: '不正なドメイン' });
 
       expect(screen.getByText('不正なドメイン')).toBeInTheDocument();
+    });
+  });
+
+  describe('許可サイト', () => {
+    const MUSIC = `music.${YOUTUBE_DOMAIN}`;
+
+    it('許可サイトは「許可サイト」節にドメイン順で並び、ブロック中のサイト一覧には出ない', () => {
+      setSettings({
+        sites: [
+          itemOf({ domain: 'google.com' }),
+          allowedSite('mail.google.com'),
+          allowedSite('docs.example')
+        ]
+      });
+
+      renderTab();
+
+      expect(
+        screen
+          .getAllByTestId('allowed-site-item-domain')
+          .map((node) => node.textContent)
+      ).toEqual(['docs.example', 'mail.google.com']);
+      expect(screen.getAllByTestId('blocklist-item')).toHaveLength(1);
+      expect(
+        screen
+          .getAllByTestId('allowed-site-item-note')
+          .map((node) => node.textContent)
+      ).toEqual(['allowedSiteNoBlock', 'allowedSiteExceptionOf(google.com)']);
+    });
+
+    it('親のブロックを無効にしていても「<ブロック> の例外」を出す', () => {
+      setSettings({
+        sites: [
+          itemOf({ domain: 'google.com', enabled: false }),
+          allowedSite('mail.google.com')
+        ]
+      });
+
+      renderTab();
+
+      expect(screen.getByTestId('allowed-site-item-note')).toHaveTextContent(
+        'allowedSiteExceptionOf(google.com)'
+      );
+    });
+
+    it('ブロックの行と YouTube の節に、その下の許可サイトの件数を出す', () => {
+      setSettings({
+        sites: [
+          itemOf({ domain: 'google.com' }),
+          itemOf({ domain: 'example.com' }),
+          allowedSite('mail.google.com'),
+          allowedSite('docs.google.com'),
+          allowedSite(MUSIC)
+        ]
+      });
+
+      renderTab({ youtube: blockedSite(YOUTUBE_DOMAIN) });
+
+      expect(
+        screen
+          .getAllByTestId('blocklist-item-allowed-count')
+          .map((node) => node.textContent)
+      ).toEqual(['allowedSitesCount(2)']);
+      expect(screen.getByTestId('youtube-allowed-count')).toHaveTextContent(
+        'allowedSitesCount(1)'
+      );
+    });
+
+    it('入力を onAddAllowedSite に渡し、拒否されたら理由を出して入力を残す', async () => {
+      const onAddAllowedSite = vi.fn(async (_input: string) => '拒否の理由');
+      renderTab({ onAddAllowedSite });
+
+      fireEvent.change(screen.getByTestId('allowed-site-input'), {
+        target: { value: YOUTUBE_DOMAIN }
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-add-button'));
+      });
+
+      expect(onAddAllowedSite).toHaveBeenCalledWith(YOUTUBE_DOMAIN);
+      expect(screen.getByTestId('allowed-site-error')).toHaveTextContent(
+        '拒否の理由'
+      );
+      expect(screen.getByTestId('allowed-site-input')).toHaveValue(
+        YOUTUBE_DOMAIN
+      );
+    });
+
+    it('追加できたら理由を消して入力を空にする', async () => {
+      const onAddAllowedSite = vi
+        .fn<(input: string) => Promise<string | null>>()
+        .mockResolvedValueOnce('拒否の理由')
+        .mockResolvedValueOnce(null);
+      renderTab({ onAddAllowedSite });
+      const input = screen.getByTestId('allowed-site-input');
+
+      fireEvent.change(input, { target: { value: MUSIC } });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-add-button'));
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-add-button'));
+      });
+
+      expect(
+        screen.queryByTestId('allowed-site-error')
+      ).not.toBeInTheDocument();
+      expect(input).toHaveValue('');
+    });
+
+    it('パスワード保護中でも、削除と「時間を記録する」は確認を挟まずに送る', async () => {
+      setSettings({
+        sites: [itemOf({ domain: YOUTUBE_DOMAIN }), allowedSite(MUSIC)],
+        password: { enabled: true, passwordHash: 'hash' }
+      });
+      const handlers = renderTab();
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-item-record-toggle'));
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-item-remove'));
+      });
+
+      expect(handlers.onSetAllowedSiteRecording).toHaveBeenCalledWith(
+        MUSIC,
+        true
+      );
+      expect(handlers.onRemoveAllowedSite).toHaveBeenCalledWith(MUSIC);
+      expect(
+        screen.queryByTestId('password-modal-confirm')
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('unblock-confirm-hold-button')
+      ).not.toBeInTheDocument();
+    });
+
+    it('削除と切り替えに失敗したら理由を欄の下に出す', async () => {
+      setSettings({ sites: [allowedSite(MUSIC)] });
+      renderTab({
+        onRemoveAllowedSite: vi.fn(async () => '削除の失敗'),
+        onSetAllowedSiteRecording: vi.fn(async () => '切り替えの失敗')
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-item-remove'));
+      });
+      expect(screen.getByTestId('allowed-site-error')).toHaveTextContent(
+        '削除の失敗'
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('allowed-site-item-record-toggle'));
+      });
+      expect(screen.getByTestId('allowed-site-error')).toHaveTextContent(
+        '切り替えの失敗'
+      );
     });
   });
 

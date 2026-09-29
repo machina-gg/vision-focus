@@ -23,6 +23,7 @@ vi.mock('~/lib/storage', () => ({
 }));
 
 import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 import { trackFeatureUse } from '~/lib/analytics';
 import { settingsItem, sitesItem } from '~/lib/storage';
 
@@ -263,6 +264,114 @@ describe('useBlocklist', () => {
         'パスワードが正しくありません。再度お試しください。'
       ]);
       expect(trackFeatureUse).not.toHaveBeenCalledWith('block_remove');
+    });
+  });
+
+  describe('許可サイトの操作', () => {
+    it('handleAddAllowedSite は前後の空白を除いた入力を add-allowed-site で依頼し、成功なら null を返す', async () => {
+      const { result } = render();
+
+      let failure: string | null = '';
+      await act(async () => {
+        failure = await result.current.handleAddAllowedSite(
+          ' music.youtube.com '
+        );
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('add-allowed-site', {
+        domain: 'music.youtube.com'
+      });
+      expect(failure).toBeNull();
+      expect(sitesItem.setValue).not.toHaveBeenCalled();
+    });
+
+    it('handleAddAllowedSite は拒否の理由を文言にして返す', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'already-blocked' }
+      });
+      const { result } = render();
+
+      let failure: string | null = null;
+      await act(async () => {
+        failure = await result.current.handleAddAllowedSite('youtube.com');
+      });
+
+      expect(failure).toBe(messageErrorText({ code: 'already-blocked' }));
+      expect(failure).not.toBe(messageErrorText(undefined));
+    });
+
+    it('handleRemoveAllowedSite は stop-tracking を依頼する', async () => {
+      const { result } = render();
+
+      let failure: string | null = '';
+      await act(async () => {
+        failure =
+          await result.current.handleRemoveAllowedSite('music.youtube.com');
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('stop-tracking', {
+        domain: 'music.youtube.com'
+      });
+      expect(failure).toBeNull();
+    });
+
+    it.each([true, false])(
+      'handleSetAllowedSiteRecording は set-allowed-site-recording を依頼する（%s）',
+      async (recordTime) => {
+        const { result } = render();
+
+        await act(async () => {
+          await result.current.handleSetAllowedSiteRecording(
+            'music.youtube.com',
+            recordTime
+          );
+        });
+
+        expect(sendMessage).toHaveBeenCalledWith('set-allowed-site-recording', {
+          domain: 'music.youtube.com',
+          recordTime
+        });
+      }
+    );
+
+    it('許可サイトが無いときの切り替えの失敗は汎用の文言を返す', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'allow-not-found' }
+      });
+      const { result } = render();
+
+      let failure: string | null = null;
+      await act(async () => {
+        failure = await result.current.handleSetAllowedSiteRecording(
+          'music.youtube.com',
+          true
+        );
+      });
+
+      expect(failure).toBe('操作できませんでした。もう一度お試しください');
+    });
+
+    it('依頼が例外を投げてもスローせず、汎用の失敗の文言を返す', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('Network error'));
+      const { result } = render();
+
+      let failures: (string | null)[] = [];
+      await act(async () => {
+        failures = [
+          await result.current.handleAddAllowedSite('music.youtube.com'),
+          await result.current.handleRemoveAllowedSite('music.youtube.com'),
+          await result.current.handleSetAllowedSiteRecording(
+            'music.youtube.com',
+            true
+          )
+        ];
+      });
+
+      expect(failures).toEqual(
+        Array(3).fill('操作できませんでした。もう一度お試しください')
+      );
     });
   });
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Plus, Lock } from 'lucide-react';
 
 import { Button, Card, Input } from '~/components/ui';
@@ -7,12 +7,21 @@ import {
   UnblockConfirmModal
 } from '~/components/options/modals';
 import { getMessage } from '~/lib/i18n';
-import { YouTubeSection, DomainListItem } from '~/components/options/blocklist';
+import {
+  AllowedSitesSection,
+  YouTubeSection,
+  DomainListItem
+} from '~/components/options/blocklist';
 import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import { blockCountsByDomain } from '~/hooks/useActivityStats';
 import { secondsOnDay } from '~/lib/activityStats';
-import { blockListSites, hasBlock } from '~/lib/blockList';
+import {
+  allowedCountUnder,
+  allowedSiteRows,
+  blockListSites,
+  hasBlock
+} from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { isProtectedByPassword } from '~/lib/password';
 import { toDateKey } from '~/lib/time';
@@ -50,10 +59,19 @@ interface BlocklistTabProps {
     youtube: YouTubeSettingsInput,
     password?: string
   ) => Promise<string | null>;
+  /** 「許可サイト」節の入力を受け取り、許可サイトにする。失敗の文言、追加したら null を返す */
+  onAddAllowedSite: (input: string) => Promise<string | null>;
+  /** 許可サイトの削除を受け取る（確認は出さない）。失敗の文言、消せたら null を返す */
+  onRemoveAllowedSite: (domain: string) => Promise<string | null>;
+  /** 許可サイトの「時間を記録する」の切り替えを受け取る（確認は出さない）。失敗の文言、切り替えたら null を返す */
+  onSetAllowedSiteRecording: (
+    domain: string,
+    recordTime: boolean
+  ) => Promise<string | null>;
 }
 
 /**
- * 設定画面のブロックタブ（追加欄・ブロック中のサイト一覧・YouTube の設定）を表示し、解除にはパスワードと長押しの確認を挟む
+ * 設定画面のブロックタブ（「ブロック」節の追加欄・ブロック中のサイト一覧・YouTube の設定と、「許可サイト」節）を表示し、ブロックの解除にはパスワードと長押しの確認を挟む
  * @param props 追加欄の状態・ブロック対象のデータと各操作（各フィールドは BlocklistTabProps）
  * @returns ブロックタブの中身と、解除の確認用のモーダル
  */
@@ -67,7 +85,10 @@ export function BlocklistTab({
   onUpdateTimeLimit,
   activity,
   trackedSites,
-  onYouTubeChange
+  onYouTubeChange,
+  onAddAllowedSite,
+  onRemoveAllowedSite,
+  onSetAllowedSiteRecording
 }: BlocklistTabProps) {
   const { settings } = useSettings();
 
@@ -79,6 +100,36 @@ export function BlocklistTab({
   const today = toDateKey(now);
   const blockList = useMemo(() => blockListSites(trackedSites), [trackedSites]);
   const blockCounts = blockCountsByDomain(activity, blockList, now);
+  const allowedSites = useMemo(
+    () => allowedSiteRows(trackedSites),
+    [trackedSites]
+  );
+  const [allowedSiteError, setAllowedSiteError] = useState('');
+
+  const handleAddAllowedSite = useCallback(
+    async (input: string) => {
+      const failure = await onAddAllowedSite(input);
+      setAllowedSiteError(failure ?? '');
+      return failure;
+    },
+    [onAddAllowedSite]
+  );
+
+  const handleRemoveAllowedSite = useCallback(
+    async (domain: string) => {
+      setAllowedSiteError((await onRemoveAllowedSite(domain)) ?? '');
+    },
+    [onRemoveAllowedSite]
+  );
+
+  const handleSetAllowedSiteRecording = useCallback(
+    async (domain: string, recordTime: boolean) => {
+      setAllowedSiteError(
+        (await onSetAllowedSiteRecording(domain, recordTime)) ?? ''
+      );
+    },
+    [onSetAllowedSiteRecording]
+  );
 
   const handleRemoveClick = useCallback(
     (domain: string) => {
@@ -166,6 +217,7 @@ export function BlocklistTab({
                 site={site}
                 blockCount={blockCounts[site.domain] ?? 0}
                 usedSeconds={secondsOnDay(activity, site.domain, today)}
+                allowedCount={allowedCountUnder(trackedSites, site.domain)}
                 onToggle={handleToggleClick}
                 onRemove={handleRemoveClick}
                 onUpdateTimeLimit={onUpdateTimeLimit}
@@ -177,8 +229,19 @@ export function BlocklistTab({
 
       <YouTubeSection
         site={trackedSites[YOUTUBE_DOMAIN] ?? null}
+        allowedCount={allowedCountUnder(trackedSites, YOUTUBE_DOMAIN)}
         onYouTubeChange={onYouTubeChange}
         onRequestUnblock={requestUnblock}
+      />
+
+      <AllowedSitesSection
+        sites={allowedSites}
+        error={allowedSiteError}
+        onAdd={handleAddAllowedSite}
+        onRemove={(domain) => void handleRemoveAllowedSite(domain)}
+        onSetRecording={(domain, recordTime) =>
+          void handleSetAllowedSiteRecording(domain, recordTime)
+        }
       />
 
       {isPasswordProtected && (
