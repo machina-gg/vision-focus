@@ -51,7 +51,6 @@ import {
   getBackgroundImages,
   getSettings,
   getVision,
-  setVision,
   getSites,
   getAllStorage,
   setLastBlocked,
@@ -77,7 +76,7 @@ beforeEach(() => {
 describe('保存形式', () => {
   it('chrome.storage.local に生のオブジェクトを保存する（キーに local: は付かない）', async () => {
     const vision = { ...DEFAULT_VISION, activePresetId: 'test' };
-    await setVision(vision);
+    await visionItem.setValue(vision);
 
     expect(fakeChrome.localData).toEqual({ vision });
     expect(fakeChrome.localData['local:vision']).toBeUndefined();
@@ -152,13 +151,6 @@ describe('getVision', () => {
   });
 });
 
-describe('setVision', () => {
-  it('ビジョン設定を保存する', async () => {
-    await setVision(DEFAULT_VISION);
-    expect(fakeChrome.localData.vision).toEqual(DEFAULT_VISION);
-  });
-});
-
 describe('getSites', () => {
   it('データがない場合は空（追跡中のサイトなし）を返す', async () => {
     expect(await getSites()).toEqual(DEFAULT_SITES);
@@ -194,13 +186,13 @@ describe('hasStoredVision', () => {
   });
 
   it('保存済みなら true を返す', async () => {
-    await setVision(DEFAULT_VISION);
+    await visionItem.setValue(DEFAULT_VISION);
 
     expect(await hasStoredVision()).toBe(true);
   });
 
   it('削除すると false に戻る', async () => {
-    await setVision(DEFAULT_VISION);
+    await visionItem.setValue(DEFAULT_VISION);
     await visionItem.removeValue();
 
     expect(await hasStoredVision()).toBe(false);

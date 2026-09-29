@@ -107,8 +107,8 @@ export function blockCountsByDomain(
  * @returns 事実の表と追跡中のサイトのキー（読み込み前は空の既定値）
  */
 export function useActivitySources(): ActivitySources {
-  const [activity] = useStorageItem(activityItem);
-  const [trackedSites] = useStorageItem(sitesItem);
+  const activity = useStorageItem(activityItem);
+  const trackedSites = useStorageItem(sitesItem);
   const sites = useMemo(() => trackedSiteKeys(trackedSites), [trackedSites]);
   return { activity, sites };
 }

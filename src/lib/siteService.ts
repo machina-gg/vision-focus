@@ -20,12 +20,14 @@ import type {
 
 const enqueue = createSerialQueue();
 
-/** `change` は読み出した値を書き換えず、変更後の値を `next` で返す（変更が無ければ null） */
+type SitesChange<T> = { next: TrackedSites | null; result: T };
+
+/** `change` は読み出した値を書き換えず、変更後の値を `next` で返す（変更が無ければ null）。`change` が待つ間も待ち行列は次の処理へ進まない */
 async function mutateSites<T>(
-  change: (current: TrackedSites) => { next: TrackedSites | null; result: T }
+  change: (current: TrackedSites) => SitesChange<T> | Promise<SitesChange<T>>
 ): Promise<T> {
   return enqueue(async () => {
-    const { next, result } = change(await getSites());
+    const { next, result } = await change(await getSites());
     if (next) await sitesItem.setValue(next);
     return result;
   });
@@ -242,18 +244,42 @@ export interface YouTubeSiteUpdate {
   block: Pick<BlockRule, 'enabled' | 'timeLimit'> | null;
 }
 
+/** updateYouTubeSite の結果。rejection が null なら書き込んで、before に変更前の youtube.com のサイト（無ければ null）が入る */
+export type UpdateYouTubeSiteResult<R> =
+  | {
+      /** 書き込んだので null */
+      rejection: null;
+      /** 変更前の youtube.com のサイト（無ければ null） */
+      before: TrackedSite | null;
+    }
+  | {
+      /** authorize が拒んだ理由 */
+      rejection: R;
+      /** 書き込まなかったので null */
+      before: null;
+    };
+
 /**
- * youtube.com の非表示機能とアクセスブロックを書き（サイトが無ければ作る）、変更前のサイト（無ければ null）を返す
+ * 書き込み直前の youtube.com を見てアクセスブロックを弱めるかを判定し、authorize が通したときだけ非表示機能とアクセスブロックを書く（サイトが無ければ作る）
  * @param update 書く値
  * @param now サイトかブロック設定を新しく作るときの時刻
- * @returns 変更前の youtube.com のサイト（無ければ null）
+ * @param authorize 弱めるか（有効なアクセスブロックが外れる・無効になるか）を受け、拒むならその理由、通すなら null を返す。待ち行列の中で呼ぶので、判定から書き込みまでに別の書き込みは入らない
+ * @returns 書き込んだなら変更前のサイト、拒んだならその理由
  */
-export async function updateYouTubeSite(
+export async function updateYouTubeSite<R>(
   update: YouTubeSiteUpdate,
-  now: Date
-): Promise<TrackedSite | null> {
-  return mutateSites((sites) => {
+  now: Date,
+  authorize: (weakens: boolean) => Promise<R | null>
+): Promise<UpdateYouTubeSiteResult<R>> {
+  return mutateSites<UpdateYouTubeSiteResult<R>>(async (sites) => {
     const before = sites[YOUTUBE_DOMAIN] ?? null;
+    const weakens =
+      before?.block?.enabled === true && update.block?.enabled !== true;
+    const rejection = await authorize(weakens);
+    if (rejection !== null) {
+      return { next: null, result: { rejection, before: null } };
+    }
+
     const current = before ?? newSite(YOUTUBE_DOMAIN, now);
     const keepsNoBlock =
       update.block !== null && !update.block.enabled && !current.block;
@@ -270,7 +296,7 @@ export async function updateYouTubeSite(
         ...sites,
         [YOUTUBE_DOMAIN]: { ...current, youtube: update.youtube, block }
       },
-      result: before
+      result: { rejection: null, before }
     };
   });
 }

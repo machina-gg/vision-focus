@@ -31,7 +31,7 @@ interface OptionsDemoProps {
 
 function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
-  const [trackedSites] = useStorageItem(sitesItem);
+  const trackedSites = useStorageItem(sitesItem);
 
   const renderTabContent = () => {
     switch (activeTab) {

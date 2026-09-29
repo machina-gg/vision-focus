@@ -42,7 +42,7 @@ import type { UnblockConfirmSettings } from '~/types/storage';
 import '~/styles/globals.css';
 
 function OptionsAppContent() {
-  const { settings, vision } = useSettings();
+  const { vision } = useSettings();
 
   const [activeTab, setActiveTab] = useState<TabName>(() =>
     getTabFromHash(window.location.hash)
@@ -54,11 +54,11 @@ function OptionsAppContent() {
 
   const analytics = useAnalytics();
   const blocklist = useBlocklist();
-  const schedules = useSchedules({ settings });
+  const schedules = useSchedules();
   const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
   const { activity } = useActivitySources();
-  const [trackedSites] = useStorageItem(sitesItem);
+  const trackedSites = useStorageItem(sitesItem);
 
   const handleUnblockConfirmUpdate = async (
     unblockConfirm: UnblockConfirmSettings

@@ -68,6 +68,7 @@ import type { TrackedSites } from '~/types/site';
 
 const NOW = new Date('2026-09-26T03:00:00.000Z');
 const LIMIT = { type: 'daily' as const, limitSeconds: 600 };
+const allow = async (_weakens: boolean): Promise<null> => null;
 
 const stored = async (): Promise<TrackedSites> => {
   expect(fakeChrome.localData.sites).toBeDefined();
@@ -253,12 +254,13 @@ describe('removeBlock / setBlockEnabled / setTimeLimit', () => {
 
 describe('updateYouTubeSite', () => {
   it('youtube.com が無ければ作り、YouTube 機能とブロック設定を書く', async () => {
-    const before = await updateYouTubeSite(
+    const { before } = await updateYouTubeSite(
       {
         youtube: youtubeFeatures({ hideShorts: true }),
         block: { enabled: true, timeLimit: LIMIT }
       },
-      NOW
+      NOW,
+      allow
     );
     expect(before).toBeNull();
     expect((await stored())[YOUTUBE_DOMAIN]).toEqual({
@@ -272,9 +274,10 @@ describe('updateYouTubeSite', () => {
   it('ブロックリストに入れた時刻は既存のブロック設定から引き継ぎ、変更前のサイトを返す', async () => {
     const existing = blockedSite(YOUTUBE_DOMAIN);
     givenSites(sitesOf(existing));
-    const before = await updateYouTubeSite(
+    const { before } = await updateYouTubeSite(
       { youtube: null, block: { enabled: true, timeLimit: LIMIT } },
-      NOW
+      NOW,
+      allow
     );
     expect(before).toEqual(existing);
     expect(entryOf(await stored(), YOUTUBE_DOMAIN).block?.addedAt).toBe(
@@ -295,7 +298,8 @@ describe('updateYouTubeSite', () => {
         youtube: youtubeFeatures(),
         block: { enabled: false, timeLimit: LIMIT }
       },
-      NOW
+      NOW,
+      allow
     );
 
     expect(entryOf(await stored(), YOUTUBE_DOMAIN).block).toEqual({
@@ -315,7 +319,8 @@ describe('updateYouTubeSite', () => {
         youtube: youtubeFeatures({ hideShorts: true }),
         block: { enabled: false, timeLimit: null }
       },
-      NOW
+      NOW,
+      allow
     );
 
     expect(entryOf(await stored(), YOUTUBE_DOMAIN).block).toBeNull();
@@ -325,10 +330,106 @@ describe('updateYouTubeSite', () => {
     givenSites(
       sitesOf(blockedSite(YOUTUBE_DOMAIN, {}, { youtube: youtubeFeatures() }))
     );
-    await updateYouTubeSite({ youtube: null, block: null }, NOW);
+    await updateYouTubeSite({ youtube: null, block: null }, NOW, allow);
     expect((await stored())[YOUTUBE_DOMAIN]).toMatchObject({
       block: null,
       youtube: null
+    });
+  });
+
+  describe('アクセスブロックを弱めるかの判定', () => {
+    const blocking = blockedSite(
+      YOUTUBE_DOMAIN,
+      {},
+      { youtube: youtubeFeatures() }
+    );
+    const notBlocking = trackedSite(YOUTUBE_DOMAIN, {
+      youtube: youtubeFeatures()
+    });
+
+    it.each([
+      [
+        '有効なアクセスブロックを無効にする',
+        blocking,
+        {
+          youtube: youtubeFeatures(),
+          block: { enabled: false, timeLimit: null }
+        },
+        true
+      ],
+      [
+        '有効なアクセスブロックを外す',
+        blocking,
+        { youtube: null, block: null },
+        true
+      ],
+      [
+        'アクセスブロックが無効なまま機能を外す',
+        notBlocking,
+        { youtube: null, block: null },
+        false
+      ],
+      [
+        'アクセスブロックを掛ける',
+        notBlocking,
+        {
+          youtube: youtubeFeatures(),
+          block: { enabled: true, timeLimit: null }
+        },
+        false
+      ],
+      [
+        'アクセスブロックが有効のまま他を変える',
+        blocking,
+        {
+          youtube: youtubeFeatures({ hideShorts: true }),
+          block: { enabled: true, timeLimit: null }
+        },
+        false
+      ]
+    ])('%s なら弱める = %s', async (_label, existing, update, weakens) => {
+      givenSites(sitesOf(existing));
+      const authorize = vi.fn(allow);
+
+      await updateYouTubeSite(update, NOW, authorize);
+
+      expect(authorize).toHaveBeenCalledWith(weakens);
+    });
+
+    it('拒まれたら理由を返し、何も書かない', async () => {
+      givenSites(sitesOf(blocking));
+
+      const result = await updateYouTubeSite(
+        { youtube: null, block: null },
+        NOW,
+        async () => 'required' as const
+      );
+
+      expect(result).toEqual({ rejection: 'required', before: null });
+      expect(entryOf(await stored(), YOUTUBE_DOMAIN)).toEqual(blocking);
+    });
+
+    it('先に並んだ書き込みの後の値で判定する（判定から書き込みまでに別の書き込みが入らない）', async () => {
+      givenSites(sitesOf(notBlocking));
+      const authorize = vi.fn(async (weakens: boolean) =>
+        weakens ? ('required' as const) : null
+      );
+
+      const [, unblocking] = await Promise.all([
+        updateYouTubeSite(
+          {
+            youtube: youtubeFeatures(),
+            block: { enabled: true, timeLimit: null }
+          },
+          NOW,
+          allow
+        ),
+        updateYouTubeSite({ youtube: null, block: null }, NOW, authorize)
+      ]);
+
+      expect(authorize).toHaveBeenCalledWith(true);
+      expect(unblocking.rejection).toBe('required');
+      expect(entryOf(await stored(), YOUTUBE_DOMAIN).block?.enabled).toBe(true);
     });
   });
 });

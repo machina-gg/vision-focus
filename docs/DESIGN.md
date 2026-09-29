@@ -98,10 +98,12 @@ Chrome拡張機能の特性上、複数のコンテキスト（Background, Popup
 
 ### 状態管理戦略
 
-| コンテキスト                | 状態管理                             | 説明                                     |
-| --------------------------- | ------------------------------------ | ---------------------------------------- |
-| Background (Service Worker) | @wxt-dev/storage                     | データの読み書き、他コンテキストへの通知 |
-| Popup / Newtab / Options    | React useState + useStorageItem hook | UIローカル状態 + ストレージ同期          |
+| コンテキスト                | 状態管理                             | 説明                                               |
+| --------------------------- | ------------------------------------ | -------------------------------------------------- |
+| Background (Service Worker) | @wxt-dev/storage                     | 保存領域の書き手。画面からのメッセージを受けて書く |
+| Popup / Newtab / Options    | React useState + useStorageItem hook | UI ローカルの状態と、保存値の購読（読み取りだけ）  |
+
+書き手の規則とそれを守る lint は [DATA_MODEL.md の「考え方」](./DATA_MODEL.md#考え方)。
 
 ### データモデル
 

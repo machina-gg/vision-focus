@@ -399,7 +399,7 @@ describe('BlocklistTab', () => {
       expect(handlers.onRemoveDomain).not.toHaveBeenCalled();
     });
 
-    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
+    it('有効でもハッシュが無ければ保護なしとして長押し確認を出す（background の照合と同じ判定）', () => {
       setSettings({
         sites: [itemOf()],
         password: { enabled: true, passwordHash: null }
@@ -408,7 +408,9 @@ describe('BlocklistTab', () => {
 
       fireEvent.click(screen.getByTestId('blocklist-item-remove'));
 
-      expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('password-modal-confirm')
+      ).not.toBeInTheDocument();
     });
 
     it('入力したパスワードを添えて削除を依頼し、成功したら閉じる', async () => {

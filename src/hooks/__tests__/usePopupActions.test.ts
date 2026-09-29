@@ -198,7 +198,7 @@ describe('usePopupActions', () => {
       expect(result.current.isPasswordProtected).toBe(false);
     });
 
-    it('保護中かどうかは enabled だけで決める（ハッシュは見ない）', () => {
+    it('有効でもハッシュが無ければ保護なし（background の照合と同じ判定）', () => {
       const { result } = renderHook(() =>
         usePopupActions({
           ...defaultProps,
@@ -208,7 +208,7 @@ describe('usePopupActions', () => {
           }
         })
       );
-      expect(result.current.isPasswordProtected).toBe(true);
+      expect(result.current.isPasswordProtected).toBe(false);
     });
   });
 });

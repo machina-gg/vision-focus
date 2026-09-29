@@ -9,17 +9,10 @@ import {
 } from '~/hooks/useSchedules';
 import { getMessage } from '~/lib/i18n';
 import { AddScheduleBodySchema } from '~/types/messageSchemas';
-import type { AppSettings, Schedule } from '~/types/storage';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { Schedule } from '~/types/storage';
 
 vi.mock('~/lib/analytics', () => ({
   trackFeatureUse: vi.fn()
-}));
-
-vi.mock('~/lib/storage', () => ({
-  settingsItem: {
-    setValue: vi.fn()
-  }
 }));
 
 vi.mock('~/lib/messaging', () => ({
@@ -28,7 +21,6 @@ vi.mock('~/lib/messaging', () => ({
 
 import { sendMessage } from '~/lib/messaging';
 import { trackFeatureUse } from '~/lib/analytics';
-import { settingsItem } from '~/lib/storage';
 import { itemAt } from '~/test/items';
 
 const mockSchedule: Schedule = {
@@ -39,11 +31,6 @@ const mockSchedule: Schedule = {
   days: [1, 2, 3, 4, 5],
   enabled: true,
   presetId: 'preset-1'
-};
-
-const mockSettings: AppSettings = {
-  ...DEFAULT_SETTINGS,
-  schedules: [mockSchedule]
 };
 
 const DEFAULT_FORM: ScheduleFormData = {
@@ -62,8 +49,8 @@ const VALID_FORM: ScheduleFormData = {
   presetId: ''
 };
 
-function render(settings: AppSettings | undefined = mockSettings) {
-  return renderHook(() => useSchedules({ settings }));
+function render() {
+  return renderHook(() => useSchedules());
 }
 
 describe('useSchedules', () => {
@@ -144,21 +131,6 @@ describe('useSchedules', () => {
   });
 
   describe('handleSaveSchedule', () => {
-    it('設定の読み込み前は何も送らない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: undefined })
-      );
-
-      act(() => {
-        result.current.setScheduleForm(VALID_FORM);
-      });
-      await act(async () => {
-        await result.current.handleSaveSchedule();
-      });
-
-      expect(sendMessage).not.toHaveBeenCalled();
-    });
-
     it.each([
       ['名前が空白だけ', { ...VALID_FORM, name: '  ' }],
       ['曜日が無い', { ...VALID_FORM, days: [] }],
@@ -178,7 +150,7 @@ describe('useSchedules', () => {
       expect(result.current.showScheduleModal).toBe(true);
     });
 
-    it('新規作成なら add-schedule を送り、保存領域には書かずにモーダルを閉じる', async () => {
+    it('新規作成なら add-schedule を送り、モーダルを閉じる', async () => {
       const { result } = render();
 
       act(() => {
@@ -198,7 +170,6 @@ describe('useSchedules', () => {
           presetId: 'preset-2'
         }
       });
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_create');
       expect(result.current.showScheduleModal).toBe(false);
       expect(result.current.editingSchedule).toBeNull();
@@ -269,7 +240,6 @@ describe('useSchedules', () => {
           presetId: 'preset-1'
         }
       });
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(trackFeatureUse).not.toHaveBeenCalled();
       expect(result.current.showScheduleModal).toBe(false);
     });
@@ -356,7 +326,7 @@ describe('useSchedules', () => {
   });
 
   describe('handleDeleteSchedule', () => {
-    it('remove-schedule を送り、保存領域には書かない', async () => {
+    it('remove-schedule を送る', async () => {
       const { result } = render();
 
       await act(async () => {
@@ -366,19 +336,6 @@ describe('useSchedules', () => {
       expect(sendMessage).toHaveBeenCalledWith('remove-schedule', {
         id: 'schedule-1'
       });
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
-    });
-
-    it('設定の読み込み前は何も送らない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: undefined })
-      );
-
-      await act(async () => {
-        await result.current.handleDeleteSchedule('schedule-1');
-      });
-
-      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('送信できなくても例外を外に投げない', async () => {
@@ -394,7 +351,7 @@ describe('useSchedules', () => {
   });
 
   describe('handleToggleSchedule', () => {
-    it('toggle-schedule を送り、保存領域には書かない', async () => {
+    it('toggle-schedule を送る', async () => {
       const { result } = render();
 
       await act(async () => {
@@ -406,34 +363,7 @@ describe('useSchedules', () => {
         enabled: false
       });
       expect(sendMessage).toHaveBeenCalledOnce();
-      expect(settingsItem.setValue).not.toHaveBeenCalled();
       expect(trackFeatureUse).toHaveBeenCalledWith('schedule_toggle');
-    });
-
-    it('一時停止中に有効にしても、一時停止の解除は画面から送らない（background が行う）', async () => {
-      const { result } = render({ ...mockSettings, paused: true });
-
-      await act(async () => {
-        await result.current.handleToggleSchedule('schedule-1', true);
-      });
-
-      expect(sendMessage).toHaveBeenCalledOnce();
-      expect(sendMessage).toHaveBeenCalledWith('toggle-schedule', {
-        id: 'schedule-1',
-        enabled: true
-      });
-    });
-
-    it('設定の読み込み前は何も送らない', async () => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: undefined })
-      );
-
-      await act(async () => {
-        await result.current.handleToggleSchedule('schedule-1', true);
-      });
-
-      expect(sendMessage).not.toHaveBeenCalled();
     });
 
     it('拒まれたら利用の記録を送らない', async () => {
@@ -513,9 +443,7 @@ describe('画面の入力欄で選べる時刻で送るスケジュール', () =
   ])(
     '開始 %s・終了 %s で送る本文は background の検証を通る',
     async (startTime, endTime) => {
-      const { result } = renderHook(() =>
-        useSchedules({ settings: { ...DEFAULT_SETTINGS, schedules: [] } })
-      );
+      const { result } = renderHook(() => useSchedules());
 
       act(() => {
         result.current.openAddSchedule();

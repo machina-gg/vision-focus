@@ -8,7 +8,6 @@ import { recordActivity } from '~/lib/activityService';
 import { checkUnblockPassword } from '~/lib/settingsService';
 import { updateYouTubeSite, type YouTubeSiteUpdate } from '~/lib/siteService';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
-import { getSites } from '~/lib/storage';
 import { passwordError } from './passwordRejection';
 
 function toSiteUpdate(
@@ -44,15 +43,14 @@ export const updateYouTubeSettingsHandler: MessageHandler<
   const blocksAccess = update.block?.enabled === true;
 
   try {
-    const stored = (await getSites())[YOUTUBE_DOMAIN];
-    const rejection = await checkUnblockPassword(
-      parsed.data.password,
-      stored?.block?.enabled === true && !blocksAccess
+    const written = await updateYouTubeSite(update, new Date(), (weakens) =>
+      checkUnblockPassword(parsed.data.password, weakens)
     );
-    if (rejection) return { success: false, error: passwordError(rejection) };
+    if (written.rejection !== null) {
+      return { success: false, error: passwordError(written.rejection) };
+    }
 
-    const before = await updateYouTubeSite(update, new Date());
-
+    const { before } = written;
     const wasBlockingAccess = before?.block?.enabled === true;
 
     await updateBlockRules();

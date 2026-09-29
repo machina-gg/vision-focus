@@ -4,6 +4,7 @@ import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
 
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
+import { isProtectedByPassword } from '~/lib/password';
 import type { AppSettings } from '~/types/storage';
 
 interface UsePopupActionsOptions {
@@ -44,7 +45,8 @@ export function usePopupActions({
   settings,
   clearDomain
 }: UsePopupActionsOptions): UsePopupActionsReturn {
-  const isPasswordProtected = settings?.password.enabled === true;
+  const isPasswordProtected =
+    settings !== undefined && isProtectedByPassword(settings.password);
 
   const handleSettingsClick = useCallback(() => {
     openOptionsPage();

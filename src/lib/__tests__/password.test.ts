@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { hashPassword, validatePasswordStrength } from '~/lib/password';
+import {
+  hashPassword,
+  isProtectedByPassword,
+  validatePasswordStrength
+} from '~/lib/password';
 
 describe('hashPassword', () => {
   it('文字列のSHA-256ハッシュ（16進数）を返す', async () => {
@@ -37,5 +41,16 @@ describe('validatePasswordStrength', () => {
     ['ちょうど100文字', 'a'.repeat(100), null]
   ])('%s は %s', (_label, password, expected) => {
     expect(validatePasswordStrength(password)).toBe(expected);
+  });
+});
+
+describe('isProtectedByPassword', () => {
+  it.each([
+    ['有効でハッシュがある', { enabled: true, passwordHash: 'abc' }, true],
+    ['有効でもハッシュが無い', { enabled: true, passwordHash: null }, false],
+    ['無効', { enabled: false, passwordHash: 'abc' }, false],
+    ['未設定', { enabled: false, passwordHash: null }, false]
+  ])('%s なら保護中の判定は %s', (_label, password, expected) => {
+    expect(isProtectedByPassword(password)).toBe(expected);
   });
 });

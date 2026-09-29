@@ -23,7 +23,7 @@ const presetsState = vi.hoisted(() => ({
 
 vi.mock('~/hooks', () => ({
   usePresets: () => presetsState.value,
-  useStorageItem: () => [undefined, vi.fn()]
+  useStorageItem: () => undefined
 }));
 
 vi.mock('../styles', () => ({

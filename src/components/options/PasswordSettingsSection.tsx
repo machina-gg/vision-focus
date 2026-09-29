@@ -6,7 +6,10 @@ import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
 import { messageErrorText } from '~/lib/messageError';
 import { sendMessage } from '~/lib/messaging';
-import { validatePasswordStrength } from '~/lib/password';
+import {
+  isProtectedByPassword,
+  validatePasswordStrength
+} from '~/lib/password';
 import type { MessageError, SettingsChangeResponse } from '~/types/messages';
 import type {
   PasswordSettings,
@@ -19,7 +22,7 @@ import { UnblockHoldSecondsField } from './UnblockHoldSecondsField';
 
 /** PasswordSettingsSection に渡す解除保護の現在の設定と保存先 */
 interface PasswordSettingsSectionProps {
-  /** 現在のパスワード設定（enabled が true なら保護中として扱う） */
+  /** 現在のパスワード設定（保護中かは isProtectedByPassword で判定する） */
   passwordSettings: PasswordSettings;
   /** 解除の確認で長押しさせる秒数 */
   holdSeconds: UnblockHoldSeconds;
@@ -65,7 +68,7 @@ export function PasswordSettingsSection({
   const [success, setSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isEnabled = passwordSettings.enabled;
+  const isEnabled = isProtectedByPassword(passwordSettings);
 
   const resetForm = useCallback(() => {
     setCurrentPassword('');

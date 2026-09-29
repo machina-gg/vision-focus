@@ -3,6 +3,8 @@
 この文書が扱う部品は、`src/components` と `src/entrypoints/*/App.tsx` が `export function` で公開しているコンポーネントである（ファイル内だけで使う補助のコンポーネントは載せない）。
 各部品の振る舞いの詳細は、実体の JSDoc を正とする。
 
+部品とフックは保存領域に書かない。保存値は [useStorageItem](#usestorageitem) の購読で読み、変更は background へメッセージで依頼する（書き手の規則と、それを守る lint は [DATA_MODEL.md の「考え方」](./DATA_MODEL.md#考え方)）。
+
 ## 1. コンポーネント一覧
 
 ### 共通部品（`src/components/ui`）
@@ -746,11 +748,11 @@ Esc で編集を取り消す。
 
 `src/components/options/PasswordSettingsSection.tsx`。パスワードの保護中は長押しの秒数を変えられない。パスワードの設定・変更・解除は平文を `set-password` / `change-password` / `remove-password` で background へ送り、強度の検査・照合・ハッシュ化は background が行う（新しいパスワードと確認欄の一致と長さは送る前にも画面で確かめる）。
 
-| Prop                   | 型                                                    | 省略時 | 説明                                                 |
-| ---------------------- | ----------------------------------------------------- | ------ | ---------------------------------------------------- |
-| passwordSettings       | `PasswordSettings`                                    | 必須   | 現在のパスワード設定（`enabled` が true なら保護中） |
-| holdSeconds            | `UnblockHoldSeconds`                                  | 必須   | 解除の確認で長押しさせる秒数                         |
-| onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 長押しの秒数を変えたときに確認設定を保存する         |
+| Prop                   | 型                                                    | 省略時 | 説明                                                                                                                         |
+| ---------------------- | ----------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| passwordSettings       | `PasswordSettings`                                    | 必須   | 現在のパスワード設定（保護中かの判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)） |
+| holdSeconds            | `UnblockHoldSeconds`                                  | 必須   | 解除の確認で長押しさせる秒数                                                                                                 |
+| onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 長押しの秒数を変えたときに確認設定を保存する                                                                                 |
 
 ---
 
@@ -1080,19 +1082,19 @@ Esc で編集を取り消す。
 
 ### PopupApp
 
-`src/entrypoints/popup/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。利用状況の送信への同意は保存領域に書かず `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、ダイアログは保存値に従って出たまま）。
+`src/entrypoints/popup/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。利用状況の送信への同意は `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、ダイアログは保存値に従って出たまま）。
 
 ---
 
 ### NewtabApp
 
-`src/entrypoints/newtab/App.tsx`。Props は無い。目標の編集は保存領域に書かず `update-goal-text` で background に依頼し、拒まれたら `messageErrorText` の文言を [GoalDisplay](#goaldisplay) に出して編集を続ける。
+`src/entrypoints/newtab/App.tsx`。Props は無い。目標の編集は `update-goal-text` で background に依頼し、拒まれたら `messageErrorText` の文言を [GoalDisplay](#goaldisplay) に出して編集を続ける。
 
 ---
 
 ### OptionsApp
 
-`src/entrypoints/options/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。長押しの秒数と利用状況の送信への同意は保存領域に書かず `update-unblock-confirm` / `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、各欄は保存値を出し続ける）。
+`src/entrypoints/options/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。長押しの秒数と利用状況の送信への同意は `update-unblock-confirm` / `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、各欄は保存値を出し続ける）。
 
 ---
 
@@ -1104,19 +1106,16 @@ Esc で編集を取り消す。
 
 ### useStorageItem
 
-`src/hooks/useStorageItem.ts`。ストレージ項目（`src/lib/storage.ts` の `@wxt-dev/storage` の項目定義）を React の state として読み書きする。
+`src/hooks/useStorageItem.ts`。ストレージ項目（`src/lib/storage.ts` の `@wxt-dev/storage` の項目定義）を読み取り専用の React の state として購読する。
 
 ```typescript
-type StorageItemSetter<T> = (
-  value: T | undefined | ((previous: T) => T)
-) => Promise<void>;
-
 function useStorageItem<T, M extends Record<string, unknown>>(
   item: WxtStorageItem<T, M>
-): [T, StorageItemSetter<T>];
+): T;
 ```
 
-- 読み込み前と保存値が壊れているときは、項目定義の `fallback` を返す
+- 読み込み前と保存値が壊れているときは、項目定義の `fallback` を返す。保存値の変更（background の書き込み）に追従する
+- 設定画面とポップアップでは `src/contexts/SettingsContext.tsx` の `SettingsProvider` がこのフックで `settings` / `vision` を読み、`useSettings()` で子孫へ渡す（読み取りだけ）
 
 ---
 
@@ -1165,7 +1164,7 @@ interface ScheduleFormData {
   presetId: string;
 }
 
-function useSchedules(options: { settings: AppSettings | undefined }): {
+function useSchedules(): {
   showScheduleModal: boolean;
   setShowScheduleModal: (show: boolean) => void;
   editingSchedule: Schedule | null;
@@ -1180,7 +1179,7 @@ function useSchedules(options: { settings: AppSettings | undefined }): {
 };
 ```
 
-- 保存領域には書かず、保存・削除・有効切り替えを `add-schedule` / `update-schedule` / `remove-schedule` / `toggle-schedule` で background に依頼する。一覧は保存値の購読で追従する
+- 保存・削除・有効切り替えを `add-schedule` / `update-schedule` / `remove-schedule` / `toggle-schedule` で background に依頼する。一覧は保存値の購読で追従する
 - 拒まれた保存（重なりなど）は `messageErrorText` の文言を `scheduleError` に入れ、モーダルを開いたままにする
 - `toScheduleInput` / `isScheduleFormValid` を公開する（送る形への変換と、background と同じ `ScheduleInputSchema` での検証。[ScheduleModal](#schedulemodal) の保存ボタンが使う）
 
@@ -1229,7 +1228,7 @@ function usePresets(options: {
 };
 ```
 
-- 保存領域には書かず、作成・保存・適用・削除を `create-preset` / `update-preset` / `apply-preset` / `delete-preset` で background に依頼する。スタイルの一覧（`draftPresets`）は `vision` の購読に追従し、選択中のスタイルの保存していない変更は保つ
+- 作成・保存・適用・削除を `create-preset` / `update-preset` / `apply-preset` / `delete-preset` で background に依頼する。スタイルの一覧（`draftPresets`）は `vision` の購読に追従し、選択中のスタイルの保存していない変更は保つ
 - 画像は下書きに「変え方」（`keep` / `set` / `clear`）で持ち、`update-preset` の `image` で送る。保存済みの画像は [useBackgroundImage](#usebackgroundimage) で選択中のスタイルの 1 枚だけを読む（`draftBackgroundData` が `undefined` の間は読み込み中。同じスタイルで直前に出していた画像があれば、保存直後の読み直しの間もそれを返す）
 - 拒まれた依頼は `messageErrorText` の文言にし、作成は `createPresetError`（[NewPresetModal](#newpresetmodal)）、ほかは `presetError`（[PresetSelector](#presetselector)）に入れる
 - 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せずに削除する。参照の件数を数えるために `settings` を受け取る（参照を外すのは `delete-preset`）
@@ -1252,7 +1251,7 @@ function useAnalytics(): {
 };
 ```
 
-- どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する（追跡中のサイトと事実の表を書けるのは background だけ）
+- どの操作もメッセージ（`add-block` / `toggle-block` / `add-tracked-site` / `stop-tracking` / `reset-activity`）で background に依頼する
 - `handleReblock`: ブロック設定が無ければ `add-block`、無効なら `toggle-block`（ON）。ブロック中なら何もしない
 - `handleStopTracking`: `stop-tracking` を依頼するだけ（ブロック設定か YouTube 機能を持つサイトは background が拒否する。ブロック設定を消すのはブロックリストタブの確認つきの経路だけ）
 - `handleAddSiteToTrack`: 拒否されたらハンドラの `error`（失敗の種類）を `messageErrorText` で文言にして `addSiteError` に入れる
@@ -1325,7 +1324,7 @@ function useUnblockGuard(isPasswordProtected: boolean): {
 
 - パスワード保護中は [PasswordModal](#passwordmodal)、それ以外は [UnblockConfirmModal](#unblockconfirmmodal)（長押し確認）を開かせる
 - 確認が通ったときだけ `onConfirm` を呼ぶ（パスワード入力を通ったときは入力されたパスワードを渡し、その失敗の文言を [PasswordModal](#passwordmodal) へ返す）。キャンセルすると何も実行しない
-- 保護中かどうかは `settings.password.enabled` で決める。照合は操作を受けた background が行う（[SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)）
+- 保護中かどうかの判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)。照合は操作を受けた background が行う（[SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)）
 - 対象の操作と画面は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)。このフックを持つのは [BlocklistTab](#blocklisttab) で、[YouTubeSection](#youtubesection) には `requestUnblock` を `onRequestUnblock` として渡す
 
 ---
@@ -1424,7 +1423,7 @@ function usePopupActions(options: {
 };
 ```
 
-- `isPasswordProtected` は `settings.password.enabled`。パスワード保護中に一時停止にするとき、`PopupApp` は [PasswordModal](#passwordmodal) を開き、入力されたパスワードを添えて `handlePausedChange(true, password)` を呼ぶ。照合は background の `toggle-pause` が行う
+- `isPasswordProtected` の判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)。パスワード保護中に一時停止にするとき、`PopupApp` は [PasswordModal](#passwordmodal) を開き、入力されたパスワードを添えて `handlePausedChange(true, password)` を呼ぶ。照合は background の `toggle-pause` が行う
 
 ---
 

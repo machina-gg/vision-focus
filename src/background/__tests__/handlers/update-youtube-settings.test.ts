@@ -10,10 +10,6 @@ vi.mock('~/lib/settingsService', () => ({
   checkUnblockPassword: vi.fn()
 }));
 
-vi.mock('~/lib/storage', () => ({
-  getSites: vi.fn()
-}));
-
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
   blockExistingTabs: vi.fn()
@@ -25,7 +21,6 @@ vi.mock('~/lib/activityService', () => ({
 
 import { checkUnblockPassword } from '~/lib/settingsService';
 import { updateYouTubeSite } from '~/lib/siteService';
-import { getSites } from '~/lib/storage';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { recordActivity } from '~/lib/activityService';
 import { updateYouTubeSettingsHandler as handler } from '../../handlers/update-youtube-settings';
@@ -56,9 +51,16 @@ const youtube = (
   ...overrides
 });
 
-function givenStored(site: TrackedSite | null) {
-  vi.mocked(getSites).mockResolvedValue(site ? { [YOUTUBE_DOMAIN]: site } : {});
-  vi.mocked(updateYouTubeSite).mockResolvedValue(site);
+// 弱めるかの判定は siteService が書き込み直前の値で行う（siteService のテストで確かめる）。ここでは判定結果を受け取った後を見る
+function givenStored(site: TrackedSite | null, weakens = false) {
+  vi.mocked(updateYouTubeSite).mockImplementation(
+    async (_update, _now, authorize) => {
+      const rejection = await authorize(weakens);
+      return rejection === null
+        ? { rejection: null, before: site }
+        : { rejection, before: null };
+    }
+  );
 }
 
 const blocking = blockedSite(
@@ -140,7 +142,8 @@ describe('update-youtube-settings ハンドラ', () => {
       expect(result).toEqual({ success: true });
       expect(updateYouTubeSite).toHaveBeenCalledWith(
         expected,
-        expect.any(Date)
+        expect.any(Date),
+        expect.any(Function)
       );
       expect(updateBlockRules).toHaveBeenCalledOnce();
     });
@@ -271,52 +274,27 @@ describe('update-youtube-settings ハンドラ', () => {
   });
 
   describe('パスワード保護', () => {
-    it.each([
-      [
-        '有効なアクセスブロックを外すのは弱める操作',
-        blocking,
-        youtube({ enabled: true, blockAccess: false }),
-        true
-      ],
-      [
-        'YouTube ごと無効にして有効なアクセスブロックが外れるのは弱める操作',
-        blocking,
-        youtube({ enabled: false }),
-        true
-      ],
-      [
-        'アクセスブロックが無効なまま機能を外すのは弱めない操作',
-        notBlocking,
-        youtube({ enabled: false }),
-        false
-      ],
-      [
-        'アクセスブロックを掛けるのは弱めない操作',
-        notBlocking,
-        youtube({ enabled: true, blockAccess: true }),
-        false
-      ],
-      [
-        'アクセスブロックが有効のまま他を変えるのは弱めない操作',
-        blocking,
-        youtube({ enabled: true, blockAccess: true, hideShorts: true }),
-        false
-      ]
-    ])('%s', async (_label, stored, next, weakens) => {
-      givenStored(stored);
+    it.each([true, false])(
+      '弱めるか（%s）と添えられたパスワードで照合する',
+      async (weakens) => {
+        givenStored(blocking, weakens);
 
-      await invoke(handler, { youtube: next, password: 'secret' });
+        await invoke(handler, {
+          youtube: youtube({ enabled: true, blockAccess: false }),
+          password: 'secret'
+        });
 
-      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', weakens);
-    });
+        expect(checkUnblockPassword).toHaveBeenCalledWith('secret', weakens);
+      }
+    );
 
     it.each([
       ['required', 'password-required'],
       ['mismatch', 'password-mismatch']
     ] as const)(
-      '%s で拒まれたら %s を返し、何も書かない',
+      '%s で拒まれたら %s を返し、ルールの更新も記録もしない',
       async (rejection, code) => {
-        givenStored(blocking);
+        givenStored(blocking, true);
         vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
 
         const result = await invoke<Response>(handler, {
@@ -324,7 +302,6 @@ describe('update-youtube-settings ハンドラ', () => {
         });
 
         expect(result).toEqual({ success: false, error: { code } });
-        expect(updateYouTubeSite).not.toHaveBeenCalled();
         expect(updateBlockRules).not.toHaveBeenCalled();
         expect(recordActivity).not.toHaveBeenCalled();
       }
