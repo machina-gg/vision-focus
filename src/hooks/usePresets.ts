@@ -7,6 +7,7 @@ import { presetToDisplaySettings } from '~/lib/presetUtils';
 import { loadGoogleFont } from '~/constants/fonts';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type { MessageError } from '~/types/messages';
+import type { PresetImageInput } from '~/types/messageSchemas';
 import type {
   AppSettings,
   VisionSettings,
@@ -16,6 +17,7 @@ import type {
 import type { FontSettings } from '~/types/font';
 import { getFontDefinition } from '~/types/font';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
+import { useBackgroundImage } from './useBackgroundImage';
 
 interface UsePresetsOptions {
   /** 保存済みのダッシュボードの設定（保存値の購読）。読み込み前は undefined */
@@ -28,6 +30,8 @@ interface UsePresetsOptions {
 export interface UsePresetsReturn {
   /** 選択中のスタイルの、保存前の表示設定 */
   draftDisplaySettings: DashboardDisplaySettings;
+  /** 選択中のスタイルの、保存前の画像の data URL。null = 画像なし / undefined = 保存済みの画像を読み込み中 */
+  draftBackgroundData: string | null | undefined;
   /** 画面に並べるスタイルの一覧（保存値の変更に追従する） */
   draftPresets: DashboardPreset[];
   /** 選択中のスタイルの ID。スタイルが無い・選択中のものが消えたときは null */
@@ -82,7 +86,7 @@ export interface UsePresetsReturn {
   handleBackgroundChange: (bgId: string) => void;
   /** 下書きの単色の背景（CSS の色の値）を変える */
   handleBackgroundColorChange: (color: string) => void;
-  /** 下書きの利用者の背景画像（data URL）を変える。null = 使わない */
+  /** 下書きの利用者の背景画像（data URL）を変える。null = 使わない。保存すると background が新しい画像として作る */
   handleCustomBackgroundChange: (dataUrl: string | null) => void;
   /** 下書きの目標文のフォントを変える */
   handleFontSettingsChange: (fontSettings: FontSettings) => void;
@@ -93,8 +97,11 @@ interface PresetDraft {
   base: DashboardPreset;
   name: string;
   display: DashboardDisplaySettings;
+  image: PresetImageInput;
   isDirty: boolean;
 }
+
+const KEEP_IMAGE: PresetImageInput = { kind: 'keep' };
 
 interface PresetState {
   initialized: boolean;
@@ -116,6 +123,7 @@ type PresetAction =
       base: DashboardPreset;
       name?: string;
       display?: Partial<DashboardDisplaySettings>;
+      image?: PresetImageInput;
     }
   | { type: 'SAVED'; presetId: string }
   | { type: 'CREATED'; presetId: string }
@@ -187,6 +195,7 @@ function presetReducer(state: PresetState, action: PresetAction): PresetState {
             ...(current?.display ?? presetToDisplaySettings(action.base)),
             ...action.display
           },
+          image: action.image ?? current?.image ?? KEEP_IMAGE,
           isDirty: true
         }
       };
@@ -292,6 +301,17 @@ export function usePresets({
     return vision?.defaultSettings ?? DEFAULT_DISPLAY_SETTINGS;
   }, [activeDraft, selectedPreset, vision]);
   const editingPresetName = activeDraft?.name ?? selectedPreset?.name ?? '';
+  const draftImage = activeDraft?.image ?? KEEP_IMAGE;
+
+  const storedBackgroundData = useBackgroundImage(
+    selectedPreset?.customBackgroundId ?? null
+  );
+  const draftBackgroundData =
+    draftImage.kind === 'set'
+      ? draftImage.dataUrl
+      : draftImage.kind === 'clear'
+        ? null
+        : storedBackgroundData;
 
   const { fontSettings: currentFontSettings } = draftDisplaySettings;
   useEffect(() => {
@@ -304,6 +324,7 @@ export function usePresets({
     const edit = (patch: {
       name?: string;
       display?: Partial<DashboardDisplaySettings>;
+      image?: PresetImageInput;
     }) => {
       if (!selectedPreset) return;
       dispatch({ type: 'EDIT', base: selectedPreset, ...patch });
@@ -322,7 +343,9 @@ export function usePresets({
       handleBackgroundColorChange: (color: string) =>
         edit({ display: { backgroundColor: color } }),
       handleCustomBackgroundChange: (dataUrl: string | null) =>
-        edit({ display: { customBackgroundData: dataUrl } }),
+        edit({
+          image: dataUrl === null ? { kind: 'clear' } : { kind: 'set', dataUrl }
+        }),
       handleFontSettingsChange: (fontSettings: FontSettings) =>
         edit({ display: { fontSettings } }),
       handlePresetNameChange: (name: string) => edit({ name })
@@ -429,7 +452,8 @@ export function usePresets({
       sendMessage('update-preset', {
         id: selectedPreset.id,
         name: editingPresetName,
-        display: draftDisplaySettings
+        display: draftDisplaySettings,
+        image: draftImage
       })
     );
     if (!response.success) {
@@ -441,6 +465,7 @@ export function usePresets({
   }, [
     selectedPreset,
     draftDisplaySettings,
+    draftImage,
     editingPresetName,
     showSavedFeedback
   ]);
@@ -477,6 +502,7 @@ export function usePresets({
 
   return {
     draftDisplaySettings,
+    draftBackgroundData,
     draftPresets: presets,
     selectedPresetId: selectedPreset?.id ?? null,
     editingPresetName,

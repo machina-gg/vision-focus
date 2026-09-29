@@ -1,5 +1,6 @@
 export * from './useActivityStats';
 export * from './useAnalytics';
+export * from './useBackgroundImage';
 export * from './useBackgroundPreload';
 export * from './useBlocklist';
 export * from './useCurrentDomain';

@@ -8,7 +8,26 @@ import { getFontDefinition } from '~/types/font';
 import { usePresets, useStorageItem } from '~/hooks';
 import { settingsItem, visionItem } from '~/lib/storage';
 import { DeletePresetModal, NewPresetModal } from '~/components/options/modals';
+import type { DashboardDisplaySettings } from '~/types/storage';
 import { PresetSelector, DisplaySettingsForm } from './styles';
+
+const COVER = { backgroundSize: 'cover', backgroundPosition: 'center' };
+
+function previewBackgroundStyle(
+  display: DashboardDisplaySettings,
+  customBackgroundData: string | null | undefined
+): React.CSSProperties {
+  if (display.backgroundType === 'color') {
+    return { backgroundColor: display.backgroundColor };
+  }
+  if (customBackgroundData === undefined) {
+    return { backgroundColor: '#1a1a2e' };
+  }
+  const url =
+    customBackgroundData ??
+    getBackgroundUrl(display.backgroundImage || 'default-1');
+  return { backgroundImage: `url(${url})`, ...COVER };
+}
 
 /**
  * 設定画面のスタイルタブ（プリセットの選択・表示設定のフォーム・編集中のプレビュー・プリセットの作成と削除のモーダル）を表示する（保存値は購読で読み、書き込みは usePresets が background に依頼する）
@@ -20,7 +39,8 @@ export function StylesTab() {
 
   const presets = usePresets({ vision, settings });
 
-  const { draftDisplaySettings, selectedPresetId } = presets;
+  const { draftDisplaySettings, draftBackgroundData, selectedPresetId } =
+    presets;
   const isEditing = !!selectedPresetId;
 
   return (
@@ -43,25 +63,10 @@ export function StylesTab() {
               <div
                 className="relative aspect-video rounded-lg overflow-hidden"
                 data-testid="style-preview"
-                style={
-                  draftDisplaySettings.backgroundType === 'color'
-                    ? {
-                        backgroundColor: draftDisplaySettings.backgroundColor
-                      }
-                    : draftDisplaySettings.customBackgroundData
-                      ? {
-                          backgroundImage: `url(${draftDisplaySettings.customBackgroundData})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }
-                      : {
-                          backgroundImage: `url(${getBackgroundUrl(
-                            draftDisplaySettings.backgroundImage || 'default-1'
-                          )})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }
-                }
+                style={previewBackgroundStyle(
+                  draftDisplaySettings,
+                  draftBackgroundData
+                )}
               >
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="relative z-10 h-full flex flex-col items-center justify-center p-4">

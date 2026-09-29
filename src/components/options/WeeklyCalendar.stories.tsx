@@ -24,7 +24,6 @@ const mockVision: VisionSettings = {
     backgroundType: 'image',
     backgroundImage: 'default-1',
     backgroundColor: '#1a1a2e',
-    customBackgroundData: null,
     fontSettings: {
       family: 'inter',
       size: 'lg',
@@ -42,7 +41,7 @@ const mockVision: VisionSettings = {
       backgroundType: 'image',
       backgroundImage: 'default-2',
       backgroundColor: '#1a1a2e',
-      customBackgroundData: null,
+      customBackgroundId: null,
       fontSettings: {
         family: 'inter',
         size: 'lg',
@@ -59,7 +58,7 @@ const mockVision: VisionSettings = {
       backgroundType: 'color',
       backgroundImage: '',
       backgroundColor: '#1e3a5f',
-      customBackgroundData: null,
+      customBackgroundId: null,
       fontSettings: {
         family: 'inter',
         size: 'lg',

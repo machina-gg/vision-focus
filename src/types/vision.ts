@@ -15,13 +15,11 @@ export interface DashboardDisplaySettings {
   backgroundImage: string;
   /** backgroundType が color のときの CSS の色の値 */
   backgroundColor: string;
-  /** 利用者が選んだ画像の data URL。あれば backgroundImage より優先。null = 使わない */
-  customBackgroundData: string | null;
   /** 目標文のフォント */
   fontSettings: FontSettings;
 }
 
-/** 名前を付けて保存した表示設定（画面上の呼称は「スタイル」） */
+/** 名前を付けて保存した表示設定（画面上の呼称は「スタイル」）。利用者の画像を持てるのはスタイルだけ */
 export interface DashboardPreset extends DashboardDisplaySettings {
   /** スタイルの ID */
   id: string;
@@ -29,6 +27,8 @@ export interface DashboardPreset extends DashboardDisplaySettings {
   name: string;
   /** 作成した時刻（ISO8601） */
   createdAt: string;
+  /** 利用者が選んだ画像の ID（保存キーは backgroundImageKey で作る）。あれば backgroundImage より優先。null = 使わない。画像の無い ID は画像なしとして扱う */
+  customBackgroundId: string | null;
 }
 
 /** ダッシュボードの表示設定とスタイルの一覧 */
@@ -49,7 +49,6 @@ export const DEFAULT_DISPLAY_SETTINGS: DashboardDisplaySettings = {
   backgroundType: 'image',
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
-  customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS
 };
 

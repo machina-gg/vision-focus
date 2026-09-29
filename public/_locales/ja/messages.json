@@ -1252,8 +1252,14 @@
     "description": "マージ付きインポート成功メッセージ"
   },
   "importErrorFileTooLarge": {
-    "message": "ファイルが大きすぎます（最大5MB）",
-    "description": "インポートエラー: ファイルが大きすぎる"
+    "message": "ファイルが大きすぎます（最大 $SIZE$MB）",
+    "description": "インポートエラー: ファイルが大きすぎる",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
   },
   "importErrorInvalidJson": {
     "message": "無効なファイル形式です。有効なJSONファイルを選択してください。",

@@ -48,6 +48,47 @@ export const supportPromptItem =
   });
 
 /**
+ * 背景画像 1 枚の保存キー（項目定義を通さない動的なキー。値は JPEG の data URL）
+ * @param imageId 画像の ID（スタイルの customBackgroundId）
+ * @returns `local:` 付きの保存キー
+ */
+export function backgroundImageKey(imageId: string): `local:${string}` {
+  return `local:backgroundImage:${imageId}`;
+}
+
+/**
+ * 背景画像 1 枚を読む
+ * @param imageId 画像の ID
+ * @returns 画像の data URL。保存されていない・文字列でないなら null（画像なしとして扱う）
+ */
+export async function getBackgroundImage(
+  imageId: string
+): Promise<string | null> {
+  const value = await extensionStorage.getItem<unknown>(
+    backgroundImageKey(imageId)
+  );
+  return typeof value === 'string' ? value : null;
+}
+
+/**
+ * 背景画像をまとめて読む
+ * @param imageIds 読む画像の ID
+ * @returns キーが画像の ID、値が data URL の対応（保存されていない画像は含まない）
+ */
+export async function getBackgroundImages(
+  imageIds: readonly string[]
+): Promise<Record<string, string>> {
+  const entries = await Promise.all(
+    imageIds.map(
+      async (imageId) => [imageId, await getBackgroundImage(imageId)] as const
+    )
+  );
+  return Object.fromEntries(
+    entries.filter((entry): entry is [string, string] => entry[1] !== null)
+  );
+}
+
+/**
  * アプリの設定を読む
  * @returns 保存済みの設定（未保存か壊れていれば既定値）
  */

@@ -28,7 +28,8 @@ const mockVision: VisionSettings = {
       ...DEFAULT_DISPLAY_SETTINGS,
       id: 'preset-1',
       name: '仕事モード',
-      createdAt: '2026-02-01T00:00:00Z'
+      createdAt: '2026-02-01T00:00:00Z',
+      customBackgroundId: null
     }
   ],
   activePresetId: null

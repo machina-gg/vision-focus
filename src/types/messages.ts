@@ -78,6 +78,10 @@ export type MessageError =
       code: 'preset-limit';
     }
   | {
+      /** スタイルの画像が JPEG の data URL でないか、上限（IMAGE_LIMITS.TARGET_SIZE）より長い */
+      code: 'image-invalid';
+    }
+  | {
       /** 保存に失敗した */
       code: 'save-failed';
     }
@@ -146,13 +150,13 @@ export interface CreatePresetResponse {
   error?: MessageError;
 }
 
-/** スタイルの名前と表示設定を置き換える依頼 */
+/** スタイルの名前・表示設定・画像を置き換える依頼 */
 export type UpdatePresetRequest = UpdatePresetBody;
 
 /** スタイルを適用中にする依頼 */
 export type ApplyPresetRequest = PresetIdBody;
 
-/** スタイルを消す依頼（適用中の指定とスケジュールからの参照も外す） */
+/** スタイルを消す依頼（その画像も消し、適用中の指定とスケジュールからの参照も外す） */
 export type DeletePresetRequest = PresetIdBody;
 
 /** 既定の表示設定の目標文を書き換える依頼 */

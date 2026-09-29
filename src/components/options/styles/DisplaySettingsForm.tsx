@@ -23,6 +23,7 @@ interface DisplaySettingsFormProps {
 export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
   const {
     draftDisplaySettings,
+    draftBackgroundData,
     selectedPresetId,
     draftPresets,
     editingPresetName,
@@ -219,7 +220,7 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
             </h3>
           </div>
           <ImageUploader
-            value={draftDisplaySettings.customBackgroundData || null}
+            value={draftBackgroundData ?? null}
             onChange={handleCustomBackgroundChange}
           />
         </div>

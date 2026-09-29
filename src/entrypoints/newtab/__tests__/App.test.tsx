@@ -22,7 +22,9 @@ import { DEFAULT_DISPLAY_SETTINGS, DEFAULT_SETTINGS } from '~/types/storage';
 stubI18nWithSubstitutions();
 
 const storageState = vi.hoisted(() => ({
-  lastBlocked: null as LastBlocked | null
+  lastBlocked: null as LastBlocked | null,
+  images: {} as Record<string, string>,
+  getBackgroundImage: vi.fn()
 }));
 
 vi.mock('~/lib/storage', () => ({
@@ -31,6 +33,7 @@ vi.mock('~/lib/storage', () => ({
   activityItem: { key: 'local:activity' },
   sitesItem: { key: 'local:sites' },
   hasStoredVision: async () => true,
+  getBackgroundImage: storageState.getBackgroundImage,
   getLastBlocked: async () => storageState.lastBlocked,
   clearLastBlocked: async () => undefined
 }));
@@ -97,6 +100,7 @@ function makePreset(overrides: Partial<DashboardPreset> = {}): DashboardPreset {
     id: 'preset-1',
     name: 'スタイル A',
     createdAt: '2026-01-01T00:00:00.000Z',
+    customBackgroundId: null,
     goalText: 'スタイルの目標',
     ...overrides
   };
@@ -132,6 +136,10 @@ function renderApp(
 beforeEach(() => {
   vi.clearAllMocks();
   storageState.lastBlocked = null;
+  storageState.images = {};
+  storageState.getBackgroundImage.mockImplementation(
+    async (imageId: string) => storageState.images[imageId] ?? null
+  );
 });
 
 describe('スタイルが 1 つも無いとき', () => {
@@ -237,6 +245,71 @@ describe('スタイルがあるとき', () => {
     expect(screen.getByTestId('newtab-block-info-message')).toHaveTextContent(
       'siteBlockedMessage(example.com)'
     );
+  });
+});
+
+describe('スタイルの背景画像', () => {
+  const JPEG = 'data:image/jpeg;base64,/9j/AAAA';
+
+  it('表示するスタイルの画像 1 枚だけを読み、背景に敷く', async () => {
+    storageState.images = {
+      'img-active': JPEG,
+      'img-other': 'data:image/jpeg;base64,/9j/BBBB'
+    };
+
+    renderApp({
+      vision: {
+        defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+        presets: [
+          makePreset({ id: 'p1', customBackgroundId: 'img-active' }),
+          makePreset({ id: 'p2', customBackgroundId: 'img-other' })
+        ],
+        activePresetId: 'p1'
+      }
+    });
+
+    const container = await screen.findByTestId('newtab-container');
+    await waitFor(() =>
+      expect(container.style.backgroundImage).toBe(`url("${JPEG}")`)
+    );
+    expect(storageState.getBackgroundImage).toHaveBeenCalledTimes(1);
+    expect(storageState.getBackgroundImage).toHaveBeenCalledWith('img-active');
+  });
+
+  it('画像の無い ID なら画像なしとして、選んだ既定の画像を敷く', async () => {
+    renderApp({
+      vision: {
+        defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+        presets: [
+          makePreset({
+            id: 'p1',
+            customBackgroundId: 'img-missing',
+            backgroundImage: 'default-2'
+          })
+        ],
+        activePresetId: 'p1'
+      }
+    });
+
+    const container = await screen.findByTestId('newtab-container');
+    await waitFor(() =>
+      expect(container.style.backgroundImage).toBe(
+        'url("stub://backgrounds/default-2.webp")'
+      )
+    );
+  });
+
+  it('画像を持たないスタイル・既定の表示設定では読まない', async () => {
+    renderApp({
+      vision: {
+        defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+        presets: [makePreset({ id: 'p1' })],
+        activePresetId: 'p1'
+      }
+    });
+
+    await screen.findByTestId('newtab-goal-text');
+    expect(storageState.getBackgroundImage).not.toHaveBeenCalled();
   });
 });
 

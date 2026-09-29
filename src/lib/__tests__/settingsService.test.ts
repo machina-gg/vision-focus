@@ -105,8 +105,40 @@ const preset = (id: string): DashboardPreset => ({
   ...DEFAULT_DISPLAY_SETTINGS,
   id,
   name: id,
-  createdAt: '2026-01-01T00:00:00.000Z'
+  createdAt: '2026-01-01T00:00:00.000Z',
+  customBackgroundId: null
 });
+
+const exported = (id: string, customBackgroundData: string | null = null) => {
+  const { customBackgroundId: _id, ...rest } = preset(id);
+  return { ...rest, customBackgroundData };
+};
+
+const JPEG = 'data:image/jpeg;base64,/9j/AAAA';
+const OTHER_JPEG = 'data:image/jpeg;base64,/9j/BBBB';
+
+const imageKey = (imageId: string) => `backgroundImage:${imageId}`;
+
+const givenPresetWithImage = (id: string, imageId: string, dataUrl: string) => {
+  fakeChrome.localData.vision = {
+    ...DEFAULT_VISION,
+    presets: [{ ...preset(id), customBackgroundId: imageId }]
+  };
+  fakeChrome.localData[imageKey(imageId)] = dataUrl;
+};
+
+const storedImageIds = () =>
+  Object.keys(fakeChrome.localData)
+    .filter((key) => key.startsWith('backgroundImage:'))
+    .map((key) => key.slice('backgroundImage:'.length));
+
+// 持ち主（その ID を指すスタイル）のいない画像
+const orphanImageIds = async () => {
+  const referenced = new Set(
+    (await getVision()).presets.map((p) => p.customBackgroundId)
+  );
+  return storedImageIds().filter((imageId) => !referenced.has(imageId));
+};
 
 const givenPresets = (...ids: string[]) => {
   fakeChrome.localData.vision = {
@@ -402,7 +434,7 @@ describe('importSettings の表示設定', () => {
 
     const result = await importSettings({
       ...importedData([]),
-      presets: presetIds(5, 'n').map(preset)
+      presets: presetIds(5, 'n').map((id) => exported(id))
     });
 
     expect(result).toEqual({
@@ -427,7 +459,7 @@ describe('importSettings の表示設定', () => {
         { ...schedule('s1'), presetId: 'n2' },
         { ...schedule('s2'), days: [2], presetId: 'n1' }
       ]),
-      presets: presetIds(2, 'n').map(preset),
+      presets: presetIds(2, 'n').map((id) => exported(id)),
       activePresetId: 'n2'
     });
 
@@ -451,7 +483,7 @@ describe('importSettings の表示設定', () => {
 
     const result = await importSettings({
       ...importedData([]),
-      presets: [preset('n1')],
+      presets: [exported('n1')],
       activePresetId: 'n1',
       defaultDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: 'Goal' }
     });
@@ -479,7 +511,8 @@ describe('createPreset', () => {
       ...DEFAULT_DISPLAY_SETTINGS,
       id: result.id,
       name: 'Morning',
-      createdAt: '2026-01-02T03:04:05.000Z'
+      createdAt: '2026-01-02T03:04:05.000Z',
+      customBackgroundId: null
     });
     expect(result.id).not.toBe('p1');
   });
@@ -497,21 +530,23 @@ describe('createPreset', () => {
 describe('updatePreset', () => {
   it('名前と表示設定を置き換え、ID と作成時刻は保つ', async () => {
     givenPresets('p1', 'p2');
-    const display = {
-      ...DEFAULT_DISPLAY_SETTINGS,
-      goalText: 'Focus',
-      customBackgroundData: 'data:image/jpeg;base64,AAAA'
-    };
+    const display = { ...DEFAULT_DISPLAY_SETTINGS, goalText: 'Focus' };
 
     expect(
-      await updatePreset({ id: 'p1', name: 'Renamed', display })
+      await updatePreset({
+        id: 'p1',
+        name: 'Renamed',
+        display,
+        image: { kind: 'keep' }
+      })
     ).toBeNull();
     expect((await getVision()).presets).toEqual([
       {
         ...display,
         id: 'p1',
         name: 'Renamed',
-        createdAt: '2026-01-01T00:00:00.000Z'
+        createdAt: '2026-01-01T00:00:00.000Z',
+        customBackgroundId: null
       },
       preset('p2')
     ]);
@@ -524,9 +559,11 @@ describe('updatePreset', () => {
       await updatePreset({
         id: 'missing',
         name: 'x',
-        display: DEFAULT_DISPLAY_SETTINGS
+        display: DEFAULT_DISPLAY_SETTINGS,
+        image: { kind: 'set', dataUrl: JPEG }
       })
     ).toBe('not-found');
+    expect(storedImageIds()).toEqual([]);
     expect((await getVision()).presets).toEqual([preset('p1')]);
   });
 });
@@ -592,6 +629,174 @@ describe('deletePreset', () => {
 
     expect(await deletePreset('missing')).toBe('not-found');
     expect((await getVision()).presets).toEqual([preset('p1')]);
+  });
+});
+
+describe('スタイルの画像', () => {
+  const update = (image: Parameters<typeof updatePreset>[0]['image']) =>
+    updatePreset({
+      id: 'p1',
+      name: 'p1',
+      display: DEFAULT_DISPLAY_SETTINGS,
+      image
+    });
+
+  const imageIdOf = async (presetId: string) =>
+    (await getVision()).presets.find((p) => p.id === presetId)
+      ?.customBackgroundId;
+
+  it('画像を付けると新しい ID で保存し、スタイルはその ID を持つ', async () => {
+    givenPresets('p1');
+
+    expect(await update({ kind: 'set', dataUrl: JPEG })).toBeNull();
+
+    const imageId = await imageIdOf('p1');
+    expect(imageId).toEqual(expect.any(String));
+    expect(fakeChrome.localData[imageKey(imageId as string)]).toBe(JPEG);
+    expect(storedImageIds()).toEqual([imageId]);
+  });
+
+  it('差し替えると新しい ID になり、古い画像は消える', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+
+    await update({ kind: 'set', dataUrl: OTHER_JPEG });
+
+    const imageId = await imageIdOf('p1');
+    expect(imageId).not.toBe('img-old');
+    expect(storedImageIds()).toEqual([imageId]);
+    expect(fakeChrome.localData[imageKey(imageId as string)]).toBe(OTHER_JPEG);
+  });
+
+  it('同じ画像を選び直しても新しい ID にする', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+
+    await update({ kind: 'set', dataUrl: JPEG });
+
+    expect(await imageIdOf('p1')).not.toBe('img-old');
+    expect(storedImageIds()).toHaveLength(1);
+  });
+
+  it('外すとスタイルの ID を null にし、画像を消す', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+
+    await update({ kind: 'clear' });
+
+    expect(await imageIdOf('p1')).toBeNull();
+    expect(storedImageIds()).toEqual([]);
+  });
+
+  it('keep なら ID も画像もそのまま', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+
+    await update({ kind: 'keep' });
+
+    expect(await imageIdOf('p1')).toBe('img-old');
+    expect(fakeChrome.localData[imageKey('img-old')]).toBe(JPEG);
+  });
+
+  it('スタイルを消すと画像も消える', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+
+    await deletePreset('p1');
+
+    expect((await getVision()).presets).toEqual([]);
+    expect(storedImageIds()).toEqual([]);
+  });
+
+  it('古い画像を消してから、スタイルを書く', async () => {
+    givenPresetWithImage('p1', 'img-old', JPEG);
+    const remove = vi.spyOn(chrome.storage.local, 'remove');
+    const set = vi.spyOn(chrome.storage.local, 'set');
+
+    await update({ kind: 'set', dataUrl: OTHER_JPEG });
+
+    expect(remove).toHaveBeenCalledOnce();
+    expect(set).toHaveBeenCalledOnce();
+    expect(remove.mock.invocationCallOrder[0]).toBeLessThan(
+      set.mock.invocationCallOrder[0] ?? 0
+    );
+    remove.mockRestore();
+    set.mockRestore();
+  });
+
+  describe('古い画像を消した後で止まったとき', () => {
+    it.each([
+      ['差し替え', () => update({ kind: 'set', dataUrl: OTHER_JPEG })],
+      ['外す', () => update({ kind: 'clear' })],
+      ['スタイルの削除', () => deletePreset('p1')]
+    ])(
+      '%s: 残るのは画像の無い ID だけで、持ち主のいない画像は残らない',
+      async (_label, run) => {
+        givenPresetWithImage('p1', 'img-old', JPEG);
+        const set = vi
+          .spyOn(chrome.storage.local, 'set')
+          .mockRejectedValueOnce(new Error('stopped'));
+
+        await expect(run()).rejects.toThrow('stopped');
+
+        expect(await imageIdOf('p1')).toBe('img-old');
+        expect(storedImageIds()).toEqual([]);
+        expect(await orphanImageIds()).toEqual([]);
+        set.mockRestore();
+      }
+    );
+  });
+
+  describe('取り込み', () => {
+    it('画像は毎回新しい ID で作り、既存の画像は消さない', async () => {
+      givenSettings(DEFAULT_SETTINGS);
+      givenPresetWithImage('e1', 'img-old', JPEG);
+      const set = vi.spyOn(chrome.storage.local, 'set');
+
+      await importSettings({
+        ...importedData([]),
+        presets: [exported('n1', OTHER_JPEG), exported('n2')]
+      });
+
+      expect(set).toHaveBeenCalledOnce();
+      const vision = await getVision();
+      const newId = vision.presets.find((p) => p.id === 'n1')
+        ?.customBackgroundId as string;
+      expect(newId).not.toBe('img-old');
+      expect(
+        vision.presets.find((p) => p.id === 'n2')?.customBackgroundId
+      ).toBe(null);
+      expect(fakeChrome.localData[imageKey(newId)]).toBe(OTHER_JPEG);
+      expect(fakeChrome.localData[imageKey('img-old')]).toBe(JPEG);
+      expect(await orphanImageIds()).toEqual([]);
+      set.mockRestore();
+    });
+
+    it('同じファイルを 2 回取り込んでも、画像を共有しない', async () => {
+      givenSettings(DEFAULT_SETTINGS);
+      givenPresets();
+
+      await importSettings({
+        ...importedData([]),
+        presets: [exported('n1', JPEG)]
+      });
+      await importSettings({
+        ...importedData([]),
+        presets: [exported('n2', JPEG)]
+      });
+
+      const ids = (await getVision()).presets.map((p) => p.customBackgroundId);
+      expect(new Set(ids).size).toBe(2);
+      expect(storedImageIds().sort()).toEqual([...(ids as string[])].sort());
+    });
+
+    it('上限を超えて取り込まなかったスタイルの画像は作らない', async () => {
+      givenSettings(DEFAULT_SETTINGS);
+      givenPresets(...presetIds(MAX_PRESETS - 1, 'e'));
+
+      await importSettings({
+        ...importedData([]),
+        presets: [exported('n1', JPEG), exported('n2', OTHER_JPEG)]
+      });
+
+      expect(storedImageIds()).toHaveLength(1);
+      expect(await orphanImageIds()).toEqual([]);
+    });
   });
 });
 

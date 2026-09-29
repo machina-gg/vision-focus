@@ -38,12 +38,14 @@ const presetOf = (id: string, name: string): DashboardPreset => ({
   ...DEFAULT_DISPLAY_SETTINGS,
   id,
   name,
-  createdAt: '2026-01-01T00:00:00.000Z'
+  createdAt: '2026-01-01T00:00:00.000Z',
+  customBackgroundId: null
 });
 
 function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
   const stub: UsePresetsReturn = {
     draftDisplaySettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    draftBackgroundData: null,
     draftPresets: [],
     selectedPresetId: 'preset-1',
     editingPresetName: 'スタイル A',
@@ -369,19 +371,19 @@ describe('DisplaySettingsForm', () => {
 
   describe('取り込んだ背景画像', () => {
     it('未設定のときは null を渡す', () => {
-      renderForm({
-        draftDisplaySettings: displayWith({ customBackgroundData: null })
-      });
+      renderForm({ draftBackgroundData: null });
+
+      expect(screen.getByTestId('image-uploader')).toHaveTextContent('null');
+    });
+
+    it('読み込み中は null を渡す', () => {
+      renderForm({ draftBackgroundData: undefined });
 
       expect(screen.getByTestId('image-uploader')).toHaveTextContent('null');
     });
 
     it('設定済みのときはその内容を渡す', () => {
-      renderForm({
-        draftDisplaySettings: displayWith({
-          customBackgroundData: 'data:image/webp;base64,AAAA'
-        })
-      });
+      renderForm({ draftBackgroundData: 'data:image/webp;base64,AAAA' });
 
       expect(screen.getByTestId('image-uploader')).toHaveTextContent(
         'data:image/webp;base64,AAAA'

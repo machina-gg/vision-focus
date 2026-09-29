@@ -13,7 +13,7 @@ const mockPreset: DashboardPreset = {
   backgroundType: 'image',
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
-  customBackgroundData: 'data:image/png;base64,custom',
+  customBackgroundId: 'img-1',
   fontSettings: {
     family: 'inter',
     size: 'md',
@@ -33,15 +33,11 @@ describe('presetToDisplaySettings', () => {
     expect(result.fontSettings).toEqual(mockPreset.fontSettings);
   });
 
-  it('カスタム背景をそのまま引き継ぐ', () => {
-    const result = presetToDisplaySettings(mockPreset);
-    expect(result.customBackgroundData).toBe('data:image/png;base64,custom');
-  });
-
-  it('id/name/createdAtはディスプレイ設定に含まない', () => {
+  it('id/name/createdAt/画像の ID はディスプレイ設定に含まない', () => {
     const result = presetToDisplaySettings(mockPreset);
     expect('id' in result).toBe(false);
     expect('name' in result).toBe(false);
     expect('createdAt' in result).toBe(false);
+    expect('customBackgroundId' in result).toBe(false);
   });
 });

@@ -27,7 +27,8 @@ vi.mock('~/lib/storage', () => ({
   },
   settingsItem: {
     setValue: vi.fn()
-  }
+  },
+  getBackgroundImage: vi.fn()
 }));
 
 vi.mock('~/lib/messaging', () => ({
@@ -44,7 +45,7 @@ vi.mock('~/constants/intervals', () => ({
 
 import { trackFeatureUse } from '~/lib/analytics';
 import { sendMessage } from '~/lib/messaging';
-import { settingsItem, visionItem } from '~/lib/storage';
+import { getBackgroundImage, settingsItem, visionItem } from '~/lib/storage';
 
 const makeSchedule = (overrides: Partial<Schedule> = {}): Schedule => ({
   id: 'schedule-1',
@@ -70,9 +71,9 @@ const mockPreset: DashboardPreset = {
   backgroundType: 'image',
   backgroundImage: 'default-1',
   backgroundColor: '#1a1a2e',
-  customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS,
-  createdAt: '2024-01-01T00:00:00Z'
+  createdAt: '2024-01-01T00:00:00Z',
+  customBackgroundId: null
 };
 
 const anotherPreset: DashboardPreset = {
@@ -84,9 +85,9 @@ const anotherPreset: DashboardPreset = {
   backgroundType: 'color',
   backgroundImage: 'default-2',
   backgroundColor: '#f0f0f0',
-  customBackgroundData: null,
   fontSettings: DEFAULT_FONT_SETTINGS,
-  createdAt: '2024-01-02T00:00:00Z'
+  createdAt: '2024-01-02T00:00:00Z',
+  customBackgroundId: null
 };
 
 const mockVision: VisionSettings = {
@@ -123,6 +124,7 @@ describe('usePresets', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(sendMessage).mockResolvedValue({ success: true });
+    vi.mocked(getBackgroundImage).mockResolvedValue(null);
   });
 
   describe('初期化', () => {
@@ -297,12 +299,6 @@ describe('usePresets', () => {
         { backgroundColor: '#00ff00' }
       ],
       [
-        'handleCustomBackgroundChange',
-        (r: ReturnType<typeof usePresets>) =>
-          r.handleCustomBackgroundChange('data:image/jpeg;base64,AAAA'),
-        { customBackgroundData: 'data:image/jpeg;base64,AAAA' }
-      ],
-      [
         'handleFontSettingsChange',
         (r: ReturnType<typeof usePresets>) =>
           r.handleFontSettingsChange({
@@ -339,6 +335,90 @@ describe('usePresets', () => {
       expect(result.current.draftDisplaySettings.goalText).toBe('Goal');
       expect(result.current.draftDisplaySettings.textColor).toBe('#123456');
       expect(result.current.editingPresetName).toBe('Name');
+    });
+  });
+
+  describe('画像の下書き', () => {
+    const IMAGE = 'data:image/jpeg;base64,AAAA';
+    const STORED = 'data:image/jpeg;base64,BBBB';
+    const withImage: VisionSettings = {
+      ...mockVision,
+      presets: [{ ...mockPreset, customBackgroundId: 'img-1' }]
+    };
+
+    it('保存済みの画像は選択中のスタイルの画像の ID で 1 枚だけ読む', async () => {
+      vi.mocked(getBackgroundImage).mockResolvedValue(STORED);
+      const { result } = renderUsePresets(withImage);
+
+      expect(result.current.draftBackgroundData).toBeUndefined();
+      await waitFor(() =>
+        expect(result.current.draftBackgroundData).toBe(STORED)
+      );
+      expect(getBackgroundImage).toHaveBeenCalledTimes(1);
+      expect(getBackgroundImage).toHaveBeenCalledWith('img-1');
+    });
+
+    it('画像の無いスタイルでは読まず、画像なしにする', () => {
+      const { result } = renderUsePresets(mockVision);
+
+      expect(result.current.draftBackgroundData).toBeNull();
+      expect(getBackgroundImage).not.toHaveBeenCalled();
+    });
+
+    it('選んだ画像は下書きだけに入り、保存すると set で送る', async () => {
+      const { result } = renderUsePresets(mockVision);
+
+      act(() => {
+        result.current.handleCustomBackgroundChange(IMAGE);
+      });
+
+      expect(result.current.draftBackgroundData).toBe(IMAGE);
+      expect(result.current.isDirty).toBe(true);
+      expect(sendMessage).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await result.current.handleSaveSelectedPreset();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        'update-preset',
+        expect.objectContaining({
+          image: { kind: 'set', dataUrl: IMAGE }
+        })
+      );
+    });
+
+    it('画像を外すと画像なしになり、保存すると clear で送る', async () => {
+      vi.mocked(getBackgroundImage).mockResolvedValue(STORED);
+      const { result } = renderUsePresets(withImage);
+
+      act(() => {
+        result.current.handleCustomBackgroundChange(null);
+      });
+
+      expect(result.current.draftBackgroundData).toBeNull();
+
+      await act(async () => {
+        await result.current.handleSaveSelectedPreset();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        'update-preset',
+        expect.objectContaining({ image: { kind: 'clear' } })
+      );
+    });
+
+    it('画像を選んだ後に他の項目を編集しても、選んだ画像は下書きに残る', () => {
+      const { result } = renderUsePresets(withImage);
+
+      act(() => {
+        result.current.handleCustomBackgroundChange(IMAGE);
+      });
+      act(() => {
+        result.current.handleGoalTextChange('Goal');
+      });
+
+      expect(result.current.draftBackgroundData).toBe(IMAGE);
     });
   });
 
@@ -400,9 +480,9 @@ describe('usePresets', () => {
           backgroundType: 'image',
           backgroundImage: 'default-1',
           backgroundColor: '#1a1a2e',
-          customBackgroundData: null,
           fontSettings: DEFAULT_FONT_SETTINGS
-        }
+        },
+        image: { kind: 'keep' }
       });
       expectNoStorageWrite();
       expect(result.current.isDirty).toBe(false);
@@ -689,7 +769,8 @@ describe('usePresets', () => {
         ...DEFAULT_DISPLAY_SETTINGS,
         id: 'new-preset-id',
         name: 'New Preset',
-        createdAt: '2024-01-03T00:00:00Z'
+        createdAt: '2024-01-03T00:00:00Z',
+        customBackgroundId: null
       };
       rerender({
         vision: { ...mockVision, presets: [mockPreset, created] },

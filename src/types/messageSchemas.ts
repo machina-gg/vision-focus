@@ -1,5 +1,6 @@
 import * as z from 'zod';
 
+import { IMAGE_LIMITS } from '~/constants/limits';
 import { END_OF_DAY_TIME, TIME_OF_DAY_PATTERN } from '~/lib/time';
 import { FONT_FAMILIES } from '~/types/font';
 import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
@@ -257,21 +258,30 @@ export const DashboardDisplaySettingsSchema = z.object({
   backgroundImage: z.string(),
   /** backgroundType が color のときの CSS の色の値 */
   backgroundColor: z.string(),
-  /** 利用者が選んだ画像の data URL。null = 使わない */
-  customBackgroundData: z.string().nullable(),
   /** 目標文のフォント */
   fontSettings: FontSettingsSchema
 });
 
-/** スタイルの保存値の形（DashboardPreset と対応する。設定の取り込みの検証に使う） */
-export const DashboardPresetSchema = DashboardDisplaySettingsSchema.extend({
+/** 背景画像 1 枚の値（JPEG の base64 の data URL で、文字数は IMAGE_LIMITS.TARGET_SIZE 以下） */
+export const BackgroundImageDataUrlSchema = z
+  .string()
+  .max(IMAGE_LIMITS.TARGET_SIZE)
+  .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/);
+
+/** 設定ファイルに書くスタイルの形（画像は ID ではなく data URL で持ち、ファイル 1 つで完結させる） */
+export const ExportedPresetSchema = DashboardDisplaySettingsSchema.extend({
   /** スタイルの ID */
   id: z.string(),
   /** 画面に出すスタイルの名前 */
   name: z.string(),
   /** 作成した時刻（ISO8601） */
-  createdAt: z.string()
+  createdAt: z.string(),
+  /** 利用者が選んだ画像。null = 使わない */
+  customBackgroundData: BackgroundImageDataUrlSchema.nullable()
 });
+
+/** 設定ファイルのスタイル（ExportedPresetSchema を通った値） */
+export type ExportedPreset = z.infer<typeof ExportedPresetSchema>;
 
 const PresetIdSchema = z.string().min(1);
 
@@ -286,17 +296,32 @@ export const CreatePresetBodySchema = z.object({
 /** スタイルの作成の本文（CreatePresetBodySchema を通った値） */
 export type CreatePresetBody = z.infer<typeof CreatePresetBodySchema>;
 
-/** スタイルの名前と表示設定を置き換える本文 */
+/** スタイルの画像の変え方。画面は既存の画像の ID を送れない（画像は共有しない） */
+export const PresetImageInputSchema = z.discriminatedUnion('kind', [
+  /** 今の画像のまま */
+  z.object({ kind: z.literal('keep') }),
+  /** 新しい画像にする（中身の検査は BackgroundImageDataUrlSchema で別に行う） */
+  z.object({ kind: z.literal('set'), dataUrl: z.string() }),
+  /** 画像を外す */
+  z.object({ kind: z.literal('clear') })
+]);
+
+/** スタイルの画像の変え方（PresetImageInputSchema を通った値） */
+export type PresetImageInput = z.infer<typeof PresetImageInputSchema>;
+
+/** スタイルの名前・表示設定・画像を置き換える本文 */
 export const UpdatePresetBodySchema = z.object({
   /** 置き換えるスタイルの ID */
   id: PresetIdSchema,
   /** 新しい名前（前後の空白を除いて 1 文字以上。除いた値を保存する） */
   name: TrimmedNonBlankStringSchema,
-  /** 新しい表示設定（画像は data URL のまま含む。目標文と補足の文は前後の空白を除いて保存する） */
+  /** 新しい表示設定（目標文と補足の文は前後の空白を除いて保存する） */
   display: DashboardDisplaySettingsSchema.extend({
     goalText: z.string().trim(),
     goalSubText: z.string().trim()
-  })
+  }),
+  /** 画像の変え方 */
+  image: PresetImageInputSchema
 });
 
 /** スタイルの更新の本文（UpdatePresetBodySchema を通った値） */
@@ -326,8 +351,8 @@ export const ExportedDataSchema = z.object({
   sites: z.record(z.string(), TrackedSiteSchema),
   /** ブロックが効く時間帯 */
   schedules: z.array(ScheduleSchema),
-  /** ダッシュボードのスタイル */
-  presets: z.array(DashboardPresetSchema),
+  /** ダッシュボードのスタイル（画像は data URL で含む） */
+  presets: z.array(ExportedPresetSchema),
   /** スタイルを適用していないときの表示設定 */
   defaultDisplaySettings: DashboardDisplaySettingsSchema,
   /** 適用中のスタイルの ID（null = defaultDisplaySettings を使う） */

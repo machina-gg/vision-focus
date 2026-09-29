@@ -28,7 +28,7 @@ function toTrackedSite(site: ImportedSite): TrackedSite {
 
 // 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
 /**
- * import-settings: 設定ファイルの設定・表示設定とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
+ * import-settings: 設定ファイルの設定・表示設定・画像とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
  * @param message data.data に設定ファイルの中身（重ね合わせは保存済みの最新の値に対して行う）
  * @returns 成功時の skipped は既存のサイトと入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）、skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request / save-failed
  */

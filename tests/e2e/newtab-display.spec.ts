@@ -4,6 +4,10 @@ import {
   setupTestStorage,
   clearStorage,
   setStorageData,
+  setBackgroundImage,
+  makePreset,
+  makeVision,
+  TINY_JPEG_DATA_URL,
   SELECTORS
 } from './helpers';
 
@@ -34,21 +38,34 @@ test.describe('NewTab 画面 - 基本表示', () => {
     await page.close();
   });
 
-  test('NEW-002: プリセット設定済み時、背景画像が表示される', async ({
+  test('NEW-002: プリセット設定済み時、スタイルの背景画像が表示される', async ({
     context,
     extensionId
   }) => {
     const setupPage = await openNewTab(context, extensionId);
-    await setupTestStorage(setupPage, {
-      withGoal: true,
-      withAnalyticsOptIn: true
-    });
+    await setStorageData(
+      setupPage,
+      'vision',
+      makeVision({
+        presets: [
+          makePreset('default', 'Default', {
+            backgroundType: 'image',
+            customBackgroundId: 'img-1'
+          })
+        ]
+      })
+    );
+    await setBackgroundImage(setupPage, 'img-1', TINY_JPEG_DATA_URL);
     await setupPage.close();
 
     const page = await openNewTab(context, extensionId);
 
     const container = page.locator(SELECTORS.newtab.container);
     await expect(container).toBeVisible();
+    await expect(container).toHaveAttribute(
+      'style',
+      /background-image: url\("data:image\/jpeg;base64,/
+    );
 
     const overlay = page.locator(SELECTORS.newtab.overlay);
     await expect(overlay).toBeVisible();
@@ -85,7 +102,6 @@ test.describe('NewTab 画面 - 基本表示', () => {
         backgroundType: 'color',
         backgroundImage: 'default-1',
         backgroundColor: '#1a1a2e',
-        customBackgroundData: null,
         fontSettings: { family: 'system', size: 'lg', weight: 'bold' }
       },
       presets: [],
