@@ -39,26 +39,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const FreeTier: Story = {
-  args: {
-    trackedSites,
-    activity,
-    onReblock: (site) => alert(`Reblock: ${site.domain}`),
-    onReset: () => alert('Reset analytics'),
-    onStopTracking: (site) => alert(`Stop tracking: ${site.domain}`),
-    onRefresh: async () => alert('Refresh'),
-    onAddSite: async (domain) => {
-      alert(`Add site: ${domain}`);
-      return true;
-    },
-    addSiteError: '',
-    isSupportPromptVisible: true,
-    onSupport: async () => alert('Open Buy Me a Coffee'),
-    onDismissSupport: async () => alert('Dismiss')
-  }
-};
-
-export const Premium: Story = {
+export const Default: Story = {
   args: {
     trackedSites,
     activity,
@@ -79,7 +60,7 @@ export const Premium: Story = {
 
 export const AddSiteRejected: Story = {
   args: {
-    ...Premium.args,
+    ...Default.args,
     addSiteError:
       'm.twitter.com は追跡中の twitter.com に含まれるため追加できません'
   }
