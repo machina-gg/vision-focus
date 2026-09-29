@@ -49,6 +49,7 @@ export function messageErrorText(error: MessageError | undefined): string {
     case 'password-already-set':
     case 'invalid-request':
     case 'invalid-url':
+    case 'allow-not-found':
     case 'schedule-not-found':
     case 'preset-not-found':
     case undefined:

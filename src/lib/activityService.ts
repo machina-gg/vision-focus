@@ -2,7 +2,7 @@
 
 import { createSerialQueue } from '~/lib/serialQueue';
 import { activityItem } from '~/lib/storage';
-import { getTrackedSiteKeys } from '~/lib/siteService';
+import { getRecordableSiteKeys, getTrackedSiteKeys } from '~/lib/siteService';
 import { resolveSiteKey } from '~/lib/siteKey';
 import { objectOrFallback } from '~/lib/storedValue';
 import { toDateKey } from '~/lib/time';
@@ -41,8 +41,8 @@ function applyEvent(
   }
 }
 
-function isRecordable(event: ActivityEvent, tracked: Set<SiteKey>): boolean {
-  if (!tracked.has(event.site)) return false;
+function isRecordable(event: ActivityEvent, recordable: Set<SiteKey>): boolean {
+  if (!recordable.has(event.site)) return false;
   if (event.kind === 'stay') {
     return Number.isFinite(event.seconds) && event.seconds > 0;
   }
@@ -50,7 +50,7 @@ function isRecordable(event: ActivityEvent, tracked: Set<SiteKey>): boolean {
 }
 
 /**
- * 出来事を発生したローカル日付・サイトの行へ加算する（追跡中でないサイトの出来事は捨てる）
+ * 出来事を発生したローカル日付・サイトの行へ加算する（追跡中でないサイトと「記録する」が OFF の許可サイトの出来事は捨てる）
  * @param events 記録する出来事（0 件なら何もしない。滞在秒数が正の有限数でない stay は捨てる）
  */
 export async function appendActivity(
@@ -59,8 +59,10 @@ export async function appendActivity(
   if (events.length === 0) return;
 
   await enqueue(async () => {
-    const tracked = new Set(await getTrackedSiteKeys());
-    const recordable = events.filter((event) => isRecordable(event, tracked));
+    const recordableSites = new Set(await getRecordableSiteKeys());
+    const recordable = events.filter((event) =>
+      isRecordable(event, recordableSites)
+    );
     if (recordable.length === 0) return;
 
     const log = await readLog();
@@ -92,7 +94,7 @@ export async function recordActivity(
 
 /**
  * ホスト名で起きた出来事を追跡中のサイトへ引き直して記録する（同じサイトのホストは 1 件にまとめ、失敗は投げない）
- * @param hosts 出来事が起きたホスト名（追跡中のどのサイトにも属さないものは捨てる）
+ * @param hosts 出来事が起きたホスト名（追跡中のどのサイトにも属さないものと、引き直した先が「記録する」が OFF の許可サイトのものは捨てる）
  * @param toEvent 引き直したサイトキーから記録する出来事を作る関数
  */
 export async function recordHostActivity(
@@ -102,6 +104,7 @@ export async function recordHostActivity(
   if (hosts.length === 0) return;
 
   try {
+    // 記録しない許可サイトも引き当てに含める。外すと、そのホストが上のブロックの行に数えられる
     const tracked = await getTrackedSiteKeys();
     const sites = new Set<SiteKey>();
     for (const host of hosts) {

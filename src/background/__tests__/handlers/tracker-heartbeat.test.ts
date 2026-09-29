@@ -25,9 +25,14 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-vi.mock('~/lib/siteService', () => ({
-  getTrackedSiteKeys: vi.fn()
-}));
+// 記録を OFF にした許可サイトはこのテストに無いので、記録してよいサイトは追跡中のサイトと同じ
+vi.mock('~/lib/siteService', () => {
+  const getTrackedSiteKeys = vi.fn();
+  return {
+    getTrackedSiteKeys,
+    getRecordableSiteKeys: vi.fn(() => getTrackedSiteKeys())
+  };
+});
 
 import { getSettings, getSites } from '~/lib/storage';
 import { checkTimeLimitNotification } from '../../notifications';
