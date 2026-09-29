@@ -17,6 +17,7 @@ function renderItem(overrides: {
   block?: Partial<BlockRule>;
   blockCount?: number;
   usedSeconds?: number;
+  allowedCount?: number;
   onToggle?: (domain: string, enabled: boolean) => void;
   onRemove?: (domain: string) => void;
   onUpdateTimeLimit?: Parameters<typeof DomainListItem>[0]['onUpdateTimeLimit'];
@@ -29,6 +30,7 @@ function renderItem(overrides: {
       })}
       blockCount={overrides.blockCount ?? 0}
       usedSeconds={overrides.usedSeconds ?? 0}
+      allowedCount={overrides.allowedCount ?? 0}
       onToggle={overrides.onToggle ?? vi.fn()}
       onRemove={overrides.onRemove ?? vi.fn()}
       onUpdateTimeLimit={overrides.onUpdateTimeLimit ?? vi.fn()}
@@ -58,6 +60,24 @@ describe('DomainListItem', () => {
       renderItem({ blockCount: 3 });
 
       expect(screen.getByText('blockedTimesShort(3)')).toBeInTheDocument();
+    });
+  });
+
+  describe('許可サイトの件数', () => {
+    it('0 件なら出さない', () => {
+      renderItem({ allowedCount: 0 });
+
+      expect(
+        screen.queryByTestId('blocklist-item-allowed-count')
+      ).not.toBeInTheDocument();
+    });
+
+    it('1 件以上なら件数つきで出す', () => {
+      renderItem({ allowedCount: 2 });
+
+      expect(
+        screen.getByTestId('blocklist-item-allowed-count')
+      ).toHaveTextContent('allowedSitesCount(2)');
     });
   });
 

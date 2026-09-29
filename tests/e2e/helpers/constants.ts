@@ -101,6 +101,16 @@ export const SELECTORS = {
     itemDomain: '[data-testid="blocklist-item-domain"]',
     itemToggle: '[data-testid="blocklist-item-toggle"]',
     deleteButton: '[data-testid="blocklist-item-remove"]',
+    itemAllowedCount: '[data-testid="blocklist-item-allowed-count"]',
+    youtubeAllowedCount: '[data-testid="youtube-allowed-count"]',
+    allowedSiteInput: '[data-testid="allowed-site-input"]',
+    allowedSiteAddButton: '[data-testid="allowed-site-add-button"]',
+    allowedSiteError: '[data-testid="allowed-site-error"]',
+    allowedSiteItem: '[data-testid="allowed-site-item"]',
+    allowedSiteDomain: '[data-testid="allowed-site-item-domain"]',
+    allowedSiteNote: '[data-testid="allowed-site-item-note"]',
+    allowedSiteRecordToggle: '[data-testid="allowed-site-item-record-toggle"]',
+    allowedSiteRemove: '[data-testid="allowed-site-item-remove"]',
     toggle: '[role="switch"]',
     youtubeSection: 'text=/YouTube/i',
     notificationSection: 'text=/Notification|通知/i'
@@ -257,6 +267,15 @@ export const UI_TEXT = {
     hideRecommendations: 'Hide Recommendations',
     hideComments: 'Hide Comments',
     timeLimitSettings: 'Time Limit Settings'
+  },
+  allowedSites: {
+    exceptionOf: (site: string) => `Exception to ${site}`,
+    noBlock: 'Not inside any blocked site',
+    count: (count: number) => `${count} allowed site(s)`,
+    alreadyBlocked: 'This site is already in the block list',
+    alreadyTracked: 'This site is already tracked',
+    containsTracked: (domain: string, site: string) =>
+      `${domain} can't be added because it contains ${site}, which is already tracked`
   },
   notifications: {
     heading: 'Notification Settings',

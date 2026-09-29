@@ -59,7 +59,7 @@
 
 | コンポーネント名            | 置き場所     | 役割                                                                   |
 | --------------------------- | ------------ | ---------------------------------------------------------------------- |
-| BlocklistTab                | `.`          | ブロックタブ（追加欄・ブロック中のサイト一覧・YouTube の設定）         |
+| BlocklistTab                | `.`          | ブロックタブ（「ブロック」節と「許可サイト」節）                       |
 | StylesTab                   | `.`          | スタイルタブ（プリセットの選択・表示設定の編集・作成と削除）           |
 | SchedulesTab                | `.`          | スケジュールタブ（週のカレンダーとスケジュールの一覧）                 |
 | WeeklyCalendar              | `.`          | スケジュールを時間帯の枠として重ねた週のカレンダー                     |
@@ -78,6 +78,8 @@
 | AnalyticsSummary            | `analytics/` | 計測中のサイト一覧（状態・解除してからの時間・合計）                   |
 | AnalyticsDateFilter         | `analytics/` | 週と月のレポートの切り替えと期間の移動                                 |
 | DomainListItem              | `blocklist/` | ブロック中のサイト 1 件の行                                            |
+| AllowedSitesSection         | `blocklist/` | 「許可サイト」節（説明・追加欄・一覧）のカード                         |
+| AllowedSiteItem             | `blocklist/` | 許可サイト 1 件の行                                                    |
 | TimeLimitEditor             | `blocklist/` | サイトの時間制限の編集欄                                               |
 | NotificationSettingsSection | `blocklist/` | 時間制限の終わりが近づいたときの通知設定のカード                       |
 | YouTubeSection              | `blocklist/` | YouTube の設定のカード                                                 |
@@ -151,6 +153,8 @@ graph TD
 
         BLT --> DLI[DomainListItem]
         BLT --> YTS[YouTubeSection]
+        BLT --> ASS[AllowedSitesSection]
+        ASS --> ASI[AllowedSiteItem]
         BLT --> PM2[PasswordModal]
         BLT --> UCM[UnblockConfirmModal]
         DLI --> TLE[TimeLimitEditor]
@@ -663,20 +667,23 @@ Esc で編集を取り消す。
 
 ### BlocklistTab
 
-`src/components/options/BlocklistTab.tsx`。一覧は `blockListSites` で導く。無効化・削除の確認は [useUnblockGuard](#useunblockguard)、YouTube の設定の保存は [useYouTubeSettings](#useyoutubesettings) を参照。
+`src/components/options/BlocklistTab.tsx`。「ブロック」節（追加欄・ブロック中のサイト一覧・YouTube の設定）と「許可サイト」節（[AllowedSitesSection](#allowedsitessection)）を並べる。ブロックの一覧は `blockListSites`、許可サイトの一覧は `allowedSiteRows`、ブロックの行と YouTube の節に出す許可サイトの件数は `allowedCountUnder`（いずれも `src/lib/blockList.ts`）で導く。ブロックの無効化・削除の確認は [useUnblockGuard](#useunblockguard)、YouTube の設定の保存は [useYouTubeSettings](#useyoutubesettings) を参照。許可サイトの追加・削除・切り替えには確認を挟まず、失敗の文言は「許可サイト」節の追加欄の下に出す。
 
-| Prop              | 型                                                                                 | 省略時 | 説明                                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| newDomain         | `string`                                                                           | 必須   | 追加欄に入力中のドメイン                                                                                      |
-| setNewDomain      | `(value: string) => void`                                                          | 必須   | 追加欄の入力の変更を受け取る                                                                                  |
-| blockError        | `string`                                                                           | 必須   | 追加に失敗した理由（空なら出さない）                                                                          |
-| onAddDomain       | `() => void`                                                                       | 必須   | 追加ボタンが押されたときに呼ぶ                                                                                |
-| onRemoveDomain    | `(domain: string, password?: string) => Promise<string \| null>`                   | 必須   | 解除の確認を通ったあとに、削除するドメインと入力されたパスワードを受け取る。失敗の文言（成功なら null）を返す |
-| onToggleDomain    | `(domain: string, enabled: boolean, password?: string) => Promise<string \| null>` | 必須   | 有効・無効の切り替えを受け取る（無効化は確認を通ったあと）。失敗の文言（成功なら null）を返す                 |
-| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void`                           | 必須   | 時間制限の変更を受け取る（null なら制限を外す）                                                               |
-| activity          | `ActivityLog`                                                                      | 必須   | 今日の使用時間とブロック回数を出すための記録                                                                  |
-| trackedSites      | `TrackedSites`                                                                     | 必須   | 登録済みのサイト（ブロック設定のあるものを一覧に出す）                                                        |
-| onYouTubeChange   | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>`    | 必須   | YouTube の設定の変更を受け取る。失敗の文言（成功なら null）を返す                                             |
+| Prop                      | 型                                                                                 | 省略時 | 説明                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| newDomain                 | `string`                                                                           | 必須   | 追加欄に入力中のドメイン                                                                                      |
+| setNewDomain              | `(value: string) => void`                                                          | 必須   | 追加欄の入力の変更を受け取る                                                                                  |
+| blockError                | `string`                                                                           | 必須   | 追加に失敗した理由（空なら出さない）                                                                          |
+| onAddDomain               | `() => void`                                                                       | 必須   | 追加ボタンが押されたときに呼ぶ                                                                                |
+| onRemoveDomain            | `(domain: string, password?: string) => Promise<string \| null>`                   | 必須   | 解除の確認を通ったあとに、削除するドメインと入力されたパスワードを受け取る。失敗の文言（成功なら null）を返す |
+| onToggleDomain            | `(domain: string, enabled: boolean, password?: string) => Promise<string \| null>` | 必須   | 有効・無効の切り替えを受け取る（無効化は確認を通ったあと）。失敗の文言（成功なら null）を返す                 |
+| onUpdateTimeLimit         | `(domain: string, timeLimit: TimeLimit \| null) => void`                           | 必須   | 時間制限の変更を受け取る（null なら制限を外す）                                                               |
+| activity                  | `ActivityLog`                                                                      | 必須   | 今日の使用時間とブロック回数を出すための記録                                                                  |
+| trackedSites              | `TrackedSites`                                                                     | 必須   | 登録済みのサイト（ブロック設定のあるものを一覧に出す）                                                        |
+| onYouTubeChange           | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>`    | 必須   | YouTube の設定の変更を受け取る。失敗の文言（成功なら null）を返す                                             |
+| onAddAllowedSite          | `(input: string) => Promise<string \| null>`                                       | 必須   | 「許可サイト」節の入力を受け取り、許可サイトにする。失敗の文言（成功なら null）を返す                         |
+| onRemoveAllowedSite       | `(domain: string) => Promise<string \| null>`                                      | 必須   | 許可サイトの削除を受け取る（登録と記録が消える）。失敗の文言（成功なら null）を返す                           |
+| onSetAllowedSiteRecording | `(domain: string, recordTime: boolean) => Promise<string \| null>`                 | 必須   | 許可サイトの「時間を記録する」の切り替えを受け取る。失敗の文言（成功なら null）を返す                         |
 
 ---
 
@@ -867,14 +874,15 @@ Esc で編集を取り消す。
 
 `src/components/options/blocklist/DomainListItem.tsx`
 
-| Prop              | 型                                                       | 省略時 | 説明                                                  |
-| ----------------- | -------------------------------------------------------- | ------ | ----------------------------------------------------- |
-| site              | `BlockedSite`                                            | 必須   | 行に出すブロック設定つきのサイト                      |
-| blockCount        | `number`                                                 | 必須   | ブロックした回数（0 なら出さない）                    |
-| usedSeconds       | `number`                                                 | 必須   | 今日の使用時間（秒。時間制限の残りの計算に使う）      |
-| onToggle          | `(domain: string, enabled: boolean) => void`             | 必須   | 有効・無効の切り替えを受け取る                        |
-| onRemove          | `(domain: string) => void`                               | 必須   | 削除ボタンが押されたドメインを受け取る                |
-| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void` | 必須   | 保存された時間制限を受け取る（null なら常にブロック） |
+| Prop              | 型                                                       | 省略時 | 説明                                                   |
+| ----------------- | -------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| site              | `BlockedSite`                                            | 必須   | 行に出すブロック設定つきのサイト                       |
+| blockCount        | `number`                                                 | 必須   | ブロックした回数（0 なら出さない）                     |
+| usedSeconds       | `number`                                                 | 必須   | 今日の使用時間（秒。時間制限の残りの計算に使う）       |
+| allowedCount      | `number`                                                 | 必須   | そのサイトの下にある許可サイトの件数（0 なら出さない） |
+| onToggle          | `(domain: string, enabled: boolean) => void`             | 必須   | 有効・無効の切り替えを受け取る                         |
+| onRemove          | `(domain: string) => void`                               | 必須   | 削除ボタンが押されたドメインを受け取る                 |
+| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void` | 必須   | 保存された時間制限を受け取る（null なら常にブロック）  |
 
 ---
 
@@ -910,8 +918,35 @@ Esc で編集を取り消す。
 | Prop             | 型                                                                              | 省略時 | 説明                                                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | site             | `SiteEntry \| null`                                                             | 必須   | YouTube の登録内容（null ならすべてオフとして表示する）                                                                                                |
+| allowedCount     | `number`                                                                        | 必須   | youtube.com の下にある許可サイトの件数（0 なら出さない）。例外の欄は置かない（許可サイトは「許可サイト」節で扱う）                                     |
 | onYouTubeChange  | `(youtube: YouTubeSettingsInput, password?: string) => Promise<string \| null>` | 必須   | 変更後の YouTube の設定全体と、解除の確認で入力されたパスワードを受け取る。失敗の文言（成功なら null）を返し、節は失敗の文言を有効化のトグルの下に出す |
 | onRequestUnblock | `(request: UnblockRequest) => void`                                             | 必須   | 全体の有効化かアクセスのブロックをオフにするときに解除の確認を求める                                                                                   |
+
+---
+
+### AllowedSitesSection
+
+`src/components/options/blocklist/AllowedSitesSection.tsx`。入力欄の値はこの節が持ち、追加できたとき（`onAdd` が null を返したとき）だけ空にする。拒否されたら入力は残す。
+
+| Prop           | 型                                              | 省略時 | 説明                                                                        |
+| -------------- | ----------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| sites          | `AllowedSiteRow[]`                              | 必須   | 一覧に並べる許可サイト（`allowedSiteRows` の値。並べる順のまま出す）        |
+| error          | `string`                                        | 必須   | 直前の操作に失敗した理由（空なら出さない。追加欄の下に出す）                |
+| onAdd          | `(input: string) => Promise<string \| null>`    | 必須   | 追加ボタンが押されたときに入力を受け取る。失敗の文言（成功なら null）を返す |
+| onRemove       | `(domain: string) => void`                      | 必須   | 削除ボタンが押されたドメインを受け取る（確認は出さない）                    |
+| onSetRecording | `(domain: string, recordTime: boolean) => void` | 必須   | 「時間を記録する」の切り替えを受け取る（確認は出さない）                    |
+
+---
+
+### AllowedSiteItem
+
+`src/components/options/blocklist/AllowedSiteItem.tsx`。補足は、覆うブロックがあれば「<ブロック> の例外」、無ければ「かかっているブロックはありません」（親のブロックを無効にしているあいだも同じ）。
+
+| Prop           | 型                                              | 省略時 | 説明                                                     |
+| -------------- | ----------------------------------------------- | ------ | -------------------------------------------------------- |
+| site           | `AllowedSiteRow`                                | 必須   | 行に出す許可サイト（ドメイン・記録するか・覆うブロック） |
+| onRemove       | `(domain: string) => void`                      | 必須   | 削除ボタンが押されたドメインを受け取る                   |
+| onSetRecording | `(domain: string, recordTime: boolean) => void` | 必須   | 「時間を記録する」の切り替え後の状態を受け取る           |
 
 ---
 
@@ -1140,6 +1175,12 @@ function useBlocklist(): {
     id: string,
     timeLimit: TimeLimit | null
   ) => Promise<void>;
+  handleAddAllowedSite: (input: string) => Promise<string | null>;
+  handleRemoveAllowedSite: (domain: string) => Promise<string | null>;
+  handleSetAllowedSiteRecording: (
+    domain: string,
+    recordTime: boolean
+  ) => Promise<string | null>;
   handleUpdateNotifications: (
     notifications: NotificationSettings
   ) => Promise<void>;
@@ -1147,6 +1188,7 @@ function useBlocklist(): {
 ```
 
 - 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・許可サイト・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
+- 許可サイトの追加は `add-allowed-site`、削除は `stop-tracking`（登録と記録が消える）、「時間を記録する」は `set-allowed-site-recording` で依頼し、失敗の文言（成功なら null）を返す。入力の検証（形式・ブロック中・追跡中・入れ子）は background 側が行う
 - 通知設定は `update-notifications` で依頼する。失敗しても文言は出さず、表示は保存値のまま
 - 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）。削除・無効化は確認で入力されたパスワードを添えて送り、失敗の文言（成功なら null）を返す
 
