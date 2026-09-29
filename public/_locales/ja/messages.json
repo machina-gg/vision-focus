@@ -1351,6 +1351,30 @@
       }
     }
   },
+  "allowHost": {
+    "message": "$HOST$ は許可する",
+    "description": "ブロック画面の帯で、ブロックされたホストを許可サイトにするボタン",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "music.youtube.com"
+      }
+    }
+  },
+  "allowHostDone": {
+    "message": "$HOST$ を許可しました",
+    "description": "ブロック画面の帯で、ホストを許可サイトにできたときの文言",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "music.youtube.com"
+      }
+    }
+  },
+  "openAllowedHost": {
+    "message": "開く",
+    "description": "許可サイトにしたホストを開くリンク"
+  },
   "perDay": {
     "message": "/日",
     "description": "1日あたりの接尾辞"

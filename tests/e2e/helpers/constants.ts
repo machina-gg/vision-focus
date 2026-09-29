@@ -73,6 +73,9 @@ export const SELECTORS = {
     goalCancelButton: '[data-testid="newtab-goal-cancel"]',
     blockInfo: '[data-testid="newtab-block-info"]',
     blockInfoMessage: '[data-testid="newtab-block-info-message"]',
+    allowHostButton: '[data-testid="newtab-allow-host-button"]',
+    allowHostDone: '[data-testid="newtab-allow-host-done"]',
+    allowHostOpen: '[data-testid="newtab-allow-host-open"]',
     blockedSitesToggle: '[data-testid="newtab-blocked-sites-toggle"]',
     blockedSiteDomain: '[data-testid="newtab-blocked-site-domain"]',
     miniStats: {
@@ -227,6 +230,8 @@ export const UI_TEXT = {
   blockingDays: (count: number) => `${count} days`,
   newtab: {
     siteBlocked: (domain: string) => `${domain} is on your block list`,
+    allowHost: (host: string) => `Allow ${host}`,
+    allowHostDone: (host: string) => `${host} is now allowed`,
     download: 'Download',
     downloadWallpaper: 'Download Wallpaper'
   },

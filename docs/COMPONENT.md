@@ -49,11 +49,12 @@
 
 ### 新しいタブ用部品（`src/components/newtab`）
 
-| コンポーネント名 | 役割                                                   |
-| ---------------- | ------------------------------------------------------ |
-| GoalDisplay      | 中央に大きく出す目標と補足（編集中は入力欄）           |
-| MiniStats        | 今日のブロック回数とブロックを続けている日数の小さな枠 |
-| BlockedSitesList | ブロック中のサイトの開閉できる一覧                     |
+| コンポーネント名 | 役割                                                             |
+| ---------------- | ---------------------------------------------------------------- |
+| GoalDisplay      | 中央に大きく出す目標と補足（編集中は入力欄）                     |
+| MiniStats        | 今日のブロック回数とブロックを続けている日数の小さな枠           |
+| BlockedSitesList | ブロック中のサイトの開閉できる一覧                               |
+| AllowHostButton  | ブロック画面の帯で、ブロックされたホストを許可サイトにするボタン |
 
 ### 設定画面用部品（`src/components/options`）
 
@@ -134,6 +135,7 @@ graph TD
         NA --> GD[GoalDisplay]
         NA --> MS[MiniStats]
         NA --> BSL[BlockedSitesList]
+        NA --> AHB[AllowHostButton]
         NA --> DB[DownloadButton]
     end
 
@@ -661,6 +663,17 @@ Esc で編集を取り消す。
 
 ---
 
+### AllowHostButton
+
+`src/components/newtab/AllowHostButton.tsx`。押すと確認なしで `onAllow` を呼び、送っている間はボタンを押せない。成功したらボタンを「（ホスト名） を許可しました」と `https://（ホスト名）/` を開くリンクに替え、失敗したら返された文言をボタンの下に出してボタンを残す。
+
+| Prop    | 型                              | 省略時 | 説明                                                              |
+| ------- | ------------------------------- | ------ | ----------------------------------------------------------------- |
+| host    | `SiteKey`                       | 必須   | 許可サイトにするホストのサイトキー                                |
+| onAllow | `() => Promise<string \| null>` | 必須   | ボタンが押されたときに呼ぶ。成功なら null、失敗なら出す文言を返す |
+
+---
+
 ### BlocklistTab
 
 `src/components/options/BlocklistTab.tsx`。一覧は `blockListSites` で導く。無効化・削除の確認は [useUnblockGuard](#useunblockguard)、YouTube の設定の保存は [useYouTubeSettings](#useyoutubesettings) を参照。
@@ -1089,7 +1102,7 @@ Esc で編集を取り消す。
 
 ### NewtabApp
 
-`src/entrypoints/newtab/App.tsx`。Props は無い。目標の編集は `update-goal-text` で background に依頼し、拒まれたら `messageErrorText` の文言を [GoalDisplay](#goaldisplay) に出して編集を続ける。
+`src/entrypoints/newtab/App.tsx`。Props は無い。目標の編集は `update-goal-text` で background に依頼し、拒まれたら `messageErrorText` の文言を [GoalDisplay](#goaldisplay) に出して編集を続ける。帯には `allowCandidate` がキーを返すときだけ [AllowHostButton](#allowhostbutton) を置き、押されたら `add-allowed-site` でそのキーを送って、拒まれたときは `messageErrorText` の文言を返す。
 
 ---
 
