@@ -31,6 +31,8 @@ function presetsStub(overrides: Partial<UsePresetsReturn> = {}) {
     presetName: '',
     deleteTargetPresetId: null,
     deleteTargetScheduleCount: 0,
+    presetError: null,
+    createPresetError: null,
     setShowSavePresetModal: vi.fn(),
     setPresetName: vi.fn(),
     handleSelectPreset: vi.fn(),
@@ -298,6 +300,29 @@ describe('PresetSelector', () => {
       expect(
         screen.queryByTestId('style-apply-button')
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('失敗の文言', () => {
+    it('presetError があれば出す', () => {
+      renderSelector({
+        draftPresets: [presetOf('p1', '朝')],
+        selectedPresetId: 'p1',
+        presetError: '保存できませんでした'
+      });
+
+      expect(screen.getByTestId('style-error')).toHaveTextContent(
+        '保存できませんでした'
+      );
+    });
+
+    it('presetError が無ければ何も出さない', () => {
+      renderSelector({
+        draftPresets: [presetOf('p1', '朝')],
+        selectedPresetId: 'p1'
+      });
+
+      expect(screen.queryByTestId('style-error')).not.toBeInTheDocument();
     });
   });
 

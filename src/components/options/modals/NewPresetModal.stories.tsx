@@ -36,6 +36,17 @@ export const Filled: Story = {
   }
 };
 
+export const LimitReached: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    presetName: 'マイプリセット',
+    onPresetNameChange: () => {},
+    onCreate: () => {},
+    error: 'スタイルは最大 10 件まで保存できます。'
+  }
+};
+
 const InteractiveTemplate = () => {
   const [presetName, setPresetName] = useState('');
 

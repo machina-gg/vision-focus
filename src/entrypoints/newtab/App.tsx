@@ -22,6 +22,8 @@ import {
   useStorageItem
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
+import { sendMessage } from '~/lib/messaging';
+import { messageErrorText } from '~/lib/messageError';
 import { formatTimeLocalized } from '~/lib/time';
 import {
   clearLastBlocked,
@@ -39,12 +41,13 @@ import '~/styles/globals.css';
  * @returns 新しいタブの画面
  */
 export function NewtabApp() {
-  const [vision, setVision] = useStorageItem(visionItem);
+  const [vision] = useStorageItem(visionItem);
   const [settings] = useStorageItem(settingsItem);
   const [trackedSites] = useStorageItem(sitesItem);
   const { activity, sites } = useActivitySources();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
+  const [goalError, setGoalError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ブロックの記録はリダイレクトと前後するので、数値は読んだ時点で固定せず activity から導出する
@@ -99,22 +102,27 @@ export function NewtabApp() {
 
   const handleStartEdit = useCallback(() => {
     setEditText(goalText);
+    setGoalError(null);
     setIsEditing(true);
   }, [goalText]);
 
+  const handleEditTextChange = useCallback((text: string) => {
+    setEditText(text);
+    setGoalError(null);
+  }, []);
+
   const handleSaveGoal = useCallback(async () => {
-    if (vision && editText.trim()) {
-      const updated = {
-        ...vision,
-        defaultSettings: {
-          ...vision.defaultSettings,
-          goalText: editText.trim()
-        }
-      };
-      await setVision(updated);
+    if (editText.trim()) {
+      const response = await sendMessage('update-goal-text', {
+        goalText: editText
+      }).catch(() => undefined);
+      if (!response?.success) {
+        setGoalError(messageErrorText(response?.error));
+        return;
+      }
     }
     setIsEditing(false);
-  }, [vision, editText, setVision]);
+  }, [editText]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -222,11 +230,12 @@ export function NewtabApp() {
             isEditing={isEditing}
             editText={editText}
             canEdit={!vision?.activePresetId}
-            onEditTextChange={setEditText}
+            onEditTextChange={handleEditTextChange}
             onStartEdit={handleStartEdit}
             onSave={handleSaveGoal}
             onCancel={() => setIsEditing(false)}
             onKeyDown={handleKeyDown}
+            error={goalError}
           />
         </div>
 

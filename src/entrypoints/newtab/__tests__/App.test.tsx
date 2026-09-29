@@ -1,10 +1,11 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { NewtabApp } from '../App';
 import { openOptionsPage } from '~/lib/chromeApi';
+import { sendMessage } from '~/lib/messaging';
 import { toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { ActivityLog } from '~/types/activity';
@@ -52,8 +53,13 @@ vi.mock('~/constants/backgrounds', async (importOriginal) => {
   };
 });
 
+vi.mock('~/lib/messaging', () => ({
+  sendMessage: vi.fn()
+}));
+
 const hooksState = vi.hoisted(() => ({
   values: {} as Record<string, unknown>,
+  setItem: vi.fn(),
   activity: {} as ActivityLog,
   sites: [] as SiteKey[]
 }));
@@ -65,7 +71,7 @@ vi.mock('~/hooks', async (importOriginal) => {
     ...actual,
     useStorageItem: (item: { key: string }) => [
       hooksState.values[item.key],
-      vi.fn()
+      hooksState.setItem
     ],
     useActivitySources: () => ({
       activity: hooksState.activity,
@@ -389,5 +395,82 @@ describe('壁紙のダウンロードボタン', () => {
     // ボタンを findBy で待つと、無関係な再描画でだけ出る実装でも通るため getBy で見る
     await screen.findByTestId('newtab-setup-cta');
     expect(screen.getByTestId('newtab-download-button')).toBeInTheDocument();
+  });
+});
+
+describe('目標の編集', () => {
+  const vision: VisionSettings = {
+    defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS, goalText: '今の目標' },
+    presets: [],
+    activePresetId: null
+  };
+
+  async function startEditing(text: string) {
+    renderApp({ vision });
+    fireEvent.click(await screen.findByTestId('newtab-goal-edit-button'));
+    fireEvent.change(screen.getByTestId('newtab-goal-input'), {
+      target: { value: text }
+    });
+  }
+
+  beforeEach(() => {
+    vi.mocked(sendMessage).mockResolvedValue({ success: true });
+  });
+
+  it('保存すると update-goal-text に入力を trim せずに送り、保存領域には書かずに編集を閉じる', async () => {
+    await startEditing(' 新しい目標 ');
+
+    fireEvent.click(screen.getByTestId('newtab-goal-save'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('newtab-goal-input')).not.toBeInTheDocument();
+    });
+    expect(sendMessage).toHaveBeenCalledWith('update-goal-text', {
+      goalText: ' 新しい目標 '
+    });
+    expect(hooksState.setItem).not.toHaveBeenCalled();
+  });
+
+  it('空白だけなら送らずに編集を閉じる', async () => {
+    await startEditing('   ');
+
+    fireEvent.click(screen.getByTestId('newtab-goal-save'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('newtab-goal-input')).not.toBeInTheDocument();
+    });
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('拒まれたら文言を出して編集を続け、入力を変えると文言が消える', async () => {
+    vi.mocked(sendMessage).mockResolvedValue({
+      success: false,
+      error: { code: 'save-failed' }
+    });
+    await startEditing('新しい目標');
+
+    fireEvent.click(screen.getByTestId('newtab-goal-save'));
+
+    expect(await screen.findByTestId('newtab-goal-error')).toHaveTextContent(
+      'errorSaveFailed'
+    );
+    expect(screen.getByTestId('newtab-goal-input')).toHaveValue('新しい目標');
+
+    fireEvent.change(screen.getByTestId('newtab-goal-input'), {
+      target: { value: '別の目標' }
+    });
+
+    expect(screen.queryByTestId('newtab-goal-error')).not.toBeInTheDocument();
+  });
+
+  it('送れなかったら汎用の文言を出す', async () => {
+    vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+    await startEditing('新しい目標');
+
+    fireEvent.click(screen.getByTestId('newtab-goal-save'));
+
+    expect(await screen.findByTestId('newtab-goal-error')).toHaveTextContent(
+      'errorOperationFailed'
+    );
   });
 });

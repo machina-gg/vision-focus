@@ -16,7 +16,7 @@ interface PresetSelectorProps {
 }
 
 /**
- * プリセットの一覧と作成ボタン、選択中のプリセットの保存・適用・削除の操作を表示する（プリセットが無ければ作成を促す）
+ * プリセットの一覧と作成ボタン、保存・適用・削除の失敗の文言、選択中のプリセットの保存・適用・削除の操作を表示する（プリセットが無ければ作成を促す）
  * @param props プリセット編集の状態と表示設定（各フィールドは PresetSelectorProps）
  * @returns プリセットのカードと、選択中のプリセットの編集状態の表示
  */
@@ -28,6 +28,7 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
     editingPresetName,
     isDirty,
     visionSaved,
+    presetError,
     setShowSavePresetModal,
     handleSelectPreset,
     handleRequestDeletePreset,
@@ -67,6 +68,12 @@ export function PresetSelector({ presets, vision }: PresetSelectorProps) {
               </p>
             )}
           </>
+        )}
+
+        {presetError && (
+          <p className="text-sm text-danger-600 mt-2" data-testid="style-error">
+            {presetError}
+          </p>
         )}
       </Card>
 

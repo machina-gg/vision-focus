@@ -613,20 +613,21 @@ Esc で編集を取り消す。
 
 `src/components/newtab/GoalDisplay.tsx`。編集の状態は呼び出し側が持つ。
 
-| Prop             | 型                                 | 省略時 | 説明                                                 |
-| ---------------- | ---------------------------------- | ------ | ---------------------------------------------------- |
-| goalText         | `string`                           | 必須   | 目標（空白だけなら「目標未設定」の案内を出す）       |
-| goalSubText      | `string`                           | 必須   | 目標の下に出す補足（空なら出さない。改行はそのまま） |
-| textColor        | `string`                           | 必須   | 目標と補足の文字色（CSS の色）                       |
-| fontStyle        | `React.CSSProperties`              | 必須   | 目標に当てるフォントの指定                           |
-| isEditing        | `boolean`                          | 必須   | true なら入力欄と保存・取消ボタンを出す              |
-| editText         | `string`                           | 必須   | 編集中の入力欄の文言                                 |
-| canEdit          | `boolean`                          | 必須   | true ならホバー時に編集ボタンを出す                  |
-| onEditTextChange | `(text: string) => void`           | 必須   | 入力欄の文言の変更を受け取る                         |
-| onStartEdit      | `() => void`                       | 必須   | 編集ボタンが押されたときに呼ぶ                       |
-| onSave           | `() => void`                       | 必須   | 保存ボタンが押されたときに呼ぶ                       |
-| onCancel         | `() => void`                       | 必須   | 取消ボタンが押されたときに呼ぶ                       |
-| onKeyDown        | `(e: React.KeyboardEvent) => void` | 必須   | 入力欄でのキー入力を受け取る                         |
+| Prop             | 型                                 | 省略時   | 説明                                                 |
+| ---------------- | ---------------------------------- | -------- | ---------------------------------------------------- |
+| goalText         | `string`                           | 必須     | 目標（空白だけなら「目標未設定」の案内を出す）       |
+| goalSubText      | `string`                           | 必須     | 目標の下に出す補足（空なら出さない。改行はそのまま） |
+| textColor        | `string`                           | 必須     | 目標と補足の文字色（CSS の色）                       |
+| fontStyle        | `React.CSSProperties`              | 必須     | 目標に当てるフォントの指定                           |
+| isEditing        | `boolean`                          | 必須     | true なら入力欄と保存・取消ボタンを出す              |
+| editText         | `string`                           | 必須     | 編集中の入力欄の文言                                 |
+| canEdit          | `boolean`                          | 必須     | true ならホバー時に編集ボタンを出す                  |
+| onEditTextChange | `(text: string) => void`           | 必須     | 入力欄の文言の変更を受け取る                         |
+| onStartEdit      | `() => void`                       | 必須     | 編集ボタンが押されたときに呼ぶ                       |
+| onSave           | `() => void`                       | 必須     | 保存ボタンが押されたときに呼ぶ                       |
+| onCancel         | `() => void`                       | 必須     | 取消ボタンが押されたときに呼ぶ                       |
+| onKeyDown        | `(e: React.KeyboardEvent) => void` | 必須     | 入力欄でのキー入力を受け取る                         |
+| error            | `string \| null`                   | 出さない | 保存できなかった理由（編集中だけ出す）               |
 
 ---
 
@@ -677,7 +678,7 @@ Esc で編集を取り消す。
 
 ### StylesTab
 
-`src/components/options/StylesTab.tsx`。Props は無い（設定は保存領域から直接読み書きし、編集の状態は [usePresets](#usepresets) が持つ）。
+`src/components/options/StylesTab.tsx`。Props は無い（保存値は購読で読み、編集の状態と background への依頼は [usePresets](#usepresets) が持つ）。
 
 ---
 
@@ -1016,13 +1017,14 @@ Esc で編集を取り消す。
 
 `src/components/options/modals/NewPresetModal.tsx`
 
-| Prop               | 型                       | 省略時 | 説明                                             |
-| ------------------ | ------------------------ | ------ | ------------------------------------------------ |
-| isOpen             | `boolean`                | 必須   | false の間は表示しない                           |
-| onClose            | `() => void`             | 必須   | 閉じるときに呼ぶ（続けて名前を空に戻す）         |
-| presetName         | `string`                 | 必須   | 入力中の名前（空白だけなら追加ボタンを押せない） |
-| onPresetNameChange | `(name: string) => void` | 必須   | 名前の入力の変更を受け取る                       |
-| onCreate           | `() => void`             | 必須   | 追加ボタンが押されたときに呼ぶ                   |
+| Prop               | 型                       | 省略時   | 説明                                             |
+| ------------------ | ------------------------ | -------- | ------------------------------------------------ |
+| isOpen             | `boolean`                | 必須     | false の間は表示しない                           |
+| onClose            | `() => void`             | 必須     | 閉じるときに呼ぶ（続けて名前を空に戻す）         |
+| presetName         | `string`                 | 必須     | 入力中の名前（空白だけなら追加ボタンを押せない） |
+| onPresetNameChange | `(name: string) => void` | 必須     | 名前の入力の変更を受け取る                       |
+| onCreate           | `() => void`             | 必須     | 追加ボタンが押されたときに呼ぶ                   |
+| error              | `string \| null`         | 出さない | 作成できなかった理由（上限など）                 |
 
 ---
 
@@ -1088,7 +1090,7 @@ Esc で編集を取り消す。
 
 ### NewtabApp
 
-`src/entrypoints/newtab/App.tsx`。Props は無い。
+`src/entrypoints/newtab/App.tsx`。Props は無い。目標の編集は保存領域に書かず `update-goal-text` で background に依頼し、拒まれたら `messageErrorText` の文言を [GoalDisplay](#goaldisplay) に出して編集を続ける。
 
 ---
 
@@ -1198,9 +1200,7 @@ function useSchedules(options: { settings: AppSettings | undefined }): {
 ```typescript
 function usePresets(options: {
   vision: VisionSettings | undefined;
-  setVision: (vision: VisionSettings) => void;
   settings: AppSettings | undefined;
-  setSettings: (settings: AppSettings) => void;
 }): {
   draftDisplaySettings: DashboardDisplaySettings;
   draftPresets: DashboardPreset[];
@@ -1212,6 +1212,8 @@ function usePresets(options: {
   presetName: string;
   deleteTargetPresetId: string | null;
   deleteTargetScheduleCount: number;
+  presetError: string | null;
+  createPresetError: string | null;
   setShowSavePresetModal: (show: boolean) => void;
   setPresetName: (name: string) => void;
   handleSelectPreset: (presetId: string) => void;
@@ -1233,8 +1235,9 @@ function usePresets(options: {
 };
 ```
 
-- 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せずに削除する
-- 削除したスタイルを参照していたスケジュールからは `presetId` を外す（`enabled` は変えない）。`settings` / `setSettings` を受け取るのはこのため
+- 保存領域には書かず、作成・保存・適用・削除を `create-preset` / `update-preset` / `apply-preset` / `delete-preset` で background に依頼する。スタイルの一覧（`draftPresets`）は `vision` の購読に追従し、選択中のスタイルの保存していない変更は保つ
+- 拒まれた依頼は `messageErrorText` の文言にし、作成は `createPresetError`（[NewPresetModal](#newpresetmodal)）、ほかは `presetError`（[PresetSelector](#presetselector)）に入れる
+- 削除は「確認 → 確定」の 2 段。参照しているスケジュールが 0 件なら確認せずに削除する。参照の件数を数えるために `settings` を受け取る（参照を外すのは `delete-preset`）
 
 ---
 
