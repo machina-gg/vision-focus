@@ -6,7 +6,6 @@ import { SettingsDataPrivacy } from '~/components/options/SettingsDataPrivacy';
 import { SettingsBackup } from '~/components/options/SettingsBackup';
 import { useSettings } from '~/contexts/SettingsContext';
 import type {
-  AnalyticsOptIn,
   NotificationSettings,
   UnblockConfirmSettings
 } from '~/types/storage';
@@ -21,10 +20,8 @@ interface SettingsTabProps {
   onUnblockConfirmUpdate: (settings: UnblockConfirmSettings) => Promise<void>;
   /** 通知の設定を保存する */
   onUpdateNotifications: (notifications: NotificationSettings) => void;
-  /** 利用統計の共有の選択を保存する */
-  onAnalyticsOptInChange: (optIn: AnalyticsOptIn) => Promise<void>;
-  /** バックアップから設定を読み込んだあとに呼ぶ */
-  onSettingsChange: () => void;
+  /** 利用統計を共有するかの選択を保存する */
+  onAnalyticsOptInChange: (enabled: boolean) => Promise<void>;
 }
 
 /**
@@ -35,8 +32,7 @@ interface SettingsTabProps {
 export function SettingsTab({
   onUnblockConfirmUpdate,
   onUpdateNotifications,
-  onAnalyticsOptInChange,
-  onSettingsChange
+  onAnalyticsOptInChange
 }: SettingsTabProps) {
   const { settings } = useSettings();
   return (
@@ -60,7 +56,7 @@ export function SettingsTab({
         onAnalyticsOptInChange={onAnalyticsOptInChange}
       />
 
-      <SettingsBackup onSettingsChange={onSettingsChange} />
+      <SettingsBackup />
     </div>
   );
 }

@@ -30,7 +30,6 @@ export const Default: Story = {
   args: {
     onUnblockConfirmUpdate: async () => alert('Hold duration updated'),
     onUpdateNotifications: () => alert('Notifications updated'),
-    onAnalyticsOptInChange: async () => alert('Analytics opt-in changed'),
-    onSettingsChange: () => alert('Settings changed')
+    onAnalyticsOptInChange: async () => alert('Analytics opt-in changed')
   }
 };

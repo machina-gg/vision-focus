@@ -1,9 +1,8 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useBlocklist } from '~/hooks/useBlocklist';
-import type { AppSettings, TimeLimit } from '~/types/storage';
-import { DEFAULT_SETTINGS } from '~/types/storage';
+import type { TimeLimit } from '~/types/storage';
 import { stubI18nWithLocale } from '~/test/i18n';
 
 vi.mock('~/lib/messaging', () => ({
@@ -30,14 +29,7 @@ import { settingsItem, sitesItem } from '~/lib/storage';
 describe('useBlocklist', () => {
   stubI18nWithLocale('ja');
 
-  const mockSetSettings = vi.fn();
-
-  const mockSettings: AppSettings = { ...DEFAULT_SETTINGS };
-
-  const render = () =>
-    renderHook(() =>
-      useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
-    );
+  const render = () => renderHook(() => useBlocklist());
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -275,65 +267,44 @@ describe('useBlocklist', () => {
   });
 
   describe('handleUpdateNotifications', () => {
-    it('settingsがundefinedの場合、何もしない', async () => {
-      const { result } = renderHook(() =>
-        useBlocklist({ settings: undefined, setSettings: mockSetSettings })
-      );
+    const notifications = {
+      timeLimitEnabled: false,
+      timeLimitMinutes: 10 as const
+    };
+
+    it('通知設定の保存を background に依頼し、保存領域に書かない', async () => {
+      const { result } = render();
 
       await act(async () => {
-        await result.current.handleUpdateNotifications({
-          timeLimitEnabled: true,
-          timeLimitMinutes: 10
-        });
+        await result.current.handleUpdateNotifications(notifications);
       });
 
+      expect(sendMessage).toHaveBeenCalledWith('update-notifications', {
+        notifications
+      });
       expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
 
-    it('通知設定を更新', async () => {
-      vi.mocked(settingsItem.setValue).mockResolvedValue(undefined);
-
-      const { result } = renderHook(() =>
-        useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      const newNotifications = {
-        timeLimitEnabled: false,
-        timeLimitMinutes: 10 as const
-      };
-
-      await act(async () => {
-        await result.current.handleUpdateNotifications(newNotifications);
+    it('依頼が失敗しても例外を投げない', async () => {
+      vi.mocked(sendMessage).mockResolvedValue({
+        success: false,
+        error: { code: 'save-failed' }
       });
+      const { result } = render();
 
-      const expectedSettings = {
-        ...mockSettings,
-        notifications: newNotifications
-      };
-
-      expect(settingsItem.setValue).toHaveBeenCalledWith(expectedSettings);
-      expect(mockSetSettings).toHaveBeenCalledWith(expectedSettings);
+      await expect(
+        result.current.handleUpdateNotifications(notifications)
+      ).resolves.toBeUndefined();
     });
 
-    it('例外が発生してもエラーをスローしない', async () => {
-      vi.mocked(settingsItem.setValue).mockRejectedValue(
-        new Error('Storage error')
-      );
+    it('送れなくても例外を投げない', async () => {
+      vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+      const { result } = render();
 
-      const { result } = renderHook(() =>
-        useBlocklist({ settings: mockSettings, setSettings: mockSetSettings })
-      );
-
-      await act(async () => {
-        await result.current.handleUpdateNotifications({
-          timeLimitEnabled: true,
-          timeLimitMinutes: 5
-        });
-      });
-
-      await waitFor(() => {
-        expect(mockSetSettings).not.toHaveBeenCalled();
-      });
+      await expect(
+        result.current.handleUpdateNotifications(notifications)
+      ).resolves.toBeUndefined();
+      expect(settingsItem.setValue).not.toHaveBeenCalled();
     });
   });
 });

@@ -30,16 +30,21 @@ vi.mock('~/contexts/SettingsContext', async () => {
     ),
     useSettings: () => ({
       settings,
-      setSettings: vi.fn(),
-      vision: undefined,
-      setVision: vi.fn()
+      vision: undefined
     })
   };
 });
 
-vi.mock('~/lib/storage', () => ({
-  settingsItem: { key: 'local:settings' }
+const storage = vi.hoisted(() => ({
+  settingsItem: { key: 'local:settings', setValue: vi.fn() }
 }));
+
+const messaging = vi.hoisted(() => ({
+  sendMessage: vi.fn()
+}));
+
+vi.mock('~/lib/storage', () => storage);
+vi.mock('~/lib/messaging', () => messaging);
 
 vi.mock('~/hooks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/hooks')>();
@@ -88,6 +93,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   popupActions.handlePausedChange.mockResolvedValue(null);
   popupActions.isPasswordProtected = false;
+  messaging.sendMessage.mockResolvedValue({ success: true });
 });
 
 describe('今日のサマリー', () => {
@@ -207,5 +213,38 @@ describe('一時停止', () => {
       expect(screen.getByText('passwordIncorrect')).toBeInTheDocument();
       expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
     });
+  });
+});
+
+describe('利用状況の送信への同意', () => {
+  it.each([
+    ['analytics-optin-allow', true],
+    ['analytics-optin-deny', false]
+  ])(
+    '%s を押すと同意の保存を background に依頼し、保存領域に書かない',
+    async (testId, enabled) => {
+      renderPopup({}, []);
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId(testId));
+      });
+
+      expect(messaging.sendMessage).toHaveBeenCalledWith(
+        'update-analytics-opt-in',
+        { enabled }
+      );
+      expect(storage.settingsItem.setValue).not.toHaveBeenCalled();
+    }
+  );
+
+  it('依頼を送れなくても例外にならない', async () => {
+    messaging.sendMessage.mockRejectedValue(new Error('disconnected'));
+    renderPopup({}, []);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('analytics-optin-allow'));
+    });
+
+    expect(storage.settingsItem.setValue).not.toHaveBeenCalled();
   });
 });

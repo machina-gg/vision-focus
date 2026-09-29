@@ -737,8 +737,7 @@ Esc で編集を取り消す。
 | ---------------------- | ----------------------------------------------------- | ------ | ------------------------------------------ |
 | onUnblockConfirmUpdate | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 解除の確認（長押しの秒数）の設定を保存する |
 | onUpdateNotifications  | `(notifications: NotificationSettings) => void`       | 必須   | 通知の設定を保存する                       |
-| onAnalyticsOptInChange | `(optIn: AnalyticsOptIn) => Promise<void>`            | 必須   | 利用統計の共有の選択を保存する             |
-| onSettingsChange       | `() => void`                                          | 必須   | バックアップから読み込んだあとに呼ぶ       |
+| onAnalyticsOptInChange | `(enabled: boolean) => Promise<void>`                 | 必須   | 利用統計を共有するかの選択を保存する       |
 
 ---
 
@@ -770,20 +769,16 @@ Esc で編集を取り消す。
 
 `src/components/options/SettingsDataPrivacy.tsx`
 
-| Prop                   | 型                                         | 省略時 | 説明                                                 |
-| ---------------------- | ------------------------------------------ | ------ | ---------------------------------------------------- |
-| settings               | `AppSettings`                              | -      | 現在の設定（undefined の間は共有しない側で表示する） |
-| onAnalyticsOptInChange | `(optIn: AnalyticsOptIn) => Promise<void>` | 必須   | 共有の切り替えを、選んだ状態とその日時として保存する |
+| Prop                   | 型                                    | 省略時 | 説明                                                       |
+| ---------------------- | ------------------------------------- | ------ | ---------------------------------------------------------- |
+| settings               | `AppSettings`                         | -      | 現在の設定（undefined の間は共有しない側で表示する）       |
+| onAnalyticsOptInChange | `(enabled: boolean) => Promise<void>` | 必須   | 共有の切り替えを保存する（選んだ日時は保存する側が付ける） |
 
 ---
 
 ### SettingsBackup
 
-`src/components/options/SettingsBackup.tsx`。読み込んだ設定の保存は background に任せる。
-
-| Prop             | 型           | 省略時 | 説明                               |
-| ---------------- | ------------ | ------ | ---------------------------------- |
-| onSettingsChange | `() => void` | -      | 読み込みが保存まで済んだあとに呼ぶ |
+`src/components/options/SettingsBackup.tsx`。Props は無い。読み込んだ設定の保存は background に任せ、画面は結果と警告だけを出す（読み込んだ設定の表示は保存値の購読が追従する）。
 
 ---
 
@@ -1084,7 +1079,7 @@ Esc で編集を取り消す。
 
 ### PopupApp
 
-`src/entrypoints/popup/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。
+`src/entrypoints/popup/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。利用状況の送信への同意は保存領域に書かず `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、ダイアログは保存値に従って出たまま）。
 
 ---
 
@@ -1096,7 +1091,7 @@ Esc で編集を取り消す。
 
 ### OptionsApp
 
-`src/entrypoints/options/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。
+`src/entrypoints/options/App.tsx`。Props は無い。`SettingsProvider` で包んで描画する。長押しの秒数と利用状況の送信への同意は保存領域に書かず `update-unblock-confirm` / `update-analytics-opt-in` で background に依頼する（失敗しても文言は出さず、各欄は保存値を出し続ける）。
 
 ---
 
@@ -1129,10 +1124,7 @@ function useStorageItem<T, M extends Record<string, unknown>>(
 `src/hooks/useBlocklist.ts`。設定画面のブロックリストタブの操作と、追加欄の入力状態。
 
 ```typescript
-function useBlocklist(options: {
-  settings: AppSettings | undefined;
-  setSettings: (settings: AppSettings) => void;
-}): {
+function useBlocklist(): {
   newDomain: string;
   setNewDomain: (value: string) => void;
   blockError: string;
@@ -1154,7 +1146,7 @@ function useBlocklist(options: {
 ```
 
 - 追加・削除・有効切り替え・時間制限の変更は background へメッセージ（`add-block` / `remove-block` / `toggle-block` / `update-time-limit`）で依頼する。入力のサイトキーへの変換と検証（形式・重複・入れ子）は background 側（`add-block` のハンドラと `src/lib/siteService.ts`）が行い、このフックは拒否の理由を文言にして `blockError` に入れる
-- 通知設定だけは `settings` へ直接保存する
+- 通知設定は `update-notifications` で依頼する。失敗しても文言は出さず、表示は保存値のまま
 - 解除の確認（パスワード・長押し）はこのフックでは行わない（[BlocklistTab](#blocklisttab) を参照）。削除・無効化は確認で入力されたパスワードを添えて送り、失敗の文言（成功なら null）を返す
 
 ---

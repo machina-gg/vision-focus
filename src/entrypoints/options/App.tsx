@@ -33,15 +33,16 @@ import {
   useYouTubeSettings
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
-import { getSettings, getVision, settingsItem, sitesItem } from '~/lib/storage';
+import { sendMessage } from '~/lib/messaging';
+import { sitesItem } from '~/lib/storage';
 import { TABS, getTabFromHash, isValidTab, type TabName } from '~/constants';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
-import type { AnalyticsOptIn, UnblockConfirmSettings } from '~/types/storage';
+import type { UnblockConfirmSettings } from '~/types/storage';
 
 import '~/styles/globals.css';
 
 function OptionsAppContent() {
-  const { settings, setSettings, vision, setVision } = useSettings();
+  const { settings, vision } = useSettings();
 
   const [activeTab, setActiveTab] = useState<TabName>(() =>
     getTabFromHash(window.location.hash)
@@ -52,7 +53,7 @@ function OptionsAppContent() {
   }, [activeTab]);
 
   const analytics = useAnalytics();
-  const blocklist = useBlocklist({ settings, setSettings });
+  const blocklist = useBlocklist();
   const schedules = useSchedules({ settings });
   const { handleYouTubeChange } = useYouTubeSettings();
   const supportPrompt = useSupportPrompt();
@@ -62,17 +63,15 @@ function OptionsAppContent() {
   const handleUnblockConfirmUpdate = async (
     unblockConfirm: UnblockConfirmSettings
   ) => {
-    if (!settings) return;
-    const updated = { ...settings, unblockConfirm };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
+    await sendMessage('update-unblock-confirm', { unblockConfirm }).catch(
+      () => undefined
+    );
   };
 
-  const handleAnalyticsOptIn = async (optIn: AnalyticsOptIn) => {
-    if (!settings) return;
-    const updated = { ...settings, analyticsOptIn: optIn };
-    await settingsItem.setValue(updated);
-    setSettings(updated);
+  const handleAnalyticsOptIn = async (enabled: boolean) => {
+    await sendMessage('update-analytics-opt-in', { enabled }).catch(
+      () => undefined
+    );
   };
 
   const tabs: Array<{ id: TabName; label: string; icon: React.ReactNode }> = [
@@ -190,14 +189,6 @@ function OptionsAppContent() {
             onUnblockConfirmUpdate={handleUnblockConfirmUpdate}
             onUpdateNotifications={blocklist.handleUpdateNotifications}
             onAnalyticsOptInChange={handleAnalyticsOptIn}
-            onSettingsChange={async () => {
-              const [newSettings, newVision] = await Promise.all([
-                getSettings(),
-                getVision()
-              ]);
-              setSettings(newSettings);
-              setVision(newVision);
-            }}
           />
         )}
 
@@ -215,18 +206,8 @@ function OptionsAppContent() {
         error={schedules.scheduleError}
       />
       <AnalyticsOptInModal
-        onAllow={() =>
-          handleAnalyticsOptIn({
-            enabled: true,
-            decidedAt: new Date().toISOString()
-          })
-        }
-        onDeny={() =>
-          handleAnalyticsOptIn({
-            enabled: false,
-            decidedAt: new Date().toISOString()
-          })
-        }
+        onAllow={() => handleAnalyticsOptIn(true)}
+        onDeny={() => handleAnalyticsOptIn(false)}
       />
     </div>
   );

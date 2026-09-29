@@ -3,14 +3,14 @@ import { BarChart3 } from 'lucide-react';
 
 import { Card, Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import type { AnalyticsOptIn, AppSettings } from '~/types/storage';
+import type { AppSettings } from '~/types/storage';
 
 /** SettingsDataPrivacy に渡す現在の設定と変更の保存先 */
 interface SettingsDataPrivacyProps {
   /** 現在の設定（読み込み前の undefined の間は共有しない側で表示する） */
   settings?: AppSettings;
-  /** 利用統計の共有を切り替えたときに、選んだ状態とその日時を保存する */
-  onAnalyticsOptInChange: (optIn: AnalyticsOptIn) => Promise<void>;
+  /** 利用統計の共有を切り替えたときに、選んだ状態を保存する（選んだ日時は保存する側が付ける） */
+  onAnalyticsOptInChange: (enabled: boolean) => Promise<void>;
 }
 
 /**
@@ -51,12 +51,7 @@ export function SettingsDataPrivacy({
           <Toggle
             data-testid="analytics-optin-toggle"
             checked={settings?.analyticsOptIn?.enabled === true}
-            onChange={(checked) =>
-              onAnalyticsOptInChange({
-                enabled: checked,
-                decidedAt: new Date().toISOString()
-              })
-            }
+            onChange={onAnalyticsOptInChange}
             size="sm"
           />
         </div>
