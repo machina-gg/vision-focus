@@ -56,7 +56,7 @@ export interface FontDefinition {
   family: FontFamily;
   /** 画面に出す表示名 */
   name: string;
-  /** CSS の font-family に渡す値（先頭の名前は src/styles/globals.css で読む Fontsource の @font-face の font-family と一致させる） */
+  /** CSS の font-family に渡す値（先頭の名前は src/styles/fonts.css で読む Fontsource の @font-face の font-family と一致させる） */
   css: string;
 }
 

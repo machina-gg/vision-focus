@@ -42,6 +42,7 @@ import {
 } from '~/lib/storage';
 
 import '~/styles/globals.css';
+import '~/styles/fonts.css';
 
 /**
  * 新しいタブの画面（目標と今日の記録を出し、ブロックで移ってきたときはブロックしたサイトの情報も出す）

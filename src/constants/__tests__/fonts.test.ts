@@ -10,16 +10,16 @@ import { FONT_CATEGORIES } from '~/types/font';
 // vitest はリポジトリのルートで走る。jsdom 環境では import.meta.url が file: にならないので cwd を起点にする
 const require = createRequire(path.resolve(process.cwd(), 'package.json'));
 
-const globalsCss = readFileSync(
-  path.resolve(process.cwd(), 'src/styles/globals.css'),
+const fontsCss = readFileSync(
+  path.resolve(process.cwd(), 'src/styles/fonts.css'),
   'utf8'
 );
 
-const importedSpecifiers = [...globalsCss.matchAll(/@import '([^']+)';/g)]
+const importedSpecifiers = [...fontsCss.matchAll(/@import '([^']+)';/g)]
   .map((match) => match[1])
   .filter((specifier): specifier is string => specifier !== undefined);
 
-/** globals.css が読む Fontsource の CSS が宣言する「font-family 名 → 太さ」の一覧 */
+/** fonts.css が読む Fontsource の CSS が宣言する「font-family 名 → 太さ」の一覧 */
 const declaredFaces = new Map<string, Set<number>>();
 for (const specifier of importedSpecifiers) {
   const css = readFileSync(require.resolve(specifier), 'utf8');
@@ -40,7 +40,7 @@ const bundledFonts = Object.values(FONT_CATEGORIES)
 const firstFamilyName = (css: string) => /^'([^']+)'/.exec(css)?.[1];
 
 describe('同梱フォント', () => {
-  it('globals.css が Fontsource の CSS を読んでいる', () => {
+  it('fonts.css が Fontsource の CSS を読んでいる', () => {
     expect(importedSpecifiers.length).toBeGreaterThan(0);
     expect(importedSpecifiers.every((s) => s.startsWith('@fontsource/'))).toBe(
       true

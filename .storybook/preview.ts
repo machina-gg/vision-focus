@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/react-vite';
 
 import '../src/styles/globals.css';
+import '../src/styles/fonts.css';
 import enMessages from '../public/_locales/en/messages.json';
 
 // chrome.i18n のスタブ。`src/` 配下から messages.json を import しない（拡張機能の出力に辞書が二重に入る）

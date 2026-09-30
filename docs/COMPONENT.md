@@ -438,7 +438,7 @@ Esc で編集を取り消す。
 フォントの種類はプルダウン 1 つで選ぶ。分類（`FONT_CATEGORIES`）を選択肢のグループの見出しにし、分類順・分類内の順で並べる。
 大きさ（Small / Medium / Large）と太さ（Normal / Bold）はボタンで選ぶ。
 プレビューの px と font-weight は `src/constants/fonts.ts` の表を使い、ダッシュボードと同じ大きさで描く。
-フォントは拡張に同梱し、実行時に外部から読み込まない（`@font-face` の宣言は `src/styles/globals.css` が読む `@fontsource/*` が持ち、使われた書体・太さのファイルだけをブラウザが読む）。書体名・著作権表示・ライセンスは `public/FONT_LICENSES.txt`。
+フォントは拡張に同梱し、実行時に外部から読み込まない（`@font-face` の宣言は `src/styles/fonts.css` が読む `@fontsource/*` が持ち（newtab と options が読み、popup は読まない）、使われた書体・太さのファイルだけをブラウザが読む）。書体名・著作権表示・ライセンスは `public/FONT_LICENSES.txt`。
 
 ---
 
