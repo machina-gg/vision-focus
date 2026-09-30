@@ -1,24 +1,22 @@
-/** 文字サイズの選択肢（sm / md / lg / xl）ごとの大きさ（px） */
-export const FONT_SIZE_PX: Record<string, number> = {
+import type { FontSize, FontWeight } from '~/types/font';
+
+/** 文字サイズの段階ごとの大きさ（px）。ダッシュボードとプレビューのどちらもこの値で描く */
+export const FONT_SIZE_PX: Record<FontSize, number> = {
   /** 小（px） */
-  sm: 24,
+  sm: 30,
   /** 中（px） */
-  md: 30,
+  md: 36,
   /** 大（px） */
-  lg: 36,
-  /** 特大（px） */
-  xl: 48
+  lg: 48
 };
 
-/** 文字の太さの選択肢（normal / medium / semibold / bold）ごとの font-weight の値 */
-export const FONT_WEIGHT_VALUE: Record<string, number> = {
+/** 文字の太さの段階ごとの font-weight の値 */
+export const FONT_WEIGHT_VALUE: Record<FontWeight, number> = {
   /** 標準 */
   normal: 400,
   /** やや太い */
   medium: 500,
   /** 太い */
-  semibold: 600,
-  /** 最も太い */
   bold: 700
 };
 
@@ -30,9 +28,13 @@ export function loadGoogleFont(fontName: string): void {
   const linkId = `google-font-${fontName.replace(/\+/g, '-')}`;
   if (document.getElementById(linkId)) return;
 
+  // Google Fonts の css2 API は wght の値が数値順に並んでいないと受け付けない
+  const weights = Object.values(FONT_WEIGHT_VALUE)
+    .sort((a, b) => a - b)
+    .join(';');
   const link = document.createElement('link');
   link.id = linkId;
   link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@${weights}&display=swap`;
   document.head.appendChild(link);
 }

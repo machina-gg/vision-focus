@@ -16,7 +16,7 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     await clearStorageFromExtension(context, extensionId);
   });
 
-  test('PR-002: Google Fonts を選択できる', async ({
+  test('PR-002: Google Fonts をプルダウンから選択できる', async ({
     context,
     extensionId
   }) => {
@@ -26,12 +26,10 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
 
     const optionsPage = await openOptions(context, extensionId, 'styles');
 
-    await expect(
-      optionsPage.locator('[data-testid="font-category-button"]').first()
-    ).toBeVisible();
-    await expect(
-      optionsPage.locator('[data-testid="font-family-button"]').first()
-    ).toBeEnabled();
+    const familySelect = optionsPage.locator(SELECTORS.styles.fontFamilySelect);
+    await expect(familySelect).toBeEnabled();
+    await familySelect.selectOption({ label: 'Playfair Display' });
+    await expect(familySelect).toHaveValue('playfair');
 
     await optionsPage.close();
   });

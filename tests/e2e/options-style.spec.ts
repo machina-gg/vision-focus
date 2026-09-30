@@ -283,13 +283,26 @@ test.describe('Options - Style Tab', () => {
     );
     await expect(fontSection).toBeVisible();
 
-    const fontSelects = page.locator(SELECTORS.styles.fontFamilySelect);
-    await expect(fontSelects.first()).toBeVisible();
+    const familySelect = page.locator(SELECTORS.styles.fontFamilySelect);
+    await familySelect.selectOption('lora');
+    await expect(familySelect).toHaveValue('lora');
+
+    const sizeSmall = page
+      .locator(SELECTORS.styles.fontSizeButton)
+      .filter({ hasText: UI_TEXT.font.sizeSmall });
+    await sizeSmall.click();
+    await expect(sizeSmall).toHaveAttribute('aria-pressed', 'true');
+
+    const weightNormal = page
+      .locator(SELECTORS.styles.fontWeightButton)
+      .filter({ hasText: UI_TEXT.font.weightNormal });
+    await weightNormal.click();
+    await expect(weightNormal).toHaveAttribute('aria-pressed', 'true');
 
     await page.close();
   });
 
-  test('OPT-ST12: Google Fonts を選択できる', async ({
+  test('OPT-ST12: Google Fonts をプルダウンから選択できる', async ({
     context,
     extensionId
   }) => {
@@ -307,16 +320,15 @@ test.describe('Options - Style Tab', () => {
       .filter({ hasText: 'Default' });
     await presetButton.click();
 
-    const categoryButtons = page.locator(SELECTORS.styles.fontCategoryButton);
-    await expect(categoryButtons.first()).toBeVisible();
+    const familySelect = page.locator(SELECTORS.styles.fontFamilySelect);
+    await familySelect.selectOption({ label: 'Noto Sans JP' });
+    await expect(familySelect).toHaveValue('notosansjp');
 
-    // count() は自動リトライしないため poll で待つ
-    await expect.poll(() => categoryButtons.count()).toBeGreaterThan(1);
-
-    await categoryButtons.nth(1).click();
-    const familyButtons = page.locator(SELECTORS.styles.fontFamilySelect);
-    await expect(familyButtons.first()).toBeVisible();
-    await expect.poll(() => familyButtons.count()).toBeGreaterThan(1);
+    // 選んだフォントだけを読み込み、一覧にある他の Google Fonts は読まない
+    await expect(
+      page.locator('link[id="google-font-Noto-Sans-JP"]')
+    ).toHaveCount(1);
+    await expect(page.locator('link[id="google-font-Lora"]')).toHaveCount(0);
 
     await page.close();
   });
@@ -364,15 +376,20 @@ test.describe('Options - Style Tab', () => {
     const previewText = preview.locator('p').first();
     const sizeButtons = page.locator(SELECTORS.styles.fontSizeButton);
 
-    await expect(previewText).toHaveCSS('font-size', '36px');
+    await expect(previewText).toHaveCSS('font-size', '48px');
 
     await sizeButtons.filter({ hasText: UI_TEXT.font.sizeSmall }).click();
-    await expect(previewText).toHaveCSS('font-size', '24px');
+    await expect(previewText).toHaveCSS('font-size', '30px');
 
     await sizeButtons
       .filter({ hasText: new RegExp(`^${UI_TEXT.font.sizeLarge}$`) })
       .click();
-    await expect(previewText).toHaveCSS('font-size', '36px');
+    await expect(previewText).toHaveCSS('font-size', '48px');
+
+    await page
+      .locator(SELECTORS.styles.fontFamilySelect)
+      .selectOption({ label: 'Lora' });
+    await expect(previewText).toHaveCSS('font-family', /Lora/);
 
     await page.close();
   });

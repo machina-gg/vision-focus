@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  FontSettingsSchema,
   ImportSettingsBodySchema,
   ScheduleInputSchema,
   ScheduleSchema,
@@ -29,6 +30,27 @@ describe('YouTubeFeaturesSchema', () => {
 
     expect(parsed.hideRecommendations).toBe(true);
     expect(parsed).not.toHaveProperty('removedSettingKey');
+  });
+});
+
+describe('FontSettingsSchema', () => {
+  it('選択肢にある大きさと太さを受け付ける', () => {
+    expect(
+      FontSettingsSchema.safeParse({
+        family: 'inter',
+        size: 'lg',
+        weight: 'medium'
+      }).success
+    ).toBe(true);
+  });
+
+  it.each([
+    ['選択肢に無い大きさ', { size: 'xl', weight: 'bold' }],
+    ['選択肢に無い太さ', { size: 'md', weight: 'semibold' }]
+  ])('%sは受け付けない', (_label, overrides) => {
+    expect(
+      FontSettingsSchema.safeParse({ family: 'system', ...overrides }).success
+    ).toBe(false);
   });
 });
 

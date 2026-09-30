@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 
-import { Type } from 'lucide-react';
+import { ChevronDown, Type } from 'lucide-react';
 
 import {
   type FontSettings,
   type FontSize,
   type FontWeight,
-  type FontCategory,
   FONT_CATEGORIES,
-  getFontDefinition,
-  getFontCategory
+  FONT_FAMILIES,
+  FONT_SIZES,
+  FONT_WEIGHTS,
+  getFontDefinition
 } from '~/types/font';
+import {
+  FONT_SIZE_PX,
+  FONT_WEIGHT_VALUE,
+  loadGoogleFont
+} from '~/constants/fonts';
 import { getMessage } from '~/lib/i18n';
 
 /** FontPicker に渡す現在のフォント設定と変更の受け取り先 */
@@ -25,56 +31,20 @@ export interface FontPickerProps {
   previewText?: string;
 }
 
-const FONT_SIZES: { value: FontSize; label: string }[] = [
-  { value: 'sm', label: 'Small' },
-  { value: 'md', label: 'Medium' },
-  { value: 'lg', label: 'Large' },
-  { value: 'xl', label: 'Extra Large' }
-];
-
-const FONT_WEIGHTS: { value: FontWeight; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'semibold', label: 'Semibold' },
-  { value: 'bold', label: 'Bold' }
-];
-
-const FONT_SIZE_PX: Record<FontSize, number> = {
-  sm: 24,
-  md: 30,
-  lg: 36,
-  xl: 48
+const FONT_SIZE_LABELS: Record<FontSize, string> = {
+  sm: 'Small',
+  md: 'Medium',
+  lg: 'Large'
 };
 
-const FONT_WEIGHT_VALUE: Record<FontWeight, number> = {
-  normal: 400,
-  medium: 500,
-  semibold: 600,
-  bold: 700
+const FONT_WEIGHT_LABELS: Record<FontWeight, string> = {
+  normal: 'Normal',
+  medium: 'Medium',
+  bold: 'Bold'
 };
-
-const CATEGORY_ORDER: FontCategory[] = [
-  'system',
-  'modern',
-  'elegant',
-  'impact',
-  'handwriting',
-  'japanese'
-];
-
-function loadGoogleFont(fontName: string) {
-  const linkId = `google-font-${fontName.replace(/\+/g, '-')}`;
-  if (document.getElementById(linkId)) return;
-
-  const link = document.createElement('link');
-  link.id = linkId;
-  link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
-  document.head.appendChild(link);
-}
 
 /**
- * フォントのカテゴリ・種類・大きさ・太さを選ぶ欄とプレビューを表示する（カテゴリを変えるとその先頭のフォントを選ぶ）
+ * フォントの種類（分類の見出し付きのプルダウン）・大きさ・太さを選ぶ欄とプレビューを表示する
  * @param props 現在の設定と変更の受け取り先（各フィールドは FontPickerProps）
  * @returns プレビューと各選択欄をまとめた要素
  */
@@ -84,39 +54,25 @@ export function FontPicker({
   disabled = false,
   previewText = 'Focus on your goals'
 }: FontPickerProps) {
-  const [selectedCategory, setSelectedCategory] = useState<FontCategory>(() =>
-    getFontCategory(value.family)
-  );
+  const familySelectId = useId();
+  const currentFontDef = getFontDefinition(value.family);
 
   useEffect(() => {
-    const fontDef = getFontDefinition(value.family);
-    if (fontDef.googleFont) {
-      loadGoogleFont(fontDef.googleFont);
+    if (currentFontDef.googleFont) {
+      loadGoogleFont(currentFontDef.googleFont);
     }
-  }, [value.family]);
-
-  useEffect(() => {
-    const category = FONT_CATEGORIES[selectedCategory];
-    category.fonts.forEach((font) => {
-      if (font.googleFont) {
-        loadGoogleFont(font.googleFont);
-      }
-    });
-  }, [selectedCategory]);
+  }, [currentFontDef.googleFont]);
 
   const handleChange = (updates: Partial<FontSettings>) => {
     onChange({ ...value, ...updates });
   };
 
-  const handleCategoryChange = (category: FontCategory) => {
-    setSelectedCategory(category);
-    const firstFont = FONT_CATEGORIES[category].fonts[0];
-    if (firstFont) {
-      handleChange({ family: firstFont.family });
+  const handleFamilyChange = (selected: string) => {
+    const family = FONT_FAMILIES.find((f) => f === selected);
+    if (family) {
+      handleChange({ family });
     }
   };
-
-  const currentFontDef = getFontDefinition(value.family);
 
   const previewStyle: React.CSSProperties = {
     fontFamily: currentFontDef.css,
@@ -135,61 +91,35 @@ export function FontPicker({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={familySelectId}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           <Type className="w-4 h-4 inline-block mr-1" />
-          {getMessage('fontCategory')}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_ORDER.map((categoryKey) => {
-            const category = FONT_CATEGORIES[categoryKey];
-            return (
-              <button
-                key={categoryKey}
-                data-testid="font-category-button"
-                aria-pressed={selectedCategory === categoryKey}
-                disabled={disabled}
-                onClick={() => handleCategoryChange(categoryKey)}
-                className={`
-                  px-3 py-1.5 text-sm rounded-lg border transition-colors
-                  ${
-                    selectedCategory === categoryKey
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                  }
-                `}
-              >
-                {category.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
           {getMessage('fontFamily')}
         </label>
-        <div className="grid grid-cols-2 gap-2">
-          {FONT_CATEGORIES[selectedCategory].fonts.map((font) => (
-            <button
-              key={font.family}
-              data-testid="font-family-button"
-              aria-pressed={value.family === font.family}
-              disabled={disabled}
-              onClick={() => handleChange({ family: font.family })}
-              className={`
-                px-3 py-2 text-sm rounded-lg border transition-colors text-left
-                ${
-                  value.family === font.family
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                }
-              `}
-              style={{ fontFamily: font.css }}
-            >
-              {font.name}
-            </button>
-          ))}
+        <div className="relative">
+          <select
+            id={familySelectId}
+            data-testid="font-family-select"
+            value={value.family}
+            disabled={disabled}
+            onChange={(e) => handleFamilyChange(e.target.value)}
+            className="w-full appearance-none px-3 py-2 pr-8 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {Object.entries(FONT_CATEGORIES).map(([categoryKey, category]) => (
+              <optgroup key={categoryKey} label={category.name}>
+                {category.fonts.map((font) => (
+                  <option key={font.family} value={font.family}>
+                    {font.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </div>
         </div>
       </div>
 
@@ -200,21 +130,21 @@ export function FontPicker({
         <div className="flex gap-2">
           {FONT_SIZES.map((size) => (
             <button
-              key={size.value}
+              key={size}
               data-testid="font-size-button"
-              aria-pressed={value.size === size.value}
+              aria-pressed={value.size === size}
               disabled={disabled}
-              onClick={() => handleChange({ size: size.value })}
+              onClick={() => handleChange({ size })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
                 ${
-                  value.size === size.value
+                  value.size === size
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
                     : 'border-gray-200 hover:border-gray-300 text-gray-700'
                 }
               `}
             >
-              {size.label}
+              {FONT_SIZE_LABELS[size]}
             </button>
           ))}
         </div>
@@ -227,22 +157,22 @@ export function FontPicker({
         <div className="flex gap-2">
           {FONT_WEIGHTS.map((weight) => (
             <button
-              key={weight.value}
+              key={weight}
               data-testid="font-weight-button"
-              aria-pressed={value.weight === weight.value}
+              aria-pressed={value.weight === weight}
               disabled={disabled}
-              onClick={() => handleChange({ weight: weight.value })}
+              onClick={() => handleChange({ weight })}
               className={`
                 flex-1 px-3 py-2 text-sm rounded-lg border transition-colors
                 ${
-                  value.weight === weight.value
+                  value.weight === weight
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
                     : 'border-gray-200 hover:border-gray-300 text-gray-700'
                 }
               `}
-              style={{ fontWeight: FONT_WEIGHT_VALUE[weight.value] }}
+              style={{ fontWeight: FONT_WEIGHT_VALUE[weight] }}
             >
-              {weight.label}
+              {FONT_WEIGHT_LABELS[weight]}
             </button>
           ))}
         </div>

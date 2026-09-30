@@ -460,7 +460,7 @@
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST09: デフォルト背景画像を選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST10: カスタム画像をアップロードできる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST11: フォント設定（ファミリー・サイズ・ウェイト）を変更可能
-- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: Google Fonts を選択できる
+- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: Google Fonts をプルダウンから選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST13: 背景画像変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST14: フォント変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST15: 色変更時にリアルタイムプレビューされる
