@@ -300,7 +300,8 @@ export const UI_TEXT = {
   font: {
     sizeSmall: 'Small',
     sizeLarge: 'Large',
-    weightNormal: 'Normal'
+    weightNormal: 'Normal',
+    weightBold: 'Bold'
   }
 };
 

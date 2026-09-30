@@ -1,11 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import {
-  getBackgroundUrl,
-  loadGoogleFont,
-  FONT_SIZE_PX,
-  FONT_WEIGHT_VALUE
-} from '~/constants';
+import { getBackgroundUrl, FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
 import { hasStoredVision } from '~/lib/storage';
 import type { DashboardDisplaySettings } from '~/types/storage';
@@ -36,7 +31,7 @@ interface UseBackgroundPreloadReturn {
 }
 
 /**
- * ダッシュボードの背景画像とフォントを先読みし、表示してよいかの状態と適用するスタイルを返す
+ * ダッシュボードの背景画像を先読みし、表示してよいかの状態と適用するスタイル（背景と目標文のフォント）を返す
  * @param options フックの入力（下記の項目）
  * @param options.displaySettings 今表示する表示設定
  * @param options.customBackgroundData 今表示するスタイルの画像の data URL。null = 画像なし / undefined = 読み込み中
@@ -97,12 +92,6 @@ export function useBackgroundPreload({
 
   const fontSettings = displaySettings.fontSettings;
   const fontDef = getFontDefinition(fontSettings.family);
-
-  useEffect(() => {
-    if (fontDef.googleFont) {
-      loadGoogleFont(fontDef.googleFont);
-    }
-  }, [fontDef.googleFont]);
 
   const fontStyle = useMemo(
     () => ({

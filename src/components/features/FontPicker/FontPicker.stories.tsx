@@ -75,7 +75,7 @@ export const ModernFont: Story = {
       value={{
         family: 'inter',
         size: 'lg',
-        weight: 'medium'
+        weight: 'normal'
       }}
     />
   )

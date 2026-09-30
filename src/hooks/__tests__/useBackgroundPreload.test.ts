@@ -11,15 +11,15 @@ vi.mock('~/constants', async (importOriginal) => {
     ...actual,
     getBackgroundUrl: vi.fn(
       (id: string) => `chrome-extension://test/${id}.webp`
-    ),
-    loadGoogleFont: vi.fn()
+    )
   };
 });
 
 import { hasStoredVision } from '~/lib/storage';
-import { getBackgroundUrl, loadGoogleFont } from '~/constants';
+import { getBackgroundUrl } from '~/constants';
 import { useBackgroundPreload } from '~/hooks/useBackgroundPreload';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
+import { getFontDefinition } from '~/types/font';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
 import { itemAt } from '~/test/items';
 import type { DashboardDisplaySettings } from '~/types/storage';
@@ -296,17 +296,20 @@ describe('useBackgroundPreload', () => {
       expect(result.current.fontStyle.fontSize).toBe('30px');
     });
 
-    it('システムフォントでは Google Fonts を読み込まない', () => {
-      renderHook(() =>
+    it('選んだフォントの font-family と太さの値を返す', () => {
+      const { result } = renderHook(() =>
         useBackgroundPreload({
           customBackgroundData: null,
           displaySettings: settings({
-            fontSettings: { family: 'system', size: 'md', weight: 'bold' }
+            fontSettings: { family: 'notosansjp', size: 'md', weight: 'normal' }
           })
         })
       );
 
-      expect(loadGoogleFont).not.toHaveBeenCalled();
+      expect(result.current.fontStyle).toMatchObject({
+        fontFamily: getFontDefinition('notosansjp').css,
+        fontWeight: 400
+      });
     });
   });
 });

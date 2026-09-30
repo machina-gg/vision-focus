@@ -340,9 +340,9 @@
 
 ### 手動確認項目（全て）
 
-- [ ] Google Fonts 選択・カスタム背景アップロードが使える
+- [ ] フォント選択・カスタム背景アップロードが使える
   - 手順: Options > Styles タブを開く
-  - 期待: Google Fonts 選択・カスタム背景アップロードが使用可能
+  - 期待: フォント選択・カスタム背景アップロードが使用可能
 
 - [ ] スタイルを上限（10件）まで作成できる
   - 手順: スタイルを10件作成し、さらに追加を試みる
@@ -460,7 +460,7 @@
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST09: デフォルト背景画像を選択できる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST10: カスタム画像をアップロードできる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST11: フォント設定（ファミリー・サイズ・ウェイト）を変更可能
-- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: Google Fonts をプルダウンから選択できる
+- 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST12: 同梱フォントをプルダウンから選択でき、外部から読み込まない
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST13: 背景画像変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST14: フォント変更時にリアルタイムプレビューされる
 - 📎 E2E 参照: `tests/e2e/options-style.spec.ts` — OPT-ST15: 色変更時にリアルタイムプレビューされる
@@ -487,9 +487,9 @@
   - 手順: PNG, JPG, WebP, GIF をそれぞれアップロード
   - 期待: PNG/JPG は正常に表示、WebP/GIF はエラーまたは警告
 
-- [ ] Google Fonts の読み込み速度
-  - 手順: Google Fonts を選択 → newtab.html を開く
-  - 期待: フォントの読み込みで3秒以上遅延しない
+- [ ] フォントの読み込みで外部へ通信しない
+  - 手順: 日本語フォント（Noto Sans JP）を選択 → DevTools の Network を開いた状態で newtab.html を開く
+  - 期待: fonts.googleapis.com / fonts.gstatic.com へのリクエストが無く、目標文がそのフォントで表示される
 
 - [ ] プリセットの複製機能（あれば）
   - 手順: 既存プリセットを複製

@@ -18,7 +18,6 @@ export const FONT_FAMILIES = [
   'dancingscript',
   'caveat',
   'notosansjp',
-  'notoserifjp',
   'mplusrounded'
 ] as const;
 
@@ -36,7 +35,7 @@ export const FONT_SIZES = ['sm', 'md', 'lg'] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 
 /** 目標文の文字の太さの段階（選択肢に出す順。normal が最も細く、bold が最も太い） */
-export const FONT_WEIGHTS = ['normal', 'medium', 'bold'] as const;
+export const FONT_WEIGHTS = ['normal', 'bold'] as const;
 
 /** 目標文の文字の太さの段階 */
 export type FontWeight = (typeof FONT_WEIGHTS)[number];
@@ -51,16 +50,14 @@ export interface FontSettings {
   weight: FontWeight;
 }
 
-/** フォント 1 つぶんの定義（表示名・CSS の値・読み込み先） */
+/** フォント 1 つぶんの定義（表示名・CSS の値） */
 export interface FontDefinition {
   /** このフォントの ID */
   family: FontFamily;
   /** 画面に出す表示名 */
   name: string;
-  /** CSS の font-family に渡す値 */
+  /** CSS の font-family に渡す値（先頭の名前は src/styles/globals.css で読む Fontsource の @font-face の font-family と一致させる） */
   css: string;
-  /** Google Fonts の family 指定（空白は +）。無ければ読み込み不要 */
-  googleFont?: string;
 }
 
 const SYSTEM_FONT: FontDefinition = {
@@ -84,38 +81,32 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'inter',
         name: 'Inter',
-        css: "'Inter', sans-serif",
-        googleFont: 'Inter'
+        css: "'Inter', sans-serif"
       },
       {
         family: 'roboto',
         name: 'Roboto',
-        css: "'Roboto', sans-serif",
-        googleFont: 'Roboto'
+        css: "'Roboto', sans-serif"
       },
       {
         family: 'poppins',
         name: 'Poppins',
-        css: "'Poppins', sans-serif",
-        googleFont: 'Poppins'
+        css: "'Poppins', sans-serif"
       },
       {
         family: 'lato',
         name: 'Lato',
-        css: "'Lato', sans-serif",
-        googleFont: 'Lato'
+        css: "'Lato', sans-serif"
       },
       {
         family: 'opensans',
         name: 'Open Sans',
-        css: "'Open Sans', sans-serif",
-        googleFont: 'Open+Sans'
+        css: "'Open Sans', sans-serif"
       },
       {
         family: 'nunito',
         name: 'Nunito',
-        css: "'Nunito', sans-serif",
-        googleFont: 'Nunito'
+        css: "'Nunito', sans-serif"
       }
     ]
   },
@@ -125,26 +116,22 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'playfair',
         name: 'Playfair Display',
-        css: "'Playfair Display', serif",
-        googleFont: 'Playfair+Display'
+        css: "'Playfair Display', serif"
       },
       {
         family: 'merriweather',
         name: 'Merriweather',
-        css: "'Merriweather', serif",
-        googleFont: 'Merriweather'
+        css: "'Merriweather', serif"
       },
       {
         family: 'lora',
         name: 'Lora',
-        css: "'Lora', serif",
-        googleFont: 'Lora'
+        css: "'Lora', serif"
       },
       {
         family: 'crimsontext',
         name: 'Crimson Text',
-        css: "'Crimson Text', serif",
-        googleFont: 'Crimson+Text'
+        css: "'Crimson Text', serif"
       }
     ]
   },
@@ -154,26 +141,22 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'montserrat',
         name: 'Montserrat',
-        css: "'Montserrat', sans-serif",
-        googleFont: 'Montserrat'
+        css: "'Montserrat', sans-serif"
       },
       {
         family: 'oswald',
         name: 'Oswald',
-        css: "'Oswald', sans-serif",
-        googleFont: 'Oswald'
+        css: "'Oswald', sans-serif"
       },
       {
         family: 'bebasneue',
         name: 'Bebas Neue',
-        css: "'Bebas Neue', sans-serif",
-        googleFont: 'Bebas+Neue'
+        css: "'Bebas Neue', sans-serif"
       },
       {
         family: 'raleway',
         name: 'Raleway',
-        css: "'Raleway', sans-serif",
-        googleFont: 'Raleway'
+        css: "'Raleway', sans-serif"
       }
     ]
   },
@@ -183,14 +166,12 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'dancingscript',
         name: 'Dancing Script',
-        css: "'Dancing Script', cursive",
-        googleFont: 'Dancing+Script'
+        css: "'Dancing Script', cursive"
       },
       {
         family: 'caveat',
         name: 'Caveat',
-        css: "'Caveat', cursive",
-        googleFont: 'Caveat'
+        css: "'Caveat', cursive"
       }
     ]
   },
@@ -200,20 +181,12 @@ export const FONT_CATEGORIES: Record<
       {
         family: 'notosansjp',
         name: 'Noto Sans JP',
-        css: "'Noto Sans JP', sans-serif",
-        googleFont: 'Noto+Sans+JP'
-      },
-      {
-        family: 'notoserifjp',
-        name: 'Noto Serif JP',
-        css: "'Noto Serif JP', serif",
-        googleFont: 'Noto+Serif+JP'
+        css: "'Noto Sans JP', sans-serif"
       },
       {
         family: 'mplusrounded',
         name: 'M PLUS Rounded 1c',
-        css: "'M PLUS Rounded 1c', sans-serif",
-        googleFont: 'M+PLUS+Rounded+1c'
+        css: "'M PLUS Rounded 1c', sans-serif"
       }
     ]
   }

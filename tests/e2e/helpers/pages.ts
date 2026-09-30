@@ -114,3 +114,22 @@ export async function sendExtensionMessage(
     { type, data }
   );
 }
+
+/**
+ * ページで宣言されたフォントを読み込み、読めた @font-face の状態の一覧を返す（宣言が無ければ空、ファイルが読めなければ例外）
+ * @param page 読み込むページ
+ * @param font CSS の font 指定（例: `700 16px 'Noto Sans JP'`）
+ * @param text unicode-range で分かれたフォントのうち、どの文字の分を読むか
+ * @returns 読み込んだ @font-face ごとの status
+ */
+export async function loadFontFaceStatuses(
+  page: Page,
+  font: string,
+  text = 'A'
+): Promise<string[]> {
+  return await page.evaluate(
+    async ({ font, text }) =>
+      (await document.fonts.load(font, text)).map((face) => face.status),
+    { font, text }
+  );
+}

@@ -10,6 +10,7 @@ import {
   getBackgroundImageIds,
   setBackgroundImage,
   openNewTab,
+  loadFontFaceStatuses,
   TINY_JPEG_BASE64,
   TINY_JPEG_DATA_URL,
   SELECTORS,
@@ -293,16 +294,22 @@ test.describe('Options - Style Tab', () => {
     await sizeSmall.click();
     await expect(sizeSmall).toHaveAttribute('aria-pressed', 'true');
 
-    const weightNormal = page
-      .locator(SELECTORS.styles.fontWeightButton)
-      .filter({ hasText: UI_TEXT.font.weightNormal });
+    const weightButtons = page.locator(SELECTORS.styles.fontWeightButton);
+    await expect(weightButtons).toHaveText([
+      UI_TEXT.font.weightNormal,
+      UI_TEXT.font.weightBold
+    ]);
+
+    const weightNormal = weightButtons.filter({
+      hasText: UI_TEXT.font.weightNormal
+    });
     await weightNormal.click();
     await expect(weightNormal).toHaveAttribute('aria-pressed', 'true');
 
     await page.close();
   });
 
-  test('OPT-ST12: Google Fonts をプルダウンから選択できる', async ({
+  test('OPT-ST12: 同梱フォントをプルダウンから選択でき、外部から読み込まない', async ({
     context,
     extensionId
   }) => {
@@ -324,11 +331,20 @@ test.describe('Options - Style Tab', () => {
     await familySelect.selectOption({ label: 'Noto Sans JP' });
     await expect(familySelect).toHaveValue('notosansjp');
 
-    // 選んだフォントだけを読み込み、一覧にある他の Google Fonts は読まない
     await expect(
-      page.locator('link[id="google-font-Noto-Sans-JP"]')
-    ).toHaveCount(1);
-    await expect(page.locator('link[id="google-font-Lora"]')).toHaveCount(0);
+      page.locator(SELECTORS.styles.preview).locator('p').first()
+    ).toHaveCSS('font-family', /Noto Sans JP/);
+    await expect(
+      page.locator('link[rel="stylesheet"][href^="http"]')
+    ).toHaveCount(0);
+    // 拡張に同梱したファイルが読めること（宣言が無ければ空、読めなければ例外になる）
+    const statuses = await loadFontFaceStatuses(
+      page,
+      "700 16px 'Noto Sans JP'",
+      '目標'
+    );
+    expect(statuses.length).toBeGreaterThan(0);
+    expect(statuses.every((status) => status === 'loaded')).toBe(true);
 
     await page.close();
   });
@@ -390,6 +406,12 @@ test.describe('Options - Style Tab', () => {
       .locator(SELECTORS.styles.fontFamilySelect)
       .selectOption({ label: 'Lora' });
     await expect(previewText).toHaveCSS('font-family', /Lora/);
+
+    await page
+      .locator(SELECTORS.styles.fontWeightButton)
+      .filter({ hasText: UI_TEXT.font.weightNormal })
+      .click();
+    await expect(previewText).toHaveCSS('font-weight', '400');
 
     await page.close();
   });

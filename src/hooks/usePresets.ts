@@ -11,7 +11,6 @@ import { trackFeatureUse } from '~/lib/analytics';
 import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
 import { presetToDisplaySettings } from '~/lib/presetUtils';
-import { loadGoogleFont } from '~/constants/fonts';
 import { STATUS_RESET_DELAY_MS } from '~/constants/intervals';
 import type { MessageError } from '~/types/messages';
 import type { PresetImageInput } from '~/types/messageSchemas';
@@ -22,7 +21,6 @@ import type {
   DashboardDisplaySettings
 } from '~/types/storage';
 import type { FontSettings } from '~/types/font';
-import { getFontDefinition } from '~/types/font';
 import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 import { useBackgroundImage } from './useBackgroundImage';
 
@@ -346,13 +344,6 @@ export function usePresets({
       : shownBackground?.presetId === selectedPresetKey
         ? shownBackground.dataUrl
         : undefined;
-
-  const { fontSettings: currentFontSettings } = draftDisplaySettings;
-  useEffect(() => {
-    if (!currentFontSettings) return;
-    const fontDef = getFontDefinition(currentFontSettings.family);
-    if (fontDef.googleFont) loadGoogleFont(fontDef.googleFont);
-  }, [currentFontSettings]);
 
   const displayHandlers = useMemo(() => {
     const edit = (patch: {
