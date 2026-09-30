@@ -88,7 +88,7 @@ pnpm test:e2e
 - **ヘッドレスで動く**。拡張機能は新ヘッドレス（`channel: 'chromium'`）でロードできるため、実行中に画面が出てフォーカスを奪われることはない
 - 描画を見て調べたいときは `pnpm test:e2e:headed`
 - 外部サイトへはアクセスしない。`example.com` / `youtube.com` はローカルの HTTPS サーバで再現している（`tests/e2e/fixtures/testServer.ts`）
-- ナイトリー（03:00 JST）で自動実行される。PR ごとには実行しない
+- CI では `.github/workflows/e2e.yml` が、`main` / `develop` 向けのすべての PR（PR のコード）、夜間 03:00 JST の定時実行（`develop`）、手動起動（指定したブランチ）で実行する
 
 ## Documentation
 
