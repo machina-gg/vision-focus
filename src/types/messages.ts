@@ -263,16 +263,8 @@ export interface GetRemainingTimeResponse {
   error?: MessageError;
 }
 
-/** 書き出したファイルの設定・表示設定と追跡中のサイトを取り込む依頼（data は画面の取り込み前の検査を通ったもの） */
+/** 書き出したファイルの設定・表示設定と追跡中のサイトで保存済みの値を置き換える依頼（data は画面の取り込み前の検査を通ったもの。password はパスワード保護中に照合する） */
 export type ImportSettingsRequest = ImportSettingsBody;
-
-/** 既存のサイトと許されない入れ子になるため取り込まなかったサイト */
-interface SkippedNestedSite {
-  /** ファイルに書かれていた表記 */
-  domain: string;
-  /** 入れ子の相手（既存か、先に取り込んだサイト） */
-  conflict: import('./site').SiteKey;
-}
 
 /** 設定の取り込みの結果 */
 export interface ImportSettingsResponse {
@@ -280,8 +272,6 @@ export interface ImportSettingsResponse {
   success: boolean;
   /** 失敗の種類。成功時は無い */
   error?: MessageError;
-  /** 許されない入れ子になるため取り込まなかったサイト */
-  skipped?: SkippedNestedSite[];
   /** 上限（MAX_PRESETS）を超えるため取り込まなかったスタイルの名前（ファイルの並び順） */
   skippedPresets?: string[];
   /** 取り込まなかったスタイルを指していたため、適用中のスタイルを外したか */

@@ -465,76 +465,14 @@ export async function stopTracking(site: SiteKey): Promise<StopTrackingResult> {
   });
 }
 
-/** importSites の結果。skipped は許されない入れ子になるため取り込まなかったもの */
-export interface ImportSitesResult {
-  /** 追加したか設定を足したサイトキー */
-  changed: SiteKey[];
-  /** 許されない入れ子になるため取り込まなかったもの */
-  skipped: {
-    /** 設定ファイルに書かれていた表記 */
-    input: string;
-    /** 入れ子の相手とその関係 */
-    nested: NestedSite;
-  }[];
-}
-
-function mergedRule(
-  current: SiteRule | null,
-  imported: SiteRule | null
-): SiteRule | null {
-  if (current) return current;
-  return imported?.kind === 'allow' ? null : imported;
-}
-
 /**
- * 設定ファイルの登録を取り込む（既存の設定は上書きせず、無い設定だけを足す。規則なしの既存の登録を許可サイトには変えない）
- * @param imported 設定ファイルの登録（youtube.com 以外と許可サイトの YouTube 機能は捨てる）
- * @param now 新しく追跡を始めるサイトの追跡開始時刻
- * @returns 取り込んだサイトと取り込まなかったサイト
+ * 追跡中のサイトを丸ごと置き換える（検証と正規化は呼び出し側で済ませる）。事実の行（activity）は消さないので、返したサイトの行は呼び出し側で消す
+ * @param next 置き換えた後の追跡中のサイト
+ * @returns 置き換えで登録が無くなったサイトキー
  */
-export async function importSites(
-  imported: readonly SiteEntry[],
-  now: Date
-): Promise<ImportSitesResult> {
-  return mutateSites((sites) => {
-    let next: TrackedSites = sites;
-    const changed: SiteKey[] = [];
-    const skipped: ImportSitesResult['skipped'] = [];
-    for (const entry of imported) {
-      const checked = checkAddition(
-        entry.domain,
-        entry.rule?.kind ?? null,
-        next,
-        () => null
-      );
-      if (checked.rejection !== null) {
-        if (checked.rejection.reason === 'nested') {
-          skipped.push({
-            input: entry.domain,
-            nested: checked.rejection.nested
-          });
-        }
-        continue;
-      }
-      const { site } = checked;
-      const current = next[site];
-      const rule = current ? mergedRule(current.rule, entry.rule) : entry.rule;
-      const youtube =
-        site === YOUTUBE_DOMAIN && rule?.kind !== 'allow'
-          ? (current?.youtube ?? entry.youtube)
-          : null;
-      if (current && rule === current.rule && youtube === current.youtube) {
-        continue;
-      }
-      const merged: SiteEntry = current
-        ? { ...current, rule, youtube }
-        : { domain: site, trackedAt: now.toISOString(), rule, youtube };
-      next = { ...next, [site]: merged };
-      changed.push(site);
-    }
-    return {
-      next: changed.length > 0 ? next : null,
-      result: { changed, skipped }
-    };
-  });
+export async function replaceSites(next: TrackedSites): Promise<SiteKey[]> {
+  return mutateSites((sites) => ({
+    next,
+    result: trackedSiteKeys(sites).filter((site) => next[site] === undefined)
+  }));
 }

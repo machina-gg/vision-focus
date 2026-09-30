@@ -380,7 +380,9 @@ export type ExportedData = z.infer<typeof ExportedDataSchema>;
 /** 設定の取り込みの本文 */
 export const ImportSettingsBodySchema = z.object({
   /** 取り込む設定ファイルの中身 */
-  data: ExportedDataSchema
+  data: ExportedDataSchema,
+  /** パスワード保護中に照合するパスワード */
+  password: UnblockPasswordSchema
 });
 
 /** 設定の取り込みの本文（ImportSettingsBodySchema を通った値） */

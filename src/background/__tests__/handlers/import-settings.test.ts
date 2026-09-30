@@ -3,11 +3,16 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { invoke } from './helpers';
 
 vi.mock('~/lib/settingsService', () => ({
-  importSettings: vi.fn()
+  importSettings: vi.fn(),
+  checkUnblockPassword: vi.fn()
 }));
 
 vi.mock('~/lib/siteService', () => ({
-  importSites: vi.fn()
+  replaceSites: vi.fn()
+}));
+
+vi.mock('~/lib/activityService', () => ({
+  purgeSite: vi.fn()
 }));
 
 vi.mock('~/lib/blockService', () => ({
@@ -19,8 +24,9 @@ vi.mock('../../blocker', () => ({
   blockExistingTabs: vi.fn()
 }));
 
-import { importSettings } from '~/lib/settingsService';
-import { importSites } from '~/lib/siteService';
+import { checkUnblockPassword, importSettings } from '~/lib/settingsService';
+import { replaceSites } from '~/lib/siteService';
+import { purgeSite } from '~/lib/activityService';
 import { getRuleTargets } from '~/lib/blockService';
 import { updateBlockRules, blockExistingTabs } from '../../blocker';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
@@ -39,7 +45,6 @@ import { DEFAULT_DISPLAY_SETTINGS } from '~/types/storage';
 interface Response {
   success: boolean;
   error?: MessageError;
-  skipped?: { domain: string; conflict: string }[];
   skippedPresets?: string[];
   clearedActivePreset?: boolean;
   clearedSchedulePresets?: boolean;
@@ -67,7 +72,8 @@ describe('import-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(importSettings).mockResolvedValue(NOTHING_SKIPPED);
-    vi.mocked(importSites).mockResolvedValue({ changed: [], skipped: [] });
+    vi.mocked(checkUnblockPassword).mockResolvedValue(null);
+    vi.mocked(replaceSites).mockResolvedValue([]);
     givenBlockedDomains([], []);
   });
 
@@ -127,13 +133,13 @@ describe('import-settings ハンドラ', () => {
         error: { code: 'invalid-request' }
       });
       expect(importSettings).not.toHaveBeenCalled();
-      expect(importSites).not.toHaveBeenCalled();
+      expect(replaceSites).not.toHaveBeenCalled();
       expect(updateBlockRules).not.toHaveBeenCalled();
       expect(blockExistingTabs).not.toHaveBeenCalled();
     });
   });
 
-  it('設定ファイルの中身を設定に重ねて保存し、追跡中のサイトを取り込んでブロックルールを更新する', async () => {
+  it('設定ファイルの中身で設定と追跡中のサイトを置き換え、ブロックルールを更新する', async () => {
     const schedules = [
       {
         id: 'schedule-1',
@@ -144,18 +150,18 @@ describe('import-settings ハンドラ', () => {
         enabled: true
       }
     ];
-    const sites = [
+    const sites = sitesOf(
       blockedSite('sns.example', {
         timeLimit: { type: 'daily', limitSeconds: 600 }
       }),
       trackedSite('youtube.com', { youtube: youtubeFeatures() }),
       allowedSite('music.youtube.com', true)
-    ];
-    const data = exportedData({ schedules, sites: sitesOf(...sites) });
+    );
+    const data = exportedData({ schedules, sites });
 
     const result = await invoke<Response>(handler, { data });
 
-    expect(result).toEqual({ success: true, skipped: [], ...NOTHING_SKIPPED });
+    expect(result).toEqual({ success: true, ...NOTHING_SKIPPED });
     expect(importSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         schedules,
@@ -163,33 +169,90 @@ describe('import-settings ハンドラ', () => {
         unblockConfirm: data.unblockConfirm
       })
     );
-    expect(importSites).toHaveBeenCalledWith(sites, expect.any(Date));
+    expect(replaceSites).toHaveBeenCalledWith(sites);
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  it('入れ子で取り込まなかったサイトを返す', async () => {
-    vi.mocked(importSites).mockResolvedValue({
-      changed: [],
-      skipped: [
-        {
-          input: 'm.youtube.com',
-          nested: { site: 'youtube.com', relation: 'ancestor' }
-        }
-      ]
+  it('置き換えで登録が無くなったサイトの記録だけを消す', async () => {
+    vi.mocked(replaceSites).mockResolvedValue(['local.com', 'old.example']);
+
+    await invoke(handler, {
+      data: exportedData({ sites: sitesOf(blockedSite('kept.com')) })
     });
 
+    expect(purgeSite).toHaveBeenCalledTimes(2);
+    expect(purgeSite).toHaveBeenCalledWith('local.com');
+    expect(purgeSite).toHaveBeenCalledWith('old.example');
+  });
+
+  it('ファイルの中に許されない入れ子の組があれば invalid-request で拒み、パスワードも照合せず何も書き換えない', async () => {
     const result = await invoke<Response>(handler, {
-      data: exportedData({ sites: sitesOf(blockedSite('m.youtube.com')) })
+      data: exportedData({
+        sites: sitesOf(blockedSite('youtube.com'), trackedSite('m.youtube.com'))
+      })
     });
 
     expect(result).toEqual({
-      success: true,
-      skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }],
-      ...NOTHING_SKIPPED
+      success: false,
+      error: { code: 'invalid-request' }
+    });
+    expect(checkUnblockPassword).not.toHaveBeenCalled();
+    expect(importSettings).not.toHaveBeenCalled();
+    expect(replaceSites).not.toHaveBeenCalled();
+    expect(purgeSite).not.toHaveBeenCalled();
+  });
+
+  describe('パスワード', () => {
+    it('添えられたパスワードを、弱める操作として照合する', async () => {
+      await invoke(handler, { data: exportedData(), password: 'secret' });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith('secret', true);
+      expect(importSettings).toHaveBeenCalledOnce();
+    });
+
+    it('添えられていなければ undefined で照合する（保護していなければ通る）', async () => {
+      const result = await invoke<Response>(handler, { data: exportedData() });
+
+      expect(checkUnblockPassword).toHaveBeenCalledWith(undefined, true);
+      expect(result).toEqual({ success: true, ...NOTHING_SKIPPED });
+    });
+
+    it.each([
+      ['required', 'password-required'],
+      ['mismatch', 'password-mismatch']
+    ] as const)(
+      '照合が %s なら %s で拒み、何も書き換えない',
+      async (rejection, code) => {
+        vi.mocked(checkUnblockPassword).mockResolvedValue(rejection);
+
+        const result = await invoke<Response>(handler, {
+          data: exportedData(),
+          password: 'wrong'
+        });
+
+        expect(result).toEqual({ success: false, error: { code } });
+        expect(importSettings).not.toHaveBeenCalled();
+        expect(replaceSites).not.toHaveBeenCalled();
+        expect(purgeSite).not.toHaveBeenCalled();
+        expect(updateBlockRules).not.toHaveBeenCalled();
+      }
+    );
+
+    it('パスワードが文字列でなければ invalid-request を返す', async () => {
+      const result = await invoke<Response>(handler, {
+        data: exportedData(),
+        password: 1234
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: { code: 'invalid-request' }
+      });
+      expect(checkUnblockPassword).not.toHaveBeenCalled();
     });
   });
 
-  it('表示設定（スタイルの画像を含む）も重ねる側へ渡し、上限で取り込まなかったスタイルと外した参照を返す', async () => {
+  it('表示設定（スタイルの画像を含む）も置き換える側へ渡し、上限で取り込まなかったスタイルと外した参照を返す', async () => {
     const presets = [
       {
         ...DEFAULT_DISPLAY_SETTINGS,
@@ -217,7 +280,6 @@ describe('import-settings ハンドラ', () => {
     );
     expect(result).toEqual({
       success: true,
-      skipped: [],
       skippedPresets: ['Morning'],
       clearedActivePreset: true,
       clearedSchedulePresets: false

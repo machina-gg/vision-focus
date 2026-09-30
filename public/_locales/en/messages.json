@@ -1138,7 +1138,7 @@
     "description": "Help FAQ backup question"
   },
   "helpFaqBackupAnswer": {
-    "message": "Use the Settings Backup section in the Settings tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Import merges the saved settings with your current ones, so you won't lose any existing data.",
+    "message": "Use the Settings Backup section in the Settings tab. Export saves your block list, schedules, styles, and preferences as a JSON file. Importing overwrites all settings with the contents of the file (sites not in the file are removed along with their records).",
     "description": "Help FAQ backup answer"
   },
   "helpFaqDataStorage": {
@@ -1279,9 +1279,17 @@
     "message": "Settings imported successfully!",
     "description": "Import success message"
   },
-  "importSuccessWithMerge": {
-    "message": "Settings imported and merged with existing data",
-    "description": "Import success message with merge"
+  "importConfirmTitle": {
+    "message": "Import settings",
+    "description": "Import confirmation modal title"
+  },
+  "importConfirmMessage": {
+    "message": "All settings will be overwritten. Sites not in the file will be removed along with their records. Import?",
+    "description": "Import confirmation: explains that everything is overwritten"
+  },
+  "importConfirmButton": {
+    "message": "Import",
+    "description": "Import confirmation modal submit button"
   },
   "importErrorFileTooLarge": {
     "message": "File is too large (max $SIZE$MB)",
@@ -1968,20 +1976,6 @@
       "names": {
         "content": "$2",
         "example": "Morning, Night"
-      }
-    }
-  },
-  "importWarningNestedSite": {
-    "message": "$DOMAIN$ was not imported because it overlaps with $SITE$",
-    "description": "Import warning: skipped a site nested with a tracked site",
-    "placeholders": {
-      "domain": {
-        "content": "$1",
-        "example": "m.youtube.com"
-      },
-      "site": {
-        "content": "$2",
-        "example": "youtube.com"
       }
     }
   },

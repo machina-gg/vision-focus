@@ -1,6 +1,12 @@
 import * as z from 'zod';
 
 import { MAX_IMPORT_SIZE } from '~/constants/limits';
+import { isValidDomain, parseDomainInput } from '~/lib/domain';
+import {
+  findNestingConflict,
+  normalizeSiteKey,
+  YOUTUBE_DOMAIN
+} from '~/lib/siteKey';
 import { getTodayKey } from '~/lib/time';
 import {
   ExportedDataSchema,
@@ -138,7 +144,7 @@ export function downloadSettings(data: ExportedSettings): void {
 /**
  * 取り込む JSON を検証し、参照先の無いプリセット ID を外した中身を返す
  * @param jsonString 設定ファイルの中身の文字列
- * @returns 検証の結果（MAX_IMPORT_SIZE より大きい・JSON でない・形が違う・版が古いなら success が false）
+ * @returns 検証の結果（MAX_IMPORT_SIZE より大きい・JSON でない・形が違う・版が古い・サイトに許されない入れ子の組があるなら success が false）
  */
 export function validateImportedData(jsonString: string): ImportResult {
   if (jsonString.length > MAX_IMPORT_SIZE) {
@@ -161,6 +167,13 @@ export function validateImportedData(jsonString: string): ImportResult {
 
   const result = exportFileSchema.safeParse(parsed);
   if (!result.success) {
+    return {
+      success: false,
+      error: 'importErrorInvalidFormat'
+    };
+  }
+
+  if (!toImportedSites(result.data.data.sites)) {
     return {
       success: false,
       error: 'importErrorInvalidFormat'
@@ -215,25 +228,18 @@ export function readFileAsString(file: File): Promise<string> {
 }
 
 /**
- * 取り込んだ設定をアプリの設定に重ねる（スケジュールは無いものだけ足し、通知と長押し確認は上書き。他の項目は今の値のまま）
+ * 取り込んだ設定でアプリの設定を置き換える（スケジュールはファイルのもので丸ごと入れ替え、通知と長押し確認は上書き。一時停止・パスワード・分析の同意は今の値のまま）
  * @param data 取り込む設定ファイルの中身（使うのはスケジュール・通知・長押し確認）
  * @param currentSettings 今のアプリの設定
- * @returns 重ねた後のアプリの設定（引数は書き換えない）
+ * @returns 置き換えた後のアプリの設定（引数は書き換えない）
  */
 export function applyImportedSettings(
   data: Pick<ExportedData, 'schedules' | 'notifications' | 'unblockConfirm'>,
   currentSettings: AppSettings
 ): AppSettings {
-  const existingScheduleIds = new Set(
-    currentSettings.schedules.map((s) => s.id)
-  );
-  const newSchedules = data.schedules.filter(
-    (s) => !existingScheduleIds.has(s.id)
-  );
-
   return {
     ...currentSettings,
-    schedules: [...currentSettings.schedules, ...newSchedules],
+    schedules: data.schedules,
     notifications: data.notifications,
     unblockConfirm: data.unblockConfirm
   };
@@ -241,21 +247,23 @@ export function applyImportedSettings(
 
 /** applyImportedVision の結果 */
 export interface ImportedVision {
-  /** 重ねた後の表示設定 */
+  /** 置き換えた後の表示設定 */
   vision: VisionSettings;
-  /** 足したスタイルの画像（キーは新しく振った画像の ID、値は data URL） */
+  /** 取り込んだスタイルの画像（キーは新しく振った画像の ID、値は data URL） */
   images: Record<string, string>;
-  /** 上限を超えるため足さなかったスタイル（ファイルの並び順） */
+  /** 置き換えで持ち主がいなくなる、今のスタイルの画像の ID */
+  removedImageIds: string[];
+  /** 上限を超えるため取り込まなかったスタイル（ファイルの並び順） */
   skippedPresets: ExportedPreset[];
 }
 
 /**
- * 取り込んだ表示設定を今の表示設定に重ねる（既存のスタイルは残し、ID が重ならないスタイルをファイルの並び順に上限まで足す。足すスタイルの画像は新しい ID で作る。既定の表示設定と適用中のスタイルは上書きし、適用中のスタイルが足さなかったものなら null にする）
+ * 取り込んだ表示設定で今の表示設定を置き換える（スタイルはファイルの並び順に上限まで取り込み、今のスタイルは画像ごと捨てる。取り込むスタイルの画像は新しい ID で作る。既定の表示設定と適用中のスタイルは上書きし、適用中のスタイルが取り込まなかったものなら null にする）
  * @param data 取り込む設定ファイルの中身（使うのはスタイル・既定の表示設定・適用中のスタイル）
  * @param currentVision 今のダッシュボードの表示設定
- * @param maxPresets スタイルの件数の上限（既存と合わせた数）
+ * @param maxPresets スタイルの件数の上限
  * @param createImageId 画像の ID を 1 つ振る関数（呼ぶたびに別の ID を返す）
- * @returns 重ねた後の表示設定、足したスタイルの画像、足さなかったスタイル（引数は書き換えない）
+ * @returns 置き換えた後の表示設定、取り込んだスタイルの画像、捨てる画像の ID、取り込まなかったスタイル（引数は書き換えない）
  */
 export function applyImportedVision(
   data: Pick<
@@ -266,14 +274,11 @@ export function applyImportedVision(
   maxPresets: number,
   createImageId: () => string
 ): ImportedVision {
-  const existingPresetIds = new Set(currentVision.presets.map((p) => p.id));
-  const newPresets = data.presets.filter((p) => !existingPresetIds.has(p.id));
-  const room = Math.max(0, maxPresets - currentVision.presets.length);
-  const skippedPresets = newPresets.slice(room);
+  const skippedPresets = data.presets.slice(maxPresets);
 
   const images: Record<string, string> = {};
-  const addedPresets = newPresets
-    .slice(0, room)
+  const presets = data.presets
+    .slice(0, maxPresets)
     .map(({ customBackgroundData, ...rest }): DashboardPreset => {
       if (customBackgroundData === null) {
         return { ...rest, customBackgroundId: null };
@@ -290,13 +295,44 @@ export function applyImportedVision(
   return {
     vision: {
       ...currentVision,
-      presets: [...currentVision.presets, ...addedPresets],
+      presets,
       defaultSettings: data.defaultDisplaySettings,
       activePresetId: activePresetSkipped ? null : data.activePresetId
     },
     images,
+    removedImageIds: currentVision.presets.flatMap((preset) =>
+      preset.customBackgroundId === null ? [] : [preset.customBackgroundId]
+    ),
     skippedPresets
   };
+}
+
+/**
+ * 設定ファイルのサイトを、保存する追跡中のサイトの形にする（キーはサイトキーに直し、ドメインとして正しくないものと 2 つ目以降の同じキーは捨てる。youtube.com 以外と許可サイトの YouTube 機能は捨てる）
+ * @param sites 設定ファイルのサイト
+ * @returns 保存する追跡中のサイト。ファイルの中に許されない入れ子の組があれば null
+ */
+export function toImportedSites(
+  sites: ExportedData['sites']
+): TrackedSites | null {
+  const result: TrackedSites = {};
+  for (const entry of Object.values(sites)) {
+    const site = normalizeSiteKey(parseDomainInput(entry.domain).domain);
+    if (!isValidDomain(site) || result[site]) continue;
+    result[site] = {
+      domain: site,
+      trackedAt: entry.trackedAt,
+      rule: entry.rule,
+      youtube:
+        site === YOUTUBE_DOMAIN && entry.rule?.kind !== 'allow'
+          ? entry.youtube
+          : null
+    };
+  }
+  const nested = Object.values(result).some((entry) =>
+    findNestingConflict(entry.domain, entry.rule?.kind ?? null, result)
+  );
+  return nested ? null : result;
 }
 
 /**

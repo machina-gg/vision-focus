@@ -7,6 +7,7 @@ import {
   validateImportedData,
   applyImportedSettings,
   applyImportedVision,
+  toImportedSites,
   createDefaultExportData,
   EXPORT_VERSION,
   type ExportedSettings
@@ -15,6 +16,7 @@ import { IMAGE_LIMITS, MAX_IMPORT_SIZE } from '~/constants/limits';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import type { ExportedPreset } from '~/types/messageSchemas';
 import {
+  allowedSite,
   blockedSite,
   sitesOf,
   trackedSite,
@@ -391,38 +393,27 @@ describe('validateImportedData', () => {
 });
 
 describe('applyImportedSettings', () => {
-  it('スケジュールをマージし、重複IDを除外する', () => {
-    const importData = createValidExportData({
-      schedules: [
-        {
-          id: 's1',
-          name: 'Work',
-          startTime: '09:00',
-          endTime: '17:00',
-          days: [1, 2, 3, 4, 5],
-          enabled: true
-        }
-      ]
-    }).data;
+  const schedule = (id: string, name: string) => ({
+    id,
+    name,
+    startTime: '09:00',
+    endTime: '17:00',
+    days: [1],
+    enabled: true
+  });
 
+  it('スケジュールをファイルのもので丸ごと置き換える（手元にしか無いものは消え、同じ ID はファイルの値になる）', () => {
+    const importData = createValidExportData({
+      schedules: [schedule('s1', 'Imported')]
+    }).data;
     const currentSettings: AppSettings = {
       ...DEFAULT_SETTINGS,
-      schedules: [
-        {
-          id: 's1',
-          name: 'Existing',
-          startTime: '08:00',
-          endTime: '16:00',
-          days: [1],
-          enabled: true
-        }
-      ]
+      schedules: [schedule('s1', 'Existing'), schedule('s2', 'Local only')]
     };
 
     const settings = applyImportedSettings(importData, currentSettings);
-    // 同じIDなのでマージされない
-    expect(settings.schedules).toHaveLength(1);
-    expect(itemAt(settings.schedules, 0).name).toBe('Existing');
+
+    expect(settings.schedules).toEqual([schedule('s1', 'Imported')]);
   });
 
   it('通知設定がインポートされる', () => {
@@ -438,11 +429,12 @@ describe('applyImportedSettings', () => {
     expect(settings.notifications.timeLimitMinutes).toBe(10);
   });
 
-  it('スケジュール・通知・長押し確認以外の項目は今の値のまま', () => {
+  it('ファイルに含まれない一時停止・パスワード・分析の同意は今の値のまま', () => {
     const currentSettings: AppSettings = {
       ...DEFAULT_SETTINGS,
       paused: true,
-      password: { enabled: true, passwordHash: 'hash' }
+      password: { enabled: true, passwordHash: 'hash' },
+      analyticsOptIn: { enabled: true, decidedAt: '2024-01-01T00:00:00Z' }
     };
 
     const settings = applyImportedSettings(
@@ -452,57 +444,50 @@ describe('applyImportedSettings', () => {
 
     expect(settings.paused).toBe(true);
     expect(settings.password).toEqual({ enabled: true, passwordHash: 'hash' });
+    expect(settings.analyticsOptIn).toEqual({
+      enabled: true,
+      decidedAt: '2024-01-01T00:00:00Z'
+    });
   });
 });
 
 describe('applyImportedVision', () => {
   const preset = (id: string) => exportedPreset(id);
 
-  it('プリセットをマージし、重複IDを除外する', () => {
+  it('スタイルをファイルのもので丸ごと置き換える（手元にしか無いものは消え、同じ ID はファイルの値になる）', () => {
     const importData = createValidExportData({
-      presets: [
-        {
-          id: 'p1',
-          name: 'New Preset',
-          createdAt: '2024-01-01T00:00:00Z',
-          goalText: 'Goal',
-          goalSubText: 'Sub',
-          textColor: '#fff',
-          backgroundType: 'color',
-          backgroundImage: '',
-          backgroundColor: '#000',
-          customBackgroundData: null,
-          fontSettings: { family: 'inter', size: 'md', weight: 'normal' }
-        }
-      ]
+      presets: [{ ...exportedPreset('p1'), name: 'Imported' }]
     }).data;
 
     const { vision, skippedPresets } = applyImportedVision(
       importData,
-      DEFAULT_VISION,
+      { ...DEFAULT_VISION, presets: [storedPreset('p1'), storedPreset('p2')] },
       10,
       sequentialIds()
     );
-    expect(vision.presets).toHaveLength(1);
-    expect(itemAt(vision.presets, 0).name).toBe('New Preset');
+
+    expect(vision.presets).toEqual([
+      { ...storedPreset('p1'), name: 'Imported' }
+    ]);
     expect(skippedPresets).toEqual([]);
   });
 
-  it('既存と同じIDのプリセットは今のものを残す', () => {
-    const existing = storedPreset('p1', 'img-1');
-    const importData = createValidExportData({
-      presets: [{ ...exportedPreset('p1', JPEG), name: 'Imported' }]
-    }).data;
-
-    const { vision, images } = applyImportedVision(
-      importData,
-      { ...DEFAULT_VISION, presets: [existing] },
+  it('今のスタイルの画像をすべて捨てる画像として返す', () => {
+    const { removedImageIds } = applyImportedVision(
+      createValidExportData({ presets: [exportedPreset('p1', JPEG)] }).data,
+      {
+        ...DEFAULT_VISION,
+        presets: [
+          storedPreset('p1', 'img-1'),
+          storedPreset('p2'),
+          storedPreset('p3', 'img-3')
+        ]
+      },
       10,
       sequentialIds()
     );
 
-    expect(vision.presets).toEqual([existing]);
-    expect(images).toEqual({});
+    expect(removedImageIds).toEqual(['img-1', 'img-3']);
   });
 
   it('defaultDisplaySettingsとactivePresetIdが反映される', () => {
@@ -525,10 +510,8 @@ describe('applyImportedVision', () => {
     expect(vision.defaultSettings.goalText).toBe('Imported Goal');
   });
 
-  it('既存 8 件にファイルの新しい 5 件なら、ファイルの並び順で先頭の 2 件だけを足し、残り 3 件を返す', () => {
-    const existing = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'].map(
-      (id) => storedPreset(id)
-    );
+  it('ファイルのスタイルが上限を超えたら、ファイルの並び順に上限まで取り込み、残りを返す（手元の件数は数えない）', () => {
+    const existing = ['e1', 'e2', 'e3'].map((id) => storedPreset(id));
     const importData = createValidExportData({
       presets: ['n1', 'n2', 'n3', 'n4', 'n5'].map(preset)
     }).data;
@@ -536,56 +519,15 @@ describe('applyImportedVision', () => {
     const { vision, skippedPresets } = applyImportedVision(
       importData,
       { ...DEFAULT_VISION, presets: existing },
-      10,
+      3,
       sequentialIds()
     );
 
-    expect(vision.presets.map((p) => p.id)).toEqual([
-      ...existing.map((p) => p.id),
-      'n1',
-      'n2'
-    ]);
-    expect(skippedPresets.map((p) => p.id)).toEqual(['n3', 'n4', 'n5']);
+    expect(vision.presets.map((p) => p.id)).toEqual(['n1', 'n2', 'n3']);
+    expect(skippedPresets.map((p) => p.id)).toEqual(['n4', 'n5']);
   });
 
-  it('既存と ID が重なるスタイルは数えずに、重ならないものだけで上限まで足す', () => {
-    const existing = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9'].map(
-      (id) => storedPreset(id)
-    );
-    const importData = createValidExportData({
-      presets: ['e1', 'n1', 'n2'].map(preset)
-    }).data;
-
-    const { vision, skippedPresets } = applyImportedVision(
-      importData,
-      { ...DEFAULT_VISION, presets: existing },
-      10,
-      sequentialIds()
-    );
-
-    expect(vision.presets.map((p) => p.id).slice(-1)).toEqual(['n1']);
-    expect(vision.presets).toHaveLength(10);
-    expect(skippedPresets.map((p) => p.id)).toEqual(['n2']);
-  });
-
-  it('既存が上限を超えていても、既存は消さずに何も足さない', () => {
-    const existing = ['e1', 'e2', 'e3'].map((id) => storedPreset(id));
-    const importData = createValidExportData({
-      presets: [preset('n1')]
-    }).data;
-
-    const { vision, skippedPresets } = applyImportedVision(
-      importData,
-      { ...DEFAULT_VISION, presets: existing },
-      2,
-      sequentialIds()
-    );
-
-    expect(vision.presets).toEqual(existing);
-    expect(skippedPresets.map((p) => p.id)).toEqual(['n1']);
-  });
-
-  it('適用中のスタイルが足さなかったものなら null にし、足したものか既存なら残す', () => {
+  it('適用中のスタイルが取り込まなかったものなら null にし、取り込んだものなら残す', () => {
     const importData = createValidExportData({
       presets: ['n1', 'n2'].map(preset)
     }).data;
@@ -608,7 +550,7 @@ describe('applyImportedVision', () => {
     ).toBe('n1');
   });
 
-  it('足すスタイルの画像を新しい ID で作り、スタイルはその ID を持つ', () => {
+  it('取り込むスタイルの画像を新しい ID で作り、スタイルはその ID を持つ', () => {
     const importData = createValidExportData({
       presets: [exportedPreset('n1', JPEG), exportedPreset('n2')]
     }).data;
@@ -627,7 +569,7 @@ describe('applyImportedVision', () => {
     expect(images).toEqual({ 'img-new-1': JPEG });
   });
 
-  it('上限を超えて足さなかったスタイルの画像は作らない', () => {
+  it('上限を超えて取り込まなかったスタイルの画像は作らない', () => {
     const importData = createValidExportData({
       presets: [exportedPreset('n1', JPEG), exportedPreset('n2', JPEG)]
     }).data;
@@ -641,6 +583,59 @@ describe('applyImportedVision', () => {
 
     expect(Object.keys(images)).toEqual(['img-new-1']);
     expect(skippedPresets.map((p) => p.id)).toEqual(['n2']);
+  });
+});
+
+describe('toImportedSites', () => {
+  it('ファイルのサイトをそのまま返す（trackedAt もファイルの値）', () => {
+    const sites = sitesOf(
+      blockedSite('x.com', {}, { trackedAt: '2020-05-05T00:00:00.000Z' }),
+      trackedSite('news.example.org'),
+      allowedSite('docs.x.com', true)
+    );
+
+    expect(toImportedSites(sites)).toEqual(sites);
+  });
+
+  it('キーをサイトキーに直し、ドメインとして正しくないものと 2 つ目以降の同じキーは捨てる', () => {
+    const result = toImportedSites({
+      'www.x.com': blockedSite('www.x.com'),
+      'x.com': trackedSite('x.com'),
+      bad: trackedSite('not a domain')
+    });
+
+    expect(result).toEqual(sitesOf(blockedSite('x.com')));
+  });
+
+  it('youtube.com 以外と許可サイトの YouTube 機能は捨てる', () => {
+    const features = youtubeFeatures({ hideShorts: true });
+    const result = toImportedSites(
+      sitesOf(
+        blockedSite(YOUTUBE_DOMAIN, {}, { youtube: features }),
+        trackedSite('x.com', { youtube: features }),
+        allowedSite('y.com', false, { youtube: features })
+      )
+    );
+
+    expect(result?.[YOUTUBE_DOMAIN]?.youtube).toEqual(features);
+    expect(result?.['x.com']?.youtube).toBeNull();
+    expect(result?.['y.com']?.youtube).toBeNull();
+  });
+
+  it.each([
+    ['ブロックの中にブロック', blockedSite('m.x.com')],
+    ['ブロックの中に規則なし', trackedSite('m.x.com')]
+  ])(
+    'ファイルの中に許されない入れ子の組（%s）があれば null',
+    (_label, child) => {
+      expect(toImportedSites(sitesOf(blockedSite('x.com'), child))).toBeNull();
+    }
+  );
+
+  it('子孫が許可サイトの入れ子は許す', () => {
+    const sites = sitesOf(blockedSite('x.com'), allowedSite('docs.x.com'));
+
+    expect(toImportedSites(sites)).toEqual(sites);
   });
 });
 
@@ -855,4 +850,19 @@ describe('スケジュールの時刻の取り込み', () => {
       });
     }
   );
+});
+
+describe('ファイルの中の入れ子の取り込み', () => {
+  it('ファイルの中に許されない入れ子の組があれば形式エラーで拒む', () => {
+    const json = JSON.stringify(
+      createValidExportData({
+        sites: sitesOf(blockedSite('x.com'), trackedSite('m.x.com'))
+      })
+    );
+
+    expect(validateImportedData(json)).toEqual({
+      success: false,
+      error: 'importErrorInvalidFormat'
+    });
+  });
 });

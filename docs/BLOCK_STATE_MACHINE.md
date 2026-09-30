@@ -61,7 +61,8 @@ flowchart TD
 - `*.example.com` / `www.example.com` / `example.com` はどれも `example.com` になる（追加時に正規化する）
 - 時間制限の使用量はサイトキーの行で数える。`www.example.com` と `m.example.com` の滞在は同じ枠に入る
 - 祖先・子孫の組を許すのは、子孫が許可サイトのときだけ（`findNestingConflict()`）。
-  追加（`add-block` / `add-tracked-site` / `add-allowed-site` / `import-settings`）と、YouTube 設定で youtube.com を新しく作るときに検査する。
+  追加（`add-block` / `add-tracked-site` / `add-allowed-site`）と、YouTube 設定で youtube.com を新しく作るときに検査する。
+  取り込み（`import-settings`）は既存の登録を丸ごと置き換えるので、ファイルの中の組だけを検査し、1 組でもあれば何も書き換えずに拒む。
   ブロック・規則なしは、祖先がある・許可サイトでない子孫があると拒む。許可サイトは、許可サイトでない子孫があると拒む。
   ブロック・規則なしの入れ子を許すと、子のサブドメインでの滞在が親の使用量に入らず、子を登録するだけで親の時間制限を回避できる。
   許可サイトはその回避を意図して登録するもので、ブロックリストの側から見える

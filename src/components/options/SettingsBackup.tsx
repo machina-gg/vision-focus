@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 
 import { Button, Card } from '~/components/ui';
+import { ImportConfirmModal } from '~/components/options/modals';
 import {
   EXPORT_STATUS_DELAY_MS,
   SHARE_MESSAGE_DELAY_MS
 } from '~/constants/intervals';
 import { getMessage } from '~/lib/i18n';
+import { messageErrorText } from '~/lib/messageError';
 import { sendMessage } from '~/lib/messaging';
 import {
   exportSettings,
@@ -27,12 +29,25 @@ import {
   getVision
 } from '~/lib/storage';
 import { MAX_PRESETS } from '~/constants/limits';
+import type { ExportedData } from '~/types/messageSchemas';
+
+/** SettingsBackup に渡すパスワード保護の状態 */
+interface SettingsBackupProps {
+  /** true なら取り込みの確認でパスワードを入力させる */
+  isPasswordProtected: boolean;
+}
+
+interface PendingImport {
+  data: ExportedData;
+  warningKeys: string[];
+}
 
 /**
- * 設定を JSON ファイルに書き出す操作と、書き出したファイルから読み込む操作をカードで表示する（読み込みの保存は background に任せ、画面は結果だけを出す。読み込んだ設定の表示は保存値の購読が追従する）
- * @returns バックアップのカード（結果・警告の表示を含む）
+ * 設定を JSON ファイルに書き出す操作と、書き出したファイルで設定を置き換える操作をカードで表示する（取り込む前に必ず上書きの確認を出し、パスワード保護中は同じ確認でパスワードを入力させる。保存は background に任せ、画面は結果だけを出す。取り込んだ設定の表示は保存値の購読が追従する）
+ * @param props パスワード保護の状態（各フィールドは SettingsBackupProps）
+ * @returns バックアップのカード（結果・警告の表示と取り込みの確認モーダルを含む）
  */
-export function SettingsBackup() {
+export function SettingsBackup({ isPasswordProtected }: SettingsBackupProps) {
   const [exportStatus, setExportStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
@@ -42,6 +57,9 @@ export function SettingsBackup() {
   const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
@@ -112,23 +130,44 @@ export function SettingsBackup() {
         return;
       }
 
-      const warningKeys = result.warnings ?? [];
-      if (warningKeys.length > 0) {
-        setImportWarnings(warningKeys.map((key) => getMessage(key)));
-      }
-
       if (!result.data) {
         throw new Error('No data');
       }
 
+      setPendingImport({
+        data: result.data,
+        warningKeys: result.warnings ?? []
+      });
+    } catch {
+      showImportError('importErrorInvalidFormat');
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleImportConfirm = async (
+    password?: string
+  ): Promise<string | null> => {
+    if (!pendingImport) return null;
+    const { data, warningKeys } = pendingImport;
+
+    try {
       // 保存・ブロックルールの更新・開いているタブのブロックを一続きで処理させるため、保存は background に任せる
       const response = await sendMessage('import-settings', {
-        data: result.data
+        data,
+        password
       });
+
+      const code = response?.error?.code;
+      if (code === 'password-required' || code === 'password-mismatch') {
+        return messageErrorText(response?.error);
+      }
 
       if (!response?.success) {
         showImportError('importErrorSaveFailed');
-        return;
+        return null;
       }
 
       const clearedKeys = [
@@ -140,10 +179,6 @@ export function SettingsBackup() {
           : [])
       ].filter((key) => !warningKeys.includes(key));
       const skippedPresets = response.skippedPresets ?? [];
-      const skippedSites = (response.skipped ?? []).map(
-        ({ domain, conflict }) =>
-          getMessage('importWarningNestedSite', [domain, conflict])
-      );
       setImportWarnings([
         ...[...warningKeys, ...clearedKeys].map((key) => getMessage(key)),
         ...(skippedPresets.length > 0
@@ -153,12 +188,11 @@ export function SettingsBackup() {
                 skippedPresets.join(', ')
               ])
             ]
-          : []),
-        ...skippedSites
+          : [])
       ]);
 
       setImportStatus('success');
-      setImportMessage(getMessage('importSuccessWithMerge'));
+      setImportMessage(getMessage('importSuccess'));
 
       setTimeout(() => {
         setImportStatus('idle');
@@ -166,12 +200,14 @@ export function SettingsBackup() {
         setImportWarnings([]);
       }, SHARE_MESSAGE_DELAY_MS);
     } catch {
-      showImportError('importErrorInvalidFormat');
-    } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      showImportError('importErrorSaveFailed');
     }
+    return null;
+  };
+
+  const handleImportClose = () => {
+    setPendingImport(null);
+    setImportStatus((status) => (status === 'loading' ? 'idle' : status));
   };
 
   return (
@@ -312,6 +348,13 @@ export function SettingsBackup() {
           )}
         </div>
       </div>
+
+      <ImportConfirmModal
+        isOpen={pendingImport !== null}
+        onClose={handleImportClose}
+        requiresPassword={isPasswordProtected}
+        onConfirm={handleImportConfirm}
+      />
     </Card>
   );
 }

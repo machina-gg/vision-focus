@@ -58,10 +58,21 @@ const jsonFile = () =>
 const exportButton = () => screen.getByTestId('settings-export-button');
 const importInput = () => screen.getByTestId('settings-import-input');
 
-async function importFile(file: File = jsonFile()) {
+async function chooseFile(file: File = jsonFile()) {
   await act(async () => {
     fireEvent.change(importInput(), { target: { files: [file] } });
   });
+}
+
+async function confirmImport() {
+  await act(async () => {
+    fireEvent.click(screen.getByTestId('import-confirm-submit'));
+  });
+}
+
+async function importFile(file: File = jsonFile()) {
+  await chooseFile(file);
+  await confirmImport();
 }
 
 beforeEach(() => {
@@ -85,7 +96,7 @@ beforeEach(() => {
 describe('SettingsBackup', () => {
   describe('初期表示', () => {
     it('エクスポートとインポートの見出しを出す', () => {
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       expect(screen.getByText('settingsBackup')).toBeInTheDocument();
       expect(exportButton()).toHaveTextContent('exportSettings');
@@ -95,7 +106,7 @@ describe('SettingsBackup', () => {
     });
 
     it('警告も結果も出ていない', () => {
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       expect(screen.queryByText('exportLargeWarning')).not.toBeInTheDocument();
       expect(
@@ -118,7 +129,7 @@ describe('SettingsBackup', () => {
       storage.getVision.mockResolvedValue(vision);
       storage.getBackgroundImages.mockResolvedValue(images);
       settingsExport.exportSettings.mockReturnValue({ data, isLarge: false });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -140,7 +151,7 @@ describe('SettingsBackup', () => {
         data: { version: 1 },
         isLarge: true
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -151,7 +162,7 @@ describe('SettingsBackup', () => {
 
     it('失敗したら成功表示を出さない', async () => {
       storage.getSettings.mockRejectedValue(new Error('storage error'));
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -165,7 +176,7 @@ describe('SettingsBackup', () => {
   describe('インポートの開始', () => {
     it('ボタンを押すとファイル選択欄が開く', () => {
       const click = vi.spyOn(HTMLInputElement.prototype, 'click');
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       fireEvent.click(screen.getByTestId('settings-import-button'));
 
@@ -174,7 +185,7 @@ describe('SettingsBackup', () => {
     });
 
     it('ファイルを選ばなかったときは何もしない', async () => {
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await act(async () => {
         fireEvent.change(importInput(), { target: { files: [] } });
@@ -184,37 +195,138 @@ describe('SettingsBackup', () => {
     });
   });
 
+  describe('取り込み前の確認', () => {
+    it('ファイルを選んだら上書きの確認を出し、確認するまで background へ送らない', async () => {
+      render(<SettingsBackup isPasswordProtected={false} />);
+
+      await chooseFile();
+
+      expect(screen.getByTestId('import-confirm-message')).toHaveTextContent(
+        'importConfirmMessage'
+      );
+      expect(messaging.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('キャンセルしたら background へ送らず、結果も出さずに元へ戻る', async () => {
+      render(<SettingsBackup isPasswordProtected={false} />);
+
+      await chooseFile();
+      fireEvent.click(screen.getByTestId('import-confirm-cancel'));
+
+      expect(messaging.sendMessage).not.toHaveBeenCalled();
+      expect(
+        screen.queryByTestId('import-confirm-message')
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('import-result-message')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('settings-import-button')).toHaveTextContent(
+        'selectFile'
+      );
+    });
+
+    it('検証で弾いたファイルでは確認を出さない', async () => {
+      settingsExport.validateImportedData.mockReturnValue({
+        success: false,
+        error: 'importErrorInvalidFormat'
+      });
+      render(<SettingsBackup isPasswordProtected={false} />);
+
+      await chooseFile();
+
+      expect(
+        screen.queryByTestId('import-confirm-message')
+      ).not.toBeInTheDocument();
+    });
+
+    it('パスワード保護がなければパスワード欄を出さない', async () => {
+      render(<SettingsBackup isPasswordProtected={false} />);
+
+      await chooseFile();
+
+      expect(
+        screen.queryByTestId('password-field-import')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('パスワード保護中の取り込み', () => {
+    async function importWithPassword(password: string) {
+      await chooseFile();
+      fireEvent.change(screen.getByTestId('password-field-import'), {
+        target: { value: password }
+      });
+      await confirmImport();
+    }
+
+    it('確認の中でパスワードを入力させ、添えて background へ送る', async () => {
+      render(<SettingsBackup isPasswordProtected />);
+
+      await importWithPassword('secret');
+
+      expect(messaging.sendMessage).toHaveBeenCalledWith('import-settings', {
+        data: { sites: IMPORTED_SITES },
+        password: 'secret'
+      });
+      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
+        'importSuccess'
+      );
+    });
+
+    it('パスワードが違えば理由を出し、確認を閉じない', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: false,
+        error: { code: 'password-mismatch' }
+      });
+      render(<SettingsBackup isPasswordProtected />);
+
+      await importWithPassword('wrong');
+
+      expect(screen.getByTestId('import-confirm-error')).toHaveTextContent(
+        'passwordIncorrect'
+      );
+      expect(screen.getByTestId('import-confirm-message')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('import-result-message')
+      ).not.toBeInTheDocument();
+    });
+
+    it('パスワードが添えられていないと返されたら理由を出し、確認を閉じない', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: false,
+        error: { code: 'password-required' }
+      });
+      render(<SettingsBackup isPasswordProtected />);
+
+      await importWithPassword('secret');
+
+      expect(screen.getByTestId('import-confirm-error')).toHaveTextContent(
+        'passwordRequired'
+      );
+      expect(screen.getByTestId('import-confirm-message')).toBeInTheDocument();
+    });
+  });
+
   describe('インポートの成功', () => {
-    it('設定ファイルの中身を background へ送り、成功を伝える（画面は設定を読み直さず、保存領域に書かない）', async () => {
-      render(<SettingsBackup />);
+    it('確認のあとで設定ファイルの中身を background へ送り、成功を伝える（画面は設定を読み直さず、保存領域に書かない）', async () => {
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
       expect(messaging.sendMessage).toHaveBeenCalledWith('import-settings', {
-        data: { sites: IMPORTED_SITES }
+        data: { sites: IMPORTED_SITES },
+        password: undefined
       });
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
-        'importSuccessWithMerge'
+        'importSuccess'
       );
+      expect(
+        screen.queryByTestId('import-confirm-message')
+      ).not.toBeInTheDocument();
       expect(storage.getSettings).not.toHaveBeenCalled();
       expect(storage.getVision).not.toHaveBeenCalled();
       expect(storage.settingsItem.setValue).not.toHaveBeenCalled();
       expect(storage.visionItem.setValue).not.toHaveBeenCalled();
-    });
-
-    it('入れ子で取り込まれなかったサイトを警告として並べる', async () => {
-      messaging.sendMessage.mockResolvedValue({
-        success: true,
-        skipped: [{ domain: 'm.youtube.com', conflict: 'youtube.com' }]
-      });
-      render(<SettingsBackup />);
-
-      await importFile();
-
-      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
-        'importSuccessWithMerge'
-      );
-      expect(screen.getByText('importWarningNestedSite')).toBeInTheDocument();
     });
 
     it('取り込まなかったスタイルへの参照を外したら既存の警告を出し、検証の警告と重ねて出さない', async () => {
@@ -225,12 +337,11 @@ describe('SettingsBackup', () => {
       });
       messaging.sendMessage.mockResolvedValue({
         success: true,
-        skipped: [],
         skippedPresets: ['Morning'],
         clearedActivePreset: true,
         clearedSchedulePresets: true
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
@@ -245,12 +356,11 @@ describe('SettingsBackup', () => {
     it('スタイルを取り込み切れたら上限の警告を出さない', async () => {
       messaging.sendMessage.mockResolvedValue({
         success: true,
-        skipped: [],
         skippedPresets: [],
         clearedActivePreset: false,
         clearedSchedulePresets: false
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
@@ -265,7 +375,7 @@ describe('SettingsBackup', () => {
         data: { sites: IMPORTED_SITES },
         warnings: ['importWarningOldVersion', 'importWarningUnknownField']
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
@@ -279,12 +389,12 @@ describe('SettingsBackup', () => {
         data: { sites: IMPORTED_SITES },
         warnings: []
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
-        'importSuccessWithMerge'
+        'importSuccess'
       );
     });
   });
@@ -295,12 +405,11 @@ describe('SettingsBackup', () => {
     it('上限の件数と名前を添えた警告にする', async () => {
       messaging.sendMessage.mockResolvedValue({
         success: true,
-        skipped: [],
         skippedPresets: ['Morning', 'Night'],
         clearedActivePreset: false,
         clearedSchedulePresets: false
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
@@ -320,9 +429,9 @@ describe('SettingsBackup', () => {
         success: false,
         error: 'importErrorVersionMismatch'
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorVersionMismatch'
@@ -336,9 +445,9 @@ describe('SettingsBackup', () => {
         error: 'importErrorFileTooLarge',
         errorSubstitutions: ['15']
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorFileTooLarge(15)'
@@ -348,9 +457,9 @@ describe('SettingsBackup', () => {
 
     it('検証が理由を返さなければ既定の理由を出す', async () => {
       settingsExport.validateImportedData.mockReturnValue({ success: false });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorInvalidFormat'
@@ -359,21 +468,27 @@ describe('SettingsBackup', () => {
 
     it('検証を通っても中身が無ければ失敗として扱う', async () => {
       settingsExport.validateImportedData.mockReturnValue({ success: true });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorInvalidFormat'
       );
     });
 
-    it('background への保存が失敗したら失敗を伝え、保存領域に書かない', async () => {
-      messaging.sendMessage.mockResolvedValue({ success: false });
-      render(<SettingsBackup />);
+    it('background への保存が失敗したら確認を閉じて失敗を伝え、保存領域に書かない', async () => {
+      messaging.sendMessage.mockResolvedValue({
+        success: false,
+        error: { code: 'save-failed' }
+      });
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
+      expect(
+        screen.queryByTestId('import-confirm-message')
+      ).not.toBeInTheDocument();
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorSaveFailed'
       );
@@ -381,9 +496,20 @@ describe('SettingsBackup', () => {
       expect(storage.visionItem.setValue).not.toHaveBeenCalled();
     });
 
+    it('background へ送れなければ失敗として扱う', async () => {
+      messaging.sendMessage.mockRejectedValue(new Error('disconnected'));
+      render(<SettingsBackup isPasswordProtected={false} />);
+
+      await importFile();
+
+      expect(screen.getByTestId('import-result-message')).toHaveTextContent(
+        'importErrorSaveFailed'
+      );
+    });
+
     it('background からの応答が無くても失敗として扱う', async () => {
       messaging.sendMessage.mockResolvedValue(undefined);
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
 
@@ -394,9 +520,9 @@ describe('SettingsBackup', () => {
 
     it('ファイルが読めなければ失敗として扱う', async () => {
       settingsExport.readFileAsString.mockRejectedValue(new Error('io error'));
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(screen.getByTestId('import-result-message')).toHaveTextContent(
         'importErrorInvalidFormat'
@@ -405,9 +531,9 @@ describe('SettingsBackup', () => {
 
     it('失敗しても同じファイルを選び直せるよう入力欄を空へ戻す', async () => {
       settingsExport.readFileAsString.mockRejectedValue(new Error('io error'));
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
-      await importFile();
+      await chooseFile();
 
       expect(importInput()).toHaveValue('');
     });
@@ -427,7 +553,7 @@ describe('SettingsBackup', () => {
         data: { version: 1 },
         isLarge: true
       });
-      render(<SettingsBackup />);
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await act(async () => {
         fireEvent.click(exportButton());
@@ -442,16 +568,13 @@ describe('SettingsBackup', () => {
       expect(screen.queryByText('exportLargeWarning')).not.toBeInTheDocument();
     });
 
-    it('インポートの失敗表示は警告ごと片付く', async () => {
-      settingsExport.validateImportedData
-        .mockReturnValueOnce({
-          success: true,
-          data: { sites: IMPORTED_SITES },
-          warnings: ['importWarningOldVersion']
-        })
-        .mockReturnValue({ success: false, error: 'importErrorSaveFailed' });
-      messaging.sendMessage.mockResolvedValue({ success: false });
-      render(<SettingsBackup />);
+    it('インポートの結果表示は警告ごと片付く', async () => {
+      settingsExport.validateImportedData.mockReturnValue({
+        success: true,
+        data: { sites: IMPORTED_SITES },
+        warnings: ['importWarningOldVersion']
+      });
+      render(<SettingsBackup isPasswordProtected={false} />);
 
       await importFile();
       expect(screen.getByText('importWarningOldVersion')).toBeInTheDocument();
