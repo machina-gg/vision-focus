@@ -369,10 +369,6 @@
     "message": "Loading...",
     "description": "Loading text shown while saved settings are being read"
   },
-  "fontCategory": {
-    "message": "Font Category",
-    "description": "Font category label"
-  },
   "fontFamily": {
     "message": "Font",
     "description": "Font family label"

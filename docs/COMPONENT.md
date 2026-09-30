@@ -29,7 +29,7 @@
 | QuickBlockButton  | `QuickBlockButton/` | ドメインを入力してすぐブロックに加える欄                 |
 | TimeLimitBadge    | `TimeLimitBadge/`   | 時間制限の残り時間のバッジ                               |
 | ImageUploader     | `ImageUploader/`    | 背景画像の選択・圧縮・プレビュー                         |
-| FontPicker        | `FontPicker/`       | フォントのカテゴリ・種類・大きさ・太さの選択とプレビュー |
+| FontPicker        | `FontPicker/`       | フォント（プルダウン）・大きさ・太さを選ぶ欄とプレビュー |
 | DownloadButton    | `DownloadButton/`   | 解像度を選んで画面を壁紙画像として保存するボタン         |
 | AnalyticsChart    | `AnalyticsChart/`   | 直近の合計閲覧時間と、種類を切り替えられるグラフ         |
 | DailyChart        | `AnalyticsChart/`   | 日ごとの閲覧時間の折れ線グラフ                           |
@@ -435,7 +435,10 @@ Esc で編集を取り消す。
 | disabled    | `boolean`                          | `false`                 | 薄く表示して操作できなくする                     |
 | previewText | `string`                           | `'Focus on your goals'` | プレビュー欄に出す文言                           |
 
-カテゴリを変えると、そのカテゴリの先頭のフォントを選ぶ。
+フォントの種類はプルダウン 1 つで選ぶ。分類（`FONT_CATEGORIES`）を選択肢のグループの見出しにし、分類順・分類内の順で並べる。
+大きさ（Small / Medium / Large）と太さ（Normal / Medium / Bold）はボタンで選ぶ。
+プレビューの px と font-weight は `src/constants/fonts.ts` の表を使い、ダッシュボードと同じ大きさで描く。
+Google Fonts は選択中のフォントだけを読み込む。
 
 ---
 

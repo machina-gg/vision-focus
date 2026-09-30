@@ -29,11 +29,17 @@ export type FontFamily = (typeof FONT_FAMILIES)[number];
 export type FontCategory =
   'system' | 'modern' | 'elegant' | 'impact' | 'handwriting' | 'japanese';
 
-/** 目標文の文字サイズの段階（sm が最小、xl が最大） */
-export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
+/** 目標文の文字サイズの段階（選択肢に出す順。sm が最小、lg が最大） */
+export const FONT_SIZES = ['sm', 'md', 'lg'] as const;
 
-/** 目標文の文字の太さの段階（normal が最も細く、bold が最も太い） */
-export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+/** 目標文の文字サイズの段階 */
+export type FontSize = (typeof FONT_SIZES)[number];
+
+/** 目標文の文字の太さの段階（選択肢に出す順。normal が最も細く、bold が最も太い） */
+export const FONT_WEIGHTS = ['normal', 'medium', 'bold'] as const;
+
+/** 目標文の文字の太さの段階 */
+export type FontWeight = (typeof FONT_WEIGHTS)[number];
 
 /** ダッシュボードの目標文のフォント */
 export interface FontSettings {
@@ -63,7 +69,7 @@ const SYSTEM_FONT: FontDefinition = {
   css: 'ui-sans-serif, system-ui, sans-serif'
 };
 
-/** フォント選択画面に並べる分類ごとのフォント一覧（name は分類の表示名）。フォントの定義の置き場はここだけ */
+/** 分類ごとのフォント一覧（name は分類の表示名）。選択肢はこの分類順・分類内の順で並ぶ。フォントの定義の置き場はここだけ */
 export const FONT_CATEGORIES: Record<
   FontCategory,
   { name: string; fonts: FontDefinition[] }
@@ -224,20 +230,6 @@ export function getFontDefinition(family: FontFamily): FontDefinition {
     if (font) return font;
   }
   return SYSTEM_FONT;
-}
-
-/**
- * family が属する分類を返す。見つからなければ 'system'
- * @param family 分類を調べるフォントの ID
- * @returns family を含む分類。どの分類にも無ければ 'system'
- */
-export function getFontCategory(family: FontFamily): FontCategory {
-  for (const [categoryKey, category] of Object.entries(FONT_CATEGORIES)) {
-    if (category.fonts.some((f) => f.family === family)) {
-      return categoryKey as FontCategory;
-    }
-  }
-  return 'system';
 }
 
 /** 目標文のフォントの既定値（システムフォント・md・bold） */

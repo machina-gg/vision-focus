@@ -75,7 +75,7 @@ export const ModernFont: Story = {
       value={{
         family: 'inter',
         size: 'lg',
-        weight: 'semibold'
+        weight: 'medium'
       }}
     />
   )
@@ -86,7 +86,7 @@ export const JapaneseFont: Story = {
     <FontPickerWrapper
       value={{
         family: 'notosansjp',
-        size: 'xl',
+        size: 'lg',
         weight: 'bold'
       }}
       previewText="目標を達成する"

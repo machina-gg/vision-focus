@@ -27,7 +27,7 @@ const mockVision: VisionSettings = {
     fontSettings: {
       family: 'inter',
       size: 'lg',
-      weight: 'semibold'
+      weight: 'medium'
     }
   },
   presets: [
@@ -45,7 +45,7 @@ const mockVision: VisionSettings = {
       fontSettings: {
         family: 'inter',
         size: 'lg',
-        weight: 'semibold'
+        weight: 'medium'
       }
     },
     {

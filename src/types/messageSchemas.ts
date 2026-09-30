@@ -2,7 +2,7 @@ import * as z from 'zod';
 
 import { IMAGE_LIMITS } from '~/constants/limits';
 import { END_OF_DAY_TIME, TIME_OF_DAY_PATTERN } from '~/lib/time';
-import { FONT_FAMILIES } from '~/types/font';
+import { FONT_FAMILIES, FONT_SIZES, FONT_WEIGHTS } from '~/types/font';
 import { UNBLOCK_HOLD_SECONDS_OPTIONS } from '~/types/storage';
 
 /** 開いているページのサイトの時間制限を問い合わせる本文 */
@@ -251,10 +251,10 @@ export type UpdateAnalyticsOptInBody = z.infer<
 export const FontSettingsSchema = z.object({
   /** 使うフォント（FONT_FAMILIES のどれか） */
   family: z.enum(FONT_FAMILIES),
-  /** 文字サイズの段階 */
-  size: z.enum(['sm', 'md', 'lg', 'xl']),
-  /** 文字の太さの段階 */
-  weight: z.enum(['normal', 'medium', 'semibold', 'bold'])
+  /** 文字サイズの段階（FONT_SIZES のどれか） */
+  size: z.enum(FONT_SIZES),
+  /** 文字の太さの段階（FONT_WEIGHTS のどれか） */
+  weight: z.enum(FONT_WEIGHTS)
 });
 
 /** 表示設定の形（DashboardDisplaySettings と対応する。設定の取り込みとスタイルの更新の検証に使う） */

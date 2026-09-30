@@ -3,19 +3,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   getBackgroundUrl,
   loadGoogleFont,
+  FONT_SIZE_PX,
   FONT_WEIGHT_VALUE
 } from '~/constants';
 import { STORAGE_LOADED_TIMEOUT_MS } from '~/constants/intervals';
 import { hasStoredVision } from '~/lib/storage';
 import type { DashboardDisplaySettings } from '~/types/storage';
 import { getFontDefinition } from '~/types/font';
-
-const FONT_SIZE_PX: Record<string, number> = {
-  sm: 30,
-  md: 36,
-  lg: 48,
-  xl: 60
-};
 
 interface UseBackgroundPreloadOptions {
   /** 今表示する表示設定 */

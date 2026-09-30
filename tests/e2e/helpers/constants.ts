@@ -133,8 +133,7 @@ export const SELECTORS = {
     backgroundColorPicker: '[data-testid="style-text-color-picker"]',
     customBackgroundUpload: '[data-testid="style-bg-upload"]',
     customBackgroundDropzone: '[data-testid="style-bg-upload-dropzone"]',
-    fontCategoryButton: '[data-testid="font-category-button"]',
-    fontFamilySelect: '[data-testid="font-family-button"]',
+    fontFamilySelect: '[data-testid="font-family-select"]',
     fontSizeButton: '[data-testid="font-size-button"]',
     fontWeightButton: '[data-testid="font-weight-button"]',
     saveButton: '[data-testid="style-save-button"]',
@@ -300,7 +299,8 @@ export const UI_TEXT = {
   },
   font: {
     sizeSmall: 'Small',
-    sizeLarge: 'Large'
+    sizeLarge: 'Large',
+    weightNormal: 'Normal'
   }
 };
 

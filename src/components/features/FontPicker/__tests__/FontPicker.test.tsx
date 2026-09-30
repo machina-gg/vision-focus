@@ -1,11 +1,10 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { FontPicker } from '../FontPicker';
 import { FONT_CATEGORIES, type FontSettings } from '~/types/font';
-import { itemAt } from '~/test/items';
 
 const settingsOf = (overrides: Partial<FontSettings> = {}): FontSettings => ({
   family: 'system',
@@ -29,6 +28,9 @@ function renderPicker(
   );
   return { onChange, ...result };
 }
+
+const familySelect = () =>
+  screen.getByTestId<HTMLSelectElement>('font-family-select');
 
 const buttonTexts = (testId: string) =>
   screen.getAllByTestId(testId).map((el) => el.textContent);
@@ -66,82 +68,104 @@ describe('FontPicker', () => {
     it('空文字でも例外にならない', () => {
       renderPicker(settingsOf(), { previewText: '' });
 
-      expect(screen.getByText('fontCategory')).toBeInTheDocument();
+      expect(familySelect()).toBeInTheDocument();
     });
 
-    it('選んだ大きさと太さを反映する', () => {
-      renderPicker(settingsOf({ size: 'xl', weight: 'normal' }));
+    it.each([
+      ['sm', '30px'],
+      ['md', '36px'],
+      ['lg', '48px']
+    ] as const)('大きさ %s をダッシュボードと同じ %s で出す', (size, px) => {
+      renderPicker(settingsOf({ size }));
 
-      const preview = screen.getByText('Focus on your goals');
-      expect(preview).toHaveStyle({ fontSize: '48px', fontWeight: '400' });
+      expect(screen.getByText('Focus on your goals')).toHaveStyle({
+        fontSize: px
+      });
+    });
+
+    it('選んだ太さを反映する', () => {
+      renderPicker(settingsOf({ weight: 'normal' }));
+
+      expect(screen.getByText('Focus on your goals')).toHaveStyle({
+        fontWeight: '400'
+      });
     });
   });
 
-  describe('カテゴリ', () => {
-    it('すべてのカテゴリを選べる', () => {
+  describe('フォントのプルダウン', () => {
+    it('ラベルでプルダウンを指せる', () => {
       renderPicker();
 
-      expect(buttonTexts('font-category-button')).toEqual([
-        'System',
-        'Modern',
-        'Elegant',
-        'Impact',
-        'Handwriting',
-        'Japanese'
-      ]);
+      expect(screen.getByLabelText('fontFamily')).toBe(familySelect());
     });
 
-    it('渡されたフォントが属するカテゴリの一覧を開く', () => {
+    it('分類を見出しにして、分類順・分類内の順ですべてのフォントを並べる', () => {
+      renderPicker();
+
+      const groups = within(familySelect())
+        .getAllByRole('group')
+        .map((group) => ({
+          label: group.getAttribute('label'),
+          fonts: within(group)
+            .getAllByRole('option')
+            .map((option) => option.textContent)
+        }));
+      expect(groups).toEqual(
+        Object.values(FONT_CATEGORIES).map((category) => ({
+          label: category.name,
+          fonts: category.fonts.map((font) => font.name)
+        }))
+      );
+    });
+
+    it('渡されたフォントを選択中にする', () => {
       renderPicker(settingsOf({ family: 'playfair' }));
 
-      expect(buttonTexts('font-family-button')).toEqual(
-        FONT_CATEGORIES.elegant.fonts.map((font) => font.name)
-      );
+      expect(familySelect().value).toBe('playfair');
     });
 
-    it('カテゴリを変えると、そのカテゴリのフォント一覧に入れ替わる', () => {
-      renderPicker();
-
-      clickButton('Japanese');
-
-      expect(buttonTexts('font-family-button')).toEqual(
-        FONT_CATEGORIES.japanese.fonts.map((font) => font.name)
-      );
-      expect(screen.queryByText('System Default')).not.toBeInTheDocument();
-    });
-
-    it('カテゴリを変えると先頭のフォントを選び、他の設定は保つ', () => {
+    it('選んだフォントで onChange が呼ばれ、他の設定は保つ', () => {
       const { onChange } = renderPicker(
-        settingsOf({ size: 'sm', weight: 'medium' })
+        settingsOf({ family: 'inter', size: 'sm', weight: 'medium' })
       );
 
-      clickButton('Elegant');
+      fireEvent.change(familySelect(), { target: { value: 'notosansjp' } });
 
       expect(onChange).toHaveBeenCalledWith({
-        family: itemAt(FONT_CATEGORIES.elegant.fonts, 0).family,
+        family: 'notosansjp',
         size: 'sm',
         weight: 'medium'
       });
     });
   });
 
-  describe('フォントの選択', () => {
-    it('押したフォントで onChange が呼ばれる', () => {
-      const { onChange } = renderPicker(settingsOf({ family: 'inter' }));
-
-      clickButton('Roboto');
-
-      expect(onChange).toHaveBeenCalledWith({
-        family: 'roboto',
-        size: 'md',
-        weight: 'bold'
-      });
-    });
-
-    it('Google Fonts のフォントを選ぶと読み込みの link を足す', () => {
+  describe('Google Fonts の読み込み', () => {
+    it('選択中のフォントだけを読み込む', () => {
       renderPicker(settingsOf({ family: 'inter' }));
 
-      expect(document.getElementById('google-font-Inter')).not.toBeNull();
+      expect(
+        Array.from(document.querySelectorAll('link[id^="google-font-"]')).map(
+          (link) => link.id
+        )
+      ).toEqual(['google-font-Inter']);
+    });
+
+    it('システムフォントなら何も読み込まない', () => {
+      renderPicker(settingsOf({ family: 'system' }));
+
+      expect(
+        document.querySelectorAll('link[id^="google-font-"]')
+      ).toHaveLength(0);
+    });
+
+    it('フォントが変わったら、変わった先のフォントを読み込む', () => {
+      const { rerender } = renderPicker(settingsOf({ family: 'inter' }));
+
+      rerender(
+        <FontPicker value={settingsOf({ family: 'lora' })} onChange={vi.fn()} />
+      );
+
+      expect(document.getElementById('google-font-Lora')).not.toBeNull();
     });
 
     it('同じフォントを二度読み込まない', () => {
@@ -161,14 +185,13 @@ describe('FontPicker', () => {
   });
 
   describe('大きさの選択', () => {
-    it('4 段階から選べる', () => {
+    it('3 段階から選べる', () => {
       renderPicker();
 
       expect(buttonTexts('font-size-button')).toEqual([
         'Small',
         'Medium',
-        'Large',
-        'Extra Large'
+        'Large'
       ]);
     });
 
@@ -186,13 +209,12 @@ describe('FontPicker', () => {
   });
 
   describe('太さの選択', () => {
-    it('4 段階から選べる', () => {
+    it('3 段階から選べる', () => {
       renderPicker();
 
       expect(buttonTexts('font-weight-button')).toEqual([
         'Normal',
         'Medium',
-        'Semibold',
         'Bold'
       ]);
     });
@@ -200,53 +222,31 @@ describe('FontPicker', () => {
     it('押した太さで onChange が呼ばれ、他の設定は保つ', () => {
       const { onChange } = renderPicker(settingsOf({ size: 'sm' }));
 
-      clickButton('Semibold');
+      clickButton('Normal');
 
       expect(onChange).toHaveBeenCalledWith({
         family: 'system',
         size: 'sm',
-        weight: 'semibold'
+        weight: 'normal'
       });
     });
   });
 
   describe('選択中の印', () => {
-    it('渡されたフォントが属するカテゴリだけが押下状態になる', () => {
-      renderPicker(settingsOf({ family: 'playfair' }));
+    it('渡された大きさ・太さだけが押下状態になる', () => {
+      renderPicker(settingsOf({ size: 'lg', weight: 'normal' }));
 
-      expect(pressedTexts('font-category-button')).toEqual(['Elegant']);
-    });
-
-    it('カテゴリを変えると押下状態が移る', () => {
-      renderPicker();
-
-      clickButton('Japanese');
-
-      expect(pressedTexts('font-category-button')).toEqual(['Japanese']);
-    });
-
-    it('渡されたフォント・大きさ・太さだけが押下状態になる', () => {
-      renderPicker(
-        settingsOf({ family: 'inter', size: 'xl', weight: 'normal' })
-      );
-
-      expect(pressedTexts('font-family-button')).toEqual(['Inter']);
-      expect(pressedTexts('font-size-button')).toEqual(['Extra Large']);
+      expect(pressedTexts('font-size-button')).toEqual(['Large']);
       expect(pressedTexts('font-weight-button')).toEqual(['Normal']);
     });
   });
 
   describe('disabled のとき', () => {
-    it('すべての選択ボタンを押せなくする', () => {
+    it('プルダウンとすべての選択ボタンを操作できなくする', () => {
       renderPicker(settingsOf(), { disabled: true });
 
-      const testIds = [
-        'font-category-button',
-        'font-family-button',
-        'font-size-button',
-        'font-weight-button'
-      ];
-      testIds.forEach((testId) => {
+      expect(familySelect()).toBeDisabled();
+      ['font-size-button', 'font-weight-button'].forEach((testId) => {
         screen.getAllByTestId(testId).forEach((button) => {
           expect(button).toBeDisabled();
         });
@@ -258,7 +258,6 @@ describe('FontPicker', () => {
 
       // 包む div の pointer-events はマウスしか止めないため、無効の属性が無いとこの押下で設定が書き換わる
       clickButton('Large');
-      clickButton('Japanese');
 
       expect(onChange).not.toHaveBeenCalled();
     });
