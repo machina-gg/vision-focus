@@ -266,9 +266,7 @@ export function BlocklistTab({
           isOpen={unblockGuard.isConfirmModalOpen}
           onClose={unblockGuard.close}
           onConfirm={() => void unblockGuard.confirm()}
-          domain={unblockGuard.pending.domain}
-          blockStyle={unblockGuard.pending.blockStyle}
-          action={unblockGuard.pending.action}
+          subject={unblockGuard.pending.subject}
           holdSeconds={settings.unblockConfirm.holdSeconds}
         />
       )}

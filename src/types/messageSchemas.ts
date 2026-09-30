@@ -226,7 +226,9 @@ export type UpdateNotificationsBody = z.infer<
 /** 長押し確認の設定を保存する本文 */
 export const UpdateUnblockConfirmBodySchema = z.object({
   /** 新しい長押し確認の設定 */
-  unblockConfirm: UnblockConfirmSettingsSchema
+  unblockConfirm: UnblockConfirmSettingsSchema,
+  /** パスワード保護中に秒数を短くするときに照合するパスワード */
+  password: UnblockPasswordSchema
 });
 
 /** 長押し確認の設定の保存の本文（UpdateUnblockConfirmBodySchema を通った値） */

@@ -18,13 +18,17 @@ interface Response {
 describe('update-unblock-confirm ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(setUnblockConfirm).mockResolvedValue(undefined);
+    vi.mocked(setUnblockConfirm).mockResolvedValue(null);
   });
 
   it.each([
     ['body が null', null],
     ['unblockConfirm が無い', {}],
-    ['秒数が選択肢に無い', { unblockConfirm: { holdSeconds: 15 } }]
+    ['秒数が選択肢に無い', { unblockConfirm: { holdSeconds: 15 } }],
+    [
+      'パスワードが文字列でない',
+      { unblockConfirm: { holdSeconds: 5 }, password: 1234 }
+    ]
   ])('%s なら invalid-request を返し、何も変えない', async (_label, body) => {
     const result = await invoke<Response>(handler, body);
 
@@ -41,7 +45,35 @@ describe('update-unblock-confirm ハンドラ', () => {
     });
 
     expect(result).toEqual({ success: true });
-    expect(setUnblockConfirm).toHaveBeenCalledWith({ holdSeconds: 30 });
+    expect(setUnblockConfirm).toHaveBeenCalledWith(
+      { holdSeconds: 30 },
+      undefined
+    );
+  });
+
+  it('添えられたパスワードを照合に渡す', async () => {
+    await invoke<Response>(handler, {
+      unblockConfirm: { holdSeconds: 5 },
+      password: 'secret'
+    });
+
+    expect(setUnblockConfirm).toHaveBeenCalledWith(
+      { holdSeconds: 5 },
+      'secret'
+    );
+  });
+
+  it.each([
+    ['required', 'password-required'],
+    ['mismatch', 'password-mismatch']
+  ] as const)('照合で %s と拒まれたら %s を返す', async (rejection, code) => {
+    vi.mocked(setUnblockConfirm).mockResolvedValue(rejection);
+
+    const result = await invoke<Response>(handler, {
+      unblockConfirm: { holdSeconds: 5 }
+    });
+
+    expect(result).toEqual({ success: false, error: { code } });
   });
 
   it('保存に失敗したら save-failed を返す', async () => {

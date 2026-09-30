@@ -373,7 +373,7 @@ describe('YouTubeSection', () => {
 
       fireEvent.click(switchNear('youtubeBlockAccess'));
 
-      expect(onlyRequest(onRequestUnblock).timeLimit).toEqual(timeLimit);
+      expect(onlyRequest(onRequestUnblock)).toMatchObject({ timeLimit });
     });
   });
 

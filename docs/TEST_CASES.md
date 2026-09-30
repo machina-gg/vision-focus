@@ -172,6 +172,8 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 | OPT-SET12 | 手元にしか無いサイト・スケジュール・スタイルがインポートで消え、消えたサイトの記録も消える（ファイルにあるサイトの記録は残る） | P2     |
 | OPT-SET13 | インポートの確認をキャンセルすると何も変わらない                                                                               | P2     |
 | OPT-SET14 | パスワード保護中はインポートの確認でパスワードを求め、違うと理由が出て何も変わらず、合うと取り込まれる                         | P2     |
+| OPT-SET15 | 長押しの秒数を短くするには変更前の秒数の長押しが要り、やめると値が変わらない（長くするときは確認なし）                         | P2     |
+| OPT-SET16 | パスワード保護中は秒数を選べず、短くする変更を直接送るとパスワードが無い・違うときは拒まれ値が変わらない                       | P2     |
 
 #### ヘルプタブ
 
@@ -874,7 +876,7 @@ grep -oE '^\| [A-Z0-9-]+ +\|.*\| (P[012]) +\|' docs/TEST_CASES.md |
 
 **Analytics 詳細機能** 8. AN-004: 追跡中サイトのサブドメインの滞在時間 9. AN-006, AN-007: Opt-Out 時の集計継続・データリセット 10. OPT-A06, OPT-A07, OPT-A08, OPT-A09, OPT-A10, OPT-A11: Analytics 詳細機能
 
-**その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-SET07: 通知設定 19. OPT-H01, OPT-H02, OPT-H03: ヘルプタブ全般 20. OPT-SET01, OPT-SET06, OPT-SET08, OPT-SET09, OPT-SET10, OPT-SET11, OPT-SET12, OPT-SET13, OPT-SET14: 設定タブ全般
+**その他詳細機能** 12. TL-007: Time Limit 使用状況表示 13. YT-003, YT-007: YouTube Comments・設定即時反映 14. BLOCK-009, BLOCK-010: ブロック履歴記録 15. NEW-009, NEW-010, NEW-012, NEW-013: ダッシュボード詳細表示 16. POP-007, POP-012, POP-013, POP-014: ポップアップ詳細機能 17. OPT-003, OPT-004: URL ハッシュ・Opt-In モーダル 18. OPT-SET07: 通知設定 19. OPT-H01, OPT-H02, OPT-H03: ヘルプタブ全般 20. OPT-SET01, OPT-SET06, OPT-SET08, OPT-SET09, OPT-SET10, OPT-SET11, OPT-SET12, OPT-SET13, OPT-SET14, OPT-SET15, OPT-SET16: 設定タブ全般
 
 ## 6. テストカバレッジ目標
 

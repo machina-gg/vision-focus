@@ -1849,6 +1849,24 @@
       }
     }
   },
+  "shortenHoldConfirmTitle": {
+    "message": "長押しの秒数の変更",
+    "description": "長押しの秒数を短くするときの確認ダイアログタイトル"
+  },
+  "shortenHoldConfirmDescription": {
+    "message": "長押しの秒数を$FROM$秒から$TO$秒に短くします。ボタンを$FROM$秒間長押しして確認してください。",
+    "description": "長押しの秒数を短くするときの確認の説明",
+    "placeholders": {
+      "from": {
+        "content": "$1",
+        "example": "30"
+      },
+      "to": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
   "unblockConfirmHoldButton": {
     "message": "長押しして確認",
     "description": "長押しボタンラベル"

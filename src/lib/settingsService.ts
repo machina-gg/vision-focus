@@ -230,13 +230,28 @@ export async function setNotifications(
 }
 
 /**
- * 長押し確認の設定を保存する
+ * 長押し確認の設定を保存する。保存済みより秒数を短くするときはブロックを弱める操作として、パスワード保護中は添えられたパスワードを照合してから書く（比較・照合・書き込みの間に別の書き込みは入らない）
  * @param unblockConfirm 新しい長押し確認の設定（検証済み）
+ * @param password 操作に添えられたパスワード（平文）。無ければ undefined
+ * @returns 拒んだ理由（required / mismatch）。保存したら null
  */
 export async function setUnblockConfirm(
-  unblockConfirm: UnblockConfirmSettings
-): Promise<void> {
-  await replaceSettings((current) => ({ ...current, unblockConfirm }));
+  unblockConfirm: UnblockConfirmSettings,
+  password: string | undefined
+): Promise<'required' | 'mismatch' | null> {
+  const inputHash =
+    password === undefined ? null : await hashPassword(password);
+  return mutate((current) => {
+    const weakens =
+      unblockConfirm.holdSeconds < current.unblockConfirm.holdSeconds;
+    const rejection = matchUnblockPassword(
+      current.password,
+      inputHash,
+      weakens
+    );
+    if (rejection) return { result: rejection };
+    return { settings: { ...current, unblockConfirm }, result: null };
+  });
 }
 
 /**
@@ -507,6 +522,16 @@ function matchCurrent(
   return password.passwordHash === inputHash ? null : 'mismatch';
 }
 
+function matchUnblockPassword(
+  password: PasswordSettings,
+  inputHash: string | null,
+  weakens: boolean
+): 'required' | 'mismatch' | null {
+  if (!isProtectedByPassword(password)) return null;
+  if (inputHash === null) return weakens ? 'required' : null;
+  return password.passwordHash === inputHash ? null : 'mismatch';
+}
+
 /**
  * パスワードを設定してパスワード保護を始める（強度は検査済みのものを受ける。保存するのは SHA-256 の 16 進）
  * @param password 新しいパスワード（平文）
@@ -584,11 +609,7 @@ export async function checkUnblockPassword(
 ): Promise<'required' | 'mismatch' | null> {
   const inputHash =
     password === undefined ? null : await hashPassword(password);
-  return mutate((current) => {
-    if (!isProtectedByPassword(current.password)) return { result: null };
-    if (inputHash === null) return { result: weakens ? 'required' : null };
-    return {
-      result: current.password.passwordHash === inputHash ? null : 'mismatch'
-    };
-  });
+  return mutate((current) => ({
+    result: matchUnblockPassword(current.password, inputHash, weakens)
+  }));
 }

@@ -19,9 +19,11 @@ export const ToggleUnblock: Story = {
     isOpen: true,
     onClose: () => {},
     onConfirm: () => {},
-    domain: 'twitter.com',
-    blockStyle: 'フルブロック',
-    action: 'toggle',
+    subject: {
+      action: 'toggle',
+      domain: 'twitter.com',
+      blockStyle: 'フルブロック'
+    },
     holdSeconds: 5
   }
 };
@@ -31,9 +33,11 @@ export const DeleteBlock: Story = {
     isOpen: true,
     onClose: () => {},
     onConfirm: () => {},
-    domain: 'reddit.com',
-    blockStyle: 'タイムリミット',
-    action: 'delete',
+    subject: {
+      action: 'delete',
+      domain: 'reddit.com',
+      blockStyle: 'タイムリミット'
+    },
     holdSeconds: 5
   }
 };
@@ -43,9 +47,21 @@ export const LongHold: Story = {
     isOpen: true,
     onClose: () => {},
     onConfirm: () => {},
-    domain: 'twitter.com',
-    blockStyle: 'フルブロック',
-    action: 'toggle',
+    subject: {
+      action: 'toggle',
+      domain: 'twitter.com',
+      blockStyle: 'フルブロック'
+    },
+    holdSeconds: 30
+  }
+};
+
+export const ShortenHold: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    onConfirm: () => {},
+    subject: { action: 'shorten-hold', nextHoldSeconds: 5 },
     holdSeconds: 30
   }
 };
@@ -55,9 +71,11 @@ export const Closed: Story = {
     isOpen: false,
     onClose: () => {},
     onConfirm: () => {},
-    domain: 'twitter.com',
-    blockStyle: 'フルブロック',
-    action: 'toggle',
+    subject: {
+      action: 'toggle',
+      domain: 'twitter.com',
+      blockStyle: 'フルブロック'
+    },
     holdSeconds: 5
   }
 };

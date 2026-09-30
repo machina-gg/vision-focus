@@ -349,7 +349,7 @@ describe('通知・長押し確認・利用状況の送信への同意', () => {
   it('長押し確認の設定だけを書き換える', async () => {
     givenSettings({ ...DEFAULT_SETTINGS, schedules: [schedule('s1')] });
 
-    await setUnblockConfirm({ holdSeconds: 60 });
+    await setUnblockConfirm({ holdSeconds: 60 }, undefined);
 
     expect(await getSettings()).toEqual({
       ...DEFAULT_SETTINGS,
@@ -1043,6 +1043,72 @@ describe('パスワード', () => {
       await checkUnblockPassword('old1', true);
 
       expect(fakeChrome.localData).toEqual(before);
+    });
+  });
+
+  describe('setUnblockConfirm', () => {
+    const givenHoldSeconds = async (password: string | null) => {
+      await givenPassword(password);
+      const settings = await getSettings();
+      givenSettings({ ...settings, unblockConfirm: { holdSeconds: 30 } });
+    };
+
+    it.each([
+      ['長くする', 60, undefined],
+      ['同じ値にする', 30, undefined],
+      ['短くする', 5, undefined],
+      ['短くする（パスワードが違っても）', 5, 'wrong']
+    ] as const)(
+      '保護していなければ、%sときはパスワードを問わず書く',
+      async (_label, holdSeconds, password) => {
+        await givenHoldSeconds(null);
+
+        expect(await setUnblockConfirm({ holdSeconds }, password)).toBeNull();
+        expect((await getSettings()).unblockConfirm).toEqual({ holdSeconds });
+      }
+    );
+
+    it.each([
+      ['短くしてパスワードが無い', 5, undefined, 'required'],
+      ['短くしてパスワードが違う', 5, 'wrong', 'mismatch']
+    ] as const)(
+      '保護中: %s なら %s を返し、書かない',
+      async (_label, holdSeconds, password, expected) => {
+        await givenHoldSeconds('old1');
+        const before = structuredClone(fakeChrome.localData);
+
+        expect(await setUnblockConfirm({ holdSeconds }, password)).toBe(
+          expected
+        );
+        expect(fakeChrome.localData).toEqual(before);
+      }
+    );
+
+    it.each([
+      ['短くしてパスワードが合う', 5, 'old1'],
+      ['長くしてパスワードが無い', 60, undefined],
+      ['同じ値でパスワードが無い', 30, undefined]
+    ] as const)(
+      '保護中: %s なら書く',
+      async (_label, holdSeconds, password) => {
+        await givenHoldSeconds('old1');
+
+        expect(await setUnblockConfirm({ holdSeconds }, password)).toBeNull();
+        expect((await getSettings()).unblockConfirm).toEqual({ holdSeconds });
+      }
+    );
+
+    it('短くするかは書き込みの直前の保存値で決める', async () => {
+      await givenHoldSeconds('old1');
+
+      const [lengthened, shortened] = await Promise.all([
+        setUnblockConfirm({ holdSeconds: 60 }, undefined),
+        setUnblockConfirm({ holdSeconds: 30 }, undefined)
+      ]);
+
+      expect(lengthened).toBeNull();
+      expect(shortened).toBe('required');
+      expect((await getSettings()).unblockConfirm).toEqual({ holdSeconds: 60 });
     });
   });
 });

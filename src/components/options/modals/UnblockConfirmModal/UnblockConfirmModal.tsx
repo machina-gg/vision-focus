@@ -1,14 +1,49 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ShieldOff, Trash2 } from 'lucide-react';
+import { ShieldOff, Timer, Trash2, type LucideIcon } from 'lucide-react';
 
 import { Modal, Button } from '~/components/ui';
-import type { UnblockAction } from '~/hooks/useUnblockGuard';
+import type {
+  UnblockAction,
+  UnblockConfirmSubject
+} from '~/hooks/useUnblockGuard';
 import { getMessage } from '~/lib/i18n';
 import type { UnblockHoldSeconds } from '~/types/storage';
 
 const MS_PER_SECOND = 1000;
 
-/** UnblockConfirmModal に渡す開閉状態・解除の対象と操作 */
+const DESCRIPTION_KEYS: Record<UnblockAction, string> = {
+  toggle: 'unblockConfirmDescription',
+  delete: 'deleteBlockConfirmDescription',
+  'shorten-hold': 'shortenHoldConfirmDescription'
+};
+
+const TITLE_KEYS: Record<UnblockAction, string> = {
+  toggle: 'unblockConfirmTitle',
+  delete: 'unblockConfirmTitle',
+  'shorten-hold': 'shortenHoldConfirmTitle'
+};
+
+const ICONS: Record<UnblockAction, LucideIcon> = {
+  toggle: ShieldOff,
+  delete: Trash2,
+  'shorten-hold': Timer
+};
+
+function descriptionOf(
+  subject: UnblockConfirmSubject,
+  holdSeconds: UnblockHoldSeconds
+): string {
+  const key = DESCRIPTION_KEYS[subject.action];
+  if (subject.action === 'shorten-hold') {
+    return getMessage(key, [
+      String(holdSeconds),
+      String(subject.nextHoldSeconds)
+    ]);
+  }
+  return getMessage(key, [subject.domain, String(holdSeconds)]);
+}
+
+/** UnblockConfirmModal に渡す開閉状態・確認する操作 */
 interface UnblockConfirmModalProps {
   /** false の間は表示しない。閉じると長押しの進み具合を 0 に戻す */
   isOpen: boolean;
@@ -16,28 +51,22 @@ interface UnblockConfirmModalProps {
   onClose: () => void;
   /** ボタンを holdSeconds 秒押し続けたときに呼ぶ */
   onConfirm: () => void;
-  /** 解除するサイトのドメイン */
-  domain: string;
-  /** 現在のブロックのしかたを表す文言（確認文に埋め込む） */
-  blockStyle: string;
-  /** 削除か無効化か（文言とアイコンを切り替える） */
-  action: UnblockAction;
-  /** 確定までに押し続けさせる秒数 */
+  /** 確認する操作（種別で見出し・文言・アイコンを切り替え、サイトのブロックを外すときはブロック方式も出す） */
+  subject: UnblockConfirmSubject;
+  /** 確定までに押し続けさせる秒数（保存済みの秒数） */
   holdSeconds: UnblockHoldSeconds;
 }
 
 /**
- * ブロックの削除・無効化を、ボタンを一定時間押し続けさせてから確定する確認モーダルを表示する
- * @param props 開閉状態・解除の対象と操作（各フィールドは UnblockConfirmModalProps）
+ * ブロックを弱める操作（ブロックの削除・無効化、長押しの秒数を短くする）を、ボタンを一定時間押し続けさせてから確定する確認モーダルを表示する
+ * @param props 開閉状態・確認する操作（各フィールドは UnblockConfirmModalProps）
  * @returns 長押しの進み具合つきの確認モーダル
  */
 export function UnblockConfirmModal({
   isOpen,
   onClose,
   onConfirm,
-  domain,
-  blockStyle,
-  action,
+  subject,
   holdSeconds
 }: UnblockConfirmModalProps) {
   const holdDurationMs = holdSeconds * MS_PER_SECOND;
@@ -101,19 +130,14 @@ export function UnblockConfirmModal({
     };
   }, []);
 
-  const descriptionKey =
-    action === 'delete'
-      ? 'deleteBlockConfirmDescription'
-      : 'unblockConfirmDescription';
-  const description = getMessage(descriptionKey, [domain, String(holdSeconds)]);
-
-  const Icon = action === 'delete' ? Trash2 : ShieldOff;
+  const description = descriptionOf(subject, holdSeconds);
+  const Icon = ICONS[subject.action];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={getMessage('unblockConfirmTitle')}
+      title={getMessage(TITLE_KEYS[subject.action])}
       size="sm"
     >
       <div className="space-y-4">
@@ -121,9 +145,11 @@ export function UnblockConfirmModal({
           <Icon className="w-5 h-5 text-warning-600 flex-shrink-0" />
           <div className="space-y-1">
             <p className="text-sm text-warning-800">{description}</p>
-            <p className="text-xs text-warning-600">
-              {getMessage('unblockConfirmBlockStyle', blockStyle)}
-            </p>
+            {subject.action !== 'shorten-hold' && (
+              <p className="text-xs text-warning-600">
+                {getMessage('unblockConfirmBlockStyle', subject.blockStyle)}
+              </p>
+            )}
           </div>
         </div>
 

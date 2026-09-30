@@ -85,3 +85,32 @@ export async function openExternalSite(
   await page.waitForLoadState('domcontentloaded');
   return page;
 }
+
+/**
+ * 拡張機能のページから background へ、画面を通さずにメッセージを直接送る（@webext-core/messaging と同じ形で包み、応答の res を返す）
+ * @param page 拡張機能のページ（chrome-extension://）
+ * @param type メッセージの種類
+ * @param data メッセージの本文
+ * @returns ハンドラが返した応答
+ */
+export async function sendExtensionMessage(
+  page: Page,
+  type: string,
+  data: unknown
+): Promise<unknown> {
+  return await page.evaluate(
+    async ({ type, data }) => {
+      const reply = (await chrome.runtime.sendMessage({
+        id: 0,
+        type,
+        data,
+        timestamp: Date.now()
+      })) as { res?: unknown; err?: unknown } | undefined;
+      if (!reply || reply.err !== undefined) {
+        throw new Error(`メッセージが失敗した: ${JSON.stringify(reply)}`);
+      }
+      return reply.res;
+    },
+    { type, data }
+  );
+}
