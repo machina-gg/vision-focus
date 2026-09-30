@@ -43,7 +43,7 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
 
     await updateBlockRules();
 
-    // 件数では比べない（有効化・時間制限や一時停止の解除でも、件数を変えずに対象が増える）
+    // 件数では比べない（有効化・時間制限の解除でも、件数を変えずに対象が増える）
     const blockedAfter = (await getRuleTargets()).redirect;
     const hasNewlyBlocked = blockedAfter.some(
       (domain) => !blockedBefore.includes(domain)

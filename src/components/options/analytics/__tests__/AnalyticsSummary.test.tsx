@@ -151,7 +151,7 @@ describe('AnalyticsSummary', () => {
     });
 
     it('再ブロックだけを出し、押すとそのサイトが渡る（追跡停止は出さない）', () => {
-      const site = siteOf({ domain: 'paused.example', status: 'disabled' });
+      const site = siteOf({ domain: 'disabled.example', status: 'disabled' });
       const { onReblock } = renderSummary([site]);
 
       fireEvent.click(screen.getByTestId('analytics-reblock-button'));

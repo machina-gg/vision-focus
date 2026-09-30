@@ -1,19 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { invoke } from './helpers';
-import { itemAt } from '~/test/items';
 
 vi.mock('~/lib/settingsService', () => ({
   setScheduleEnabled: vi.fn()
 }));
 
 vi.mock('../../blocker', () => ({
-  updateBlockRules: vi.fn(),
-  blockExistingTabs: vi.fn()
+  updateBlockRules: vi.fn()
 }));
 
 import { setScheduleEnabled } from '~/lib/settingsService';
-import { updateBlockRules, blockExistingTabs } from '../../blocker';
+import { updateBlockRules } from '../../blocker';
 import { toggleScheduleHandler as handler } from '../../handlers/toggle-schedule';
 import type { MessageError } from '~/types/messages';
 
@@ -25,10 +23,7 @@ interface Response {
 describe('toggle-schedule ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(setScheduleEnabled).mockResolvedValue({
-      rejection: null,
-      resumed: false
-    });
+    vi.mocked(setScheduleEnabled).mockResolvedValue(null);
   });
 
   it.each([
@@ -58,36 +53,8 @@ describe('toggle-schedule ハンドラ', () => {
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
 
-  it('一時停止を解かなかったときは、開いているタブをブロックしない', async () => {
-    await invoke(handler, { id: 's1', enabled: true });
-
-    expect(blockExistingTabs).not.toHaveBeenCalled();
-  });
-
-  it('一時停止を解いたときは、ルールを作り直してから開いているタブをブロックする', async () => {
-    vi.mocked(setScheduleEnabled).mockResolvedValue({
-      rejection: null,
-      resumed: true
-    });
-
-    const result = await invoke<Response>(handler, {
-      id: 's1',
-      enabled: true
-    });
-
-    expect(result).toEqual({ success: true });
-    expect(blockExistingTabs).toHaveBeenCalledOnce();
-    expect(
-      itemAt(vi.mocked(updateBlockRules).mock.invocationCallOrder, 0)
-    ).toBeLessThan(
-      itemAt(vi.mocked(blockExistingTabs).mock.invocationCallOrder, 0)
-    );
-  });
-
   it('対象が無ければ schedule-not-found を返し、ルールを作り直さない', async () => {
-    vi.mocked(setScheduleEnabled).mockResolvedValue({
-      rejection: 'not-found'
-    });
+    vi.mocked(setScheduleEnabled).mockResolvedValue('not-found');
 
     const result = await invoke<Response>(handler, {
       id: 'missing',
@@ -99,7 +66,6 @@ describe('toggle-schedule ハンドラ', () => {
       error: { code: 'schedule-not-found' }
     });
     expect(updateBlockRules).not.toHaveBeenCalled();
-    expect(blockExistingTabs).not.toHaveBeenCalled();
   });
 
   it('保存に失敗したら save-failed を返す', async () => {
@@ -111,6 +77,5 @@ describe('toggle-schedule ハンドラ', () => {
     });
 
     expect(result).toEqual({ success: false, error: { code: 'save-failed' } });
-    expect(blockExistingTabs).not.toHaveBeenCalled();
   });
 });

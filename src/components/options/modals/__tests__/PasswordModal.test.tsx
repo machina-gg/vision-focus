@@ -72,10 +72,10 @@ describe('PasswordModal', () => {
     });
 
     it('description を渡すとその説明になる', () => {
-      renderModal({ description: '一時停止にはパスワードが必要です' });
+      renderModal({ description: 'サイトの削除にはパスワードが必要です' });
 
       expect(
-        screen.getByText('一時停止にはパスワードが必要です')
+        screen.getByText('サイトの削除にはパスワードが必要です')
       ).toBeInTheDocument();
     });
 

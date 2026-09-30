@@ -68,8 +68,8 @@ describe('sendMessage', () => {
 
 describe('onMessage', () => {
   it('登録した name のメッセージだけをハンドラへ渡す', async () => {
-    const handler = vi.fn(() => ({ success: true, paused: true }));
-    onMessage('toggle-pause', handler);
+    const handler = vi.fn(() => ({ success: true }));
+    onMessage('toggle-schedule', handler);
 
     const rootListener = itemAt(listeners, 0);
     const sender = {} as chrome.runtime.MessageSender;
@@ -84,7 +84,11 @@ describe('onMessage', () => {
 
     const sendResponse = vi.fn();
     const handled = rootListener(
-      { type: 'toggle-pause', data: { paused: true }, timestamp: Date.now() },
+      {
+        type: 'toggle-schedule',
+        data: { id: 's1', enabled: true },
+        timestamp: Date.now()
+      },
       sender,
       sendResponse
     );
@@ -93,7 +97,7 @@ describe('onMessage', () => {
     expect(handled).toBe(true);
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({
-        res: { success: true, paused: true }
+        res: { success: true }
       });
     });
   });

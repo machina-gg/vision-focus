@@ -24,7 +24,6 @@ import { resetActivityHandler } from '../../handlers/reset-activity';
 import { setAllowedSiteRecordingHandler } from '../../handlers/set-allowed-site-recording';
 import { stopTrackingHandler } from '../../handlers/stop-tracking';
 import { toggleBlockHandler } from '../../handlers/toggle-block';
-import { togglePauseHandler } from '../../handlers/toggle-pause';
 import { toggleScheduleHandler } from '../../handlers/toggle-schedule';
 import { trackerHeartbeatHandler } from '../../handlers/tracker-heartbeat';
 import { updateAnalyticsOptInHandler } from '../../handlers/update-analytics-opt-in';
@@ -55,7 +54,6 @@ const expected = [
   ['set-allowed-site-recording', setAllowedSiteRecordingHandler],
   ['stop-tracking', stopTrackingHandler],
   ['toggle-block', toggleBlockHandler],
-  ['toggle-pause', togglePauseHandler],
   ['toggle-schedule', toggleScheduleHandler],
   ['tracker-heartbeat', trackerHeartbeatHandler],
   ['update-analytics-opt-in', updateAnalyticsOptInHandler],

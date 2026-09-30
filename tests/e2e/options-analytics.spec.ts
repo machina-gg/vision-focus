@@ -109,7 +109,7 @@ test.describe('Options - Analytics Tab', () => {
       makeSites([
         { domain: 'youtube.com' },
         { domain: 'blocked.com', block: {} },
-        { domain: 'paused.com', block: { enabled: false } },
+        { domain: 'disabled.com', block: { enabled: false } },
         { domain: 'music.blocked.com', allow: { recordTime: true } }
       ])
     );
@@ -129,7 +129,7 @@ test.describe('Options - Analytics Tab', () => {
     await expect(rows.nth(0)).toHaveAttribute('data-status', 'blocked');
     await expect(rows.nth(0)).toContainText('blocked.com');
     await expect(rows.nth(1)).toHaveAttribute('data-status', 'disabled');
-    await expect(rows.nth(1)).toContainText('paused.com');
+    await expect(rows.nth(1)).toContainText('disabled.com');
     await expect(rows.nth(2)).toHaveAttribute('data-status', 'tracking');
     await expect(rows.nth(2)).toContainText('youtube.com');
     await expect(rows.nth(3)).toHaveAttribute('data-status', 'allowed');
@@ -235,7 +235,7 @@ test.describe('Options - Analytics Tab', () => {
       'sites',
       makeSites([
         { domain: 'reddit.com' },
-        { domain: 'paused.com', block: { enabled: false } }
+        { domain: 'disabled.com', block: { enabled: false } }
       ])
     );
     await setupPage.close();
@@ -260,17 +260,17 @@ test.describe('Options - Analytics Tab', () => {
       )
       .not.toContain('reddit.com');
 
-    await expect(stopButtonOf('paused.com')).toHaveCount(0);
-    expect((await getStorageData(page, 'sites'))?.['paused.com']?.rule).toEqual(
-      expect.objectContaining({ kind: 'block', enabled: false })
-    );
+    await expect(stopButtonOf('disabled.com')).toHaveCount(0);
+    expect(
+      (await getStorageData(page, 'sites'))?.['disabled.com']?.rule
+    ).toEqual(expect.objectContaining({ kind: 'block', enabled: false }));
 
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page.locator(SELECTORS.analytics.trackedSite)).toHaveCount(1);
     await expect(page.locator(SELECTORS.analytics.trackedSite)).toContainText(
-      'paused.com'
+      'disabled.com'
     );
 
     await page.close();

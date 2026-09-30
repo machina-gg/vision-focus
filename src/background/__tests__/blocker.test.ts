@@ -1,9 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-vi.mock('~/lib/storage', () => ({
-  getSettings: vi.fn()
-}));
-
 vi.mock('~/lib/blockService', () => ({
   getBlockState: vi.fn(),
   getRuleTargets: vi.fn()
@@ -17,12 +13,10 @@ vi.mock('~/lib/blockRecordService', () => ({
   recordBlockedDomain: vi.fn()
 }));
 
-import { getSettings } from '~/lib/storage';
 import { getBlockState, getRuleTargets } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
-import { DEFAULT_SETTINGS } from '~/types/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import { itemAt, lastItem } from '~/test/items';
 
@@ -73,7 +67,6 @@ describe('blocker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     chromeMock = setupChrome();
-    vi.mocked(getSettings).mockResolvedValue({ ...DEFAULT_SETTINGS });
     vi.mocked(getRuleTargets).mockResolvedValue({ redirect: [], allow: [] });
     vi.mocked(isExtensionContextValid).mockReturnValue(true);
   });
@@ -192,34 +185,6 @@ describe('blocker', () => {
       const arg = lastUpdateRulesArg(chromeMock);
       expect(arg.removeRuleIds).toEqual([1000]);
       expect(arg.addRules).toEqual([]);
-    });
-
-    describe('一時停止中', () => {
-      beforeEach(() => {
-        vi.mocked(getSettings).mockResolvedValue({
-          ...DEFAULT_SETTINGS,
-          paused: true
-        });
-      });
-
-      it('既存ルールを全削除し、新規ルールを追加しない', async () => {
-        chromeMock.declarativeNetRequest.getDynamicRules.mockResolvedValue([
-          { id: 1000 },
-          { id: 1001 }
-        ]);
-
-        await updateBlockRules();
-
-        const arg = lastUpdateRulesArg(chromeMock);
-        expect(arg.removeRuleIds).toEqual([1000, 1001]);
-        expect(arg.addRules).toEqual([]);
-      });
-
-      it('ブロック対象の取得自体を行わない', async () => {
-        await updateBlockRules();
-
-        expect(getRuleTargets).not.toHaveBeenCalled();
-      });
     });
   });
 

@@ -52,7 +52,6 @@ import {
   removeSchedule,
   setAnalyticsOptIn,
   setNotifications,
-  setPaused,
   setScheduleEnabled,
   setGoalText,
   setUnblockConfirm,
@@ -161,25 +160,11 @@ beforeEach(() => {
   fakeChrome.reset();
 });
 
-describe('setPaused', () => {
-  it('一時停止の状態だけを書き換え、他の設定は残す', async () => {
-    givenSettings({ ...DEFAULT_SETTINGS, schedules: [schedule('s1')] });
-
-    await setPaused(true);
-
-    expect(await getSettings()).toEqual({
-      ...DEFAULT_SETTINGS,
-      schedules: [schedule('s1')],
-      paused: true
-    });
-  });
-});
-
 describe('addSchedule', () => {
   it('ID を振り、有効な状態で末尾に足す。他の設定は残す', async () => {
     givenSettings({
       ...DEFAULT_SETTINGS,
-      paused: true,
+      notifications: { timeLimitEnabled: false, timeLimitMinutes: 1 },
       schedules: [schedule('s1')]
     });
 
@@ -187,7 +172,10 @@ describe('addSchedule', () => {
 
     expect(rejection).toBeNull();
     const settings = await getSettings();
-    expect(settings.paused).toBe(true);
+    expect(settings.notifications).toEqual({
+      timeLimitEnabled: false,
+      timeLimitMinutes: 1
+    });
     expect(settings.schedules).toHaveLength(2);
     const added = itemAt(settings.schedules, 1);
     expect(added).toEqual({
@@ -312,59 +300,36 @@ describe('removeSchedule', () => {
 });
 
 describe('setScheduleEnabled', () => {
-  it('一時停止中に有効にしたら、同じ書き込みで一時停止も解く', async () => {
+  it('有効にしたら、対象のスケジュールだけを有効にする', async () => {
     givenSettings({
       ...DEFAULT_SETTINGS,
-      paused: true,
-      schedules: [{ ...schedule('s1'), enabled: false }]
+      schedules: [
+        { ...schedule('s1'), enabled: false },
+        { ...schedule('s2'), enabled: false }
+      ]
     });
-    const set = vi.spyOn(chrome.storage.local, 'set');
 
-    const result = await setScheduleEnabled('s1', true);
-
-    expect(result).toEqual({ rejection: null, resumed: true });
-    expect(set).toHaveBeenCalledOnce();
-    const settings = await getSettings();
-    expect(settings.paused).toBe(false);
-    expect(settings.schedules).toEqual([schedule('s1')]);
-    set.mockRestore();
+    expect(await setScheduleEnabled('s1', true)).toBeNull();
+    expect((await getSettings()).schedules).toEqual([
+      schedule('s1'),
+      { ...schedule('s2'), enabled: false }
+    ]);
   });
 
-  it('一時停止していなければ、有効にしても resumed は false', async () => {
-    givenSettings({
-      ...DEFAULT_SETTINGS,
-      schedules: [{ ...schedule('s1'), enabled: false }]
-    });
+  it('無効にしたら、対象のスケジュールを無効にする', async () => {
+    givenSettings({ ...DEFAULT_SETTINGS, schedules: [schedule('s1')] });
 
-    expect(await setScheduleEnabled('s1', true)).toEqual({
-      rejection: null,
-      resumed: false
-    });
+    expect(await setScheduleEnabled('s1', false)).toBeNull();
+    expect((await getSettings()).schedules).toEqual([
+      { ...schedule('s1'), enabled: false }
+    ]);
   });
 
-  it('無効にするときは一時停止を解かない', async () => {
-    givenSettings({
-      ...DEFAULT_SETTINGS,
-      paused: true,
-      schedules: [schedule('s1')]
-    });
+  it('対象が無ければ not-found で拒み、何も変えない', async () => {
+    givenSettings({ ...DEFAULT_SETTINGS, schedules: [schedule('s1')] });
 
-    expect(await setScheduleEnabled('s1', false)).toEqual({
-      rejection: null,
-      resumed: false
-    });
-    const settings = await getSettings();
-    expect(settings.paused).toBe(true);
-    expect(settings.schedules).toEqual([{ ...schedule('s1'), enabled: false }]);
-  });
-
-  it('対象が無ければ not-found で拒み、一時停止も解かない', async () => {
-    givenSettings({ ...DEFAULT_SETTINGS, paused: true });
-
-    expect(await setScheduleEnabled('missing', true)).toEqual({
-      rejection: 'not-found'
-    });
-    expect((await getSettings()).paused).toBe(true);
+    expect(await setScheduleEnabled('missing', true)).toBe('not-found');
+    expect((await getSettings()).schedules).toEqual([schedule('s1')]);
   });
 });
 
@@ -382,13 +347,13 @@ describe('通知・長押し確認・利用状況の送信への同意', () => {
   });
 
   it('長押し確認の設定だけを書き換える', async () => {
-    givenSettings({ ...DEFAULT_SETTINGS, paused: true });
+    givenSettings({ ...DEFAULT_SETTINGS, schedules: [schedule('s1')] });
 
     await setUnblockConfirm({ holdSeconds: 60 });
 
     expect(await getSettings()).toEqual({
       ...DEFAULT_SETTINGS,
-      paused: true,
+      schedules: [schedule('s1')],
       unblockConfirm: { holdSeconds: 60 }
     });
   });
@@ -409,7 +374,6 @@ describe('importSettings', () => {
   it('スケジュールをファイルのもので置き換え、ファイルに含まれない項目は残す', async () => {
     givenSettings({
       ...DEFAULT_SETTINGS,
-      paused: true,
       password: { enabled: true, passwordHash: 'hash' },
       schedules: [schedule('s1'), { ...schedule('local'), days: [3] }]
     });
@@ -420,7 +384,6 @@ describe('importSettings', () => {
 
     expect(await getSettings()).toEqual({
       ...DEFAULT_SETTINGS,
-      paused: true,
       password: { enabled: true, passwordHash: 'hash' },
       schedules: [{ ...schedule('s1'), name: 'Imported' }, schedule('s2')],
       notifications: { timeLimitEnabled: false, timeLimitMinutes: 10 },
@@ -839,16 +802,16 @@ describe('setGoalText', () => {
 });
 
 describe('書き込みの直列化', () => {
-  it('一時停止と取り込みを同時に呼んでも、両方の変更が残る', async () => {
+  it('利用状況の送信への同意と取り込みを同時に呼んでも、両方の変更が残る', async () => {
     givenSettings(DEFAULT_SETTINGS);
 
     await Promise.all([
-      setPaused(true),
+      setAnalyticsOptIn(true, new Date('2026-01-02T03:04:05.000Z')),
       importSettings(importedData([schedule('s1')]))
     ]);
 
     const settings = await getSettings();
-    expect(settings.paused).toBe(true);
+    expect(settings.analyticsOptIn?.enabled).toBe(true);
     expect(settings.schedules).toEqual([schedule('s1')]);
     expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
   });
@@ -876,13 +839,19 @@ describe('書き込みの直列化', () => {
     expect((await getSettings()).schedules).toHaveLength(1);
   });
 
-  it('スケジュールの追加と一時停止を同時に呼んでも、両方の変更が残る', async () => {
+  it('スケジュールの追加と通知の設定を同時に呼んでも、両方の変更が残る', async () => {
     givenSettings(DEFAULT_SETTINGS);
 
-    await Promise.all([setPaused(true), addSchedule(input())]);
+    await Promise.all([
+      setNotifications({ timeLimitEnabled: false, timeLimitMinutes: 1 }),
+      addSchedule(input())
+    ]);
 
     const settings = await getSettings();
-    expect(settings.paused).toBe(true);
+    expect(settings.notifications).toEqual({
+      timeLimitEnabled: false,
+      timeLimitMinutes: 1
+    });
     expect(settings.schedules).toHaveLength(1);
   });
 
@@ -894,7 +863,7 @@ describe('書き込みの直列化', () => {
       setScheduleEnabled('s1', true)
     ]);
 
-    expect(toggled).toEqual({ rejection: 'not-found' });
+    expect(toggled).toBe('not-found');
     expect((await getSettings()).schedules).toEqual([]);
   });
 
@@ -937,13 +906,13 @@ describe('書き込みの直列化', () => {
       .mockRejectedValueOnce(new Error('storage full'));
 
     const results = await Promise.allSettled([
-      setPaused(true),
+      setAnalyticsOptIn(true, new Date('2026-01-02T03:04:05.000Z')),
       importSettings(importedData([schedule('s1')]))
     ]);
 
     expect(results.map((r) => r.status)).toEqual(['rejected', 'fulfilled']);
     const settings = await getSettings();
-    expect(settings.paused).toBe(false);
+    expect(settings.analyticsOptIn).toBeUndefined();
     expect(settings.schedules).toEqual([schedule('s1')]);
     set.mockRestore();
   });

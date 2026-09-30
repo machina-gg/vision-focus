@@ -70,8 +70,6 @@ export interface UnblockConfirmSettings {
 export interface AppSettings {
   /** ブロックが効く時間帯の一覧 */
   schedules: Schedule[];
-  /** true = すべてのブロックを一時停止中 */
-  paused: boolean;
   /** 残り時間の通知の設定 */
   notifications: NotificationSettings;
   /** パスワード保護の設定 */
@@ -125,10 +123,9 @@ export const DEFAULT_SUPPORT_PROMPT_STATE: SupportPromptState = {
   opened: false
 };
 
-/** アプリ設定の既定値（スケジュール無し・一時停止なし。利用状況の送信は未決定） */
+/** アプリ設定の既定値（スケジュール無し。利用状況の送信は未決定） */
 export const DEFAULT_SETTINGS: AppSettings = {
   schedules: [],
-  paused: false,
   notifications: DEFAULT_NOTIFICATION_SETTINGS,
   password: DEFAULT_PASSWORD_SETTINGS,
   unblockConfirm: DEFAULT_UNBLOCK_CONFIRM_SETTINGS

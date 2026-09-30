@@ -14,7 +14,6 @@ import { resetActivityHandler } from './reset-activity';
 import { setAllowedSiteRecordingHandler } from './set-allowed-site-recording';
 import { stopTrackingHandler } from './stop-tracking';
 import { toggleBlockHandler } from './toggle-block';
-import { togglePauseHandler } from './toggle-pause';
 import { toggleScheduleHandler } from './toggle-schedule';
 import { trackerHeartbeatHandler } from './tracker-heartbeat';
 import { updateAnalyticsOptInHandler } from './update-analytics-opt-in';
@@ -46,7 +45,6 @@ export function registerMessageHandlers(): void {
   onMessage('set-allowed-site-recording', setAllowedSiteRecordingHandler);
   onMessage('stop-tracking', stopTrackingHandler);
   onMessage('toggle-block', toggleBlockHandler);
-  onMessage('toggle-pause', togglePauseHandler);
   onMessage('toggle-schedule', toggleScheduleHandler);
   onMessage('tracker-heartbeat', trackerHeartbeatHandler);
   onMessage('update-analytics-opt-in', updateAnalyticsOptInHandler);

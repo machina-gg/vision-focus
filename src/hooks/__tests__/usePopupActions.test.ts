@@ -2,8 +2,6 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { usePopupActions } from '~/hooks/usePopupActions';
-import type { AppSettings } from '~/types/storage';
-import { DEFAULT_SETTINGS } from '~/types/storage';
 
 vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
@@ -25,7 +23,6 @@ beforeEach(() => {
 describe('usePopupActions', () => {
   const mockClearDomain = vi.fn();
   const defaultProps = {
-    settings: DEFAULT_SETTINGS as AppSettings,
     clearDomain: mockClearDomain
   };
 
@@ -114,101 +111,6 @@ describe('usePopupActions', () => {
         '操作できませんでした。もう一度お試しください'
       );
       vi.unstubAllGlobals();
-    });
-  });
-
-  describe('handlePausedChange', () => {
-    it('toggle-pauseメッセージを送信する', async () => {
-      vi.mocked(sendMessage).mockResolvedValue({ success: true, paused: true });
-      const { result } = renderHook(() => usePopupActions(defaultProps));
-      await act(async () => {
-        await result.current.handlePausedChange(true);
-      });
-      expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
-        paused: true
-      });
-    });
-
-    it('パスワードを添えて送り、成功なら null を返す', async () => {
-      vi.mocked(sendMessage).mockResolvedValue({ success: true, paused: true });
-      const { result } = renderHook(() => usePopupActions(defaultProps));
-
-      let failure: string | null = 'unset';
-      await act(async () => {
-        failure = await result.current.handlePausedChange(true, 'secret');
-      });
-
-      expect(sendMessage).toHaveBeenCalledWith('toggle-pause', {
-        paused: true,
-        password: 'secret'
-      });
-      expect(failure).toBeNull();
-    });
-
-    describe('失敗の文言', () => {
-      stubI18nWithLocale('ja');
-
-      it('照合に失敗したら応答の失敗の文言を返す', async () => {
-        vi.mocked(sendMessage).mockResolvedValue({
-          success: false,
-          error: { code: 'password-mismatch' }
-        });
-        const { result } = renderHook(() => usePopupActions(defaultProps));
-
-        let failure: string | null = null;
-        await act(async () => {
-          failure = await result.current.handlePausedChange(true, 'wrong');
-        });
-
-        expect(failure).toBe(
-          'パスワードが正しくありません。再度お試しください。'
-        );
-      });
-
-      it('送信が例外で終わったら汎用の文言を返す', async () => {
-        vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
-        const { result } = renderHook(() => usePopupActions(defaultProps));
-
-        let failure: string | null = null;
-        await act(async () => {
-          failure = await result.current.handlePausedChange(true);
-        });
-
-        expect(failure).toBe('操作できませんでした。もう一度お試しください');
-      });
-    });
-  });
-
-  describe('isPasswordProtected', () => {
-    it('パスワードが有効な場合はtrue', () => {
-      const { result } = renderHook(() =>
-        usePopupActions({
-          ...defaultProps,
-          settings: {
-            ...DEFAULT_SETTINGS,
-            password: { enabled: true, passwordHash: 'hash' }
-          }
-        })
-      );
-      expect(result.current.isPasswordProtected).toBe(true);
-    });
-
-    it('パスワードが無効な場合はfalse', () => {
-      const { result } = renderHook(() => usePopupActions(defaultProps));
-      expect(result.current.isPasswordProtected).toBe(false);
-    });
-
-    it('有効でもハッシュが無ければ保護なし（background の照合と同じ判定）', () => {
-      const { result } = renderHook(() =>
-        usePopupActions({
-          ...defaultProps,
-          settings: {
-            ...DEFAULT_SETTINGS,
-            password: { enabled: true, passwordHash: null }
-          }
-        })
-      );
-      expect(result.current.isPasswordProtected).toBe(false);
     });
   });
 });

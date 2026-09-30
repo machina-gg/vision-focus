@@ -22,30 +22,30 @@
 
 ### 機能部品（`src/components/features`）
 
-| コンポーネント名  | 置き場所            | 役割                                                                       |
-| ----------------- | ------------------- | -------------------------------------------------------------------------- |
-| Header            | `Header/`           | ロゴ・バージョン・一時停止のスイッチ・設定とヘルプのボタンを並べたヘッダー |
-| GoalCard          | `GoalCard/`         | 今日の目標のカード（その場で編集できる）                                   |
-| QuickBlockButton  | `QuickBlockButton/` | ドメインを入力してすぐブロックに加える欄                                   |
-| TimeLimitBadge    | `TimeLimitBadge/`   | 時間制限の残り時間のバッジ                                                 |
-| ImageUploader     | `ImageUploader/`    | 背景画像の選択・圧縮・プレビュー                                           |
-| FontPicker        | `FontPicker/`       | フォントのカテゴリ・種類・大きさ・太さの選択とプレビュー                   |
-| DownloadButton    | `DownloadButton/`   | 解像度を選んで画面を壁紙画像として保存するボタン                           |
-| AnalyticsChart    | `AnalyticsChart/`   | 直近の合計閲覧時間と、種類を切り替えられるグラフ                           |
-| DailyChart        | `AnalyticsChart/`   | 日ごとの閲覧時間の折れ線グラフ                                             |
-| BySiteChart       | `AnalyticsChart/`   | サイトごとの閲覧時間の横棒グラフ                                           |
-| CumulativeChart   | `AnalyticsChart/`   | 日ごとの累計閲覧時間の縦棒グラフ                                           |
-| WeeklyReportCard  | `ReportCard/`       | 週のレポートのカード（週を移動できる）                                     |
-| MonthlyReportCard | `ReportCard/`       | 月のレポートのカード（月を移動できる）                                     |
-| TrendIcon         | `ReportCard/`       | 傾向の矢印アイコンと文言                                                   |
-| StatsGrid         | `ReportCard/`       | 期間の時間・前期間比・ブロック回数・解除回数の 4 枠                        |
-| WeeklyChart       | `ReportCard/`       | 曜日ごとの時間（棒）とブロック回数（折れ線）                               |
-| MonthlyTrendChart | `ReportCard/`       | 月内の週ごとの時間（棒）とブロック回数（折れ線）                           |
-| RankedList        | `ReportCard/`       | サイトの上位を順位つきで並べる表                                           |
-| EmptyReport       | `ReportCard/`       | レポートに出すデータが無いときの表示                                       |
-| SupportButton     | `Support/`          | 支援を呼びかけるボタン                                                     |
-| SupportPrompt     | `Support/`          | 支援を呼びかける帯（支援・閉じるボタンつき）                               |
-| SupportSection    | `Support/`          | 支援を呼びかける説明のカード                                               |
+| コンポーネント名  | 置き場所            | 役割                                                     |
+| ----------------- | ------------------- | -------------------------------------------------------- |
+| Header            | `Header/`           | ロゴ・バージョン・設定とヘルプのボタンを並べたヘッダー   |
+| GoalCard          | `GoalCard/`         | 今日の目標のカード（その場で編集できる）                 |
+| QuickBlockButton  | `QuickBlockButton/` | ドメインを入力してすぐブロックに加える欄                 |
+| TimeLimitBadge    | `TimeLimitBadge/`   | 時間制限の残り時間のバッジ                               |
+| ImageUploader     | `ImageUploader/`    | 背景画像の選択・圧縮・プレビュー                         |
+| FontPicker        | `FontPicker/`       | フォントのカテゴリ・種類・大きさ・太さの選択とプレビュー |
+| DownloadButton    | `DownloadButton/`   | 解像度を選んで画面を壁紙画像として保存するボタン         |
+| AnalyticsChart    | `AnalyticsChart/`   | 直近の合計閲覧時間と、種類を切り替えられるグラフ         |
+| DailyChart        | `AnalyticsChart/`   | 日ごとの閲覧時間の折れ線グラフ                           |
+| BySiteChart       | `AnalyticsChart/`   | サイトごとの閲覧時間の横棒グラフ                         |
+| CumulativeChart   | `AnalyticsChart/`   | 日ごとの累計閲覧時間の縦棒グラフ                         |
+| WeeklyReportCard  | `ReportCard/`       | 週のレポートのカード（週を移動できる）                   |
+| MonthlyReportCard | `ReportCard/`       | 月のレポートのカード（月を移動できる）                   |
+| TrendIcon         | `ReportCard/`       | 傾向の矢印アイコンと文言                                 |
+| StatsGrid         | `ReportCard/`       | 期間の時間・前期間比・ブロック回数・解除回数の 4 枠      |
+| WeeklyChart       | `ReportCard/`       | 曜日ごとの時間（棒）とブロック回数（折れ線）             |
+| MonthlyTrendChart | `ReportCard/`       | 月内の週ごとの時間（棒）とブロック回数（折れ線）         |
+| RankedList        | `ReportCard/`       | サイトの上位を順位つきで並べる表                         |
+| EmptyReport       | `ReportCard/`       | レポートに出すデータが無いときの表示                     |
+| SupportButton     | `Support/`          | 支援を呼びかけるボタン                                   |
+| SupportPrompt     | `Support/`          | 支援を呼びかける帯（支援・閉じるボタンつき）             |
+| SupportSection    | `Support/`          | 支援を呼びかける説明のカード                             |
 
 ### 新しいタブ用部品（`src/components/newtab`）
 
@@ -110,7 +110,7 @@
 
 | コンポーネント名 | 置き場所          | 役割                                                                         |
 | ---------------- | ----------------- | ---------------------------------------------------------------------------- |
-| PopupApp         | `popup/App.tsx`   | ツールバーのポップアップ（今見ているサイトのブロック・今日の記録・一時停止） |
+| PopupApp         | `popup/App.tsx`   | ツールバーのポップアップ（今見ているサイトのブロック・今日の記録）           |
 | NewtabApp        | `newtab/App.tsx`  | 新しいタブ（目標と今日の記録。ブロックで移ってきたときはそのサイトの情報も） |
 | OptionsApp       | `options/App.tsx` | 設定画面（ブロック・表示・スケジュール・分析・設定・ヘルプのタブ）           |
 
@@ -361,13 +361,11 @@ graph TD
 
 `src/components/features/Header/Header.tsx`
 
-| Prop            | 型                          | 省略時   | 説明                                                                 |
-| --------------- | --------------------------- | -------- | -------------------------------------------------------------------- |
-| showSettings    | `boolean`                   | `true`   | false なら設定ボタンを出さない                                       |
-| onSettingsClick | `() => void`                | -        | 設定ボタンが押されたときに呼ぶ                                       |
-| onHelpClick     | `() => void`                | 出さない | ヘルプボタンが押されたときに呼ぶ（省略時はボタンを出さない）         |
-| paused          | `boolean`                   | `false`  | ブロックを一時停止中として表示する                                   |
-| onPausedChange  | `(paused: boolean) => void` | 出さない | 一時停止のスイッチの切り替えを受け取る（省略時はスイッチを出さない） |
+| Prop            | 型           | 省略時   | 説明                                                         |
+| --------------- | ------------ | -------- | ------------------------------------------------------------ |
+| showSettings    | `boolean`    | `true`   | false なら設定ボタンを出さない                               |
+| onSettingsClick | `() => void` | -        | 設定ボタンが押されたときに呼ぶ                               |
+| onHelpClick     | `() => void` | 出さない | ヘルプボタンが押されたときに呼ぶ（省略時はボタンを出さない） |
 
 ---
 
@@ -1479,27 +1477,17 @@ function useCurrentDomain(): {
 
 ### usePopupActions
 
-`src/hooks/usePopupActions.ts`。ポップアップのページ遷移・ブロック追加・一時停止の切り替えと、パスワード保護の有無。
+`src/hooks/usePopupActions.ts`。ポップアップのページ遷移とブロック追加。
 
 ```typescript
-function usePopupActions(options: {
-  settings: AppSettings | undefined;
-  clearDomain: () => void;
-}): {
+function usePopupActions(options: { clearDomain: () => void }): {
   handleSettingsClick: () => void;
   handleHelpClick: () => void;
   handleAnalyticsClick: () => void;
   handleGoalClick: () => void;
   handleBlock: (domain: string) => Promise<void>;
-  handlePausedChange: (
-    paused: boolean,
-    password?: string
-  ) => Promise<string | null>;
-  isPasswordProtected: boolean;
 };
 ```
-
-- `isPasswordProtected` の判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)。パスワード保護中に一時停止にするとき、`PopupApp` は [PasswordModal](#passwordmodal) を開き、入力されたパスワードを添えて `handlePausedChange(true, password)` を呼ぶ。照合は background の `toggle-pause` が行う
 
 ---
 

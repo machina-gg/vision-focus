@@ -117,10 +117,14 @@ describe('Toggle', () => {
   describe('識別子', () => {
     it('data-testid は内部の button に付く', () => {
       render(
-        <Toggle checked={false} onChange={vi.fn()} data-testid="pause-toggle" />
+        <Toggle
+          checked={false}
+          onChange={vi.fn()}
+          data-testid="sample-toggle"
+        />
       );
 
-      expect(screen.getByTestId('pause-toggle')).toHaveAttribute(
+      expect(screen.getByTestId('sample-toggle')).toHaveAttribute(
         'role',
         'switch'
       );

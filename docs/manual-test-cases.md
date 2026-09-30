@@ -17,8 +17,6 @@
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-001: ブロックリストに追加したサイトが newtab.html にリダイレクト
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-002: ワイルドカードで指定したサブドメインがブロックされる
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-003: ブロックリストから削除したサイトにアクセスできる
-- 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-004: Pause トグルで全ブロックが一時停止される
-- 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-005: Pause 解除後、通常のブロック動作に戻る
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-006: 無効化したブロックアイテムはブロックされない
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-007: 有効化したブロックアイテムがブロックされる
 - 📎 E2E 参照: `tests/e2e/block.spec.ts` — BLOCK-008: declarativeNetRequest でリダイレクトが実行される
@@ -102,7 +100,6 @@
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-009: Daily の使用実績は日付が変わるとリセットされる
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-006: 残り時間がポップアップで表示される
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-007: Time Limit の残り時間がブロックリストに表示される
-- 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-008: Pause 有効中は Time Limit 超過してもブロックされない
 - 📎 E2E 参照: `tests/e2e/time-limit.spec.ts` — TL-011: 複数サイトで異なる Time Limit が同時に動作する
 
 ### 手動確認項目
@@ -140,8 +137,6 @@
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-005: 設定アイコンクリックでオプション画面が開く
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-006: 目標カードクリックでダッシュボード（新規タブ）が開く
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-007: ヘルプアイコンクリックでヘルプタブが開く
-- 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-008: Pause トグルでブロック機能の一時停止ができる
-- 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-009: パスワード保護設定時、Pause トグルにパスワード認証が必要
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-010: クイックブロックボタンに現在のドメインが表示される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-011: クイックブロッククリックでサイトがブロックリストに追加される
 - 📎 E2E 参照: `tests/e2e/popup.spec.ts` — POP-013: Analytics リンクが表示される
@@ -402,10 +397,6 @@
 - [ ] パスワード削除
   - 手順: Options > Help > Remove Password
   - 期待: 確認ダイアログ表示 → Yes でパスワード保護が解除される
-
-- [ ] Pause トグルのパスワード保護
-  - 手順: パスワード設定後、Popup で Pause トグルをクリック
-  - 期待: パスワード入力モーダルが表示される
 
 - [ ] パスワード保護の視覚フィードバック
   - 手順: パスワード設定後、Options を開く
