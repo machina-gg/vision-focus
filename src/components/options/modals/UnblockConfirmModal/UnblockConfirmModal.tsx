@@ -17,6 +17,12 @@ const DESCRIPTION_KEYS: Record<UnblockAction, string> = {
   'shorten-hold': 'shortenHoldConfirmDescription'
 };
 
+const TITLE_KEYS: Record<UnblockAction, string> = {
+  toggle: 'unblockConfirmTitle',
+  delete: 'unblockConfirmTitle',
+  'shorten-hold': 'shortenHoldConfirmTitle'
+};
+
 const ICONS: Record<UnblockAction, LucideIcon> = {
   toggle: ShieldOff,
   delete: Trash2,
@@ -45,7 +51,7 @@ interface UnblockConfirmModalProps {
   onClose: () => void;
   /** ボタンを holdSeconds 秒押し続けたときに呼ぶ */
   onConfirm: () => void;
-  /** 確認する操作（種別で文言とアイコンを切り替え、サイトのブロックを外すときはブロック方式も出す） */
+  /** 確認する操作（種別で見出し・文言・アイコンを切り替え、サイトのブロックを外すときはブロック方式も出す） */
   subject: UnblockConfirmSubject;
   /** 確定までに押し続けさせる秒数（保存済みの秒数） */
   holdSeconds: UnblockHoldSeconds;
@@ -131,7 +137,7 @@ export function UnblockConfirmModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={getMessage('unblockConfirmTitle')}
+      title={getMessage(TITLE_KEYS[subject.action])}
       size="sm"
     >
       <div className="space-y-4">

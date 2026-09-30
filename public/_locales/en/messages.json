@@ -1873,6 +1873,10 @@
       }
     }
   },
+  "shortenHoldConfirmTitle": {
+    "message": "Change Hold Duration",
+    "description": "Confirmation dialog title when shortening the hold duration"
+  },
   "shortenHoldConfirmDescription": {
     "message": "You are about to shorten the hold duration from $FROM$ to $TO$ seconds. Hold the button for $FROM$ seconds to confirm.",
     "description": "Confirmation description when shortening the hold duration",

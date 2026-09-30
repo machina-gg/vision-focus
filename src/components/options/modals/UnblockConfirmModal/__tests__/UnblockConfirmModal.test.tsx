@@ -113,6 +113,13 @@ describe('UnblockConfirmModal', () => {
       ).toBeInTheDocument();
     });
 
+    it('秒数を短くするときは秒数の変更の見出しを出し、解除の見出しは出さない', () => {
+      renderModal({ subject: { action: 'shorten-hold', nextHoldSeconds: 5 } });
+
+      expect(screen.getByText('shortenHoldConfirmTitle')).toBeInTheDocument();
+      expect(screen.queryByText('unblockConfirmTitle')).not.toBeInTheDocument();
+    });
+
     it('秒数を短くするときは変更前と変更後の秒数を出し、ブロック方式は出さない', () => {
       renderModal({
         holdSeconds: 30,
