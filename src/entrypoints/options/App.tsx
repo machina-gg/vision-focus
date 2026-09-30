@@ -156,6 +156,9 @@ function OptionsAppContent() {
             activity={activity}
             trackedSites={trackedSites}
             onYouTubeChange={handleYouTubeChange}
+            onAddAllowedSite={blocklist.handleAddAllowedSite}
+            onRemoveAllowedSite={blocklist.handleRemoveAllowedSite}
+            onSetAllowedSiteRecording={blocklist.handleSetAllowedSiteRecording}
           />
         )}
 

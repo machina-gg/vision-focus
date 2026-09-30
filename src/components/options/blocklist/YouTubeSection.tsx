@@ -30,6 +30,8 @@ import type { SiteEntry } from '~/types/site';
 interface YouTubeSectionProps {
   /** YouTube の登録内容（登録が無ければ null で、すべてオフとして表示する） */
   site: SiteEntry | null;
+  /** youtube.com の下にある許可サイトの件数（0 なら出さない） */
+  allowedCount: number;
   /** 変更後の YouTube の設定全体を受け取る（解除の確認でパスワードが入力されたときはそれも受け取る）。失敗の文言、保存したら null を返す */
   onYouTubeChange: (
     youtube: YouTubeSettingsInput,
@@ -64,12 +66,13 @@ const SAVED_FEEDBACK_DURATION_MS = 2000;
 type LimitTypeOption = 'always' | 'daily';
 
 /**
- * YouTube の設定（全体の有効化・アクセスのブロック・時間制限・ショートやおすすめなどの非表示）をカードで表示する（保存を拒まれたら理由を出す）
+ * YouTube の設定（全体の有効化・アクセスのブロック・時間制限・ショートやおすすめなどの非表示）と、その下の許可サイトの件数をカードで表示する（保存を拒まれたら理由を出す）
  * @param props YouTube の登録状態と操作（各フィールドは YouTubeSectionProps）
  * @returns YouTube の設定のカード
  */
 export function YouTubeSection({
   site,
+  allowedCount,
   onYouTubeChange,
   onRequestUnblock
 }: YouTubeSectionProps) {
@@ -238,6 +241,14 @@ export function YouTubeSection({
           <p className="text-sm text-gray-500 mt-0.5">
             {getMessage('youtubeBlockingDescription')}
           </p>
+          {allowedCount > 0 && (
+            <p
+              className="text-xs text-gray-500 mt-0.5"
+              data-testid="youtube-allowed-count"
+            >
+              {getMessage('allowedSitesCount', allowedCount.toString())}
+            </p>
+          )}
         </div>
       </div>
 

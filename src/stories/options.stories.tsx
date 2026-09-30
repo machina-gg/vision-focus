@@ -48,6 +48,9 @@ function OptionsDemoContent({ initialTab = 'blocklist' }: OptionsDemoProps) {
             activity={{}}
             trackedSites={trackedSites}
             onYouTubeChange={async () => null}
+            onAddAllowedSite={async () => null}
+            onRemoveAllowedSite={async () => null}
+            onSetAllowedSiteRecording={async () => null}
           />
         );
       case 'schedules':

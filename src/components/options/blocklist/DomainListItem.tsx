@@ -15,6 +15,8 @@ interface DomainListItemProps {
   blockCount: number;
   /** そのサイトの今日の使用時間（秒。時間制限の残りの計算に使う） */
   usedSeconds: number;
+  /** そのサイトの下にある許可サイトの件数（0 なら出さない） */
+  allowedCount: number;
   /** 有効・無効のスイッチが切り替わったときに、ドメインと切り替え後の状態を受け取る */
   onToggle: (domain: string, enabled: boolean) => void;
   /** 削除ボタンが押されたときにドメインを受け取る */
@@ -24,7 +26,7 @@ interface DomainListItemProps {
 }
 
 /**
- * ブロック中のサイト 1 件を、有効・無効のスイッチ・追加日・ブロック回数・削除ボタン・時間制限の編集欄とともに表示する
+ * ブロック中のサイト 1 件を、有効・無効のスイッチ・追加日・許可サイトの件数・ブロック回数・削除ボタン・時間制限の編集欄とともに表示する
  * @param props ブロック中のサイトと操作（各フィールドは DomainListItemProps）
  * @returns ブロック一覧の 1 行
  */
@@ -32,6 +34,7 @@ export function DomainListItem({
   site,
   blockCount,
   usedSeconds,
+  allowedCount,
   onToggle,
   onRemove,
   onUpdateTimeLimit
@@ -56,6 +59,14 @@ export function DomainListItem({
             <p className="text-xs text-gray-500">
               Added {new Date(site.rule.addedAt).toLocaleDateString()}
             </p>
+            {allowedCount > 0 && (
+              <p
+                className="text-xs text-gray-500"
+                data-testid="blocklist-item-allowed-count"
+              >
+                {getMessage('allowedSitesCount', allowedCount.toString())}
+              </p>
+            )}
           </div>
           {blockCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-danger-100 text-danger-700 text-xs rounded-full">

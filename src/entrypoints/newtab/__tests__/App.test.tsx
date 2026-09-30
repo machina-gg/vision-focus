@@ -353,6 +353,97 @@ describe('帯の文言はブロックの記録の理由で決まる', () => {
   });
 });
 
+describe('帯の「<ホスト名> は許可する」', () => {
+  const vision: VisionSettings = {
+    defaultSettings: { ...DEFAULT_DISPLAY_SETTINGS },
+    presets: [makePreset()],
+    activePresetId: 'preset-1'
+  };
+  const trackedSites = sitesOf(blockedSite('youtube.com'));
+
+  it.each([
+    ['常時ブロック', 'always_blocked'],
+    ['時間制限', 'time_limit_exceeded']
+  ] as const)(
+    '%s でも、ブロックした登録の真のサブドメインならボタンを出す',
+    async (_label, reason) => {
+      storageState.lastBlocked = { domain: 'Music.YouTube.com', reason };
+
+      renderApp({ vision, trackedSites });
+
+      expect(
+        await screen.findByTestId('newtab-allow-host-button')
+      ).toHaveTextContent('allowHost(music.youtube.com)');
+    }
+  );
+
+  it.each([
+    ['ブロックした登録そのもの', 'youtube.com'],
+    ['www. 付きのブロックした登録', 'www.youtube.com'],
+    ['ブロックの登録に覆われないホスト', 'example.com']
+  ])('%s（%s）なら候補が無いのでボタンを出さない', async (_label, domain) => {
+    storageState.lastBlocked = { domain, reason: 'always_blocked' };
+
+    renderApp({ vision, trackedSites });
+
+    await screen.findByTestId('newtab-block-info-message');
+    expect(
+      screen.queryByTestId('newtab-allow-host-button')
+    ).not.toBeInTheDocument();
+  });
+
+  it('押すと add-allowed-site にサイトキーを送り、成功の文言を出す', async () => {
+    vi.mocked(sendMessage).mockResolvedValue({ success: true });
+    storageState.lastBlocked = {
+      domain: 'Music.YouTube.com',
+      reason: 'always_blocked'
+    };
+    renderApp({ vision, trackedSites });
+
+    fireEvent.click(await screen.findByTestId('newtab-allow-host-button'));
+
+    expect(
+      await screen.findByTestId('newtab-allow-host-done')
+    ).toHaveTextContent('allowHostDone(music.youtube.com)');
+    expect(sendMessage).toHaveBeenCalledWith('add-allowed-site', {
+      domain: 'music.youtube.com'
+    });
+  });
+
+  it('拒まれたら理由の文言を出す', async () => {
+    vi.mocked(sendMessage).mockResolvedValue({
+      success: false,
+      error: { code: 'already-tracked' }
+    });
+    storageState.lastBlocked = {
+      domain: 'music.youtube.com',
+      reason: 'always_blocked'
+    };
+    renderApp({ vision, trackedSites });
+
+    fireEvent.click(await screen.findByTestId('newtab-allow-host-button'));
+
+    expect(
+      await screen.findByTestId('newtab-allow-host-error')
+    ).toHaveTextContent('siteErrorAlreadyTracked');
+  });
+
+  it('送れなかったら汎用の文言を出す', async () => {
+    vi.mocked(sendMessage).mockRejectedValue(new Error('disconnected'));
+    storageState.lastBlocked = {
+      domain: 'music.youtube.com',
+      reason: 'always_blocked'
+    };
+    renderApp({ vision, trackedSites });
+
+    fireEvent.click(await screen.findByTestId('newtab-allow-host-button'));
+
+    expect(
+      await screen.findByTestId('newtab-allow-host-error')
+    ).toHaveTextContent('errorOperationFailed');
+  });
+});
+
 describe('数値は activity から導出する', () => {
   function daysAgo(n: number): string {
     const d = new Date();

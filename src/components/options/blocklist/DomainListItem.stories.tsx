@@ -20,6 +20,7 @@ export const Basic: Story = {
     site: blockedSite('twitter.com'),
     blockCount: 12,
     usedSeconds: 0,
+    allowedCount: 0,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}
@@ -33,6 +34,7 @@ export const WithTimeLimit: Story = {
     }),
     blockCount: 5,
     usedSeconds: 900,
+    allowedCount: 0,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}
@@ -44,6 +46,19 @@ export const Disabled: Story = {
     site: blockedSite('facebook.com', { enabled: false }),
     blockCount: 0,
     usedSeconds: 0,
+    allowedCount: 0,
+    onToggle: () => {},
+    onRemove: () => {},
+    onUpdateTimeLimit: () => {}
+  }
+};
+
+export const WithAllowedSites: Story = {
+  args: {
+    site: blockedSite('google.com'),
+    blockCount: 3,
+    usedSeconds: 0,
+    allowedCount: 2,
     onToggle: () => {},
     onRemove: () => {},
     onUpdateTimeLimit: () => {}

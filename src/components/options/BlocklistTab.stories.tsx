@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BlocklistTab } from './BlocklistTab';
 import { SettingsProvider } from '~/contexts/SettingsContext';
-import { blockedSite, sitesOf } from '~/test/sites';
+import { allowedSite, blockedSite, sitesOf } from '~/test/sites';
 import type { TrackedSites } from '~/types/site';
 
 const mockSites: TrackedSites = sitesOf(
@@ -13,7 +13,9 @@ const mockSites: TrackedSites = sitesOf(
     addedAt: '2026-02-02T14:30:00Z',
     timeLimit: { type: 'daily', limitSeconds: 1800 }
   }),
-  blockedSite('reddit.com', { addedAt: '2026-02-03T09:15:00Z' })
+  blockedSite('reddit.com', { addedAt: '2026-02-03T09:15:00Z' }),
+  allowedSite('old.reddit.com', true),
+  allowedSite('docs.example.com')
 );
 
 const BlocklistTabWrapper = () => {
@@ -42,6 +44,26 @@ const BlocklistTabWrapper = () => {
     return null;
   };
 
+  const handleAddAllowedSite = async (input: string) => {
+    const domain = input.toLowerCase().trim();
+    if (trackedSites[domain]) return 'This site is already tracked';
+    setTrackedSites({ ...trackedSites, [domain]: allowedSite(domain) });
+    return null;
+  };
+
+  const handleSetAllowedSiteRecording = async (
+    domain: string,
+    recordTime: boolean
+  ) => {
+    const site = trackedSites[domain];
+    if (site?.rule?.kind !== 'allow') return null;
+    setTrackedSites({
+      ...trackedSites,
+      [domain]: { ...site, rule: { ...site.rule, recordTime } }
+    });
+    return null;
+  };
+
   const handleToggleDomain = async (domain: string, enabled: boolean) => {
     const site = trackedSites[domain];
     if (site?.rule?.kind !== 'block') return null;
@@ -65,6 +87,9 @@ const BlocklistTabWrapper = () => {
         activity={{}}
         trackedSites={trackedSites}
         onYouTubeChange={async () => null}
+        onAddAllowedSite={handleAddAllowedSite}
+        onRemoveAllowedSite={handleRemoveDomain}
+        onSetAllowedSiteRecording={handleSetAllowedSiteRecording}
       />
     </SettingsProvider>
   );
@@ -94,7 +119,10 @@ const meta = {
     onUpdateTimeLimit: () => {},
     activity: {},
     trackedSites: mockSites,
-    onYouTubeChange: async () => null
+    onYouTubeChange: async () => null,
+    onAddAllowedSite: async () => null,
+    onRemoveAllowedSite: async () => null,
+    onSetAllowedSiteRecording: async () => null
   }
 } satisfies Meta<typeof BlocklistTab>;
 
@@ -119,6 +147,9 @@ export const LongUrlInput: Story = {
         activity={{}}
         trackedSites={mockSites}
         onYouTubeChange={async () => null}
+        onAddAllowedSite={async () => null}
+        onRemoveAllowedSite={async () => null}
+        onSetAllowedSiteRecording={async () => null}
       />
     </SettingsProvider>
   )
