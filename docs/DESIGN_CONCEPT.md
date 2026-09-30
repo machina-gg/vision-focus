@@ -262,7 +262,6 @@ Tailwind の 4px 単位スケールを使用。以下のサイズを**推奨値*
 `public/assets/images/backgrounds/` を参照。
 
 - デフォルト背景（default-1〜5）
-- 曜日別背景（monday〜sunday）
 
 ### ブランド
 
@@ -297,7 +296,6 @@ VisionFocus は Chrome 拡張であり、LP やウェブサイトではないた
 | カテゴリ   | ファイル            | パス                              | サイズ    | 備考 |
 | ---------- | ------------------- | --------------------------------- | --------- | ---- |
 | デフォルト | default-1〜5.webp   | public/assets/images/backgrounds/ | 1920x1080 | 既存 |
-| 曜日別     | monday〜sunday.webp | public/assets/images/backgrounds/ | 1920x1080 | 既存 |
 
 ### Chrome Web Store 用（本実装で追加）
 
