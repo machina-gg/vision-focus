@@ -89,10 +89,6 @@
     "message": "設定",
     "description": "設定ボタン・設定タブのラベル"
   },
-  "paused": {
-    "message": "一時停止",
-    "description": "一時停止トグルのラベル"
-  },
   "help": {
     "message": "ヘルプ",
     "description": "ヘルプボタンのラベル"
@@ -777,14 +773,6 @@
     "message": "デフォルト設定を編集中",
     "description": "デフォルト設定編集中ラベル"
   },
-  "active": {
-    "message": "有効",
-    "description": "有効ラベル"
-  },
-  "disabled": {
-    "message": "無効",
-    "description": "無効ラベル"
-  },
   "useDefault": {
     "message": "デフォルトに戻す",
     "description": "デフォルトに戻すボタン"
@@ -1101,14 +1089,6 @@
     "message": "*.example.com を使用すると、すべてのサブドメイン（news.example.com、blog.example.comなど）をブロックできます。ワイルドカードなしでexample.comを指定すると、メインドメインのみがブロックされます。",
     "description": "ヘルプFAQワイルドカード回答"
   },
-  "helpFaqPause": {
-    "message": "一時的にブロックを無効にするには？",
-    "description": "ヘルプFAQ一時停止質問"
-  },
-  "helpFaqPauseAnswer": {
-    "message": "ポップアップヘッダーの「一時停止」スイッチを切り替えると、すべてのブロックが一時的に無効になります。忘れずに元に戻してください！",
-    "description": "ヘルプFAQ一時停止回答"
-  },
   "helpFaqPresets": {
     "message": "ダッシュボードスタイルとは？",
     "description": "ヘルプFAQスタイル質問"
@@ -1130,7 +1110,7 @@
     "description": "ヘルプFAQパスワード質問"
   },
   "helpFaqPasswordAnswer": {
-    "message": "パスワード保護を有効にすると、ブロック設定の変更（一時停止、サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。設定タブの「ブロック解除の保護」から設定できます。",
+    "message": "パスワード保護を有効にすると、ブロック設定の変更（サイトの削除、ブロックルールの無効化）にパスワードが必要になります。衝動的な設定変更を防ぐのに効果的です。設定タブの「ブロック解除の保護」から設定できます。",
     "description": "ヘルプFAQパスワード回答"
   },
   "helpFaqBackup": {
@@ -1162,7 +1142,7 @@
     "description": "ヘルプトラブルシューティングブロックされない"
   },
   "helpTroubleshootSiteNotBlockedAnswer": {
-    "message": "ブロックリストにドメインが登録され有効になっていることを確認してください。ポップアップの「一時停止」がオンになっていないか確認してください。サブドメイン（例：m.example.com）を使用している場合は、ワイルドカード（*.example.com）を追加してください。また、現在の時間帯と曜日にスケジュールが有効か確認してください。",
+    "message": "ブロックリストにドメインが登録され有効になっていることを確認してください。サブドメイン（例：m.example.com）を使用している場合は、ワイルドカード（*.example.com）を追加してください。また、現在の時間帯と曜日にスケジュールが有効か確認してください。",
     "description": "ヘルプトラブルシューティングブロックされない回答"
   },
   "helpTroubleshootNewTab": {
@@ -1334,7 +1314,7 @@
     "description": "設定エクスポートに含まれるもの"
   },
   "settingsNotIncluded": {
-    "message": "含まれない: パスワード保護、一時停止の状態、匿名使用統計の同意、分析データ",
+    "message": "含まれない: パスワード保護、匿名使用統計の同意、分析データ",
     "description": "設定エクスポートに含まれないもの"
   },
   "alwaysBlocked": {
@@ -1740,10 +1720,6 @@
   "passwordRequiredForUnblockDescription": {
     "message": "ブロックサイトを削除または無効にするにはパスワードを入力してください。",
     "description": "ブロック解除用パスワード必須説明"
-  },
-  "passwordRequiredForPause": {
-    "message": "ブロックを一時停止するにはパスワードを入力してください。",
-    "description": "一時停止用パスワード必須説明"
   },
   "passwordIncorrect": {
     "message": "パスワードが正しくありません。再度お試しください。",

@@ -89,10 +89,6 @@
     "message": "Settings",
     "description": "Label for the settings button and Settings tab"
   },
-  "paused": {
-    "message": "Paused",
-    "description": "Paused toggle label"
-  },
   "help": {
     "message": "Help",
     "description": "Help button label"
@@ -777,14 +773,6 @@
     "message": "Editing default settings",
     "description": "Editing default settings label"
   },
-  "active": {
-    "message": "Active",
-    "description": "Active label"
-  },
-  "disabled": {
-    "message": "Disabled",
-    "description": "Disabled label"
-  },
   "useDefault": {
     "message": "Use Default",
     "description": "Use default button"
@@ -1101,14 +1089,6 @@
     "message": "Use *.example.com to block all subdomains (like news.example.com, blog.example.com). Use example.com without wildcard to block only the main domain.",
     "description": "Help FAQ wildcard answer"
   },
-  "helpFaqPause": {
-    "message": "How do I temporarily disable blocking?",
-    "description": "Help FAQ pause question"
-  },
-  "helpFaqPauseAnswer": {
-    "message": "Toggle the 'Paused' switch in the popup header to temporarily disable all blocking. Remember to turn it back on!",
-    "description": "Help FAQ pause answer"
-  },
   "helpFaqPresets": {
     "message": "What are dashboard styles?",
     "description": "Help FAQ styles question"
@@ -1130,7 +1110,7 @@
     "description": "Help FAQ password question"
   },
   "helpFaqPasswordAnswer": {
-    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to pause blocking, remove sites from the block list, or disable blocking rules. Set it up in the Settings tab under Unblock Protection.",
+    "message": "Password protection prevents accidental or impulsive changes to your block settings. When enabled, you'll need to enter your password to remove sites from the block list or disable blocking rules. Set it up in the Settings tab under Unblock Protection.",
     "description": "Help FAQ password answer"
   },
   "helpFaqBackup": {
@@ -1162,7 +1142,7 @@
     "description": "Help troubleshoot site not blocked title"
   },
   "helpTroubleshootSiteNotBlockedAnswer": {
-    "message": "Make sure the domain is in your block list and enabled. Check that blocking isn't paused (look for the Paused toggle in the popup). If the site uses a subdomain (e.g., m.example.com), add a wildcard entry (*.example.com) to cover all subdomains. Also verify that your schedule is active for the current time and day.",
+    "message": "Make sure the domain is in your block list and enabled. If the site uses a subdomain (e.g., m.example.com), add a wildcard entry (*.example.com) to cover all subdomains. Also verify that your schedule is active for the current time and day.",
     "description": "Help troubleshoot site not blocked answer"
   },
   "helpTroubleshootNewTab": {
@@ -1334,7 +1314,7 @@
     "description": "What's included in settings export"
   },
   "settingsNotIncluded": {
-    "message": "Not included: Password protection, Pause state, Anonymous usage statistics consent, Analytics data",
+    "message": "Not included: Password protection, Anonymous usage statistics consent, Analytics data",
     "description": "What's not included in settings export"
   },
   "alwaysBlocked": {
@@ -1740,10 +1720,6 @@
   "passwordRequiredForUnblockDescription": {
     "message": "Enter your password to remove or disable this blocked site.",
     "description": "Password required for unblock description"
-  },
-  "passwordRequiredForPause": {
-    "message": "Enter your password to pause blocking.",
-    "description": "Password required for pause description"
   },
   "passwordIncorrect": {
     "message": "Incorrect password. Please try again.",

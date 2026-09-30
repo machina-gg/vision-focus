@@ -63,49 +63,11 @@ describe('Header', () => {
     });
   });
 
-  describe('一時停止トグル', () => {
-    it('onPausedChange が未指定のときトグルは表示されない', () => {
-      render(<Header />);
+  describe('スイッチ', () => {
+    it('有効・無効を切り替えるスイッチを出さない', () => {
+      render(<Header onSettingsClick={vi.fn()} onHelpClick={vi.fn()} />);
 
-      expect(screen.queryByTestId('pause-toggle')).not.toBeInTheDocument();
-    });
-
-    it('paused 未指定（= false）では有効と表示され、トグルは ON', () => {
-      render(<Header onPausedChange={vi.fn()} />);
-
-      expect(screen.getByText('active')).toBeInTheDocument();
-      expect(screen.getByTestId('pause-toggle')).toHaveAttribute(
-        'aria-checked',
-        'true'
-      );
-    });
-
-    it('paused が true では無効と表示され、トグルは OFF', () => {
-      render(<Header paused onPausedChange={vi.fn()} />);
-
-      expect(screen.getByText('disabled')).toBeInTheDocument();
-      expect(screen.getByTestId('pause-toggle')).toHaveAttribute(
-        'aria-checked',
-        'false'
-      );
-    });
-
-    it('稼働中にトグルを押すと onPausedChange(true) が呼ばれる', () => {
-      const onPausedChange = vi.fn();
-      render(<Header onPausedChange={onPausedChange} />);
-
-      fireEvent.click(screen.getByTestId('pause-toggle'));
-
-      expect(onPausedChange).toHaveBeenCalledWith(true);
-    });
-
-    it('一時停止中にトグルを押すと onPausedChange(false) が呼ばれる', () => {
-      const onPausedChange = vi.fn();
-      render(<Header paused onPausedChange={onPausedChange} />);
-
-      fireEvent.click(screen.getByTestId('pause-toggle'));
-
-      expect(onPausedChange).toHaveBeenCalledWith(false);
+      expect(screen.queryByRole('switch')).not.toBeInTheDocument();
     });
   });
 });

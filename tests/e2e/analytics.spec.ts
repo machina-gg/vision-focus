@@ -41,7 +41,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
     await setSitesFromExtension(context, extensionId, [
@@ -71,7 +70,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
     await setSitesFromExtension(context, extensionId, [
@@ -108,7 +106,6 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     await setupStorageViaSW(context, {
       settings: makeAppSettings({
-        paused: false,
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       }),
       sites: makeSites([{ domain: TEST_DOMAINS.example }])
@@ -141,7 +138,6 @@ test.describe('Analytics - アナリティクス機能', () => {
 
     await setupStorageViaSW(context, {
       settings: makeAppSettings({
-        paused: false,
         analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
       }),
       sites: makeSites([{ domain: TEST_DOMAINS.example }])
@@ -174,7 +170,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
       analyticsOptIn: null
     });
 
@@ -201,7 +196,6 @@ test.describe('Analytics - アナリティクス機能', () => {
   test('AN-006: Opt-Out でもブロック回数の集計は続く', async ({ context }) => {
     await setupStorageViaSW(context, {
       settings: makeAppSettings({
-        paused: false,
         analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
       }),
       sites: makeSites([{ domain: TEST_DOMAINS.example, block: {} }])
@@ -231,7 +225,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
 
@@ -279,7 +272,6 @@ test.describe('Analytics - アナリティクス機能', () => {
     extensionId
   }) => {
     await setSettingsFromExtension(context, extensionId, {
-      paused: false,
       analyticsOptIn: { enabled: false, decidedAt: new Date().toISOString() }
     });
     await setSitesFromExtension(context, extensionId, [

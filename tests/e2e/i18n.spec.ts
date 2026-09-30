@@ -24,7 +24,7 @@ test.describe('i18n - 多言語対応', () => {
     await popupPage.close();
   });
 
-  test('I18N-003: ヘッダーの操作は実装どおりの 3 つだけ', async ({
+  test('I18N-003: ヘッダーの操作は実装どおりのものだけ', async ({
     context,
     extensionId
   }) => {
@@ -33,7 +33,6 @@ test.describe('i18n - 多言語対応', () => {
     const popupPage = await openPopup(context, extensionId);
 
     const implementedControls = [
-      SELECTORS.header.pauseToggle,
       SELECTORS.header.settingsButton,
       SELECTORS.header.helpButton
     ];

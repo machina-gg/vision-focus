@@ -49,7 +49,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [
       { domain: YOUTUBE_SITE, youtube: { hideShorts: true } }
     ]);
@@ -82,7 +82,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [
       { domain: YOUTUBE_SITE, youtube: { hideRecommendations: true } }
     ]);
@@ -115,7 +115,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [
       { domain: YOUTUBE_SITE, youtube: { hideComments: true } }
     ]);
@@ -148,7 +148,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [{ domain: YOUTUBE_SITE, youtube: {}, block: {} }]);
 
     await page.close();
@@ -174,7 +174,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     const youtubeFeatures = features({ hideShorts: true });
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [{ domain: YOUTUBE_SITE, youtube: youtubeFeatures }]);
 
     await setStorageData(
@@ -222,7 +222,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     const initialSettings = features();
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [{ domain: YOUTUBE_SITE, youtube: initialSettings }]);
 
     await page.close();
@@ -247,7 +247,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
 
     // page.evaluate はメインワールドで実行され chrome.storage を参照できないため、拡張機能ページ経由で更新する
     const updatePage = await openStoragePage(context, extensionId);
-    await setSettings(updatePage, { paused: false });
+    await setSettings(updatePage);
     await setSites(updatePage, [
       { domain: YOUTUBE_SITE, youtube: { hideShorts: true } }
     ]);
@@ -266,7 +266,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [
       {
         domain: YOUTUBE_SITE,
@@ -312,7 +312,7 @@ test.describe('YouTube - YouTube ブロック機能', () => {
   }) => {
     const page = await openStoragePage(context, extensionId);
 
-    await setSettings(page, { paused: false });
+    await setSettings(page);
     await setSites(page, [
       {
         domain: YOUTUBE_SITE,

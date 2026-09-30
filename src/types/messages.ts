@@ -7,7 +7,6 @@ import type {
   PresetIdBody,
   RemoveScheduleBody,
   ToggleScheduleBody,
-  TogglePauseBody,
   TrackerHeartbeatBody,
   UpdateAnalyticsOptInBody,
   UpdateGoalTextBody,
@@ -242,7 +241,7 @@ export interface RemoveBlockResponse {
 export interface TimeLimitInfo {
   /** 時間制限が設定されているか（false = 常時ブロック） */
   hasTimeLimit: boolean;
-  /** 今日の残り秒数（超過後は 0）。時間制限が無い・一時停止中・スケジュール外なら null */
+  /** 今日の残り秒数（超過後は 0）。時間制限が無い・スケジュール外なら null */
   remainingSeconds: number | null;
   /** 時間制限の種類。時間制限が無ければ null */
   limitType: TimeLimitType | null;
@@ -314,19 +313,6 @@ export interface ToggleBlockRequest {
 export interface ToggleBlockResponse {
   /** 切り替えられたか */
   success: boolean;
-  /** 失敗の種類。成功時は無い */
-  error?: MessageError;
-}
-
-/** すべてのブロックの一時停止を切り替える依頼 */
-export type TogglePauseRequest = TogglePauseBody;
-
-/** 一時停止の切り替えの結果 */
-export interface TogglePauseResponse {
-  /** 切り替えられたか */
-  success: boolean;
-  /** 切り替え後の一時停止の状態。失敗時は無い */
-  paused?: boolean;
   /** 失敗の種類。成功時は無い */
   error?: MessageError;
 }

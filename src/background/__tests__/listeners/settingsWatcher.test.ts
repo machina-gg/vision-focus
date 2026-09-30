@@ -68,7 +68,7 @@ describe('setupSettingsWatcher', () => {
   it('settings の変更時にブロックルールを更新する', async () => {
     const { settingsWatcher, updateBlockRules } = await load();
 
-    await settingsWatcher(settings({ paused: true }));
+    await settingsWatcher(settings());
 
     expect(updateBlockRules).toHaveBeenCalledOnce();
   });
@@ -103,7 +103,7 @@ describe('setupSettingsWatcher', () => {
     // blocker のモックに blockExistingTabs が無いため、watcher がこれを呼べば参照エラーになる
     const { settingsWatcher, sitesWatcher, updateBlockRules } = await load();
 
-    await settingsWatcher(settings({ paused: false }));
+    await settingsWatcher(settings());
     await sitesWatcher(
       sitesOf(blockedSite('a.com'), blockedSite('youtube.com'))
     );

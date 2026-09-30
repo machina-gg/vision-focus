@@ -86,7 +86,7 @@ describe('保存形式', () => {
     // 実キーが同じため古い JSON 文字列が残りうる。そのまま返すと settings.schedules などの参照が壊れる
     fakeChrome.localData.settings = JSON.stringify({
       ...DEFAULT_SETTINGS,
-      paused: true
+      notifications: { timeLimitEnabled: false, timeLimitMinutes: 5 }
     });
     fakeChrome.localData.vision = JSON.stringify(DEFAULT_VISION);
     fakeChrome.localData.sites = JSON.stringify({});
@@ -127,9 +127,12 @@ describe('背景画像', () => {
 
 describe('getSettings', () => {
   it('データがある場合はそれを返す', async () => {
-    fakeChrome.localData.settings = { ...DEFAULT_SETTINGS, paused: true };
+    fakeChrome.localData.settings = {
+      ...DEFAULT_SETTINGS,
+      notifications: { timeLimitEnabled: false, timeLimitMinutes: 5 }
+    };
     const result = await getSettings();
-    expect(result.paused).toBe(true);
+    expect(result.notifications.timeLimitEnabled).toBe(false);
   });
 
   it('データがない場合はデフォルトを返す', async () => {

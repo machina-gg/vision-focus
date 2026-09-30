@@ -22,9 +22,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
@@ -46,9 +44,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
@@ -70,9 +66,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
@@ -97,79 +91,12 @@ test.describe('Block - ブロック機能', () => {
     await unblockedPage.close();
   });
 
-  test('BLOCK-004: Pause トグルで全ブロックが一時停止される', async ({
-    context,
-    extensionId
-  }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
-    await setSitesFromExtension(context, extensionId, [
-      { domain: TEST_DOMAINS.example, block: {} }
-    ]);
-
-    await waitForBlockRules(context, [TEST_DOMAINS.example]);
-
-    await setSettingsFromExtension(context, extensionId, {
-      paused: true
-    });
-    await setSitesFromExtension(context, extensionId, [
-      { domain: TEST_DOMAINS.example, block: {} }
-    ]);
-
-    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
-
-    const unblockedPage = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
-    );
-
-    await unblockedPage.waitForLoadState('domcontentloaded');
-    expect(unblockedPage.url()).not.toContain('newtab.html');
-    expect(unblockedPage.url()).toContain(TEST_DOMAINS.example);
-
-    await unblockedPage.close();
-  });
-
-  test('BLOCK-005: Pause 解除後、通常のブロック動作に戻る', async ({
-    context,
-    extensionId
-  }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: true
-    });
-    await setSitesFromExtension(context, extensionId, [
-      { domain: TEST_DOMAINS.example, block: {} }
-    ]);
-
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
-    await setSitesFromExtension(context, extensionId, [
-      { domain: TEST_DOMAINS.example, block: {} }
-    ]);
-
-    await waitForBlockRules(context, [TEST_DOMAINS.example]);
-
-    const blockedPage = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
-    );
-
-    await blockedPage.waitForURL(`**newtab.html**`, { timeout: 10000 });
-    expect(blockedPage.url()).toContain('newtab.html');
-
-    await blockedPage.close();
-  });
-
   test('BLOCK-006: 無効化したブロックアイテムはブロックされない', async ({
     context,
     extensionId
   }) => {
     // 無効なものだけだとルールが 0 件で再計算の完了を観測できないため、有効なアイテムを目印に添える
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: { enabled: false } },
       { domain: TEST_DOMAINS.reddit, block: {} }
@@ -196,9 +123,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: { enabled: false } }
     ]);
@@ -224,9 +149,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
@@ -252,9 +175,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);
@@ -282,9 +203,7 @@ test.describe('Block - ブロック機能', () => {
     context,
     extensionId
   }) => {
-    await setSettingsFromExtension(context, extensionId, {
-      paused: false
-    });
+    await setSettingsFromExtension(context, extensionId);
     await setSitesFromExtension(context, extensionId, [
       { domain: TEST_DOMAINS.example, block: {} }
     ]);

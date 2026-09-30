@@ -17,12 +17,6 @@ const sourcesState = vi.hoisted(() => ({
   trackedSites: [] as SiteKey[]
 }));
 
-const popupActions = vi.hoisted(() => ({
-  handlePausedChange:
-    vi.fn<(paused: boolean, password?: string) => Promise<string | null>>(),
-  isPasswordProtected: false
-}));
-
 vi.mock('~/contexts/SettingsContext', async () => {
   const { DEFAULT_SETTINGS: settings } = await import('~/types/storage');
   return {
@@ -66,9 +60,7 @@ vi.mock('~/hooks', async (importOriginal) => {
       handleHelpClick: vi.fn(),
       handleAnalyticsClick: vi.fn(),
       handleGoalClick: vi.fn(),
-      handleBlock: vi.fn(),
-      handlePausedChange: popupActions.handlePausedChange,
-      isPasswordProtected: popupActions.isPasswordProtected
+      handleBlock: vi.fn()
     })
   };
 });
@@ -98,8 +90,6 @@ function renderPopup(
 
 beforeEach(() => {
   vi.clearAllMocks();
-  popupActions.handlePausedChange.mockResolvedValue(null);
-  popupActions.isPasswordProtected = false;
   messaging.sendMessage.mockResolvedValue({ success: true });
 });
 
@@ -185,58 +175,11 @@ describe('今日のサマリー', () => {
   });
 });
 
-describe('一時停止', () => {
-  it('パスワード保護が無ければ、すぐに一時停止を依頼する', async () => {
+describe('ヘッダー', () => {
+  it('有効・無効を切り替えるスイッチを出さない', () => {
     renderPopup({}, []);
 
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('pause-toggle'));
-    });
-
-    expect(popupActions.handlePausedChange).toHaveBeenCalledWith(true);
-    expect(
-      screen.queryByTestId('password-modal-confirm')
-    ).not.toBeInTheDocument();
-  });
-
-  describe('パスワード保護中', () => {
-    beforeEach(() => {
-      popupActions.isPasswordProtected = true;
-    });
-
-    function submitPassword(password: string) {
-      fireEvent.click(screen.getByTestId('pause-toggle'));
-      fireEvent.change(screen.getByLabelText('enterPassword'), {
-        target: { value: password }
-      });
-      return act(async () => {
-        fireEvent.click(screen.getByTestId('password-modal-confirm'));
-      });
-    }
-
-    it('パスワード入力を開き、入力したパスワードを添えて一時停止を依頼し、成功したら閉じる', async () => {
-      renderPopup({}, []);
-
-      await submitPassword('secret');
-
-      expect(popupActions.handlePausedChange).toHaveBeenCalledWith(
-        true,
-        'secret'
-      );
-      expect(
-        screen.queryByTestId('password-modal-confirm')
-      ).not.toBeInTheDocument();
-    });
-
-    it('依頼が失敗したら応答の文言をモーダルに出し、閉じない', async () => {
-      popupActions.handlePausedChange.mockResolvedValue('passwordIncorrect');
-      renderPopup({}, []);
-
-      await submitPassword('wrong');
-
-      expect(screen.getByText('passwordIncorrect')).toBeInTheDocument();
-      expect(screen.getByTestId('password-modal-confirm')).toBeInTheDocument();
-    });
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 });
 

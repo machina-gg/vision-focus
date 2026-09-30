@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 
 import { Ban, Shield, TrendingUp, Clock, Timer, Unlock } from 'lucide-react';
 
@@ -8,10 +8,7 @@ import {
   QuickBlockButton,
   TimeLimitBadge
 } from '~/components/features';
-import {
-  AnalyticsOptInModal,
-  PasswordModal
-} from '~/components/options/modals';
+import { AnalyticsOptInModal } from '~/components/options/modals';
 import {
   todayStats,
   useActivitySources,
@@ -39,12 +36,8 @@ function PopupAppContent() {
     handleHelpClick,
     handleAnalyticsClick,
     handleGoalClick,
-    handleBlock,
-    handlePausedChange,
-    isPasswordProtected
-  } = usePopupActions({ settings, clearDomain });
-
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    handleBlock
+  } = usePopupActions({ clearDomain });
 
   const handleAnalyticsOptIn = async (enabled: boolean) => {
     await sendMessage('update-analytics-opt-in', { enabled }).catch(
@@ -52,24 +45,11 @@ function PopupAppContent() {
     );
   };
 
-  const handlePausedChangeWithPassword = useCallback(
-    async (paused: boolean) => {
-      if (paused && isPasswordProtected) {
-        setIsPasswordModalOpen(true);
-        return;
-      }
-      await handlePausedChange(paused);
-    },
-    [isPasswordProtected, handlePausedChange]
-  );
-
   return (
     <div className="popup-container bg-white">
       <Header
         onSettingsClick={handleSettingsClick}
         onHelpClick={handleHelpClick}
-        paused={settings?.paused ?? false}
-        onPausedChange={handlePausedChangeWithPassword}
       />
 
       <div className="p-4 space-y-4">
@@ -204,22 +184,12 @@ function PopupAppContent() {
         onAllow={() => handleAnalyticsOptIn(true)}
         onDeny={() => handleAnalyticsOptIn(false)}
       />
-
-      {isPasswordProtected && (
-        <PasswordModal
-          isOpen={isPasswordModalOpen}
-          onClose={() => setIsPasswordModalOpen(false)}
-          onSubmit={(password) => handlePausedChange(true, password)}
-          title={getMessage('passwordRequired')}
-          description={getMessage('passwordRequiredForPause')}
-        />
-      )}
     </div>
   );
 }
 
 /**
- * ツールバーのポップアップ画面（今見ているサイトのブロック・今日の記録・一時停止を扱う）
+ * ツールバーのポップアップ画面（今見ているサイトのブロックと今日の記録を扱う）
  * @returns SettingsProvider で包んだポップアップ画面
  */
 export function PopupApp() {

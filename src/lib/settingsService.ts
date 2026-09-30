@@ -122,14 +122,6 @@ function toSchedule(
 }
 
 /**
- * すべてのブロックの一時停止を切り替えて保存する
- * @param paused true = 一時停止する / false = 再開する
- */
-export async function setPaused(paused: boolean): Promise<void> {
-  await replaceSettings((current) => ({ ...current, paused }));
-}
-
-/**
  * スケジュールを有効な状態で足す（ID はここで振る）。重なりとスタイルの存在は保存済みの最新の値で調べる
  * @param input 足すスケジュールの入力値（検証済み）
  * @returns 拒んだ理由（overlap / preset-not-found）。足したら null
@@ -201,43 +193,28 @@ export async function removeSchedule(
   });
 }
 
-/** スケジュールの有効・無効の切り替えの結果 */
-export type SetScheduleEnabledResult =
-  | {
-      /** 指定された ID のスケジュールが無い */
-      rejection: 'not-found';
-    }
-  | {
-      /** 切り替えたので null */
-      rejection: null;
-      /** 同じ書き込みで一時停止を解いたか */
-      resumed: boolean;
-    };
-
 /**
- * スケジュールの有効・無効を切り替える。有効にしたとき一時停止中なら、同じ書き込みで一時停止も解く
+ * スケジュールの有効・無効を切り替える
  * @param id 切り替えるスケジュールの ID
  * @param enabled true = 有効にする / false = 無効にする
- * @returns 切り替えの結果
+ * @returns 拒んだ理由（not-found）。切り替えたら null
  */
 export async function setScheduleEnabled(
   id: string,
   enabled: boolean
-): Promise<SetScheduleEnabledResult> {
-  return mutate<SetScheduleEnabledResult>((current) => {
+): Promise<ScheduleRejection | null> {
+  return mutate((current) => {
     if (!current.schedules.some((schedule) => schedule.id === id)) {
-      return { result: { rejection: 'not-found' } };
+      return { result: 'not-found' };
     }
-    const resumed = enabled && current.paused;
     return {
       settings: {
         ...current,
-        paused: resumed ? false : current.paused,
         schedules: current.schedules.map((schedule) =>
           schedule.id === id ? { ...schedule, enabled } : schedule
         )
       },
-      result: { rejection: null, resumed }
+      result: null
     };
   });
 }

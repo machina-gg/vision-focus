@@ -14,10 +14,7 @@ flowchart TD
 
     Host -->|覆う登録に許可サイトがある| Unblocked["✅ 許可"]
     Host -->|覆うブロックの登録が無い| Unblocked
-    Host -->|覆うブロックの登録（高々 1 件）で判定| A{"グローバル一時停止？<br/>settings.paused"}
-
-    A -->|Yes| Unblocked
-    A -->|No| D{"ブロックが効く時間帯？<br/>isBlockingWindowOpen()"}
+    Host -->|覆うブロックの登録（高々 1 件）で判定| D{"ブロックが効く時間帯？<br/>isBlockingWindowOpen()"}
 
     D -->|No（有効なスケジュールがあり、どれも時間外）| Unblocked
     D -->|Yes（有効なスケジュール 0 件を含む）| C{"ブロック有効？<br/>rule.enabled"}
@@ -32,7 +29,7 @@ flowchart TD
     K -->|No| Within["✅ 許可<br/>残り秒数を返す"]
 ```
 
-一時停止から時間制限までの条件を並べるのは `src/lib/blockRule.ts` の `evaluateBlock()` だけである。
+スケジュールから時間制限までの条件を並べるのは `src/lib/blockRule.ts` の `evaluateBlock()` だけである。
 `src/lib/blockService.ts` は保存値（`settings` と `sites` と `activity`）を読み、ホスト名を覆う登録から
 判定に使うブロックの登録を選び、今日の表示秒数を添えて `evaluateBlock()` に渡すだけにする。
 
@@ -86,7 +83,7 @@ stateDiagram-v2
         [*] --> Enabled
 
         Enabled: ブロック有効
-        Disabled: ブロック無効（一時停止）
+        Disabled: ブロック無効（サイトごとの無効化）
 
         Enabled --> Disabled: toggle-block(enabled=false)
         Disabled --> Enabled: toggle-block(enabled=true)
@@ -132,15 +129,14 @@ stateDiagram-v2
 
 ## 状態を決定する要素
 
-| 要素               | 保存場所                             | 型                  | 説明                                                   |
-| ------------------ | ------------------------------------ | ------------------- | ------------------------------------------------------ |
-| グローバル一時停止 | `settings.paused`                    | `boolean`           | 拡張機能全体の一時停止                                 |
-| サイトの規則       | `sites[サイトキー].rule`             | `SiteRule \| null`  | `kind` がブロックか許可。null なら規則なし（追跡だけ） |
-| 覆う許可サイト     | `sites[祖先か自分のキー].rule.kind`  | `'allow'`           | あればブロックの規則に関わらず通す                     |
-| サイト別有効/無効  | `sites[サイトキー].rule.enabled`     | `boolean`           | ブロックの規則の ON/OFF                                |
-| サイト別時間制限   | `sites[サイトキー].rule.timeLimit`   | `TimeLimit \| null` | ブロックの規則の「1日30分まで」などの設定              |
-| スケジュール       | `settings.schedules`                 | `Schedule[]`        | ブロック有効時間帯                                     |
-| 時間制限使用量     | `activity[今日][サイトキー].seconds` | `number`            | 今日（ローカル日付）の表示秒数                         |
+| 要素              | 保存場所                             | 型                  | 説明                                                   |
+| ----------------- | ------------------------------------ | ------------------- | ------------------------------------------------------ |
+| サイトの規則      | `sites[サイトキー].rule`             | `SiteRule \| null`  | `kind` がブロックか許可。null なら規則なし（追跡だけ） |
+| 覆う許可サイト    | `sites[祖先か自分のキー].rule.kind`  | `'allow'`           | あればブロックの規則に関わらず通す                     |
+| サイト別有効/無効 | `sites[サイトキー].rule.enabled`     | `boolean`           | ブロックの規則の ON/OFF                                |
+| サイト別時間制限  | `sites[サイトキー].rule.timeLimit`   | `TimeLimit \| null` | ブロックの規則の「1日30分まで」などの設定              |
+| スケジュール      | `settings.schedules`                 | `Schedule[]`        | ブロック有効時間帯                                     |
+| 時間制限使用量    | `activity[今日][サイトキー].seconds` | `number`            | 今日（ローカル日付）の表示秒数                         |
 
 ### YouTube の扱い
 
@@ -229,7 +225,7 @@ flowchart LR
     R --> End
 ```
 
-通知チェックは次の順に見る。残り秒数は判定（`evaluateBlock()`）の値で、一時停止中・スケジュール外・
+通知チェックは次の順に見る。残り秒数は判定（`evaluateBlock()`）の値で、スケジュール外・
 無効な項目では残り秒数が無いので通知しない。
 
 ```mermaid

@@ -11,7 +11,6 @@ import {
   getStorageData,
   makeActivity,
   SELECTORS,
-  TEST_DATA,
   TEST_DOMAINS
 } from './helpers';
 
@@ -171,68 +170,6 @@ test.describe('Popup 画面', () => {
     await page.close();
   });
 
-  test('POP-008: Pause トグルでブロック機能の一時停止ができる', async ({
-    context,
-    extensionId
-  }) => {
-    const page = await openPopup(context, extensionId);
-
-    const pauseToggle = page.locator(SELECTORS.header.pauseToggle);
-    await expect(pauseToggle).toBeVisible();
-
-    await expect(pauseToggle).toHaveAttribute('aria-checked', 'true');
-
-    await pauseToggle.click();
-
-    await expect(pauseToggle).toHaveAttribute('aria-checked', 'false');
-
-    await page.reload();
-    await page.waitForLoadState('domcontentloaded');
-
-    const pauseToggleAfterReload = page.locator(SELECTORS.header.pauseToggle);
-    await expect(pauseToggleAfterReload).toHaveAttribute(
-      'aria-checked',
-      'false'
-    );
-
-    await page.close();
-  });
-
-  test('POP-009: パスワード保護設定時、Pause トグルにパスワード認証が必要', async ({
-    context,
-    extensionId
-  }) => {
-    const setupPage = await openPopup(context, extensionId);
-    await setupTestStorage(setupPage, {
-      withGoal: true,
-      withPassword: true,
-      withAnalyticsOptIn: true
-    });
-    await setupPage.close();
-
-    const page = await openPopup(context, extensionId);
-
-    const pauseToggle = page.locator(SELECTORS.header.pauseToggle);
-    await pauseToggle.click();
-
-    const passwordModal = page.locator(SELECTORS.modal.passwordModal);
-    await expect(passwordModal).toBeVisible();
-
-    const passwordInput = passwordModal.locator('input[type="password"]');
-    await expect(passwordInput).toBeVisible();
-
-    await passwordInput.fill(TEST_DATA.password.valid);
-
-    const confirmButton = page.locator(SELECTORS.modal.passwordConfirmButton);
-    await confirmButton.click();
-
-    await expect(passwordModal).not.toBeVisible();
-
-    await expect(pauseToggle).toHaveAttribute('aria-checked', 'false');
-
-    await page.close();
-  });
-
   test('POP-010: クイックブロックボタンに現在のドメインが表示される', async ({
     context,
     extensionId
@@ -318,7 +255,7 @@ test.describe('Popup 画面', () => {
     extensionId
   }) => {
     const setupPage = await openPopup(context, extensionId);
-    await setSettings(setupPage, { paused: false });
+    await setSettings(setupPage);
     await setSites(setupPage, [
       {
         domain: TEST_DOMAINS.example,

@@ -177,12 +177,6 @@ describe('getBlockState', () => {
     expect(result).toEqual({ blocked: false, reason: null });
   });
 
-  it('一時停止中はブロックしない', async () => {
-    given({ settings: { paused: true }, sites: [site()] });
-    const result = await getBlockState('https://example.com');
-    expect(result).toEqual({ blocked: false, reason: null });
-  });
-
   it('追跡中のサイトに無いURLはブロックしない', async () => {
     given({ sites: [site()] });
     const result = await getBlockState('https://google.com');
@@ -417,14 +411,6 @@ describe('YouTube（youtube.com も普通の追跡中のサイト）', () => {
 });
 
 describe('getRuleTargets', () => {
-  it('一時停止中は転送するサイトが無い', async () => {
-    given({
-      settings: { paused: true },
-      sites: [site(), site(YOUTUBE_DOMAIN)]
-    });
-    expect((await getRuleTargets()).redirect).toEqual([]);
-  });
-
   it('スケジュール外では常時ブロックのサイトも転送しない', async () => {
     mockIsWithinSchedule.mockReturnValue(false);
     given({
@@ -511,7 +497,6 @@ describe('判定とルール生成の一致', () => {
       { [PARENT]: LIMIT_SECONDS },
       true
     ],
-    ['一時停止中', { settings: { paused: true }, sites: [site()] }, {}, false],
     [
       '許可サイト: 親ブロック + 子許可',
       { sites: [site(), allowedSite(CHILD)] },

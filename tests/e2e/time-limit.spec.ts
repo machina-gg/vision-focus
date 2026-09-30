@@ -107,35 +107,6 @@ test.describe('TimeLimit - Time Limit 機能', () => {
     await optionsPage.close();
   });
 
-  test('TL-008: Pause 有効中は Time Limit 超過してもブロックされない', async ({
-    context
-  }) => {
-    await setupStorageViaSW(context, {
-      settings: makeAppSettings({
-        paused: true
-      }),
-      sites: makeSites([
-        {
-          domain: TEST_DOMAINS.example,
-          block: { timeLimit: { type: 'daily', limitSeconds: 60 } }
-        }
-      ]),
-      activity: makeActivity([[TEST_DOMAINS.example, { seconds: 100 }]])
-    });
-
-    await triggerBlockRuleRecompute(context);
-
-    await waitForNoBlockRules(context, [TEST_DOMAINS.example]);
-
-    const page = await openExternalSite(
-      context,
-      `https://${TEST_DOMAINS.example}`
-    );
-    expect(page.url()).toContain(TEST_DOMAINS.example);
-    expect(page.url()).not.toContain('newtab.html');
-    await page.close();
-  });
-
   test('TL-009: Daily の使用実績は日付が変わるとリセットされる', async ({
     context
   }) => {

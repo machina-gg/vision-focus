@@ -5,7 +5,6 @@ import { Settings, HelpCircle } from 'lucide-react';
 // html2canvas のキャプチャ対象に入るため、外部 URL ではなくデータ URL（?inline）で埋め込む
 import iconBase64 from '~/assets/icon.png?inline';
 
-import { Toggle } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 
 const VERSION = '1.0.0';
@@ -18,23 +17,17 @@ export interface HeaderProps {
   onSettingsClick?: () => void;
   /** ヘルプボタンが押されたときに呼ぶ（省略時はヘルプボタンを出さない） */
   onHelpClick?: () => void;
-  /** true ならブロックを一時停止中として表示する */
-  paused?: boolean;
-  /** 一時停止のスイッチが切り替わったときに停止中かを受け取る（省略時はスイッチを出さない） */
-  onPausedChange?: (paused: boolean) => void;
 }
 
 /**
- * ロゴとバージョン、一時停止のスイッチ、設定・ヘルプのボタンを並べたヘッダーを表示する
+ * ロゴとバージョン、設定・ヘルプのボタンを並べたヘッダーを表示する
  * @param props ボタンの出し分けと操作（各フィールドは HeaderProps）
  * @returns header 要素
  */
 export function Header({
   showSettings = true,
   onSettingsClick,
-  onHelpClick,
-  paused = false,
-  onPausedChange
+  onHelpClick
 }: HeaderProps) {
   return (
     <header
@@ -59,20 +52,6 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-2">
-        {onPausedChange && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">
-              {getMessage(paused ? 'disabled' : 'active')}
-            </span>
-            <Toggle
-              checked={!paused}
-              onChange={(checked) => onPausedChange(!checked)}
-              size="sm"
-              data-testid="pause-toggle"
-            />
-          </div>
-        )}
-
         {showSettings && (
           <button
             data-testid="settings-button"

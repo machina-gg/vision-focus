@@ -390,17 +390,6 @@ export const ImportSettingsBodySchema = z.object({
 /** 設定の取り込みの本文（ImportSettingsBodySchema を通った値） */
 export type ImportSettingsBody = z.infer<typeof ImportSettingsBodySchema>;
 
-/** すべてのブロックの一時停止を切り替える本文 */
-export const TogglePauseBodySchema = z.object({
-  /** true = 一時停止する / false = 再開する */
-  paused: z.boolean(),
-  /** パスワード保護中に一時停止するときに照合するパスワード */
-  password: UnblockPasswordSchema
-});
-
-/** 一時停止の切り替えの本文（TogglePauseBodySchema を通った値） */
-export type TogglePauseBody = z.infer<typeof TogglePauseBodySchema>;
-
 /** domain だけを持つメッセージ本文（ドメイン名の長さの上限 253 文字まで） */
 export const SiteBodySchema = z.object({
   /** 対象のサイトのドメイン */

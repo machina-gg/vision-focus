@@ -19,8 +19,7 @@ export const SELECTORS = {
     logo: '[data-testid="app-logo"]',
     container: '[data-testid="app-header"]',
     settingsButton: '[data-testid="settings-button"]',
-    helpButton: '[data-testid="help-button"]',
-    pauseToggle: '[data-testid="pause-toggle"]'
+    helpButton: '[data-testid="help-button"]'
   },
 
   goalCard: {
