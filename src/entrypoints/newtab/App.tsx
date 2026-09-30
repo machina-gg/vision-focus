@@ -9,7 +9,13 @@ import React, {
 import { Settings, ShieldX, Clock } from 'lucide-react';
 
 import { DownloadButton } from '~/components/features';
-import { MiniStats, GoalDisplay, BlockedSitesList } from '~/components/newtab';
+import {
+  AllowHostButton,
+  MiniStats,
+  GoalDisplay,
+  BlockedSitesList
+} from '~/components/newtab';
+import { allowCandidate } from '~/lib/blockList';
 import { calculateBlockingDays } from '~/lib/blockingDays';
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
 import {
@@ -104,6 +110,18 @@ export function NewtabApp() {
 
     return calculateBlockingDays(blockedDomain, trackedSites);
   }, [blockedDomain, trackedSites]);
+
+  const allowHost = blockedDomain
+    ? allowCandidate(blockedDomain, trackedSites)
+    : null;
+
+  const handleAllowHost = useCallback(async () => {
+    if (!allowHost) return null;
+    const response = await sendMessage('add-allowed-site', {
+      domain: allowHost
+    }).catch(() => undefined);
+    return response?.success ? null : messageErrorText(response?.error);
+  }, [allowHost]);
 
   const handleAnalyticsClick = useCallback(() => {
     openExtensionPage('options.html#analytics');
@@ -223,6 +241,14 @@ export function NewtabApp() {
                         )}
                       </p>
                     )}
+                  </div>
+                )}
+                {allowHost && (
+                  <div className="mt-3" data-html2canvas-ignore="true">
+                    <AllowHostButton
+                      host={allowHost}
+                      onAllow={handleAllowHost}
+                    />
                   </div>
                 )}
               </div>
