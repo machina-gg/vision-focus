@@ -23,7 +23,8 @@ const received = vi.hoisted(() => ({
     | undefined,
   privacy: undefined as
     | { settings: AppSettings | undefined; onAnalyticsOptInChange: unknown }
-    | undefined
+    | undefined,
+  backup: undefined as { isPasswordProtected: boolean } | undefined
 }));
 
 const context = vi.hoisted(() => ({
@@ -58,7 +59,10 @@ vi.mock('~/components/options/SettingsDataPrivacy', () => ({
   }
 }));
 vi.mock('~/components/options/SettingsBackup', () => ({
-  SettingsBackup: () => <div data-testid="settings-backup" />
+  SettingsBackup: (props: { isPasswordProtected: boolean }) => {
+    received.backup = props;
+    return <div data-testid="settings-backup" />;
+  }
 }));
 
 const handlers = () => ({
@@ -70,6 +74,7 @@ const handlers = () => ({
 beforeEach(() => {
   received.password = undefined;
   received.privacy = undefined;
+  received.backup = undefined;
   context.settings = undefined;
 });
 
@@ -140,6 +145,25 @@ describe('SettingsTab', () => {
 
       expect(received.password?.passwordSettings).toEqual(password);
       expect(received.password?.holdSeconds).toBe(30);
+    });
+  });
+
+  describe('設定のバックアップ', () => {
+    it('設定が未読み込みならパスワード保護なしとして渡す', () => {
+      render(<SettingsTab {...handlers()} />);
+
+      expect(received.backup?.isPasswordProtected).toBe(false);
+    });
+
+    it('パスワード保護中ならそれを渡す', () => {
+      context.settings = {
+        ...DEFAULT_SETTINGS,
+        password: { enabled: true, passwordHash: 'stored-hash' }
+      };
+
+      render(<SettingsTab {...handlers()} />);
+
+      expect(received.backup?.isPasswordProtected).toBe(true);
     });
   });
 

@@ -5,6 +5,7 @@ import { NotificationSettingsSection } from '~/components/options/blocklist/Noti
 import { SettingsDataPrivacy } from '~/components/options/SettingsDataPrivacy';
 import { SettingsBackup } from '~/components/options/SettingsBackup';
 import { useSettings } from '~/contexts/SettingsContext';
+import { isProtectedByPassword } from '~/lib/password';
 import type {
   NotificationSettings,
   UnblockConfirmSettings
@@ -56,7 +57,11 @@ export function SettingsTab({
         onAnalyticsOptInChange={onAnalyticsOptInChange}
       />
 
-      <SettingsBackup />
+      <SettingsBackup
+        isPasswordProtected={isProtectedByPassword(
+          settings?.password ?? DEFAULT_PASSWORD_SETTINGS
+        )}
+      />
     </div>
   );
 }

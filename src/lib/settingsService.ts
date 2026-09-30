@@ -283,12 +283,12 @@ export interface ImportSettingsResult {
   skippedPresets: string[];
   /** 取り込まなかったスタイルを指していたため、適用中のスタイルを外したか */
   clearedActivePreset: boolean;
-  /** 取り込まなかったスタイルを指していたため、取り込んだスケジュールからスタイルを外したか */
+  /** 取り込まなかったスタイルを指していたため、スケジュールからスタイルを外したか */
   clearedSchedulePresets: boolean;
 }
 
 /**
- * 設定ファイルの設定・表示設定・画像を、保存済みの値に重ねて 1 回の書き込みで保存する（重ね方は applyImportedSettings / applyImportedVision。スタイルは既存と合わせて MAX_PRESETS 件まで。画像は毎回新しい ID で作り、既存の画像は消さない）
+ * 設定ファイルの設定・表示設定・画像で保存済みの値を置き換える（置き換え方は applyImportedSettings / applyImportedVision。スタイルは MAX_PRESETS 件まで。今のスタイルの画像を消してから、設定・表示設定・新しい ID で作った画像を 1 回の書き込みで保存する）
  * @param data 取り込む設定ファイルの中身（検証済み）
  * @returns 取り込まなかったスタイルと、それを指していた参照を外したか
  */
@@ -299,20 +299,18 @@ export async function importSettings(
     const {
       vision: nextVision,
       images,
+      removedImageIds,
       skippedPresets
     } = applyImportedVision(data, vision, MAX_PRESETS, () =>
       crypto.randomUUID()
     );
     const skippedIds = new Set(skippedPresets.map((preset) => preset.id));
-    const existingScheduleIds = new Set(
-      current.schedules.map((schedule) => schedule.id)
-    );
 
     let clearedSchedulePresets = false;
     const schedules = data.schedules.map((schedule) => {
       if (schedule.presetId === undefined || !skippedIds.has(schedule.presetId))
         return schedule;
-      if (!existingScheduleIds.has(schedule.id)) clearedSchedulePresets = true;
+      clearedSchedulePresets = true;
       const { presetId: _presetId, ...rest } = schedule;
       return rest;
     });
@@ -321,6 +319,7 @@ export async function importSettings(
       settings: applyImportedSettings({ ...data, schedules }, current),
       vision: nextVision,
       images,
+      removedImageIds,
       result: {
         skippedPresets: skippedPresets.map((preset) => preset.name),
         clearedActivePreset:

@@ -149,6 +149,15 @@ export async function getStorageViaSW<K extends keyof StorageSchema>(
   }, key);
 }
 
+/** 保存領域（local）の全体を読む。取り込みを取りやめたときに何も書き換わっていないことを確かめるのに使う */
+export async function getAllStorageViaSW(
+  context: BrowserContext
+): Promise<Record<string, unknown>> {
+  const sw = await getServiceWorker(context);
+
+  return await sw.evaluate(async () => chrome.storage.local.get(null));
+}
+
 export async function setupTestStorageViaSW(
   context: BrowserContext,
   options: TestStorageOptions & { clear?: boolean } = {}

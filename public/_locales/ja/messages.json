@@ -1138,7 +1138,7 @@
     "description": "ヘルプFAQバックアップ質問"
   },
   "helpFaqBackupAnswer": {
-    "message": "設定タブの「設定のバックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートは既存の設定とマージされるため、現在のデータが失われることはありません。",
+    "message": "設定タブの「設定のバックアップ」セクションを使用します。エクスポートでブロックリスト、スケジュール、スタイル、設定をJSONファイルとして保存できます。インポートすると、すべての設定がファイルの内容で上書きされます（ファイルに無いサイトは記録ごと消えます）。",
     "description": "ヘルプFAQバックアップ回答"
   },
   "helpFaqDataStorage": {
@@ -1279,9 +1279,17 @@
     "message": "設定をインポートしました！",
     "description": "インポート成功メッセージ"
   },
-  "importSuccessWithMerge": {
-    "message": "設定をインポートし、既存のデータとマージしました",
-    "description": "マージ付きインポート成功メッセージ"
+  "importConfirmTitle": {
+    "message": "設定をインポート",
+    "description": "インポート確認モーダルの見出し"
+  },
+  "importConfirmMessage": {
+    "message": "すべての設定が上書きされます。ファイルに無いサイトは記録ごと消えます。インポートしますか？",
+    "description": "インポート確認: 上書きされることの説明"
+  },
+  "importConfirmButton": {
+    "message": "インポート",
+    "description": "インポート確認モーダルの実行ボタン"
   },
   "importErrorFileTooLarge": {
     "message": "ファイルが大きすぎます（最大 $SIZE$MB）",
@@ -1968,20 +1976,6 @@
       "names": {
         "content": "$2",
         "example": "朝, 夜"
-      }
-    }
-  },
-  "importWarningNestedSite": {
-    "message": "$DOMAIN$ は $SITE$ と重なるため取り込みませんでした",
-    "description": "インポート警告: 追跡中のサイトと親子関係になるサイトを読み飛ばした",
-    "placeholders": {
-      "domain": {
-        "content": "$1",
-        "example": "m.youtube.com"
-      },
-      "site": {
-        "content": "$2",
-        "example": "youtube.com"
       }
     }
   },

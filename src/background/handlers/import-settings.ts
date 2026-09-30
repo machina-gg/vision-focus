@@ -1,51 +1,45 @@
 import type { MessageHandler } from '~/lib/messaging';
+import { purgeSite } from '~/lib/activityService';
 import { getRuleTargets } from '~/lib/blockService';
-import { importSettings } from '~/lib/settingsService';
-import { importSites } from '~/lib/siteService';
+import { toImportedSites } from '~/lib/settingsExport';
+import { checkUnblockPassword, importSettings } from '~/lib/settingsService';
+import { replaceSites } from '~/lib/siteService';
 import { updateBlockRules, blockExistingTabs } from '../blocker';
-import {
-  ImportSettingsBodySchema,
-  type ImportSettingsBody
-} from '~/types/messageSchemas';
-import type { SiteEntry } from '~/types/site';
-
-type ImportedSite = ImportSettingsBody['data']['sites'][string];
-
-function toSiteEntry(site: ImportedSite): SiteEntry {
-  return {
-    domain: site.domain,
-    trackedAt: site.trackedAt,
-    rule: site.rule,
-    youtube: site.youtube
-  };
-}
+import { ImportSettingsBodySchema } from '~/types/messageSchemas';
+import { passwordError } from './passwordRejection';
 
 // 保存は background で完結させる（画面から保存すると開いているタブが置き換わらない）
 /**
- * import-settings: 設定ファイルの設定・表示設定・画像とサイトを取り込み、ルールを更新して新たにブロック対象になったタブをブロックする
- * @param message data.data に設定ファイルの中身（重ね合わせは保存済みの最新の値に対して行う）
- * @returns 成功時の skipped は既存のサイトと許されない入れ子になるため取り込まなかったドメイン（conflict はぶつかった既存のサイト）、skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request / save-failed
+ * import-settings: 設定ファイルの設定・表示設定・画像とサイトで保存済みの値を丸ごと置き換え、登録が無くなったサイトの記録を消し、ルールを更新して新たにブロック対象になったタブをブロックする（ファイルの検証とパスワード保護中のパスワードの照合を、どの書き込みよりも前に済ませる）
+ * @param message data.data に設定ファイルの中身、data.password にパスワード保護中に照合するパスワード
+ * @returns 成功時の skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request（形が違う・ファイルの中に許されない入れ子の組がある）/ password-required / password-mismatch / save-failed
  */
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   data
 }) => {
   const parsed = ImportSettingsBodySchema.safeParse(data);
-
   if (!parsed.success) {
     return { success: false, error: { code: 'invalid-request' } };
   }
 
+  const { data: imported, password } = parsed.data;
+  const sites = toImportedSites(imported.sites);
+  if (!sites) {
+    return { success: false, error: { code: 'invalid-request' } };
+  }
+
   try {
-    const imported = parsed.data.data;
+    const rejection = await checkUnblockPassword(password, true);
+    if (rejection) return { success: false, error: passwordError(rejection) };
 
     const blockedBefore = (await getRuleTargets()).redirect;
 
     const { skippedPresets, clearedActivePreset, clearedSchedulePresets } =
       await importSettings(imported);
-    const { skipped } = await importSites(
-      Object.values(imported.sites).map(toSiteEntry),
-      new Date()
-    );
+    const removedSites = await replaceSites(sites);
+    for (const site of removedSites) {
+      await purgeSite(site);
+    }
 
     await updateBlockRules();
 
@@ -62,10 +56,6 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
 
     return {
       success: true,
-      skipped: skipped.map(({ input, nested }) => ({
-        domain: input,
-        conflict: nested.site
-      })),
       skippedPresets,
       clearedActivePreset,
       clearedSchedulePresets

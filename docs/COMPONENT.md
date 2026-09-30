@@ -69,7 +69,7 @@
 | PasswordSettingsSection     | `.`          | 解除保護の設定（長押しの秒数とパスワード）のカード                     |
 | UnblockHoldSecondsField     | `.`          | 解除の確認で長押しさせる秒数の選択欄                                   |
 | SettingsDataPrivacy         | `.`          | 匿名の利用統計を共有するかのスイッチのカード                           |
-| SettingsBackup              | `.`          | 設定の JSON 書き出しと読み込みのカード                                 |
+| SettingsBackup              | `.`          | 設定の JSON 書き出しと、書き出したファイルでの置き換えのカード         |
 | HelpTab                     | `.`          | ヘルプタブ（はじめかた・よくある質問・困ったとき・支援・問い合わせ）   |
 | HelpGettingStarted          | `.`          | 主な機能の使い方のカード                                               |
 | HelpFAQ                     | `.`          | よくある質問のカード                                                   |
@@ -93,6 +93,7 @@
 | ScheduleModal               | `modals/`    | スケジュールの追加・編集のモーダル                                     |
 | NewPresetModal              | `modals/`    | 新しいプリセットの名前を入力するモーダル                               |
 | DeletePresetModal           | `modals/`    | プリセット削除の確認モーダル                                           |
+| ImportConfirmModal          | `modals/`    | 設定の取り込みで上書きされることの確認モーダル                         |
 | PasswordModal               | `modals/`    | パスワードを入力させて呼び出し元へ渡すモーダル                         |
 | UnblockConfirmModal         | `modals/`    | ブロックの削除・無効化を長押しで確定させる確認モーダル                 |
 | AnalyticsOptInModal         | `modals/`    | 匿名の利用統計を共有するかを尋ねるダイアログ                           |
@@ -201,6 +202,7 @@ graph TD
         SET --> NSS[NotificationSettingsSection]
         SET --> SDP[SettingsDataPrivacy]
         SET --> SBK[SettingsBackup]
+        SBK --> ICM[ImportConfirmModal]
         PSS --> UHS[UnblockHoldSecondsField]
         PSS --> PF3[PasswordField]
         PSS --> FA[FormActions]
@@ -802,7 +804,11 @@ Esc で編集を取り消す。
 
 ### SettingsBackup
 
-`src/components/options/SettingsBackup.tsx`。Props は無い。読み込んだ設定の保存は background に任せ、画面は結果と警告だけを出す（読み込んだ設定の表示は保存値の購読が追従する）。
+`src/components/options/SettingsBackup.tsx`。ファイルを選んで検査を通ったら、取り込む前に必ず [ImportConfirmModal](#importconfirmmodal) を開く（キャンセルなら何も変えない）。保存は background（`import-settings`）に任せ、画面は結果と警告だけを出す（取り込んだ設定の表示は保存値の購読が追従する）。パスワードが違う・無いと返されたときは確認を閉じずに理由を出す。
+
+| Prop                | 型        | 省略時 | 説明                                                                                                                                          |
+| ------------------- | --------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| isPasswordProtected | `boolean` | 必須   | true なら取り込みの確認でパスワードを入力させる（判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)） |
 
 ---
 
@@ -1085,6 +1091,19 @@ Esc で編集を取り消す。
 | onClose       | `() => void` | 必須   | 取消ボタンか背景が押されたときに呼ぶ                                           |
 | onConfirm     | `() => void` | 必須   | 削除ボタンが押されたときに呼ぶ                                                 |
 | scheduleCount | `number`     | 必須   | そのプリセットを使っているスケジュールの数（スケジュールは残る旨と一緒に出す） |
+
+---
+
+### ImportConfirmModal
+
+`src/components/options/modals/ImportConfirmModal.tsx`。すべての設定が上書きされ、ファイルに無いサイトは記録ごと消えることを伝える。照合はせず、入力を呼び出し元へ渡す（Enter でも送る）。呼び出し元が取り込みを依頼し、成功なら閉じ、失敗なら返された文言を出す。
+
+| Prop             | 型                                               | 省略時 | 説明                                                                                                      |
+| ---------------- | ------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------- |
+| isOpen           | `boolean`                                        | 必須   | false の間は表示しない。開くたびに入力とエラーを空に戻す                                                  |
+| onClose          | `() => void`                                     | 必須   | キャンセルボタンか背景が押されたときと、onConfirm が成功したあとに呼ぶ                                    |
+| requiresPassword | `boolean`                                        | 必須   | true ならパスワード欄を出し、入力するまで取り込めない                                                     |
+| onConfirm        | `(password?: string) => Promise<string \| null>` | 必須   | 取り込みを依頼し、閉じずに出す文言（閉じてよければ null）を返す（パスワード欄があればその入力を受け取る） |
 
 ---
 

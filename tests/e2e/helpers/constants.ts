@@ -227,7 +227,12 @@ export const SELECTORS = {
     exportSettingsButton: '[data-testid="settings-export-button"]',
     importSettingsButton: '[data-testid="settings-import-button"]',
     importSettingsInput: '[data-testid="settings-import-input"]',
-    importResultMessage: '[data-testid="import-result-message"]'
+    importResultMessage: '[data-testid="import-result-message"]',
+    importConfirmMessage: '[data-testid="import-confirm-message"]',
+    importConfirmSubmit: '[data-testid="import-confirm-submit"]',
+    importConfirmCancel: '[data-testid="import-confirm-cancel"]',
+    importConfirmError: '[data-testid="import-confirm-error"]',
+    importPasswordField: '[data-testid="password-field-import"]'
   }
 };
 

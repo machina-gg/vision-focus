@@ -49,9 +49,9 @@ import {
   addTrackedSite,
   getRecordableSiteKeys,
   getTrackedSiteKeys,
-  importSites,
   recordableSiteKeys,
   removeBlock,
+  replaceSites,
   setAllowedSiteRecording,
   setBlockEnabled,
   setTimeLimit,
@@ -776,146 +776,30 @@ describe('stopTracking', () => {
   });
 });
 
-describe('importSites', () => {
-  it('新しいサイトは正規化したキーで取り込み、既存の設定は上書きしない', async () => {
-    givenSites(sitesOf(blockedSite('x.com', { enabled: false })));
-
-    const result = await importSites(
-      [
-        blockedSite('www.New.com', { addedAt: '2025-05-05T00:00:00.000Z' }),
-        blockedSite('x.com', { enabled: true, timeLimit: LIMIT })
-      ],
-      NOW
-    );
-
-    expect(result).toEqual({ changed: ['new.com'], skipped: [] });
-    expect((await stored())['new.com']).toEqual({
-      domain: 'new.com',
-      trackedAt: NOW.toISOString(),
-      rule: {
-        kind: 'block',
-        enabled: true,
-        addedAt: '2025-05-05T00:00:00.000Z',
-        timeLimit: null
-      },
-      youtube: null
-    });
-    expect(entryOf(await stored(), 'x.com').rule).toMatchObject({
-      enabled: false
-    });
-  });
-
-  it('追跡だけの既存サイトにはブロックの規則を足す', async () => {
-    givenSites(sitesOf(trackedSite('x.com')));
-    const result = await importSites([blockedSite('x.com')], NOW);
-    expect(result.changed).toEqual(['x.com']);
-    expect(entryOf(await stored(), 'x.com').rule).toMatchObject({
-      kind: 'block',
-      enabled: true
-    });
-  });
-
-  it('既存の登録の規則は許可とブロック・規則なしの間で付け替えない', async () => {
-    givenSites(sitesOf(trackedSite('x.com'), allowedSite('y.com')));
-    const result = await importSites(
-      [allowedSite('x.com'), blockedSite('y.com')],
-      NOW
-    );
-    expect(result).toEqual({ changed: [], skipped: [] });
-    expect(entryOf(await stored(), 'x.com').rule).toBeNull();
-    expect(entryOf(await stored(), 'y.com').rule?.kind).toBe('allow');
-  });
-
-  it('許可サイトはブロックの下にも取り込み、許可サイトでない子孫を持つものは取り込まない', async () => {
+describe('replaceSites', () => {
+  it('追跡中のサイトを丸ごと置き換え、登録が無くなったサイトキーを返す', async () => {
     givenSites(
-      sitesOf(blockedSite('youtube.com'), trackedSite('m.google.com'))
+      sitesOf(
+        blockedSite('x.com', { enabled: false }),
+        trackedSite('local.com'),
+        allowedSite('docs.x.com')
+      )
     );
-    const result = await importSites(
-      [
-        allowedSite('music.youtube.com', true),
-        allowedSite('google.com'),
-        blockedSite('reddit.com'),
-        allowedSite('old.reddit.com')
-      ],
-      NOW
+    const next = sitesOf(
+      blockedSite('x.com', { timeLimit: LIMIT }),
+      trackedSite('new.com', { trackedAt: '2020-01-01T00:00:00.000Z' })
     );
-    expect(result).toEqual({
-      changed: ['music.youtube.com', 'reddit.com', 'old.reddit.com'],
-      skipped: [
-        {
-          input: 'google.com',
-          nested: { site: 'm.google.com', relation: 'descendant' }
-        }
-      ]
-    });
-    expect(entryOf(await stored(), 'music.youtube.com').rule).toEqual({
-      kind: 'allow',
-      recordTime: true
-    });
+
+    const removed = await replaceSites(next);
+
+    expect(removed.sort()).toEqual(['docs.x.com', 'local.com']);
+    expect(await stored()).toEqual(next);
   });
 
-  it('既存・ファイル内の先行サイトと入れ子になるものは取り込まず理由を返す', async () => {
-    givenSites(sitesOf(trackedSite('google.com')));
-    const result = await importSites(
-      [
-        blockedSite('mail.google.com'),
-        blockedSite('reddit.com'),
-        blockedSite('old.reddit.com')
-      ],
-      NOW
-    );
-    expect(result).toEqual({
-      changed: ['reddit.com'],
-      skipped: [
-        {
-          input: 'mail.google.com',
-          nested: { site: 'google.com', relation: 'ancestor' }
-        },
-        {
-          input: 'old.reddit.com',
-          nested: { site: 'reddit.com', relation: 'ancestor' }
-        }
-      ]
-    });
-    expect(Object.keys(await stored()).sort()).toEqual([
-      'google.com',
-      'reddit.com'
-    ]);
-  });
+  it('未保存なら何も無くならない', async () => {
+    const next = sitesOf(trackedSite('x.com'));
 
-  it('許可サイトの youtube.com には YouTube 機能を取り込まない', async () => {
-    await importSites(
-      [allowedSite(YOUTUBE_DOMAIN, false, { youtube: youtubeFeatures() })],
-      NOW
-    );
-    expect(entryOf(await stored(), YOUTUBE_DOMAIN)).toMatchObject({
-      rule: { kind: 'allow' },
-      youtube: null
-    });
-  });
-
-  it('YouTube 機能は youtube.com 以外では取り込まない', async () => {
-    await importSites(
-      [
-        trackedSite('x.com', { youtube: youtubeFeatures() }),
-        trackedSite(YOUTUBE_DOMAIN, {
-          youtube: youtubeFeatures({ hideComments: true })
-        })
-      ],
-      NOW
-    );
-    expect(entryOf(await stored(), 'x.com').youtube).toBeNull();
-    expect(entryOf(await stored(), YOUTUBE_DOMAIN).youtube).toEqual(
-      youtubeFeatures({ hideComments: true })
-    );
-  });
-
-  it('変わるものが無ければ書かない', async () => {
-    givenSites(sitesOf(blockedSite('x.com')));
-    const result = await importSites(
-      [blockedSite('x.com'), trackedSite('bad')],
-      NOW
-    );
-    expect(result).toEqual({ changed: [], skipped: [] });
+    expect(await replaceSites(next)).toEqual([]);
+    expect(await stored()).toEqual(next);
   });
 });

@@ -406,21 +406,23 @@ describe('通知・長押し確認・利用状況の送信への同意', () => {
 });
 
 describe('importSettings', () => {
-  it('保存済みの設定に重ね、取り込みが触れない項目は残す', async () => {
+  it('スケジュールをファイルのもので置き換え、ファイルに含まれない項目は残す', async () => {
     givenSettings({
       ...DEFAULT_SETTINGS,
       paused: true,
       password: { enabled: true, passwordHash: 'hash' },
-      schedules: [schedule('s1')]
+      schedules: [schedule('s1'), { ...schedule('local'), days: [3] }]
     });
 
-    await importSettings(importedData([schedule('s1'), schedule('s2')]));
+    await importSettings(
+      importedData([{ ...schedule('s1'), name: 'Imported' }, schedule('s2')])
+    );
 
     expect(await getSettings()).toEqual({
       ...DEFAULT_SETTINGS,
       paused: true,
       password: { enabled: true, passwordHash: 'hash' },
-      schedules: [schedule('s1'), schedule('s2')],
+      schedules: [{ ...schedule('s1'), name: 'Imported' }, schedule('s2')],
       notifications: { timeLimitEnabled: false, timeLimitMinutes: 10 },
       unblockConfirm: { holdSeconds: 30 }
     });
@@ -428,43 +430,61 @@ describe('importSettings', () => {
 });
 
 describe('importSettings の表示設定', () => {
-  it('既存 8 件にファイルの新しい 5 件なら、先頭の 2 件だけを足し、3 件の名前を返す', async () => {
+  it('スタイルをファイルのもので置き換え、手元にしか無いスタイルは消える', async () => {
     givenSettings(DEFAULT_SETTINGS);
-    givenPresets(...presetIds(8, 'e'));
+    givenPresets('e1', 'n1');
 
     const result = await importSettings({
       ...importedData([]),
-      presets: presetIds(5, 'n').map((id) => exported(id))
+      presets: [{ ...exported('n1'), name: 'Imported' }, exported('n2')]
     });
 
     expect(result).toEqual({
-      skippedPresets: ['n3', 'n4', 'n5'],
+      skippedPresets: [],
       clearedActivePreset: false,
       clearedSchedulePresets: false
     });
-    expect((await getVision()).presets.map((p) => p.id)).toEqual([
-      ...presetIds(8, 'e'),
-      'n1',
-      'n2'
+    expect((await getVision()).presets).toEqual([
+      { ...preset('n1'), name: 'Imported' },
+      preset('n2')
     ]);
+  });
+
+  it(`ファイルのスタイルが ${MAX_PRESETS} 件を超えたら、先頭から上限まで取り込み、残りの名前を返す`, async () => {
+    givenSettings(DEFAULT_SETTINGS);
+    givenPresets(...presetIds(3, 'e'));
+
+    const result = await importSettings({
+      ...importedData([]),
+      presets: presetIds(MAX_PRESETS + 2, 'n').map((id) => exported(id))
+    });
+
+    expect(result.skippedPresets).toEqual([
+      `n${MAX_PRESETS + 1}`,
+      `n${MAX_PRESETS + 2}`
+    ]);
+    expect((await getVision()).presets.map((p) => p.id)).toEqual(
+      presetIds(MAX_PRESETS, 'n')
+    );
   });
 
   it('取り込まなかったスタイルを指す適用中の指定とスケジュールの参照を外し、設定と表示設定を 1 回で書く', async () => {
     givenSettings(DEFAULT_SETTINGS);
-    givenPresets(...presetIds(9, 'e'));
     const set = vi.spyOn(chrome.storage.local, 'set');
+    const presets = presetIds(MAX_PRESETS + 1, 'n');
+    const skipped = presets[MAX_PRESETS] as string;
 
     const result = await importSettings({
       ...importedData([
-        { ...schedule('s1'), presetId: 'n2' },
+        { ...schedule('s1'), presetId: skipped },
         { ...schedule('s2'), days: [2], presetId: 'n1' }
       ]),
-      presets: presetIds(2, 'n').map((id) => exported(id)),
-      activePresetId: 'n2'
+      presets: presets.map((id) => exported(id)),
+      activePresetId: skipped
     });
 
     expect(result).toEqual({
-      skippedPresets: ['n2'],
+      skippedPresets: [skipped],
       clearedActivePreset: true,
       clearedSchedulePresets: true
     });
@@ -477,7 +497,7 @@ describe('importSettings の表示設定', () => {
     set.mockRestore();
   });
 
-  it('上限に収まれば適用中の指定と既定の表示設定をファイルの値にする', async () => {
+  it('適用中の指定と既定の表示設定をファイルの値にする', async () => {
     givenSettings(DEFAULT_SETTINGS);
     givenPresets('e1');
 
@@ -723,7 +743,11 @@ describe('スタイルの画像', () => {
     it.each([
       ['差し替え', () => update({ kind: 'set', dataUrl: OTHER_JPEG })],
       ['外す', () => update({ kind: 'clear' })],
-      ['スタイルの削除', () => deletePreset('p1')]
+      ['スタイルの削除', () => deletePreset('p1')],
+      [
+        '取り込み',
+        () => importSettings({ ...importedData([]), presets: [exported('n1')] })
+      ]
     ])(
       '%s: 残るのは画像の無い ID だけで、持ち主のいない画像は残らない',
       async (_label, run) => {
@@ -743,7 +767,7 @@ describe('スタイルの画像', () => {
   });
 
   describe('取り込み', () => {
-    it('画像は毎回新しい ID で作り、既存の画像は消さない', async () => {
+    it('画像は新しい ID で作り、今のスタイルの画像は消す（持ち主のいない画像を残さない）', async () => {
       givenSettings(DEFAULT_SETTINGS);
       givenPresetWithImage('e1', 'img-old', JPEG);
       const set = vi.spyOn(chrome.storage.local, 'set');
@@ -761,37 +785,37 @@ describe('スタイルの画像', () => {
       expect(
         vision.presets.find((p) => p.id === 'n2')?.customBackgroundId
       ).toBe(null);
+      expect(storedImageIds()).toEqual([newId]);
       expect(fakeChrome.localData[imageKey(newId)]).toBe(OTHER_JPEG);
-      expect(fakeChrome.localData[imageKey('img-old')]).toBe(JPEG);
       expect(await orphanImageIds()).toEqual([]);
       set.mockRestore();
     });
 
-    it('同じファイルを 2 回取り込んでも、画像を共有しない', async () => {
+    it('同じ ID のスタイルを取り込んでも、画像は新しい ID で作り直す', async () => {
+      givenSettings(DEFAULT_SETTINGS);
+      givenPresetWithImage('p1', 'img-old', JPEG);
+
+      await importSettings({
+        ...importedData([]),
+        presets: [exported('p1', JPEG)]
+      });
+
+      const newId = await imageIdOf('p1');
+      expect(newId).not.toBe('img-old');
+      expect(storedImageIds()).toEqual([newId]);
+    });
+
+    it('上限を超えて取り込まなかったスタイルの画像は作らない', async () => {
       givenSettings(DEFAULT_SETTINGS);
       givenPresets();
 
       await importSettings({
         ...importedData([]),
-        presets: [exported('n1', JPEG)]
-      });
-      await importSettings({
-        ...importedData([]),
-        presets: [exported('n2', JPEG)]
-      });
-
-      const ids = (await getVision()).presets.map((p) => p.customBackgroundId);
-      expect(new Set(ids).size).toBe(2);
-      expect(storedImageIds().sort()).toEqual([...(ids as string[])].sort());
-    });
-
-    it('上限を超えて取り込まなかったスタイルの画像は作らない', async () => {
-      givenSettings(DEFAULT_SETTINGS);
-      givenPresets(...presetIds(MAX_PRESETS - 1, 'e'));
-
-      await importSettings({
-        ...importedData([]),
-        presets: [exported('n1', JPEG), exported('n2', OTHER_JPEG)]
+        presets: [
+          ...presetIds(MAX_PRESETS - 1, 'n').map((id) => exported(id)),
+          exported('last', JPEG),
+          exported('over', OTHER_JPEG)
+        ]
       });
 
       expect(storedImageIds()).toHaveLength(1);
@@ -829,7 +853,7 @@ describe('書き込みの直列化', () => {
     expect(settings.unblockConfirm).toEqual({ holdSeconds: 30 });
   });
 
-  it('取り込みを続けて呼んでも、先の取り込みで足したスケジュールが消えない', async () => {
+  it('取り込みを続けて呼んだら、後の取り込みの内容になる', async () => {
     givenSettings(DEFAULT_SETTINGS);
 
     await Promise.all([
@@ -837,10 +861,7 @@ describe('書き込みの直列化', () => {
       importSettings(importedData([schedule('s2')]))
     ]);
 
-    expect((await getSettings()).schedules).toEqual([
-      schedule('s1'),
-      schedule('s2')
-    ]);
+    expect((await getSettings()).schedules).toEqual([schedule('s2')]);
   });
 
   it('先に足したスケジュールと重なる 2 件目は、同時に呼んでも最新の値で拒む', async () => {

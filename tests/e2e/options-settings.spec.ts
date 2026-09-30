@@ -1,6 +1,10 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from './fixtures/extension';
 
 import { EXPORT_VERSION } from '~/lib/settingsExport';
+import type { ExportedData } from '~/types/messageSchemas';
+import type { AppSettings } from '~/types/storage';
 import {
   openOptions,
   setupTestStorage,
@@ -19,8 +23,104 @@ import {
   SELECTORS,
   TEST_DATA,
   UI_TEXT,
-  makeSites
+  makeSites,
+  makeActivity,
+  openExternalSite,
+  setupStorageViaSW,
+  getStorageViaSW,
+  getAllStorageViaSW,
+  TEST_DOMAINS
 } from './helpers';
+
+function exportFile(overrides: Partial<ExportedData> = {}) {
+  const settings = makeAppSettings();
+  return {
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: {
+      sites: {},
+      schedules: [],
+      presets: [],
+      defaultDisplaySettings: makeDisplaySettings(),
+      activePresetId: null,
+      notifications: settings.notifications,
+      unblockConfirm: settings.unblockConfirm,
+      ...overrides
+    }
+  };
+}
+
+async function chooseImportFile(page: Page, file: object): Promise<void> {
+  await page.locator(SELECTORS.settings.importSettingsInput).setInputFiles({
+    name: 'test-settings.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(file))
+  });
+}
+
+const IMPORTED_SITE = 'imported.example';
+const KEPT_SITE = 'kept.example';
+const LOCAL_SITE = 'local.example';
+
+function localOnlyStorage(overrides: Partial<AppSettings> = {}) {
+  return {
+    settings: makeAppSettings({
+      schedules: [
+        {
+          id: 'local-schedule',
+          name: 'Local',
+          startTime: '09:00',
+          endTime: '18:00',
+          days: [1],
+          enabled: true
+        }
+      ],
+      ...overrides
+    }),
+    vision: makeVision({
+      presets: [
+        makePreset('local-style', 'Local Style', {
+          customBackgroundId: 'local-img'
+        })
+      ],
+      activePresetId: 'local-style'
+    }),
+    sites: makeSites([
+      { domain: LOCAL_SITE, block: {} },
+      { domain: KEPT_SITE }
+    ]),
+    activity: makeActivity([
+      [LOCAL_SITE, { seconds: 120 }],
+      [KEPT_SITE, { seconds: 60 }]
+    ]),
+    'backgroundImage:local-img': TINY_JPEG_DATA_URL
+  };
+}
+
+function replacingFile() {
+  const { customBackgroundId: _id, ...importedStyle } = makePreset(
+    'imported-style',
+    'Imported Style'
+  );
+  return exportFile({
+    sites: makeSites([
+      { domain: KEPT_SITE },
+      { domain: IMPORTED_SITE, block: {} }
+    ]),
+    schedules: [
+      {
+        id: 'imported-schedule',
+        name: 'Imported',
+        startTime: '10:00',
+        endTime: '11:00',
+        days: [2],
+        enabled: true
+      }
+    ],
+    presets: [{ ...importedStyle, customBackgroundData: null }],
+    activePresetId: 'imported-style'
+  });
+}
 
 test.describe('Options - Settings Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
@@ -392,13 +492,11 @@ test.describe('Options - Settings Tab', () => {
     const importButton = page.locator(SELECTORS.settings.importSettingsButton);
     await expect(importButton).toBeVisible();
 
-    const fileInput = page.locator('input[type="file"]');
-
-    await fileInput.setInputFiles({
-      name: 'test-settings.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(testData))
-    });
+    await chooseImportFile(page, testData);
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toBeVisible();
+    await page.locator(SELECTORS.settings.importConfirmSubmit).click();
 
     const resultMessage = page.locator(SELECTORS.settings.importResultMessage);
     await expect(resultMessage).toBeVisible();
@@ -425,6 +523,166 @@ test.describe('Options - Settings Tab', () => {
     expect(await getBackgroundImageIds(page)).toEqual([
       imported?.customBackgroundId
     ]);
+
+    await page.close();
+  });
+  test('OPT-SET11: インポートでブロック対象になったサイトが、開いていたタブでも置き換わる', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(context, { settings: makeAppSettings() });
+
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.reddit}`
+    );
+    expect(sitePage.url()).toContain(TEST_DOMAINS.reddit);
+    expect(sitePage.url()).not.toContain('newtab.html');
+
+    const page = await openOptions(context, extensionId, 'settings');
+    await chooseImportFile(
+      page,
+      exportFile({
+        sites: makeSites([{ domain: TEST_DOMAINS.reddit, block: {} }])
+      })
+    );
+    await page.locator(SELECTORS.settings.importConfirmSubmit).click();
+
+    await sitePage.waitForURL('**newtab.html**', { timeout: 10_000 });
+    expect(sitePage.url()).toContain('newtab.html');
+
+    await sitePage.close();
+    await page.close();
+  });
+
+  test('OPT-SET12: 手元にしか無いサイト・スケジュール・スタイルが取り込みで消え、消えたサイトの記録も消える（ファイルにあるサイトの記録は残る）', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(context, localOnlyStorage());
+
+    // 消えることを確かめる前に、在ることを確かめる
+    expect(
+      Object.keys((await getStorageViaSW(context, 'sites')) ?? {})
+    ).toEqual(expect.arrayContaining([LOCAL_SITE, KEPT_SITE]));
+    const activityBefore = Object.values(
+      (await getStorageViaSW(context, 'activity')) ?? {}
+    );
+    expect(activityBefore.some((row) => LOCAL_SITE in row)).toBe(true);
+    expect(activityBefore.some((row) => KEPT_SITE in row)).toBe(true);
+
+    const page = await openOptions(context, extensionId, 'settings');
+    expect(await getBackgroundImageIds(page)).toEqual(['local-img']);
+
+    await chooseImportFile(page, replacingFile());
+    await page.locator(SELECTORS.settings.importConfirmSubmit).click();
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toHaveCount(0);
+
+    await expect
+      .poll(async () =>
+        Object.keys((await getStorageViaSW(context, 'sites')) ?? {}).sort()
+      )
+      .toEqual([IMPORTED_SITE, KEPT_SITE].sort());
+    await expect
+      .poll(async () => {
+        const rows = Object.values(
+          (await getStorageViaSW(context, 'activity')) ?? {}
+        );
+        return {
+          local: rows.some((row) => LOCAL_SITE in row),
+          kept: rows.some((row) => KEPT_SITE in row)
+        };
+      })
+      .toEqual({ local: false, kept: true });
+
+    const settings = await getStorageViaSW(context, 'settings');
+    expect(settings?.schedules.map((schedule) => schedule.id)).toEqual([
+      'imported-schedule'
+    ]);
+    const vision = await getStorageViaSW(context, 'vision');
+    expect(vision?.presets.map((preset) => preset.id)).toEqual([
+      'imported-style'
+    ]);
+    expect(vision?.activePresetId).toBe('imported-style');
+    expect(await getBackgroundImageIds(page)).toEqual([]);
+
+    await page.close();
+  });
+
+  test('OPT-SET13: 取り込みの確認をキャンセルすると何も変わらない', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(context, localOnlyStorage());
+
+    const page = await openOptions(context, extensionId, 'settings');
+    await chooseImportFile(page, replacingFile());
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toBeVisible();
+    const before = await getAllStorageViaSW(context);
+
+    await page.locator(SELECTORS.settings.importConfirmCancel).click();
+
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toHaveCount(0);
+    await expect(
+      page.locator(SELECTORS.settings.importResultMessage)
+    ).toHaveCount(0);
+    expect(await getAllStorageViaSW(context)).toEqual(before);
+
+    await page.close();
+  });
+
+  test('OPT-SET14: パスワード保護中は確認でパスワードを求め、違うと理由が出て何も変わらず、合うと取り込まれる', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(
+      context,
+      localOnlyStorage({
+        password: { enabled: true, passwordHash: TEST_DATA.password.validHash }
+      })
+    );
+
+    const page = await openOptions(context, extensionId, 'settings');
+    await chooseImportFile(page, replacingFile());
+
+    const passwordField = page.locator(SELECTORS.settings.importPasswordField);
+    const submit = page.locator(SELECTORS.settings.importConfirmSubmit);
+    await expect(passwordField).toBeVisible();
+    await expect(submit).toBeDisabled();
+    const before = await getAllStorageViaSW(context);
+
+    await passwordField.fill(TEST_DATA.password.invalid);
+    await submit.click();
+
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmError)
+    ).toBeVisible();
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toBeVisible();
+    expect(await getAllStorageViaSW(context)).toEqual(before);
+
+    await passwordField.fill(TEST_DATA.password.valid);
+    await submit.click();
+
+    await expect(
+      page.locator(SELECTORS.settings.importConfirmMessage)
+    ).toHaveCount(0);
+    await expect
+      .poll(async () =>
+        Object.keys((await getStorageViaSW(context, 'sites')) ?? {}).sort()
+      )
+      .toEqual([IMPORTED_SITE, KEPT_SITE].sort());
+    expect((await getStorageViaSW(context, 'settings'))?.password).toEqual({
+      enabled: true,
+      passwordHash: TEST_DATA.password.validHash
+    });
 
     await page.close();
   });
