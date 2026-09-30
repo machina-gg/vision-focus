@@ -3,7 +3,11 @@ import { Plus } from 'lucide-react';
 
 import { Card, Button, Input } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
-import { wasteSiteKeys } from '~/lib/sitePopulation';
+import {
+  allowedSiteKeys,
+  wasteSiteKeys,
+  type SitePopulations
+} from '~/lib/sitePopulation';
 import type { ActivityLog } from '~/types/activity';
 import type { SiteEntry, TrackedSites } from '~/types/site';
 
@@ -60,6 +64,10 @@ export function AnalyticsTab({
 }: AnalyticsTabProps) {
   const [newSiteDomain, setNewSiteDomain] = useState('');
   const sites = useMemo(() => wasteSiteKeys(trackedSites), [trackedSites]);
+  const populations = useMemo<SitePopulations>(
+    () => ({ waste: sites, allowed: allowedSiteKeys(trackedSites) }),
+    [sites, trackedSites]
+  );
 
   const handleAddSite = async () => {
     const domain = newSiteDomain.trim().toLowerCase();
@@ -126,7 +134,7 @@ export function AnalyticsTab({
 
       <AnalyticsDateFilter
         activity={activity}
-        sites={sites}
+        populations={populations}
         isSupportPromptVisible={isSupportPromptVisible}
         onSupport={onSupport}
         onDismissSupport={onDismissSupport}

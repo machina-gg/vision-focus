@@ -32,6 +32,8 @@ export interface WeeklyReport extends ReportTopSites {
   wasteTimeChangePercent: number | null;
   /** 週の前半と後半の浪費時間の比較 */
   trend: ReportTrend;
+  /** 週の許可サイトの表示秒数（浪費時間には入らない） */
+  allowedSeconds: number;
 }
 
 /** 月の中の 1 週分の合計（月の外の日は含めない） */
@@ -52,4 +54,6 @@ export interface MonthlyReport extends ReportTopSites {
   wasteTimeChangePercent: number | null;
   /** 月の前半と後半の浪費時間の比較 */
   trend: ReportTrend;
+  /** 月の許可サイトの表示秒数（浪費時間には入らない） */
+  allowedSeconds: number;
 }

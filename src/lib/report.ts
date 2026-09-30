@@ -15,6 +15,7 @@ import type {
   ReportTrend,
   WeeklyReport
 } from '~/types/report';
+import type { SitePopulations } from '~/lib/sitePopulation';
 import type { SiteKey } from '~/types/site';
 
 /** レポートのトップに並べるサイトの数 */
@@ -80,19 +81,20 @@ function changePercent(current: number, previous: number): number | null {
 }
 
 /**
- * 週次レポート。weekOffset は 0 = 今週、-1 = 先週で、過去の週に記録が無ければ null
+ * 週次レポート。weekOffset は 0 = 今週、-1 = 先週で、過去の週に浪費の記録が無ければ null
  * @param log 活動の記録
- * @param sites 集計の対象にするサイトキー
+ * @param populations 浪費時間と許可サイトの時間の母集団（許可サイトは allowedSeconds にだけ入る）
  * @param weekOffset 今週からずらす週数（負で過去）
  * @param now 今週を決める基準の時刻
- * @returns 週次レポート（過去の週で表示秒数もブロック回数も 0 なら null。今週は 0 でも返す）
+ * @returns 週次レポート（過去の週で浪費の表示秒数もブロック回数も 0 なら、許可サイトの時間があっても null。今週は 0 でも返す）
  */
 export function generateWeeklyReport(
   log: ActivityLog,
-  sites: readonly SiteKey[],
+  populations: SitePopulations,
   weekOffset: number = 0,
   now: Date = new Date()
 ): WeeklyReport | null {
+  const sites = populations.waste;
   const range = weekRange(now, weekOffset);
   const totals = sumRange(log, sites, range);
   if (weekOffset < 0 && isEmpty(totals)) return null;
@@ -107,24 +109,26 @@ export function generateWeeklyReport(
     dailyBreakdown,
     ...topSites(log, sites, range),
     wasteTimeChangePercent: changePercent(totals.seconds, previous.seconds),
-    trend: calculateTrend(dailyBreakdown.map((d) => d.seconds))
+    trend: calculateTrend(dailyBreakdown.map((d) => d.seconds)),
+    allowedSeconds: sumRange(log, populations.allowed, range).seconds
   };
 }
 
 /**
- * 月次レポート。monthOffset は 0 = 今月、-1 = 先月で、過去の月に記録が無ければ null
+ * 月次レポート。monthOffset は 0 = 今月、-1 = 先月で、過去の月に浪費の記録が無ければ null
  * @param log 活動の記録
- * @param sites 集計の対象にするサイトキー
+ * @param populations 浪費時間と許可サイトの時間の母集団（許可サイトは allowedSeconds にだけ入る）
  * @param monthOffset 今月からずらす月数（負で過去）
  * @param now 今月を決める基準の時刻
- * @returns 月次レポート（過去の月で表示秒数もブロック回数も 0 なら null。今月は 0 でも返す）
+ * @returns 月次レポート（過去の月で浪費の表示秒数もブロック回数も 0 なら、許可サイトの時間があっても null。今月は 0 でも返す）
  */
 export function generateMonthlyReport(
   log: ActivityLog,
-  sites: readonly SiteKey[],
+  populations: SitePopulations,
   monthOffset: number = 0,
   now: Date = new Date()
 ): MonthlyReport | null {
+  const sites = populations.waste;
   const range = monthRange(now, monthOffset);
   const totals = sumRange(log, sites, range);
   if (monthOffset < 0 && isEmpty(totals)) return null;
@@ -141,7 +145,8 @@ export function generateMonthlyReport(
     weeklyBreakdown,
     ...topSites(log, sites, range),
     wasteTimeChangePercent: changePercent(totals.seconds, previous.seconds),
-    trend: calculateTrend(weeklyBreakdown.map((w) => w.seconds))
+    trend: calculateTrend(weeklyBreakdown.map((w) => w.seconds)),
+    allowedSeconds: sumRange(log, populations.allowed, range).seconds
   };
 }
 

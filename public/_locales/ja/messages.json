@@ -561,6 +561,16 @@
     "message": "レポート",
     "description": "レポートセクションタイトル"
   },
+  "reportAllowedTime": {
+    "message": "許可サイトの時間: $TIME$",
+    "description": "週次・月次レポートの集計値の下に出す補助の 1 行。時間はその期間の許可サイトの表示時間",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "1h 5m"
+      }
+    }
+  },
   "close": {
     "message": "閉じる",
     "description": "閉じるボタン"

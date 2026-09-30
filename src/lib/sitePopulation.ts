@@ -22,3 +22,11 @@ export function allowedSiteKeys(sites: TrackedSites): SiteKey[] {
     .filter(isAllowedSite)
     .map((site) => site.domain);
 }
+
+/** 浪費時間と許可サイトの時間の母集団の組 */
+export interface SitePopulations {
+  /** 浪費時間の母集団（wasteSiteKeys） */
+  waste: readonly SiteKey[];
+  /** 許可サイトの時間の母集団（allowedSiteKeys） */
+  allowed: readonly SiteKey[];
+}

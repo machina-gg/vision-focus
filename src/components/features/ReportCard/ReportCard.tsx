@@ -4,6 +4,7 @@ import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, Button } from '~/components/ui';
 import { getMessage } from '~/lib/i18n';
 import { formatWeekRange, formatMonth } from '~/lib/report';
+import { formatTime } from '~/lib/time';
 import type { WeeklyReport, MonthlyReport } from '~/types/report';
 
 import { TrendIcon } from './TrendIcon';
@@ -42,7 +43,7 @@ interface MonthlyReportCardProps {
 }
 
 /**
- * 週のレポート（傾向・集計値・曜日ごとのグラフ・上位サイト）を、週を移動できるカードで表示する
+ * 週のレポート（傾向・集計値・許可サイトの時間・曜日ごとのグラフ・上位サイト）を、週を移動できるカードで表示する
  * @param props 週のレポートと週の移動（各フィールドは WeeklyReportCardProps）
  * @returns 週のレポートのカード
  */
@@ -106,6 +107,18 @@ export function WeeklyReportCard({
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
 
+          {report.allowedSeconds > 0 && (
+            <p
+              className="text-sm text-gray-600"
+              data-testid="report-allowed-time"
+            >
+              {getMessage(
+                'reportAllowedTime',
+                formatTime(report.allowedSeconds)
+              )}
+            </p>
+          )}
+
           <div className="pt-4 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getMessage('dailyBreakdown')}
@@ -150,7 +163,7 @@ export function WeeklyReportCard({
 }
 
 /**
- * 月のレポート（傾向・集計値・週ごとのグラフ・上位サイト）を、月を移動できるカードで表示する
+ * 月のレポート（傾向・集計値・許可サイトの時間・週ごとのグラフ・上位サイト）を、月を移動できるカードで表示する
  * @param props 月のレポートと月の移動（各フィールドは MonthlyReportCardProps）
  * @returns 月のレポートのカード
  */
@@ -213,6 +226,18 @@ export function MonthlyReportCard({
             unblockCount={report.totals.unblocks}
             wasteTimeChangePercent={report.wasteTimeChangePercent}
           />
+
+          {report.allowedSeconds > 0 && (
+            <p
+              className="text-sm text-gray-600"
+              data-testid="report-allowed-time"
+            >
+              {getMessage(
+                'reportAllowedTime',
+                formatTime(report.allowedSeconds)
+              )}
+            </p>
+          )}
 
           <div className="pt-4 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-700 mb-3">

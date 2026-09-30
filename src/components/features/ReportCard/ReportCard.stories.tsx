@@ -4,12 +4,28 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { WeeklyReportCard, MonthlyReportCard } from './ReportCard';
 import { generateMonthlyReport, generateWeeklyReport } from '~/lib/report';
-import { STORY_SITES, storyActivity } from '~/stories/mockActivity';
+import {
+  STORY_ALLOWED_SITES,
+  STORY_SITES,
+  storyActivity
+} from '~/stories/mockActivity';
 
 // レポートの期間は今日基準なので、例の activity も今日からの相対日付で作る
 const activity = storyActivity();
-const mockWeeklyReport = generateWeeklyReport(activity, STORY_SITES, 0);
-const mockMonthlyReport = generateMonthlyReport(activity, STORY_SITES, 0);
+const populations = { waste: STORY_SITES, allowed: STORY_ALLOWED_SITES };
+const mockWeeklyReport = generateWeeklyReport(activity, populations, 0);
+const mockMonthlyReport = generateMonthlyReport(activity, populations, 0);
+const withoutAllowed = { waste: STORY_SITES, allowed: [] };
+const mockWeeklyReportWithoutAllowed = generateWeeklyReport(
+  activity,
+  withoutAllowed,
+  0
+);
+const mockMonthlyReportWithoutAllowed = generateMonthlyReport(
+  activity,
+  withoutAllowed,
+  0
+);
 
 const meta = {
   title: 'Features/ReportCard',
@@ -49,6 +65,15 @@ export const WeeklyCurrentWeek: Story = {
   }
 };
 
+export const WeeklyWithoutAllowedSites: Story = {
+  args: {
+    report: mockWeeklyReportWithoutAllowed,
+    onPrevious: () => {},
+    onNext: () => {},
+    canGoNext: true
+  }
+};
+
 export const WeeklyEmpty: Story = {
   args: {
     report: null,
@@ -62,6 +87,16 @@ export const MonthlyWithData: StoryObj<typeof MonthlyReportCard> = {
   render: (args) => <MonthlyReportCard {...args} />,
   args: {
     report: mockMonthlyReport,
+    onPrevious: () => {},
+    onNext: () => {},
+    canGoNext: true
+  }
+};
+
+export const MonthlyWithoutAllowedSites: StoryObj<typeof MonthlyReportCard> = {
+  render: (args) => <MonthlyReportCard {...args} />,
+  args: {
+    report: mockMonthlyReportWithoutAllowed,
     onPrevious: () => {},
     onNext: () => {},
     canGoNext: true

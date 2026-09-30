@@ -4,6 +4,7 @@ import { act, render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AnalyticsTab } from '../AnalyticsTab';
+import type { SitePopulations } from '~/lib/sitePopulation';
 import type { ActivityLog } from '~/types/activity';
 import type { TrackedSites } from '~/types/site';
 import { allowedSite, blockedSite, sitesOf, trackedSite } from '~/test/sites';
@@ -32,15 +33,21 @@ vi.mock('../analytics', () => ({
   AnalyticsSummary: (props: TrackedSitesProps) => (
     <div data-testid="summary">{trackedSitesText(props)}</div>
   ),
-  AnalyticsDateFilter: (
-    props: SourcesProps & {
-      isSupportPromptVisible: boolean;
-      onSupport: () => Promise<void>;
-      onDismissSupport: () => Promise<void>;
-    }
-  ) => (
+  AnalyticsDateFilter: (props: {
+    activity: ActivityLog;
+    populations: SitePopulations;
+    isSupportPromptVisible: boolean;
+    onSupport: () => Promise<void>;
+    onDismissSupport: () => Promise<void>;
+  }) => (
     <div data-testid="date-filter">
-      {sourcesText(props)}
+      {sourcesText({
+        activity: props.activity,
+        sites: props.populations.waste
+      })}
+      <span data-testid="date-filter-allowed">
+        {props.populations.allowed.join(',')}
+      </span>
       <span data-testid="date-filter-support-visible">
         {String(props.isSupportPromptVisible)}
       </span>
@@ -240,7 +247,7 @@ describe('AnalyticsTab', () => {
       expect(screen.getByTestId('date-filter')).toHaveTextContent(expected);
     });
 
-    it('ランキングと期間の絞り込みには許可サイトを除いた母集団を渡し、一覧と書き出しには登録をすべて渡す', () => {
+    it('ランキングと期間の絞り込みの浪費には許可サイトを除いた母集団を、期間の絞り込みの許可には許可サイトを渡し、一覧と書き出しには登録をすべて渡す', () => {
       renderTab({
         activity: {
           '2026-03-10': {
@@ -259,7 +266,7 @@ describe('AnalyticsTab', () => {
       expect(screen.getByTestId('summary')).toHaveTextContent(all);
       expect(screen.getByTestId('site-ranking').textContent).toBe(waste);
       expect(screen.getByTestId('date-filter')).toHaveTextContent(waste);
-      expect(screen.getByTestId('date-filter')).not.toHaveTextContent(
+      expect(screen.getByTestId('date-filter-allowed').textContent).toBe(
         'music.a.example'
       );
     });
