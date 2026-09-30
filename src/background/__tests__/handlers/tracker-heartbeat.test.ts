@@ -41,7 +41,6 @@ import { getTrackedSiteKeys } from '~/lib/siteService';
 import { toDateKey } from '~/lib/time';
 import type { ActivityLog } from '~/types/activity';
 import { DEFAULT_SETTINGS } from '~/types/storage';
-import type { AppSettings } from '~/types/storage';
 import type { BlockRule, SiteEntry } from '~/types/site';
 import { blockedSite, sitesOf } from '~/test/sites';
 import { TRACKER_CONFIG } from '~/constants/limits';
@@ -63,11 +62,8 @@ const RECORDED_SECONDS = Math.floor(
   TRACKER_CONFIG.RECORDING_INTERVAL_MS / 1000
 );
 
-function given(sites: SiteEntry[], settings: Partial<AppSettings> = {}) {
-  vi.mocked(getSettings).mockResolvedValue({
-    ...DEFAULT_SETTINGS,
-    ...settings
-  });
+function given(sites: SiteEntry[]) {
+  vi.mocked(getSettings).mockResolvedValue({ ...DEFAULT_SETTINGS });
   vi.mocked(getSites).mockResolvedValue(sitesOf(...sites));
 }
 
@@ -77,15 +73,12 @@ function givenYouTubeBlock(block: Partial<BlockRule> | null) {
 
 const LIMIT_SECONDS = 1800;
 
-function givenTimeLimitedExample(overrides: Partial<AppSettings> = {}) {
-  given(
-    [
-      blockedSite('example.com', {
-        timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
-      })
-    ],
-    overrides
-  );
+function givenTimeLimitedExample() {
+  given([
+    blockedSite('example.com', {
+      timeLimit: { type: 'daily', limitSeconds: LIMIT_SECONDS }
+    })
+  ]);
   vi.mocked(getTrackedSiteKeys).mockResolvedValue(['example.com']);
 }
 
@@ -312,17 +305,6 @@ describe('tracker-heartbeat ハンドラ', () => {
       await showExampleFor();
 
       expect(updateBlockRules).not.toHaveBeenCalled();
-    });
-
-    it('一時停止中は上限を超えていても適用しない', async () => {
-      vi.useFakeTimers();
-      givenTimeLimitedExample({ paused: true });
-      givenTodaySeconds('example.com', LIMIT_SECONDS * 2);
-
-      await showExampleFor();
-
-      expect(updateBlockRules).not.toHaveBeenCalled();
-      expect(blockExistingTabs).not.toHaveBeenCalled();
     });
 
     it('常時ブロックの項目は通知もルール更新もしない', async () => {

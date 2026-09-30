@@ -71,7 +71,7 @@ describe('get-remaining-time ハンドラ', () => {
     });
   });
 
-  it('判定が残り時間を持たない（スケジュール外・一時停止中）なら remainingSeconds は null', async () => {
+  it('判定が残り時間を持たない（スケジュール外）なら remainingSeconds は null', async () => {
     vi.mocked(getSiteBlockStatus).mockResolvedValue(
       status({ state: { blocked: false, reason: null } })
     );

@@ -4,12 +4,8 @@ import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
 
 import { openExtensionPage, openOptionsPage } from '~/lib/chromeApi';
-import { isProtectedByPassword } from '~/lib/password';
-import type { AppSettings } from '~/types/storage';
 
 interface UsePopupActionsOptions {
-  /** 今のアプリ設定。読み込み前は undefined */
-  settings: AppSettings | undefined;
   /** 表示中のドメインを消す（ブロックに加えたあとに呼ぶ） */
   clearDomain: () => void;
 }
@@ -25,29 +21,17 @@ interface UsePopupActionsReturn {
   handleGoalClick: () => void;
   /** domain をブロックリストに加える。失敗したら文言を alert で出す */
   handleBlock: (domain: string) => Promise<void>;
-  /** すべてのブロックの一時停止を切り替える（パスワード保護中に一時停止するときは password を添える）。失敗の文言、切り替えたら null を返す */
-  handlePausedChange: (
-    paused: boolean,
-    password?: string
-  ) => Promise<string | null>;
-  /** パスワード保護が有効か */
-  isPasswordProtected: boolean;
 }
 
 /**
- * ポップアップのページ遷移・ブロック追加・一時停止切り替えの操作と、パスワード保護の有無を提供する
+ * ポップアップのページ遷移とブロック追加の操作を提供する
  * @param options フックの入力（下記の項目）
- * @param options.settings 今のアプリ設定。読み込み前は undefined
  * @param options.clearDomain ブロックに加えたあと表示中のドメインを消す関数
- * @returns 各操作とパスワード保護の有無
+ * @returns 各操作
  */
 export function usePopupActions({
-  settings,
   clearDomain
 }: UsePopupActionsOptions): UsePopupActionsReturn {
-  const isPasswordProtected =
-    settings !== undefined && isProtectedByPassword(settings.password);
-
   const handleSettingsClick = useCallback(() => {
     openOptionsPage();
   }, []);
@@ -80,28 +64,11 @@ export function usePopupActions({
     [clearDomain]
   );
 
-  const handlePausedChange = useCallback(
-    async (paused: boolean, password?: string) => {
-      try {
-        const response = await sendMessage('toggle-pause', {
-          paused,
-          password
-        });
-        return response.success ? null : messageErrorText(response.error);
-      } catch {
-        return messageErrorText(undefined);
-      }
-    },
-    []
-  );
-
   return {
     handleSettingsClick,
     handleHelpClick,
     handleAnalyticsClick,
     handleGoalClick,
-    handleBlock,
-    handlePausedChange,
-    isPasswordProtected
+    handleBlock
   };
 }

@@ -32,8 +32,6 @@ import type {
   ToggleBlockRequest,
   ToggleBlockResponse,
   ToggleScheduleRequest,
-  TogglePauseRequest,
-  TogglePauseResponse,
   TrackerHeartbeatRequest,
   TrackerHeartbeatResponse,
   UpdateAnalyticsOptInRequest,
@@ -87,10 +85,8 @@ export interface ProtocolMap {
   'stop-tracking'(data: StopTrackingRequest): StopTrackingResponse;
   /** サイトのブロック設定の有効・無効を切り替える */
   'toggle-block'(data: ToggleBlockRequest): ToggleBlockResponse;
-  /** スケジュールの有効・無効を切り替える（有効にしたら一時停止も解く） */
+  /** スケジュールの有効・無効を切り替える */
   'toggle-schedule'(data: ToggleScheduleRequest): SettingsChangeResponse;
-  /** ブロックの一時停止を切り替える */
-  'toggle-pause'(data: TogglePauseRequest): TogglePauseResponse;
   /** 開いているページの表示状態を知らせる（滞在時間の記録に使う） */
   'tracker-heartbeat'(data: TrackerHeartbeatRequest): TrackerHeartbeatResponse;
   /** 利用状況の送信への同意・拒否を保存する */

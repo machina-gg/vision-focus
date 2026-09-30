@@ -67,7 +67,6 @@ test.describe('NewTab 画面 - 統計カード', () => {
     createdDate.setDate(createdDate.getDate() - 10);
 
     await setSettings(setupPage, {
-      paused: false,
       analyticsOptIn: { enabled: true, decidedAt: new Date().toISOString() }
     });
     await setSites(setupPage, [

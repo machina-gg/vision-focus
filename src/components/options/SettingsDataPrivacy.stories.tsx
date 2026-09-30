@@ -5,7 +5,6 @@ import type { AppSettings } from '~/types/storage';
 
 const baseSettings: AppSettings = {
   schedules: [],
-  paused: false,
   notifications: {
     timeLimitEnabled: true,
     timeLimitMinutes: 5

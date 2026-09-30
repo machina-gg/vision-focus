@@ -1,4 +1,3 @@
-import { getSettings } from '~/lib/storage';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import {
   getBlockState,
@@ -27,20 +26,8 @@ function conditionFor(
   };
 }
 
-/** 現在の設定から declarativeNetRequest の動的ルールを作り直す（ブロック中の登録は転送、許可サイトは通す。一時停止中はすべて外す） */
+/** 現在の設定から declarativeNetRequest の動的ルールを作り直す（ブロック中の登録は転送、許可サイトは通す） */
 export async function updateBlockRules(): Promise<void> {
-  const settings = await getSettings();
-
-  if (settings.paused) {
-    const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-    const removeRuleIds = existingRules.map((rule) => rule.id);
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds,
-      addRules: []
-    });
-    return;
-  }
-
   const { redirect, allow } = await getRuleTargets();
 
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();

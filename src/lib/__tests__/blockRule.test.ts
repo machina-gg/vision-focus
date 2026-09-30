@@ -17,7 +17,6 @@ const limitedRule: Pick<BlockRule, 'enabled' | 'timeLimit'> = {
 
 function ctx(overrides: Partial<BlockContext> = {}): BlockContext {
   return {
-    paused: false,
     scheduleActive: true,
     todaySeconds: 0,
     ...overrides
@@ -97,23 +96,7 @@ describe('evaluateBlock - スケジュール内 / 外 × 常時 / 時間制限',
   });
 });
 
-describe('evaluateBlock - 一時停止とブロック有効', () => {
-  it('一時停止中は常時ブロックでも閲覧可', () => {
-    expect(evaluateBlock(alwaysRule, ctx({ paused: true }))).toEqual({
-      blocked: false,
-      reason: null
-    });
-  });
-
-  it('一時停止中は時間制限を超えていても閲覧可', () => {
-    expect(
-      evaluateBlock(
-        limitedRule,
-        ctx({ paused: true, todaySeconds: LIMIT_SECONDS * 2 })
-      )
-    ).toEqual({ blocked: false, reason: null });
-  });
-
+describe('evaluateBlock - ブロック有効', () => {
   it('ブロックのトグルが OFF なら閲覧可', () => {
     expect(
       evaluateBlock(

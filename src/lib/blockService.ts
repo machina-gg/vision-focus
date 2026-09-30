@@ -112,7 +112,6 @@ function evaluate(
 ): SiteBlockStatus {
   const { site, rule } = registration;
   const state = evaluateBlock(rule, {
-    paused: inputs.settings.paused,
     scheduleActive: isBlockingWindowOpen(inputs.settings.schedules),
     todaySeconds: secondsOnDay(inputs.activity, site, toDateKey(inputs.now))
   });

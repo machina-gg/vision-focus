@@ -19,7 +19,7 @@ test.describe('Allow - ブロック画面の帯から許可サイトにする', 
   test.beforeEach(async ({ context, extensionId }) => {
     await clearStorageFromExtension(context, extensionId);
     await setupStorageViaSW(context, {
-      settings: makeAppSettings({ paused: false }),
+      settings: makeAppSettings(),
       sites: makeSites([{ domain: TEST_DOMAINS.youtube, block: {} }])
     });
     await waitForBlockRules(context, [TEST_DOMAINS.youtube]);

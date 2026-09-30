@@ -194,7 +194,6 @@ export function makeAppSettings(
 ): AppSettings {
   return {
     schedules: [],
-    paused: false,
     notifications: { timeLimitEnabled: true, timeLimitMinutes: 5 },
     password: { enabled: false, passwordHash: null },
     unblockConfirm: { holdSeconds: 5 },

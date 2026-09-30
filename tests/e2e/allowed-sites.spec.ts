@@ -123,7 +123,7 @@ test.describe('Allow - 許可サイト', () => {
       test.setTimeout(90_000);
 
       await setupStorageViaSW(context, {
-        settings: makeAppSettings({ paused: false }),
+        settings: makeAppSettings(),
         sites: makeSites([
           { domain: TEST_DOMAINS.youtube, block: {} },
           { domain: ALLOWED_HOST, allow: { recordTime: false } },
@@ -162,7 +162,7 @@ test.describe('Allow - 許可サイト', () => {
       test.setTimeout(90_000);
 
       await setupStorageViaSW(context, {
-        settings: makeAppSettings({ paused: false }),
+        settings: makeAppSettings(),
         sites: makeSites([
           { domain: TEST_DOMAINS.youtube, block: {} },
           { domain: ALLOWED_HOST, allow: { recordTime: true } }

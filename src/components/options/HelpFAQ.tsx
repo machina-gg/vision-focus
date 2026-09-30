@@ -35,10 +35,6 @@ export function HelpFAQ() {
             a: getMessage('helpFaqWildcardAnswer')
           },
           {
-            q: getMessage('helpFaqPause'),
-            a: getMessage('helpFaqPauseAnswer')
-          },
-          {
             q: getMessage('helpFaqPresets'),
             a: getMessage('helpFaqPresetsAnswer')
           },

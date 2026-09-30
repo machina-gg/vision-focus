@@ -429,10 +429,9 @@ describe('applyImportedSettings', () => {
     expect(settings.notifications.timeLimitMinutes).toBe(10);
   });
 
-  it('ファイルに含まれない一時停止・パスワード・分析の同意は今の値のまま', () => {
+  it('ファイルに含まれないパスワード・分析の同意は今の値のまま', () => {
     const currentSettings: AppSettings = {
       ...DEFAULT_SETTINGS,
-      paused: true,
       password: { enabled: true, passwordHash: 'hash' },
       analyticsOptIn: { enabled: true, decidedAt: '2024-01-01T00:00:00Z' }
     };
@@ -442,7 +441,6 @@ describe('applyImportedSettings', () => {
       currentSettings
     );
 
-    expect(settings.paused).toBe(true);
     expect(settings.password).toEqual({ enabled: true, passwordHash: 'hash' });
     expect(settings.analyticsOptIn).toEqual({
       enabled: true,
