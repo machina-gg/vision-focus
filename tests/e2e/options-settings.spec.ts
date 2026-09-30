@@ -29,6 +29,7 @@ import {
   setupStorageViaSW,
   getStorageViaSW,
   getAllStorageViaSW,
+  sendExtensionMessage,
   TEST_DOMAINS
 } from './helpers';
 
@@ -683,6 +684,98 @@ test.describe('Options - Settings Tab', () => {
       enabled: true,
       passwordHash: TEST_DATA.password.validHash
     });
+
+    await page.close();
+  });
+
+  test('OPT-SET15: 秒数を短くするには変更前の秒数の長押しが要り、やめると値が変わらない。長くする変更は確認なしで保存される', async ({
+    context,
+    extensionId
+  }) => {
+    // 短くする先は最短の 5 秒なので、変更前はその次に短い 10 秒にして長押しの待ちを抑える
+    const BEFORE_SECONDS = 10;
+    const SHORTER_SECONDS = 5;
+    const MEASUREMENT_SLACK_MS = 1000;
+    test.setTimeout(60 * 1000);
+
+    await setupStorageViaSW(context, {
+      settings: makeAppSettings({
+        unblockConfirm: { holdSeconds: BEFORE_SECONDS }
+      })
+    });
+    const holdSecondsSaved = async () =>
+      (await getStorageViaSW(context, 'settings'))?.unblockConfirm.holdSeconds;
+
+    const page = await openOptions(context, extensionId, 'settings');
+    const holdSelect = page.locator(
+      SELECTORS.settings.unblockHoldSecondsSelect
+    );
+    const holdButton = page.locator(SELECTORS.modal.unblockConfirmHoldButton);
+    await expect(holdSelect).toHaveValue(String(BEFORE_SECONDS));
+
+    await holdSelect.selectOption(String(SHORTER_SECONDS));
+    await expect(holdButton).toBeVisible();
+    await page.locator(SELECTORS.modal.unblockConfirmCancel).click();
+    await expect(holdButton).toHaveCount(0);
+    await expect(holdSelect).toHaveValue(String(BEFORE_SECONDS));
+    expect(await holdSecondsSaved()).toBe(BEFORE_SECONDS);
+
+    await holdSelect.selectOption(String(SHORTER_SECONDS));
+    await expect(page.locator(SELECTORS.modal.unblockConfirm)).toContainText(
+      `from ${BEFORE_SECONDS} to ${SHORTER_SECONDS} seconds`
+    );
+    const elapsedMs = await holdUnblockConfirm(page, BEFORE_SECONDS);
+    expect(elapsedMs).toBeGreaterThanOrEqual(
+      BEFORE_SECONDS * 1000 - MEASUREMENT_SLACK_MS
+    );
+    await expect.poll(holdSecondsSaved).toBe(SHORTER_SECONDS);
+
+    await holdSelect.selectOption(String(BEFORE_SECONDS));
+    await expect.poll(holdSecondsSaved).toBe(BEFORE_SECONDS);
+    await expect(holdButton).toHaveCount(0);
+
+    await page.close();
+  });
+
+  test('OPT-SET16: パスワード保護中は秒数を選べず、短くするメッセージをパスワードなしか違うパスワードで送ると拒まれて値が変わらない', async ({
+    context,
+    extensionId
+  }) => {
+    const BEFORE_SECONDS = 30;
+    const SHORTER_SECONDS = 5;
+
+    await setupStorageViaSW(context, {
+      settings: makeAppSettings({
+        password: { enabled: true, passwordHash: TEST_DATA.password.validHash },
+        unblockConfirm: { holdSeconds: BEFORE_SECONDS }
+      })
+    });
+    const holdSecondsSaved = async () =>
+      (await getStorageViaSW(context, 'settings'))?.unblockConfirm.holdSeconds;
+
+    const page = await openOptions(context, extensionId, 'settings');
+    await expect(
+      page.locator(SELECTORS.settings.unblockHoldSecondsSelect)
+    ).toBeDisabled();
+
+    const shorten = (password?: string) =>
+      sendExtensionMessage(page, 'update-unblock-confirm', {
+        unblockConfirm: { holdSeconds: SHORTER_SECONDS },
+        ...(password !== undefined && { password })
+      });
+
+    expect(await shorten()).toEqual({
+      success: false,
+      error: { code: 'password-required' }
+    });
+    expect(await shorten(TEST_DATA.password.invalid)).toEqual({
+      success: false,
+      error: { code: 'password-mismatch' }
+    });
+    expect(await holdSecondsSaved()).toBe(BEFORE_SECONDS);
+
+    expect(await shorten(TEST_DATA.password.valid)).toEqual({ success: true });
+    expect(await holdSecondsSaved()).toBe(SHORTER_SECONDS);
 
     await page.close();
   });

@@ -4,7 +4,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import type { UnblockRequest } from '~/hooks/useUnblockGuard';
 
-function requestOf(overrides: Partial<UnblockRequest> = {}): UnblockRequest {
+type BlockRequest = Extract<UnblockRequest, { action: 'toggle' | 'delete' }>;
+
+function requestOf(overrides: Partial<BlockRequest> = {}): BlockRequest {
   return {
     domain: 'example.com',
     timeLimit: null,
@@ -54,7 +56,7 @@ describe('useUnblockGuard', () => {
       )
     );
 
-    expect(result.current.pending).toMatchObject({
+    expect(result.current.pending?.subject).toMatchObject({
       domain: 'youtube.com',
       action: 'delete'
     });
@@ -65,7 +67,9 @@ describe('useUnblockGuard', () => {
 
     act(() => result.current.requestUnblock(requestOf({ timeLimit: null })));
 
-    expect(result.current.pending?.blockStyle).toBe('alwaysBlocked');
+    expect(result.current.pending?.subject).toMatchObject({
+      blockStyle: 'alwaysBlocked'
+    });
   });
 
   it('時間制限があればブロック方式は 1 日の上限と表示する', () => {
@@ -77,7 +81,27 @@ describe('useUnblockGuard', () => {
       )
     );
 
-    expect(result.current.pending?.blockStyle).toBe('dailyLimit');
+    expect(result.current.pending?.subject).toMatchObject({
+      blockStyle: 'dailyLimit'
+    });
+  });
+
+  it('秒数を短くする依頼は、短くしたあとの秒数を出す内容にする', () => {
+    const { result } = renderHook(() => useUnblockGuard(false));
+
+    act(() =>
+      result.current.requestUnblock({
+        action: 'shorten-hold',
+        nextHoldSeconds: 5,
+        onConfirm: vi.fn(async () => null)
+      })
+    );
+
+    expect(result.current.isConfirmModalOpen).toBe(true);
+    expect(result.current.pending?.subject).toEqual({
+      action: 'shorten-hold',
+      nextHoldSeconds: 5
+    });
   });
 
   it('confirm で依頼の onConfirm が 1 回だけ呼ばれる', async () => {

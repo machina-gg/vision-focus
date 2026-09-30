@@ -4,6 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { UnblockConfirmModal } from '../UnblockConfirmModal';
+import type { UnblockConfirmSubject } from '~/hooks/useUnblockGuard';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 
 stubI18nWithSubstitutions();
@@ -22,14 +23,29 @@ function renderModal(
       isOpen
       onClose={onClose}
       onConfirm={onConfirm}
-      domain="example.com"
-      blockStyle="集中モード"
-      action="toggle"
+      subject={{
+        action: 'toggle',
+        domain: 'example.com',
+        blockStyle: '集中モード'
+      }}
       holdSeconds={HOLD_SECONDS}
       {...overrides}
     />
   );
   return { onClose, onConfirm, ...result };
+}
+
+function blockSubject(
+  overrides: Partial<
+    Extract<UnblockConfirmSubject, { action: 'toggle' | 'delete' }>
+  > = {}
+): UnblockConfirmSubject {
+  return {
+    action: 'toggle',
+    domain: 'example.com',
+    blockStyle: '集中モード',
+    ...overrides
+  };
 }
 
 const holdButton = () => screen.getByTestId('unblock-confirm-hold-button');
@@ -60,7 +76,7 @@ describe('UnblockConfirmModal', () => {
 
   describe('説明文', () => {
     it('解除のときは解除の説明をドメイン名つきで出し、削除の説明は出さない', () => {
-      renderModal({ action: 'toggle' });
+      renderModal({ subject: blockSubject({ action: 'toggle' }) });
 
       expect(
         screen.getByText('unblockConfirmDescription(example.com,5)')
@@ -71,7 +87,7 @@ describe('UnblockConfirmModal', () => {
     });
 
     it('削除のときは削除の説明をドメイン名つきで出し、解除の説明は出さない', () => {
-      renderModal({ action: 'delete' });
+      renderModal({ subject: blockSubject({ action: 'delete' }) });
 
       expect(
         screen.getByText('deleteBlockConfirmDescription(example.com,5)')
@@ -82,7 +98,7 @@ describe('UnblockConfirmModal', () => {
     });
 
     it('適用中のスタイル名を併記する', () => {
-      renderModal({ blockStyle: '集中モード' });
+      renderModal({ subject: blockSubject({ blockStyle: '集中モード' }) });
 
       expect(
         screen.getByText('unblockConfirmBlockStyle(集中モード)')
@@ -90,11 +106,25 @@ describe('UnblockConfirmModal', () => {
     });
 
     it('スタイル名が空文字でも欄そのものは出す', () => {
-      renderModal({ blockStyle: '' });
+      renderModal({ subject: blockSubject({ blockStyle: '' }) });
 
       expect(
         screen.getByText('unblockConfirmBlockStyle()')
       ).toBeInTheDocument();
+    });
+
+    it('秒数を短くするときは変更前と変更後の秒数を出し、ブロック方式は出さない', () => {
+      renderModal({
+        holdSeconds: 30,
+        subject: { action: 'shorten-hold', nextHoldSeconds: 5 }
+      });
+
+      expect(
+        screen.getByText('shortenHoldConfirmDescription(30,5)')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/^unblockConfirmBlockStyle/)
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -206,7 +236,10 @@ describe('UnblockConfirmModal', () => {
     const LONG_HOLD_MS = LONG_HOLD_SECONDS * 1000;
 
     it('説明文に秒数を渡す', () => {
-      renderModal({ holdSeconds: LONG_HOLD_SECONDS, action: 'delete' });
+      renderModal({
+        holdSeconds: LONG_HOLD_SECONDS,
+        subject: blockSubject({ action: 'delete' })
+      });
 
       expect(
         screen.getByText('deleteBlockConfirmDescription(example.com,30)')

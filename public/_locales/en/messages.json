@@ -1873,6 +1873,20 @@
       }
     }
   },
+  "shortenHoldConfirmDescription": {
+    "message": "You are about to shorten the hold duration from $FROM$ to $TO$ seconds. Hold the button for $FROM$ seconds to confirm.",
+    "description": "Confirmation description when shortening the hold duration",
+    "placeholders": {
+      "from": {
+        "content": "$1",
+        "example": "30"
+      },
+      "to": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
   "unblockConfirmHoldButton": {
     "message": "Hold to Confirm",
     "description": "Long press button label"

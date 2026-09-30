@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { UnblockHoldSecondsField } from '../UnblockHoldSecondsField';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
@@ -47,12 +47,63 @@ describe('UnblockHoldSecondsField', () => {
     expect(select()).toHaveValue('30');
   });
 
-  it('選んだ秒数を保存に渡す', () => {
-    const { onUpdate } = renderField();
+  it('今より長い秒数は確認なしで保存に渡す', () => {
+    const { onUpdate } = renderField({ holdSeconds: 10 });
 
     fireEvent.change(select(), { target: { value: '60' } });
 
     expect(onUpdate).toHaveBeenCalledWith({ holdSeconds: 60 });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  describe('今より短い秒数を選んだとき', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const holdButton = () => screen.getByTestId('unblock-confirm-hold-button');
+
+    it('すぐには保存せず、今の秒数の長押しの確認を出す', () => {
+      const { onUpdate } = renderField({ holdSeconds: 30 });
+
+      fireEvent.change(select(), { target: { value: '5' } });
+
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(
+        screen.getByText('shortenHoldConfirmDescription(30,5)')
+      ).toBeInTheDocument();
+    });
+
+    it('今の秒数だけ長押しすると、選んだ秒数を保存に渡す', async () => {
+      vi.useFakeTimers();
+      const { onUpdate } = renderField({ holdSeconds: 10 });
+      fireEvent.change(select(), { target: { value: '5' } });
+
+      fireEvent.pointerDown(holdButton());
+      act(() => {
+        vi.advanceTimersByTime(5 * 1000 + 100);
+      });
+      expect(onUpdate).not.toHaveBeenCalled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(5 * 1000);
+      });
+
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenCalledWith({ holdSeconds: 5 });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('確認をやめると保存せず、今の秒数を選んだままにする', () => {
+      const { onUpdate } = renderField({ holdSeconds: 30 });
+      fireEvent.change(select(), { target: { value: '5' } });
+
+      fireEvent.click(screen.getByTestId('unblock-confirm-cancel'));
+
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(select()).toHaveValue('30');
+    });
   });
 
   it('選べる状態では注記を出さない', () => {

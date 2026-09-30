@@ -95,7 +95,7 @@
 | DeletePresetModal           | `modals/`    | プリセット削除の確認モーダル                                           |
 | ImportConfirmModal          | `modals/`    | 設定の取り込みで上書きされることの確認モーダル                         |
 | PasswordModal               | `modals/`    | パスワードを入力させて呼び出し元へ渡すモーダル                         |
-| UnblockConfirmModal         | `modals/`    | ブロックの削除・無効化を長押しで確定させる確認モーダル                 |
+| UnblockConfirmModal         | `modals/`    | ブロックを弱める操作を長押しで確定させる確認モーダル                   |
 | AnalyticsOptInModal         | `modals/`    | 匿名の利用統計を共有するかを尋ねるダイアログ                           |
 
 ### ユーティリティ（lib）
@@ -204,6 +204,7 @@ graph TD
         SET --> SBK[SettingsBackup]
         SBK --> ICM[ImportConfirmModal]
         PSS --> UHS[UnblockHoldSecondsField]
+        UHS --> UCM2[UnblockConfirmModal]
         PSS --> PF3[PasswordField]
         PSS --> FA[FormActions]
         PSS --> FF[FormFeedback]
@@ -781,13 +782,13 @@ Esc で編集を取り消す。
 
 ### UnblockHoldSecondsField
 
-`src/components/options/UnblockHoldSecondsField.tsx`
+`src/components/options/UnblockHoldSecondsField.tsx`。今より長い秒数はそのまま保存し、今より短い秒数は [useUnblockGuard](#useunblockguard) の `'shorten-hold'` で、今の秒数の長押し確認（[UnblockConfirmModal](#unblockconfirmmodal)）を通ってから保存する。確認をやめたら保存せず、欄は今の秒数を出し続ける（パスワード保護中は欄を選べないので、確認は長押しだけになる）。
 
-| Prop        | 型                                                    | 省略時 | 説明                                                     |
-| ----------- | ----------------------------------------------------- | ------ | -------------------------------------------------------- |
-| holdSeconds | `UnblockHoldSeconds`                                  | 必須   | 現在の秒数                                               |
-| onUpdate    | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 選び直した秒数を確認設定として保存する（完了は待たない） |
-| disabled    | `boolean`                                             | 必須   | true なら選べなくし、パスワード保護中である旨を注記する  |
+| Prop        | 型                                                    | 省略時 | 説明                                                                                         |
+| ----------- | ----------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| holdSeconds | `UnblockHoldSeconds`                                  | 必須   | 現在の秒数                                                                                   |
+| onUpdate    | `(settings: UnblockConfirmSettings) => Promise<void>` | 必須   | 選び直した秒数を確認設定として保存する（短くするときは確認を通ってから呼ぶ。完了は待たない） |
+| disabled    | `boolean`                                             | 必須   | true なら選べなくし、パスワード保護中である旨を注記する                                      |
 
 ---
 
@@ -1125,15 +1126,13 @@ Esc で編集を取り消す。
 
 `src/components/options/modals/UnblockConfirmModal/UnblockConfirmModal.tsx`
 
-| Prop        | 型                   | 省略時 | 説明                                                        |
-| ----------- | -------------------- | ------ | ----------------------------------------------------------- |
-| isOpen      | `boolean`            | 必須   | false の間は表示しない。閉じると長押しの進み具合を 0 に戻す |
-| onClose     | `() => void`         | 必須   | 取消・背景が押されたとき、および確定したあとに呼ぶ          |
-| onConfirm   | `() => void`         | 必須   | ボタンを `holdSeconds` 秒押し続けたときに呼ぶ               |
-| domain      | `string`             | 必須   | 解除するサイトのドメイン                                    |
-| blockStyle  | `string`             | 必須   | 現在のブロックのしかたを表す文言（確認文に埋め込む）        |
-| action      | `UnblockAction`      | 必須   | 削除（`'delete'`）か無効化（`'toggle'`）か                  |
-| holdSeconds | `UnblockHoldSeconds` | 必須   | 確定までに押し続けさせる秒数                                |
+| Prop        | 型                      | 省略時 | 説明                                                                                                                                                                                               |
+| ----------- | ----------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| isOpen      | `boolean`               | 必須   | false の間は表示しない。閉じると長押しの進み具合を 0 に戻す                                                                                                                                        |
+| onClose     | `() => void`            | 必須   | 取消・背景が押されたとき、および確定したあとに呼ぶ                                                                                                                                                 |
+| onConfirm   | `() => void`            | 必須   | ボタンを `holdSeconds` 秒押し続けたときに呼ぶ                                                                                                                                                      |
+| subject     | `UnblockConfirmSubject` | 必須   | 確認する操作（[useUnblockGuard](#useunblockguard)）。種別で文言とアイコンを切り替え、削除・無効化のときはドメインとブロック方式を、秒数を短くするときは変更前（`holdSeconds`）と変更後の秒数を出す |
+| holdSeconds | `UnblockHoldSeconds`    | 必須   | 確定までに押し続けさせる秒数（保存済みの秒数）                                                                                                                                                     |
 
 ---
 
@@ -1375,17 +1374,27 @@ function useYouTubeSettings(): {
 `src/hooks/useUnblockGuard.ts`。ブロックを弱める操作を、確認を通してから実行させる。
 
 ```typescript
-type UnblockAction = 'toggle' | 'delete';
+type UnblockAction = 'toggle' | 'delete' | 'shorten-hold';
 
-interface UnblockRequest {
-  domain: string;
-  timeLimit: TimeLimit | null | undefined;
-  action: UnblockAction;
+type UnblockTarget =
+  | {
+      action: 'toggle' | 'delete';
+      domain: string;
+      timeLimit: TimeLimit | null | undefined;
+    }
+  | { action: 'shorten-hold'; nextHoldSeconds: UnblockHoldSeconds };
+
+type UnblockRequest = UnblockTarget & {
   onConfirm: (password?: string) => Promise<string | null>;
-}
+};
 
-interface PendingUnblock extends UnblockRequest {
-  blockStyle: string;
+type UnblockConfirmSubject =
+  | { action: 'toggle' | 'delete'; domain: string; blockStyle: string }
+  | { action: 'shorten-hold'; nextHoldSeconds: UnblockHoldSeconds };
+
+interface PendingUnblock {
+  subject: UnblockConfirmSubject;
+  onConfirm: UnblockRequest['onConfirm'];
 }
 
 function useUnblockGuard(isPasswordProtected: boolean): {
@@ -1401,7 +1410,7 @@ function useUnblockGuard(isPasswordProtected: boolean): {
 - パスワード保護中は [PasswordModal](#passwordmodal)、それ以外は [UnblockConfirmModal](#unblockconfirmmodal)（長押し確認）を開かせる
 - 確認が通ったときだけ `onConfirm` を呼ぶ（パスワード入力を通ったときは入力されたパスワードを渡し、その失敗の文言を [PasswordModal](#passwordmodal) へ返す）。キャンセルすると何も実行しない
 - 保護中かどうかの判定は [DATA_MODEL.md の PasswordSettings](./DATA_MODEL.md#passwordsettingsパスワード保護)。照合は操作を受けた background が行う（[SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)）
-- 対象の操作と画面は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)。このフックを持つのは [BlocklistTab](#blocklisttab) で、[YouTubeSection](#youtubesection) には `requestUnblock` を `onRequestUnblock` として渡す
+- 対象の操作と画面は [SCREEN.md の「解除の流れ」](./SCREEN.md#解除の流れ)。このフックを持つのは [BlocklistTab](#blocklisttab)（[YouTubeSection](#youtubesection) には `requestUnblock` を `onRequestUnblock` として渡す）と、秒数を短くする確認に使う [UnblockHoldSecondsField](#unblockholdsecondsfield)
 
 ---
 
