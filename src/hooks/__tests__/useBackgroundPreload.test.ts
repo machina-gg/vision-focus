@@ -69,13 +69,13 @@ describe('useBackgroundPreload', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
           customBackgroundData: null,
-          displaySettings: settings({ backgroundImage: 'monday' })
+          displaySettings: settings({ backgroundImage: 'default-1' })
         })
       );
 
-      expect(getBackgroundUrl).toHaveBeenCalledWith('monday');
+      expect(getBackgroundUrl).toHaveBeenCalledWith('default-1');
       expect(result.current.backgroundUrl).toBe(
-        'chrome-extension://test/monday.webp'
+        'chrome-extension://test/default-1.webp'
       );
     });
 
@@ -96,7 +96,7 @@ describe('useBackgroundPreload', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
           customBackgroundData: 'data:image/png;base64,AAA',
-          displaySettings: settings({ backgroundImage: 'monday' })
+          displaySettings: settings({ backgroundImage: 'default-1' })
         })
       );
 
@@ -108,7 +108,7 @@ describe('useBackgroundPreload', () => {
         ({ data }: { data: string | null | undefined }) =>
           useBackgroundPreload({
             customBackgroundData: data,
-            displaySettings: settings({ backgroundImage: 'monday' })
+            displaySettings: settings({ backgroundImage: 'default-1' })
           }),
         { initialProps: { data: undefined as string | null | undefined } }
       );
@@ -192,7 +192,7 @@ describe('useBackgroundPreload', () => {
       const { result } = renderHook(() =>
         useBackgroundPreload({
           customBackgroundData: null,
-          displaySettings: settings({ backgroundImage: 'monday' })
+          displaySettings: settings({ backgroundImage: 'default-1' })
         })
       );
 
@@ -204,7 +204,7 @@ describe('useBackgroundPreload', () => {
         expect(result.current.isBackgroundReady).toBe(true);
       });
       expect(result.current.containerStyle).toMatchObject({
-        backgroundImage: 'url(chrome-extension://test/monday.webp)',
+        backgroundImage: 'url(chrome-extension://test/default-1.webp)',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       });
