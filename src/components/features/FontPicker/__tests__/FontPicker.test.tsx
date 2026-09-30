@@ -1,10 +1,14 @@
 import React from 'react';
 
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { FontPicker } from '../FontPicker';
-import { FONT_CATEGORIES, type FontSettings } from '~/types/font';
+import {
+  FONT_CATEGORIES,
+  getFontDefinition,
+  type FontSettings
+} from '~/types/font';
 
 const settingsOf = (overrides: Partial<FontSettings> = {}): FontSettings => ({
   family: 'system',
@@ -43,13 +47,6 @@ const pressedTexts = (testId: string) =>
 
 const clickButton = (name: string) =>
   fireEvent.click(screen.getByRole('button', { name }));
-
-afterEach(() => {
-  // Google Fonts の link は document.head に残るため、テストごとに片付ける
-  document
-    .querySelectorAll('link[id^="google-font-"]')
-    .forEach((link) => link.remove());
-});
 
 describe('FontPicker', () => {
   describe('プレビュー', () => {
@@ -126,7 +123,7 @@ describe('FontPicker', () => {
 
     it('選んだフォントで onChange が呼ばれ、他の設定は保つ', () => {
       const { onChange } = renderPicker(
-        settingsOf({ family: 'inter', size: 'sm', weight: 'medium' })
+        settingsOf({ family: 'inter', size: 'sm', weight: 'normal' })
       );
 
       fireEvent.change(familySelect(), { target: { value: 'notosansjp' } });
@@ -134,53 +131,28 @@ describe('FontPicker', () => {
       expect(onChange).toHaveBeenCalledWith({
         family: 'notosansjp',
         size: 'sm',
-        weight: 'medium'
+        weight: 'normal'
       });
     });
   });
 
-  describe('Google Fonts の読み込み', () => {
-    it('選択中のフォントだけを読み込む', () => {
-      renderPicker(settingsOf({ family: 'inter' }));
+  describe('フォントの適用', () => {
+    it('選んだフォントの font-family をプレビューに当てる', () => {
+      renderPicker(settingsOf({ family: 'notosansjp' }));
 
-      expect(
-        Array.from(document.querySelectorAll('link[id^="google-font-"]')).map(
-          (link) => link.id
-        )
-      ).toEqual(['google-font-Inter']);
+      expect(screen.getByText('Focus on your goals')).toHaveStyle({
+        fontFamily: getFontDefinition('notosansjp').css
+      });
     });
 
-    it('システムフォントなら何も読み込まない', () => {
-      renderPicker(settingsOf({ family: 'system' }));
-
-      expect(
-        document.querySelectorAll('link[id^="google-font-"]')
-      ).toHaveLength(0);
-    });
-
-    it('フォントが変わったら、変わった先のフォントを読み込む', () => {
+    it('外部のスタイルシートを読み込まない', () => {
       const { rerender } = renderPicker(settingsOf({ family: 'inter' }));
 
       rerender(
         <FontPicker value={settingsOf({ family: 'lora' })} onChange={vi.fn()} />
       );
 
-      expect(document.getElementById('google-font-Lora')).not.toBeNull();
-    });
-
-    it('同じフォントを二度読み込まない', () => {
-      const { rerender } = renderPicker(settingsOf({ family: 'inter' }));
-
-      rerender(
-        <FontPicker
-          value={settingsOf({ family: 'inter' })}
-          onChange={vi.fn()}
-        />
-      );
-
-      expect(
-        document.querySelectorAll('link[id="google-font-Inter"]')
-      ).toHaveLength(1);
+      expect(document.head.querySelectorAll('link')).toHaveLength(0);
     });
   });
 
@@ -209,14 +181,10 @@ describe('FontPicker', () => {
   });
 
   describe('太さの選択', () => {
-    it('3 段階から選べる', () => {
+    it('2 段階から選べる', () => {
       renderPicker();
 
-      expect(buttonTexts('font-weight-button')).toEqual([
-        'Normal',
-        'Medium',
-        'Bold'
-      ]);
+      expect(buttonTexts('font-weight-button')).toEqual(['Normal', 'Bold']);
     });
 
     it('押した太さで onChange が呼ばれ、他の設定は保つ', () => {

@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/extension';
-import { openOptions, openNewTab, openStoragePage } from './helpers/pages';
+import {
+  openOptions,
+  openNewTab,
+  openStoragePage,
+  loadFontFaceStatuses
+} from './helpers/pages';
 import { SELECTORS } from './helpers/constants';
 import {
   clearStorageFromExtension,
@@ -16,22 +21,35 @@ test.describe('追加機能 - 全ユーザーが利用できる', () => {
     await clearStorageFromExtension(context, extensionId);
   });
 
-  test('PR-002: Google Fonts をプルダウンから選択できる', async ({
+  test('PR-002: 同梱フォントが新しいタブの目標文に適用される', async ({
     context,
     extensionId
   }) => {
     const page = await openOptions(context, extensionId);
     await setupTestStorage(page, {});
+    const fontSettings = {
+      family: 'playfair',
+      size: 'lg',
+      weight: 'bold'
+    } as const;
+    await setStorageData(page, 'vision', {
+      defaultSettings: makeDisplaySettings({ fontSettings }),
+      presets: [makePreset('default', 'Default', { fontSettings })],
+      activePresetId: 'default'
+    });
     await page.close();
 
-    const optionsPage = await openOptions(context, extensionId, 'styles');
+    const newTab = await openNewTab(context, extensionId);
 
-    const familySelect = optionsPage.locator(SELECTORS.styles.fontFamilySelect);
-    await expect(familySelect).toBeEnabled();
-    await familySelect.selectOption({ label: 'Playfair Display' });
-    await expect(familySelect).toHaveValue('playfair');
+    const goalText = newTab.locator(SELECTORS.newtab.goalText);
+    await expect(goalText).toHaveCSS('font-family', /Playfair Display/);
+    await expect(goalText).toHaveCSS('font-weight', '700');
+    // 拡張に同梱したファイルが読めること（宣言が無ければ空、読めなければ例外になる）
+    expect(
+      await loadFontFaceStatuses(newTab, "700 16px 'Playfair Display'")
+    ).toEqual(['loaded']);
 
-    await optionsPage.close();
+    await newTab.close();
   });
 
   test('PR-003: カスタム背景画像をアップロードできる', async ({

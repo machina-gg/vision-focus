@@ -1,4 +1,4 @@
-import React, { useEffect, useId } from 'react';
+import React, { useId } from 'react';
 
 import { ChevronDown, Type } from 'lucide-react';
 
@@ -12,11 +12,7 @@ import {
   FONT_WEIGHTS,
   getFontDefinition
 } from '~/types/font';
-import {
-  FONT_SIZE_PX,
-  FONT_WEIGHT_VALUE,
-  loadGoogleFont
-} from '~/constants/fonts';
+import { FONT_SIZE_PX, FONT_WEIGHT_VALUE } from '~/constants/fonts';
 import { getMessage } from '~/lib/i18n';
 
 /** FontPicker に渡す現在のフォント設定と変更の受け取り先 */
@@ -39,7 +35,6 @@ const FONT_SIZE_LABELS: Record<FontSize, string> = {
 
 const FONT_WEIGHT_LABELS: Record<FontWeight, string> = {
   normal: 'Normal',
-  medium: 'Medium',
   bold: 'Bold'
 };
 
@@ -56,12 +51,6 @@ export function FontPicker({
 }: FontPickerProps) {
   const familySelectId = useId();
   const currentFontDef = getFontDefinition(value.family);
-
-  useEffect(() => {
-    if (currentFontDef.googleFont) {
-      loadGoogleFont(currentFontDef.googleFont);
-    }
-  }, [currentFontDef.googleFont]);
 
   const handleChange = (updates: Partial<FontSettings>) => {
     onChange({ ...value, ...updates });

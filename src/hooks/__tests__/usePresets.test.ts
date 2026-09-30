@@ -35,10 +35,6 @@ vi.mock('~/lib/messaging', () => ({
   sendMessage: vi.fn()
 }));
 
-vi.mock('~/constants/fonts', () => ({
-  loadGoogleFont: vi.fn()
-}));
-
 vi.mock('~/constants/intervals', () => ({
   STATUS_RESET_DELAY_MS: 1000
 }));

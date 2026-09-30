@@ -40,6 +40,7 @@ import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 import type { UnblockConfirmSettings } from '~/types/storage';
 
 import '~/styles/globals.css';
+import '~/styles/fonts.css';
 
 function OptionsAppContent() {
   const { vision } = useSettings();

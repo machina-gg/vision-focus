@@ -278,11 +278,11 @@ DashboardDisplaySettings に次を足したもの。
 
 ### FontSettings（フォント設定）
 
-| フィールド | 型                             | 説明                                                                           |
-| ---------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| family     | FontFamily                     | フォントファミリー（`src/types/font.ts`）                                      |
-| size       | "sm" \| "md" \| "lg"           | サイズ（px は `src/constants/fonts.ts` の `FONT_SIZE_PX`）                     |
-| weight     | "normal" \| "medium" \| "bold" | ウェイト（font-weight の値は `src/constants/fonts.ts` の `FONT_WEIGHT_VALUE`） |
+| フィールド | 型                   | 説明                                                                           |
+| ---------- | -------------------- | ------------------------------------------------------------------------------ |
+| family     | FontFamily           | フォントファミリー（`src/types/font.ts`）                                      |
+| size       | "sm" \| "md" \| "lg" | サイズ（px は `src/constants/fonts.ts` の `FONT_SIZE_PX`）                     |
+| weight     | "normal" \| "bold"   | ウェイト（font-weight の値は `src/constants/fonts.ts` の `FONT_WEIGHT_VALUE`） |
 
 ### SupportPromptState（支援誘導の表示状態）
 

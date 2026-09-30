@@ -436,9 +436,9 @@ Esc で編集を取り消す。
 | previewText | `string`                           | `'Focus on your goals'` | プレビュー欄に出す文言                           |
 
 フォントの種類はプルダウン 1 つで選ぶ。分類（`FONT_CATEGORIES`）を選択肢のグループの見出しにし、分類順・分類内の順で並べる。
-大きさ（Small / Medium / Large）と太さ（Normal / Medium / Bold）はボタンで選ぶ。
+大きさ（Small / Medium / Large）と太さ（Normal / Bold）はボタンで選ぶ。
 プレビューの px と font-weight は `src/constants/fonts.ts` の表を使い、ダッシュボードと同じ大きさで描く。
-Google Fonts は選択中のフォントだけを読み込む。
+フォントは拡張に同梱し、実行時に外部から読み込まない（`@font-face` の宣言は `src/styles/fonts.css` が読む `@fontsource/*` が持ち（newtab と options が読み、popup は読まない）、使われた書体・太さのファイルだけをブラウザが読む）。書体名・著作権表示・ライセンスは `public/FONT_LICENSES.txt`。
 
 ---
 
@@ -1437,7 +1437,7 @@ function useResolvedPreset(options: {
 
 ### useBackgroundPreload
 
-`src/hooks/useBackgroundPreload.ts`。新しいタブの背景画像とフォントを先読みし、表示してよいかと当てるスタイルを返す。
+`src/hooks/useBackgroundPreload.ts`。新しいタブの背景画像を先読みし、表示してよいかと当てるスタイル（背景と目標文のフォント）を返す。
 
 ```typescript
 function useBackgroundPreload(options: {

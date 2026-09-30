@@ -39,14 +39,19 @@ describe('FontSettingsSchema', () => {
       FontSettingsSchema.safeParse({
         family: 'inter',
         size: 'lg',
-        weight: 'medium'
+        weight: 'normal'
       }).success
     ).toBe(true);
   });
 
   it.each([
     ['選択肢に無い大きさ', { size: 'xl', weight: 'bold' }],
-    ['選択肢に無い太さ', { size: 'md', weight: 'semibold' }]
+    ['選択肢に無い太さ', { size: 'md', weight: 'semibold' }],
+    ['選択肢に無い太さ（medium）', { size: 'md', weight: 'medium' }],
+    [
+      '選択肢に無いフォント',
+      { family: 'notoserifjp', size: 'md', weight: 'bold' }
+    ]
   ])('%sは受け付けない', (_label, overrides) => {
     expect(
       FontSettingsSchema.safeParse({ family: 'system', ...overrides }).success
