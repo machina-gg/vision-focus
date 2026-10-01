@@ -5,7 +5,9 @@ vi.mock('~/lib/analytics', () => ({
 }));
 
 vi.mock('../../blocker', () => ({
-  updateBlockRules: vi.fn()
+  updateBlockRules: vi.fn(),
+  blockExistingTabs: vi.fn(),
+  getRedirectedHosts: vi.fn()
 }));
 
 vi.mock('../../notifications', () => ({
@@ -19,7 +21,8 @@ vi.mock('~/lib/activityService', () => ({
 import { sendDailyActive } from '~/lib/analytics';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
-import { updateBlockRules } from '../../blocker';
+import { blockExistingTabs, updateBlockRules } from '../../blocker';
+import { givenRedirectedHosts } from '../redirectedHosts';
 import { clearExpiredNotifications } from '../../notifications';
 import {
   setupAlarmHandlers,
@@ -61,6 +64,7 @@ let harness: ReturnType<typeof setupChrome>;
 beforeEach(() => {
   vi.clearAllMocks();
   harness = setupChrome();
+  givenRedirectedHosts([], []);
 });
 
 afterEach(() => {
@@ -122,6 +126,29 @@ describe('setupAlarmHandlers', () => {
       expect(updateBlockRules).toHaveBeenCalledOnce();
     });
 
+    it('時間帯の開始などで新たにブロック対象になったホストがあれば、開いているタブを移す', async () => {
+      givenRedirectedHosts([], ['example.com']);
+      setupAlarmHandlers();
+
+      await harness.fire('check-schedule');
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      ['ブロック対象が変わらない', ['example.com'], ['example.com']],
+      ['時間帯の終了などでブロック対象が減っただけ', ['example.com'], []]
+    ])('%sなら、開いているタブを移さない', async (_label, before, after) => {
+      givenRedirectedHosts(before, after);
+      setupAlarmHandlers();
+
+      await harness.fire('check-schedule');
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
     it('クリーンアップや通知処理は行わない', async () => {
       setupAlarmHandlers();
 
@@ -140,5 +167,6 @@ describe('setupAlarmHandlers', () => {
     expect(pruneBefore).not.toHaveBeenCalled();
     expect(sendDailyActive).not.toHaveBeenCalled();
     expect(updateBlockRules).not.toHaveBeenCalled();
+    expect(blockExistingTabs).not.toHaveBeenCalled();
   });
 });

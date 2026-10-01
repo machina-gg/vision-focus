@@ -188,6 +188,22 @@ stateDiagram-v2
   時間制限つきのサイトは上限に達するまで遷移しても通るため、ここで記録すると
   「〜回ブロックしました」と統計が実際より多くなる
 
+### 開いているタブへの反映
+
+転送ルールの作り直し（`updateBlockRules()`）は新しい遷移にしか効かない。
+開いているタブは `blockExistingTabs()` を呼んだときだけブロック画面へ移る。
+
+| 経路                                                                                                                                                                          | 開いているタブを移す条件                                           | 呼び出し元                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| ブロックの追加・有効化（`add-block` / `toggle-block`）、時間制限の超過（`tracker-heartbeat`）、追跡の停止（`stop-tracking`）、YouTube のブロック（`update-youtube-settings`） | ブロックを掛けたとき                                               | 各ハンドラ                                                     |
+| 取り込み（`import-settings`）、スケジュールの追加・編集・有効無効（`add-schedule` / `update-schedule` / `toggle-schedule`）、時間帯の開始（`check-schedule` アラーム）        | 作り直しの前に転送していなかったホストが転送の対象に入ったときだけ | `blockNewTargets.ts` の `updateBlockRulesAndBlockNewTargets()` |
+
+- 後者は、作り直しの前に転送していたホストを今の動的ルールから読む（`blocker.ts` の `getRedirectedHosts()`）。
+  ハンドラでは保存の前に読む（保存を見てルールを作り直す `settingsWatcher` が先に走ると、保存の後では差が消える）
+- 件数ではなくホストで比べる（有効化と時間帯の終了が重なると、件数を変えずに対象が入れ替わる）
+- 対象が減っただけのとき（スケジュールの無効化・時間帯の終了）は移さない
+- `settingsWatcher` はルールを作り直すだけで、開いているタブは移さない
+
 ### `newtab.html` は web accessible でなければならない
 
 `declarativeNetRequest` のリダイレクト先は、公開リソース
@@ -244,16 +260,17 @@ flowchart LR
 
 ## 関連ファイル
 
-| ファイル                                         | 責務                                                           |
-| ------------------------------------------------ | -------------------------------------------------------------- |
-| `src/background/blocker.ts`                      | ルール更新と開いているタブのブロック                           |
-| `src/background/handlers/tracker-heartbeat.ts`   | 滞在の記録と時間制限の適用                                     |
-| `src/background/notifications.ts`                | 通知判定と送信                                                 |
-| `src/background/listeners/alarmHandlers.ts`      | 毎分のルール再計算（`check-schedule`）                         |
-| `src/lib/blockRule.ts`                           | ブロックの条件（`evaluateBlock()`）                            |
-| `src/lib/blockService.ts`                        | 保存値を読み `evaluateBlock()` に渡す判定とルール生成の入口    |
-| `src/lib/siteKey.ts`                             | サイトキーの正規化・照合（`coveringSiteKeys()`）と入れ子の検査 |
-| `src/lib/activityStats.ts`                       | 今日の表示秒数（`secondsOnDay()`）                             |
-| `src/lib/blockRecordService.ts`                  | ブロック成立時の記録の一元管理                                 |
-| `src/background/listeners/navigationTracking.ts` | 遷移イベントからの記録                                         |
-| `wxt.config.ts`                                  | manifest（リダイレクト先の公開宣言）                           |
+| ファイル                                         | 責務                                                                                         |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `src/background/blocker.ts`                      | ルール更新と開いているタブのブロック                                                         |
+| `src/background/blockNewTargets.ts`              | ルールを作り直し、新たに対象になったときだけ開いているタブをブロック                         |
+| `src/background/handlers/tracker-heartbeat.ts`   | 滞在の記録と時間制限の適用                                                                   |
+| `src/background/notifications.ts`                | 通知判定と送信                                                                               |
+| `src/background/listeners/alarmHandlers.ts`      | 毎分のルール再計算（`check-schedule`）と、時間帯の開始で対象になった開いているタブのブロック |
+| `src/lib/blockRule.ts`                           | ブロックの条件（`evaluateBlock()`）                                                          |
+| `src/lib/blockService.ts`                        | 保存値を読み `evaluateBlock()` に渡す判定とルール生成の入口                                  |
+| `src/lib/siteKey.ts`                             | サイトキーの正規化・照合（`coveringSiteKeys()`）と入れ子の検査                               |
+| `src/lib/activityStats.ts`                       | 今日の表示秒数（`secondsOnDay()`）                                                           |
+| `src/lib/blockRecordService.ts`                  | ブロック成立時の記録の一元管理                                                               |
+| `src/background/listeners/navigationTracking.ts` | 遷移イベントからの記録                                                                       |
+| `wxt.config.ts`                                  | manifest（リダイレクト先の公開宣言）                                                         |

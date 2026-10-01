@@ -1,12 +1,13 @@
 import type { MessageHandler } from '~/lib/messaging';
 import { addSchedule } from '~/lib/settingsService';
-import { updateBlockRules } from '../blocker';
+import { getRedirectedHosts } from '../blocker';
+import { updateBlockRulesAndBlockNewTargets } from '../blockNewTargets';
 import { AddScheduleBodySchema } from '~/types/messageSchemas';
 import { normalizeEndTime } from '~/lib/time';
 import { scheduleError } from './scheduleRejection';
 
 /**
- * add-schedule: スケジュールを有効な状態で足してルールを更新する（ID は background が振る。終了時刻 00:00 は 24:00 にして保存する）
+ * add-schedule: スケジュールを有効な状態で足してルールを更新し、新たにブロック対象になったホストがあれば開いているタブもブロックする（ID は background が振る。終了時刻 00:00 は 24:00 にして保存する）
  * @param message data.schedule に足すスケジュールの入力値
  * @returns 成功か、失敗の種類（invalid-request / schedule-overlap / preset-not-found / save-failed）
  */
@@ -21,6 +22,7 @@ export const addScheduleHandler: MessageHandler<'add-schedule'> = async ({
 
   try {
     const { schedule } = parsed.data;
+    const blockedBefore = await getRedirectedHosts();
     const rejection = await addSchedule({
       ...schedule,
       endTime: normalizeEndTime(schedule.endTime)
@@ -29,7 +31,7 @@ export const addScheduleHandler: MessageHandler<'add-schedule'> = async ({
       return { success: false, error: scheduleError(rejection) };
     }
 
-    await updateBlockRules();
+    await updateBlockRulesAndBlockNewTargets(blockedBefore);
 
     return { success: true };
   } catch {

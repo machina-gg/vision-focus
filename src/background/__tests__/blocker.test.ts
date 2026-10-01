@@ -16,7 +16,11 @@ vi.mock('~/lib/blockRecordService', () => ({
 import { getBlockState, getRuleTargets } from '~/lib/blockService';
 import { isExtensionContextValid } from '~/lib/chromeApi';
 import { recordBlockedDomain } from '~/lib/blockRecordService';
-import { updateBlockRules, blockExistingTabs } from '../blocker';
+import {
+  updateBlockRules,
+  blockExistingTabs,
+  getRedirectedHosts
+} from '../blocker';
 import { BLOCKER_CONFIG } from '~/constants/limits';
 import { itemAt, lastItem } from '~/test/items';
 
@@ -185,6 +189,47 @@ describe('blocker', () => {
       const arg = lastUpdateRulesArg(chromeMock);
       expect(arg.removeRuleIds).toEqual([1000]);
       expect(arg.addRules).toEqual([]);
+    });
+  });
+
+  describe('getRedirectedHosts', () => {
+    it('転送ルールの requestDomains だけを返す（許可サイトのルールは含めない）', async () => {
+      chromeMock.declarativeNetRequest.getDynamicRules.mockResolvedValue([
+        {
+          id: 1000,
+          action: { type: 'redirect' },
+          condition: { requestDomains: ['example.com'] }
+        },
+        {
+          id: 1001,
+          action: { type: 'allow' },
+          condition: { requestDomains: ['music.youtube.com'] }
+        },
+        {
+          id: 1002,
+          action: { type: 'redirect' },
+          condition: { requestDomains: ['youtube.com'] }
+        }
+      ]);
+
+      expect(await getRedirectedHosts()).toEqual([
+        'example.com',
+        'youtube.com'
+      ]);
+    });
+
+    it('作り直したルールの転送先を読み戻せる', async () => {
+      givenTargets(['example.com'], ['music.youtube.com']);
+      await updateBlockRules();
+      chromeMock.declarativeNetRequest.getDynamicRules.mockResolvedValue(
+        lastUpdateRulesArg(chromeMock).addRules
+      );
+
+      expect(await getRedirectedHosts()).toEqual(['example.com']);
+    });
+
+    it('ルールが無ければ空を返す', async () => {
+      expect(await getRedirectedHosts()).toEqual([]);
     });
   });
 

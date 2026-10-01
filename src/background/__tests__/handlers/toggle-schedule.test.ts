@@ -7,11 +7,18 @@ vi.mock('~/lib/settingsService', () => ({
 }));
 
 vi.mock('../../blocker', () => ({
-  updateBlockRules: vi.fn()
+  updateBlockRules: vi.fn(),
+  blockExistingTabs: vi.fn(),
+  getRedirectedHosts: vi.fn()
 }));
 
 import { setScheduleEnabled } from '~/lib/settingsService';
-import { updateBlockRules } from '../../blocker';
+import {
+  blockExistingTabs,
+  getRedirectedHosts,
+  updateBlockRules
+} from '../../blocker';
+import { givenRedirectedHosts } from '../redirectedHosts';
 import { toggleScheduleHandler as handler } from '../../handlers/toggle-schedule';
 import type { MessageError } from '~/types/messages';
 
@@ -24,6 +31,7 @@ describe('toggle-schedule ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(setScheduleEnabled).mockResolvedValue(null);
+    givenRedirectedHosts([], []);
   });
 
   it.each([
@@ -77,5 +85,50 @@ describe('toggle-schedule ハンドラ', () => {
     });
 
     expect(result).toEqual({ success: false, error: { code: 'save-failed' } });
+  });
+  describe('開いているタブを移す条件', () => {
+    it('転送していたホストは保存の前に読む', async () => {
+      await invoke<Response>(handler, { id: 's1', enabled: true });
+
+      expect(
+        vi.mocked(getRedirectedHosts).mock.invocationCallOrder[0]
+      ).toBeLessThan(
+        vi.mocked(setScheduleEnabled).mock.invocationCallOrder[0] ?? 0
+      );
+    });
+
+    it('新たにブロック対象になったホストがあれば、開いているタブを移す', async () => {
+      givenRedirectedHosts(['example.com'], ['example.com', 'sns.example']);
+
+      await invoke<Response>(handler, { id: 's1', enabled: true });
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      ['ブロック対象が変わらない', ['example.com'], ['example.com']],
+      [
+        'ブロック対象が減っただけ',
+        ['example.com', 'sns.example'],
+        ['example.com']
+      ]
+    ])('%sなら、開いているタブを移さない', async (_label, before, after) => {
+      givenRedirectedHosts(before, after);
+
+      await invoke<Response>(handler, { id: 's1', enabled: true });
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
+    it('保存を拒まれたら、開いているタブを移さない', async () => {
+      vi.mocked(setScheduleEnabled).mockResolvedValue('not-found');
+      givenRedirectedHosts([], ['example.com']);
+
+      await invoke<Response>(handler, { id: 's1', enabled: true });
+
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
   });
 });

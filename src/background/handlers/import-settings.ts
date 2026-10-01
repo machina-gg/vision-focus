@@ -1,10 +1,10 @@
 import type { MessageHandler } from '~/lib/messaging';
 import { purgeSite } from '~/lib/activityService';
-import { getRuleTargets } from '~/lib/blockService';
 import { toImportedSites } from '~/lib/settingsExport';
 import { checkUnblockPassword, importSettings } from '~/lib/settingsService';
 import { replaceSites } from '~/lib/siteService';
-import { updateBlockRules, blockExistingTabs } from '../blocker';
+import { getRedirectedHosts } from '../blocker';
+import { updateBlockRulesAndBlockNewTargets } from '../blockNewTargets';
 import { ImportSettingsBodySchema } from '~/types/messageSchemas';
 import { passwordError } from './passwordRejection';
 
@@ -32,7 +32,7 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
     const rejection = await checkUnblockPassword(password, true);
     if (rejection) return { success: false, error: passwordError(rejection) };
 
-    const blockedBefore = (await getRuleTargets()).redirect;
+    const blockedBefore = await getRedirectedHosts();
 
     const { skippedPresets, clearedActivePreset, clearedSchedulePresets } =
       await importSettings(imported);
@@ -41,18 +41,7 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
       await purgeSite(site);
     }
 
-    await updateBlockRules();
-
-    // 件数では比べない（有効化・時間制限の解除でも、件数を変えずに対象が増える）
-    const blockedAfter = (await getRuleTargets()).redirect;
-    const hasNewlyBlocked = blockedAfter.some(
-      (domain) => !blockedBefore.includes(domain)
-    );
-
-    // ルール更新は新規の遷移にしか効かないため、開いているタブは明示的にブロックする
-    if (hasNewlyBlocked) {
-      await blockExistingTabs();
-    }
+    await updateBlockRulesAndBlockNewTargets(blockedBefore);
 
     return {
       success: true,
