@@ -4,7 +4,8 @@ import {
   ALARM_CHECK_SCHEDULE_MINUTES,
   MAX_HISTORY_DAYS_FALLBACK
 } from '~/constants/intervals';
-import { updateBlockRules } from '../blocker';
+import { getRedirectedHosts } from '../blocker';
+import { updateBlockRulesAndBlockNewTargets } from '../blockNewTargets';
 import { clearExpiredNotifications } from '../notifications';
 import { pruneBefore } from '~/lib/activityService';
 import { toDateKey } from '~/lib/time';
@@ -16,7 +17,7 @@ async function pruneOldActivity(): Promise<void> {
   await pruneBefore(toDateKey(cutoff));
 }
 
-/** アラームを処理する（daily-cleanup で古い記録と通知済みの記憶を消して日次の利用を送り、check-schedule でブロックのルールを作り直す） */
+/** アラームを処理する（daily-cleanup で古い記録と通知済みの記憶を消して日次の利用を送り、check-schedule でブロックのルールを作り直し、時間帯の開始などで新たにブロック対象になったホストがあれば開いているタブもブロックする） */
 export function setupAlarmHandlers(): void {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'daily-cleanup') {
@@ -25,7 +26,7 @@ export function setupAlarmHandlers(): void {
       await sendDailyActive();
     }
     if (alarm.name === 'check-schedule') {
-      await updateBlockRules();
+      await updateBlockRulesAndBlockNewTargets(await getRedirectedHosts());
     }
   });
 }

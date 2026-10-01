@@ -7,11 +7,18 @@ vi.mock('~/lib/settingsService', () => ({
 }));
 
 vi.mock('../../blocker', () => ({
-  updateBlockRules: vi.fn()
+  updateBlockRules: vi.fn(),
+  blockExistingTabs: vi.fn(),
+  getRedirectedHosts: vi.fn()
 }));
 
 import { updateSchedule } from '~/lib/settingsService';
-import { updateBlockRules } from '../../blocker';
+import {
+  blockExistingTabs,
+  getRedirectedHosts,
+  updateBlockRules
+} from '../../blocker';
+import { givenRedirectedHosts } from '../redirectedHosts';
 import { updateScheduleHandler as handler } from '../../handlers/update-schedule';
 import type { MessageError } from '~/types/messages';
 
@@ -31,6 +38,7 @@ describe('update-schedule ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(updateSchedule).mockResolvedValue(null);
+    givenRedirectedHosts([], []);
   });
 
   describe('入力検証', () => {
@@ -107,5 +115,50 @@ describe('update-schedule ハンドラ', () => {
     });
 
     expect(result).toEqual({ success: false, error: { code: 'save-failed' } });
+  });
+  describe('開いているタブを移す条件', () => {
+    it('転送していたホストは保存の前に読む', async () => {
+      await invoke<Response>(handler, { id: 's1', schedule: input });
+
+      expect(
+        vi.mocked(getRedirectedHosts).mock.invocationCallOrder[0]
+      ).toBeLessThan(
+        vi.mocked(updateSchedule).mock.invocationCallOrder[0] ?? 0
+      );
+    });
+
+    it('新たにブロック対象になったホストがあれば、開いているタブを移す', async () => {
+      givenRedirectedHosts(['example.com'], ['example.com', 'sns.example']);
+
+      await invoke<Response>(handler, { id: 's1', schedule: input });
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      ['ブロック対象が変わらない', ['example.com'], ['example.com']],
+      [
+        'ブロック対象が減っただけ',
+        ['example.com', 'sns.example'],
+        ['example.com']
+      ]
+    ])('%sなら、開いているタブを移さない', async (_label, before, after) => {
+      givenRedirectedHosts(before, after);
+
+      await invoke<Response>(handler, { id: 's1', schedule: input });
+
+      expect(updateBlockRules).toHaveBeenCalledOnce();
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
+
+    it('保存を拒まれたら、開いているタブを移さない', async () => {
+      vi.mocked(updateSchedule).mockResolvedValue('overlap');
+      givenRedirectedHosts([], ['example.com']);
+
+      await invoke<Response>(handler, { id: 's1', schedule: input });
+
+      expect(blockExistingTabs).not.toHaveBeenCalled();
+    });
   });
 });

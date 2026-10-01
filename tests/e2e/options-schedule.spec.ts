@@ -10,9 +10,51 @@ import {
   makePreset,
   makeAppSettings,
   getStorageData,
+  getRuleDomains,
+  getStorageViaSW,
+  makeSites,
+  openExternalSite,
+  setupStorageViaSW,
+  waitForNoBlockRules,
   SELECTORS,
+  TEST_DOMAINS,
   UI_TEXT
 } from './helpers';
+
+import type { Schedule } from '~/types/storage';
+
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+const HOURS_PER_DAY = 24;
+
+function hourLabel(hour: number): string {
+  return `${String(hour).padStart(2, '0')}:00`;
+}
+
+// 全曜日・時単位で作り、境界から 1 時間以上離す（実行中に時・日付・曜日が変わっても今の時刻との関係が変わらない）
+function hourWindow(
+  startHoursFromNow: number,
+  hours: number
+): Pick<Schedule, 'startTime' | 'endTime' | 'days'> {
+  const currentHour = new Date().getHours();
+  const start =
+    (currentHour + startHoursFromNow + HOURS_PER_DAY) % HOURS_PER_DAY;
+  const end = (start + hours) % HOURS_PER_DAY;
+  return {
+    startTime: hourLabel(start),
+    endTime: end === 0 ? '24:00' : hourLabel(end),
+    days: ALL_DAYS
+  };
+}
+
+// 有効なスケジュールが 1 件も無いと常にブロックするため、今の時刻を含まない有効なスケジュールを置いてブロックを止めておく
+function laterSchedule(): Schedule {
+  return {
+    id: 'later',
+    name: 'Later Window',
+    ...hourWindow(6, 1),
+    enabled: true
+  };
+}
 
 test.describe('Options - Schedule Tab', () => {
   test.beforeEach(async ({ context, extensionId }) => {
@@ -682,6 +724,99 @@ test.describe('Options - Schedule Tab', () => {
       enabled: false
     });
 
+    await page.close();
+  });
+  test('OPT-S17: 今の時刻を含むスケジュールを有効にすると、開いているブロック対象のタブがブロック画面へ移る', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(context, {
+      settings: makeAppSettings({
+        schedules: [
+          laterSchedule(),
+          {
+            id: 'current',
+            name: 'Current Window',
+            ...hourWindow(-1, 3),
+            enabled: false
+          }
+        ]
+      }),
+      sites: makeSites([{ domain: TEST_DOMAINS.reddit, block: {} }])
+    });
+    await waitForNoBlockRules(context, [TEST_DOMAINS.reddit]);
+
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.reddit}`
+    );
+    expect(sitePage.url()).toContain(TEST_DOMAINS.reddit);
+    expect(sitePage.url()).not.toContain('newtab.html');
+
+    const page = await openOptions(context, extensionId, 'schedules');
+    const toggle = page
+      .locator(SELECTORS.schedules.scheduleItem)
+      .filter({ hasText: 'Current Window' })
+      .locator(SELECTORS.schedules.scheduleToggle);
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await toggle.click();
+
+    await sitePage.waitForURL('**newtab.html**', { timeout: 10_000 });
+    expect(sitePage.url()).toContain('newtab.html');
+
+    await sitePage.close();
+    await page.close();
+  });
+
+  test('OPT-S18: 有効にしたスケジュールが今の時刻を含まなければ、開いているタブは移らない', async ({
+    context,
+    extensionId
+  }) => {
+    await setupStorageViaSW(context, {
+      settings: makeAppSettings({
+        schedules: [
+          laterSchedule(),
+          {
+            id: 'night',
+            name: 'Night Window',
+            ...hourWindow(12, 1),
+            enabled: false
+          }
+        ]
+      }),
+      sites: makeSites([{ domain: TEST_DOMAINS.reddit, block: {} }])
+    });
+    await waitForNoBlockRules(context, [TEST_DOMAINS.reddit]);
+
+    const sitePage = await openExternalSite(
+      context,
+      `https://${TEST_DOMAINS.reddit}`
+    );
+
+    const page = await openOptions(context, extensionId, 'schedules');
+    const toggle = page
+      .locator(SELECTORS.schedules.scheduleItem)
+      .filter({ hasText: 'Night Window' })
+      .locator(SELECTORS.schedules.scheduleToggle);
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+    await expect
+      .poll(
+        async () =>
+          (await getStorageViaSW(context, 'settings'))?.schedules.find(
+            (schedule) => schedule.id === 'night'
+          )?.enabled
+      )
+      .toBe(true);
+    expect((await getRuleDomains(context)).redirect).not.toContain(
+      TEST_DOMAINS.reddit
+    );
+    expect(sitePage.url()).toContain(TEST_DOMAINS.reddit);
+    expect(sitePage.url()).not.toContain('newtab.html');
+
+    await sitePage.close();
     await page.close();
   });
 });

@@ -63,6 +63,21 @@ export async function updateBlockRules(): Promise<void> {
   });
 }
 
+/**
+ * 今の動的ルールがブロック画面へ転送しているホストを返す
+ * @returns 転送ルールの requestDomains（許可サイトのルールは含めない）
+ */
+export async function getRedirectedHosts(): Promise<string[]> {
+  const rules = await chrome.declarativeNetRequest.getDynamicRules();
+  return rules
+    .filter(
+      (rule) =>
+        rule.action.type ===
+        chrome.declarativeNetRequest.RuleActionType.REDIRECT
+    )
+    .flatMap((rule) => rule.condition.requestDomains ?? []);
+}
+
 /** 開いているタブのうちブロック対象のものを、理由を記録してからブロック画面（newtab.html）へ移す（chrome:// と拡張のページは除く） */
 export async function blockExistingTabs(): Promise<void> {
   if (!isExtensionContextValid()) {

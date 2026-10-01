@@ -15,20 +15,21 @@ vi.mock('~/lib/activityService', () => ({
   purgeSite: vi.fn()
 }));
 
-vi.mock('~/lib/blockService', () => ({
-  getRuleTargets: vi.fn()
-}));
-
 vi.mock('../../blocker', () => ({
   updateBlockRules: vi.fn(),
-  blockExistingTabs: vi.fn()
+  blockExistingTabs: vi.fn(),
+  getRedirectedHosts: vi.fn()
 }));
 
 import { checkUnblockPassword, importSettings } from '~/lib/settingsService';
 import { replaceSites } from '~/lib/siteService';
 import { purgeSite } from '~/lib/activityService';
-import { getRuleTargets } from '~/lib/blockService';
-import { updateBlockRules, blockExistingTabs } from '../../blocker';
+import {
+  updateBlockRules,
+  blockExistingTabs,
+  getRedirectedHosts
+} from '../../blocker';
+import { givenRedirectedHosts } from '../redirectedHosts';
 import { importSettingsHandler as handler } from '../../handlers/import-settings';
 import { createDefaultExportData } from '~/lib/settingsExport';
 import {
@@ -61,20 +62,13 @@ const exportedData = (overrides: Partial<ExportedData> = {}): ExportedData => ({
   ...overrides
 });
 
-function givenBlockedDomains(before: string[], after: string[]) {
-  vi.mocked(getRuleTargets)
-    .mockReset()
-    .mockResolvedValueOnce({ redirect: before, allow: [] })
-    .mockResolvedValueOnce({ redirect: after, allow: ['music.youtube.com'] });
-}
-
 describe('import-settings ハンドラ', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(importSettings).mockResolvedValue(NOTHING_SKIPPED);
     vi.mocked(checkUnblockPassword).mockResolvedValue(null);
     vi.mocked(replaceSites).mockResolvedValue([]);
-    givenBlockedDomains([], []);
+    givenRedirectedHosts([], []);
   });
 
   describe('入力検証', () => {
@@ -287,8 +281,18 @@ describe('import-settings ハンドラ', () => {
   });
 
   describe('既存タブをブロックする条件', () => {
+    it('転送していたホストは保存の前に読む', async () => {
+      await invoke(handler, { data: exportedData() });
+
+      expect(
+        vi.mocked(getRedirectedHosts).mock.invocationCallOrder[0]
+      ).toBeLessThan(
+        vi.mocked(importSettings).mock.invocationCallOrder[0] ?? 0
+      );
+    });
+
     it('ブロック対象のドメインが増えたとき', async () => {
-      givenBlockedDomains([], ['example.com']);
+      givenRedirectedHosts([], ['example.com']);
 
       await invoke(handler, { data: exportedData() });
 
@@ -296,7 +300,7 @@ describe('import-settings ハンドラ', () => {
     });
 
     it('元からあった対象に加えて別の対象が増えたとき', async () => {
-      givenBlockedDomains(['example.com'], ['example.com', 'sns.example']);
+      givenRedirectedHosts(['example.com'], ['example.com', 'sns.example']);
 
       await invoke(handler, { data: exportedData() });
 
@@ -305,8 +309,8 @@ describe('import-settings ハンドラ', () => {
   });
 
   describe('既存タブをブロックしない条件', () => {
-    it('ブロック対象が変わらないとき（許可サイトが増えても）', async () => {
-      givenBlockedDomains(['example.com'], ['example.com']);
+    it('ブロック対象が変わらないとき', async () => {
+      givenRedirectedHosts(['example.com'], ['example.com']);
 
       await invoke(handler, { data: exportedData() });
 
@@ -315,7 +319,7 @@ describe('import-settings ハンドラ', () => {
     });
 
     it('ブロック対象が減ったとき', async () => {
-      givenBlockedDomains(['example.com', 'sns.example'], ['example.com']);
+      givenRedirectedHosts(['example.com', 'sns.example'], ['example.com']);
 
       await invoke(handler, { data: exportedData() });
 
