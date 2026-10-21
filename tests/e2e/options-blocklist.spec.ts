@@ -182,7 +182,7 @@ test.describe('Options 画面（ブロックリストタブ）', () => {
       })
       .toEqual({ type: 'daily', limitSeconds: 5 * 60 });
 
-    await expect(item.getByRole('button', { name: /\b5m\b/ })).toBeVisible();
+    await expect(item.getByRole('button', { name: /5 min/ })).toBeVisible();
 
     await page.close();
   });
