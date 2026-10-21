@@ -2,6 +2,7 @@ import * as z from 'zod';
 
 import { MAX_IMPORT_SIZE } from '~/constants/limits';
 import { isValidDomain, parseDomainInput } from '~/lib/domain';
+import { findOverlappingSchedule } from '~/lib/scheduleOverlap';
 import {
   findNestingConflict,
   normalizeSiteKey,
@@ -144,7 +145,7 @@ export function downloadSettings(data: ExportedSettings): void {
 /**
  * 取り込む JSON を検証し、参照先の無いプリセット ID を外した中身を返す
  * @param jsonString 設定ファイルの中身の文字列
- * @returns 検証の結果（MAX_IMPORT_SIZE より大きい・JSON でない・形が違う・版が古い・サイトに許されない入れ子の組があるなら success が false）
+ * @returns 検証の結果（MAX_IMPORT_SIZE より大きい・JSON でない・形が違う・版が古い・サイトに許されない入れ子の組がある・時間帯が重なるスケジュールがあるなら success が false）
  */
 export function validateImportedData(jsonString: string): ImportResult {
   if (jsonString.length > MAX_IMPORT_SIZE) {
@@ -173,7 +174,10 @@ export function validateImportedData(jsonString: string): ImportResult {
     };
   }
 
-  if (!toImportedSites(result.data.data.sites)) {
+  if (
+    !toImportedSites(result.data.data.sites) ||
+    hasOverlappingSchedules(result.data.data.schedules)
+  ) {
     return {
       success: false,
       error: 'importErrorInvalidFormat'
@@ -305,6 +309,20 @@ export function applyImportedVision(
     ),
     skippedPresets
   };
+}
+
+/**
+ * スケジュールの中に、曜日を共有して時間帯が交差する組（無効なものも対象）があるか
+ * @param schedules 設定ファイルのスケジュール
+ * @returns 1 組でもあれば true（id が重複していても取りこぼさないよう、id では除外せず前に並ぶものとだけ照合する）
+ */
+export function hasOverlappingSchedules(
+  schedules: ExportedData['schedules']
+): boolean {
+  return schedules.some(
+    (schedule, index) =>
+      findOverlappingSchedule(schedule, schedules.slice(0, index)) !== null
+  );
 }
 
 /**
