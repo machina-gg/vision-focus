@@ -15,7 +15,7 @@ import {
 import { useSettings } from '~/contexts/SettingsContext';
 import { useUnblockGuard } from '~/hooks/useUnblockGuard';
 import { blockCountsByDomain } from '~/hooks/useActivityStats';
-import { secondsOnDay } from '~/lib/activityStats';
+import { evaluateSiteBlock } from '~/lib/blockService';
 import {
   allowedCountUnder,
   allowedSiteRows,
@@ -24,7 +24,6 @@ import {
 } from '~/lib/blockList';
 import { YOUTUBE_DOMAIN } from '~/lib/siteKey';
 import { isProtectedByPassword } from '~/lib/password';
-import { toDateKey } from '~/lib/time';
 import type { TimeLimit } from '~/types/storage';
 import type { ActivityLog } from '~/types/activity';
 import type { YouTubeSettingsInput } from '~/types/messageSchemas';
@@ -97,7 +96,6 @@ export function BlocklistTab({
   const unblockGuard = useUnblockGuard(isPasswordProtected);
   const { requestUnblock } = unblockGuard;
   const now = new Date();
-  const today = toDateKey(now);
   const blockList = useMemo(() => blockListSites(trackedSites), [trackedSites]);
   const blockCounts = blockCountsByDomain(activity, blockList, now);
   const allowedSites = useMemo(
@@ -216,7 +214,15 @@ export function BlocklistTab({
                 key={site.domain}
                 site={site}
                 blockCount={blockCounts[site.domain] ?? 0}
-                usedSeconds={secondsOnDay(activity, site.domain, today)}
+                remainingSeconds={
+                  evaluateSiteBlock(
+                    site.domain,
+                    site.rule,
+                    settings.schedules,
+                    activity,
+                    now
+                  ).remainingSeconds
+                }
                 allowedCount={allowedCountUnder(trackedSites, site.domain)}
                 onToggle={handleToggleClick}
                 onRemove={handleRemoveClick}

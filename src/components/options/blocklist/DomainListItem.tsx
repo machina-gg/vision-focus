@@ -13,8 +13,8 @@ interface DomainListItemProps {
   site: BlockedSite;
   /** そのサイトをブロックした回数（0 なら回数を出さない） */
   blockCount: number;
-  /** そのサイトの今日の使用時間（秒。時間制限の残りの計算に使う） */
-  usedSeconds: number;
+  /** そのサイトの今日の残り時間（秒。ブロックの判定の結果。時間制限が効いていなければ undefined） */
+  remainingSeconds?: number;
   /** そのサイトの下にある許可サイトの件数（0 なら出さない） */
   allowedCount: number;
   /** 有効・無効のスイッチが切り替わったときに、ドメインと切り替え後の状態を受け取る */
@@ -33,7 +33,7 @@ interface DomainListItemProps {
 export function DomainListItem({
   site,
   blockCount,
-  usedSeconds,
+  remainingSeconds,
   allowedCount,
   onToggle,
   onRemove,
@@ -89,7 +89,7 @@ export function DomainListItem({
         <TimeLimitEditor
           site={site}
           onUpdate={(timeLimit) => onUpdateTimeLimit(site.domain, timeLimit)}
-          usedSeconds={usedSeconds}
+          remainingSeconds={remainingSeconds}
         />
       </div>
     </div>

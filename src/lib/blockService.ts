@@ -106,15 +106,40 @@ function coveringRegistration(
   return null;
 }
 
+/**
+ * 1 件のブロックの規則を、判定と同じ材料（スケジュール・今日の秒数）を揃えて評価する。画面が残り時間を出すときもこれを通す
+ * @param site 規則を持つサイトのキー（今日の秒数を引く）
+ * @param rule サイトのブロック設定
+ * @param schedules スケジュール（未設定なら undefined）
+ * @param activity 活動の事実の表
+ * @param now 今日を決める現在時刻
+ * @returns ブロックの判定結果
+ */
+export function evaluateSiteBlock(
+  site: SiteKey,
+  rule: BlockRuleInput,
+  schedules: Schedule[] | undefined,
+  activity: ActivityLog,
+  now: Date
+): BlockState {
+  return evaluateBlock(rule, {
+    scheduleActive: isBlockingWindowOpen(schedules),
+    todaySeconds: secondsOnDay(activity, site, toDateKey(now))
+  });
+}
+
 function evaluate(
   registration: Registration,
   inputs: BlockInputs
 ): SiteBlockStatus {
   const { site, rule } = registration;
-  const state = evaluateBlock(rule, {
-    scheduleActive: isBlockingWindowOpen(inputs.settings.schedules),
-    todaySeconds: secondsOnDay(inputs.activity, site, toDateKey(inputs.now))
-  });
+  const state = evaluateSiteBlock(
+    site,
+    rule,
+    inputs.settings.schedules,
+    inputs.activity,
+    inputs.now
+  );
   return { site, rule, state };
 }
 

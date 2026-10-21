@@ -18,8 +18,8 @@ interface TimeLimitEditorProps {
   site: BlockedSite;
   /** 保存した時間制限を受け取る（null なら常にブロック）。既存の分数が選択肢に無いときは最も近い選択肢に直して呼ぶ */
   onUpdate: (timeLimit: TimeLimit | null) => void | Promise<void>;
-  /** 今日の使用時間（秒。残り時間のバッジに使う） */
-  usedSeconds: number;
+  /** 今日の残り時間（秒。ブロックの判定の結果。時間制限が効いていなければ undefined でバッジを出さない） */
+  remainingSeconds?: number;
 }
 
 /**
@@ -30,9 +30,9 @@ interface TimeLimitEditorProps {
 export function TimeLimitEditor({
   site,
   onUpdate,
-  usedSeconds
+  remainingSeconds
 }: TimeLimitEditorProps) {
-  const { enabled, timeLimit } = site.rule;
+  const { timeLimit } = site.rule;
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,10 +141,6 @@ export function TimeLimitEditor({
     }));
   };
 
-  const remainingSeconds = timeLimit
-    ? timeLimit.limitSeconds - usedSeconds
-    : null;
-
   return (
     <div className="mt-2">
       <button
@@ -215,10 +211,10 @@ export function TimeLimitEditor({
         </div>
       )}
 
-      {enabled && timeLimit && remainingSeconds !== null && (
+      {timeLimit && remainingSeconds !== undefined && (
         <div className="mt-2">
           <TimeLimitBadge
-            remainingSeconds={Math.max(0, remainingSeconds)}
+            remainingSeconds={remainingSeconds}
             limitSeconds={timeLimit.limitSeconds}
             compact
           />
