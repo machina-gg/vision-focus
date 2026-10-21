@@ -86,7 +86,8 @@ test.describe('NewTab 画面 - 統計カード', () => {
 
     const daysCount = page.locator(SELECTORS.newtab.miniStats.blockingDays);
     await expect(daysCount.first()).toBeVisible();
-    await expect(daysCount.first()).toHaveText(UI_TEXT.blockingDays(10));
+    // 10 日前にブロックした日を 1 日目と数えるので 11 日目
+    await expect(daysCount.first()).toHaveText(UI_TEXT.blockingDays(11));
 
     await page.close();
   });
