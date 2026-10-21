@@ -864,3 +864,61 @@ describe('ファイルの中の入れ子の取り込み', () => {
     });
   });
 });
+
+describe('ファイルの中のスケジュールの重なりの取り込み', () => {
+  const schedule = (
+    id: string,
+    startTime: string,
+    endTime: string,
+    days: number[],
+    enabled = true
+  ) => ({ id, name: id, startTime, endTime, days, enabled });
+
+  const importWith = (schedules: ReturnType<typeof schedule>[]) =>
+    validateImportedData(JSON.stringify(createValidExportData({ schedules })));
+
+  it('曜日を共有して時間帯が交差する組があれば形式エラーで拒む', () => {
+    expect(
+      importWith([
+        schedule('a', '09:00', '12:00', [1, 2]),
+        schedule('b', '11:00', '13:00', [2, 3])
+      ])
+    ).toEqual({ success: false, error: 'importErrorInvalidFormat' });
+  });
+
+  it('無効のスケジュール同士の重なりも拒む', () => {
+    expect(
+      importWith([
+        schedule('a', '09:00', '12:00', [1], false),
+        schedule('b', '10:00', '11:00', [1], false)
+      ])
+    ).toEqual({ success: false, error: 'importErrorInvalidFormat' });
+  });
+
+  it('id が同じ 2 件でも重なりを見逃さない', () => {
+    expect(
+      importWith([
+        schedule('a', '09:00', '12:00', [1]),
+        schedule('a', '10:00', '11:00', [1])
+      ]).success
+    ).toBe(false);
+  });
+
+  it('終わりと始まりが同じ時刻の隣接する時間帯は取り込める', () => {
+    expect(
+      importWith([
+        schedule('a', '09:00', '12:00', [1]),
+        schedule('b', '12:00', '15:00', [1])
+      ]).success
+    ).toBe(true);
+  });
+
+  it('曜日が違えば時間帯が同じでも取り込める', () => {
+    expect(
+      importWith([
+        schedule('a', '09:00', '12:00', [1]),
+        schedule('b', '09:00', '12:00', [2])
+      ]).success
+    ).toBe(true);
+  });
+});

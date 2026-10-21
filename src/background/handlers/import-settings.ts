@@ -1,6 +1,6 @@
 import type { MessageHandler } from '~/lib/messaging';
 import { purgeSite } from '~/lib/activityService';
-import { toImportedSites } from '~/lib/settingsExport';
+import { hasOverlappingSchedules, toImportedSites } from '~/lib/settingsExport';
 import { checkUnblockPassword, importSettings } from '~/lib/settingsService';
 import { replaceSites } from '~/lib/siteService';
 import { getRedirectedHosts } from '../blocker';
@@ -12,7 +12,7 @@ import { passwordError } from './passwordRejection';
 /**
  * import-settings: 設定ファイルの設定・表示設定・画像とサイトで保存済みの値を丸ごと置き換え、登録が無くなったサイトの記録を消し、ルールを更新して新たにブロック対象になったタブをブロックする（ファイルの検証とパスワード保護中のパスワードの照合を、どの書き込みよりも前に済ませる）
  * @param message data.data に設定ファイルの中身、data.password にパスワード保護中に照合するパスワード
- * @returns 成功時の skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request（形が違う・ファイルの中に許されない入れ子の組がある）/ password-required / password-mismatch / save-failed
+ * @returns 成功時の skippedPresets は上限を超えるため取り込まなかったスタイルの名前、clearedActivePreset / clearedSchedulePresets はそのスタイルへの参照を外したか。失敗は invalid-request（形が違う・ファイルの中に許されない入れ子の組や時間帯が重なるスケジュールがある）/ password-required / password-mismatch / save-failed
  */
 export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
   data
@@ -24,7 +24,7 @@ export const importSettingsHandler: MessageHandler<'import-settings'> = async ({
 
   const { data: imported, password } = parsed.data;
   const sites = toImportedSites(imported.sites);
-  if (!sites) {
+  if (!sites || hasOverlappingSchedules(imported.schedules)) {
     return { success: false, error: { code: 'invalid-request' } };
   }
 

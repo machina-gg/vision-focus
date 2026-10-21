@@ -196,6 +196,33 @@ describe('import-settings ハンドラ', () => {
     expect(purgeSite).not.toHaveBeenCalled();
   });
 
+  it('ファイルの中に時間帯が重なるスケジュールがあれば invalid-request で拒み、パスワードも照合せず何も書き換えない', async () => {
+    const schedule = (id: string, startTime: string, endTime: string) => ({
+      id,
+      name: id,
+      startTime,
+      endTime,
+      days: [1],
+      enabled: false
+    });
+    const result = await invoke<Response>(handler, {
+      data: exportedData({
+        schedules: [
+          schedule('a', '09:00', '12:00'),
+          schedule('b', '11:00', '13:00')
+        ]
+      })
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: { code: 'invalid-request' }
+    });
+    expect(checkUnblockPassword).not.toHaveBeenCalled();
+    expect(importSettings).not.toHaveBeenCalled();
+    expect(replaceSites).not.toHaveBeenCalled();
+  });
+
   describe('パスワード', () => {
     it('添えられたパスワードを、弱める操作として照合する', async () => {
       await invoke(handler, { data: exportedData(), password: 'secret' });
