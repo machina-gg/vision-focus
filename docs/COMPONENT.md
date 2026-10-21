@@ -895,15 +895,15 @@ Esc で編集を取り消す。
 
 `src/components/options/blocklist/DomainListItem.tsx`
 
-| Prop              | 型                                                       | 省略時 | 説明                                                   |
-| ----------------- | -------------------------------------------------------- | ------ | ------------------------------------------------------ |
-| site              | `BlockedSite`                                            | 必須   | 行に出すブロック設定つきのサイト                       |
-| blockCount        | `number`                                                 | 必須   | ブロックした回数（0 なら出さない）                     |
-| usedSeconds       | `number`                                                 | 必須   | 今日の使用時間（秒。時間制限の残りの計算に使う）       |
-| allowedCount      | `number`                                                 | 必須   | そのサイトの下にある許可サイトの件数（0 なら出さない） |
-| onToggle          | `(domain: string, enabled: boolean) => void`             | 必須   | 有効・無効の切り替えを受け取る                         |
-| onRemove          | `(domain: string) => void`                               | 必須   | 削除ボタンが押されたドメインを受け取る                 |
-| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void` | 必須   | 保存された時間制限を受け取る（null なら常にブロック）  |
+| Prop              | 型                                                       | 省略時 | 説明                                                                 |
+| ----------------- | -------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| site              | `BlockedSite`                                            | 必須   | 行に出すブロック設定つきのサイト                                     |
+| blockCount        | `number`                                                 | 必須   | ブロックした回数（0 なら出さない）                                   |
+| remainingSeconds  | `number`                                                 | 省略可 | 今日の残り時間（秒。ブロックの判定の結果。無ければバッジを出さない） |
+| allowedCount      | `number`                                                 | 必須   | そのサイトの下にある許可サイトの件数（0 なら出さない）               |
+| onToggle          | `(domain: string, enabled: boolean) => void`             | 必須   | 有効・無効の切り替えを受け取る                                       |
+| onRemove          | `(domain: string) => void`                               | 必須   | 削除ボタンが押されたドメインを受け取る                               |
+| onUpdateTimeLimit | `(domain: string, timeLimit: TimeLimit \| null) => void` | 必須   | 保存された時間制限を受け取る（null なら常にブロック）                |
 
 ---
 
@@ -911,11 +911,11 @@ Esc で編集を取り消す。
 
 `src/components/options/blocklist/TimeLimitEditor.tsx`
 
-| Prop        | 型                                                        | 省略時 | 説明                                                |
-| ----------- | --------------------------------------------------------- | ------ | --------------------------------------------------- |
-| site        | `BlockedSite`                                             | 必須   | 時間制限を編集するブロック中のサイト                |
-| onUpdate    | `(timeLimit: TimeLimit \| null) => void \| Promise<void>` | 必須   | 保存した時間制限を受け取る（null なら常にブロック） |
-| usedSeconds | `number`                                                  | 必須   | 今日の使用時間（秒。残り時間のバッジに使う）        |
+| Prop             | 型                                                        | 省略時 | 説明                                                                 |
+| ---------------- | --------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| site             | `BlockedSite`                                             | 必須   | 時間制限を編集するブロック中のサイト                                 |
+| onUpdate         | `(timeLimit: TimeLimit \| null) => void \| Promise<void>` | 必須   | 保存した時間制限を受け取る（null なら常にブロック）                  |
+| remainingSeconds | `number`                                                  | 省略可 | 今日の残り時間（秒。ブロックの判定の結果。無ければバッジを出さない） |
 
 既存の分数が選択肢に無いときは、最も近い選択肢に直して `onUpdate` を呼ぶ。
 

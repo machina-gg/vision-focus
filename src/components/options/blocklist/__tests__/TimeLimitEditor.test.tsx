@@ -14,7 +14,7 @@ stubI18nWithSubstitutions();
 function renderEditor(options: {
   timeLimit?: TimeLimit | null;
   enabled?: boolean;
-  usedSeconds?: number;
+  remainingSeconds?: number;
   onUpdate?: (timeLimit: TimeLimit | null) => void;
 }) {
   const onUpdate = options.onUpdate ?? vi.fn();
@@ -25,7 +25,7 @@ function renderEditor(options: {
         timeLimit: options.timeLimit ?? null
       })}
       onUpdate={onUpdate}
-      usedSeconds={options.usedSeconds ?? 0}
+      remainingSeconds={options.remainingSeconds}
     />
   );
   return onUpdate;
@@ -175,7 +175,7 @@ describe('TimeLimitEditor', () => {
     it('有効・時間制限ありのとき残り時間を表示する', () => {
       renderEditor({
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usedSeconds: 600
+        remainingSeconds: 1200
       });
 
       expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
@@ -184,10 +184,10 @@ describe('TimeLimitEditor', () => {
       );
     });
 
-    it('使用量が制限を超えていたら超過として表示する', () => {
+    it('残りが 0 なら超過として表示する', () => {
       renderEditor({
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usedSeconds: 2400
+        remainingSeconds: 0
       });
 
       expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
@@ -196,10 +196,10 @@ describe('TimeLimitEditor', () => {
       );
     });
 
-    it('今日まだ使っていなければ上限までの残り時間を表示する', () => {
+    it('上限どおりの残りを表示する', () => {
       renderEditor({
         timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usedSeconds: 0
+        remainingSeconds: 1800
       });
 
       expect(screen.getByTestId('time-limit-badge')).toHaveAttribute(
@@ -208,18 +208,17 @@ describe('TimeLimitEditor', () => {
       );
     });
 
-    it('ブロックが無効ならバッジを表示しない', () => {
+    it('残り時間が渡されなければ（判定が時間制限を効かせていない）バッジを表示しない', () => {
       renderEditor({
         enabled: false,
-        timeLimit: { type: 'daily', limitSeconds: 1800 },
-        usedSeconds: 600
+        timeLimit: { type: 'daily', limitSeconds: 1800 }
       });
 
       expect(screen.queryByTestId('time-limit-badge')).not.toBeInTheDocument();
     });
 
     it('時間制限が未設定ならバッジを表示しない', () => {
-      renderEditor({ timeLimit: null, usedSeconds: 600 });
+      renderEditor({ timeLimit: null, remainingSeconds: 600 });
 
       expect(screen.queryByTestId('time-limit-badge')).not.toBeInTheDocument();
     });

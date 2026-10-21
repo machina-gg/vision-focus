@@ -16,7 +16,7 @@ const DOMAIN = 'example.com';
 function renderItem(overrides: {
   block?: Partial<BlockRule>;
   blockCount?: number;
-  usedSeconds?: number;
+  remainingSeconds?: number;
   allowedCount?: number;
   onToggle?: (domain: string, enabled: boolean) => void;
   onRemove?: (domain: string) => void;
@@ -29,7 +29,7 @@ function renderItem(overrides: {
         ...overrides.block
       })}
       blockCount={overrides.blockCount ?? 0}
-      usedSeconds={overrides.usedSeconds ?? 0}
+      remainingSeconds={overrides.remainingSeconds}
       allowedCount={overrides.allowedCount ?? 0}
       onToggle={overrides.onToggle ?? vi.fn()}
       onRemove={overrides.onRemove ?? vi.fn()}

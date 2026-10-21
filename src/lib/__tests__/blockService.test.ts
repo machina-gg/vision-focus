@@ -20,6 +20,7 @@ import {
   getBlockStateForDomain,
   getSiteBlockStatus,
   getSiteBlockStatuses,
+  evaluateSiteBlock,
   shouldBlockUrl,
   getRuleTargets
 } from '~/lib/blockService';
@@ -360,6 +361,52 @@ describe('getSiteBlockStatus', () => {
     expect(statuses.map((s) => s.site)).toEqual(['example.com']);
     expect(mockGetSettings).toHaveBeenCalledOnce();
     expect(mockGetSites).toHaveBeenCalledOnce();
+  });
+});
+
+describe('evaluateSiteBlock（設定画面の残り時間とポップアップの一致）', () => {
+  const rule = {
+    enabled: true,
+    timeLimit: { type: 'daily' as const, limitSeconds: LIMIT_SECONDS }
+  };
+
+  it.each([
+    ['使い始め', 0],
+    ['途中', 100],
+    ['使い切り', LIMIT_SECONDS],
+    ['超過', LIMIT_SECONDS + 500]
+  ])('%s: 判定（getSiteBlockStatus）と同じ状態を返す', async (_label, used) => {
+    given({ sites: [limitedSite()] });
+    givenSeconds({ 'example.com': used });
+
+    const status = await getSiteBlockStatus('example.com');
+    const activity = (await mockGetActivity.mock.results[0]?.value) as
+      ActivityLog | undefined;
+
+    expect(
+      evaluateSiteBlock(
+        'example.com',
+        rule,
+        DEFAULT_SETTINGS.schedules,
+        activity ?? {},
+        new Date()
+      )
+    ).toEqual(status?.state);
+  });
+
+  it('ブロックの時間帯の外では残り時間を持たない（判定と同じ）', async () => {
+    given({
+      settings: { schedules: OUT_OF_SCHEDULE },
+      sites: [limitedSite()]
+    });
+    mockIsWithinSchedule.mockReturnValue(false);
+
+    const status = await getSiteBlockStatus('example.com');
+
+    expect(
+      evaluateSiteBlock('example.com', rule, OUT_OF_SCHEDULE, {}, new Date())
+    ).toEqual(status?.state);
+    expect(status?.state.remainingSeconds).toBeUndefined();
   });
 });
 

@@ -18,8 +18,7 @@ type Story = StoryObj<typeof meta>;
 export const AlwaysBlocked: Story = {
   args: {
     site: blockedSite('twitter.com'),
-    onUpdate: () => {},
-    usedSeconds: 0
+    onUpdate: () => {}
   }
 };
 
@@ -29,7 +28,7 @@ export const WithDailyLimit: Story = {
       timeLimit: { type: 'daily', limitSeconds: 1800 }
     }),
     onUpdate: () => {},
-    usedSeconds: 0
+    remainingSeconds: 1800
   }
 };
 
@@ -39,6 +38,6 @@ export const NearLimit: Story = {
       timeLimit: { type: 'daily', limitSeconds: 1800 }
     }),
     onUpdate: () => {},
-    usedSeconds: 1700
+    remainingSeconds: 100
   }
 };
