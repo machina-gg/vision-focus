@@ -1,13 +1,14 @@
-import { MS_PER_DAY } from '~/constants/intervals';
+import { daysBetween } from '~/lib/activityStats';
 import { resolveSiteKey } from '~/lib/siteKey';
+import { toDateKey } from '~/lib/time';
 import type { TrackedSites } from '~/types/site';
 
 /**
- * ホスト名が属するサイトをブロックリストに入れてからの日数（1 日未満も 1。ブロックの規則が無ければ null）
+ * ホスト名が属するサイトをブロックしてから何日目か（ブロックした日が 1 日目。ブロックの規則が無ければ null）
  * @param hostname 数えるホスト名
  * @param sites 追跡中のサイト
  * @param now 基準の時刻
- * @returns ブロックに追加してからの経過日数（切り捨てで最小 1。属するサイトかブロックの規則が無ければ null）
+ * @returns ローカルの暦の日付で数えた日数（ブロックした日は 1、翌日は 2。属するサイトかブロックの規則が無ければ null）
  */
 export function calculateBlockingDays(
   hostname: string,
@@ -18,8 +19,7 @@ export function calculateBlockingDays(
   const rule = site === null ? null : sites[site]?.rule;
   if (rule?.kind !== 'block') return null;
 
-  const diffTime = now.getTime() - new Date(rule.addedAt).getTime();
-  const diffDays = Math.floor(diffTime / MS_PER_DAY);
-
-  return Math.max(1, diffDays);
+  const addedOn = toDateKey(new Date(rule.addedAt));
+  // 時計が戻って登録日が未来になっても 1 日目として扱う
+  return Math.max(0, daysBetween(addedOn, toDateKey(now))) + 1;
 }
