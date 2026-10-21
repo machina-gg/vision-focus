@@ -268,7 +268,7 @@ export function SettingsBackup({ isPasswordProtected }: SettingsBackupProps) {
           </div>
           {exportWarning && (
             <div className="mt-3 flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{exportWarning}</span>
             </div>
           )}
@@ -326,9 +326,9 @@ export function SettingsBackup({ isPasswordProtected }: SettingsBackupProps) {
               }`}
             >
               {importStatus === 'success' ? (
-                <Check className="w-4 h-4 flex-shrink-0" />
+                <Check className="w-4 h-4 shrink-0" />
               ) : (
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 shrink-0" />
               )}
               <span data-testid="import-result-message">{importMessage}</span>
             </div>
@@ -340,7 +340,7 @@ export function SettingsBackup({ isPasswordProtected }: SettingsBackupProps) {
                   key={index}
                   className="flex items-center gap-2 text-xs text-warning-600 bg-warning-50 px-3 py-2 rounded-lg"
                 >
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{warning}</span>
                 </div>
               ))}

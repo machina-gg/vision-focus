@@ -230,10 +230,6 @@ manifest の定義は `wxt.config.ts`（`permissions` / `host_permissions`）。
 - chrome.storage.local を使用（同期不要）
 - パスワード等の機密情報は扱わない設計
 
-### 依存パッケージの脆弱性検査
-
-CI の `audit-high`（`pnpm audit --audit-level high`）から、`package.json` の `pnpm.auditConfig.ignoreGhsas` で GHSA-vfj7-8cjw-p6xm（`braces`）だけを除外している。理由と外す条件は [#671](https://github.com/machina-gg/vision-focus/issues/671) を参照（`braces` は devDependencies の `tailwindcss` 3.x 経由のみで、成果物に入らない。tailwind v4 移行で消えたとき、または修正版が出たときにこの除外を外す）。
-
 ## 8. パフォーマンス最適化
 
 目標値は [PRD.md](./PRD.md) の非機能要件を参照。

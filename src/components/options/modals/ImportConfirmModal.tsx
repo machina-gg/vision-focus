@@ -76,7 +76,7 @@ export function ImportConfirmModal({
     >
       <div className="space-y-4">
         <div className="flex items-start gap-3 p-4 bg-warning-50 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-warning-600 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-warning-600 shrink-0 mt-0.5" />
           <p
             className="text-sm text-warning-800"
             data-testid="import-confirm-message"

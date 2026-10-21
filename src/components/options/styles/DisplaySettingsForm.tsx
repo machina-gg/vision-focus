@@ -182,7 +182,7 @@ export function DisplaySettingsForm({ presets }: DisplaySettingsFormProps) {
                   alt={bg.name}
                   className="w-full h-full object-cover"
                 />
-                <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-0.5 rounded">
+                <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-2 py-0.5 rounded-sm">
                   {bg.name}
                 </span>
               </button>

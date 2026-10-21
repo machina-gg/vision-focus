@@ -26,7 +26,7 @@ export function MiniStats({
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex justify-center gap-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
+        <div className="bg-white/90 backdrop-blur-xs rounded-xl px-6 py-4 min-w-[120px]">
           <div className="flex items-center justify-center gap-2 text-block-500 mb-1">
             <Ban className="w-4 h-4" />
             <span className="text-xs font-medium">
@@ -42,7 +42,7 @@ export function MiniStats({
         </div>
 
         {blockingDays !== null && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
+          <div className="bg-white/90 backdrop-blur-xs rounded-xl px-6 py-4 min-w-[120px]">
             <div className="flex items-center justify-center gap-2 text-info-500 mb-1">
               <Calendar className="w-4 h-4" />
               <span className="text-xs font-medium">

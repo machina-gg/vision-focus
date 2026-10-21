@@ -1,10 +1,218 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+@theme {
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+  --color-primary-950: #042f2e;
+
+  --color-success-50: #ecfeff;
+  --color-success-100: #cffafe;
+  --color-success-200: #a5f3fc;
+  --color-success-300: #67e8f9;
+  --color-success-400: #22d3ee;
+  --color-success-500: #06b6d4;
+  --color-success-600: #0891b2;
+  --color-success-700: #0e7490;
+  --color-success-800: #155e75;
+  --color-success-900: #164e63;
+  --color-success-950: #083344;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  --color-danger-50: #fff1f2;
+  --color-danger-100: #ffe4e6;
+  --color-danger-200: #fecdd3;
+  --color-danger-300: #fda4af;
+  --color-danger-400: #fb7185;
+  --color-danger-500: #f43f5e;
+  --color-danger-600: #e11d48;
+  --color-danger-700: #be123c;
+  --color-danger-800: #9f1239;
+  --color-danger-900: #881337;
+  --color-danger-950: #4c0519;
+
+  --color-block-50: #fff7ed;
+  --color-block-100: #ffedd5;
+  --color-block-200: #fed7aa;
+  --color-block-300: #fdba74;
+  --color-block-400: #fb923c;
+  --color-block-500: #f97316;
+  --color-block-600: #ea580c;
+  --color-block-700: #c2410c;
+  --color-block-800: #9a3412;
+  --color-block-900: #7c2d12;
+  --color-block-950: #431407;
+
+  --color-premium-50: #f5f3ff;
+  --color-premium-100: #ede9fe;
+  --color-premium-200: #ddd6fe;
+  --color-premium-300: #c4b5fd;
+  --color-premium-400: #a78bfa;
+  --color-premium-500: #8b5cf6;
+  --color-premium-600: #7c3aed;
+  --color-premium-700: #6d28d9;
+  --color-premium-800: #5b21b6;
+  --color-premium-900: #4c1d95;
+  --color-premium-950: #2e1065;
+
+  --color-info-50: #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-200: #bae6fd;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-800: #075985;
+  --color-info-900: #0c4a6e;
+  --color-info-950: #082f49;
+
+  /* Tailwind 既定パレットのうち使っている色は v3 の値に固定する（v4 の既定値は oklch で色味が変わる） */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+  --color-indigo-950: #1e1b4b;
+
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce7f3;
+  --color-pink-200: #fbcfe8;
+  --color-pink-300: #f9a8d4;
+  --color-pink-400: #f472b6;
+  --color-pink-500: #ec4899;
+  --color-pink-600: #db2777;
+  --color-pink-700: #be185d;
+  --color-pink-800: #9d174d;
+  --color-pink-900: #831843;
+  --color-pink-950: #500724;
+
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}
+
+@theme inline {
+  /*
+    drop-shadow も v4 で値が変わったので v3 の値に固定する（drop-shadow-sm が v3 の drop-shadow に当たる）。
+    影を複数持つ値は inline にしないと drop-shadow() 1 つに詰め込まれ、無効な filter になって影が消える
+  */
+  --drop-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.1), 0 1px 1px rgb(0 0 0 / 0.06);
+  --drop-shadow-lg: 0 10px 8px rgb(0 0 0 / 0.04), 0 4px 3px rgb(0 0 0 / 0.1);
+}
+
+/* v4 の preflight で変わった既定値を v3 の見た目に戻す（境界線の色・placeholder の色・ボタンの cursor・フォーム部品） */
 @layer base {
-  * {
-    @apply border-gray-200;
+  /* v3 はフォーム部品の背景・角丸・不透明度と日時入力の内側を触らずブラウザ既定のままだった */
+  input:where(:not([type='button'], [type='reset'], [type='submit'])),
+  select,
+  optgroup,
+  textarea {
+    border-radius: revert;
+    background-color: revert;
+    opacity: revert;
+  }
+
+  option {
+    padding: revert;
+  }
+
+  ::-webkit-date-and-time-value {
+    min-height: revert;
+    text-align: revert;
+  }
+
+  ::-webkit-datetime-edit {
+    display: revert;
+  }
+
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: revert;
+  }
+
+  ::-webkit-datetime-edit,
+  ::-webkit-datetime-edit-year-field,
+  ::-webkit-datetime-edit-month-field,
+  ::-webkit-datetime-edit-day-field,
+  ::-webkit-datetime-edit-hour-field,
+  ::-webkit-datetime-edit-minute-field,
+  ::-webkit-datetime-edit-second-field,
+  ::-webkit-datetime-edit-millisecond-field,
+  ::-webkit-datetime-edit-meridiem-field {
+    padding-block: revert;
+  }
+
+  ::-webkit-calendar-picker-indicator {
+    line-height: revert;
+  }
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
   }
 
   body {
@@ -15,31 +223,29 @@
   }
 }
 
-@layer components {
-  .popup-container {
-    @apply w-[480px] min-h-[500px] max-h-[600px] overflow-y-auto;
-  }
+@utility popup-container {
+  @apply w-[480px] min-h-[500px] max-h-[600px] overflow-y-auto;
+}
 
-  .newtab-container {
-    @apply min-h-screen w-full;
-  }
+@utility newtab-container {
+  @apply min-h-screen w-full;
+}
 
-  .options-container {
-    @apply min-h-screen w-full max-w-5xl mx-auto px-4 py-8;
-  }
+@utility options-container {
+  @apply min-h-screen w-full max-w-5xl mx-auto px-4 py-8;
+}
 
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
+@utility animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

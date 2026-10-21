@@ -203,7 +203,7 @@ export function NewtabApp() {
                 isTimeLimit
                   ? 'bg-warning-500/20 border-warning-500/30'
                   : 'bg-danger-500/20 border-danger-500/30'
-              } backdrop-blur-sm rounded-xl px-6 py-4 border`}
+              } backdrop-blur-xs rounded-xl px-6 py-4 border`}
             >
               {isTimeLimit ? (
                 <Clock className="w-6 h-6 text-warning-400" />
@@ -291,7 +291,7 @@ export function NewtabApp() {
             className="mt-8 pt-6 border-t border-white/10"
             data-html2canvas-ignore="true"
           >
-            <p className="text-gray-300 text-sm mb-3 drop-shadow">
+            <p className="text-gray-300 text-sm mb-3 drop-shadow-sm">
               {getMessage('noPresetsDescription')}
             </p>
             <button
@@ -318,7 +318,7 @@ export function NewtabApp() {
         <button
           data-testid="newtab-settings-button"
           onClick={handleSettingsClick}
-          className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+          className="p-3 bg-white/20 backdrop-blur-xs rounded-full text-white hover:bg-white/30 transition-colors"
         >
           <Settings className="w-5 h-5" />
         </button>

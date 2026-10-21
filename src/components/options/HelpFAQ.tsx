@@ -57,7 +57,7 @@ export function HelpFAQ() {
         ].map((item) => (
           <details key={item.q} className="group" data-testid="help-faq-item">
             <summary className="cursor-pointer flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors">
-              <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-90" />
+              <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 transition-transform group-open:rotate-90" />
               {item.q}
             </summary>
             <p className="px-4 pb-3 pl-10 text-sm text-gray-500">{item.a}</p>

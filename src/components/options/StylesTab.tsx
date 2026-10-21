@@ -79,7 +79,7 @@ export function StylesTab() {
                 {isBackgroundLoading && (
                   <p
                     data-testid="style-preview-loading"
-                    className="absolute top-2 left-2 z-20 text-xs bg-black/50 text-white px-2 py-0.5 rounded"
+                    className="absolute top-2 left-2 z-20 text-xs bg-black/50 text-white px-2 py-0.5 rounded-sm"
                   >
                     {getMessage('loading')}
                   </p>
