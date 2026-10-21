@@ -272,7 +272,7 @@ function TrackedSiteItem({
               {site.domain}
             </span>
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${style.badge}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${style.badge}`}
             >
               {getMessage(STATUS_LABEL_KEY[status])}
             </span>

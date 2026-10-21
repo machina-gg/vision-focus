@@ -291,7 +291,7 @@ export function YouTubeSection({
 
           {blockAccessEnabled && (
             <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg space-y-3">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-600" />
                 <h4 className="text-sm font-medium text-gray-700">
                   {getMessage('timeLimitSettings')}
@@ -358,7 +358,7 @@ export function YouTubeSection({
 
       {!isEnabled && (
         <div className="mb-3 p-2 bg-block-50 border border-block-200 rounded-lg flex items-center gap-2">
-          <Info className="w-4 h-4 text-block-600 flex-shrink-0" />
+          <Info className="w-4 h-4 text-block-600 shrink-0" />
           <p className="text-xs text-block-700">
             {getMessage('youtubeDisabledNote')}
           </p>

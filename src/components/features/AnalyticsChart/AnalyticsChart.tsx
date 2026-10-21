@@ -165,7 +165,7 @@ export function AnalyticsChart({
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
             ${
               chartType === 'daily'
-                ? 'bg-white shadow text-gray-900'
+                ? 'bg-white shadow-sm text-gray-900'
                 : 'text-gray-600 hover:text-gray-900'
             }
           `}
@@ -181,7 +181,7 @@ export function AnalyticsChart({
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
             ${
               chartType === 'bySite'
-                ? 'bg-white shadow text-gray-900'
+                ? 'bg-white shadow-sm text-gray-900'
                 : 'text-gray-600 hover:text-gray-900'
             }
           `}
@@ -197,7 +197,7 @@ export function AnalyticsChart({
             flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors
             ${
               chartType === 'cumulative'
-                ? 'bg-white shadow text-gray-900'
+                ? 'bg-white shadow-sm text-gray-900'
                 : 'text-gray-600 hover:text-gray-900'
             }
           `}

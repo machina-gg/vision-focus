@@ -205,7 +205,7 @@ export function ImageUploader({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className={`
-          relative w-full aspect-video rounded-lg border-2 border-dashed
+          relative mt-2 w-full aspect-video rounded-lg border-2 border-dashed
           flex flex-col items-center justify-center gap-2
           transition-colors cursor-pointer
           ${isDragging ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'}

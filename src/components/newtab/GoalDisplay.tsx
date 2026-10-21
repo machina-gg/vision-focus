@@ -68,7 +68,7 @@ export function GoalDisplay({
         />
         {error && (
           <p
-            className="text-sm text-danger-200 drop-shadow"
+            className="text-sm text-danger-200 drop-shadow-sm"
             data-testid="newtab-goal-error"
           >
             {error}

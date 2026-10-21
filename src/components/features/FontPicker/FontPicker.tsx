@@ -94,7 +94,7 @@ export function FontPicker({
             value={value.family}
             disabled={disabled}
             onChange={(e) => handleFamilyChange(e.target.value)}
-            className="w-full appearance-none px-3 py-2 pr-8 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            className="w-full appearance-none px-3 py-2 pr-8 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
           >
             {Object.entries(FONT_CATEGORIES).map(([categoryKey, category]) => (
               <optgroup key={categoryKey} label={category.name}>

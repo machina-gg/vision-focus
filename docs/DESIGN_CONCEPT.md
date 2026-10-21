@@ -15,8 +15,8 @@
 ### 設計原則
 
 - 各色は**1つの意味**にのみ割り当てる（衝突禁止）
-- セマンティックカラーは Tailwind config にトークンとして定義し、直接の色名（`red-500` 等）ではなくトークン名（`danger-500` 等）で参照する
-- ニュートラルカラーは Tailwind デフォルトの `gray-*` をそのまま使用
+- セマンティックカラーは `src/styles/globals.css` の `@theme` にトークンとして定義し、直接の色名（`red-500` 等）ではなくトークン名（`danger-500` 等）で参照する
+- ニュートラルカラーは Tailwind デフォルトの `gray-*` を使用（v4 の既定値は色味が変わるため、`src/styles/globals.css` の `@theme` で v3 の値に固定している）
 
 ### メインカラー
 
@@ -67,19 +67,19 @@ Primary を blue-500 → teal-500 に変更。宝石のエメラルドを思わ�
 - Text Tertiary (gray-400) を新設（プレースホルダー、補足的な情報用）
 - Divider (gray-100) を新設（セクション区切り用）
 
-### Tailwind config でのトークン定義
+### トークン定義
 
-```typescript
-colors: {
-  primary: { /* teal scale */ },
-  success: { /* cyan scale */ },
-  warning: { /* amber scale */ },
-  danger: { /* rose scale */ },
-  block: { /* orange scale */ },
-  premium: { /* violet scale */ },
-  info: { /* sky scale */ },
-}
-```
+`src/styles/globals.css` の `@theme` に `--color-<トークン>-<50〜950>` の形で定義する（値の実体はこのファイル）。
+
+| トークン | 元にしたスケール |
+| -------- | ---------------- |
+| primary  | teal             |
+| success  | cyan             |
+| warning  | amber            |
+| danger   | rose             |
+| block    | orange           |
+| premium  | violet           |
+| info     | sky              |
 
 ### 各色のバリエーション使用ガイド
 

@@ -15,7 +15,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-white border border-gray-200 shadow-sm',
+  default: 'bg-white border border-gray-200 shadow-xs',
   outlined: 'bg-white border border-gray-200',
   elevated: 'bg-white shadow-md border border-gray-100'
 };

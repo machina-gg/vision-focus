@@ -245,7 +245,7 @@ export function WeeklyCalendar({
                   return (
                     <div
                       key={block.schedule.id}
-                      className={`absolute left-0.5 right-0.5 rounded border cursor-pointer transition-opacity hover:opacity-80 ${colors.bg} ${colors.border} ${
+                      className={`absolute left-0.5 right-0.5 rounded-sm border cursor-pointer transition-opacity hover:opacity-80 ${colors.bg} ${colors.border} ${
                         !block.schedule.enabled ? 'opacity-40' : ''
                       }`}
                       style={getBlockStyle(block)}
@@ -284,7 +284,7 @@ export function WeeklyCalendar({
               className={`flex items-center gap-1.5 ${!item.enabled ? 'opacity-50' : ''}`}
             >
               <div
-                className={`w-3 h-3 rounded ${colors.bg} ${colors.border} border`}
+                className={`w-3 h-3 rounded-sm ${colors.bg} ${colors.border} border`}
               />
               <span
                 className={`text-xs text-gray-600 ${!item.enabled ? 'line-through' : ''}`}

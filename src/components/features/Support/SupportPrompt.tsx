@@ -31,7 +31,7 @@ export function SupportPrompt({ onSupport, onDismiss }: SupportPromptProps) {
           data-testid="support-prompt-dismiss"
           aria-label={getMessage('supportPromptDismiss')}
           onClick={() => void onDismiss()}
-          className="p-1.5 rounded-lg text-gray-500 hover:bg-premium-100 focus:outline-none focus:ring-2 focus:ring-premium-500"
+          className="p-1.5 rounded-lg text-gray-500 hover:bg-premium-100 focus:outline-hidden focus:ring-2 focus:ring-premium-500"
         >
           <X className="w-4 h-4" />
         </button>

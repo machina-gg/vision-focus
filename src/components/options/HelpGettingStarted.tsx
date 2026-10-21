@@ -78,7 +78,7 @@ export function HelpGettingStarted() {
             className="flex items-start gap-3 p-3 rounded-lg bg-gray-50"
           >
             <div
-              className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}
+              className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center shrink-0 mt-0.5`}
             >
               <item.icon className={`w-4 h-4 ${item.color}`} />
             </div>
