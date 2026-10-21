@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PopupApp } from '../App';
-import { formatTimeLocalized, toDateKey } from '~/lib/time';
+import { formatTime, toDateKey } from '~/lib/time';
 import { stubI18nWithSubstitutions } from '~/test/i18n';
 import type { ActivityLog, DailySiteActivity } from '~/types/activity';
 import type { SiteKey } from '~/types/site';
@@ -135,7 +135,7 @@ describe('今日のサマリー', () => {
     );
 
     expect(screen.getByTestId('summary-wasted-time')).toHaveTextContent(
-      formatTimeLocalized(3600)
+      formatTime(3600)
     );
   });
 
@@ -152,7 +152,7 @@ describe('今日のサマリー', () => {
     );
 
     expect(screen.getByTestId('summary-wasted-time')).toHaveTextContent(
-      formatTimeLocalized(600)
+      formatTime(600)
     );
   });
 

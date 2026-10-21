@@ -1,4 +1,7 @@
 import { parseDateKey } from '~/lib/activityStats';
+import { formatTime } from '~/lib/time';
+
+const SECONDS_PER_MINUTE = 60;
 
 /**
  * 日付キーをグラフの軸用の短い表記（例: Jan 5）にする
@@ -12,15 +15,13 @@ export function formatDate(dateStr: string): string {
 }
 
 /**
- * 分をツールチップ用の表記（1 時間以上なら「1h 5m」、未満なら「5m」）にする
- * @param minutes 分（小数は四捨五入して分に丸める）
- * @returns 時間と分の表記
+ * 分をツールチップ用の表記（formatTime の形。45s / 12m / 1h 5m）にする
+ * @param minutes 分（小数は秒に戻して扱い、端数の秒は切り捨てる）
+ * @returns formatTime の形の表記
  */
 export function formatMinutes(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = Math.round(minutes % 60);
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+  // 軸の単位変換で出る浮動小数点の誤差で 1 秒ずれないよう、秒は先に丸めてから formatTime に渡す
+  return formatTime(Math.round(minutes * SECONDS_PER_MINUTE));
 }
 
 /**

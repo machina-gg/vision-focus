@@ -401,12 +401,12 @@ Esc で編集を取り消す。
 
 `src/components/features/TimeLimitBadge/TimeLimitBadge.tsx`
 
-| Prop             | 型        | 省略時  | 説明                                                           |
-| ---------------- | --------- | ------- | -------------------------------------------------------------- |
-| remainingSeconds | `number`  | 必須    | その日の残り時間（秒。0 以下なら上限到達として表示する）       |
-| limitSeconds     | `number`  | 必須    | 1 日の上限（秒。残りの割合の計算に使う）                       |
-| showWarning      | `boolean` | `true`  | false なら残りが少なくても警告の色にしない                     |
-| compact          | `boolean` | `false` | 「1 日あたり」の添え字を省き、残り時間を表示言語の書き方で出す |
+| Prop             | 型        | 省略時  | 説明                                                                   |
+| ---------------- | --------- | ------- | ---------------------------------------------------------------------- |
+| remainingSeconds | `number`  | 必須    | その日の残り時間（秒。0 以下なら上限到達として表示する）               |
+| limitSeconds     | `number`  | 必須    | 1 日の上限（秒。残りの割合の計算に使う）                               |
+| showWarning      | `boolean` | `true`  | false なら残りが少なくても警告の色にしない                             |
+| compact          | `boolean` | `false` | 「1 日あたり」の添え字を省き、残りの割合が小さくても警告の文言にしない |
 
 ---
 

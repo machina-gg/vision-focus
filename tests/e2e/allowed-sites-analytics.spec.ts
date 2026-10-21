@@ -67,9 +67,9 @@ test.describe('Allow - 許可サイトの集計', () => {
     await expect(
       popup.locator(SELECTORS.summary.topBlockedSiteDomain)
     ).toHaveText(BLOCKED);
-    // 浪費は 40 分。許可サイトが混ざると 1 時間 40 分になる
+    // 浪費は 40m。許可サイトが混ざると 1h 40m になる
     await expect(popup.locator(SELECTORS.summary.wastedTime)).toHaveText(
-      /^40\s?(分|min)$/
+      formatTime(WASTE_SECONDS)
     );
     await popup.close();
 

@@ -49,6 +49,7 @@ export function BySiteChart({ data }: BySiteChartProps) {
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           type="number"
+          allowDecimals={false}
           stroke="#6b7280"
           fontSize={12}
           tickFormatter={(v) => `${v}m`}

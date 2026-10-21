@@ -7,6 +7,7 @@ import { MonthlyTrendChart } from '../MonthlyTrendChart';
 
 const chart = vi.hoisted(() => ({
   data: [] as { week: string; wasteTime: number; blockCount: number }[],
+  allowDecimals: {} as Record<string, boolean | undefined>,
   wasteTickFormatter: undefined as ((value: number) => string) | undefined,
   tooltipFormatter: undefined as
     ((value: unknown, name: string) => unknown) | undefined
@@ -30,11 +31,14 @@ vi.mock('recharts', () => ({
   XAxis: () => null,
   YAxis: ({
     yAxisId,
-    tickFormatter
+    tickFormatter,
+    allowDecimals
   }: {
     yAxisId: string;
+    allowDecimals?: boolean;
     tickFormatter?: (value: number) => string;
   }) => {
+    chart.allowDecimals[yAxisId] = allowDecimals;
     if (yAxisId === 'waste') chart.wasteTickFormatter = tickFormatter;
     return null;
   },
@@ -100,11 +104,10 @@ describe('MonthlyTrendChart', () => {
   });
 
   describe('2 時間未満しか使っていない月', () => {
-    it('秒を分へ丸めてそのまま渡す', () => {
-      // 150 秒 = 2.5 分 → 3 分（四捨五入）
+    it('秒を丸めずに分へ換算して渡す', () => {
       renderChart([{ waste: 150 }, { waste: 3600 }]);
 
-      expect(chart.data.map((d) => d.wasteTime)).toEqual([3, 60]);
+      expect(chart.data.map((d) => d.wasteTime)).toEqual([2.5, 60]);
     });
 
     it('119 分は分表示のままにする（境界）', () => {
@@ -156,6 +159,30 @@ describe('MonthlyTrendChart', () => {
         '1h 30m',
         'wasteTime'
       ]);
+    });
+
+    it('1 分未満は秒で出す', () => {
+      renderChart([{ waste: 45 }]);
+
+      expect(chart.tooltipFormatter?.(0.75, 'wasteTime')).toEqual([
+        '45s',
+        'wasteTime'
+      ]);
+    });
+
+    it('端数の秒は切り捨てる', () => {
+      renderChart([{ waste: 3580 }]);
+
+      expect(chart.tooltipFormatter?.(3580 / 60, 'wasteTime')).toEqual([
+        '59m',
+        'wasteTime'
+      ]);
+    });
+
+    it('小さい値でも縦軸の目盛りを整数にする', () => {
+      renderChart([{ waste: 45 }]);
+
+      expect(chart.allowDecimals).toEqual({ waste: false, block: false });
     });
 
     it('ブロック数は件数のまま出す', () => {

@@ -18,7 +18,7 @@ import {
 } from '~/hooks';
 import { getMessage } from '~/lib/i18n';
 import { sendMessage } from '~/lib/messaging';
-import { formatTimeLocalized } from '~/lib/time';
+import { formatTime } from '~/lib/time';
 import { SettingsProvider, useSettings } from '~/contexts/SettingsContext';
 
 import '~/styles/globals.css';
@@ -149,7 +149,7 @@ function PopupAppContent() {
                 className="text-2xl font-bold text-warning-600"
                 data-testid="summary-wasted-time"
               >
-                {formatTimeLocalized(stats.seconds)}
+                {formatTime(stats.seconds)}
               </p>
             </div>
 

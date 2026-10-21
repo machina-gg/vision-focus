@@ -1,5 +1,4 @@
 import { MS_PER_DAY } from '~/constants/intervals';
-import { getUILanguage } from '~/lib/i18n';
 import type { DateKey } from '~/types/activity';
 
 /**
@@ -20,49 +19,6 @@ export function formatTime(seconds: number): string {
   }
 
   return `${minutes}m`;
-}
-
-/**
- * 秒を UI 言語に合わせた表示（"1時間5分" / "1 hr 5 min" など）にする
- * @param seconds 秒数
- * @returns 60 秒未満は秒、1 時間未満は分、それ以上は時間と分（0 分なら時間だけ）
- */
-export function formatTimeLocalized(seconds: number): string {
-  const language = getUILanguage();
-
-  if (seconds < 60) {
-    return language === 'ja' ? `${seconds}秒` : `${seconds} sec`;
-  }
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    if (language === 'ja') {
-      return minutes > 0 ? `${hours}時間${minutes}分` : `${hours}時間`;
-    } else {
-      return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
-    }
-  }
-
-  return language === 'ja' ? `${minutes}分` : `${minutes} min`;
-}
-
-/**
- * 秒を "m:ss" か "h:mm:ss" の形にする
- * @param seconds 秒数
- * @returns 1 時間未満は "m:ss"、それ以上は "h:mm:ss"
- */
-export function formatTimeShort(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**
