@@ -47,11 +47,17 @@ describe('isExtensionContextValid', () => {
 });
 
 describe('getActiveTab', () => {
+  // query はコールバック形式のオーバーロードが最後に解決されるため、Promise 形式の型へ絞る
+  const queryMock = () =>
+    vi.mocked(
+      chrome.tabs.query as (
+        queryInfo: chrome.tabs.QueryInfo
+      ) => Promise<chrome.tabs.Tab[]>
+    );
+
   it('アクティブタブを返す', async () => {
     const mockTab = { id: 1, url: 'https://youtube.com' };
-    vi.mocked(chrome.tabs.query).mockResolvedValue([
-      mockTab
-    ] as chrome.tabs.Tab[]);
+    queryMock().mockResolvedValue([mockTab] as chrome.tabs.Tab[]);
     const tab = await getActiveTab();
     expect(tab).toEqual(mockTab);
     expect(chrome.tabs.query).toHaveBeenCalledWith({
@@ -61,7 +67,7 @@ describe('getActiveTab', () => {
   });
 
   it('タブがない場合はundefined', async () => {
-    vi.mocked(chrome.tabs.query).mockResolvedValue([]);
+    queryMock().mockResolvedValue([]);
     const tab = await getActiveTab();
     expect(tab).toBeUndefined();
   });
