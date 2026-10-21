@@ -66,8 +66,9 @@ export interface AnalyticsChartProps {
   disabled?: boolean;
 }
 
+// ツールチップが秒まで出せるよう、分への換算では丸めない
 function toMinutes(seconds: number): number {
-  return Math.round(seconds / SECONDS_PER_MINUTE);
+  return seconds / SECONDS_PER_MINUTE;
 }
 
 /**

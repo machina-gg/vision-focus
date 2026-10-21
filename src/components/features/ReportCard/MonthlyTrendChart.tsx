@@ -10,6 +10,7 @@ import {
   ComposedChart
 } from 'recharts';
 import { getMessage } from '~/lib/i18n';
+import { formatTime } from '~/lib/time';
 
 /** MonthlyTrendChart に渡す週ごとの集計 */
 interface MonthlyTrendChartProps {
@@ -24,14 +25,6 @@ interface MonthlyTrendChartProps {
   }[];
 }
 
-function formatChartMinutes(seconds: number): string {
-  const totalMinutes = Math.round(seconds / 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
-}
-
 /**
  * 月内の週ごとの時間を棒、ブロック回数を折れ線で重ねて表示する（最大が 120 分以上なら時間の軸を時間単位にする）
  * @param props 週ごとの集計（各フィールドは MonthlyTrendChartProps）
@@ -40,7 +33,7 @@ function formatChartMinutes(seconds: number): string {
 export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
   const chartData = weeklyBreakdown.map((w, i) => ({
     week: `W${i + 1}`,
-    wasteTime: Math.round(w.wasteTime / 60),
+    wasteTime: w.wasteTime / 60,
     blockCount: w.blockCount
   }));
 
@@ -77,7 +70,7 @@ export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
             if (typeof value !== 'number') return null;
             if (name === 'wasteTime') {
               return [
-                formatChartMinutes(useHours ? value * 3600 : value * 60),
+                formatTime(Math.round(useHours ? value * 3600 : value * 60)),
                 getMessage('wasteTime')
               ];
             }

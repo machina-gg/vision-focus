@@ -116,14 +116,14 @@ describe('TimeLimitBadge', () => {
   });
 
   describe('compact のとき', () => {
-    it('ローカライズした残り時間を出し、1 日あたりの断りは出さない', () => {
+    it('残り時間を formatTime の形で出し、1 日あたりの断りは出さない', () => {
       render(
         <TimeLimitBadge remainingSeconds={600} limitSeconds={7200} compact />
       );
 
       const badge = screen.getByTestId('time-limit-badge');
       expect(badge).toHaveAttribute('data-state', 'remaining');
-      expect(badge).toHaveTextContent('timeLimitRemaining(10 min)');
+      expect(badge).toHaveTextContent('timeLimitRemaining(10m)');
       expect(badge).not.toHaveTextContent('perDay');
     });
 

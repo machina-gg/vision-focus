@@ -31,7 +31,7 @@ import {
 import { getMessage } from '~/lib/i18n';
 import { sendMessage } from '~/lib/messaging';
 import { messageErrorText } from '~/lib/messageError';
-import { formatTimeLocalized } from '~/lib/time';
+import { formatTime } from '~/lib/time';
 import {
   clearLastBlocked,
   getLastBlocked,
@@ -238,7 +238,7 @@ export function NewtabApp() {
                       <p className="text-danger-100 text-sm">
                         {getMessage(
                           'wastedTime',
-                          formatTimeLocalized(blockedInfo.seconds)
+                          formatTime(blockedInfo.seconds)
                         )}
                       </p>
                     )}

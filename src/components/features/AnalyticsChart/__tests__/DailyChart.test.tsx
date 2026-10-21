@@ -56,6 +56,21 @@ describe('DailyChart のツールチップ', () => {
     ]);
   });
 
+  it('1 分未満は秒で出す', () => {
+    renderChart([0.75]);
+
+    expect(chart.tooltipFormatter?.(0.75)).toEqual(['45s', 'chartDailyLabel']);
+  });
+
+  it('端数の秒は切り捨てる', () => {
+    renderChart([3580 / 60]);
+
+    expect(chart.tooltipFormatter?.(3580 / 60)).toEqual([
+      '59m',
+      'chartDailyLabel'
+    ]);
+  });
+
   it('値が数値でなければ行を出さない（null を返す）', () => {
     renderChart([60]);
 

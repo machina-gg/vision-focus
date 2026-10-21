@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 
-import { formatTime, formatTimeLocalized } from '~/lib/time';
+import { formatTime } from '~/lib/time';
 import { getMessage } from '~/lib/i18n';
 import { TIME_LIMIT_CONFIG } from '~/constants/limits';
 
@@ -13,7 +13,7 @@ interface TimeLimitBadgeProps {
   limitSeconds: number;
   /** false なら残りが少なくても警告の色にしない（省略時は警告する） */
   showWarning?: boolean;
-  /** true なら「1 日あたり」の添え字を省き、残り時間を表示言語の書き方で出す */
+  /** true なら「1 日あたり」の添え字を省き、残りの割合が小さくても警告の文言にしない */
   compact?: boolean;
 }
 
@@ -50,7 +50,6 @@ export function TimeLimitBadge({
   const textColor = isLow ? 'text-warning-700' : 'text-info-700';
 
   const timeDisplay = formatTime(remainingSeconds);
-  const timeDisplayLocalized = formatTimeLocalized(remainingSeconds);
   const suffix = getMessage('perDay');
 
   if (compact) {
@@ -62,7 +61,7 @@ export function TimeLimitBadge({
         className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} text-xs rounded-full`}
       >
         <Clock className="w-3 h-3" />
-        {getMessage('timeLimitRemaining', timeDisplayLocalized)}
+        {getMessage('timeLimitRemaining', timeDisplay)}
       </span>
     );
   }

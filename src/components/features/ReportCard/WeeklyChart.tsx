@@ -10,6 +10,7 @@ import {
   ComposedChart
 } from 'recharts';
 import { getMessage } from '~/lib/i18n';
+import { formatTime } from '~/lib/time';
 
 /** WeeklyChart に渡す曜日ごとの集計 */
 interface WeeklyChartProps {
@@ -25,14 +26,6 @@ function getDayLabels(): string[] {
   );
 }
 
-function formatChartMinutes(seconds: number): string {
-  const totalMinutes = Math.round(seconds / 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
-}
-
 /**
  * 週の曜日ごとの時間を棒、ブロック回数を折れ線で重ねて表示する（最大が 120 分以上なら時間の軸を時間単位にする）
  * @param props 曜日ごとの集計（各フィールドは WeeklyChartProps）
@@ -45,7 +38,7 @@ export function WeeklyChart({
   const dayLabels = getDayLabels();
   const chartData = dailyBreakdown.map((d, i) => ({
     day: dayLabels[i] || `D${i + 1}`,
-    wasteTime: Math.round(d.wasteTime / 60),
+    wasteTime: d.wasteTime / 60,
     blockCount: dailyBlockCounts[i] || 0
   }));
 
@@ -82,7 +75,7 @@ export function WeeklyChart({
             if (typeof value !== 'number') return null;
             if (name === 'wasteTime') {
               return [
-                formatChartMinutes(useHours ? value * 3600 : value * 60),
+                formatTime(Math.round(useHours ? value * 3600 : value * 60)),
                 getMessage('wasteTime')
               ];
             }

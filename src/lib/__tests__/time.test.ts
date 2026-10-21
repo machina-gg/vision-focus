@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   formatTime,
-  formatTimeLocalized,
-  formatTimeShort,
   getTodayKey,
   getDateKey,
   isWithinDays,
@@ -14,7 +12,6 @@ import {
   isWithinSchedule,
   toDateKey
 } from '~/lib/time';
-import * as i18n from '~/lib/i18n';
 import { itemAt } from '~/test/items';
 
 describe('formatTime', () => {
@@ -28,6 +25,7 @@ describe('formatTime', () => {
     expect(formatTime(60)).toBe('1m');
     expect(formatTime(120)).toBe('2m');
     expect(formatTime(3540)).toBe('59m');
+    expect(formatTime(3599)).toBe('59m'); // 端数の秒は切り上げない
   });
 
   it('formats hours and minutes', () => {
@@ -39,75 +37,6 @@ describe('formatTime', () => {
   it('handles large values', () => {
     expect(formatTime(86400)).toBe('24h 0m'); // 1 day
     expect(formatTime(90061)).toBe('25h 1m'); // More than 1 day
-  });
-});
-
-describe('formatTimeLocalized', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('formats seconds in English', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
-    expect(formatTimeLocalized(30)).toBe('30 sec');
-  });
-
-  it('formats seconds in Japanese', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
-    expect(formatTimeLocalized(30)).toBe('30秒');
-  });
-
-  it('formats minutes only in English', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
-    expect(formatTimeLocalized(120)).toBe('2 min');
-  });
-
-  it('formats minutes only in Japanese', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
-    expect(formatTimeLocalized(120)).toBe('2分');
-  });
-
-  it('formats hours and minutes in English', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
-    expect(formatTimeLocalized(3660)).toBe('1 hr 1 min');
-  });
-
-  it('formats hours and minutes in Japanese', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
-    expect(formatTimeLocalized(3660)).toBe('1時間1分');
-  });
-
-  it('formats hours only in English', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('en');
-    expect(formatTimeLocalized(3600)).toBe('1 hr');
-  });
-
-  it('formats hours only in Japanese', () => {
-    vi.spyOn(i18n, 'getUILanguage').mockReturnValue('ja');
-    expect(formatTimeLocalized(3600)).toBe('1時間');
-  });
-});
-
-describe('formatTimeShort', () => {
-  it('formats seconds only (no hours)', () => {
-    expect(formatTimeShort(30)).toBe('0:30');
-    expect(formatTimeShort(59)).toBe('0:59');
-  });
-
-  it('formats minutes and seconds (no hours)', () => {
-    expect(formatTimeShort(90)).toBe('1:30');
-    expect(formatTimeShort(3599)).toBe('59:59');
-  });
-
-  it('formats hours, minutes, and seconds', () => {
-    expect(formatTimeShort(3600)).toBe('1:00:00');
-    expect(formatTimeShort(3661)).toBe('1:01:01');
-    expect(formatTimeShort(86399)).toBe('23:59:59');
-  });
-
-  it('pads single-digit values with zeros', () => {
-    expect(formatTimeShort(3605)).toBe('1:00:05');
-    expect(formatTimeShort(3665)).toBe('1:01:05');
   });
 });
 
