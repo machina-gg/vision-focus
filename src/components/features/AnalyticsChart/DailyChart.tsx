@@ -55,6 +55,7 @@ export function DailyChart({ data }: DailyChartProps) {
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
         <YAxis
+          allowDecimals={false}
           stroke="#6b7280"
           fontSize={12}
           tickFormatter={axisConfig.tickFormatter}

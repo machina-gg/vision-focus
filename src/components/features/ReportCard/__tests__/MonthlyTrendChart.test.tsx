@@ -7,6 +7,7 @@ import { MonthlyTrendChart } from '../MonthlyTrendChart';
 
 const chart = vi.hoisted(() => ({
   data: [] as { week: string; wasteTime: number; blockCount: number }[],
+  allowDecimals: {} as Record<string, boolean | undefined>,
   wasteTickFormatter: undefined as ((value: number) => string) | undefined,
   tooltipFormatter: undefined as
     ((value: unknown, name: string) => unknown) | undefined
@@ -30,11 +31,14 @@ vi.mock('recharts', () => ({
   XAxis: () => null,
   YAxis: ({
     yAxisId,
-    tickFormatter
+    tickFormatter,
+    allowDecimals
   }: {
     yAxisId: string;
+    allowDecimals?: boolean;
     tickFormatter?: (value: number) => string;
   }) => {
+    chart.allowDecimals[yAxisId] = allowDecimals;
     if (yAxisId === 'waste') chart.wasteTickFormatter = tickFormatter;
     return null;
   },
@@ -173,6 +177,12 @@ describe('MonthlyTrendChart', () => {
         '59m',
         'wasteTime'
       ]);
+    });
+
+    it('小さい値でも縦軸の目盛りを整数にする', () => {
+      renderChart([{ waste: 45 }]);
+
+      expect(chart.allowDecimals).toEqual({ waste: false, block: false });
     });
 
     it('ブロック数は件数のまま出す', () => {

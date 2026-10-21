@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DailyChart } from '../DailyChart';
 
 const chart = vi.hoisted(() => ({
+  allowDecimals: undefined as boolean | undefined,
   tooltipFormatter: undefined as ((value: unknown) => unknown) | undefined
 }));
 
@@ -18,7 +19,10 @@ vi.mock('recharts', () => ({
   ),
   CartesianGrid: () => null,
   XAxis: () => null,
-  YAxis: () => null,
+  YAxis: ({ allowDecimals }: { allowDecimals?: boolean }) => {
+    chart.allowDecimals = allowDecimals;
+    return null;
+  },
   Tooltip: ({ formatter }: { formatter: (value: unknown) => unknown }) => {
     chart.tooltipFormatter = formatter;
     return null;
@@ -38,6 +42,7 @@ const renderChart = (minutes: number[]) =>
 
 beforeEach(() => {
   chart.tooltipFormatter = undefined;
+  chart.allowDecimals = undefined;
 });
 
 describe('DailyChart のツールチップ', () => {
@@ -54,6 +59,12 @@ describe('DailyChart のツールチップ', () => {
       '1h 30m',
       'chartDailyLabel'
     ]);
+  });
+
+  it('小さい値でも縦軸の目盛りを整数にする', () => {
+    renderChart([0.75]);
+
+    expect(chart.allowDecimals).toBe(false);
   });
 
   it('1 分未満は秒で出す', () => {

@@ -55,6 +55,7 @@ export function WeeklyChart({
         <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
         <YAxis
           yAxisId="waste"
+          allowDecimals={false}
           stroke="#ef4444"
           fontSize={12}
           tickFormatter={(v: number) => (useHours ? `${v}h` : `${v}m`)}
@@ -62,6 +63,7 @@ export function WeeklyChart({
         <YAxis
           yAxisId="block"
           orientation="right"
+          allowDecimals={false}
           stroke="#3b82f6"
           fontSize={12}
         />

@@ -50,6 +50,7 @@ export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
         <XAxis dataKey="week" stroke="#6b7280" fontSize={12} />
         <YAxis
           yAxisId="waste"
+          allowDecimals={false}
           stroke="#ef4444"
           fontSize={12}
           tickFormatter={(v: number) => (useHours ? `${v}h` : `${v}m`)}
@@ -57,6 +58,7 @@ export function MonthlyTrendChart({ weeklyBreakdown }: MonthlyTrendChartProps) {
         <YAxis
           yAxisId="block"
           orientation="right"
+          allowDecimals={false}
           stroke="#3b82f6"
           fontSize={12}
         />
